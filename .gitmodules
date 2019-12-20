@@ -1,0 +1,4 @@
+[submodule "lib/cpp_engine/external/object-store"]
+	path = lib/cpp_engine/external/object-store
+	url = https://github.com/realm/realm-object-store
+	branch = master
