@@ -1,0 +1,4 @@
+rootProject.name = 'Realm-Kotlin'
+
+
+enableFeaturePreview('GRADLE_METADATA')

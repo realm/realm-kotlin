@@ -15,6 +15,22 @@
 
 #define typeof __typeof__
 
+
+#include <dirent.h>
+#include <fnmatch.h>
+ 
+extern "C" DIR * opendir$INODE64( char * dirName );
+DIR * opendir$INODE64( char * dirName )
+{
+return opendir( dirName );
+}
+ 
+extern "C" struct dirent * readdir$INODE64( DIR * dir );
+struct dirent * readdir$INODE64( DIR * dir )
+{
+return readdir( dir );
+}
+
 struct database
 {
 	void *db;
@@ -171,7 +187,7 @@ void object_set_value(realm_object_t *obj_ptr, const char *property_name, ValueT
 {
 	realm::Object *obj = static_cast<realm::Object *>(obj_ptr->obj);
 	realm::CppContext context(obj->realm()); //FIXME is this the right way to invoke the set_property? can we cache the context?
-	obj->set_property_value(context, property_name, value, false);
+	obj->set_property_value(context, property_name, value);
 }
 
 void object_set_bool(realm_object_t *obj_ptr, const char *property_name, int8_t value)
@@ -285,4 +301,39 @@ void realmlist_set(realm_list_t *realm_list_ptr, realm_object_t *obj_ptr, size_t
 	List *list = static_cast<List *>(realm_list_ptr->list);
 	realm::Object *obj = static_cast<realm::Object *>(obj_ptr->obj);
 	list->set(index, obj->row());
+}
+
+// *********** CALLBACK  *********** //
+NotificationToken token;
+void register_listner(database_t *db_ptr, const char *object_type, CallbackFn callback)
+{
+	Database *db = static_cast<Database *>(db_ptr->db);
+	auto &table = *db->realm()->read_group().get_table(std::string("class_").append(object_type));
+
+	Results* r = new Results(db->realm(), table);//FIXME memory leak
+
+	// Results r(db->realm(), table);
+	std::string table_name = std::string(object_type);
+	token = r->add_notification_callback([=, cb=std::move(callback)](CollectionChangeSet c, std::exception_ptr err) {
+		if (err) {
+			try {
+				std::rethrow_exception(err);
+			} catch(const std::exception& e) {
+				std::cout << "Caught exception \"" << e.what() << "\"\n";
+			}
+		} else {
+			auto del = c.deletions.as_indexes();
+			auto insr = c.insertions.as_indexes();
+			auto mod = c.modifications.as_indexes();
+			auto mod_new = c.modifications_new.as_indexes();
+
+			std::stringstream message;
+			message << "Table " << table_name.c_str() << " changed: \n\t number of deletions " << static_cast<size_t>(std::distance(del.begin(), del.end())) 
+				<< " \n\t number of insertions " << static_cast<size_t>(std::distance(insr.begin(), insr.end())) 
+				<< " \n\t number of modifications " << static_cast<size_t>(std::distance(mod.begin(), mod.end()))
+				<< " \n\t number of new modifications " << static_cast<size_t>(std::distance(mod_new.begin(), mod_new.end()));
+
+			cb(message.str().c_str());		
+		}
+		});
 }

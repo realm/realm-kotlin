@@ -1,8 +1,6 @@
 #ifndef __WRAPPER_H__
 #define __WRAPPER_H__
 
-#include <thread>
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -63,19 +61,9 @@ extern "C"
 
 
     // ***********    CALLBACK   *********** //
-    int wrapper_callmeback(int (*add)(int, int)) {
-        std::thread::id this_id = std::this_thread::get_id();
-        std::cout << "_______________[START] wrapper_callmeback on ThreadID: " << this_id << std::endl;
-        std::thread t1([f = std::move(add)](){
-            std::cout << "_______________ Background Thread ID: " << std::this_thread::get_id() << std::endl;
-            f(10,20);
-        });
-        // int result = add(10,20);
-        std::cout << "_______________[END] wrapper_callmeback on ThreadID: " << this_id << std::endl;
-        // std::cout << "_______________RESULT" << result << std::endl;
-        return 0;// ret code
+    typedef void (*CallbackFn)(const char *name);
+    void register_listner(database_t *db_ptr, const char *object_type, CallbackFn callback);
 
-    }
 #ifdef __cplusplus
 }
 #endif

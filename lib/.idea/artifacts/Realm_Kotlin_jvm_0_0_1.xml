@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Realm-Kotlin-jvm-0.0.1">
+    <output-path>$PROJECT_DIR$/build/libs</output-path>
+    <root id="archive" name="Realm-Kotlin-jvm-0.0.1.jar" />
+  </artifact>
+</component>

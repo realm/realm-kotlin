@@ -229,7 +229,7 @@ KeyPathMapping Database::getKeyPathMappings()
 {
 	if (!m_mappings) {
 		m_mappings = KeyPathMapping();
-		realm::alias_backlinks(*m_mappings, *m_realm);
+		realm::populate_keypath_mapping(*m_mappings, *m_realm);
 	}
 	return *m_mappings;
 }

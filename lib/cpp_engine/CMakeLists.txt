@@ -9,16 +9,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_EXTENSIONS off)
 add_compile_options(-Wall -DREALM_HAVE_CONFIG)
 add_compile_options("$<$<CONFIG:DEBUG>:-DREALM_DEBUG>")
+add_link_options(-Wl,-all_load)
 
-add_subdirectory(external/object-store)
-include_directories(external/object-store/external/json)
+add_subdirectory(external/realm-object-store)
+include_directories(external/realm-object-store/external/json)
 
-add_library(realm-dart SHARED
+add_library(realm-objectstore-wrapper STATIC
   database.cpp
   wrapper.cpp
 )
 
-file(STRINGS "${CMAKE_SOURCE_DIR}/external/object-store/dependencies.list" DEPENDENCIES)
+file(STRINGS "${CMAKE_SOURCE_DIR}/external/realm-object-store/dependencies.list" DEPENDENCIES)
 foreach(LINE IN LISTS DEPENDENCIES)
     string(REGEX MATCHALL "([^=]+)" KEY_VALUE ${LINE})
     list(LENGTH KEY_VALUE matches_count)
@@ -29,4 +30,4 @@ foreach(LINE IN LISTS DEPENDENCIES)
     endif()
 endforeach()
 
-target_link_libraries(realm-objectstore-wrapper realm-object-store ${CMAKE_CURRENT_SOURCE_DIR}/external/object-store/CMakeFiles/realm-core-${DEP_REALM_CORE_VERSION}/librealm-parser.a)
+target_link_libraries(realm-objectstore-wrapper realm-object-store ${CMAKE_CURRENT_SOURCE_DIR}/external/realm-object-store/CMakeFiles/realm-core-${DEP_REALM_CORE_VERSION}/librealm-parser-macosx.a)
