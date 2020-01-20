@@ -1,0 +1,5 @@
+Compile the library project (example run ./graldew publishToMavenLocal)
+
+javah -classpath /path/to/realm-kotlin-mpp/lib/build/tmp/kotlin-classes/release io.realm.CInterop
+
+Once you build the dynamic library copy it into: cp librealm-objectstore-wrapper-android-dynamic.so /Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/src/androidMain/jniLibs/x86_64

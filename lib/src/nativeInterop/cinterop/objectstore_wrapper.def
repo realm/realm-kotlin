@@ -1,6 +1,3 @@
 headers = stdint.h stdio.h wrapper.h
 headerFilter = stdint.h stdio.h wrapper.h
-compilerOpts.ios_x64 = -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ -I/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine
-staticLibraries = librealm-objectstore-wrapper.a
-libraryPaths = /Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/build
-linkerOpts = -framework Foundation -framework CoreFoundation -framework Security  -framework CoreServices -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/build -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6 -lrealm-macosx-dbg -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/external/realm-object-store/src -lrealm-object-store -lrealm-parser-macosx-dbg
+linkerOpts = -framework Foundation -framework CoreFoundation -framework Security

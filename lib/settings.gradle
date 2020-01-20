@@ -1,4 +1,17 @@
-rootProject.name = 'Realm-Kotlin'
+pluginManagement {
+    repositories {
+        google()
+        gradlePluginPortal()
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if(requested.id.namespace == "com.android") {
+                useModule("com.android.tools.build:gradle:3.2.1")
+            }
+        }
+    }
+}
 
+rootProject.name = 'Realm-Kotlin'
 
 enableFeaturePreview('GRADLE_METADATA')

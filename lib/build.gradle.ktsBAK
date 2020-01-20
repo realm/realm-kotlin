@@ -1,0 +1,143 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+
+//buildscript {
+//    repositories {
+//        mavenCentral()
+//    }
+//
+//    dependencies {
+//        classpath(kotlin("gradle-plugin", version = "1.3.60"))
+//    }
+//}
+
+
+plugins {
+    kotlin("multiplatform") version "1.3.60"
+    id("com.android.library")
+}
+repositories {
+    google()
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+}
+group = "io.realm"
+version = "0.0.1"
+
+//apply plugin: 'maven-publish'
+apply(plugin = "maven-publish")
+
+android {
+    compileSdkVersion(29)
+    buildToolsVersion = "29.0.2"
+
+
+    defaultConfig {
+        minSdkVersion (22)
+        targetSdkVersion(29)
+        versionCode = 1
+        versionName = "1.0"
+
+//        sourceSets["main"].withConvention(KotlinSourceSet::class) {
+//            //            kotlin.srcDir("src/main/myKotlin")
+//        }
+//
+        sourceSets {
+//            getByName("main") {
+//                withConvention(KotlinSourceSet::class){
+////                    kotlin.srcDirs("src")
+//                }
+////                resources.srcDirs("resources")
+//            }
+            val main by getting {
+                manifest.srcFile("src/androidMain/AndroidManifest.xml")
+            }
+        }
+
+
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+}
+
+kotlin {
+    android("android") {
+//        sourceSets {
+//            getByName("androidMain") {
+//                withConvention(KotlinSourceSet::class) {
+//                }
+//            }
+//        }
+        publishLibraryVariants("release", "debug")
+//        sourceSets["main"].withConvention(KotlinSourceSet::class) {
+//            kotlin.srcDir("src/main/myKotlin")
+//        }
+    }
+//    jvm("android")
+    // For ARM, should be changed to iosArm32 or iosArm64
+    // For Linux, should be changed to e.g. linuxX64
+    // For MacOS, should be changed to e.g. macosX64
+    // For Windows, should be changed to e.g. mingwX64
+    iosX64("ios") {
+        compilations.getByName("main") {
+            val objectstore_wrapper by cinterops.creating {
+            }
+//            cinterops {
+//                objectstore_wrapper {
+//                    // Options to be passed to compiler by cinterop tool.
+////                    compilerOpts '-I/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/'
+//                }
+//            }
+        }
+    }
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+            }
+        }
+        val androidMain by getting {
+            kotlin.srcDir("src/main/kotlin")
+            dependencies {
+                implementation(kotlin("stdlib"))
+//                implementation(project(":jniwrapper"))
+            }
+        }
+        val androidTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+            }
+        }
+        val iosMain by getting {
+        }
+        val iosTest by getting {
+        }
+    }
+
+    tasks.register("iosTest")  {
+        val  device = project.findProperty("iosDevice") as? String ?: "iPhone 11 Pro Max"
+        dependsOn("linkDebugTestIos")
+        group = JavaBasePlugin.VERIFICATION_GROUP
+        description = "Runs tests for target 'ios' on an iOS simulator"
+
+        doLast {
+            val  binary = (kotlin.targets["ios"] as KotlinNativeTarget).binaries.getTest("DEBUG").outputFile
+            exec {
+                commandLine("xcrun", "simctl", "spawn", "--standalone", device, binary.absolutePath)
+            }
+        }
+    }
+}

@@ -14,7 +14,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId 'org.jetbrains.kotlin.mpp_app_android'
-        minSdkVersion 15
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
         versionName '1.0'
@@ -22,6 +22,7 @@ android {
     }
     buildTypes {
         release {
+            matchingFallbacks = ['debug'] // the lib export only debug deps, https://developer.android.com/studio/build/dependencies#resolve_matching_errors
             minifyEnabled false
         }
     }
@@ -38,14 +39,7 @@ kotlin {
     android("android")
     // This is for iPhone emulator
     // Switch here to iosArm64 (or iosArm32) to build library for iPhone device
-    iosX64("ios")
-            {
-//        compilations.main {
-//            cinterops {
-//                os_wrapper {
-//                }
-//            }
-//        }
+    iosX64("ios") {
         binaries {
             framework()
         }
@@ -66,7 +60,8 @@ kotlin {
         androidMain {
             dependencies {
                 implementation kotlin('stdlib')
-                implementation "io.realm:Realm-Kotlin-android:0.0.1"
+                implementation kotlin('reflect') //TODO include this with lib as transitive deps
+//                implementation "io.realm:Realm-Kotlin-android-debug:0.0.1"
             }
         }
         androidTest {

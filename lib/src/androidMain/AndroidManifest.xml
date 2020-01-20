@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="io.realm">
+    <application>
+        <provider
+                android:name=".RealmInitProvider"
+                android:authorities="io.realm.RealmInitProvider"/>
+    </application>
+</manifest>
