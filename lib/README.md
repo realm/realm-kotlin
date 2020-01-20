@@ -21,4 +21,4 @@ cd path/to/lib
 
 # Example project
 
-A sample project under [example](./example) directory demonstrate how to consume this library in a Multiplatform Kotlin Project targeting iOS and Android.
+A sample project under [example](../example) directory demonstrate how to consume this library in a Multiplatform Kotlin Project targeting iOS and Android.
