@@ -1,5 +1,9 @@
 # Building
 
+Pull the submodule dependencies 
+```
+git submodule update --init --recursive
+```
 
 ## iOS
 
@@ -27,4 +31,5 @@ export ANDROID_NDK=/absolute/path/to/the/android-ndk
 cd realm-kotlin-mpp/lib/cpp_engine/build-android
 cmake -DCMAKE_TOOLCHAIN_FILE=../android.toolchain.cmake  -DANDROID_ABI="x86_64" -DENABLE_DEBUG_CORE=false .
 make -j8 realm-objectstore-wrapper-android-dynamic
+cp librealm-objectstore-wrapper-android-dynamic.so ../../src/androidMain/jniLibs/x86_64
 ```

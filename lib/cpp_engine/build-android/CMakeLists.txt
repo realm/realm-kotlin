@@ -5,13 +5,11 @@ cmake_minimum_required(VERSION 3.0)
 #   $ mkdir build && cd build
 #   $ cmake -DCMAKE_TOOLCHAIN_FILE=path/to/the/android.toolchain.cmake ..
 #   $ make -j8
-#  I assume that specify the ANDROID_ABI (from Gradle) will choose the right compiler and linker per ABI to produce the 
-#  static/shared library required 
 # cmake -DCMAKE_TOOLCHAIN_FILE=/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/android.toolchain.cmake  -DANDROID_ABI="x86_64" -DENABLE_DEBUG_CORE=false ..
 # cmake -DCMAKE_TOOLCHAIN_FILE=/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/android.toolchain.cmake  -DANDROID_ABI="armeabi-v7a" -DENABLE_DEBUG_CORE=false ..
 
 # where are we using the Android toolchain to crosscompile
-# why can't we include OS recursively and avoid using `use_realm_core` 
+# why can't we include OS recursively and avoid using `use_realm_core`
 
 project(realm-objectstore-wrapper)
 
@@ -29,16 +27,16 @@ include(RealmCore)
 set(build_SYNC OFF)
 
 # add step to downalod core
-# set(core_Android_VERSION "4.8.3")
-# set(core_Android_URL "http://static.realm.io/downloads/sync/realm-sync-android-${core_Android_VERSION}.tar.gz")
-# message(STATUS "Downloading Core for Android ${ANDROID_ABI} ...")
-# file(DOWNLOAD "${core_Android_URL}" "${PROJECT_BINARY_DIR}/core_${core_Android_VERSION}.tar.gz")
-# message(STATUS "Uncompressing Core...")
-# execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz "${PROJECT_BINARY_DIR}/core_${core_Android_VERSION}.tar.gz"
-#     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(core_Android_VERSION "4.8.3")
+set(core_Android_URL "http://static.realm.io/downloads/sync/realm-sync-android-${core_Android_VERSION}.tar.gz")
+message(STATUS "Downloading Core for Android ${ANDROID_ABI} ...")
+file(DOWNLOAD "${core_Android_URL}" "${PROJECT_BINARY_DIR}/core_${core_Android_VERSION}.tar.gz")
+message(STATUS "Uncompressing Core inside ${PROJECT_BINARY_DIR} ...")
+execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz "${PROJECT_BINARY_DIR}/core_${core_Android_VERSION}.tar.gz"
+     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
 
-# set (REALM_CORE_DIST_DIR "${PROJECT_BINARY_DIR}/core_${core_Android_VERSION}")
-set (REALM_CORE_DIST_DIR "${CMAKE_SOURCE_DIR}/core/")
+set (REALM_CORE_DIST_DIR ${PROJECT_BINARY_DIR})
+
 
 use_realm_core(${build_SYNC} "${REALM_CORE_DIST_DIR}" "${CORE_SOURCE_PATH}")
 
@@ -63,7 +61,7 @@ get_target_property(crypto_LIB crypto IMPORTED_LOCATION)
 #get_target_property(ssl_LIB ssl IMPORTED_LOCATION)
 
 # build application's shared lib
-#TODO use one include_directories with 3 locations 
+#TODO use one include_directories with 3 locations
 include_directories(
     ${CMAKE_SOURCE_DIR}/external/realm-object-store/src)
 
