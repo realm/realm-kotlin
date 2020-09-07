@@ -14,4 +14,4 @@ includeBuild("realm-compiler-plugin") {
     }
 }
 
-//includeBuild("compiler-example")
+includeBuild("compiler-example")
