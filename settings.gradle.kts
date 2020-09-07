@@ -6,7 +6,7 @@
 //  and include it by includeBuild("compiler-plugin") with dependencySubstition
 //include("compiler-plugin:gradle-plugin")
 //include("compiler-plugin:compiler-plugin")
-includeBuild("compiler-plugin") {
+includeBuild("realm-compiler-plugin") {
     dependencySubstitution {
         substitute(module("io.realm:gradle-plugin")).with(project(":gradle-plugin"))
         substitute(module("io.realm:compiler-plugin")).with(project(":compiler-plugin"))
