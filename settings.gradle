@@ -1,4 +1,0 @@
-includeBuild 'lib'
-includeBuild 'compiler-plugin'
-includeBuild 'example'
-
