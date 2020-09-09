@@ -1,3 +1,8 @@
+import io.realm.build.Config.Companion.COMPILER_PLUGIN
+import io.realm.build.Config.Companion.GROUP
+import io.realm.build.Config.Companion.VERSION
+import io.realm.build.Dependencies
+
 plugins {
     kotlin("jvm")
     kotlin("kapt")
@@ -5,18 +10,18 @@ plugins {
     `maven-publish`
 }
 
-group = "io.realm"
-version = "0.0.1-SNAPSHOT"
-
 dependencies {
     compileOnly(kotlin("gradle-plugin"))
-    kapt("com.google.auto.service:auto-service:1.0-rc6")
+    kapt(Dependencies.AUTO_SERVICE_COMPILER)
 }
 
+// TODO How to grap gradle plugin component and publish it instead of from(components["java"])
+//   pluginSourceSet = sourceSets.named("plugin").get()
 gradlePlugin {
+    isAutomatedPublishing = false
     plugins {
         create("RealmPlugin") {
-            id = "io.realm.realm-compiler-plugin"
+            id = COMPILER_PLUGIN
             displayName = "Realm compiler plugin"
             implementationClass = "io.realm.gradle.GradleSubplugin"
         }
@@ -25,10 +30,10 @@ gradlePlugin {
 
 publishing {
     publications {
-        register("mavenJava", MavenPublication::class) {
-            groupId ="io.realm"
-            artifactId ="gradle-plugin"
-            version ="0.0.1-SNAPSHOT"
+        register("gradlePlugin", MavenPublication::class) {
+            groupId = GROUP
+            artifactId = "gradle-plugin"
+            version = VERSION
             from(components["java"])
         }
     }

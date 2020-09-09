@@ -1,5 +1,4 @@
 buildscript {
-    ext.kotlin_version = '1.4.0'
     repositories {
         mavenLocal()
         mavenCentral()
@@ -7,21 +6,22 @@ buildscript {
     }
     dependencies {
         classpath 'io.realm:gradle-plugin:0.0.1-SNAPSHOT'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
-
 plugins {
     id 'org.jetbrains.kotlin.multiplatform' version '1.4.0'
+    // TODO Have not found a way to fetch the plugin from ID, to enable using io.realm.Config properties
+    // id ("io.realm.config")
 }
+
 repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
 }
 
-apply plugin: 'io.realm.realm-compiler-plugin'
+apply plugin: 'io.realm.compiler-plugin'
 
 kotlin {
     jvm {

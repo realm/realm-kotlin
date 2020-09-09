@@ -1,4 +1,8 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import io.realm.build.Config.Companion.GROUP
+import io.realm.build.Config.Companion.VERSION
+import io.realm.build.Dependencies.Companion.AUTO_SERVICE_ANNOTATION
+import io.realm.build.Dependencies.Companion.AUTO_SERVICE_COMPILER
 
 plugins {
     kotlin("jvm")
@@ -9,19 +13,8 @@ plugins {
 
 dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable")
-
-    compileOnly("com.google.auto.service:auto-service-annotations:1.0-rc6")
-    kapt("com.google.auto.service:auto-service:1.0-rc6")
-}
-
-tasks {
-    named<ShadowJar>("shadowJar") {
-        archiveBaseName.set("shadow")
-        mergeServiceFiles()
-        manifest {
-            attributes(mapOf("Main-Class" to "com.github.csolem.gradle.shadow.kotlin.example.App"))
-        }
-    }
+    compileOnly(AUTO_SERVICE_ANNOTATION)
+    kapt(AUTO_SERVICE_COMPILER)
 }
 
 tasks {
@@ -35,21 +28,19 @@ tasks {
 
 publishing {
     publications {
-        register("mavenJava", MavenPublication::class) {
-            groupId ="io.realm"
+        register("compilerPlugin", MavenPublication::class) {
+            // TODO Has to match GradleSubplugin constants
+            groupId = GROUP
             artifactId ="compiler-plugin"
-            version ="0.0.1-SNAPSHOT"
+            version = VERSION
             from(components["java"])
         }
-        register("mavenJava-shaded", MavenPublication::class) {
-            groupId ="io.realm"
+        register("compilerPluginShaded", MavenPublication::class) {
+            // TODO Has to match GradleSubplugin constants
+            groupId = GROUP
             artifactId ="compiler-plugin-shaded"
-            version ="0.0.1-SNAPSHOT"
+            version = VERSION
             artifact(tasks["shadowJar"])
         }
     }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
 }
