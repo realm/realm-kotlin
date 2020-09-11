@@ -1,6 +1,7 @@
 plugins {
     id "org.jetbrains.kotlin.multiplatform" version "1.4.0"
     id "com.android.library"
+    id ("io.realm.compiler-plugin")
 }
 
 repositories {
@@ -46,6 +47,13 @@ android {
 kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
+        // FIXME We need to apply this to all compilations
+        compilations.all {
+            kotlinOptions {
+                kotlinOptions.jvmTarget = "1.8"
+                kotlinOptions.useIR = true
+            }
+        }
     }
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
@@ -114,19 +122,20 @@ kotlin {
 }
 
 
-task iosTest {
-    def device = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-    dependsOn kotlin.targets.ios.binaries.getTest('DEBUG').linkTaskName
-    group = JavaBasePlugin.VERIFICATION_GROUP
-    description = "Runs tests for target 'ios' on an iOS simulator"
-
-    doLast {
-        def binary = kotlin.targets.ios.binaries.getTest('DEBUG').outputFile
-        exec {
-            commandLine 'xcrun', 'simctl', 'spawn', device, binary.absolutePath
-        }
-    }
-}
+//Cannot add task 'iosTest' as a task with that name already exists.
+//task iosTest {
+//    def device = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
+//    dependsOn kotlin.targets.ios.binaries.getTest('DEBUG').linkTaskName
+//    group = JavaBasePlugin.VERIFICATION_GROUP
+//    description = "Runs tests for target 'ios' on an iOS simulator"
+//
+//    doLast {
+//        def binary = kotlin.targets.ios.binaries.getTest('DEBUG').outputFile
+//        exec {
+//            commandLine 'xcrun', 'simctl', 'spawn', device, binary.absolutePath
+//        }
+//    }
+//}
 
 configurations {
     compileClasspath

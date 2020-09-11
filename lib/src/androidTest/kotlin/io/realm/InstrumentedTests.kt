@@ -1,12 +1,11 @@
 package io.realm
 
-import android.os.SystemClock
 import android.support.test.runner.AndroidJUnit4
-import io.realm.model.Person
+import io.realm.model.Sample
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
@@ -15,6 +14,7 @@ class InstrumentedTests {
     fun contextIsNotNull() {
         assertNotNull(RealmInitProvider.applicationContext)
     }
+
 //    @Test
 //    fun createObject() {
 //        val configuration = RealmConfiguration.Builder()
@@ -70,5 +70,10 @@ class InstrumentedTests {
 //        assertEquals("FooBar", obj2.name)
 //        assertEquals(17, obj2.age)
 //    }
+
+    @Test
+    fun compilerPlugin() {
+        assertTrue { Sample().name.startsWith("Hello ") }
+    }
 
 }
