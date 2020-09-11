@@ -5,14 +5,15 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'io.realm:gradle-plugin:0.0.1-SNAPSHOT'
+        classpath("io.realm:gradle-plugin:0.0.1-SNAPSHOT")
     }
 }
 
 plugins {
-    id 'org.jetbrains.kotlin.multiplatform' version '1.4.0'
+    kotlin("multiplatform")
     // TODO Have not found a way to fetch the plugin from ID, to enable using io.realm.Config properties
     // id ("io.realm.config")
+    `maven-publish`
 }
 
 repositories {
@@ -21,7 +22,7 @@ repositories {
     jcenter()
 }
 
-apply plugin: 'io.realm.compiler-plugin'
+apply(plugin = "io.realm.compiler-plugin")
 
 kotlin {
     jvm {
@@ -40,29 +41,29 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation kotlin('stdlib-common')
+                implementation(kotlin("stdlib-common"))
             }
         }
         commonTest {
             dependencies {
-                implementation kotlin('test-common')
-                implementation kotlin('test-annotations-common')
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
             }
         }
-        jvmMain {
+        val jvmMain by getting {
             dependencies {
-                implementation kotlin('stdlib-jdk8')
+                implementation(kotlin("stdlib-jdk8"))
             }
         }
-        jvmTest {
+        val jvmTest by getting {
             dependencies {
-                implementation kotlin('test')
-                implementation kotlin('test-junit')
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
             }
         }
-        macosMain {
+        val macosMain by getting {
         }
-        macosTest {
+        val macosTest by getting {
         }
     }
 }

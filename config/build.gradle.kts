@@ -11,6 +11,7 @@ gradlePlugin {
     plugins {
         create("dependencies") {
             id = "io.realm.config"
+            // TODO Consider renaming package as /build/ is ignored by git
             implementationClass = "io.realm.build.Config"
         }
     }
