@@ -38,3 +38,30 @@ publishing {
         }
     }
 }
+
+
+// Make version information available at runtime
+val versionDirectory = "$buildDir/generated/source/version/"
+sourceSets {
+    main {
+        java.srcDir(versionDirectory)
+    }
+}
+tasks.create("pluginVersion") {
+    val outputDir = file(versionDirectory)
+
+    inputs.property("version", project.version)
+    outputs.dir(outputDir)
+
+    doLast {
+        val versionFile = file("$outputDir/io/realm/gradle/version.kt")
+        versionFile.parentFile.mkdirs()
+        versionFile.writeText("""
+            // Generated file. Do not edit!
+            package io.realm.gradle
+            internal const val PLUGIN_VERSION = "${VERSION}"
+        """.trimIndent()
+        )
+    }
+}
+tasks.getByName("compileKotlin").dependsOn("pluginVersion")

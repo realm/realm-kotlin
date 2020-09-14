@@ -23,7 +23,7 @@ class GenerationExtensionTest {
             sources = listOf(SourceFile.fromPath(resource))
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins//listOf(TRegistrar())
+            compilerPlugins = plugins
             inheritClassPath = true
         }.compile()
 

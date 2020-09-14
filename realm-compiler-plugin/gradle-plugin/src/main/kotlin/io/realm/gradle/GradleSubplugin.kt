@@ -14,7 +14,7 @@ class GradleSubplugin: KotlinCompilerPluginSupportPlugin {
         val groupId = "io.realm"
         val artifactId = "compiler-plugin"
         val artifactIdShadeSuffix = "-shaded"
-        val version = "0.0.1-SNAPSHOT"
+        val version = PLUGIN_VERSION
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
