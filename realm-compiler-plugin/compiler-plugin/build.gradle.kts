@@ -15,6 +15,12 @@ dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable")
     compileOnly(AUTO_SERVICE_ANNOTATION)
     kapt(AUTO_SERVICE_COMPILER)
+
+    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.4.0")
+    testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.2.6")
+
 }
 
 tasks {
