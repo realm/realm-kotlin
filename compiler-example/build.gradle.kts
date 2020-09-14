@@ -4,9 +4,6 @@ buildscript {
         mavenCentral()
         jcenter()
     }
-    dependencies {
-        classpath("io.realm:gradle-plugin:0.0.1-SNAPSHOT")
-    }
 }
 
 plugins {
@@ -14,6 +11,8 @@ plugins {
     // TODO Have not found a way to fetch the plugin from ID, to enable using io.realm.Config properties
     // id ("io.realm.config")
     `maven-publish`
+
+    id("io.realm.compiler-plugin")
 }
 
 repositories {
@@ -21,8 +20,6 @@ repositories {
     mavenCentral()
     jcenter()
 }
-
-apply(plugin = "io.realm.compiler-plugin")
 
 kotlin {
     jvm {
