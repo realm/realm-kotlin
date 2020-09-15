@@ -7,13 +7,12 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.4.0"
-    // TODO Have not found a way to fetch the plugin from ID, to enable using io.realm.Config properties
-    // id ("io.realm.config")
+    kotlin("multiplatform") version PluginVersions.kotlin
     `maven-publish`
-
     id("io.realm.compiler-plugin")
 }
+
+
 
 repositories {
     mavenLocal()

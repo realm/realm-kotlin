@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.4.0"
-    kotlin("kapt") version "1.4.0"
+    kotlin("jvm") version PluginVersions.kotlin
+    kotlin("kapt") version PluginVersions.kotlin
     `java-gradle-plugin`
     id ("io.realm.config")
 }
