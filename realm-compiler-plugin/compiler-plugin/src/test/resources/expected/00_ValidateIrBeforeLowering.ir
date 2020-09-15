@@ -1,0 +1,44 @@
+-- IR for <main> after Validate IR before lowering
+MODULE_FRAGMENT name:<main>
+  FILE fqName:io.realm.example fileName:/Users/claus.rorbech/proj/realm-kotlin/realm-compiler-plugin/compiler-plugin/build/resources/test/input/Sample.kt
+    CLASS CLASS name:Sample modality:FINAL visibility:public superTypes:[kotlin.Any]
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
+      CONSTRUCTOR visibility:public <> () returnType:io.realm.example.Sample [primary]
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+          INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:Sample modality:FINAL visibility:public superTypes:[kotlin.Any]'
+      PROPERTY name:name visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private
+          EXPRESSION_BODY
+            CONST String type=kotlin.String value="a"
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-name> visibility:public modality:FINAL <> ($this:io.realm.example.Sample) returnType:kotlin.String?
+          correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:io.realm.example.Sample
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String? declared in io.realm.example.Sample'
+                STRING_CONCATENATION type=kotlin.String
+                  CONST String type=kotlin.String value="Hello "
+                  GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.String? origin=null
+                    receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<get-name>' type=io.realm.example.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-name> visibility:public modality:FINAL <> ($this:io.realm.example.Sample, <set-?>:kotlin.String?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:io.realm.example.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<set-name>' type=io.realm.example.Sample origin=null
+              value: GET_VAR '<set-?>: kotlin.String? declared in io.realm.example.Sample.<set-name>' type=kotlin.String? origin=null
+      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+      FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+        overridden:
+          public open fun hashCode (): kotlin.Int declared in kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+        overridden:
+          public open fun toString (): kotlin.String declared in kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any

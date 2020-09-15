@@ -20,6 +20,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.0")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.4.0")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.2.6")
+    testImplementation("junit-addons:junit-addons:1.4")
 
 }
 

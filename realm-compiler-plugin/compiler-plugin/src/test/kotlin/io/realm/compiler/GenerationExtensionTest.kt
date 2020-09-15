@@ -18,13 +18,18 @@ class GenerationExtensionTest {
     fun transform() {
         val plugins: List<Registrar> = listOf(Registrar())
 
-        val resource = File(GenerationExtensionTest::class.java.getResource("/Sample.kt").file)
+        val resource = File(GenerationExtensionTest::class.java.getResource("/input/Sample.kt").file)
         val result = KotlinCompilation().apply {
             sources = listOf(SourceFile.fromPath(resource))
             useIR = true
             messageOutputStream = System.out
             compilerPlugins = plugins
             inheritClassPath = true
+            kotlincArguments = listOf(
+                    "-Xuse-ir",
+                    "-Xdump-directory=src/test/resources/output/",
+                    "-Xphases-to-dump-after=ValidateIrBeforeLowering"
+            )
         }.compile()
 
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
@@ -38,6 +43,10 @@ class GenerationExtensionTest {
                 assertTrue(property.get(newInstance).startsWith("Hello "))
             }
         }
+
+        junitx.framework.FileAssert.assertEquals(
+                File("src/test/resources/expected/00_ValidateIrBeforeLowering.ir"),
+                File("src/test/resources/output/00_ValidateIrBeforeLowering.ir)
     }
 
 }
