@@ -14,20 +14,34 @@ import kotlin.test.assertTrue
 
 class GenerationExtensionTest {
 
+    class Files(val directory: String) {
+        val fileMap: Map<String, File>
+        init {
+            val base = File(this::class.java.getResource("${directory}").file)
+            val file = File(this::class.java.getResource("${directory}${File.separator}input").file)
+            fileMap = file.walkTopDown().toList()
+                    .filter{ !it.isDirectory }
+                    .map { it.relativeTo(base).path to it}.toMap()
+        }
+        fun expectedDir() = listOf("src", "test", "resources", directory, "output").joinToString(separator = File.separator)
+        fun outputDir() = listOf("src", "test", "resources", directory, "output").joinToString(separator = File.separator)
+    }
+
     @Test
     fun transform() {
         val plugins: List<Registrar> = listOf(Registrar())
 
-        val resource = File(GenerationExtensionTest::class.java.getResource("/input/Sample.kt").file)
+        val inputs = Files("/sample")
+
         val result = KotlinCompilation().apply {
-            sources = listOf(SourceFile.fromPath(resource))
+            sources = inputs.fileMap.values.map { SourceFile.fromPath(it)}
             useIR = true
             messageOutputStream = System.out
             compilerPlugins = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
                     "-Xuse-ir",
-                    "-Xdump-directory=src/test/resources/output/",
+                    "-Xdump-directory=${inputs.outputDir()}",
                     "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )
         }.compile()
@@ -44,9 +58,20 @@ class GenerationExtensionTest {
             }
         }
 
-        junitx.framework.FileAssert.assertEquals(
-                File("src/test/resources/expected/00_ValidateIrBeforeLowering.ir"),
-                File("src/test/resources/output/00_ValidateIrBeforeLowering.ir)
+        stripInputPath(File("${inputs.outputDir()}/00_ValidateIrBeforeLowering.ir"), inputs.fileMap)
+
+        assertEquals(
+                File("${inputs.expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
+                File("${inputs.outputDir()}/00_ValidateIrBeforeLowering.ir").readText(),
+        )
+    }
+
+    private fun stripInputPath(file: File, map: Map<String, File>) {
+        file.writeText(
+            map.entries.fold(file.readText()) { text, (name, file) ->
+                text.replace(file.path, name)
+            }
+        )
     }
 
 }

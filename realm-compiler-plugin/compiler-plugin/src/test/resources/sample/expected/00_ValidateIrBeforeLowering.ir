@@ -1,6 +1,6 @@
 -- IR for <main> after Validate IR before lowering
 MODULE_FRAGMENT name:<main>
-  FILE fqName:io.realm.example fileName:/Users/claus.rorbech/proj/realm-kotlin/realm-compiler-plugin/compiler-plugin/build/resources/test/input/Sample.kt
+  FILE fqName:io.realm.example fileName:input/Sample.kt
     CLASS CLASS name:Sample modality:FINAL visibility:public superTypes:[kotlin.Any]
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
       CONSTRUCTOR visibility:public <> () returnType:io.realm.example.Sample [primary]
