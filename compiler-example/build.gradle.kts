@@ -7,7 +7,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version PluginVersions.kotlin
+    kotlin("multiplatform") version Versions.kotlin
     `maven-publish`
     id("io.realm.compiler-plugin")
 }
