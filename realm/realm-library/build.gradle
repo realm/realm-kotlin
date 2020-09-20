@@ -1,6 +1,6 @@
 plugins {
-    id "com.android.library"
     id "org.jetbrains.kotlin.multiplatform"
+    id "com.android.library"
 }
 
 repositories {
@@ -15,7 +15,7 @@ version Realm.version
 
 apply plugin: 'maven-publish'
 
-// Commont Kotlin configuration
+// Common Kotlin configuration
 kotlin {
     sourceSets {
         commonMain {
@@ -138,6 +138,52 @@ kotlin {
 //    }
 //}
 
-//configurations {
-//    compileClasspath
-//}
+configurations {
+    compileClasspath
+}
+
+// FIXME Adhoc tasks to build object store wrappers until migrated to proper module
+tasks.create("os") {
+    doLast {
+        exec {
+            workingDir("cpp_engine/external/realm-object-store/")
+            commandLine("cmake", ".")
+        }
+        exec {
+            workingDir("cpp_engine/external/realm-object-store/")
+            commandLine("make", "-j8")
+        }
+    }
+}
+tasks.create("wrapperIos") {
+    dependsOn("os")
+    doLast {
+        exec {
+            workingDir("cpp_engine/build-ios")
+            commandLine("cmake", ".")
+        }
+        exec {
+            workingDir("cpp_engine/build-ios")
+            commandLine("make", "-j8", "realm-objectstore-wrapper")
+        }
+    }
+}
+// FIXME Requires ANDROID_NDK environment variable to point to android-ndk-r10e folder
+// FIXME Not properly hooked up with android target tasks
+tasks.create("wrapperAndroid") {
+    doLast {
+        exec {
+            workingDir("cpp_engine/build-android")
+            commandLine("cmake", "-DCMAKE_TOOLCHAIN_FILE=../android.toolchain.cmake", "-DANDROID_ABI=x86_64", "-DENABLE_DEBUG_CORE=false", ".")
+        }
+        exec {
+            workingDir("cpp_engine/build-android")
+            commandLine("make", "-j8", "realm-objectstore-wrapper-android-dynamic")
+        }
+        copy {
+            from "cpp_engine/build-android/librealm-objectstore-wrapper-android-dynamic.so"
+            into "src/androidMain/jniLibs/x86_64/"
+        }
+    }
+    outputs.file("src/androidMain/jniLibs/x86_64/librealm-objectstore-wrapper-android-dynamic.so")
+}
