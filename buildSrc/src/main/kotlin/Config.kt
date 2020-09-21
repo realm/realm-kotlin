@@ -3,8 +3,8 @@ object Realm {
     const val group = "io.realm"
     const val plugin = "realm-kotlin-plugin"
     const val pluginId = "$group.$plugin"
-    const val compilerPluginId = "compiler-plugin"
-    const val compilerPluginIdNative = "compiler-plugin-shaded"
+    const val compilerPluginId = "realm-compiler-plugin"
+    const val compilerPluginIdNative = "realm-compiler-plugin-shaded"
 }
 
 object Versions {

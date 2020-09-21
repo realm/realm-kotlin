@@ -22,7 +22,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation("io.realm:realm-library")
             }
         }
 

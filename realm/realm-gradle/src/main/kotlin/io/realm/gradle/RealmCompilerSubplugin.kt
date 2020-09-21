@@ -10,9 +10,9 @@ class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
 
     companion object {
         // TODO Find a way to align with gradles Config.* properties
-        val compilerPluginId = "io.realm-compiler-plugin"
+        val compilerPluginId = "io.realm.realm-compiler-plugin"
         val groupId = "io.realm"
-        val artifactId = "compiler-plugin"
+        val artifactId = "realm-compiler-plugin"
         val artifactIdShadeSuffix = "-shaded"
         val version = PLUGIN_VERSION
     }
@@ -39,4 +39,5 @@ class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
             emptyList<SubpluginOption>()
         }
     }
+
 }

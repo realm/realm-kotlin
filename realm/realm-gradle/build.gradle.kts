@@ -7,7 +7,6 @@ plugins {
 
 dependencies {
     compileOnly(kotlin("gradle-plugin"))
-    kapt(Deps.autoServiceAnnotation)
 }
 
 gradlePlugin {
@@ -16,7 +15,7 @@ gradlePlugin {
         create("RealmPlugin") {
             id = Realm.pluginId
             displayName = "Realm compiler plugin"
-            implementationClass = "io.realm.gradle.RealmCompilerSubplugin"
+            implementationClass = "io.realm.gradle.RealmPlugin"
         }
     }
 }
@@ -28,7 +27,7 @@ gradlePlugin {
 publishing {
     publications {
         register("gradlePlugin", MavenPublication::class) {
-            artifactId = "gradle-plugin"
+            artifactId = "realm-gradle-plugin"
             from(components["java"])
         }
     }
