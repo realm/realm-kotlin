@@ -16,7 +16,7 @@ gradlePlugin {
         create("RealmPlugin") {
             id = Realm.pluginId
             displayName = "Realm compiler plugin"
-            implementationClass = "io.realm.gradle.RealmPlugin"
+            implementationClass = "io.realm.gradle.RealmCompilerSubplugin"
         }
     }
 }

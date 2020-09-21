@@ -1,0 +1,96 @@
+plugins {
+    id("org.jetbrains.kotlin.multiplatform") version "1.4.0"
+    id "com.android.library"
+    id("io.realm.realm-kotlin-plugin")
+}
+
+repositories {
+    google()
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+}
+
+group Realm.group
+version Realm.version
+
+apply plugin: 'maven-publish'
+
+// Common Kotlin configuration
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation kotlin('stdlib-common')
+                implementation("io.realm:realm-library")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+            }
+        }
+    }
+}
+
+// Android configuration
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.2"
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        sourceSets {
+            main {
+                manifest.srcFile "src/androidMain/AndroidManifest.xml"
+                jniLibs.srcDir "src/androidMain/jniLibs"
+                androidTest.java.srcDirs += 'src/androidTest/kotlin'
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+kotlin {
+    android("android") {
+        publishLibraryVariants("release", "debug")
+        compilations.all {
+            kotlinOptions {
+                kotlinOptions.jvmTarget = "1.8"
+                kotlinOptions.useIR = true
+            }
+        }
+    }
+    sourceSets {
+        androidMain {
+            kotlin.srcDir("src/androidMain/kotlin")
+            dependencies {
+                implementation(kotlin("stdlib"))
+            }
+        }
+        androidTest {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+
+                implementation 'junit:junit:4.12'
+                implementation 'com.android.support.test:runner:1.0.2'
+                implementation 'com.android.support.test:rules:1.0.2'
+                implementation(kotlin("reflect"))
+            }
+        }
+    }
+}
