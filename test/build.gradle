@@ -66,12 +66,6 @@ android {
 kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
-        compilations.all {
-            kotlinOptions {
-                kotlinOptions.jvmTarget = "1.8"
-                kotlinOptions.useIR = true
-            }
-        }
     }
     sourceSets {
         androidMain {
@@ -89,6 +83,19 @@ kotlin {
                 implementation 'com.android.support.test:runner:1.0.2'
                 implementation 'com.android.support.test:rules:1.0.2'
                 implementation(kotlin("reflect"))
+            }
+        }
+    }
+}
+
+kotlin {
+    jvm() {}
+
+    sourceSets {
+        jvmTest {
+            dependencies {
+                implementation kotlin('test')
+                implementation kotlin('test-junit')
             }
         }
     }
