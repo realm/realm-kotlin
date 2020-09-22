@@ -20,7 +20,7 @@ stage('SCM') {
         echo "Building: ${gitSha}"
         setBuildName(gitSha)
 
-        stash includes: '**', name: 'source', useDefaultExcludes: false
+        stash includes: '**/*', name: 'source', excludes: './realm/realm-library/cpp_engine/external/realm-object-store/.dockerignore'
     }
 }
 
