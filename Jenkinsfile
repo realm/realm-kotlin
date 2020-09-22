@@ -26,12 +26,12 @@ stage('SCM') {
 
 stage('build') {
     parralelExecutors = [:]
-    parralelExecutors['android'] = inAndroidContainer {
+    parralelExecutors['android'] = android {
         sh """
             cd test && ./gradlew jvmTest'
         """
     }
-    parralelExecutors['macos'] = inAndroidContainer {
+    parralelExecutors['macos'] = macos {
         sh """
             cd test && ./gradlew macosTest'
         """
