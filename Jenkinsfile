@@ -43,7 +43,6 @@ def macos(workerFunction) {
     return {
         node('osx') {
             unstash 'source'
-            sh "bash ./scripts/utils.sh set-version ${dependencies.VERSION}"
             workerFunction('macos')
         }
     }
@@ -54,7 +53,7 @@ def android(workerFunction) {
         node('android') {
             unstash 'source'
             def image
-            image = buildDockerEnv("ci/realm-kotlin:android-build",)
+            image = buildDockerEnv("ci/realm-kotlin:android-build", '-f Dockerfile.android')
 
             // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
