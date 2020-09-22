@@ -36,7 +36,7 @@ stage('build') {
             cd test && ./gradlew macosTest'
         """
     }
-    parrallel parralelExecutors
+    parallel parralelExecutors
 }
 
 def macos(workerFunction) {
