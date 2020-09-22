@@ -90,13 +90,45 @@ kotlin {
 
 kotlin {
     jvm() {}
-
     sourceSets {
         jvmTest {
             dependencies {
                 implementation kotlin('test')
                 implementation kotlin('test-junit')
             }
+        }
+    }
+}
+
+kotlin {
+    iosX64("ios") {
+    }
+    sourceSets {
+        iosMain { }
+        iosTest { }
+    }
+}
+
+kotlin {
+    macosX64("macos") {
+    }
+    sourceSets {
+        macosMain { }
+        macosTest { }
+    }
+}
+
+
+tasks.named("iosTest") {
+    def device = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
+    dependsOn kotlin.targets.ios.binaries.getTest('DEBUG').linkTaskName
+    group = JavaBasePlugin.VERIFICATION_GROUP
+    description = "Runs tests for target 'ios' on an iOS simulator"
+
+    doLast {
+        def binary = kotlin.targets.ios.binaries.getTest('DEBUG').outputFile
+        exec {
+            commandLine 'xcrun', 'simctl', 'spawn', device, binary.absolutePath
         }
     }
 }

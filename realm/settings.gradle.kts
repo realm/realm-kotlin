@@ -1,6 +1,7 @@
 rootProject.name = "realm-kotlin"
 include("realm-gradle")
 include("realm-compiler")
+include("realm-compiler-shaded")
 include("realm-library")
 
 pluginManagement {

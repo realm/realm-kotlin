@@ -22,6 +22,7 @@ class RealmPlugin : Plugin<Project> {
                             implementation("io.realm:realm-library")
                         }
                         // Setup correct compiler options
+                        // FIXME Are these to dangerous to apply under the hood?
                         val options = compilation.kotlinOptions
                         when (options) {
                             is KotlinJvmOptions -> {

@@ -109,6 +109,7 @@ kotlin {
                     //  linkerOpts = -framework Foundation -framework CoreFoundation -framework Security  -framework CoreServices -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/build-ios -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6 -lrealm-macosx-dbg -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/external/realm-object-store/src -lrealm-object-store -lrealm-parser-macosx-dbg
                     // However since the cinterop def file doens't support environment variable to define relative path (see https://github.com/JetBrains/kotlin-native/issues/3631)
                     // we're forced to use this hack, Note the cinterop plugin doesn't support specifying the 'linkerOpts' option in Gradle which would allow us to calculate the full path in the build script
+                    // FIXME Mixup of macos and ios libraries??
                     kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/build-ios/librealm-objectstore-wrapper.a".toString()]
                     kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6/librealm-macosx-dbg.a".toString()]
                     kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/src/librealm-object-store.a".toString()]
@@ -127,6 +128,38 @@ kotlin {
     }
 }
 
+// Macos configuration
+kotlin {
+    // For ARM, should be changed to iosArm32 or iosArm64
+    // For Linux, should be changed to e.g. linuxX64
+    // For MacOS, should be changed to e.g. macosX64
+    // For Windows, should be changed to e.g. mingwX64
+    macosX64("macos") {
+        compilations.main {
+            cinterops {
+                objectstore_wrapper {
+                    includeDirs "${project.projectDir}/cpp_engine"
+                    // Usually the following is specified via the cinterop def file as the following:
+                    //  staticLibraries = librealm-objectstore-wrapper.a
+                    //  libraryPaths = /Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/build-ios
+                    //  linkerOpts = -framework Foundation -framework CoreFoundation -framework Security  -framework CoreServices -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/build-ios -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6 -lrealm-macosx-dbg -L/Users/Nabil/Dev/realm/realm-kotlin-mpp/lib/cpp_engine/external/realm-object-store/src -lrealm-object-store -lrealm-parser-macosx-dbg
+                    // However since the cinterop def file doens't support environment variable to define relative path (see https://github.com/JetBrains/kotlin-native/issues/3631)
+                    // we're forced to use this hack, Note the cinterop plugin doesn't support specifying the 'linkerOpts' option in Gradle which would allow us to calculate the full path in the build script
+                    kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/build-ios/librealm-objectstore-wrapper.a".toString()]
+                    kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6/librealm-macosx-dbg.a".toString()]
+                    kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/src/librealm-object-store.a".toString()]
+                    kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6/librealm-parser-macosx-dbg.a".toString()]
+
+                    compilerOpts "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ -I${project.projectDir}/cpp_engine"
+                }
+            }
+        }
+    }
+    sourceSets {
+        macosMain { }
+        macosTest { }
+    }
+}
 // Needs running emulator
 //tasks.named("iosTest") {
 //    def device = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
@@ -158,6 +191,7 @@ tasks.create("os") {
             commandLine("make", "-j8")
         }
     }
+    outputs.file("cpp_engine/external/realm-object-store/src/librealm-object-store.a")
 }
 tasks.create("wrapperIos") {
     dependsOn("os")
@@ -171,10 +205,12 @@ tasks.create("wrapperIos") {
             commandLine("make", "-j8", "realm-objectstore-wrapper")
         }
     }
+    outputs.file("cpp_engine/build-ios/librealm-objectstore-wrapper.a")
 }
 // FIXME Requires ANDROID_NDK environment variable to point to android-ndk-r10e folder
 // FIXME Not properly hooked up with android target tasks
 tasks.create("wrapperAndroid") {
+    dependsOn("os")
     doLast {
         exec {
             workingDir("cpp_engine/build-android")
@@ -190,4 +226,8 @@ tasks.create("wrapperAndroid") {
         }
     }
     outputs.file("src/androidMain/jniLibs/x86_64/librealm-objectstore-wrapper-android-dynamic.so")
+}
+tasks.named("preBuild") {
+    dependsOn(wrapperAndroid)
+    dependsOn(wrapperIos)
 }

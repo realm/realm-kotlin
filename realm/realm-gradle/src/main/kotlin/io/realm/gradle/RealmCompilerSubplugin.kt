@@ -11,8 +11,9 @@ class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
     companion object {
         // TODO Find a way to align with gradles Config.* properties
         val compilerPluginId = "io.realm.realm-compiler-plugin"
+        // Modules has to match ${project.group}:${project.name} to make composite build work
         val groupId = "io.realm"
-        val artifactId = "realm-compiler-plugin"
+        val artifactId = "realm-compiler"
         val artifactIdShadeSuffix = "-shaded"
         val version = PLUGIN_VERSION
     }
@@ -26,10 +27,12 @@ class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
     }
 
     override fun getPluginArtifact(): SubpluginArtifact {
+        // Modules has to match ${project.group}:${project.name} to make composite build work
         return SubpluginArtifact(groupId, artifactId, version)
     }
 
     override fun getPluginArtifactForNative(): SubpluginArtifact {
+        // Modules has to match ${project.group}:${project.name} to make composite build work
         return SubpluginArtifact(groupId, artifactId + artifactIdShadeSuffix, version)
     }
 
