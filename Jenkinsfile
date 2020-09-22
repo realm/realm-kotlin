@@ -33,6 +33,7 @@ stage('build') {
     }
     parralelExecutors['macos'] = macos {
         sh """
+            find gradle
             cd test && ./gradlew macosTest
         """
     }
@@ -53,7 +54,7 @@ def android(workerFunction) {
         node('android') {
             unstash 'source'
             def image
-            image = buildDockerEnv('ci/realm-kotlin:android-build', '-f Dockerfile.android')
+            image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
 
             // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
