@@ -75,7 +75,7 @@ RUN yes | sdkmanager \
     'extras;android;m2repository' \
     'platforms;android-29' \
     'platform-tools' \
-    'system-images;android-29;default;x86'
+    'system-images;android-29;default;x86_64'
 
 RUN mkdir /opt/android-ndk-tmp && \
      cd /opt/android-ndk-tmp && \

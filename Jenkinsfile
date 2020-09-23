@@ -118,7 +118,7 @@ def androidEmulator(workerFunction) {
                         "-e ANDROID_SERIAL=emulator-5554"
                 ) {
                     sh """
-                        yes '\n' | avdmanager create avd -n CIEmulator -k 'system-images;android-29;default;x86' --force
+                        yes '\n' | avdmanager create avd -n CIEmulator -k 'system-images;android-29;default;x86_64' --force
                         # https://stackoverflow.com/questions/56198290/problems-with-adb-exe
                         adb start-server
                         # Need to go to ANDROID_HOME due to https://askubuntu.com/questions/1005944/emulator-avd-does-not-launch-the-virtual-device
