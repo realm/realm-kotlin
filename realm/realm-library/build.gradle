@@ -111,11 +111,11 @@ kotlin {
                     // we're forced to use this hack, Note the cinterop plugin doesn't support specifying the 'linkerOpts' option in Gradle which would allow us to calculate the full path in the build script
                     // FIXME Mixup of macos and ios libraries??
                     kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/build-ios/librealm-objectstore-wrapper.a".toString()]
-                    kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6/librealm-macosx-dbg.a".toString()]
+                    kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6/librealm-ios-dbg.a".toString()]
                     kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/src/librealm-object-store.a".toString()]
                     kotlinOptions.freeCompilerArgs += ["-include-binary", "${project.projectDir}/cpp_engine/external/realm-object-store/CMakeFiles/realm-core-5.23.6/librealm-parser-ios-dbg.a".toString()]
 
-                    compilerOpts "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ -I${project.projectDir}/cpp_engine"
+                    compilerOpts "-I/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include/ -I${project.projectDir}/cpp_engine"
                 }
             }
         }
