@@ -29,6 +29,7 @@ stage('build') {
     parralelExecutors['android'] = android {
         sh """
             cd test && ./gradlew jvmTest
+            cd test && ./gradlew connectedAndroidTest
         """
     }
     parralelExecutors['macos'] = macos {

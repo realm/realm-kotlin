@@ -229,5 +229,8 @@ tasks.create("wrapperAndroid") {
 }
 tasks.named("preBuild") {
     dependsOn(wrapperAndroid)
+}
+tasks.named("cinteropObjectstore_wrapperMacos") {
     dependsOn(wrapperIos)
 }
+
