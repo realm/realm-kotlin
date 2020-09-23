@@ -28,14 +28,17 @@ stage('build') {
     parralelExecutors = [:]
     parralelExecutors['android'] = android {
         sh """
-            cd test && ./gradlew jvmTest
-            cd test && ./gradlew connectedAndroidTest
+            echo \$HOME
+            echo \$(pwd) 
+            export PATH=\$ANDROID_HOME/cmake/3.6.4111459/bin:\$PATH
+            cd test
+            ./gradlew jvmTest --info --stacktrace
+            ./gradlew connectedAndroidTest --info --stacktrace  
         """
     }
     parralelExecutors['macos'] = macos {
         sh """
-            find gradle
-            cd test && ./gradlew macosTest
+            cd test && ./gradlew macosTest --info --stacktrace
         """
     }
     parallel parralelExecutors
@@ -61,14 +64,16 @@ def android(workerFunction) {
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
             lock("${env.NODE_NAME}-android") {
                 image.inside(
+                        "-e HOME=/tmp " +
+                        "-v /dev/bus/usb:/dev/bus/usb " +
                         // Mounting ~/.android/adbkey(.pub) to reuse the adb keys
                         "-v ${HOME}/.android/adbkey:/home/jenkins/.android/adbkey:ro -v ${HOME}/.android/adbkey.pub:/home/jenkins/.android/adbkey.pub:ro " +
-                                // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
-                                "-v ${HOME}/gradle-cache:/home/jenkins/.gradle " +
-                                // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
-                                "-v ${HOME}/ccache:/home/jenkins/.ccache " +
-                                // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
-                                "-v /dev/bus/usb:/dev/bus/usb --privileged"
+                        // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
+                        "-v ${HOME}/gradle-cache:/home/jenkins/.gradle " +
+                        // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
+                        "-v ${HOME}/ccache:/home/jenkins/.ccache " +
+                        // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
+                        "-v /dev/bus/usb:/dev/bus/usb --privileged"
                 ) {
                     workerFunction()
                 }
