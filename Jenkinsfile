@@ -24,32 +24,21 @@ stage('SCM') {
     }
 }
 
+
 stage('build') {
     parralelExecutors = [:]
-    parralelExecutors['jvm'] = android {
-        sh """
-            export PATH=\$ANDROID_HOME/cmake/3.6.4111459/bin:\$PATH
-            cd test
-            ./gradlew clean jvmTest --info --stacktrace
-        """
-        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
-    }
-    parralelExecutors['android'] = androidEmulator {
-        sh """
-            export PATH=\$ANDROID_HOME/cmake/3.6.4111459/bin:\$PATH
-            cd test
-            ./gradlew clean connectedAndroidTest --info --stacktrace  
-        """
-        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
-    }
-    parralelExecutors['macos'] = macos {
-        sh """
-            cd test
-            ./gradlew clean macosTest --info --stacktrace
-        """
-        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
-    }
+    parralelExecutors['jvm']     = android         { test("jvmTest") }
+    parralelExecutors['android'] = androidEmulator { test("connectedAndroidTest") }
+    parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
+}
+
+def test(task) {
+    sh """
+        cd test
+        ./gradlew clean $task --info --stacktrace  
+    """
+    step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
 }
 
 def macos(workerFunction) {
@@ -71,6 +60,8 @@ def android(workerFunction) {
             // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
             lock("${env.NODE_NAME}-android") {
+                // FIXME For some reason moving the arguments to a variable shared androidEmulator
+                //  did not work.
                 image.inside(
                     "-e HOME=/tmp " +
                     "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
@@ -104,6 +95,8 @@ def androidEmulator(workerFunction) {
             sh "echo Waiting for log ${env.NODE_NAME}-android"
             lock("${env.NODE_NAME}-android") {
                 sh "echo Executing with lock ${env.NODE_NAME}-android"
+                // FIXME For some reason moving the arguments to a variable shared androidEmulator
+                //  did not work.
                 image.inside(
                         "-e HOME=/tmp " +
                         "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
