@@ -32,6 +32,7 @@ stage('build') {
             cd test
             ./gradlew clean jvmTest --info --stacktrace
         """
+        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
     }
     parralelExecutors['android'] = androidEmulator {
         sh """
@@ -39,12 +40,14 @@ stage('build') {
             cd test
             ./gradlew clean connectedAndroidTest --info --stacktrace  
         """
+        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
     }
     parralelExecutors['macos'] = macos {
         sh """
             cd test
             ./gradlew clean macosTest --info --stacktrace
         """
+        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
     }
     parallel parralelExecutors
 }
