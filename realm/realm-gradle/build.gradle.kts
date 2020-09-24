@@ -10,7 +10,6 @@ dependencies {
 }
 
 gradlePlugin {
-    isAutomatedPublishing = false
     plugins {
         create("RealmPlugin") {
             id = Realm.pluginId
