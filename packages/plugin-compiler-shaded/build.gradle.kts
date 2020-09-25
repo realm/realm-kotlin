@@ -17,7 +17,7 @@ tasks {
         relocate("org.jetbrains.kotlin.com.intellij", "com.intellij")
         dependencies {
             exclude {
-                it.moduleName != "realm-compiler"
+                it.moduleName != "plugin-compiler"
             }
         }
     }

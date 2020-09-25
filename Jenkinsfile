@@ -10,6 +10,7 @@ stage('SCM') {
                 branches         : scm.branches,
                 gitTool          : 'native git',
                 extensions       : scm.extensions + [
+                        [$class: 'WipeWorkspace'],
                         [$class: 'CleanCheckout'],
                         [$class: 'SubmoduleOption', recursiveSubmodules: true]
                 ],
