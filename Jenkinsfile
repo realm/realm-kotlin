@@ -27,7 +27,7 @@ stage('SCM') {
 
 stage('build') {
     parralelExecutors = [:]
-    parralelExecutors['jvm']     = android         { test("jvmTest") }
+    parralelExecutors['jvm']     = jvm             { test("jvmTest") }
     parralelExecutors['android'] = androidEmulator { test("connectedAndroidTest") }
     parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
@@ -50,7 +50,34 @@ def macos(workerFunction) {
     }
 }
 
-def android(workerFunction) {
+def jvm(workerFunction) {
+    return {
+        // FIXME Could just use a docker node, but do not have overview on all the caching
+        //  considerations now, so just reusing an Android machine with gradle caching etc.
+        node('android') {
+            unstash 'source'
+
+            // TODO Consider adding a specific jvm docker image instead. For now just reuse Android
+            //  one as it fulfills the toolchain requirement
+            def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
+
+            image.inside(
+                // TODO Abstract common setup across executor methods (jvm, androidDevice, androidEmulator)
+                "-e HOME=/tmp " +
+                "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
+                "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
+                // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
+                "-v ${HOME}/gradle-cache:/tmp/.gradle " +
+                // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
+                "-v ${HOME}/ccache:/tmp/.ccache "
+            ) {
+                workerFunction()
+            }
+        }
+    }
+}
+
+def androidDevice(workerFunction) {
     return {
         node('android') {
             unstash 'source'
@@ -60,9 +87,8 @@ def android(workerFunction) {
             // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
             lock("${env.NODE_NAME}-android") {
-                // FIXME For some reason moving the arguments to a variable shared androidEmulator
-                //  did not work.
                 image.inside(
+                    // TODO Abstract common setup across executor methods (jvm, androidDevice, androidEmulator)
                     "-e HOME=/tmp " +
                     "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
                     "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
@@ -95,9 +121,8 @@ def androidEmulator(workerFunction) {
             sh "echo Waiting for log ${env.NODE_NAME}-android"
             lock("${env.NODE_NAME}-android") {
                 sh "echo Executing with lock ${env.NODE_NAME}-android"
-                // FIXME For some reason moving the arguments to a variable shared androidEmulator
-                //  did not work.
                 image.inside(
+                        // TODO Abstract common setup across executor methods (jvm, androidDevice, androidEmulator)
                         "-e HOME=/tmp " +
                         "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
                         "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
