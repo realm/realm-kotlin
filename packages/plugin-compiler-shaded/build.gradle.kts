@@ -7,7 +7,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":realm-compiler"))
+    implementation(project(":plugin-compiler"))
 }
 
 tasks {

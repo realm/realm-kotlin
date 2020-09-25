@@ -19,7 +19,7 @@ class RealmPlugin : Plugin<Project> {
                     target.compilations.all { compilation ->
                         // Inject library dependency
                         compilation.dependencies {
-                            implementation("io.realm:realm-library:${io.realm.gradle.PLUGIN_VERSION}")
+                            implementation("io.realm.kotlin:library:${io.realm.gradle.PLUGIN_VERSION}")
                         }
                         // Setup correct compiler options
                         // FIXME Are these to dangerous to apply under the hood?

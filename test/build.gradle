@@ -1,7 +1,7 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform") version "1.4.0"
     id "com.android.library"
-    id("io.realm.realm-kotlin-plugin")
+    id("realm-kotlin")
 }
 
 repositories {

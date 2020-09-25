@@ -26,7 +26,7 @@ gradlePlugin {
 publishing {
     publications {
         register("gradlePlugin", MavenPublication::class) {
-            artifactId = "realm-gradle-plugin"
+            artifactId = "plugin-gradle"
             from(components["java"])
         }
     }

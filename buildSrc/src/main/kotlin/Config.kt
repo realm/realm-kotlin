@@ -1,11 +1,11 @@
 object Realm {
     const val version = "0.0.1-SNAPSHOT"
-    const val group = "io.realm"
-    const val plugin = "realm-kotlin-plugin"
-    const val pluginId = "$group.$plugin"
+    const val group = "io.realm.kotlin"
+    const val plugin = "realm-kotlin"
+    const val pluginId = "$plugin"
     // Modules has to match ${project.group}:${project.name} to make composite build work
-    const val compilerPluginId = "realm-compiler"
-    const val compilerPluginIdNative = "realm-compiler-shaded"
+    const val compilerPluginId = "plugin-compiler"
+    const val compilerPluginIdNative = "plugin-compiler-shaded"
 }
 
 object Versions {

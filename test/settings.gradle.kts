@@ -1,4 +1,4 @@
-includeBuild("../realm")
+includeBuild("../packages")
 
 pluginManagement {
     repositories {
