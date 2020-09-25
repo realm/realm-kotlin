@@ -10,12 +10,13 @@ class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
 
     companion object {
         // TODO Find a way to align with gradles Config.* properties
-        val compilerPluginId = "io.realm.realm-compiler-plugin"
         // Modules has to match ${project.group}:${project.name} to make composite build work
-        val groupId = "io.realm"
-        val artifactId = "realm-compiler"
+        val groupId = "io.realm.kotlin"
+        val artifactId = "plugin-compiler"
         val artifactIdShadeSuffix = "-shaded"
         val version = PLUGIN_VERSION
+        // The id used for passing compiler options from command line
+        val compilerPluginId = "io.realm.kotlin"
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
