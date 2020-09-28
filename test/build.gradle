@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.multiplatform") version "1.4.0"
+    id("org.jetbrains.kotlin.multiplatform") version "1.4.20-M1-63"
     id "com.android.library"
     id("realm-kotlin")
 }
@@ -9,6 +9,7 @@ repositories {
     jcenter()
     mavenCentral()
     mavenLocal()
+    maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
 }
 
 group Realm.group
