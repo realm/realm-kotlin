@@ -21,6 +21,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
+                implementation(project(":runtime-api"))
             }
         }
 
@@ -75,6 +76,7 @@ kotlin {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
                 implementation(kotlin("stdlib"))
+                implementation(project(":runtime-api"))
             }
         }
 
@@ -122,6 +124,9 @@ kotlin {
     }
     sourceSets {
         iosMain {
+            dependencies {
+                implementation(project(":runtime-api"))
+            }
         }
         iosTest {
         }
@@ -156,7 +161,11 @@ kotlin {
         }
     }
     sourceSets {
-        macosMain { }
+        macosMain {
+            dependencies {
+                implementation(project(":runtime-api"))
+            }
+        }
         macosTest { }
     }
 }

@@ -3,6 +3,7 @@ include("plugin-gradle")
 include("plugin-compiler")
 include("plugin-compiler-shaded")
 include("library")
+include("runtime-api")
 
 pluginManagement {
     plugins {
