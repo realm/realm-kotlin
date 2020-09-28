@@ -2,6 +2,7 @@ package io.realm.compiler
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
@@ -32,3 +33,9 @@ fun IrPluginContext.blockBody(
 ): IrBlockBody =
         DeclarationIrBuilder(this, symbol).irBlockBody { block() }
 
+
+val ClassDescriptor.isRealmObjectCompanion
+    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isRealmObject
+
+val ClassDescriptor.isRealmObject
+    get() = annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)

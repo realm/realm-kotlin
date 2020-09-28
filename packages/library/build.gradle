@@ -21,7 +21,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation(project(":runtime-api"))
+                api(project(":runtime-api"))
             }
         }
 
@@ -74,10 +74,6 @@ kotlin {
     sourceSets {
         androidMain {
             kotlin.srcDir("src/androidMain/kotlin")
-            dependencies {
-                implementation(kotlin("stdlib"))
-                implementation(project(":runtime-api"))
-            }
         }
 
         androidTest {
@@ -88,7 +84,7 @@ kotlin {
                 implementation 'junit:junit:4.12'
                 implementation 'com.android.support.test:runner:1.0.2'
                 implementation 'com.android.support.test:rules:1.0.2'
-                implementation(kotlin("reflect"))
+                implementation(kotlin("reflect:1.4.20-M1-63"))
             }
         }
     }
@@ -123,13 +119,8 @@ kotlin {
         }
     }
     sourceSets {
-        iosMain {
-            dependencies {
-                implementation(project(":runtime-api"))
-            }
-        }
-        iosTest {
-        }
+        iosMain {}
+        iosTest {}
     }
 }
 
@@ -161,12 +152,8 @@ kotlin {
         }
     }
     sourceSets {
-        macosMain {
-            dependencies {
-                implementation(project(":runtime-api"))
-            }
-        }
-        macosTest { }
+        macosMain {}
+        macosTest {}
     }
 }
 // Needs running emulator

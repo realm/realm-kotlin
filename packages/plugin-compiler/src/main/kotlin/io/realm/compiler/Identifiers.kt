@@ -4,6 +4,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 internal object Names {
+    val DEFAULT_COMPANION = Name.identifier("Companion")
+    val SCHEMA_METHOD = Name.identifier("schema")
     val REALM_POINTER = Name.identifier("realmPointer")
     val OBJECT_POINTER = Name.identifier("realmObjectPointer") // names must match `RealmModelInterface` properties
     val OBJECT_TABLE_NAME = Name.identifier("tableName")

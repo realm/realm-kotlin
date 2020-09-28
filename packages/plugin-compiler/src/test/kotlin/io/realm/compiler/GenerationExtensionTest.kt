@@ -5,7 +5,10 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.runtimeapi.RealmModelInterface
 import org.junit.Test
 import java.io.File
+import kotlin.reflect.full.companionObject
+import kotlin.reflect.full.functions
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class GenerationExtensionTest {
@@ -22,6 +25,7 @@ class GenerationExtensionTest {
             compilerPlugins = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
+                    "-Xjvm-default=enable",
                     "-Xdump-directory=./build/ir/",
                     "-Xphases-to-dump-after=ValidateIrBeforeLowering")
         }.compile()
@@ -43,13 +47,16 @@ class GenerationExtensionTest {
         assertEquals(0xCAFEBABE, newInstance.realmObjectPointer)
         assertEquals(0XCAFED00D, newInstance.realmPointer)
         assertEquals("Sample", newInstance.tableName)
-//        for (memberProperty in newInstance::class.memberProperties) {
-//            if (memberProperty.returnType.classifier == String::class.createType().classifier) {
-//                val property = memberProperty as KProperty1<Any, String>
-//                assertTrue(property.get(newInstance).startsWith("Hello "))
-//            }
-//        }
-    }
 
+        // Check synthetic method has been added.
+        val schemaFunction = newInstance::class.companionObject?.functions?.firstOrNull { it.name == "schema" }
+        assertNotNull(schemaFunction)
+
+        // Make sure synthetic method returns the correct schema
+        // dumpSchema method calls the synthetic method `Sample.schema()` internally
+        val dumpSchemaFunction = newInstance::class.functions.firstOrNull { it.name == "dumpSchema" }
+        assertNotNull(dumpSchemaFunction)
+        assertEquals("__REPLACE_ME__", dumpSchemaFunction.call(newInstance))
+    }
 }
 

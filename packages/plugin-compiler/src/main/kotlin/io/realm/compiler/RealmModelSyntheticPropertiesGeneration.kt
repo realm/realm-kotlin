@@ -5,6 +5,7 @@ import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.REALM_POINTER
+import io.realm.compiler.Names.SCHEMA_METHOD
 import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -22,8 +23,9 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.name.Name
@@ -32,14 +34,22 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmModelInterface = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
             ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
 
-    private val realmPointerGetter = realmModelInterface.owner.getPropertyGetter(REALM_POINTER.asString()) ?: error("${REALM_POINTER.asString()} function getter symbol is not available")
-    private val realmPointerSetter = realmModelInterface.owner.getPropertySetter(REALM_POINTER.asString()) ?: error("${REALM_POINTER.asString()} function getter symbol is not available")
-    private val realmObjectPointerGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_POINTER.asString()) ?: error("${OBJECT_POINTER.asString()} function getter symbol is not available")
-    private val realmObjectPointerSetter = realmModelInterface.owner.getPropertySetter(OBJECT_POINTER.asString()) ?: error("${OBJECT_POINTER.asString()} function getter symbol is not available")
-    private val realmObjectIsManagedGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_IS_MANAGED.asString()) ?: error("${OBJECT_IS_MANAGED.asString()} function getter symbol is not available")
-    private val realmObjectIsManagedSetter = realmModelInterface.owner.getPropertySetter(OBJECT_IS_MANAGED.asString()) ?: error("${OBJECT_IS_MANAGED.asString()} function getter symbol is not available")
-    private val realmObjectTableNameGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_TABLE_NAME.asString()) ?: error("${OBJECT_TABLE_NAME.asString()} function getter symbol is not available")
-    private val realmObjectTableNameSetter = realmModelInterface.owner.getPropertySetter(OBJECT_TABLE_NAME.asString()) ?: error("${OBJECT_TABLE_NAME.asString()} function getter symbol is not available")
+    private val realmPointerGetter = realmModelInterface.owner.getPropertyGetter(REALM_POINTER.asString())
+            ?: error("${REALM_POINTER.asString()} function getter symbol is not available")
+    private val realmPointerSetter = realmModelInterface.owner.getPropertySetter(REALM_POINTER.asString())
+            ?: error("${REALM_POINTER.asString()} function getter symbol is not available")
+    private val realmObjectPointerGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_POINTER.asString())
+            ?: error("${OBJECT_POINTER.asString()} function getter symbol is not available")
+    private val realmObjectPointerSetter = realmModelInterface.owner.getPropertySetter(OBJECT_POINTER.asString())
+            ?: error("${OBJECT_POINTER.asString()} function getter symbol is not available")
+    private val realmObjectIsManagedGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_IS_MANAGED.asString())
+            ?: error("${OBJECT_IS_MANAGED.asString()} function getter symbol is not available")
+    private val realmObjectIsManagedSetter = realmModelInterface.owner.getPropertySetter(OBJECT_IS_MANAGED.asString())
+            ?: error("${OBJECT_IS_MANAGED.asString()} function getter symbol is not available")
+    private val realmObjectTableNameGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_TABLE_NAME.asString())
+            ?: error("${OBJECT_TABLE_NAME.asString()} function getter symbol is not available")
+    private val realmObjectTableNameSetter = realmModelInterface.owner.getPropertySetter(OBJECT_TABLE_NAME.asString())
+            ?: error("${OBJECT_TABLE_NAME.asString()} function getter symbol is not available")
 
     fun addProperties(irClass: IrClass): IrClass =
             irClass.apply {
@@ -47,8 +57,26 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 addNullableProperty(OBJECT_POINTER, pluginContext.irBuiltIns.longType.makeNullable(), realmObjectPointerGetter, realmObjectPointerSetter)
                 addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), realmObjectTableNameGetter, realmObjectTableNameSetter)
                 addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable(), realmObjectIsManagedGetter, realmObjectIsManagedSetter)
+
+                // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
+
+                //TODO infer schema while defining getter/setters for the various properties
+                val schemaBody = "__REPLACE_ME__"
+                val companionObject = companionObject() as? IrClass
+                        ?: error("Companion object not available")
+                addSchemaFunctionBody(companionObject, schemaBody)
             }
 
+
+    private fun addSchemaFunctionBody(companionObject: IrClass, schemaBody: String) {
+        val function = companionObject.functions.first { it.name == SCHEMA_METHOD }
+        function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
+        function.body = pluginContext.blockBody(function.symbol) {
+            +irReturn(
+                    irString(schemaBody)
+            )
+        }
+    }
 
     private fun irNull(startOffset: Int, endOffset: Int): IrConstImpl<Nothing?> {
         return IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
@@ -71,8 +99,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             type = propertyType
 
         }.apply {
-        // EXPRESSION_BODY
-        //  CONST Null type=kotlin.Nothing? value=null
+            // EXPRESSION_BODY
+            //  CONST Null type=kotlin.Nothing? value=null
             initializer = IrExpressionBodyImpl(startOffset, endOffset, irNull(startOffset, endOffset))
         }
         property.backingField?.parent = this
@@ -117,7 +145,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         // overridden:
         //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmModelInterface
-        setter.overriddenSymbols =  listOf(propertyAccessorSetter)
+        setter.overriddenSymbols = listOf(propertyAccessorSetter)
 
         // VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long?
         // BLOCK_BODY
