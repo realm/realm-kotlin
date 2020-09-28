@@ -5,11 +5,11 @@ plugins {
 }
 
 dependencies {
-    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable")
+    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.20-M1-63")
     compileOnly(Deps.autoService)
     kapt(Deps.autoServiceAnnotation)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
+    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.20-M1-63")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.20-M1-63")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.4.20-M1-63")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.2.6")

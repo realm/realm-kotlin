@@ -10,7 +10,7 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
+import io.realm.runtimeapi.RealmModelInterface
 
 class GenerationExtensionTest {
 
@@ -32,12 +32,13 @@ class GenerationExtensionTest {
         val kClazz = result.classLoader.loadClass("io.realm.example.Sample")
         val newInstance = kClazz.newInstance()!!
 
-        for (memberProperty in newInstance::class.memberProperties) {
-            if (memberProperty.returnType.classifier == String::class.createType().classifier) {
-                val property = memberProperty as KProperty1<Any, String>
-                assertTrue(property.get(newInstance).startsWith("Hello "))
-            }
-        }
+        assertTrue(newInstance is RealmModelInterface)
+//        for (memberProperty in newInstance::class.memberProperties) {
+//            if (memberProperty.returnType.classifier == String::class.createType().classifier) {
+//                val property = memberProperty as KProperty1<Any, String>
+//                assertTrue(property.get(newInstance).startsWith("Hello "))
+//            }
+//        }
     }
 
 }
