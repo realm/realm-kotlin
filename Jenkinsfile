@@ -37,7 +37,7 @@ stage('build') {
 def test(task) {
     sh """
         cd test
-        ./gradlew clean $task --info --stacktrace  
+        ./gradlew clean $task --info --stacktrace
     """
     step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
 }
