@@ -1,16 +1,12 @@
 package io.realm.compiler
 
-import java.io.File
-import kotlin.reflect.KProperty1
-
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.runtimeapi.RealmModelInterface
 import org.junit.Test
-import kotlin.reflect.full.createType
-import kotlin.reflect.full.memberProperties
+import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import io.realm.runtimeapi.RealmModelInterface
 
 class GenerationExtensionTest {
 
@@ -25,6 +21,9 @@ class GenerationExtensionTest {
             messageOutputStream = System.out
             compilerPlugins = plugins
             inheritClassPath = true
+            kotlincArguments = listOf(
+                    "-Xdump-directory=./build/ir/",
+                    "-Xphases-to-dump-after=ValidateIrBeforeLowering")
         }.compile()
 
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
@@ -33,6 +32,17 @@ class GenerationExtensionTest {
         val newInstance = kClazz.newInstance()!!
 
         assertTrue(newInstance is RealmModelInterface)
+
+        // Accessing getters/setters
+        newInstance.isManaged = true
+        newInstance.realmObjectPointer = 0xCAFEBABE
+        newInstance.realmPointer = 0XCAFED00D
+        newInstance.tableName = "Sample"
+
+        assertEquals(true, newInstance.isManaged)
+        assertEquals(0xCAFEBABE, newInstance.realmObjectPointer)
+        assertEquals(0XCAFED00D, newInstance.realmPointer)
+        assertEquals("Sample", newInstance.tableName)
 //        for (memberProperty in newInstance::class.memberProperties) {
 //            if (memberProperty.returnType.classifier == String::class.createType().classifier) {
 //                val property = memberProperty as KProperty1<Any, String>
