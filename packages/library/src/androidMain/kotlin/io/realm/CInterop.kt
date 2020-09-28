@@ -19,7 +19,7 @@ actual object CInterop : NativeCall{
     }
 
     actual override fun addObject(pointer: NativePointer, objectType: String): NativePointer {
-        return JNI_addObject((pointer as BindingPointer).ptr, objectType) as NativePointer
+        return BindingPointer(JNI_addObject((pointer as BindingPointer).ptr, objectType))
     }
 
     actual override fun beginTransaction(pointer: NativePointer) {

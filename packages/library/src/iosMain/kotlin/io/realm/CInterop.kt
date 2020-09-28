@@ -7,6 +7,9 @@ import kotlinx.cinterop.toKString
 import objectstore_wrapper.*
 
 actual object CInterop : NativeCall {
+    init {
+        NativeCall.instance = this
+    }
     actual override fun openRealm(path: String, schema: String): NativePointer {
         return CPointerWrapper(create(path, schema)!!)//TODO !!
     }
