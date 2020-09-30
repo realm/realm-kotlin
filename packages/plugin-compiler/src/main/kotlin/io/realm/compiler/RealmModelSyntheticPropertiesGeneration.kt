@@ -59,20 +59,17 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), realmObjectTableNameGetter, realmObjectTableNameSetter)
                 addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable(), realmObjectIsManagedGetter, realmObjectIsManagedSetter)
 
-                // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
-
-                //TODO infer schema while defining getter/setters for the various properties
-                val companionObject = companionObject() as? IrClass
-                        ?: error("Companion object not available")
-                addSchemaFunctionBody(companionObject, schemaString(SchemaCollector.properties))
             }
 
+    // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
+    fun addSchema(irClass: IrClass, properties: MutableMap<String, MutableMap<String, Pair<String, Boolean>>>) {
+        val companionObject = irClass.companionObject() as? IrClass
+                ?: error("Companion object not available")
 
-    private fun addSchemaFunctionBody(companionObject: IrClass, schemaString: String) {
         val function = companionObject.functions.first { it.name == SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            +irReturn(irString(schemaString))
+            +irReturn(irString(schemaString(properties)))
         }
     }
 

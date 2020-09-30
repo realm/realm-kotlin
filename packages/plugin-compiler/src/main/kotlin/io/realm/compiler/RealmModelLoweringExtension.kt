@@ -34,7 +34,10 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             irClass.superTypes = irClass.superTypes + realmModelClass.defaultType
 
             // Generate properties
-            RealmModelSyntheticPropertiesGeneration(pluginContext).addProperties(irClass)
+            val generator = RealmModelSyntheticPropertiesGeneration(pluginContext)
+            generator.addProperties(irClass)
+            generator.addSchema(irClass, SchemaCollector.properties)
         }
     }
 }
+//private class RealmModuleLowering(private val pluginContext: IrPluginContext) : LoweringP
