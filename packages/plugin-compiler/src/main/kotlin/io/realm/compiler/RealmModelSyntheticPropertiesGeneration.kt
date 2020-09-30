@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.name.Name
+import java.lang.StringBuilder
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInterface = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
@@ -61,20 +62,17 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
 
                 //TODO infer schema while defining getter/setters for the various properties
-                val schemaBody = "__REPLACE_ME__"
                 val companionObject = companionObject() as? IrClass
                         ?: error("Companion object not available")
-                addSchemaFunctionBody(companionObject, schemaBody)
+                addSchemaFunctionBody(companionObject, schemaString(SchemaCollector.properties))
             }
 
 
-    private fun addSchemaFunctionBody(companionObject: IrClass, schemaBody: String) {
+    private fun addSchemaFunctionBody(companionObject: IrClass, schemaString: String) {
         val function = companionObject.functions.first { it.name == SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            +irReturn(
-                    irString(schemaBody)
-            )
+            +irReturn(irString(schemaString))
         }
     }
 
@@ -159,6 +157,39 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         setter.body = DeclarationIrBuilder(pluginContext, setter.symbol).irBlockBody {
             +irSetField(irGet(setter.dispatchReceiverParameter!!), property.backingField!!, irGet(valueParameter))
         }
+    }
+    
+    private fun schemaString(properties: MutableMap<String, MutableMap<String, Pair<String, Boolean>>>): String {
+        val builder = StringBuilder()
+        
+        builder.append("[")
+
+        // classes
+        val it_class = properties.iterator()
+        while(it_class.hasNext()) {
+            // class
+            val cls = it_class.next()
+            builder.append("{\"name\": \"${cls.key}\", \"properties\": [")
+
+            // properties
+            val it_property = cls.value.iterator()
+            while(it_property.hasNext()) {
+                // property
+                val property = it_property.next()
+                builder.append("{\"${property.key}\": {\"type\": \"${property.value.first}\", \"nullable\": \"${property.value.second}\"}}" )
+
+                if (it_property.hasNext()) {
+                    builder.append(",")
+                }
+            }
+            builder.append("]}")
+
+            if (it_class.hasNext()) {
+                builder.append(",")
+            }
+        }
+        builder.append("]")
+        return builder.toString()
     }
 }
 

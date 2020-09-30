@@ -5,13 +5,13 @@ plugins {
 }
 
 dependencies {
-    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.20-M1-63")
+    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
     compileOnly(Deps.autoService)
     kapt(Deps.autoServiceAnnotation)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.20-M1-63")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.20-M1-63")
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.4.20-M1-63")
+    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.2.6")
     testCompileOnly(project(":runtime-api"))
 }

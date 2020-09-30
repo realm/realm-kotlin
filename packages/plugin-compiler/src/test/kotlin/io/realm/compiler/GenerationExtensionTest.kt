@@ -56,7 +56,7 @@ class GenerationExtensionTest {
         // dumpSchema method calls the synthetic method `Sample.schema()` internally
         val dumpSchemaFunction = newInstance::class.functions.firstOrNull { it.name == "dumpSchema" }
         assertNotNull(dumpSchemaFunction)
-        assertEquals("__REPLACE_ME__", dumpSchemaFunction.call(newInstance))
+        assertEquals("[{\"name\": \"Sample\", \"properties\": [{\"<get-name>\": {\"type\": \"int\", \"nullable\": \"true\"}}]}]", dumpSchemaFunction.call(newInstance))
     }
 }
 
