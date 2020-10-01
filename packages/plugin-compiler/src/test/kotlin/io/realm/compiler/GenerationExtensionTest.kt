@@ -75,7 +75,6 @@ class GenerationExtensionTest {
             compilerPlugins = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
-                    "-Xuse-ir",
                     "-Xdump-directory=${inputs.outputDir()}",
                     "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )
