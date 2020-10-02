@@ -8,7 +8,8 @@ import kotlin.test.assertEquals
 class SampleTests {
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
-        assertEquals("__REPLACE_ME__", Sample.schema())
+        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
+        assertEquals(expected, Sample.schema())
     }
 
     @Test

@@ -62,14 +62,17 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             }
 
     // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
-    fun addSchema(irClass: IrClass, properties: MutableMap<String, MutableMap<String, Pair<String, Boolean>>>) {
+    fun addSchema(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
                 ?: error("Companion object not available")
+
+        val name = irClass.name.identifier
+        val fields: MutableMap<String, Pair<String, Boolean>> = SchemaCollector.properties.getOrDefault(name, mutableMapOf())
 
         val function = companionObject.functions.first { it.name == SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            +irReturn(irString(schemaString(properties)))
+            +irReturn(irString(schemaString(name, fields)))
         }
     }
 
@@ -156,36 +159,18 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
     }
     
-    private fun schemaString(properties: MutableMap<String, MutableMap<String, Pair<String, Boolean>>>): String {
-        val builder = StringBuilder()
-        
-        builder.append("[")
+    private fun schemaString(name: String, fields: MutableMap<String, Pair<String, Boolean>>): String {
+        val builder = StringBuilder("{\"name\": \"${name}\", \"properties\": [")
 
-        // classes
-        val it_class = properties.iterator()
-        while(it_class.hasNext()) {
-            // class
-            val cls = it_class.next()
-            builder.append("{\"name\": \"${cls.key}\", \"properties\": [")
-
-            // properties
-            val it_property = cls.value.iterator()
-            while(it_property.hasNext()) {
-                // property
-                val property = it_property.next()
-                builder.append("{\"${property.key}\": {\"type\": \"${property.value.first}\", \"nullable\": \"${property.value.second}\"}}" )
-
-                if (it_property.hasNext()) {
-                    builder.append(",")
-                }
-            }
-            builder.append("]}")
-
-            if (it_class.hasNext()) {
+        val it_field = fields.iterator()
+        while (it_field.hasNext()) {
+            val fields = it_field.next()
+            builder.append("{\"${fields.key}\": {\"type\": \"${fields.value.first}\", \"nullable\": \"${fields.value.second}\"}}")
+            if (it_field.hasNext()) {
                 builder.append(",")
             }
         }
-        builder.append("]")
+        builder.append("]}")
         return builder.toString()
     }
 }
