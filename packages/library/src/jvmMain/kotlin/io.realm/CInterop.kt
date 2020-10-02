@@ -1,9 +1,9 @@
 package io.realm
 
-import io.realm.runtimeapi.NativeCall
+import io.realm.runtimeapi.NativeWrapper
 import io.realm.runtimeapi.NativePointer
 
-actual object CInterop : NativeCall {
+actual object CInterop : NativeWrapper {
     init {
         TODO()
     }

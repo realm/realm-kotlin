@@ -2,16 +2,16 @@ package io.realm
 
 import java.io.File
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.NativeCall
+import io.realm.runtimeapi.NativeWrapper
 
-actual object CInterop : NativeCall{
+actual object CInterop : NativeWrapper{
     /* load the shared library on application startup. */
     init {
         System.loadLibrary("realm-objectstore-wrapper-android-dynamic")
         val tmpDir = File(RealmInitProvider.applicationContext.filesDir, ".realm.temp")
         tmpDir.mkdirs()
         JNI_initTmpDir(tmpDir.absolutePath)
-        NativeCall.instance = this
+        NativeWrapper.instance = this
     }
 
     actual override fun openRealm(path: String, schema: String): NativePointer {

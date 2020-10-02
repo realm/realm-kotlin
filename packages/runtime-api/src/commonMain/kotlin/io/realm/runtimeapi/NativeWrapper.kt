@@ -2,9 +2,9 @@ package io.realm.runtimeapi
 
 interface NativePointer
 
-interface NativeCall {
+interface NativeWrapper {
     companion object {
-        var instance: NativeCall? = null
+        var instance: NativeWrapper? = null
     }
 
     fun openRealm(path: String, schema: String): NativePointer

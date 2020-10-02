@@ -4,6 +4,7 @@ import io.realm.runtimeapi.RealmModelInterface
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SampleTests {
     @Test
@@ -12,6 +13,7 @@ class SampleTests {
         assertEquals(expected, Sample.schema())
     }
 
+    @Suppress("UNREACHABLE_CODE")
     @Test
     fun testRealmModelInterfaceIsImplemented() {
         val p = Sample()

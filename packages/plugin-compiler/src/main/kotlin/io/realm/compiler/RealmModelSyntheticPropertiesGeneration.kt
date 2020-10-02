@@ -35,29 +35,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmModelInterface = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
             ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
 
-    private val realmPointerGetter = realmModelInterface.owner.getPropertyGetter(REALM_POINTER.asString())
-            ?: error("${REALM_POINTER.asString()} function getter symbol is not available")
-    private val realmPointerSetter = realmModelInterface.owner.getPropertySetter(REALM_POINTER.asString())
-            ?: error("${REALM_POINTER.asString()} function getter symbol is not available")
-    private val realmObjectPointerGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_POINTER.asString())
-            ?: error("${OBJECT_POINTER.asString()} function getter symbol is not available")
-    private val realmObjectPointerSetter = realmModelInterface.owner.getPropertySetter(OBJECT_POINTER.asString())
-            ?: error("${OBJECT_POINTER.asString()} function getter symbol is not available")
-    private val realmObjectIsManagedGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_IS_MANAGED.asString())
-            ?: error("${OBJECT_IS_MANAGED.asString()} function getter symbol is not available")
-    private val realmObjectIsManagedSetter = realmModelInterface.owner.getPropertySetter(OBJECT_IS_MANAGED.asString())
-            ?: error("${OBJECT_IS_MANAGED.asString()} function getter symbol is not available")
-    private val realmObjectTableNameGetter = realmModelInterface.owner.getPropertyGetter(OBJECT_TABLE_NAME.asString())
-            ?: error("${OBJECT_TABLE_NAME.asString()} function getter symbol is not available")
-    private val realmObjectTableNameSetter = realmModelInterface.owner.getPropertySetter(OBJECT_TABLE_NAME.asString())
-            ?: error("${OBJECT_TABLE_NAME.asString()} function getter symbol is not available")
-
     fun addProperties(irClass: IrClass): IrClass =
             irClass.apply {
-                addNullableProperty(REALM_POINTER, pluginContext.irBuiltIns.longType.makeNullable(), realmPointerGetter, realmPointerSetter)
-                addNullableProperty(OBJECT_POINTER, pluginContext.irBuiltIns.longType.makeNullable(), realmObjectPointerGetter, realmObjectPointerSetter)
-                addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), realmObjectTableNameGetter, realmObjectTableNameSetter)
-                addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable(), realmObjectIsManagedGetter, realmObjectIsManagedSetter)
+                addNullableProperty(REALM_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
+                addNullableProperty(OBJECT_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
+                addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable())
+                addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable())
 
             }
 
@@ -80,7 +63,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         return IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
     }
 
-    private fun IrClass.addNullableProperty(propertyName: Name, propertyType: IrType, propertyAccessorGetter: IrSimpleFunctionSymbol, propertyAccessorSetter: IrSimpleFunctionSymbol) {
+    private fun IrClass.addNullableProperty(propertyName: Name, propertyType: IrType) {
         // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val property = addProperty {
             name = propertyName
@@ -117,6 +100,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
         // overridden:
         //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInterface
+        val propertyAccessorGetter = realmModelInterface.owner.getPropertyGetter(propertyName.asString())
+                ?: error("${propertyName.asString()} function getter symbol is not available")
         getter.overriddenSymbols = listOf(propertyAccessorGetter)
 
         // BLOCK_BODY
@@ -143,7 +128,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         // overridden:
         //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmModelInterface
-        setter.overriddenSymbols = listOf(propertyAccessorSetter)
+        val realmPointerSetter = realmModelInterface.owner.getPropertySetter(propertyName.asString())
+                ?: error("${propertyName.asString()} function getter symbol is not available")
+        setter.overriddenSymbols = listOf(realmPointerSetter)
 
         // VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long?
         // BLOCK_BODY

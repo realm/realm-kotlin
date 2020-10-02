@@ -1,14 +1,14 @@
 package io.realm
 
-import io.realm.runtimeapi.NativeCall
+import io.realm.runtimeapi.NativeWrapper
 import io.realm.runtimeapi.NativePointer
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.toKString
 import objectstore_wrapper.*
 
-actual object CInterop : NativeCall {
+actual object CInterop : NativeWrapper {
     init {
-        NativeCall.instance = this
+        NativeWrapper.instance = this
     }
     actual override fun openRealm(path: String, schema: String): NativePointer {
         return CPointerWrapper(create(path, schema)!!)//TODO !!

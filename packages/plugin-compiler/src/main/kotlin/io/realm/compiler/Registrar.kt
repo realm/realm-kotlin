@@ -18,7 +18,6 @@ class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
         messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
         SyntheticResolveExtension.registerExtension(project, RealmModelSyntheticCompanionExtension())
-
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
     }
 
