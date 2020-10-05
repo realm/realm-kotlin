@@ -1,16 +1,15 @@
 package io.realm.compiler
 
-import java.io.File
-import kotlin.reflect.KProperty1
-
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.runtimeapi.RealmCompanion
+import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.RealmModel
 import org.junit.Test
-import kotlin.reflect.full.createType
-import kotlin.reflect.full.memberProperties
+import java.io.File
+import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
 
 class GenerationExtensionTest {
 
@@ -24,16 +23,16 @@ class GenerationExtensionTest {
      *
      * @param directory Directory containing test case files.
      */
-    class Files(val directory: String) {
+    class Files(private val directory: String) {
         val fileMap: Map<String, File>
         init {
-            val base = File(this::class.java.getResource("${directory}").file)
+            val base = File(this::class.java.getResource("$directory").file)
             val file = File(this::class.java.getResource("${directory}${File.separator}input").file)
             fileMap = file.walkTopDown().toList()
                     .filter{ !it.isDirectory }
                     .map { it.relativeTo(base).path to it}.toMap()
         }
-        fun expectedDir() = listOf("src", "test", "resources", directory, "expected").joinToString(separator = File.separator)
+        private fun expectedDir() = listOf("src", "test", "resources", directory, "expected").joinToString(separator = File.separator)
         fun outputDir() = listOf("src", "test", "resources", directory, "output").joinToString(separator = File.separator)
 
         fun assertOutput() {
@@ -56,12 +55,26 @@ class GenerationExtensionTest {
         val kClazz = result.classLoader.loadClass("io.realm.example.Sample")
         val newInstance = kClazz.newInstance()!!
 
-        for (memberProperty in newInstance::class.memberProperties) {
-            if (memberProperty.returnType.classifier == String::class.createType().classifier) {
-                val property = memberProperty as KProperty1<Any, String>
-                assertTrue(property.get(newInstance).startsWith("Hello "))
-            }
-        }
+        assertTrue(newInstance is RealmModel)
+        assertTrue(newInstance is RealmModelInternal)
+
+        // Accessing getters/setters
+        newInstance.isManaged = true
+        newInstance.realmObjectPointer = 0xCAFEBABE
+        newInstance.realmPointer = 0XCAFED00D
+        newInstance.tableName = "Sample"
+
+        assertEquals(true, newInstance.isManaged)
+        assertEquals(0xCAFEBABE, newInstance.realmObjectPointer)
+        assertEquals(0XCAFED00D, newInstance.realmPointer)
+        assertEquals("Sample", newInstance.tableName)
+
+        val companionObject = newInstance::class.companionObjectInstance
+        assertTrue(companionObject is RealmCompanion)
+
+        // Check synthetic schema method has been added.
+        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
+        assertEquals(expected, companionObject.schema())
 
         inputs.assertOutput()
 
@@ -75,6 +88,7 @@ class GenerationExtensionTest {
             compilerPlugins = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
+                    "-Xjvm-default=enable",
                     "-Xdump-directory=${inputs.outputDir()}",
                     "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )

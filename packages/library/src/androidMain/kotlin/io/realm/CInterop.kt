@@ -1,66 +1,69 @@
 package io.realm
 
 import java.io.File
+import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.NativeWrapper
 
-actual object CInterop {
+actual object CInterop : NativeWrapper{
     /* load the shared library on application startup. */
     init {
         System.loadLibrary("realm-objectstore-wrapper-android-dynamic")
         val tmpDir = File(RealmInitProvider.applicationContext.filesDir, ".realm.temp")
         tmpDir.mkdirs()
         JNI_initTmpDir(tmpDir.absolutePath)
+        NativeWrapper.instance = this
     }
 
-    actual fun openRealm(path: String, schema: String): BindingPointer {
-        return JNI_openRealm(path, schema)
+    actual override fun openRealm(path: String, schema: String): NativePointer {
+        return BindingPointer(JNI_openRealm(path, schema))
     }
 
-    actual fun addObject(pointer: BindingPointer, objectType: String): BindingPointer {
-        return JNI_addObject(pointer, objectType)
+    actual override fun addObject(pointer: NativePointer, objectType: String): NativePointer {
+        return BindingPointer(JNI_addObject((pointer as BindingPointer).ptr, objectType))
     }
 
-    actual fun beginTransaction(pointer: BindingPointer) {
-        JNI_beginTransaction(pointer)
+    actual override fun beginTransaction(pointer: NativePointer) {
+        JNI_beginTransaction((pointer as BindingPointer).ptr)
     }
 
-    actual fun commitTransaction(pointer: BindingPointer) {
-        JNI_commitTransaction(pointer)
+    actual override fun commitTransaction(pointer: NativePointer) {
+        JNI_commitTransaction((pointer as BindingPointer).ptr)
     }
 
-    actual fun cancelTransaction(pointer: BindingPointer) {
-        JNI_cancelTransaction(pointer)
+    actual override fun cancelTransaction(pointer: NativePointer) {
+        JNI_cancelTransaction((pointer as BindingPointer).ptr)
     }
 
-    actual fun realmresultsQuery(
-        pointer: BindingPointer,
+    actual override fun realmresultsQuery(
+        pointer: NativePointer,
         objectType: String,
         query: String
-    ): BindingPointer {
-        return JNI_realmresultsQuery(pointer, objectType, query)
+    ): NativePointer {
+        return BindingPointer(JNI_realmresultsQuery((pointer as BindingPointer).ptr, objectType, query))
     }
 
-    actual fun objectGetString(pointer: BindingPointer, propertyName: String) : String? {
-        return JNI_objectGetString(pointer, propertyName)
+    actual override fun objectGetString(pointer: NativePointer, propertyName: String) : String? {
+        return JNI_objectGetString((pointer as BindingPointer).ptr, propertyName)
     }
 
-    actual fun objectSetString(pointer: BindingPointer, propertyName: String, value: String?) {
-        JNI_objectSetString(pointer, propertyName, value!!)//TODO handle nullability
+    actual override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
+        JNI_objectSetString((pointer as BindingPointer).ptr, propertyName, value!!)//TODO handle nullability
     }
 
-    actual fun objectGetInt64(pointer: BindingPointer, propertyName: String) : Long? {
-        return JNI_objectGetInt64(pointer, propertyName)
+    actual override fun objectGetInt64(pointer: NativePointer, propertyName: String) : Long? {
+        return JNI_objectGetInt64((pointer as BindingPointer).ptr, propertyName)
     }
 
-    actual fun objectSetInt64(pointer: BindingPointer, propertyName: String, value: Long) {
-        JNI_objectSetInt64(pointer, propertyName, value)
+    actual override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
+        JNI_objectSetInt64((pointer as BindingPointer).ptr, propertyName, value)
     }
 
-    actual fun queryGetSize(queryPointer: BindingPointer): Long {
-        return JNI_queryGetSize(queryPointer)
+    actual override fun queryGetSize(queryPointer: NativePointer): Long {
+        return JNI_queryGetSize((queryPointer as BindingPointer).ptr)
     }
 
-    actual fun queryGetObjectAt(queryPointer: BindingPointer, objectType: String, index: Int): BindingPointer {
-        return JNI_queryGetObjectAt(queryPointer, objectType, index)
+    actual override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
+        return BindingPointer(JNI_queryGetObjectAt((queryPointer as BindingPointer).ptr, objectType, index))
     }
 
 

@@ -1,9 +1,10 @@
 package io.realm
 
+import io.realm.runtimeapi.NativePointer
 import kotlin.reflect.KClass
 
 class Realm {
-    private var dbPointer: BindingPointer? = null //TODO nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
+    private var dbPointer: NativePointer? = null //TODO nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
     private lateinit var realmConfiguration: RealmConfiguration
 
     companion object {

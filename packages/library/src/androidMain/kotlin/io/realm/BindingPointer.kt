@@ -1,3 +1,7 @@
 package io.realm
 
-actual typealias BindingPointer = Long
+import io.realm.runtimeapi.NativePointer
+
+actual typealias BindingPointer = LongPointerWrapper
+
+class LongPointerWrapper(val ptr : Long): NativePointer
