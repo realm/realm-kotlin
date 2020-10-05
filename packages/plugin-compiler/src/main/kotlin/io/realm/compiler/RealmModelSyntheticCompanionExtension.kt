@@ -27,7 +27,8 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
     override fun addSyntheticSupertypes(thisDescriptor: ClassDescriptor, supertypes: MutableList<KotlinType>) {
         if (thisDescriptor.annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)) {
-            val defaultType = thisDescriptor.module.resolveClassByFqName(FqNames.REALM_MODEL_INTERFACE_MARKER, NoLookupLocation.FROM_BACKEND)!!.defaultType
+            val defaultType = thisDescriptor.module.resolveClassByFqName(FqNames.REALM_MODEL_INTERFACE_MARKER, NoLookupLocation.FROM_BACKEND)?.defaultType
+                    ?: throw error("Couldn't resolve `RealmModel` from ${thisDescriptor.name.identifier}")
             supertypes.add(defaultType)
         }
         super.addSyntheticSupertypes(thisDescriptor, supertypes)

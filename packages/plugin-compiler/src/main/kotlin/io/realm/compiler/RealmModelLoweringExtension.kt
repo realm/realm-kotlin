@@ -41,9 +41,9 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             generator.addSchema(irClass)
         } else {
             if (irClass.isCompanion && irClass.parentAsClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
-                val realmModelClass: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_COMPANION)
+                val realmModelCompanion: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_COMPANION)
                         ?: error("RealmCompanion interface not found")
-                irClass.superTypes += realmModelClass.defaultType
+                irClass.superTypes += realmModelCompanion.defaultType
             }
         }
 
