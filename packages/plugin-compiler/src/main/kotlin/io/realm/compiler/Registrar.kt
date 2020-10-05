@@ -26,7 +26,7 @@ class Registrar : ComponentRegistrar {
 // Logging to a temp file and to console/IDE (Build Output)
 lateinit var messageCollector: MessageCollector
 fun logger(message: String, severity: CompilerMessageSeverity = CompilerMessageSeverity.WARNING) {
-    val formattedMessage = "[Kotlin Compiler] ${Instant.now()} $message\n"
+    val formattedMessage = "[Realm Compiler Plugin] ${Instant.now()} $message\n"
     messageCollector.report(severity, formattedMessage)
     FileWriter("/tmp/kmp.log").use {
         it.append(formattedMessage)
