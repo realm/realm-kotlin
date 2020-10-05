@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.companionObject
@@ -32,7 +31,7 @@ import org.jetbrains.kotlin.name.Name
 import java.lang.StringBuilder
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
-    private val realmModelInterface = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
+    private val realmModelInternal = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
             ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
 
     fun addProperties(irClass: IrClass): IrClass =
@@ -99,8 +98,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
         getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
         // overridden:
-        //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInterface
-        val propertyAccessorGetter = realmModelInterface.owner.getPropertyGetter(propertyName.asString())
+        //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInternal
+        val propertyAccessorGetter = realmModelInternal.owner.getPropertyGetter(propertyName.asString())
                 ?: error("${propertyName.asString()} function getter symbol is not available")
         getter.overriddenSymbols = listOf(propertyAccessorGetter)
 
@@ -127,8 +126,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         setter.correspondingPropertySymbol = property.symbol
 
         // overridden:
-        //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmModelInterface
-        val realmPointerSetter = realmModelInterface.owner.getPropertySetter(propertyName.asString())
+        //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmModelInternal
+        val realmPointerSetter = realmModelInternal.owner.getPropertySetter(propertyName.asString())
                 ?: error("${propertyName.asString()} function getter symbol is not available")
         setter.overriddenSymbols = listOf(realmPointerSetter)
 

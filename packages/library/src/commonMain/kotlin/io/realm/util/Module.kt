@@ -2,8 +2,6 @@ package io.realm.util
 
 import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModel
-import io.realm.runtimeapi.RealmModelInterface
-import io.realm.runtimeapi.RealmObject
 import kotlin.reflect.KClass
 
 /**

@@ -1,4 +1,6 @@
 package io.realm.runtimeapi
 
-interface RealmModel {
-}
+/**
+ * Marker interface added by the compiler to all [RealmObject] annotated classes.
+ */
+interface RealmModel

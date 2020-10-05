@@ -30,9 +30,9 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndReturnSchema(irClass)
 
-            // add super type RealmModelInterface
+            // add super type RealmModelInternal
             val realmModelClass: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
-                    ?: error("RealmModelInterface interface not found")
+                    ?: error("RealmModelInternal interface not found")
             irClass.superTypes = irClass.superTypes + realmModelClass.defaultType
 
             // Generate properties

@@ -1,6 +1,6 @@
 package io.realm
 
-import io.realm.runtimeapi.RealmModelInterface
+import io.realm.runtimeapi.RealmModelInternal
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,9 +14,9 @@ class SampleTests {
 
     @Suppress("UNREACHABLE_CODE")
     @Test
-    fun testRealmModelInterfaceIsImplemented() {
+    fun testRealmModelInternalIsImplemented() {
         val p = Sample()
-        val realmModel: RealmModelInterface = p as? RealmModelInterface ?: error("Supertype RealmModelInterface was not added to Sample class")
+        val realmModel: RealmModelInternal = p as? RealmModelInternal ?: error("Supertype RealmModelInternal was not added to Sample class")
 
         // Accessing getters/setters
         realmModel.isManaged = true
