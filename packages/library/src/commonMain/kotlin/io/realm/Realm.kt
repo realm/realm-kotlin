@@ -16,7 +16,7 @@ class Realm private constructor(val configuration: RealmConfiguration, private v
 
         // TODO Should we expose a specific method for the default config, e.g. `openDefault()`
         // TODO Do we throw a sensible exception is the default configuration is null?
-        fun open(configuration: RealmConfiguration = defaultConfiguration!!) : Realm {
+        fun open(configuration: RealmConfiguration = defaultConfiguration ?: throw IllegalArgumentException("The default configuration is null. Set it with 'Realm.defaultConfiguration' before calling `Realm.open()'.")) : Realm {
             //TODO
             // IN Android use lazy property delegation init to load the shared library
             //   use the function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
