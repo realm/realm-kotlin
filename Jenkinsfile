@@ -30,7 +30,7 @@ stage('build') {
     parralelExecutors = [:]
     parralelExecutors['jvm']     = jvm             { test("jvmTest") }
     parralelExecutors['android'] = androidEmulator { test("connectedAndroidTest") }
-    parralelExecutors['macos']   = macos           { test("macosTest") }
+    // DISABLED until https://youtrack.jetbrains.com/issue/KT-42443 is fixed  parralelExecutors['macos']   = macos           { test("macosTest") } 
     parallel parralelExecutors
 }
 
