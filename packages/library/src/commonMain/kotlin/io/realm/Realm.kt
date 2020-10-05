@@ -4,34 +4,27 @@ import kotlinx.coroutines.flow.Flow
 import io.realm.runtimeapi.NativePointer
 import kotlin.reflect.KClass
 
-class Realm private constructor(val configuration: RealmConfiguration, private val dbPointer: BindingPointer) {
+class Realm private constructor(val configuration: RealmConfiguration, private val dbPointer: NativePointer) {
 
     companion object {
         var defaultConfiguration: RealmConfiguration? = null
-        fun openDefault() {
-            TODO("Return default Realm")
-        }
-        fun setDefaultConfiguration(realmConfiguration: RealmConfiguration?) {
-            TODO()
-        }
         suspend fun openAsync(configuration: RealmConfiguration): Realm { TODO("Does coroutines make sense here?") }
 
         fun getLocalInstanceCount(configuration: RealmConfiguration): Int { TODO() }
         fun getGlobalInstanceCount(configuration: RealmConfiguration): Int { TODO() }
         fun deleteRealm(configuration: RealmConfiguration): Int { TODO() }
-        fun writeCopyTo(configuration: RealmConfiguration): Int { TODO() }
-        fun writeEncryptedCopyTo(configuration: RealmConfiguration): Int { TODO() }
 
-        fun open(configuration: RealmConfiguration) : Realm {
+        // TODO Should we expose a specific method for the default config, e.g. `openDefault()`
+        // TODO Do we throw a sensible exception is the default configuration is null?
+        fun open(configuration: RealmConfiguration = defaultConfiguration!!) : Realm {
             //TODO
             // IN Android use lazy property delegation init to load the shared library
             //   use the function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
 
             val schema = "[ { \"name\": \"Person\", \"properties\": { \"name\": \"string\", \"age\": \"int\"}}]" //TODO use schema Array generated from type
-            val dbPointer = CInterop.openRealm(PlatformUtils.getPathOrUseDefaultLocation(configuration), schema)
-            val realm = Realm(configuration, dbPointer)
-            return realm
+            val dbPointer: NativePointer = CInterop.openRealm(PlatformUtils.getPathOrUseDefaultLocation(configuration), schema)
+            return Realm(configuration, dbPointer)
         }
     }
 
@@ -82,7 +75,7 @@ class Realm private constructor(val configuration: RealmConfiguration, private v
         return managedModel as T
     }
     fun <T : RealmModel> add(obj: T): T { TODO("Should we return the object or not if modified in place (for more fluent API's) ") }
-    fun delete(type: KClass<RealmModel>) { TODO() }}
+    fun delete(type: KClass<RealmModel>) { TODO() }
     fun deleteAll() { TODO() }
     suspend fun executeTransaction(transaction: (Realm) -> Unit) { TODO() }
 
