@@ -28,8 +28,15 @@ stage('SCM') {
 
 stage('build') {
     parralelExecutors = [:]
-    parralelExecutors['jvm']     = jvm             { test("jvmTest") }
-    parralelExecutors['android'] = androidEmulator { test("connectedAndroidTest") }
+    parralelExecutors['compiler']  = jvm             { 
+        sh """
+            cd packages
+            ./gradlew clean :plugin-compiler:test --info --stacktrace
+        """
+        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
+    }
+    parralelExecutors['jvm']       = jvm             { test("jvmTest") }
+    parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
     // DISABLED until https://youtrack.jetbrains.com/issue/KT-42443 is fixed  parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
 }
