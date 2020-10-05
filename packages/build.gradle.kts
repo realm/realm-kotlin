@@ -11,6 +11,7 @@ plugins {
 allprojects {
     repositories {
         jcenter()
+        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
     }
 
     version = Realm.version

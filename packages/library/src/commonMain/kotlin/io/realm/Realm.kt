@@ -1,6 +1,7 @@
 package io.realm
 
 import kotlinx.coroutines.flow.Flow
+import io.realm.runtimeapi.NativePointer
 import kotlin.reflect.KClass
 
 class Realm private constructor(val configuration: RealmConfiguration, private val dbPointer: BindingPointer) {

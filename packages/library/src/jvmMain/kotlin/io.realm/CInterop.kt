@@ -1,60 +1,53 @@
 package io.realm
 
-actual object CInterop {
+import io.realm.runtimeapi.NativeWrapper
+import io.realm.runtimeapi.NativePointer
+
+actual object CInterop : NativeWrapper {
     init {
         TODO()
     }
-
-    actual fun openRealm(path: String, schema: String): BindingPointer {
-        TODO()
+    actual override fun openRealm(path: String, schema: String): NativePointer {
+        TODO("Not yet implemented")
     }
 
-    actual fun addObject(pointer: BindingPointer, objectType: String): BindingPointer {
-        TODO()
+    actual override fun realmresultsQuery(pointer: NativePointer, objectType: String, query: String): NativePointer {
+        TODO("Not yet implemented")
     }
 
-    actual fun beginTransaction(pointer: BindingPointer) {
-        TODO()
+    actual override fun addObject(pointer: NativePointer, objectType: String): NativePointer {
+        TODO("Not yet implemented")
     }
 
-    actual fun commitTransaction(pointer: BindingPointer) {
-        TODO()
+    actual override fun beginTransaction(pointer: NativePointer) {
     }
 
-    actual fun cancelTransaction(pointer: BindingPointer) {
-        TODO()
+    actual override fun commitTransaction(pointer: NativePointer) {
     }
 
-    actual fun realmresultsQuery(
-        pointer: BindingPointer,
-        objectType: String,
-        query: String
-    ): BindingPointer {
-        TODO()
+    actual override fun cancelTransaction(pointer: NativePointer) {
     }
 
-    actual fun objectGetString(pointer: BindingPointer, propertyName: String) : String? {
-        TODO()
+    actual override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
+        TODO("Not yet implemented")
     }
 
-    actual fun objectSetString(pointer: BindingPointer, propertyName: String, value: String?) {
-        TODO()
+    actual override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
     }
 
-    actual fun objectGetInt64(pointer: BindingPointer, propertyName: String) : Long? {
-        TODO()
+    actual override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
+        TODO("Not yet implemented")
     }
 
-    actual fun objectSetInt64(pointer: BindingPointer, propertyName: String, value: Long) {
-        TODO()
+    actual override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
     }
 
-    actual fun queryGetSize(queryPointer: BindingPointer): Long {
-        TODO()
+    actual override fun queryGetSize(queryPointer: NativePointer): Long {
+        TODO("Not yet implemented")
     }
 
-    actual fun queryGetObjectAt(queryPointer: BindingPointer, objectType: String, index: Int): BindingPointer {
-        TODO()
+    actual override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
+        TODO("Not yet implemented")
     }
 
 }

@@ -37,7 +37,7 @@ stage('build') {
     }
     parralelExecutors['jvm']       = jvm             { test("jvmTest") }
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
-    parralelExecutors['macos']     = macos           { test("macosTest") }
+    // DISABLED until https://youtrack.jetbrains.com/issue/KT-42443 is fixed  parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
 }
 
@@ -52,7 +52,7 @@ def test(task) {
 def macos(workerFunction) {
     return {
         node('osx') {
-            unstash 'source'
+            getArchive()
             workerFunction()
         }
     }
@@ -63,7 +63,7 @@ def jvm(workerFunction) {
         // FIXME Could just use a docker node, but do not have overview on all the caching
         //  considerations now, so just reusing an Android machine with gradle caching etc.
         node('android') {
-            unstash 'source'
+            getArchive()
 
             // TODO Consider adding a specific jvm docker image instead. For now just reuse Android
             //  one as it fulfills the toolchain requirement
@@ -88,9 +88,8 @@ def jvm(workerFunction) {
 def androidDevice(workerFunction) {
     return {
         node('android') {
-            unstash 'source'
-            def image
-            image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
+            getArchive()
+            def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
 
             // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
@@ -120,9 +119,8 @@ def androidDevice(workerFunction) {
 def androidEmulator(workerFunction) {
     return {
         node('docker-cph-03') {
-            unstash 'source'
-            def image
-            image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
+            getArchive()
+            def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
 
             // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
@@ -162,4 +160,9 @@ def androidEmulator(workerFunction) {
             }
         }
     }
+}
+
+def getArchive() {
+    deleteDir()
+    unstash 'source'
 }

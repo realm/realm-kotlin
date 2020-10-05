@@ -1,64 +1,68 @@
 package io.realm
 
+import io.realm.runtimeapi.NativeWrapper
+import io.realm.runtimeapi.NativePointer
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.toKString
 import objectstore_wrapper.*
 
-actual object CInterop {
-    actual fun openRealm(path: String, schema: String): BindingPointer {
+actual object CInterop : NativeWrapper {
+    init {
+        NativeWrapper.instance = this
+    }
+    actual override fun openRealm(path: String, schema: String): NativePointer {
         return CPointerWrapper(create(path, schema)!!)//TODO !!
     }
 
-    actual fun beginTransaction(pointer: BindingPointer) {
-        begin_transaction(pointer.ptr as CValuesRef<database_t>)
-
+    actual override fun beginTransaction(pointer: NativePointer) {
+        begin_transaction((pointer as BindingPointer).ptr as CValuesRef<database_t>)
     }
 
-    actual fun commitTransaction(pointer: BindingPointer) {
-        commit_transaction(pointer.ptr as CValuesRef<database_t>)
+    actual override fun commitTransaction(pointer: NativePointer) {
+        commit_transaction((pointer as BindingPointer).ptr as CValuesRef<database_t>)
     }
 
-    actual fun cancelTransaction(pointer: BindingPointer) {
-        cancel_transaction(pointer.ptr as CValuesRef<database_t>)
+    actual override fun cancelTransaction(pointer: NativePointer) {
+        cancel_transaction((pointer as BindingPointer).ptr as CValuesRef<database_t>)
     }
 
-    actual fun realmresultsQuery(pointer: BindingPointer, objectType: String, query: String): BindingPointer {
-        return CPointerWrapper(query(pointer.ptr as CValuesRef<database_t>, objectType, query)!!) //TODO !!
+    actual override fun realmresultsQuery(pointer: NativePointer, objectType: String, query: String): NativePointer {
+        return CPointerWrapper(query((pointer as BindingPointer).ptr as CValuesRef<database_t>, objectType, query)!!) //TODO !!
     }
 
-    actual fun addObject(pointer: BindingPointer, objectType: String): BindingPointer {
-        return CPointerWrapper(add_object(pointer.ptr as CValuesRef<database_t>, objectType)!!) //TODO !!
+    actual override fun addObject(pointer: NativePointer, objectType: String): NativePointer {
+        return CPointerWrapper(add_object((pointer as BindingPointer).ptr as CValuesRef<database_t>, objectType)!!) //TODO !!
     }
 
-    actual fun objectGetString(pointer: BindingPointer, propertyName: String) : String? {
-        return object_get_string(pointer.ptr as CValuesRef<realm_object_t>, propertyName)?.toKString()
+    actual override fun objectGetString(pointer: NativePointer, propertyName: String) : String? {
+        return object_get_string((pointer as BindingPointer).ptr as CValuesRef<realm_object_t>, propertyName)?.toKString()
     }
 
-    actual fun objectSetString(pointer: BindingPointer, propertyName: String, value: String?) {
-        object_set_string(pointer.ptr as CValuesRef<realm_object_t>, propertyName, value)
+    actual override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
+        object_set_string((pointer as BindingPointer).ptr as CValuesRef<realm_object_t>, propertyName, value)
     }
 
-    actual fun objectGetInt64(pointer: BindingPointer, propertyName: String) : Long? {
-        return object_get_int64(pointer.ptr as CValuesRef<realm_object_t>, propertyName)
+    actual override fun objectGetInt64(pointer: NativePointer, propertyName: String) : Long? {
+        return object_get_int64((pointer as BindingPointer).ptr as CValuesRef<realm_object_t>, propertyName)
     }
 
-    actual fun objectSetInt64(pointer: BindingPointer, propertyName: String, value: Long) {
-        object_set_int64(pointer.ptr as CValuesRef<realm_object_t>, propertyName, value)
-    }
-
-    @ExperimentalUnsignedTypes
-    actual fun queryGetSize(queryPointer: BindingPointer): Long {
-        return realmresults_size(queryPointer.ptr as CValuesRef<realm_results_t>).toLong()
+    actual override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
+        object_set_int64((pointer as BindingPointer).ptr as CValuesRef<realm_object_t>, propertyName, value)
     }
 
     @ExperimentalUnsignedTypes
-    actual fun queryGetObjectAt(queryPointer: BindingPointer, objectType: String, index: Int): BindingPointer {
+    actual override fun queryGetSize(queryPointer: NativePointer): Long {
+        return realmresults_size((queryPointer as BindingPointer).ptr as CValuesRef<realm_results_t>).toLong()
+    }
+
+    @ExperimentalUnsignedTypes
+    actual override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
         return CPointerWrapper(
-            realmresults_get(
-                queryPointer.ptr as CValuesRef<realm_results_t>,
-                objectType,
-                index.toULong()
-            )!!
+                realmresults_get(
+                        (queryPointer as BindingPointer).ptr as CValuesRef<realm_results_t>,
+                        objectType,
+                        index.toULong()
+                )!!
         )
     }
 }
