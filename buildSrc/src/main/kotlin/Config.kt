@@ -11,6 +11,7 @@ object Realm {
 object Versions {
     const val shadowJar =  "5.2.0"
     const val kotlin = "1.4.0"
+    const val kotlinCoroutines = "1.3.9"
     const val autoService = "1.0-rc6"
 }
 
