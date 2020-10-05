@@ -4,7 +4,6 @@ import io.realm.runtimeapi.RealmModelInterface
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class SampleTests {
     @Test

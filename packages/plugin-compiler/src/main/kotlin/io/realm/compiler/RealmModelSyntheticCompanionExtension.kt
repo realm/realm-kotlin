@@ -5,10 +5,13 @@ import io.realm.compiler.Names.SCHEMA_METHOD
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
+import org.jetbrains.kotlin.types.KotlinType
 
 class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
@@ -20,6 +23,14 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
         } else {
             emptyList()
         }
+    }
+
+    override fun addSyntheticSupertypes(thisDescriptor: ClassDescriptor, supertypes: MutableList<KotlinType>) {
+        if (thisDescriptor.annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)) {
+            val defaultType = thisDescriptor.module.resolveClassByFqName(FqNames.REALM_MODEL_INTERFACE_MARKER, NoLookupLocation.FROM_BACKEND)!!.defaultType
+            supertypes.add(defaultType)
+        }
+        super.addSyntheticSupertypes(thisDescriptor, supertypes)
     }
 
     override fun generateSyntheticMethods(thisDescriptor: ClassDescriptor, name: Name, bindingContext: BindingContext, fromSupertypes: List<SimpleFunctionDescriptor>, result: MutableCollection<SimpleFunctionDescriptor>) {
