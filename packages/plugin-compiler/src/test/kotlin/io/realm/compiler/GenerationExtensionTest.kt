@@ -2,13 +2,12 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInterface
 import org.junit.Test
 import java.io.File
-import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.functions
+import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class GenerationExtensionTest {
@@ -48,15 +47,13 @@ class GenerationExtensionTest {
         assertEquals(0XCAFED00D, newInstance.realmPointer)
         assertEquals("Sample", newInstance.tableName)
 
-        // Check synthetic method has been added.
-        val schemaFunction = newInstance::class.companionObject?.functions?.firstOrNull { it.name == "schema" }
-        assertNotNull(schemaFunction)
+        val companionObject = newInstance::class.companionObjectInstance
+        assertTrue(companionObject is RealmCompanion)
 
-        // Make sure synthetic method returns the correct schema
-        // dumpSchema method calls the synthetic method `Sample.schema()` internally
-        val dumpSchemaFunction = newInstance::class.functions.firstOrNull { it.name == "dumpSchema" }
-        assertNotNull(dumpSchemaFunction)
-        assertEquals("__REPLACE_ME__", dumpSchemaFunction.call(newInstance))
+        // Check synthetic schema method has been added.
+        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
+        assertEquals(expected, companionObject.schema())
     }
+
 }
 

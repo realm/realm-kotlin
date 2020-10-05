@@ -4,12 +4,12 @@ import io.realm.runtimeapi.RealmModelInterface
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class SampleTests {
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
-        assertEquals("__REPLACE_ME__", Sample.schema())
+        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
+        assertEquals(expected, Sample.schema())
     }
 
     @Suppress("UNREACHABLE_CODE")

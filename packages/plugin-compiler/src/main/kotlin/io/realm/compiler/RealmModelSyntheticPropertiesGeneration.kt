@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.name.Name
+import java.lang.StringBuilder
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInterface = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
@@ -41,23 +42,20 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable())
                 addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable())
 
-                // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
-
-                //TODO infer schema while defining getter/setters for the various properties
-                val schemaBody = "__REPLACE_ME__"
-                val companionObject = companionObject() as? IrClass
-                        ?: error("Companion object not available")
-                addSchemaFunctionBody(companionObject, schemaBody)
             }
 
+    // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
+    fun addSchema(irClass: IrClass) {
+        val companionObject = irClass.companionObject() as? IrClass
+                ?: error("Companion object not available")
 
-    private fun addSchemaFunctionBody(companionObject: IrClass, schemaBody: String) {
+        val name = irClass.name.identifier
+        val fields: MutableMap<String, Pair<String, Boolean>> = SchemaCollector.properties.getOrDefault(name, mutableMapOf())
+
         val function = companionObject.functions.first { it.name == SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            +irReturn(
-                    irString(schemaBody)
-            )
+            +irReturn(irString(schemaString(name, fields)))
         }
     }
 
@@ -146,6 +144,21 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         setter.body = DeclarationIrBuilder(pluginContext, setter.symbol).irBlockBody {
             +irSetField(irGet(setter.dispatchReceiverParameter!!), property.backingField!!, irGet(valueParameter))
         }
+    }
+    
+    private fun schemaString(name: String, fields: MutableMap<String, Pair<String, Boolean>>): String {
+        val builder = StringBuilder("{\"name\": \"${name}\", \"properties\": [")
+
+        val it_field = fields.iterator()
+        while (it_field.hasNext()) {
+            val fields = it_field.next()
+            builder.append("{\"${fields.key}\": {\"type\": \"${fields.value.first}\", \"nullable\": \"${fields.value.second}\"}}")
+            if (it_field.hasNext()) {
+                builder.append(",")
+            }
+        }
+        builder.append("]}")
+        return builder.toString()
     }
 }
 
