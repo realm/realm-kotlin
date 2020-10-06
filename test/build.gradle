@@ -1,7 +1,9 @@
 plugins {
+    // FIXME Figure out how to unify versions
     id("org.jetbrains.kotlin.multiplatform") version "1.4.20-M1-63"
     id "com.android.library"
     id("realm-kotlin")
+    id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
 }
 
 repositories {
