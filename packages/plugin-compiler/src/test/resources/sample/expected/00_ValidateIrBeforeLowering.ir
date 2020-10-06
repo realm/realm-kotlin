@@ -76,51 +76,51 @@ MODULE_FRAGMENT name:<main>
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.runtimeapi.RealmModel
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
       PROPERTY name:realmPointer visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:realmPointer type:kotlin.Long? visibility:private
+        FIELD PROPERTY_BACKING_FIELD name:realmPointer type:io.realm.runtimeapi.NativePointer? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-realmPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample) returnType:kotlin.Long?
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-realmPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample) returnType:io.realm.runtimeapi.NativePointer?
           correspondingProperty: PROPERTY name:realmPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-realmPointer> (): kotlin.Long? declared in io.realm.runtimeapi.RealmModelInternal
+            public abstract fun <get-realmPointer> (): io.realm.runtimeapi.NativePointer? declared in io.realm.runtimeapi.RealmModelInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-realmPointer> (): kotlin.Long? declared in io.realm.example.Sample'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmPointer type:kotlin.Long? visibility:private' type=kotlin.Long? origin=null
+            RETURN type=kotlin.Nothing from='public open fun <get-realmPointer> (): io.realm.runtimeapi.NativePointer? declared in io.realm.example.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmPointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=io.realm.runtimeapi.NativePointer? origin=null
                 receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<get-realmPointer>' type=io.realm.example.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample, <set-?>:kotlin.Long?) returnType:kotlin.Unit
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample, <set-?>:io.realm.runtimeapi.NativePointer?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:realmPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+            public abstract fun <set-realmPointer> (<set-?>: io.realm.runtimeapi.NativePointer?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
-          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long?
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.runtimeapi.NativePointer?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmPointer type:kotlin.Long? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmPointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<set-realmPointer>' type=io.realm.example.Sample origin=null
-              value: GET_VAR '<set-?>: kotlin.Long? declared in io.realm.example.Sample.<set-realmPointer>' type=kotlin.Long? origin=null
+              value: GET_VAR '<set-?>: io.realm.runtimeapi.NativePointer? declared in io.realm.example.Sample.<set-realmPointer>' type=io.realm.runtimeapi.NativePointer? origin=null
       PROPERTY name:realmObjectPointer visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:realmObjectPointer type:kotlin.Long? visibility:private
+        FIELD PROPERTY_BACKING_FIELD name:realmObjectPointer type:io.realm.runtimeapi.NativePointer? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-realmObjectPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample) returnType:kotlin.Long?
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-realmObjectPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample) returnType:io.realm.runtimeapi.NativePointer?
           correspondingProperty: PROPERTY name:realmObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-realmObjectPointer> (): kotlin.Long? declared in io.realm.runtimeapi.RealmModelInternal
+            public abstract fun <get-realmObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in io.realm.runtimeapi.RealmModelInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-realmObjectPointer> (): kotlin.Long? declared in io.realm.example.Sample'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmObjectPointer type:kotlin.Long? visibility:private' type=kotlin.Long? origin=null
+            RETURN type=kotlin.Nothing from='public open fun <get-realmObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in io.realm.example.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmObjectPointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=io.realm.runtimeapi.NativePointer? origin=null
                 receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<get-realmObjectPointer>' type=io.realm.example.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmObjectPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample, <set-?>:kotlin.Long?) returnType:kotlin.Unit
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmObjectPointer> visibility:public modality:OPEN <> ($this:io.realm.example.Sample, <set-?>:io.realm.runtimeapi.NativePointer?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:realmObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-realmObjectPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+            public abstract fun <set-realmObjectPointer> (<set-?>: io.realm.runtimeapi.NativePointer?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
-          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long?
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.runtimeapi.NativePointer?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmObjectPointer type:kotlin.Long? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:realmObjectPointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<set-realmObjectPointer>' type=io.realm.example.Sample origin=null
-              value: GET_VAR '<set-?>: kotlin.Long? declared in io.realm.example.Sample.<set-realmObjectPointer>' type=kotlin.Long? origin=null
+              value: GET_VAR '<set-?>: io.realm.runtimeapi.NativePointer? declared in io.realm.example.Sample.<set-realmObjectPointer>' type=io.realm.runtimeapi.NativePointer? origin=null
       PROPERTY name:tableName visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:tableName type:kotlin.String? visibility:private
           EXPRESSION_BODY

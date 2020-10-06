@@ -2,6 +2,7 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModel
@@ -44,6 +45,8 @@ class GenerationExtensionTest {
         }
     }
 
+    class LongPointer(val ptr : Long): NativePointer
+
     @Test
     fun transform() {
         val inputs = Files("/sample")
@@ -60,13 +63,13 @@ class GenerationExtensionTest {
 
         // Accessing getters/setters
         newInstance.isManaged = true
-        newInstance.realmObjectPointer = 0xCAFEBABE
-        newInstance.realmPointer = 0XCAFED00D
+        newInstance.realmObjectPointer = LongPointer(0xCAFEBABE)
+        newInstance.realmPointer = LongPointer(0XCAFED00D)
         newInstance.tableName = "Sample"
 
         assertEquals(true, newInstance.isManaged)
-        assertEquals(0xCAFEBABE, newInstance.realmObjectPointer)
-        assertEquals(0XCAFED00D, newInstance.realmPointer)
+        assertEquals(0xCAFEBABE, (newInstance.realmObjectPointer as LongPointer).ptr)
+        assertEquals(0XCAFED00D, (newInstance.realmPointer as LongPointer).ptr)
         assertEquals("Sample", newInstance.tableName)
 
         val companionObject = newInstance::class.companionObjectInstance
