@@ -25,7 +25,21 @@ stage('SCM') {
     }
 }
 
-
+stage('checks') {
+    try {
+        gradle('test', 'ktlintCheck')
+    } finally {
+        step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+              pattern: 'test/build/reports/ktlint/**/*.xml'])
+    }
+    try { 
+        gradle('packages', 'ktlintCheck')
+    } finally {
+        step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+              pattern: 'packages/**/build/reports/ktlint/**/*.xml'])
+    }
+}
+ 
 stage('build') {
     parralelExecutors = [:]
     parralelExecutors['compiler']  = jvm             { 
@@ -160,6 +174,10 @@ def androidEmulator(workerFunction) {
             }
         }
     }
+}
+
+def gradle(String relativePath, String commands) {
+  sh "cd ${relativePath} && chmod +x gradlew && ./gradlew ${commands} --stacktrace"
 }
 
 def getArchive() {
