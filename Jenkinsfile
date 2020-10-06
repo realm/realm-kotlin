@@ -30,25 +30,25 @@ stage('checks') {
         getArchive()
         try {
             gradle('test', 'ktlintCheck')
-        } finally {
-            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-                  pattern: 'test/build/reports/ktlint/**/*.xml'])
-        }
-        try { 
             gradle('packages', 'ktlintCheck')
         } finally {
-            // FIXME: Is there a better to capture all of them without having to
-            //  enumerate folders, which is error prone.
-            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-                  pattern: 'packages/library/build/reports/ktlint/**/*.xml'])
-            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-                  pattern: 'packages/plugin-compiler/build/reports/ktlint/**/*.xml'])
-            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-                  pattern: 'packages/plugin-compiler-shaded/build/reports/ktlint/**/*.xml'])
-            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-                  pattern: 'packages/plugin-gradle/build/reports/ktlint/**/*.xml'])
-            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-                  pattern: 'packages/runtime-api/build/reports/ktlint/**/*.xml'])
+            // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
+            // New Generation Warnings plugin throw a NullPointerException
+            // As a work-around we just stash the output of Ktlint for manual inspection
+            sh """
+                rm -r /tm/ktlint || true
+                'test/build/reports/ktlint/**/*.xml'
+                cp -r test/build/reports/ktlint /tmp/ktlint/test 
+                cp -r packages/plugin-compiler/build/reports/ktlint /tmp/ktlint/plugin-compiler
+                cp -r packages/plugin-compiler-shaded/build/reports/ktlint /tmp/ktlint/plugin-compiler-shaded
+                cp -r packages/plugin-gradle/build/reports/ktlint /tmp/ktlint/plugin-gradle
+                cp -r packages/runtime-api/build/reports/ktlint /tmp/ktlint/runtime-api
+            """
+            zip([
+                    'zipFile': 'ktlint.zip',
+                    'archive': true,
+                    'glob' : '/tmp/ktlint/**'
+            ])
         }
     }
 }

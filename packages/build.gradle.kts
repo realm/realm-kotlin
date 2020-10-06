@@ -33,8 +33,6 @@ subprojects {
         reporters {
             // Human readable output
             reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
-            // Checkstyle compatible output for CI
-            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
         }
         ignoreFailures.set(false)
         filter {

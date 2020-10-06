@@ -19,6 +19,24 @@ version Realm.version
 
 apply plugin: 'maven-publish'
 
+ktlint {
+    // TODO: Figure out how to extract this so it can be shared between all projects we run ktlint on
+    version.set(Versions.ktlintVersion)
+    debug.set(false)
+    verbose.set(true)
+    android.set(false)
+    outputToConsole.set(true)
+    reporters {
+        // Human readable output
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
+    }
+    ignoreFailures.set(false)
+    filter {
+        exclude("**/generated/**")
+        include("**/kotlin/**")
+    }
+}
+
 // Common Kotlin configuration
 kotlin {
     sourceSets {
