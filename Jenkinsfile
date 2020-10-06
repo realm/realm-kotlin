@@ -26,17 +26,30 @@ stage('SCM') {
 }
 
 stage('checks') {
-    try {
-        gradle('test', 'ktlintCheck')
-    } finally {
-        step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-              pattern: 'test/build/reports/ktlint/**/*.xml'])
-    }
-    try { 
-        gradle('packages', 'ktlintCheck')
-    } finally {
-        step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
-              pattern: 'packages/**/build/reports/ktlint/**/*.xml'])
+    node('android') {
+        getArchive()
+        try {
+            gradle('test', 'ktlintCheck')
+        } finally {
+            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+                  pattern: 'test/build/reports/ktlint/**/*.xml'])
+        }
+        try { 
+            gradle('packages', 'ktlintCheck')
+        } finally {
+            // FIXME: Is there a better to capture all of them without having to
+            //  enumerate folders, which is error prone.
+            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+                  pattern: 'packages/library/build/reports/ktlint/**/*.xml'])
+            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+                  pattern: 'packages/plugin-compiler/build/reports/ktlint/**/*.xml'])
+            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+                  pattern: 'packages/plugin-compiler-shaded/build/reports/ktlint/**/*.xml'])
+            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+                  pattern: 'packages/plugin-gradle/build/reports/ktlint/**/*.xml'])
+            step([$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+                  pattern: 'packages/runtime-api/build/reports/ktlint/**/*.xml'])
+        }
     }
 }
  
@@ -177,7 +190,7 @@ def androidEmulator(workerFunction) {
 }
 
 def gradle(String relativePath, String commands) {
-  sh "cd ${relativePath} && chmod +x gradlew && ./gradlew ${commands} --stacktrace"
+  sh "cd ${relativePath} && chmod +x gradlew && ./gradlew ${commands}"
 }
 
 def getArchive() {
