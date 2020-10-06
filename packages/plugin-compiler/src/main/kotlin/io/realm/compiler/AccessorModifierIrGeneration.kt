@@ -4,8 +4,14 @@ import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.ir.propertyIfAccessor
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.builders.*
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
+import org.jetbrains.kotlin.ir.builders.irBlock
+import org.jetbrains.kotlin.ir.builders.irConcat
+import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irString
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.isPropertyAccessor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
@@ -18,7 +24,7 @@ class AccessorModifierIrGeneration(val pluginContext: IrPluginContext) {
     fun modifyPropertiesAndReturnSchema(irClass: IrClass) {
         logger("Processing class ${irClass.name}")
         val className = irClass.name.asString()
-        val fields = SchemaCollector.properties.getOrPut(className, {mutableMapOf()})
+        val fields = SchemaCollector.properties.getOrPut(className, { mutableMapOf() })
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoidWithContext() {
             override fun visitFunctionNew(declaration: IrFunction): IrStatement {
@@ -65,4 +71,3 @@ class AccessorModifierIrGeneration(val pluginContext: IrPluginContext) {
         })
     }
 }
-

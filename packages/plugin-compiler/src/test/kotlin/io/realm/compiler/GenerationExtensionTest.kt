@@ -3,8 +3,8 @@ package io.realm.compiler
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.runtimeapi.RealmCompanion
-import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmModelInternal
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.full.companionObjectInstance
@@ -29,8 +29,8 @@ class GenerationExtensionTest {
             val base = File(this::class.java.getResource("$directory").file)
             val file = File(this::class.java.getResource("${directory}${File.separator}input").file)
             fileMap = file.walkTopDown().toList()
-                    .filter{ !it.isDirectory }
-                    .map { it.relativeTo(base).path to it}.toMap()
+                .filter { !it.isDirectory }
+                .map { it.relativeTo(base).path to it }.toMap()
         }
         private fun expectedDir() = listOf("src", "test", "resources", directory, "expected").joinToString(separator = File.separator)
         fun outputDir() = listOf("src", "test", "resources", directory, "output").joinToString(separator = File.separator)
@@ -38,8 +38,8 @@ class GenerationExtensionTest {
         fun assertOutput() {
             stripInputPath(File("${outputDir()}/00_ValidateIrBeforeLowering.ir"), fileMap)
             assertEquals(
-                    File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
-                    File("${outputDir()}/00_ValidateIrBeforeLowering.ir").readText()
+                File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
+                File("${outputDir()}/00_ValidateIrBeforeLowering.ir").readText()
             )
         }
     }
@@ -77,32 +77,29 @@ class GenerationExtensionTest {
         assertEquals(expected, companionObject.schema())
 
         inputs.assertOutput()
-
     }
 
     private fun compile(inputs: Files, plugins: List<Registrar> = listOf(Registrar())): KotlinCompilation.Result =
         KotlinCompilation().apply {
-            sources = inputs.fileMap.values.map { SourceFile.fromPath(it)}
+            sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
             compilerPlugins = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
-                    "-Xjvm-default=enable",
-                    "-Xdump-directory=${inputs.outputDir()}",
-                    "-Xphases-to-dump-after=ValidateIrBeforeLowering"
+                "-Xjvm-default=enable",
+                "-Xdump-directory=${inputs.outputDir()}",
+                "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )
         }.compile()
 
     companion object {
         private fun stripInputPath(file: File, map: Map<String, File>) {
             file.writeText(
-                    map.entries.fold(file.readText()) { text, (name, file) ->
-                        text.replace(file.path, name)
-                    }
+                map.entries.fold(file.readText()) { text, (name, file) ->
+                    text.replace(file.path, name)
+                }
             )
         }
     }
-
 }
-

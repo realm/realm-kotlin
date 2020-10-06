@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 
-class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
+class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
 
     companion object {
         // TODO Find a way to align with gradles Config.* properties
@@ -43,5 +43,4 @@ class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
             emptyList<SubpluginOption>()
         }
     }
-
 }

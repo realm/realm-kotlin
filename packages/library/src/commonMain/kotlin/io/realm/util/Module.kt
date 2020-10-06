@@ -12,13 +12,12 @@ class Module(classes: List<KClass<out RealmModel>>) {
 
     fun schema(): String {
         return classes
-                .map { it.companion() }
-                .map { it.schema() }
-                .joinToString(prefix = "[", separator = ",", postfix = "]") { it }
+            .map { it.companion() }
+            .map { it.schema() }
+            .joinToString(prefix = "[", separator = ",", postfix = "]") { it }
     }
 
     private fun <T : Any> KClass<T>.companion(): RealmCompanion {
         return this.nestedClasses.first { it.isCompanion }.objectInstance as RealmCompanion
     }
-
 }

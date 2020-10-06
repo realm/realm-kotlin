@@ -21,5 +21,4 @@ interface NativeWrapper {
     fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long)
     fun queryGetSize(queryPointer: NativePointer): Long
     fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer
-
 }

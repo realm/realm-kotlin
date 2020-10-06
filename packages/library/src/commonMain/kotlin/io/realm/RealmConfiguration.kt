@@ -2,11 +2,11 @@ package io.realm
 
 import kotlin.reflect.KClass
 
-typealias  ModelFactory = ((KClass<out RealmModel>) -> RealmModel)
+typealias ModelFactory = ((KClass<out RealmModel>) -> RealmModel)
 
-//fun <R : RealmModel> getInstance(type: KClass<R>) : R {
+// fun <R : RealmModel> getInstance(type: KClass<R>) : R {
 //    return null!!
-//}
+// }
 
 class RealmConfiguration private constructor(
     val path: String?, // Full path if we don't want to use the default location

@@ -12,11 +12,16 @@ import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
 import org.jetbrains.kotlin.ir.builders.declarations.addProperty
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
+import org.jetbrains.kotlin.ir.builders.irBlockBody
+import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
+import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irSetField
+import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
@@ -28,25 +33,23 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.name.Name
-import java.lang.StringBuilder
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInternal = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
-            ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
+        ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
 
     fun addProperties(irClass: IrClass): IrClass =
-            irClass.apply {
-                addNullableProperty(REALM_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
-                addNullableProperty(OBJECT_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
-                addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable())
-                addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable())
-
-            }
+        irClass.apply {
+            addNullableProperty(REALM_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
+            addNullableProperty(OBJECT_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
+            addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable())
+            addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable())
+        }
 
     // Generate body for the synthetic $schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     fun addSchema(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
-                ?: error("Companion object not available")
+            ?: error("Companion object not available")
 
         val name = irClass.name.identifier
         val fields: MutableMap<String, Pair<String, Boolean>> = SchemaCollector.properties.getOrDefault(name, mutableMapOf())
@@ -77,7 +80,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             visibility = DescriptorVisibilities.PRIVATE
             modality = property.modality
             type = propertyType
-
         }.apply {
             // EXPRESSION_BODY
             //  CONST Null type=kotlin.Nothing? value=null
@@ -85,7 +87,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         property.backingField?.parent = this
         property.backingField?.correspondingPropertySymbol = property.symbol
-
 
         // FUN DEFAULT _PROPERTY_ACCESSOR name:<get-objectPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Foo.$RealmHandler) returnType:kotlin.Long?
         // correspondingProperty: PROPERTY name:objectPointer visibility:public modality:OPEN [var]
@@ -100,7 +101,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // overridden:
         //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInternal
         val propertyAccessorGetter = realmModelInternal.owner.getPropertyGetter(propertyName.asString())
-                ?: error("${propertyName.asString()} function getter symbol is not available")
+            ?: error("${propertyName.asString()} function getter symbol is not available")
         getter.overriddenSymbols = listOf(propertyAccessorGetter)
 
         // BLOCK_BODY
@@ -109,7 +110,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // receiver: GET_VAR '<this>: dev.nhachicha.Foo.$RealmHandler declared in dev.nhachicha.Foo.$RealmHandler.<get-objectPointer>' type=dev.nhachicha.Foo.$RealmHandler origin=null
         getter.body = pluginContext.blockBody(getter.symbol) {
             +irReturn(
-                    irGetField(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
+                irGetField(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
             )
         }
 
@@ -128,7 +129,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // overridden:
         //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmModelInternal
         val realmPointerSetter = realmModelInternal.owner.getPropertySetter(propertyName.asString())
-                ?: error("${propertyName.asString()} function getter symbol is not available")
+            ?: error("${propertyName.asString()} function getter symbol is not available")
         setter.overriddenSymbols = listOf(realmPointerSetter)
 
         // VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long?
@@ -144,7 +145,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             +irSetField(irGet(setter.dispatchReceiverParameter!!), property.backingField!!, irGet(valueParameter))
         }
     }
-    
+
     private fun schemaString(name: String, fields: MutableMap<String, Pair<String, Boolean>>): String {
         val builder = StringBuilder("{\"name\": \"${name}\", \"properties\": [")
 
@@ -160,4 +161,3 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         return builder.toString()
     }
 }
-

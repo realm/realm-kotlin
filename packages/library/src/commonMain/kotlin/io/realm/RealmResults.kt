@@ -3,9 +3,10 @@ package io.realm
 import io.realm.runtimeapi.NativePointer
 import kotlin.reflect.KClass
 
-class RealmResults<T : RealmModel> constructor(private val queryPointer: NativePointer,
-                                                                           private val clazz: KClass<T>,
-                                                                           private val modelFactory: ModelFactory
+class RealmResults<T : RealmModel> constructor(
+    private val queryPointer: NativePointer,
+    private val clazz: KClass<T>,
+    private val modelFactory: ModelFactory
 ) : AbstractList<T>() {
     override val size: Int
         get() = CInterop.queryGetSize(queryPointer).toInt()
@@ -20,5 +21,4 @@ class RealmResults<T : RealmModel> constructor(private val queryPointer: NativeP
         // call T factory to instantiate an Object of type T using it's pointer 'objectPointer'
         return model as T
     }
-
 }
