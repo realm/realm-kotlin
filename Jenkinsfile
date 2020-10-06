@@ -25,7 +25,7 @@ stage('SCM') {
     }
 }
 
-stage('checks') {
+stage('Static Analysis') {
     node('android') {
         getArchive()
         try {
@@ -33,21 +33,21 @@ stage('checks') {
             gradle('packages', 'ktlintCheck')
         } finally {
             // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
-            // New Generation Warnings plugin throw a NullPointerException
-            // As a work-around we just stash the output of Ktlint for manual inspection
+            // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
+            // As a work-around we just stash the output of Ktlint for manual inspection.
             sh """
-                rm -r /tm/ktlint || true
-                'test/build/reports/ktlint/**/*.xml'
-                cp -r test/build/reports/ktlint /tmp/ktlint/test 
-                cp -r packages/plugin-compiler/build/reports/ktlint /tmp/ktlint/plugin-compiler
-                cp -r packages/plugin-compiler-shaded/build/reports/ktlint /tmp/ktlint/plugin-compiler-shaded
-                cp -r packages/plugin-gradle/build/reports/ktlint /tmp/ktlint/plugin-gradle
-                cp -r packages/runtime-api/build/reports/ktlint /tmp/ktlint/runtime-api
+                rm -rf /tmp/ktlint
+                mkdir /tmp/ktlint
+                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ 
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/
+                rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/
+                rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/
             """
             zip([
                     'zipFile': 'ktlint.zip',
                     'archive': true,
-                    'glob' : '/tmp/ktlint/**'
+                    'dir' : '/tmp/ktlint'
             ])
         }
     }
