@@ -11,8 +11,8 @@ class ModuleTest {
     fun schema() {
         val moduleSchema = Module(listOf(Sample::class)).schema()
         assertEquals(
-                listOf(Sample.schema()).joinToString(prefix = "[", separator = ",", postfix = "]") { it },
-                moduleSchema
+            listOf(Sample.schema()).joinToString(prefix = "[", separator = ",", postfix = "]") { it },
+            moduleSchema
         )
     }
 }
