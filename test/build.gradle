@@ -22,6 +22,7 @@ apply plugin: 'maven-publish'
 ktlint {
     // TODO: Figure out how to extract this so it can be shared between all projects we run ktlint on
     version.set(Versions.ktlintVersion)
+    additionalEditorconfigFile.set(file("$rootDir/../.editorconfig"))
     debug.set(false)
     verbose.set(true)
     android.set(false)
