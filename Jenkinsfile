@@ -29,8 +29,7 @@ stage('Static Analysis') {
     node('android') {
         getArchive()
         try {
-            gradle('test', 'ktlintCheck')
-            gradle('packages', 'ktlintCheck')
+            sh 'chmod +x gradlew && ./gradlew ktlintCheck'
         } finally {
             // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
             // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
@@ -187,10 +186,6 @@ def androidEmulator(workerFunction) {
             }
         }
     }
-}
-
-def gradle(String relativePath, String commands) {
-  sh "cd ${relativePath} && chmod +x gradlew && ./gradlew ${commands}"
 }
 
 def getArchive() {
