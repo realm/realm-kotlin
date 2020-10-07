@@ -38,16 +38,16 @@ stage('Static Analysis') {
             // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
             // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
             // As a work-around we just stash the output of Ktlint for manual inspection.
-            sh """
-                rm -rf /tmp/ktlint
+            sh '''
+                rm -rf /tmp/ktlint 
                 mkdir /tmp/ktlint
-                [ ! -d 'test/build/reports/ktlint' ] && rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ 
-                [ ! -d 'packages/library/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/
-                [ ! -d 'packages/plugin-compiler/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/
-                [ ! -d 'packages/plugin-compiler-shaded/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/
-                [ ! -d 'packages/plugin-gradle/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/
-                [ ! -d 'packages/runtime-api/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/
-            """
+                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true 
+                rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/  || true
+                rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
+            '''
             zip([
                     'zipFile': 'ktlint.zip',
                     'archive': true,
