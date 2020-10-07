@@ -10,20 +10,22 @@ tasks.register("ktlintCheck") {
     dependsOn.addAll(listOf("ktlintCheckPackages", "ktlintCheckTest", "ktlintCheckExample"))
 }
 
-tasks.register<GradleBuild>("ktlintCheckExample") {
+tasks.register<Exec>("ktlintCheckExample") {
     description = "Run ktlintCheck on /example project"
-    buildFile = file("example/build.gradle")
-    tasks = listOf("ktlintCheck")
+    workingDir = file("${rootDir}/example")
+    commandLine = listOf("./gradlew", "ktlintCheck")
 }
 
-tasks.register("ktlintCheckPackages") {
-    description = "Run ktlintCheck on /package project"
-    dependsOn(gradle.includedBuild("packages").task(":ktlintCheck"))
+tasks.register<Exec>("ktlintCheckPackages") {
+    description = "Run ktlintCheck on /packages project"
+    workingDir = file("${rootDir}/packages")
+    commandLine = listOf("./gradlew", "ktlintCheck")
 }
 
-tasks.register("ktlintCheckTest") {
+tasks.register<Exec>("ktlintCheckTest") {
     description = "Run ktlintCheck on /test project"
-    dependsOn(gradle.includedBuild("test").task(":ktlintCheck"))
+    workingDir = file("${rootDir}/test")
+    commandLine = listOf("./gradlew", "ktlintCheck")
 }
 
 tasks.register("ktlintFormat") {
@@ -32,18 +34,20 @@ tasks.register("ktlintFormat") {
     dependsOn.addAll(listOf("ktlintFormatPackages", "ktlintFormatTest", "ktlintFormatExample"))
 }
 
-tasks.register<GradleBuild>("ktlintFormatExample") {
+tasks.register<Exec>("ktlintFormatExample") {
     description = "Run ktlintFormat on /example project"
-    buildFile = file("example/build.gradle")
-    tasks = listOf("ktlintFormat")
+    workingDir = file("${rootDir}/example")
+    commandLine = listOf("./gradlew", "ktlintFormat")
 }
 
-tasks.register("ktlintFormatPackages") {
+tasks.register<Exec>("ktlintFormatPackages") {
     description = "Run ktlintFormat on /package project"
-    dependsOn(gradle.includedBuild("packages").task(":ktlintFormat"))
+    workingDir = file("${rootDir}/packages")
+    commandLine = listOf("./gradlew", "ktlintFormat")
 }
 
-tasks.register("ktlintFormatTest") {
+tasks.register<Exec>("ktlintFormatTest") {
     description = "Run ktlintFormat on /test project"
-    dependsOn(gradle.includedBuild("test").task(":ktlintFormat"))
+    workingDir = file("${rootDir}/test")
+    commandLine = listOf("./gradlew", "ktlintFormat")
 }
