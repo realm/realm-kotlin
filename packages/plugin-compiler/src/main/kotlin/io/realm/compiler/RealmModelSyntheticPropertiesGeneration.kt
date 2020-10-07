@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
-import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.name.Name
-import java.lang.StringBuilder
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInternal = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
@@ -41,12 +40,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
             irClass.apply {
-
-                addNullableProperty(REALM_POINTER, nullableNativePointerInterface)
-                addNullableProperty(OBJECT_POINTER, nullableNativePointerInterface)
-                addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable())
-                addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable())
-
+                addProperty(REALM_POINTER, nullableNativePointerInterface, ::irExprIsNull)
+                addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irExprIsNull)
+                addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irExprIsNull)
+                addProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irExprIsFalse)
             }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
@@ -64,14 +61,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
     }
 
-    private fun irNull(startOffset: Int, endOffset: Int): IrConstImpl<Nothing?> {
-        return IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
-    }
-
-    private fun IrClass.addNullableProperty(propertyName: Name, propertyType: IrType) {
+    private fun IrClass.addProperty(propertyName: Name, propertyType: IrType, initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody) {
         // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val property = addProperty {
-            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
+            at(this@addProperty.startOffset, this@addProperty.endOffset)
             name = propertyName
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
@@ -79,7 +72,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
         property.backingField = pluginContext.irFactory.buildField {
-            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
+            at(this@addProperty.startOffset, this@addProperty.endOffset)
             origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
             name = property.name
             visibility = DescriptorVisibilities.PRIVATE
@@ -88,8 +81,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         }.apply {
             // EXPRESSION_BODY
-            //  CONST Null type=kotlin.Nothing? value=null
-            initializer = IrExpressionBodyImpl(startOffset, endOffset, irNull(startOffset, endOffset))
+            //  CONST Boolean type=kotlin.Boolean value=false
+            initializer = initExpression(startOffset, endOffset)
         }
         property.backingField?.parent = this
         property.backingField?.correspondingPropertySymbol = property.symbol
@@ -98,7 +91,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT _PROPERTY_ACCESSOR name:<get-objectPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Foo.$RealmHandler) returnType:kotlin.Long?
         // correspondingProperty: PROPERTY name:objectPointer visibility:public modality:OPEN [var]
         val getter = property.addGetter {
-            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
+            at(this@addProperty.startOffset, this@addProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = propertyType
@@ -126,7 +119,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Child, <set-?>:kotlin.Long?) returnType:kotlin.Unit
         //  correspondingProperty: PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val setter = property.addSetter {
-            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
+            at(this@addProperty.startOffset, this@addProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = pluginContext.irBuiltIns.unitType
@@ -156,7 +149,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             +irSetField(irGet(setter.dispatchReceiverParameter!!), property.backingField!!, irGet(valueParameter))
         }
     }
-    
+
     private fun schemaString(name: String, fields: MutableMap<String, Pair<String, Boolean>>): String {
         val builder = StringBuilder("{\"name\": \"${name}\", \"properties\": [")
 
@@ -171,5 +164,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         builder.append("]}")
         return builder.toString()
     }
+
+    private fun irExprIsNull(startOffset: Int, endOffset: Int): IrExpressionBody =
+            IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType))
+
+    private fun irExprIsFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
+            IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType))
+
 }
 

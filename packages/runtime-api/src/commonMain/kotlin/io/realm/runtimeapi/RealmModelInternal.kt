@@ -12,5 +12,5 @@ interface RealmModelInternal : RealmModel {
     var realmPointer: NativePointer?
     var realmObjectPointer: NativePointer?
     var tableName: String?
-    var isManaged: Boolean?
+    var isManaged: Boolean
 }

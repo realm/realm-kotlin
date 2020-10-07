@@ -145,25 +145,25 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<set-tableName>' type=io.realm.example.Sample origin=null
               value: GET_VAR '<set-?>: kotlin.String? declared in io.realm.example.Sample.<set-tableName>' type=kotlin.String? origin=null
       PROPERTY name:isManaged visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:isManaged type:kotlin.Boolean? visibility:private
+        FIELD PROPERTY_BACKING_FIELD name:isManaged type:kotlin.Boolean visibility:private
           EXPRESSION_BODY
-            CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-isManaged> visibility:public modality:OPEN <> ($this:io.realm.example.Sample) returnType:kotlin.Boolean?
+            CONST Boolean type=kotlin.Boolean value=false
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-isManaged> visibility:public modality:OPEN <> ($this:io.realm.example.Sample) returnType:kotlin.Boolean
           correspondingProperty: PROPERTY name:isManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-isManaged> (): kotlin.Boolean? declared in io.realm.runtimeapi.RealmModelInternal
+            public abstract fun <get-isManaged> (): kotlin.Boolean declared in io.realm.runtimeapi.RealmModelInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-isManaged> (): kotlin.Boolean? declared in io.realm.example.Sample'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:isManaged type:kotlin.Boolean? visibility:private' type=kotlin.Boolean? origin=null
+            RETURN type=kotlin.Nothing from='public open fun <get-isManaged> (): kotlin.Boolean declared in io.realm.example.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:isManaged type:kotlin.Boolean visibility:private' type=kotlin.Boolean origin=null
                 receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<get-isManaged>' type=io.realm.example.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-isManaged> visibility:public modality:OPEN <> ($this:io.realm.example.Sample, <set-?>:kotlin.Boolean?) returnType:kotlin.Unit
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-isManaged> visibility:public modality:OPEN <> ($this:io.realm.example.Sample, <set-?>:kotlin.Boolean) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:isManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-isManaged> (<set-?>: kotlin.Boolean?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+            public abstract fun <set-isManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:io.realm.example.Sample
-          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean?
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:isManaged type:kotlin.Boolean? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:isManaged type:kotlin.Boolean visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: io.realm.example.Sample declared in io.realm.example.Sample.<set-isManaged>' type=io.realm.example.Sample origin=null
-              value: GET_VAR '<set-?>: kotlin.Boolean? declared in io.realm.example.Sample.<set-isManaged>' type=kotlin.Boolean? origin=null
+              value: GET_VAR '<set-?>: kotlin.Boolean declared in io.realm.example.Sample.<set-isManaged>' type=kotlin.Boolean origin=null
