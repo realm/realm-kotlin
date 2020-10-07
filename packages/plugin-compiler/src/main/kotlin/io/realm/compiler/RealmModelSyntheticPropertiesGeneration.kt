@@ -68,6 +68,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private fun IrClass.addNullableProperty(propertyName: Name, propertyType: IrType) {
         // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val property = addProperty {
+            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
             name = propertyName
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
@@ -75,6 +76,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
         property.backingField = pluginContext.irFactory.buildField {
+            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
             origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
             name = property.name
             visibility = DescriptorVisibilities.PRIVATE
@@ -91,6 +93,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT _PROPERTY_ACCESSOR name:<get-objectPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Foo.$RealmHandler) returnType:kotlin.Long?
         // correspondingProperty: PROPERTY name:objectPointer visibility:public modality:OPEN [var]
         val getter = property.addGetter {
+            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = propertyType
@@ -109,6 +112,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private' type=kotlin.Long? origin=null
         // receiver: GET_VAR '<this>: dev.nhachicha.Foo.$RealmHandler declared in dev.nhachicha.Foo.$RealmHandler.<get-objectPointer>' type=dev.nhachicha.Foo.$RealmHandler origin=null
         getter.body = pluginContext.blockBody(getter.symbol) {
+            at(startOffset, endOffset)
             +irReturn(
                 irGetField(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
             )
@@ -116,7 +120,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         // FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Child, <set-?>:kotlin.Long?) returnType:kotlin.Unit
         //  correspondingProperty: PROPERTY name:realmPointer visibility:public modality:OPEN [var]
-        val setter = property.addSetter() {
+        val setter = property.addSetter {
+            at(this@addNullableProperty.startOffset, this@addNullableProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = pluginContext.irBuiltIns.unitType
@@ -142,6 +147,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             this.type = propertyType
         }
         setter.body = DeclarationIrBuilder(pluginContext, setter.symbol).irBlockBody {
+            at(startOffset, endOffset)
             +irSetField(irGet(setter.dispatchReceiverParameter!!), property.backingField!!, irGet(valueParameter))
         }
     }

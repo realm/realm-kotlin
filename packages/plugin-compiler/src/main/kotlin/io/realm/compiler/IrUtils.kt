@@ -4,7 +4,9 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
+import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
+import org.jetbrains.kotlin.ir.builders.declarations.IrPropertyBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -70,6 +72,21 @@ fun IrFunction.isRealmBoolean(): Boolean {
     return isPropertyAccessor &&
         isGetter &&
         returnType.makeNotNull().isBoolean()
+}
+
+internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
+    this.startOffset = startOffset
+    this.endOffset = endOffset
+}
+
+internal fun IrFieldBuilder.at(startOffset: Int, endOffset: Int) = also {
+    this.startOffset = startOffset
+    this.endOffset = endOffset
+}
+
+internal fun IrPropertyBuilder.at(startOffset: Int, endOffset: Int) = also {
+    this.startOffset = startOffset
+    this.endOffset = endOffset
 }
 
 object SchemaCollector {

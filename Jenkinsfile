@@ -55,7 +55,7 @@ stage('Static Analysis') {
  
 stage('build') {
     parralelExecutors = [:]
-    parralelExecutors['compiler']  = jvm             { 
+    parralelExecutors['compiler']  = jvm             {
         sh """
             cd packages
             ./gradlew clean :plugin-compiler:test --info --stacktrace
@@ -64,7 +64,7 @@ stage('build') {
     }
     parralelExecutors['jvm']       = jvm             { test("jvmTest") }
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
-    // DISABLED until https://youtrack.jetbrains.com/issue/KT-42443 is fixed  parralelExecutors['macos']   = macos           { test("macosTest") }
+    parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
 }
 
