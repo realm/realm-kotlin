@@ -20,7 +20,7 @@ class RealmModelLoweringExtension : IrGenerationExtension {
         RealmModelLowering(pluginContext).lower(moduleFragment)
         moduleFragment.checkDeclarationParents()
 
-        logger("Collected schema is: ${SchemaCollector.properties}")
+        logInfo("Collected schema is: ${SchemaCollector.properties}")
     }
 }
 
