@@ -41,11 +41,12 @@ stage('Static Analysis') {
             sh """
                 rm -rf /tmp/ktlint
                 mkdir /tmp/ktlint
-                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ 
-                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/
-                rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/
-                rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/
-                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/
+                [ ! -d 'test/build/reports/ktlint' ] && rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ 
+                [ ! -d 'packages/library/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/
+                [ ! -d 'packages/plugin-compiler/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/
+                [ ! -d 'packages/plugin-compiler-shaded/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/
+                [ ! -d 'packages/plugin-gradle/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/
+                [ ! -d 'packages/runtime-api/build/reports/ktlint' ] && rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/
             """
             zip([
                     'zipFile': 'ktlint.zip',
