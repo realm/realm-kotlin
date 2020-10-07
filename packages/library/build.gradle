@@ -38,6 +38,14 @@ kotlin {
 // JVM
 kotlin {
     jvm()
+
+    sourceSets {
+        jvmMain {
+            dependencies {
+                implementation(project(":clib-jvm"))
+            }
+        }
+    }
 }
 
 // Android configuration

@@ -2,11 +2,32 @@ package io.realm
 
 import io.realm.runtimeapi.NativeWrapper
 import io.realm.runtimeapi.NativePointer
+import realm_value_type_e
+import realmcJNI.*
+import realmc.*
 
 actual object CInterop : NativeWrapper {
     init {
-        TODO()
+        // With pointers (directly JNI invocation)
+        val pointer = realmcJNI.realm_config_new()
+        realmcJNI.realm_config_set_path(pointer, "PATH")
+        realmcJNI.realm_open(pointer)
+
+        // With SWIG wrappers
+        val realmConfigNew = realmc.realm_config_new()
+        realmc.realm_config_set_path(realmConfigNew, "PATH")
+        realmc.realm_open(realmConfigNew)
+
+
+        realmcJNI.custom("Claus")
+
+
+        // Enum example
+        realm_value_type_e.RLM_TYPE_BINARY
+        val swigToEnum: realm_value_type_e = realm_value_type_e.swigToEnum(5)
+
     }
+
     actual override fun openRealm(path: String, schema: String): NativePointer {
         TODO("Not yet implemented")
     }
