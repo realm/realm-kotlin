@@ -29,7 +29,11 @@ stage('Static Analysis') {
     node('android') {
         getArchive()
         try {
-            sh 'chmod +x gradlew && ./gradlew ktlintCheck'
+            // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
+            // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
+            lock("${env.NODE_NAME}-android") {
+                sh 'chmod +x gradlew && ./gradlew ktlintCheck'
+            }
         } finally {
             // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
             // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
