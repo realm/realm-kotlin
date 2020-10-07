@@ -36,7 +36,10 @@ subprojects {
         }
         ignoreFailures.set(false)
         filter {
-            exclude("**/generated/**")
+            exclude { element ->
+                // See https://github.com/JLLeitschuh/ktlint-gradle#faq and https://github.com/gradle/gradle/issues/3417
+                element.file.path.contains("generated/")
+            }
             include("**/kotlin/**")
         }
     }
