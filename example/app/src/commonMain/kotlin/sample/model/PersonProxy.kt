@@ -44,6 +44,6 @@ class PersonProxy : Person() {
         }
 
     override fun <T : RealmModel> newInstance(): T {
-        return PersonProxy() as T //FIXME remove the cast
+        return PersonProxy() as T // FIXME remove the cast
     }
 }
