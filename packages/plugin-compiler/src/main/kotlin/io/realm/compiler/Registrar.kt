@@ -20,7 +20,6 @@ class Registrar : ComponentRegistrar {
         SyntheticResolveExtension.registerExtension(project, RealmModelSyntheticCompanionExtension())
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
     }
-
 }
 
 // Logging to a temp file and to console/IDE (Build Output)

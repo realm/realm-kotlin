@@ -32,7 +32,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
             // add super type RealmModelInternal
             val realmModelClass: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
-                    ?: error("RealmModelInternal interface not found")
+                ?: error("RealmModelInternal interface not found")
             irClass.superTypes = irClass.superTypes + realmModelClass.defaultType
 
             // Generate properties
@@ -42,10 +42,9 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
         } else {
             if (irClass.isCompanion && irClass.parentAsClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
                 val realmModelCompanion: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_COMPANION)
-                        ?: error("RealmCompanion interface not found")
+                    ?: error("RealmCompanion interface not found")
                 irClass.superTypes += realmModelCompanion.defaultType
             }
         }
-
     }
 }

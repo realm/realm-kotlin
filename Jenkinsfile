@@ -25,7 +25,38 @@ stage('SCM') {
     }
 }
 
-
+stage('Static Analysis') {
+    node('android') {
+        getArchive()
+        try {
+            // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
+            // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
+            lock("${env.NODE_NAME}-android") {
+                sh 'chmod +x gradlew && ./gradlew ktlintCheck'
+            }
+        } finally {
+            // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
+            // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
+            // As a work-around we just stash the output of Ktlint for manual inspection.
+            sh '''
+                rm -rf /tmp/ktlint 
+                mkdir /tmp/ktlint
+                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true 
+                rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/  || true
+                rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
+            '''
+            zip([
+                    'zipFile': 'ktlint.zip',
+                    'archive': true,
+                    'dir' : '/tmp/ktlint'
+            ])
+        }
+    }
+}
+ 
 stage('build') {
     parralelExecutors = [:]
     parralelExecutors['compiler']  = jvm             {

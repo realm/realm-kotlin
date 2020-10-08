@@ -1,10 +1,10 @@
 package io.realm
 
-import java.io.File
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.NativeWrapper
+import java.io.File
 
-actual object CInterop : NativeWrapper{
+actual object CInterop : NativeWrapper {
     /* load the shared library on application startup. */
     init {
         System.loadLibrary("realm-objectstore-wrapper-android-dynamic")
@@ -42,15 +42,15 @@ actual object CInterop : NativeWrapper{
         return BindingPointer(JNI_realmresultsQuery((pointer as BindingPointer).ptr, objectType, query))
     }
 
-    actual override fun objectGetString(pointer: NativePointer, propertyName: String) : String? {
+    actual override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
         return JNI_objectGetString((pointer as BindingPointer).ptr, propertyName)
     }
 
     actual override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
-        JNI_objectSetString((pointer as BindingPointer).ptr, propertyName, value!!)//TODO handle nullability
+        JNI_objectSetString((pointer as BindingPointer).ptr, propertyName, value!!) // TODO handle nullability
     }
 
-    actual override fun objectGetInt64(pointer: NativePointer, propertyName: String) : Long? {
+    actual override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
         return JNI_objectGetInt64((pointer as BindingPointer).ptr, propertyName)
     }
 
@@ -66,7 +66,6 @@ actual object CInterop : NativeWrapper{
         return BindingPointer(JNI_queryGetObjectAt((queryPointer as BindingPointer).ptr, objectType, index))
     }
 
-
     // JNI functions implemented in the shared C++ library
     // This file is used to generate the header file as well
 
@@ -78,11 +77,10 @@ actual object CInterop : NativeWrapper{
     external fun JNI_cancelTransaction(pointer: Long)
     external fun JNI_realmresultsQuery(pointer: Long, objectType: String, query: String): Long
 
-    external fun JNI_objectGetString(pointer: Long, propertyName: String) : String //TODO how to handle nullability (should we throw exception instead)
+    external fun JNI_objectGetString(pointer: Long, propertyName: String): String // TODO how to handle nullability (should we throw exception instead)
     external fun JNI_objectSetString(pointer: Long, propertyName: String, value: String)
-    external fun JNI_objectGetInt64(pointer: Long, propertyName: String) : Long
+    external fun JNI_objectGetInt64(pointer: Long, propertyName: String): Long
     external fun JNI_objectSetInt64(pointer: Long, propertyName: String, value: Long)
     external fun JNI_queryGetSize(queryPointer: Long): Long
     external fun JNI_queryGetObjectAt(queryPointer: Long, objectType: String, index: Int): Long
-
 }

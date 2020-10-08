@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnAddPerson).setOnClickListener {
             val name = findViewById<TextView>(R.id.txtName).text.toString()
-            val age= findViewById<TextView>(R.id.txtAge).text.toString().toInt()
+            val age = findViewById<TextView>(R.id.txtAge).text.toString().toInt()
 
             PersonRepository.addPerson(name, age)
 

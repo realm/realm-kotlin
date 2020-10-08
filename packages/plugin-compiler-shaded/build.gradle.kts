@@ -25,7 +25,7 @@ tasks {
 tasks {
     named("jar") {
         actions.clear()
-        dependsOn (
+        dependsOn(
             shadowJar
         )
     }

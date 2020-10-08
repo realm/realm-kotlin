@@ -1,11 +1,11 @@
-//package io.realm
+// package io.realm
 //
-//import io.realm.util.Module
-//import test.Sample
-//import kotlin.test.Test
-//import kotlin.test.assertEquals
+// import io.realm.util.Module
+// import test.Sample
+// import kotlin.test.Test
+// import kotlin.test.assertEquals
 //
-//class ModuleTest {
+// class ModuleTest {
 //
 //    @Test
 //    fun schema() {
@@ -15,4 +15,4 @@
 //                moduleSchema
 //        )
 //    }
-//}
+// }
