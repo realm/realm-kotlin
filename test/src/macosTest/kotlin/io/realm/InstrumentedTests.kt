@@ -17,15 +17,15 @@ class InstrumentedTests {
             val ptr2: COpaquePointerVar = alloc()
 
             // Accessing getters/setters
-            realmModel.isManaged = true
-            realmModel.realmObjectPointer = CPointerWrapper(ptr1.ptr)
-            realmModel.realmPointer = CPointerWrapper(ptr2.ptr)
-            realmModel.tableName = "Sample"
+            realmModel.`$realm$IsManaged` = true
+            realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
+            realmModel.`$realm$Pointer` = CPointerWrapper(ptr2.ptr)
+            realmModel.`$realm$TableName` = "Sample"
 
-            assertEquals(true, realmModel.isManaged)
-            assertEquals(ptr1.rawPtr.toLong(), (realmModel.realmObjectPointer as CPointerWrapper).ptr.toLong())
-            assertEquals(ptr2.rawPtr.toLong(), (realmModel.realmPointer as CPointerWrapper).ptr.toLong())
-            assertEquals("Sample", realmModel.tableName)
+            assertEquals(true, realmModel.`$realm$IsManaged`)
+            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
+            assertEquals(ptr2.rawPtr.toLong(), (realmModel.`$realm$Pointer` as CPointerWrapper).ptr.toLong())
+            assertEquals("Sample", realmModel.`$realm$TableName`)
         }
     }
 }

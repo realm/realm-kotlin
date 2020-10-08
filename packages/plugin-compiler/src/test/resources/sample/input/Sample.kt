@@ -1,8 +1,8 @@
-package io.realm.example
+package sample.input
 import io.realm.runtimeapi.RealmObject
 
 @RealmObject
 class Sample {
-    var name: String? = "a"
-    fun dumpSchema() : String = "${Sample.schema()}"
+    var name: String = "Realm"
+    fun dumpSchema() : String = "${Sample.`$realm$schema`()}"
 }

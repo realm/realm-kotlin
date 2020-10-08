@@ -2,15 +2,13 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmCompanion
-import io.realm.runtimeapi.RealmModelInternal
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.*
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class GenerationExtensionTest {
 
@@ -45,8 +43,6 @@ class GenerationExtensionTest {
         }
     }
 
-    class LongPointer(val ptr : Long): NativePointer
-
     @Test
     fun transform() {
         val inputs = Files("/sample")
@@ -55,29 +51,39 @@ class GenerationExtensionTest {
 
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val kClazz = result.classLoader.loadClass("io.realm.example.Sample")
+        val kClazz = result.classLoader.loadClass("sample.input.Sample")
         val newInstance = kClazz.newInstance()!!
+        val nameProperty = newInstance::class.members.find { it.name == "name" }
+                ?: fail("Couldn't find property name of class Sample")
 
         assertTrue(newInstance is RealmModel)
         assertTrue(newInstance is RealmModelInternal)
 
-        // Accessing getters/setters
-        newInstance.isManaged = true
-        newInstance.realmObjectPointer = LongPointer(0xCAFEBABE)
-        newInstance.realmPointer = LongPointer(0XCAFED00D)
-        newInstance.tableName = "Sample"
+        // Inject Mock NativeWrapper implementation
+        NativeWrapper.instance = MockNativeWrapper
 
-        assertEquals(true, newInstance.isManaged)
-        assertEquals(0xCAFEBABE, (newInstance.realmObjectPointer as LongPointer).ptr)
-        assertEquals(0XCAFED00D, (newInstance.realmPointer as LongPointer).ptr)
-        assertEquals("Sample", newInstance.tableName)
+        // Accessing getters/setters
+        newInstance.`$realm$IsManaged` = true
+        newInstance.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
+        newInstance.`$realm$Pointer` = LongPointer(0XCAFED00D)
+        newInstance.`$realm$TableName` = "Sample"
+
+        assertEquals("Managed name value", nameProperty.call(newInstance))
+        assertEquals(true, newInstance.`$realm$IsManaged`)
+        assertEquals(0xCAFEBABE, (newInstance.`$realm$ObjectPointer` as LongPointer).ptr)
+        assertEquals(0XCAFED00D, (newInstance.`$realm$Pointer` as LongPointer).ptr)
+        assertEquals("Sample", newInstance.`$realm$TableName`)
+
+        // In un-managed mode return only the backing field
+        newInstance.`$realm$IsManaged` = false
+        assertEquals("Realm", nameProperty.call(newInstance))
 
         val companionObject = newInstance::class.companionObjectInstance
         assertTrue(companionObject is RealmCompanion)
 
         // Check synthetic schema method has been added.
-        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
-        assertEquals(expected, companionObject.schema())
+        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"false\"}}]}"
+        assertEquals(expected, companionObject.`$realm$schema`())
 
         inputs.assertOutput()
 
@@ -107,5 +113,56 @@ class GenerationExtensionTest {
         }
     }
 
+    class LongPointer(val ptr : Long): NativePointer
+    object MockNativeWrapper : NativeWrapper {
+        override fun openRealm(path: String, schema: String): NativePointer {
+            TODO("Not yet implemented")
+        }
+
+        override fun realmresultsQuery(pointer: NativePointer, objectType: String, query: String): NativePointer {
+            TODO("Not yet implemented")
+        }
+
+        override fun addObject(pointer: NativePointer, objectType: String): NativePointer {
+            TODO("Not yet implemented")
+        }
+
+        override fun beginTransaction(pointer: NativePointer) {
+            TODO("Not yet implemented")
+        }
+
+        override fun commitTransaction(pointer: NativePointer) {
+            TODO("Not yet implemented")
+        }
+
+        override fun cancelTransaction(pointer: NativePointer) {
+            TODO("Not yet implemented")
+        }
+
+        override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
+            return "Managed $propertyName value"
+        }
+
+        override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
+            TODO("Not yet implemented")
+        }
+
+        override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
+            TODO("Not yet implemented")
+        }
+
+        override fun queryGetSize(queryPointer: NativePointer): Long {
+            TODO("Not yet implemented")
+        }
+
+        override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
+            TODO("Not yet implemented")
+        }
+
+    }
 }
 

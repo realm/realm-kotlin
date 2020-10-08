@@ -9,8 +9,8 @@ annotation class RealmObject
  * This interface is not meant to be used externally (consider using [RealmModel] instead)
  */
 interface RealmModelInternal : RealmModel {
-    var realmPointer: NativePointer?
-    var realmObjectPointer: NativePointer?
-    var tableName: String?
-    var isManaged: Boolean
+    var `$realm$Pointer`: NativePointer?
+    var `$realm$ObjectPointer`: NativePointer?
+    var `$realm$TableName`: String?
+    var `$realm$IsManaged`: Boolean
 }

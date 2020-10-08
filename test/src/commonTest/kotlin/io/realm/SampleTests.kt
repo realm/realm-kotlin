@@ -9,8 +9,8 @@ import kotlin.test.assertEquals
 class SampleTests {
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
-        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
-        assertEquals(expected, Sample.schema())
+        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"false\"}}]}"
+        assertEquals(expected, Sample.`$realm$schema`())
     }
 
     @Test

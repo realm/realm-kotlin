@@ -23,15 +23,15 @@ class InstrumentedTests {
         val realmModel: RealmModelInternal = p as? RealmModelInternal ?: error("Supertype RealmModelInternal was not added to Sample class")
 
         // Accessing getters/setters
-        realmModel.isManaged = true
-        realmModel.realmObjectPointer = BindingPointer(0xCAFEBABE)
-        realmModel.realmPointer = BindingPointer(0XCAFED00D)
-        realmModel.tableName = "Sample"
+        realmModel.`$realm$IsManaged` = true
+        realmModel.`$realm$ObjectPointer` = BindingPointer(0xCAFEBABE)
+        realmModel.`$realm$Pointer` = BindingPointer(0XCAFED00D)
+        realmModel.`$realm$TableName` = "Sample"
 
-        assertEquals(true, realmModel.isManaged)
-        assertEquals(0xCAFEBABE, (realmModel.realmObjectPointer as BindingPointer).ptr)
-        assertEquals(0XCAFED00D, (realmModel.realmPointer as BindingPointer).ptr)
-        assertEquals("Sample", realmModel.tableName)
+        assertEquals(true, realmModel.`$realm$IsManaged`)
+        assertEquals(0xCAFEBABE, (realmModel.`$realm$ObjectPointer` as BindingPointer).ptr)
+        assertEquals(0XCAFED00D, (realmModel.`$realm$Pointer` as BindingPointer).ptr)
+        assertEquals("Sample", realmModel.`$realm$TableName`)
     }
 
 }

@@ -1,5 +1,5 @@
 package io.realm.runtimeapi
 
 interface RealmCompanion {
-    fun schema() : String
+    fun `$realm$schema`() : String
 }
