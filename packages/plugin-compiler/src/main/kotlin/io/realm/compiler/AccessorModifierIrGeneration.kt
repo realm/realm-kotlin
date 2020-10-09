@@ -152,4 +152,3 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         })
     }
 }
-

@@ -2,7 +2,11 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.runtimeapi.*
+import io.realm.runtimeapi.RealmCompanion
+import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.NativeWrapper
+import io.realm.runtimeapi.NativePointer
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.full.companionObjectInstance
@@ -39,8 +43,8 @@ class GenerationExtensionTest {
         fun assertGeneratedIR() {
             stripInputPath(File("${outputDir()}/00_ValidateIrBeforeLowering.ir"), fileMap)
             assertEquals(
-                    File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
-                    File("${outputDir()}/00_ValidateIrBeforeLowering.ir").readText()
+                File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
+                File("${outputDir()}/00_ValidateIrBeforeLowering.ir").readText()
             )
         }
     }
@@ -140,9 +144,9 @@ class GenerationExtensionTest {
     companion object {
         private fun stripInputPath(file: File, map: Map<String, File>) {
             file.writeText(
-                    map.entries.fold(file.readText()) { text, (name, file) ->
-                        text.replace(file.path, name)
-                    }
+                map.entries.fold(file.readText()) { text, (name, file) ->
+                    text.replace(file.path, name)
+                }
             )
         }
     }
@@ -198,4 +202,3 @@ class GenerationExtensionTest {
         }
     }
 }
-

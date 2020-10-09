@@ -2,9 +2,8 @@ plugins {
     kotlin("multiplatform") version Versions.kotlin apply false
     kotlin("jvm") version Versions.kotlin apply false
     kotlin("kapt") version Versions.kotlin apply false
-
+    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlintPlugin
     id("com.android.library") apply false
-
     `java-gradle-plugin`
 }
 
@@ -19,5 +18,29 @@ allprojects {
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
+    }
+}
+
+subprojects {
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    ktlint {
+        // TODO: Figure out how to extract this so it can be shared between all projects we run ktlint on
+        version.set(Versions.ktlintVersion)
+        debug.set(false)
+        verbose.set(true)
+        android.set(false)
+        outputToConsole.set(true)
+        reporters {
+            // Human readable output
+            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
+        }
+        ignoreFailures.set(false)
+        filter {
+            exclude { element ->
+                // See https://github.com/JLLeitschuh/ktlint-gradle#faq and https://github.com/gradle/gradle/issues/3417
+                element.file.path.contains("generated/")
+            }
+            include("**/kotlin/**")
+        }
     }
 }

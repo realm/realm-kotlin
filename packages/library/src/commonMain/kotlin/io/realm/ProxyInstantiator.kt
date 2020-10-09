@@ -3,5 +3,5 @@ package io.realm
 import kotlin.reflect.KClass
 
 interface ProxyInstantiator<T : RealmModel> {
-    fun getInstance(type: KClass<T>) : T
+    fun getInstance(type: KClass<T>): T
 }

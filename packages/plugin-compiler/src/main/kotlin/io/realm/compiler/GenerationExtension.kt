@@ -6,7 +6,11 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.builders.*
+import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
+import org.jetbrains.kotlin.ir.builders.irBlock
+import org.jetbrains.kotlin.ir.builders.irConcat
+import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -16,9 +20,13 @@ import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.types.isNullableString
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.util.isGetter
-import org.jetbrains.kotlin.ir.visitors.*
+import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
+import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
-class GenerationExtension: IrGenerationExtension {
+class GenerationExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         for (file in moduleFragment.files) {
             GetTransformer(pluginContext).runOnFileInOrder(file)
@@ -26,16 +34,16 @@ class GenerationExtension: IrGenerationExtension {
     }
 
     class GetTransformer(
-            val context: IrPluginContext
+        val context: IrPluginContext
     ) : IrElementTransformerVoidWithContext(), FileLoweringPass {
         override fun lower(irFile: IrFile) {
             irFile.transformChildrenVoid()
         }
 
         override fun visitFunctionNew(declaration: IrFunction): IrStatement {
-            return if (declaration.isPropertyAccessor
-                    && declaration.isGetter
-                    && (declaration.returnType.isString() || declaration.returnType.isNullableString())
+            return if (declaration.isPropertyAccessor &&
+                declaration.isGetter &&
+                (declaration.returnType.isString() || declaration.returnType.isNullableString())
             ) {
                 declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
                     override fun visitReturn(expression: IrReturn): IrExpression {
@@ -52,7 +60,6 @@ class GenerationExtension: IrGenerationExtension {
                 super.visitFunctionNew(declaration)
             }
         }
-
     }
 }
 

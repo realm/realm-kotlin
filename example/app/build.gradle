@@ -1,5 +1,6 @@
 plugins {
     id 'org.jetbrains.kotlin.multiplatform' version '1.3.60'
+    id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
 }
 repositories {
     google()
@@ -33,6 +34,26 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
+}
+
+ktlint {
+    // TODO: Figure out how to extract this so it can be shared between all projects we run ktlint on
+    // TODO Convert to kts
+    version.set("0.39.0")
+    additionalEditorconfigFile.set(file("$rootDir/../.editorconfig"))
+    debug.set(false)
+    verbose.set(true)
+    android.set(false)
+    outputToConsole.set(true)
+    reporters {
+        // Human readable output
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
+    }
+    ignoreFailures.set(false)
+    filter {
+        exclude("**/generated/**")
+        include("**/kotlin/**")
+    }
 }
 
 kotlin {

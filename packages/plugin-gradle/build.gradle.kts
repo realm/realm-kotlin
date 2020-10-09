@@ -48,11 +48,12 @@ tasks.create("pluginVersion") {
     doLast {
         val versionFile = file("$outputDir/io/realm/gradle/version.kt")
         versionFile.parentFile.mkdirs()
-        versionFile.writeText("""
+        versionFile.writeText(
+            """
             // Generated file. Do not edit!
             package io.realm.gradle
             internal const val PLUGIN_VERSION = "${project.version}"
-        """.trimIndent()
+            """.trimIndent()
         )
     }
 }
