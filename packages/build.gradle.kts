@@ -1,5 +1,5 @@
 plugins {
-    id("realm-ktlint")
+    id("realm-lint")
     id("com.android.library") apply false
     `java-gradle-plugin`
 }
