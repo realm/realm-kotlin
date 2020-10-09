@@ -40,10 +40,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
             irClass.apply {
-                addProperty(REALM_POINTER, nullableNativePointerInterface, ::irExprIsNull)
-                addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irExprIsNull)
-                addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irExprIsNull)
-                addProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irExprIsFalse)
+                addProperty(REALM_POINTER, nullableNativePointerInterface, ::irIsNull)
+                addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irIsNull)
+                addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irIsNull)
+                addProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
             }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
@@ -165,10 +165,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         return builder.toString()
     }
 
-    private fun irExprIsNull(startOffset: Int, endOffset: Int): IrExpressionBody =
+    private fun irIsNull(startOffset: Int, endOffset: Int): IrExpressionBody =
             IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType))
 
-    private fun irExprIsFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
+    private fun irFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
             IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType))
 
 }
