@@ -64,6 +64,11 @@ stage('Static Analysis') {
                     'archive': true,
                     'dir' : '/tmp/ktlint'
             ])
+            zip([
+                    'zipFile': 'detekt.zip',
+                    'archive': true,
+                    'dir' : '/tmp/detekt'
+            ])
         }
     }
 }
