@@ -156,11 +156,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private fun schemaString(name: String, fields: MutableMap<String, Pair<String, Boolean>>): String {
         val builder = StringBuilder("{\"name\": \"${name}\", \"properties\": [")
 
-        val it_field = fields.iterator()
-        while (it_field.hasNext()) {
-            val fields = it_field.next()
+        val itField = fields.iterator()
+        while (itField.hasNext()) {
+            val fields = itField.next()
             builder.append("{\"${fields.key}\": {\"type\": \"${fields.value.first}\", \"nullable\": \"${fields.value.second}\"}}")
-            if (it_field.hasNext()) {
+            if (itField.hasNext()) {
                 builder.append(",")
             }
         }

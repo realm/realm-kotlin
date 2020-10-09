@@ -27,6 +27,7 @@ buildscript {
 // they are not allowed to set the version. It can only be set from here.
 dependencies {
     implementation("org.jlleitschuh.gradle:ktlint-gradle:9.4.1")
+    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.14.1")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20-M1-63")
     implementation("com.android.tools.build:gradle:4.0.0")
 }
