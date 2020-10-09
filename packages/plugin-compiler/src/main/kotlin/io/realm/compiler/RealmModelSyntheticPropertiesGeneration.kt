@@ -46,9 +46,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addProperty(REALM_POINTER, nullableNativePointerInterface, ::irIsNull)
-            addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irIsNull)
-            addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irIsNull)
+            addProperty(REALM_POINTER, nullableNativePointerInterface, ::irNull)
+            addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
+            addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irNull)
             addProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
         }
 
@@ -169,7 +169,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         return builder.toString()
     }
 
-    private fun irIsNull(startOffset: Int, endOffset: Int): IrExpressionBody =
+    private fun irNull(startOffset: Int, endOffset: Int): IrExpressionBody =
         IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType))
 
     private fun irFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
