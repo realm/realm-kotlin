@@ -18,6 +18,7 @@ internal object Names {
 
     // C-interop methods
     val C_INTEROP_OBJECT_GET_STRING = Name.identifier("objectGetString")
+    val C_INTEROP_OBJECT_SET_STRING = Name.identifier("objectSetString")
     val C_INTEROP_OBJECT_GET_INT64 = Name.identifier("objectGetInt64")
 }
 

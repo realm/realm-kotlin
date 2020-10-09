@@ -3,6 +3,7 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.NATIVE_WRAPPER
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_STRING
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_STRING
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfThenElse
 import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -28,11 +30,13 @@ import org.jetbrains.kotlin.ir.declarations.isPropertyAccessor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
+import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.isGetter
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -44,6 +48,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private lateinit var nativeWrapperClass: IrClass
     private lateinit var nativeWrapperCompanion: IrClass
     private lateinit var objectGetStringFun: IrSimpleFunction
+    private lateinit var objectSetStringFun: IrSimpleFunction
     private lateinit var objectGetInt64Fun: IrSimpleFunction
     private lateinit var getInstanceProperty: IrProperty
 
@@ -69,6 +74,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             it.name == C_INTEROP_OBJECT_GET_STRING
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_STRING.asString()}")
 
+        objectSetStringFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_SET_STRING
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_STRING.asString()}")
+
         objectGetInt64Fun = nativeWrapperClass.functions.find {
             it.name == C_INTEROP_OBJECT_GET_INT64
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INT64.asString()}")
@@ -93,18 +102,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 when {
                     declaration.isRealmString() -> {
                         logInfo("String property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("string", nullable)
-                        modifyAccessor(irClass, currentScope, name, objectGetStringFun, declaration)
+                        if (declaration.isGetter) {
+                            fields[name] = Pair("string", nullable) // collect schema information once
+                            modifyGetterAccessor(irClass, currentScope, name, objectGetStringFun, declaration)
+                        } else { // isSetter
+                            modifySetterAccessor(irClass, currentScope, name, objectSetStringFun, declaration)
+                        }
                     }
                     declaration.isRealmLong() -> {
                         logInfo("Long property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("int", nullable)
-                        modifyAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
+                        modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
                     }
                     declaration.isRealmInt() -> {
                         logInfo("Int property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("int", nullable)
-                        modifyAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
+                        modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
                     }
                     declaration.isRealmBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
@@ -120,7 +133,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         })
     }
 
-    private fun modifyAccessor(irClass: IrClass, currentScope: ScopeWithIr?, name: String, cInteropFunction: IrSimpleFunction, declaration: IrFunction) {
+    private fun modifyGetterAccessor(irClass: IrClass, currentScope: ScopeWithIr?, name: String, cInteropGetFunction: IrSimpleFunction, declaration: IrFunction) {
         declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitReturn(expression: IrReturn): IrExpression {
                 return IrBlockBuilder(pluginContext, currentScope?.scope!!, expression.startOffset, expression.endOffset).irBlock {
@@ -140,7 +153,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 //              pointer: CALL 'public open fun <get-realmObjectPointer> (): dev.nhachicha.NativePointer declared in dev.nhachicha.Child' type=dev.nhachicha.NativePointer origin=GET_PROPERTY
 //                $this: GET_VAR '<this>: dev.nhachicha.Child declared in dev.nhachicha.Child.<get-address>' type=dev.nhachicha.Child origin=null
 //              propertyName: CONST String type=kotlin.String value="address"
-                    val cinteropCall = irCall(cInteropFunction, origin = IrStatementOrigin.GET_PROPERTY).also {
+                    val cinteropCall = irCall(cInteropGetFunction, origin = IrStatementOrigin.GET_PROPERTY).also {
                         it.dispatchReceiver = irCall(getInstanceProperty.getter!!).apply {
                             dispatchReceiver = irGetObject(nativeWrapperCompanion.symbol)
                         }
@@ -163,6 +176,49 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             isManagedCall,
                             cinteropCall, // property is managed call C-Interop function
                             irGetField(irGet(property.getter!!.dispatchReceiverParameter!!), property.backingField!!), // unmanaged property call backing field value
+                            origin = IrStatementOrigin.IF
+                        )
+                    )
+                }
+            }
+        })
+    }
+
+    private fun modifySetterAccessor(irClass: IrClass, currentScope: ScopeWithIr?, name: String, cInteropSetFunction: IrSimpleFunction, declaration: IrFunction) {
+        declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
+            override fun visitSetField(expression: IrSetField): IrExpression {
+                return IrBlockBuilder(pluginContext, currentScope?.scope!!, expression.startOffset, expression.endOffset).irBlock {
+                    val property = irClass.properties.find {
+                        it.name == Name.identifier(name)
+                    } ?: error("Could not find property $name")
+
+                    val isManagedCall = irCall(isManagedProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).also {
+                        it.dispatchReceiver = irGet(property.setter!!.dispatchReceiverParameter!!)
+                    }
+
+                    val cinteropCall = irCall(cInteropSetFunction).also {
+                        it.dispatchReceiver = irCall(getInstanceProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+                            dispatchReceiver = irGetObject(nativeWrapperCompanion.symbol)
+                        }
+                    }.apply {
+                        putValueArgument(
+                            0,
+                            irCall(objectPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+                                dispatchReceiver = irGet(property.setter!!.dispatchReceiverParameter!!)
+                            }
+                        )
+                        putValueArgument(1, irString(name))
+                        putValueArgument(2, irGet(declaration.valueParameters.first()))
+                    }
+
+                    logWarn(cinteropCall.dump())
+
+                    +irReturn(
+                        irIfThenElse(
+                            pluginContext.irBuiltIns.unitType,
+                            isManagedCall,
+                            cinteropCall, // property is managed call C-Interop function
+                            irSetField(irGet(property.setter!!.dispatchReceiverParameter!!), property.backingField!!, irGet(declaration.valueParameters.first())), // un-managed property set backing field value
                             origin = IrStatementOrigin.IF
                         )
                     )

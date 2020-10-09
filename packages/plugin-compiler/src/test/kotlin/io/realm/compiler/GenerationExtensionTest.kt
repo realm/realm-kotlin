@@ -9,6 +9,7 @@ import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import org.junit.Test
 import java.io.File
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -58,21 +59,21 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
-        val newInstance = kClazz.newInstance()!!
+        val sampleModel = kClazz.newInstance()!!
 
-        assertTrue(newInstance is RealmModel)
-        assertTrue(newInstance is RealmModelInternal)
+        assertTrue(sampleModel is RealmModel)
+        assertTrue(sampleModel is RealmModelInternal)
 
         // Accessing getters/setters
-        newInstance.`$realm$IsManaged` = true
-        newInstance.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
-        newInstance.`$realm$Pointer` = LongPointer(0XCAFED00D)
-        newInstance.`$realm$TableName` = "Sample"
+        sampleModel.`$realm$IsManaged` = true
+        sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
+        sampleModel.`$realm$Pointer` = LongPointer(0XCAFED00D)
+        sampleModel.`$realm$TableName` = "Sample"
 
-        assertEquals(true, newInstance.`$realm$IsManaged`)
-        assertEquals(0xCAFEBABE, (newInstance.`$realm$ObjectPointer` as LongPointer).ptr)
-        assertEquals(0XCAFED00D, (newInstance.`$realm$Pointer` as LongPointer).ptr)
-        assertEquals("Sample", newInstance.`$realm$TableName`)
+        assertEquals(true, sampleModel.`$realm$IsManaged`)
+        assertEquals(0xCAFEBABE, (sampleModel.`$realm$ObjectPointer` as LongPointer).ptr)
+        assertEquals(0XCAFED00D, (sampleModel.`$realm$Pointer` as LongPointer).ptr)
+        assertEquals("Sample", sampleModel.`$realm$TableName`)
 
         inputs.assertGeneratedIR()
     }
@@ -86,8 +87,8 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
-        val newInstance = kClazz.newInstance()!!
-        val companionObject = newInstance::class.companionObjectInstance
+        val sampleModel = kClazz.newInstance()!!
+        val companionObject = sampleModel::class.companionObjectInstance
 
         assertTrue(companionObject is RealmCompanion)
 
@@ -98,7 +99,7 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun `modify getter accessor to call cinterop`() {
+    fun `modify accessors to call cinterop`() {
         val inputs = Files("/sample")
 
         val result = compile(inputs)
@@ -106,21 +107,25 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
-        val newInstance = kClazz.newInstance()!!
-        val nameProperty = newInstance::class.members.find { it.name == "name" }
+        val sampleModel = kClazz.newInstance()!!
+        val nameProperty = sampleModel::class.members.find { it.name == "name" }
             ?: fail("Couldn't find property name of class Sample")
-
-        assertTrue(newInstance is RealmModelInternal)
+        assertTrue(nameProperty is KMutableProperty<*>)
+        assertTrue(sampleModel is RealmModelInternal)
 
         // In un-managed mode return only the backing field
-        newInstance.`$realm$IsManaged` = false
-        assertEquals("Realm", nameProperty.call(newInstance))
+        sampleModel.`$realm$IsManaged` = false
+        assertEquals("Realm", nameProperty.call(sampleModel))
 
         // Inject Mock NativeWrapper implementation
         NativeWrapper.instance = MockNativeWrapper
-        newInstance.`$realm$IsManaged` = true
-        newInstance.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
-        assertEquals("Managed name value", nameProperty.call(newInstance))
+        sampleModel.`$realm$IsManaged` = true
+        sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
+
+        // set a value using the CInterop call
+        nameProperty.setter.call(sampleModel, "Zepp")
+        // get value using the CInterop call
+        assertEquals("Hello Zepp", nameProperty.call(sampleModel))
 
         inputs.assertGeneratedIR()
     }
@@ -151,8 +156,15 @@ class GenerationExtensionTest {
 
     class LongPointer(val ptr: Long) : NativePointer
     object MockNativeWrapper : NativeWrapper {
+        // simulate a storage engine for setters accessors modification tests
+        private val storage = mutableMapOf<Any, Any?>()
+
         override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
-            return "Managed $propertyName value"
+            return "Hello ${storage["$pointer$propertyName"]}"
+        }
+
+        override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
+            storage["$pointer$propertyName"] = value
         }
 
         override fun openRealm(path: String, schema: String): NativePointer {
@@ -176,10 +188,6 @@ class GenerationExtensionTest {
         }
 
         override fun cancelTransaction(pointer: NativePointer) {
-            error("Should not be invoked")
-        }
-
-        override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
             error("Should not be invoked")
         }
 

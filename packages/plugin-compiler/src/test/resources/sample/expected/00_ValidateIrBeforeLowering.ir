@@ -38,9 +38,24 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-name>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-name>' type=kotlin.String? origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-name> (<set-?>: kotlin.String?): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-name>' type=sample.input.Sample origin=null
+                    then: CALL 'public abstract fun objectSetString (pointer: io.realm.runtimeapi.NativePointer, propertyName: kotlin.String, value: kotlin.String?): kotlin.Unit declared in io.realm.runtimeapi.NativeWrapper' type=kotlin.Unit origin=null
+                      $this: CALL 'public final fun <get-instance> (): io.realm.runtimeapi.NativeWrapper declared in io.realm.runtimeapi.NativeWrapper.Companion' type=io.realm.runtimeapi.NativeWrapper origin=GET_PROPERTY
+                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.runtimeapi.NativeWrapper.Companion
+                      pointer: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
+                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-name>' type=sample.input.Sample origin=null
+                      propertyName: CONST String type=kotlin.String value="name"
+                      value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-name>' type=kotlin.String? origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-name>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-name>' type=kotlin.String? origin=null
       FUN name:dumpSchema visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
         $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
         BLOCK_BODY
