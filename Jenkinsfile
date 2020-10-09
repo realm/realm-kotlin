@@ -48,14 +48,12 @@ stage('Static Analysis') {
                 rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true 
                 rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
                 rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
-                rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/  || true
                 rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
                 rsync -a --delete --ignore-errors example/build/reports/detekt/ /tmp/detekt/example/ || true 
                 rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true 
                 rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
                 rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
-                rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/detekt/ /tmp/detekt/plugin-compiler-shaded/  || true
                 rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''

@@ -4,6 +4,7 @@ import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.NativeWrapper
 import java.io.File
 
+@Suppress("FunctionNaming")
 actual object CInterop : NativeWrapper {
     /* load the shared library on application startup. */
     init {
