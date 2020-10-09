@@ -3,8 +3,10 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
 }
 
-subprojects {
+allprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    apply(plugin = "io.gitlab.arturbosch.detekt")
+
     ktlint {
         version.set(Versions.ktlintVersion)
         additionalEditorconfigFile.set(file("$rootDir/../config/ktlint/.editorconfig"))
@@ -26,12 +28,22 @@ subprojects {
         }
     }
 
-    apply(plugin = "io.gitlab.arturbosch.detekt")
     detekt {
         failFast = true // fail build on any finding
         buildUponDefaultConfig = true // preconfigure defaults
         config = files("$rootDir/../config/detekt/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
         baseline = file("$rootDir/../config/detekt/baseline.xml") // a way of suppressing issues before introducing detekt
+        input = files(file("src/androidMain/kotlin"),
+                file("src/androidTest/kotlin"),
+                file("src/commonMain/kotlin"),
+                file("src/commonTest/kotlin"),
+                file("src/iosMain/kotlin"),
+                file("src/iosTest/kotlin"),
+                file("src/jvmMain/kotlin"),
+                file("src/main/kotlin"),
+                file("src/macosMain/kotlin"),
+                file("src/macosTest/kotlin"),
+                file("src/test/kotlin"))
 
         reports {
             html.enabled = true // observe findings in your browser with structure and code snippets
@@ -39,5 +51,4 @@ subprojects {
             txt.enabled = false // similar to the console output, contains issue signature to manually edit baseline files
         }
     }
-
 }
