@@ -11,8 +11,20 @@ import org.jetbrains.kotlin.backend.common.ScopeWithIr
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.ir.propertyIfAccessor
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.builders.*
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
+import org.jetbrains.kotlin.ir.builders.irBlock
+import org.jetbrains.kotlin.ir.builders.irCall
+import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
+import org.jetbrains.kotlin.ir.builders.irGetObject
+import org.jetbrains.kotlin.ir.builders.irIfThenElse
+import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irString
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.isPropertyAccessor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
@@ -49,7 +61,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         } ?: error("Could not find synthetic property ${OBJECT_IS_MANAGED.asString()}")
 
         nativeWrapperClass = pluginContext.referenceClass(NATIVE_WRAPPER)?.owner
-                ?: error("${NATIVE_WRAPPER.asString()} not available")
+            ?: error("${NATIVE_WRAPPER.asString()} not available")
 
         nativeWrapperCompanion = nativeWrapperClass.companionObject() as IrClass
 
@@ -133,20 +145,27 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             dispatchReceiver = irGetObject(nativeWrapperCompanion.symbol)
                         }
                     }.apply {
-                        putValueArgument(0, irCall(objectPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
-                            dispatchReceiver = irGet(property.getter!!.dispatchReceiverParameter!!)
-                        })
+                        putValueArgument(
+                            0,
+                            irCall(objectPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+                                dispatchReceiver = irGet(property.getter!!.dispatchReceiverParameter!!)
+                            }
+                        )
                         putValueArgument(1, irString(name))
                     }
 
-                    //RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String declared in io.realm.example.Sample'
+                    // RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String declared in io.realm.example.Sample'
                     //                WHEN type=kotlin.String origin=IF
                     //                  BRANCH
-                    +irReturn(irIfThenElse(property.getter!!.returnType,
+                    +irReturn(
+                        irIfThenElse(
+                            property.getter!!.returnType,
                             isManagedCall,
                             cinteropCall, // property is managed call C-Interop function
                             irGetField(irGet(property.getter!!.dispatchReceiverParameter!!), property.backingField!!), // unmanaged property call backing field value
-                            origin = IrStatementOrigin.IF))
+                            origin = IrStatementOrigin.IF
+                        )
+                    )
                 }
             }
         })

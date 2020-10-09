@@ -18,4 +18,3 @@ class Registrar : ComponentRegistrar {
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
     }
 }
-

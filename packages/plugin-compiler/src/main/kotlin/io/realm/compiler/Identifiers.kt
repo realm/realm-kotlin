@@ -16,10 +16,9 @@ internal object Names {
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
 
-    //C-interop methods
+    // C-interop methods
     val C_INTEROP_OBJECT_GET_STRING = Name.identifier("objectGetString")
     val C_INTEROP_OBJECT_GET_INT64 = Name.identifier("objectGetInt64")
-
 }
 
 internal object FqNames {

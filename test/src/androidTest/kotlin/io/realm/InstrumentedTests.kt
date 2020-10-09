@@ -1,11 +1,11 @@
 package io.realm
 
 import android.support.test.runner.AndroidJUnit4
+import io.realm.runtimeapi.RealmModelInternal
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
-import io.realm.runtimeapi.RealmModelInternal
 import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
@@ -33,5 +33,4 @@ class InstrumentedTests {
         assertEquals(0XCAFED00D, (realmModel.`$realm$Pointer` as BindingPointer).ptr)
         assertEquals("Sample", realmModel.`$realm$TableName`)
     }
-
 }

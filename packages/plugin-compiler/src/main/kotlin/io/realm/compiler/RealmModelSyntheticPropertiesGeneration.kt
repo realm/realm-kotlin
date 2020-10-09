@@ -40,17 +40,17 @@ import org.jetbrains.kotlin.name.Name
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInternal = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
-            ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
+        ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
     private val nullableNativePointerInterface = pluginContext.referenceClass(NATIVE_POINTER)?.createType(true, emptyList())
-            ?: error("${NATIVE_POINTER.asString()} interface not found")
+        ?: error("${NATIVE_POINTER.asString()} interface not found")
 
     fun addProperties(irClass: IrClass): IrClass =
-            irClass.apply {
-                addProperty(REALM_POINTER, nullableNativePointerInterface, ::irIsNull)
-                addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irIsNull)
-                addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irIsNull)
-                addProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
-            }
+        irClass.apply {
+            addProperty(REALM_POINTER, nullableNativePointerInterface, ::irIsNull)
+            addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irIsNull)
+            addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irIsNull)
+            addProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
+        }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     fun addSchema(irClass: IrClass) {
@@ -170,9 +170,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
 
     private fun irIsNull(startOffset: Int, endOffset: Int): IrExpressionBody =
-            IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType))
+        IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType))
 
     private fun irFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
-            IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType))
-
+        IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType))
 }

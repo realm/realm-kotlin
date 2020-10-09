@@ -1,6 +1,5 @@
 package io.realm
 
-import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import test.Sample
 import kotlin.test.Test

@@ -52,7 +52,6 @@ interface NativeWrapper {
             override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
                 TODO("Not yet implemented")
             }
-
         }
     }
 
