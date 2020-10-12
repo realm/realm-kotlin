@@ -8,12 +8,10 @@ import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_STRING
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
-import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
-import org.jetbrains.kotlin.backend.common.ScopeWithIr
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.jvm.ir.propertyIfAccessor
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
+import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.builders.irBlock
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
@@ -27,17 +25,19 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.isPropertyAccessor
-import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.types.isBoolean
+import org.jetbrains.kotlin.ir.types.isInt
+import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.types.isNullable
+import org.jetbrains.kotlin.ir.types.isString
+import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.isGetter
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -56,8 +56,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private lateinit var objectSetStringFun: IrSimpleFunction
     private lateinit var objectGetInt64Fun: IrSimpleFunction
     private lateinit var objectSetInt64Fun: IrSimpleFunction
-    private lateinit var objectGetBooleanFun: IrSimpleFunction
-    private lateinit var objectSetBooleanFun: IrSimpleFunction
+
+    //    private lateinit var objectGetBooleanFun: IrSimpleFunction
+//    private lateinit var objectSetBooleanFun: IrSimpleFunction
     private lateinit var getInstanceProperty: IrProperty
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
@@ -106,48 +107,37 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             it.name == Name.identifier("instance")
         } ?: error("Could not find property <get-instance>")
 
-        irClass.transformChildrenVoid(object : IrElementTransformerVoidWithContext() {
-            override fun visitFunctionNew(declaration: IrFunction): IrStatement {
-                if (!declaration.isPropertyAccessor)
-                    return declaration
-
-                val name = declaration.propertyIfAccessor.toIrBasedDescriptor().name.identifier
+        irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
+            override fun visitProperty(declaration: IrProperty): IrStatement {
+                val name = declaration.name.asString()
 
                 // Don't redefine accessors for internal synthetic properties
-                if (name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX)) {
+                if (declaration.backingField == null || name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX)) {
                     return declaration
                 }
 
-                val nullable = declaration.returnType.isNullable()
+                val propertyType = declaration.backingField!!.type
+                val nullable = propertyType.isNullable()
                 when {
-                    declaration.isRealmString() -> {
+                    propertyType.makeNotNull().isString() -> {
                         logInfo("String property named ${declaration.name} is nullable $nullable")
-                        if (declaration.isGetter) {
-                            fields[name] = Pair("string", nullable) // collect schema information once
-                            modifyGetterAccessor(irClass, currentScope, name, objectGetStringFun, declaration)
-                        } else { // isSetter
-                            modifySetterAccessor(irClass, currentScope, name, objectSetStringFun, declaration)
-                        }
+                        fields[name] = Pair("string", nullable) // collect schema information once
+                        modifyGetterAccessor(irClass, name, objectGetStringFun, declaration.getter!!)
+                        modifySetterAccessor(irClass, name, objectSetStringFun, declaration.setter!!)
                     }
-                    declaration.isRealmLong() -> {
+                    propertyType.makeNotNull().isLong() -> {
                         logInfo("Long property named ${declaration.name} is nullable $nullable")
-                        if (declaration.isGetter) {
-                            fields[name] = Pair("int", nullable)
-                            modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
-                        } else {
-                            modifySetterAccessor(irClass, currentScope, name, objectSetInt64Fun, declaration)
-                        }
+                        fields[name] = Pair("int", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetInt64Fun, declaration.getter!!)
+                        modifySetterAccessor(irClass, name, objectSetInt64Fun, declaration.setter!!)
                     }
-                    declaration.isRealmInt() -> {
+                    propertyType.makeNotNull().isInt() -> {
                         logInfo("Int property named ${declaration.name} is nullable $nullable")
-                        if (declaration.isGetter) {
-                            fields[name] = Pair("int", nullable)
-                            modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
-                        } else {
-                            modifySetterAccessor(irClass, currentScope, name, objectSetInt64Fun, declaration)
-                        }
+                        fields[name] = Pair("int", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetInt64Fun, declaration.getter!!)
+                        modifySetterAccessor(irClass, name, objectSetInt64Fun, declaration.setter!!)
                     }
-                    declaration.isRealmBoolean() -> {
+                    propertyType.makeNotNull().isBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
 //                        if (declaration.isGetter) {
 //                            fields[name] = Pair("boolean", nullable)
@@ -161,15 +151,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                 }
 
-                return super.visitFunctionNew(declaration)
+                return super.visitProperty(declaration)
             }
         })
     }
 
-    private fun modifyGetterAccessor(irClass: IrClass, currentScope: ScopeWithIr?, name: String, cInteropGetFunction: IrSimpleFunction, declaration: IrFunction) {
+    private fun modifyGetterAccessor(irClass: IrClass, name: String, cInteropGetFunction: IrSimpleFunction, declaration: IrFunction) {
         declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitReturn(expression: IrReturn): IrExpression {
-                return IrBlockBuilder(pluginContext, currentScope?.scope!!, expression.startOffset, expression.endOffset).irBlock {
+                return IrBlockBuilder(pluginContext, Scope(declaration.symbol), expression.startOffset, expression.endOffset).irBlock {
                     val property = irClass.properties.find {
                         it.name == Name.identifier(name)
                     } ?: error("Could not find property $name")
@@ -209,7 +199,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             isManagedCall,
                             cinteropCall, // property is managed call C-Interop function
                             irGetField(irGet(property.getter!!.dispatchReceiverParameter!!), property.backingField!!), // unmanaged property call backing field value
-                            origin = IrStatementOrigin.IF
+                            origin = IrStatementOrigin.IF,
                         )
                     )
                 }
@@ -217,10 +207,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         })
     }
 
-    private fun modifySetterAccessor(irClass: IrClass, currentScope: ScopeWithIr?, name: String, cInteropSetFunction: IrSimpleFunction, declaration: IrFunction) {
+    private fun modifySetterAccessor(irClass: IrClass, name: String, cInteropSetFunction: IrSimpleFunction, declaration: IrFunction) {
         declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitSetField(expression: IrSetField): IrExpression {
-                return IrBlockBuilder(pluginContext, currentScope?.scope!!, expression.startOffset, expression.endOffset).irBlock {
+                return IrBlockBuilder(pluginContext, Scope(declaration.symbol), expression.startOffset, expression.endOffset).irBlock {
                     val property = irClass.properties.find {
                         it.name == Name.identifier(name)
                     } ?: error("Could not find property $name")
@@ -243,8 +233,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         putValueArgument(1, irString(name))
                         putValueArgument(2, irGet(declaration.valueParameters.first()))
                     }
-
-                    logWarn(cinteropCall.dump())
 
                     +irReturn(
                         irIfThenElse(
