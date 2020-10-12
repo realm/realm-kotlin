@@ -1,10 +1,8 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.NATIVE_WRAPPER
-import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_BOOLEAN
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_STRING
-import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_BOOLEAN
 import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_STRING
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
