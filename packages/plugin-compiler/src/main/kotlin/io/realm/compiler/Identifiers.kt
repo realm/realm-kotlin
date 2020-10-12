@@ -20,6 +20,9 @@ internal object Names {
     val C_INTEROP_OBJECT_GET_STRING = Name.identifier("objectGetString")
     val C_INTEROP_OBJECT_SET_STRING = Name.identifier("objectSetString")
     val C_INTEROP_OBJECT_GET_INT64 = Name.identifier("objectGetInt64")
+    val C_INTEROP_OBJECT_SET_INT64 = Name.identifier("objectSetInt64")
+    val C_INTEROP_OBJECT_GET_BOOLEAN = Name.identifier("objectGetBoolean")
+    val C_INTEROP_OBJECT_SET_BOOLEAN = Name.identifier("objectSetBoolean")
 }
 
 internal object FqNames {

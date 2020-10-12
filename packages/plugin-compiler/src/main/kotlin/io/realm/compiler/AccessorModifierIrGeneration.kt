@@ -1,8 +1,11 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.NATIVE_WRAPPER
+import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_BOOLEAN
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_STRING
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_BOOLEAN
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_STRING
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -42,6 +45,10 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 
+/**
+ * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
+ * It also collect the schema information while processing the class properties.
+ */
 class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private lateinit var objectPointerProperty: IrProperty
     private lateinit var isManagedProperty: IrProperty
@@ -50,6 +57,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private lateinit var objectGetStringFun: IrSimpleFunction
     private lateinit var objectSetStringFun: IrSimpleFunction
     private lateinit var objectGetInt64Fun: IrSimpleFunction
+    private lateinit var objectSetInt64Fun: IrSimpleFunction
+    private lateinit var objectGetBooleanFun: IrSimpleFunction
+    private lateinit var objectSetBooleanFun: IrSimpleFunction
     private lateinit var getInstanceProperty: IrProperty
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
@@ -82,6 +92,18 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             it.name == C_INTEROP_OBJECT_GET_INT64
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INT64.asString()}")
 
+        objectSetInt64Fun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_SET_INT64
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_INT64.asString()}")
+
+//        objectGetBooleanFun = nativeWrapperClass.functions.find {
+//            it.name == C_INTEROP_OBJECT_GET_BOOLEAN
+//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_BOOLEAN.asString()}")
+//
+//        objectSetBooleanFun = nativeWrapperClass.functions.find {
+//            it.name == C_INTEROP_OBJECT_GET_BOOLEAN
+//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_BOOLEAN.asString()}")
+
         getInstanceProperty = nativeWrapperCompanion.properties.find {
             it.name == Name.identifier("instance")
         } ?: error("Could not find property <get-instance>")
@@ -111,17 +133,30 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     declaration.isRealmLong() -> {
                         logInfo("Long property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("int", nullable)
-                        modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
+                        if (declaration.isGetter) {
+                            fields[name] = Pair("int", nullable)
+                            modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
+                        } else {
+                            modifySetterAccessor(irClass, currentScope, name, objectSetInt64Fun, declaration)
+                        }
                     }
                     declaration.isRealmInt() -> {
                         logInfo("Int property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("int", nullable)
-                        modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
+                        if (declaration.isGetter) {
+                            fields[name] = Pair("int", nullable)
+                            modifyGetterAccessor(irClass, currentScope, name, objectGetInt64Fun, declaration)
+                        } else {
+                            modifySetterAccessor(irClass, currentScope, name, objectSetInt64Fun, declaration)
+                        }
                     }
                     declaration.isRealmBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("boolean", nullable)
+//                        if (declaration.isGetter) {
+//                            fields[name] = Pair("boolean", nullable)
+//                            modifyGetterAccessor(irClass, currentScope, name, objectGetBooleanFun, declaration)
+//                        } else {
+//                            modifySetterAccessor(irClass, currentScope, name, objectSetBooleanFun, declaration)
+//                        }
                     }
                     else -> {
                         logInfo("Type not processed: ${declaration.dump()}")
