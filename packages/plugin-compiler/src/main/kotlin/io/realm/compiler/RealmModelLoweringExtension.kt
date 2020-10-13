@@ -20,24 +20,26 @@ class RealmModelLoweringExtension : IrGenerationExtension {
         RealmModelLowering(pluginContext).lower(moduleFragment)
         moduleFragment.checkDeclarationParents()
 
-        logger("Collected schema is: ${SchemaCollector.properties}")
+        logInfo("Collected schema is: ${SchemaCollector.properties}")
     }
 }
 
 private class RealmModelLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
     override fun lower(irClass: IrClass) {
         if (irClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
-            // Modify properties accessor to generate custom getter/setter
-            AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndReturnSchema(irClass)
-
             // add super type RealmModelInternal
             val realmModelClass: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
                 ?: error("RealmModelInternal interface not found")
-            irClass.superTypes = irClass.superTypes + realmModelClass.defaultType
+            irClass.superTypes += realmModelClass.defaultType
 
-            // Generate properties
+            // Generate RealmModelInternal properties overrides
             val generator = RealmModelSyntheticPropertiesGeneration(pluginContext)
             generator.addProperties(irClass)
+
+            // Modify properties accessor to generate custom getter/setter
+            AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
+
+            // Add body for the schema synthetic method
             generator.addSchema(irClass)
         } else {
             if (irClass.isCompanion && irClass.parentAsClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
