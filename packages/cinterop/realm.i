@@ -31,7 +31,7 @@ typedef jstring realm_string_t;
 
 //typedef long* realm_t;
 %typemap(jstype) realm_t* "LongPointerWrapper"
-%typemap(javain) realm_t* "$javainput.ptr"
+%typemap(javain) realm_t* "$javainput.ptr()"
 %typemap(javaout) realm_t* {
     return new LongPointerWrapper($jnicall);
 }

@@ -38,14 +38,6 @@ kotlin {
 // JVM
 kotlin {
     jvm()
-
-    sourceSets {
-        jvmMain {
-            dependencies {
-                implementation(project(":clib-jvm"))
-            }
-        }
-    }
 }
 
 // Android configuration
@@ -213,6 +205,7 @@ tasks.create("wrapperIos") {
             commandLine("make", "-j8", "realm-objectstore-wrapper")
         }
     }
+    inputs.dir("cpp_engine/build-macos/CMakeLists.txt")
     outputs.file("cpp_engine/build-ios/librealm-objectstore-wrapper.a")
 }
 // FIXME Requires ANDROID_NDK environment variable to point to android-ndk-r10e folder
@@ -223,6 +216,7 @@ tasks.create("wrapperAndroid") {
         exec {
             workingDir("cpp_engine/build-android")
             commandLine("cmake", "-DCMAKE_TOOLCHAIN_FILE=../android.toolchain.cmake", "-DANDROID_ABI=x86_64", "-DENABLE_DEBUG_CORE=false", ".")
+            environment ANDROID_NDK: System.getenv("ANDROID_NDK_HOME")
         }
         exec {
             workingDir("cpp_engine/build-android")
@@ -233,6 +227,7 @@ tasks.create("wrapperAndroid") {
             into "src/androidMain/jniLibs/x86_64/"
         }
     }
+    inputs.file("cpp_engine/build-android/CMakeLists.txt")
     outputs.file("src/androidMain/jniLibs/x86_64/librealm-objectstore-wrapper-android-dynamic.so")
 }
 tasks.named("preBuild") {
