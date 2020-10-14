@@ -123,7 +123,11 @@ kotlin {
         }
     }
     sourceSets {
-        iosMain {}
+        iosMain {
+            dependencies {
+                implementation(project(":cinterop"))
+            }
+        }
         iosTest {}
     }
 }
@@ -193,7 +197,8 @@ tasks.create("os") {
     }
     outputs.file("cpp_engine/external/realm-object-store/src/librealm-object-store.a")
 }
-tasks.create("wrapperIos") {
+// Currently reusing macos libraries build with Xcode pre 12 which can be used for both macos and ios simulator
+tasks.create("wrapperMacos") {
     dependsOn("os")
     doLast {
         exec {
@@ -205,7 +210,7 @@ tasks.create("wrapperIos") {
             commandLine("make", "-j8", "realm-objectstore-wrapper")
         }
     }
-    inputs.dir("cpp_engine/build-macos/CMakeLists.txt")
+    // FIXME Find a way to prevent recompilation
     outputs.file("cpp_engine/build-ios/librealm-objectstore-wrapper.a")
 }
 // FIXME Requires ANDROID_NDK environment variable to point to android-ndk-r10e folder
@@ -227,13 +232,17 @@ tasks.create("wrapperAndroid") {
             into "src/androidMain/jniLibs/x86_64/"
         }
     }
-    inputs.file("cpp_engine/build-android/CMakeLists.txt")
+    // FIXME Find a way to prevent recompilation
     outputs.file("src/androidMain/jniLibs/x86_64/librealm-objectstore-wrapper-android-dynamic.so")
 }
 tasks.named("preBuild") {
     dependsOn(wrapperAndroid)
 }
 tasks.named("cinteropObjectstore_wrapperMacos") {
-    dependsOn(wrapperIos)
+    // FIXME Currently reusing ios libraries build
+    dependsOn(wrapperMacos)
+}
+tasks.named("cinteropObjectstore_wrapperIos") {
+    dependsOn(wrapperMacos)
 }
 

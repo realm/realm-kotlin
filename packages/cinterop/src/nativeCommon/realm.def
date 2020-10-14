@@ -1,9 +1,9 @@
 headers = realm.h
 headerFilter = realm.h
-staticLibraries = librealm-ffi-static-dbg.a
+staticLibraries = librealm-ffi-static-dbg.a librealm-dbg.a librealm-parser-dbg.a
 // This is relative to project root
-//libraryPaths.macos_x64 = ../../external/core/build.macos_x64/src
-libraryPaths.macos_x64 = .
+// FIXME Add -Debug
+libraryPaths.ios_x64 = ../../external/core/build-macos_x64/src ../../external/core/build-macos_x64/src/realm ../../external/core/build-macos_x64/src/realm/parser
 
 // Possible options
 // linkerOpts = -framework Foundation -framework CoreFoundation -framework Security

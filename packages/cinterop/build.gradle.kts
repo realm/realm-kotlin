@@ -75,13 +75,17 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     sourceSets {
-        val commonMain by getting {}
+        val commonMain by getting {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+            }
+        }
+        // FIXME Maybe not the best idea to have in separate source set, but ideally we could reuse
+        //  it for all JVM platform, seems like there are issues for the IDE to recognize symbols
+        //  using this approach, but maybe a general thing (also issues with native cinterops)
         val jvmCommon by creating {
             dependsOn(commonMain)
             kotlin.srcDir("src/jvmCommon/kotlin")
-//            dependencies {
-//                implementation(kotlin("stdlib"))
-//            }
         }
         val androidMain by getting {
             dependsOn(jvmCommon)
@@ -89,15 +93,43 @@ kotlin {
                 implementation(kotlin("stdlib"))
             }
         }
-        // FIXME If we define this separately then we do not get IDE assistance around the wrappers
-        val nativeCommon by creating {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/nativeCommon")
+        // FIXME Ideally we could reuse platform implementation just by using different cinterop
+        //  klibs, but seems like IDE does not resolve symbols, which is a bit annoying
+//        val nativeCommon by creating {
+//            dependsOn(commonMain)
+//            kotlin.srcDir("src/nativeCommon/kotlin")
+//        }
+        // FIXME Maybe it is some other IDE issue causing the IDE not recognizing symbols when
+        //  using above, because now it also doesn't work when using it directly
+        val iosMain by creating {
+//            dependsOn(nativeCommon)
+            kotlin.srcDir("src/iosMain/kotlin")
         }
     }
 }
 
-tasks.create("cinteropRealm_wrapper_x86_64") {
+// Ios configuration
+kotlin {
+    // For ARM, should be changed to iosArm32 or iosArm64
+    // For Linux, should be changed to e.g. linuxX64
+    // For MacOS, should be changed to e.g. macosX64
+    // For Windows, should be changed to e.g. mingwX64
+
+    // We should be able to reuse configuration across different architectures (x86_64/arv differentiation can be done in def file)
+    // FIXME Ideally we could reuse it across all native builds, but would have to do it dynamically
+    //  as it does not seem like we can do this from the current target "hierarchy" (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
+    ios("ios") {
+        compilations.getByName("main") {
+            cinterops.create("realm_wrapper") {
+                defFile = project.file("src/nativeCommon/realm.def")
+                packageName = "realm_wrapper"
+                includeDirs("${project.projectDir}/../../external/core/src/realm")
+            }
+        }
+    }
+}
+
+tasks.create("capi_android_x86_64") {
     doLast {
         exec {
             workingDir("../../external/core")
@@ -121,5 +153,42 @@ tasks.create("realmWrapperJvm") {
 }
 tasks.named("preBuild") {
     dependsOn(tasks.named("realmWrapperJvm"))
-    dependsOn(tasks.named("cinteropRealm_wrapper_x86_64"))
+    dependsOn(tasks.named("capi_android_x86_64"))
+}
+
+
+// FIXME/TODO Core build fails, so currently reusing macos build which prior to Xcode 12 can be used for both macos and ios simulator
+tasks.create("capi_ios_simulator") {
+    doLast {
+        exec {
+            workingDir("../../external/core")
+            commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
+            // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
+            environment(mapOf("ANDROID_NDK" to System.getenv("ANDROID_HOME") + "/ndk/21.0.6113669"))
+        }
+    }
+}
+
+tasks.create("capi_macos_x64") {
+    doLast {
+        exec {
+            workingDir("../../external/core")
+            commandLine("mkdir", "-p", "build-macos_x64")
+        }
+        exec {
+            workingDir("../../external/core/build-macos_x64")
+            commandLine("cmake", "-D", "CMAKE_BUILD_TYPE=debug", "..")
+        }
+        exec {
+            workingDir("../../external/core/build-macos_x64")
+            commandLine("cmake", "--build", ".", "-j8")
+        }
+    }
+// TODO Fix inputs to prevent for proper incremental builds
+//    inputs.dir("../../external/core/build-macos_x64")
+    outputs.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so")
+}
+
+tasks.named("cinteropRealm_wrapperIosX64") {
+    dependsOn(tasks.named("capi_macos_x64"))
 }
