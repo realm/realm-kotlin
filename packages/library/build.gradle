@@ -83,6 +83,9 @@ kotlin {
     sourceSets {
         androidMain {
             kotlin.srcDir("src/androidMain/kotlin")
+            dependencies {
+                implementation(project(":cinterop"))
+            }
         }
 
         androidTest {

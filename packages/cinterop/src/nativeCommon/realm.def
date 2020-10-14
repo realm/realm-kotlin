@@ -1,0 +1,12 @@
+headers = realm.h
+headerFilter = realm.h
+staticLibraries = librealm-ffi-static-dbg.a
+// This is relative to project root
+//libraryPaths.macos_x64 = ../../external/core/build.macos_x64/src
+libraryPaths.macos_x64 = .
+
+// Possible options
+// linkerOpts = -framework Foundation -framework CoreFoundation -framework Security
+// compilerOpts
+// excludeDependentModules
+// noStringConversion = LoadCursorA LoadCursorW

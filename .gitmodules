@@ -2,3 +2,7 @@
 	path = packages/library/cpp_engine/external/realm-object-store
 	url = https://github.com/realm/realm-object-store
 	branch = master
+[submodule "external/core"]
+	path = external/core
+	url = git@github.com:realm/realm-core.git
+	branch = su/c-api
