@@ -3,6 +3,8 @@ headerFilter = realm.h
 staticLibraries = librealm-ffi-static-dbg.a librealm-dbg.a librealm-parser-dbg.a
 // This is relative to project root
 // FIXME Add -Debug
+libraryPaths.macos_x64 = ../../external/core/build-macos_x64/src/realm/object-store/c_api ../../external/core/build-macos_x64/src/realm ../../external/core/build-macos_x64/src/realm/parser
+// FIXME Prior to Xcode 12 we can just reuse macos libraries for ios simulator builds
 libraryPaths.ios_x64 = ../../external/core/build-macos_x64/src/realm/object-store/c_api ../../external/core/build-macos_x64/src/realm ../../external/core/build-macos_x64/src/realm/parser
 
 // Possible options

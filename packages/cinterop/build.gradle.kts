@@ -65,7 +65,7 @@ android {
     // Innter externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
-            setPath("src/jvmCommon/jni/CMakeLists.txt")
+            setPath("src/jvmCommon/CMakeLists.txt")
         }
     }
 
@@ -111,9 +111,12 @@ kotlin {
 //        }
         // FIXME Maybe it is some other IDE issue causing the IDE not recognizing symbols when
         //  using above, because now it also doesn't work when using it directly
-        val iosMain by creating {
+        val macosMain by creating {
 //            dependsOn(nativeCommon)
             kotlin.srcDir("src/iosMain/kotlin")
+        }
+        val iosMain by creating {
+            dependsOn(macosMain)
         }
     }
 }
@@ -129,6 +132,15 @@ kotlin {
     // FIXME Ideally we could reuse it across all native builds, but would have to do it dynamically
     //  as it does not seem like we can do this from the current target "hierarchy" (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
     iosX64("ios") {
+        compilations.getByName("main") {
+            cinterops.create("realm_wrapper") {
+                defFile = project.file("src/nativeCommon/realm.def")
+                packageName = "realm_wrapper"
+                includeDirs("${project.projectDir}/../../external/core/src/realm")
+            }
+        }
+    }
+    macosX64("macos") {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
