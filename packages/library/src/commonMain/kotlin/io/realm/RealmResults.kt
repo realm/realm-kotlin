@@ -8,11 +8,10 @@ class RealmResults<T : RealmModel> constructor(private val queryPointer: NativeP
                                                                            private val modelFactory: ModelFactory
 ) : AbstractList<T>() {
     override val size: Int
-        get() = CInterop.queryGetSize(queryPointer).toInt()
+        get() = TODO() // CInterop.queryGetSize(queryPointer).toInt()
 
     override fun get(index: Int): T {
-        val objectPointer =
-            CInterop.queryGetObjectAt(queryPointer, clazz.simpleName!!, index)
+        val objectPointer = TODO() // CInterop.queryGetObjectAt(queryPointer, clazz.simpleName!!, index)
         val model = modelFactory.invoke(clazz)
         model.isManaged = true
         model.objectPointer = objectPointer

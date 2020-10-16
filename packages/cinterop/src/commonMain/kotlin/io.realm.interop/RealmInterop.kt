@@ -1,6 +1,7 @@
 package io.realm.interop
 
-interface NativePointer
+import io.realm.runtimeapi.NativePointer
+
 
 expect object RealmInterop {
 
