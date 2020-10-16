@@ -4,6 +4,7 @@ import io.realm.runtimeapi.NativePointer
 
 // JVM/Android specific pointer wrapper
 class LongPointerWrapper(val ptr : Long): NativePointer {
+    // FIXME Maybe make private property with public getter, to make it directly accessible from Swig Java module
     fun ptr() :  Long{
         return ptr
     }

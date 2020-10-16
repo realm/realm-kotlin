@@ -9,9 +9,10 @@ link_directories("${CAPI_BUILD}/src/realm/object-store") # realm-object-store
 link_directories("${CAPI_BUILD}/src/realm/parser")       # realm-parser
 link_directories("${CAPI_BUILD}/src/realm/sync")         # realm-sync
 link_directories("${CAPI_BUILD}/src/realm")              # realm-object-store
-link_directories("${CAPI_BUILD}/src/")                   # librealm-ffi-dbg.a
+link_directories("${CAPI_BUILD}/src/realm/object-store/c_api") # librealm-ffi-dbg.a
+link_directories("${CAPI_BUILD}/openssl/lib/")           # libcrypto.a libssl.a
 
-add_library(realmc SHARED realmc.c)
+add_library(realmc SHARED realmc.cpp)
 
 include_directories("${CAPI}/src/")
 
@@ -26,8 +27,7 @@ include_directories("${CAPI}/src/")
 #target_link_libraries(realmc realm-ffi-dbg)
 
 # 2 Static library
-
-# Grabbed from realm-java
+# SSL configuration grabbed from realm-java
 # Download OpenSSL lib
 # FIXME Read the openssl version from core when the core/sync release has that information.
 set(openssl_VERSION "1.1.1b")
@@ -45,4 +45,4 @@ get_target_property(openssl_include_DIR OpenSSL::Crypto INTERFACE_INCLUDE_DIRECT
 get_target_property(crypto_LIB OpenSSL::Crypto IMPORTED_LOCATION)
 get_target_property(ssl_LIB OpenSSL::SSL IMPORTED_LOCATION)
 
-target_link_libraries(realmc log android realm-ffi-static-dbg realm-object-store-dbg realm-sync-dbg stdc++  realm-parser-dbg realm-dbg  OpenSSL::SSL OpenSSL::Crypto z)
+target_link_libraries(realmc log android realm-ffi-static-dbg realm-object-store-dbg realm-sync-dbg stdc++  realm-parser-dbg realm-dbg OpenSSL::SSL OpenSSL::Crypto  z)

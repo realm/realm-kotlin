@@ -22,7 +22,6 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib-common')
                 implementation kotlin('reflect')
-                api(project(":runtime-api"))
             }
         }
 

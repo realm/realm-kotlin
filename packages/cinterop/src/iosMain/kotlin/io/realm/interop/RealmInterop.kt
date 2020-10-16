@@ -1,13 +1,6 @@
 package io.realm.interop
 
 import io.realm.runtimeapi.NativePointer
-
-// JVM/Android specific pointer wrapper
-class LongPointerWrapper(val ptr : Long): NativePointer {
-    fun ptr() :  Long{
-        return ptr
-    }
-}
 import kotlinx.cinterop.toKString
 import realm_wrapper.*
 
@@ -26,7 +19,6 @@ actual object RealmInterop {
 
     actual fun realm_open(config: io.realm.interop.NativePointer): io.realm.interop.NativePointer {
         TODO()
-        // Compiler complains without useless cast
     }
 
     actual fun realm_close(realm: io.realm.interop.NativePointer) {

@@ -1,26 +1,44 @@
 %module realmc
 %{
 #include "realm/realm.h"
+#include <cstring>
+#include <string>
 %}
 
-%include "typemaps.i"
+// TODO
+//  - Memory management
+//  - Optimization
+//    - Transfer "value semantics" objects in one go
 
+%include "typemaps.i"
+%include "stdint.i"
+%include "arrays_java.i"
+
+// Manual imports in java module class
 %pragma(java) moduleimports=%{
 import io.realm.interop.LongPointerWrapper;
 %}
 
+// Manual additions to java module class
 %pragma(java) modulecode=%{
-  // > Manual additions
-  // < Manual addition
+  //  Manual addition
+%}
+
+// Helpers included directly in cpp file
+%{
+realm_string_t rlm_str(const char* str)
+{
+    return realm_string_t{str, std::strlen(str)};
+}
 %}
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;
-%typemap(in) (jstring) {
-	realm_string_t $1;
-//	$1.data = jenv->GetStringUTFChars($arg, 0);
-//	$1.size = strlen($1.data)
-}
+// FIXME Optimize...maybe port JStringAccessor from realm-
+//%typemap(jtype) realm_string_t "String"
+//%typemap(jstype) realm_string_t "String"
+%typemap(in) (realm_string_t) "$1 = rlm_str(jenv->GetStringUTFChars($arg,0));"
+%typemap(out) (realm_string_t) "$result = jenv->NewStringUTF(std::string($1.data, 0, $1.size).c_str());"
 
 //typedef long* realm_config_t;
 %typemap(jstype) realm_config_t* "long"
@@ -28,6 +46,8 @@ typedef jstring realm_string_t;
 %typemap(javaout) realm_config_t* {
     return $jnicall;
 }
+// Reuse above mapping of point on all the other pointer types
+%apply realm_config_t* { realm_object_t* , realm_query_t*};
 
 //typedef long* realm_t;
 %typemap(jstype) realm_t* "LongPointerWrapper"
@@ -36,37 +56,50 @@ typedef jstring realm_string_t;
     return new LongPointerWrapper($jnicall);
 }
 
-// Small collection of methods
-const char* realm_get_library_version();
-realm_config_t* realm_config_new();
-bool realm_config_set_path(realm_config_t*, realm_string_t);
-realm_t* realm_open(const realm_config_t* config);
-bool realm_close(realm_t*);
+%include "carrays.i"
+%array_functions(realm_class_info_t, classArray);
+%array_functions(realm_property_info_t, propertyArray);
+%array_functions(realm_property_info_t*, propertyArrayArray);
 
-// Custom auxiliary method
-void custom(char* s);
-// Implementation
-%{
-void custom(char* s) {
-    printf("Hello, %s", s);
-}
-%}
+// Not yet available in library
+%ignore "realm_get_async_error";
+%ignore "realm_get_last_error_as_async_error";
+%ignore "realm_config_set_encryption_key";
+%ignore "realm_config_set_disable_format_upgrade";
+%ignore "realm_config_set_sync_config";
+%ignore "realm_config_set_force_sync_history";
+%ignore "realm_config_set_audit_factory";
+%ignore "realm_is_closed";
+%ignore "realm_is_writable";
+%ignore "_realm_get_schema_native";
+%ignore "realm_find_primary_key_property";
+%ignore "realm_object_get_table";
+%ignore "_realm_list_from_native_copy";
+%ignore "_realm_list_from_native_move";
+%ignore "realm_list_assign";
+%ignore "_realm_set_from_native_copy";
+%ignore "_realm_set_from_native_move";
+%ignore "realm_get_set";
+%ignore "realm_set_size";
+%ignore "realm_set_get";
+%ignore "realm_set_find";
+%ignore "realm_set_insert";
+%ignore "realm_set_erase";
+%ignore "realm_set_clear";
+%ignore "realm_set_assign";
+%ignore "realm_set_add_notification_callback";
+%ignore "_realm_dictionary_from_native_copy";
+%ignore "_realm_dictionary_from_native_move";
+%ignore "realm_get_dictionary";
+%ignore "realm_dictionary_size";
+%ignore "realm_dictionary_get";
+%ignore "realm_dictionary_insert";
+%ignore "realm_dictionary_erase";
+%ignore "realm_dictionary_clear";
+%ignore "realm_dictionary_assign";
+%ignore "realm_dictionary_add_notification_callback";
+%ignore "realm_query_delete_all";
+%ignore "realm_results_snapshot";
+%ignore "realm_results_freeze";
 
-typedef struct realm_string {
-    const char* data;
-    size_t size;
-} realm_string_t;
-
-typedef enum realm_value_type {
-    RLM_TYPE_NULL,
-    RLM_TYPE_INT,
-    RLM_TYPE_BOOL,
-    RLM_TYPE_STRING,
-    RLM_TYPE_BINARY,
-    RLM_TYPE_TIMESTAMP,
-    RLM_TYPE_FLOAT,
-    RLM_TYPE_DOUBLE,
-    RLM_TYPE_DECIMAL128,
-    RLM_TYPE_OBJECT_ID,
-    RLM_TYPE_LINK,
-} realm_value_type_e;
+%include "realm.h"

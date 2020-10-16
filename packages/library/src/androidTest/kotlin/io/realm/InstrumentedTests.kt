@@ -1,11 +1,9 @@
 package io.realm
 
 import android.support.test.runner.AndroidJUnit4
-import io.realm.model.Sample
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
@@ -18,9 +16,6 @@ class InstrumentedTests {
     @Test
     fun cinterop_swig() {
         System.loadLibrary("realmc")
-        println(realmc.realm_get_library_version())
-        val config = realmc.realm_config_new()
-        realmc.realm_open(config)
         println(io.realm.interop.RealmInterop.realm_get_library_version())
     }
 
