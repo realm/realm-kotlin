@@ -61,6 +61,8 @@ typedef jstring realm_string_t;
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
 
+#define __attribute__(x)
+
 // Not yet available in library
 %ignore "realm_get_async_error";
 %ignore "realm_get_last_error_as_async_error";
