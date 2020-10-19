@@ -97,7 +97,6 @@ kotlin {
 kotlin {
     sourceSets {
         nativeCommon {
-            kotlin.srcDir("src/nativeCommon/kotlin")
             dependencies {
                 implementation(project(":cinterop"))
             }

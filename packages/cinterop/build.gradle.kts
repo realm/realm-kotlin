@@ -104,13 +104,11 @@ kotlin {
             }
         }
         // FIXME Ideally we could reuse platform implementation just by using different cinterop
-        //  klibs, but seems like IDE does not resolve symbols, which is a bit annoying
+        //  klibs, but seems like IDE does not resolve symbols, which is pretty annoying
 //        val nativeCommon by creating {
 //            dependsOn(commonMain)
 //            kotlin.srcDir("src/nativeCommon/kotlin")
 //        }
-        // FIXME Maybe it is some other IDE issue causing the IDE not recognizing symbols when
-        //  using above, because now it also doesn't work when using it directly
         val macosMain by creating {
 //            dependsOn(nativeCommon)
             kotlin.srcDir("src/iosMain/kotlin")
@@ -131,6 +129,8 @@ kotlin {
     // We should be able to reuse configuration across different architectures (x86_64/arv differentiation can be done in def file)
     // FIXME Ideally we could reuse it across all native builds, but would have to do it dynamically
     //  as it does not seem like we can do this from the current target "hierarchy" (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
+    // FIXME If the native target is not specified fully (with architecture) the cinterop
+    //  symbols won't be recognized by the IDE which is pretty annoying.
     iosX64("ios") {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
