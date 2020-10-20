@@ -5,7 +5,7 @@ import io.realm.runtimeapi.NativeWrapper
 import java.io.File
 
 @Suppress("FunctionNaming")
-actual internal object CInterop : NativeWrapper {
+internal actual object CInterop : NativeWrapper {
     /* load the shared library on application startup. */
     init {
         System.loadLibrary("realm-objectstore-wrapper-android-dynamic")

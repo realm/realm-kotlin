@@ -4,7 +4,7 @@ package io.realm
 import platform.Foundation.NSFileManager
 // import platform.Foundation.NSUserDomainMask
 
-actual internal object PlatformUtils {
+internal actual object PlatformUtils {
     actual fun getPathOrUseDefaultLocation(realmConfiguration: RealmConfiguration): String {
         val directory = realmConfiguration.path
 //        NSFileManager.defaultManager.URLsForDirectory(NSDocumentDirectory, NSUserDomainMask).first().toString()

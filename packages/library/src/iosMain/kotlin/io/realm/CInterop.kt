@@ -6,7 +6,7 @@ import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.toKString
 import objectstore_wrapper.* // ktlint-disable no-wildcard-imports
 
-actual internal object CInterop : NativeWrapper {
+internal actual object CInterop : NativeWrapper {
     init {
         NativeWrapper.instance = this
     }
