@@ -11,7 +11,7 @@ internal typealias ModelFactory = ((KClass<out RealmModel>) -> RealmModel)
 public class RealmConfiguration private constructor(
     public val path: String?, // Full path if we don't want to use the default location
     public val name: String?, // Optional Realm name (default is 'default')
-    public val modelFactory: ModelFactory // Factory to instantiate proxy object (since reflection is not supported in K/N) TODO: Should this be public?
+    public val modelFactory: ModelFactory // Factory to instantiate proxy object (since reflection is not supported in K/N) TODO Should this be public?
 ) {
     public data class Builder(
         var path: String? = null,
@@ -20,7 +20,7 @@ public class RealmConfiguration private constructor(
     ) {
         public fun path(path: String): RealmConfiguration.Builder = apply { this.path = path }
         public fun name(name: String): RealmConfiguration.Builder = apply { this.name = name }
-        public fun factory(factory: ModelFactory): RealmConfiguration.Builder = apply { this.modelFactory = factory } // TODO: Should this be public?
+        public fun factory(factory: ModelFactory): RealmConfiguration.Builder = apply { this.modelFactory = factory } // TODO Should this be public?
         public fun build(): RealmConfiguration {
             if (modelFactory != null) {
                 return RealmConfiguration(path, name, modelFactory!!)
