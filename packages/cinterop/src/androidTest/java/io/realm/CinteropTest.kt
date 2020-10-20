@@ -147,7 +147,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config, BigInteger("1"))
 
-        val realm = realmc.realm_open(config);
+        val realm = realmc.realm_open(config)
     }
 
 }

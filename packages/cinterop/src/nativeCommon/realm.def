@@ -1,17 +1,6 @@
 headers = realm.h
 headerFilter = realm.h
-// FIXME Lacks objects store, but seems to trigger requirement for Sync and then ssl, crypto and z
-staticLibraries = librealm-ffi-static-dbg.a librealm-dbg.a librealm-parser-dbg.a
-//staticLibraries = librealm-ffi-static-dbg.a librealm-dbg.a librealm-parser-dbg.a librealm-object-store-dbg.a librealm-sync-dbg.a
-// This is relative to project root
-// FIXME Add -Debug
-libraryPaths.macos_x64 = ../../external/core/build-macos_x64/src/realm/object-store/c_api ../../external/core/build-macos_x64/src/realm ../../external/core/build-macos_x64/src/realm/parser ../../external/core/build-macos_x64/src/realm/object-store/ ../../external/core/build-macos_x64/src/realm/sync
-// FIXME Prior to Xcode 12 we can just reuse macos libraries for ios simulator builds
-libraryPaths.ios_x64 = ../../external/core/build-macos_x64/src/realm/object-store/c_api ../../external/core/build-macos_x64/src/realm ../../external/core/build-macos_x64/src/realm/parser ../../external/core/build-macos_x64/src/realm/object-store/ ../../external/core/build-macos_x64/src/realm/sync
+staticLibraries = librealm-ffi-static-dbg.a librealm-dbg.a librealm-parser-dbg.a librealm-object-store-dbg.a
+libraryPaths.macos_x64 = ../../external/core/build-macos_x64/src/realm/object-store/c_api ../../external/core/build-macos_x64/src/realm ../../external/core/build-macos_x64/src/realm/parser ../../external/core/build-macos_x64/src/realm/object-store/
+libraryPaths.ios_x64 = ../../external/core/build-macos_x64/src/realm/object-store/c_api ../../external/core/build-macos_x64/src/realm ../../external/core/build-macos_x64/src/realm/parser ../../external/core/build-macos_x64/src/realm/object-store/
 linkerOpts = -lz -framework Foundation -framework CoreFoundation -framework Security
-# asdfasdf
-// Possible options
-// linkerOpts = -framework Foundation -framework CoreFoundation -framework Security
-// compilerOpts
-// excludeDependentModules
-// noStringConversion = LoadCursorA LoadCursorW

@@ -202,7 +202,7 @@ tasks.create("capi_macos_x64") {
         }
         exec {
             workingDir("../../external/core/build-macos_x64")
-            commandLine("cmake", "-D", "CMAKE_BUILD_TYPE=debug", "..")
+            commandLine("cmake", "-DCMAKE_BUILD_TYPE=debug", "-DREALM_ENABLE_SYNC=0", "-DREALM_NO_TESTS=1", "..")
         }
         exec {
             workingDir("../../external/core/build-macos_x64")

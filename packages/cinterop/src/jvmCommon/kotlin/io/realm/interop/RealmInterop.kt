@@ -1,14 +1,10 @@
 package io.realm.interop
 
 import io.realm.runtimeapi.NativePointer
+import kotlin.jvm.JvmName
 
 // JVM/Android specific pointer wrapper
-class LongPointerWrapper(val ptr : Long): NativePointer {
-    // FIXME Maybe make private property with public getter, to make it directly accessible from Swig Java module
-    fun ptr() :  Long{
-        return ptr
-    }
-}
+class LongPointerWrapper(@get:JvmName("ptr") val ptr : Long): NativePointer
 
 actual object RealmInterop {
     actual fun realm_get_library_version(): String {
@@ -25,7 +21,7 @@ actual object RealmInterop {
 
     actual fun realm_open(config: NativePointer): NativePointer {
         // Compiler complains without useless cast
-        return realmc.realm_open((config as LongPointerWrapper).ptr) as NativePointer
+        return realmc.realm_open((config as LongPointerWrapper).ptr)
     }
 
     actual fun realm_close(realm: NativePointer) {
