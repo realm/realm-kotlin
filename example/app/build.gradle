@@ -1,15 +1,16 @@
 plugins {
-    id 'org.jetbrains.kotlin.multiplatform' version '1.3.60'
-    id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
+    id("org.jetbrains.kotlin.multiplatform")
+    id("com.android.application")
+    id("kotlin-android-extensions")
+    id("realm-ktlint")
 }
+
 repositories {
     google()
     jcenter()
     mavenCentral()
     mavenLocal()
 }
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
@@ -36,26 +37,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
 }
 
-ktlint {
-    // TODO: Figure out how to extract this so it can be shared between all projects we run ktlint on
-    // TODO Convert to kts
-    version.set("0.39.0")
-    additionalEditorconfigFile.set(file("$rootDir/../.editorconfig"))
-    debug.set(false)
-    verbose.set(true)
-    android.set(false)
-    outputToConsole.set(true)
-    reporters {
-        // Human readable output
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
-    }
-    ignoreFailures.set(false)
-    filter {
-        exclude("**/generated/**")
-        include("**/kotlin/**")
-    }
-}
-
 kotlin {
     android("android")
     // This is for iPhone emulator
@@ -69,7 +50,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation "io.realm:Realm-Kotlin:0.0.1"
+                implementation "io.realm.kotlin:library:0.0.1-SNAPSHOT"
             }
         }
         commonTest {
@@ -82,7 +63,6 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib')
                 implementation kotlin('reflect') //TODO include this with lib as transitive deps
-//                implementation "io.realm:Realm-Kotlin-android-debug:0.0.1"
             }
         }
         androidTest {
@@ -94,7 +74,6 @@ kotlin {
         iosMain {
             dependencies {
                 implementation kotlin('stdlib')
-                implementation "io.realm:Realm-Kotlin-ios:0.0.1"
             }
         }
         iosTest {

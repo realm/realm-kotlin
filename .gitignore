@@ -50,7 +50,10 @@ captures/
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
-cpp_engine/
+packages/library/cpp_engine/build-android
+packages/library/cpp_engine/build-ios
+!packages/library/cpp_engine/build-android/CMakeLists.txt
+!packages/library/cpp_engine/build-ios/CmakeLists.txt
 
 # Google Services (e.g. APIs or Firebase)
 # google-services.json
