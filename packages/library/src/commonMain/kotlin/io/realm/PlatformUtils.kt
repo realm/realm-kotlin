@@ -1,5 +1,5 @@
 package io.realm
 
-expect object PlatformUtils {
+expect internal object PlatformUtils {
     fun getPathOrUseDefaultLocation(realmConfiguration: RealmConfiguration): String
 }

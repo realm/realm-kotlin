@@ -3,7 +3,7 @@ package io.realm
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.NativeWrapper
 
-expect object CInterop : NativeWrapper {
+expect internal object CInterop : NativeWrapper {
     override fun openRealm(path: String, schema: String): NativePointer
     override fun realmresultsQuery(pointer: NativePointer, objectType: String, query: String): NativePointer
     override fun addObject(pointer: NativePointer, objectType: String): NativePointer

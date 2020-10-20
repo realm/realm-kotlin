@@ -20,14 +20,17 @@ In Android Studio open the `test` project, which will open also the `realm-libra
 
 ## Code Style
 
-We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-conventions.html) from Kotlin which is enforced using [ktlint](https://github.com/pinterest/ktlint).
+We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-conventions.html) from Kotlin which is enforced using [ktlint](https://github.com/pinterest/ktlint) and [detekt](https://github.com/detekt/detekt).
 
 ```sh
 # Call from root folder to check if code is compliant.
 ./gradlew ktlintCheck
+./gradlew detekt
 
 # Call from root folder to automatically format all Kotlin code according to the code style rules.
 ./gradlew ktlintFormat
 ```
 
-Note: klint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+
+

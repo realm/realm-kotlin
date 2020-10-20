@@ -17,6 +17,8 @@ apply plugin: 'maven-publish'
 
 // Common Kotlin configuration
 kotlin {
+    explicitApi = 'strict'
+
     sourceSets {
         commonMain {
             dependencies {

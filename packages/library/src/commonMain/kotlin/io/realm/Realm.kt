@@ -3,12 +3,12 @@ package io.realm
 import io.realm.runtimeapi.NativePointer
 import kotlin.reflect.KClass
 
-class Realm {
+public class Realm {
     private var dbPointer: NativePointer? = null // TODO nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
     private lateinit var realmConfiguration: RealmConfiguration
 
-    companion object {
-        fun open(realmConfiguration: RealmConfiguration): Realm {
+    public companion object {
+        public fun open(realmConfiguration: RealmConfiguration): Realm {
             // TODO
             // IN Android use lazy property delegation init to load the shared library
             //   use the function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
@@ -22,22 +22,22 @@ class Realm {
         }
     }
     //    fun open(dbName: String, schema: String) : Realm
-    fun beginTransaction() {
+    public fun beginTransaction() {
         CInterop.beginTransaction(dbPointer!!)
     }
 
-    fun commitTransaction() {
+    public fun commitTransaction() {
         CInterop.commitTransaction(dbPointer!!)
     }
 
-    fun cancelTransaction() {
+    public fun cancelTransaction() {
         CInterop.cancelTransaction(dbPointer!!)
     }
 
-    fun registerListener(f: () -> Unit) {
+    public fun registerListener(f: () -> Unit) {
     }
 
-    fun <T : RealmModel> objects(clazz: KClass<T>, query: String): RealmResults<T> {
+    public fun <T : RealmModel> objects(clazz: KClass<T>, query: String): RealmResults<T> {
         val objectType = clazz.simpleName ?: error("Cannot get class name") // TODO infer type from T
         // TODO check nullability of pointer and throw
         return RealmResults(
@@ -52,7 +52,7 @@ class Realm {
     //    were we take an already created un-managed instance and return a new manageable one
     //    (note since parameter are immutable in Kotlin, we need to create a new instance instead of
     //    doing this operation in place)
-    fun <T : RealmModel> create(type: KClass<T>): T {
+    public fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
         val managedModel = realmConfiguration.modelFactory.invoke(type)
         managedModel.objectPointer = CInterop.addObject(dbPointer!!, objectType)

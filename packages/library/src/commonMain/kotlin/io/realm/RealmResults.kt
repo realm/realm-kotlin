@@ -3,7 +3,7 @@ package io.realm
 import io.realm.runtimeapi.NativePointer
 import kotlin.reflect.KClass
 
-class RealmResults<T : RealmModel> constructor(
+public class RealmResults<T : RealmModel> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<T>,
     private val modelFactory: ModelFactory
