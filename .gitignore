@@ -52,6 +52,8 @@ captures/
 .externalNativeBuild
 packages/library/cpp_engine/build-android
 packages/library/cpp_engine/build-ios
+!packages/library/cpp_engine/build-android/CMakeLists.txt
+!packages/library/cpp_engine/build-ios/CmakeLists.txt
 
 # Google Services (e.g. APIs or Firebase)
 # google-services.json

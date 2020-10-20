@@ -2,14 +2,18 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.NativeWrapper
 import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import org.junit.Test
 import java.io.File
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class GenerationExtensionTest {
 
@@ -25,6 +29,7 @@ class GenerationExtensionTest {
      */
     class Files(private val directory: String) {
         val fileMap: Map<String, File>
+
         init {
             val base = File(this::class.java.getResource("$directory").file)
             val file = File(this::class.java.getResource("${directory}${File.separator}input").file)
@@ -32,10 +37,11 @@ class GenerationExtensionTest {
                 .filter { !it.isDirectory }
                 .map { it.relativeTo(base).path to it }.toMap()
         }
+
         private fun expectedDir() = listOf("src", "test", "resources", directory, "expected").joinToString(separator = File.separator)
         fun outputDir() = listOf("src", "test", "resources", directory, "output").joinToString(separator = File.separator)
 
-        fun assertOutput() {
+        fun assertGeneratedIR() {
             stripInputPath(File("${outputDir()}/00_ValidateIrBeforeLowering.ir"), fileMap)
             assertEquals(
                 File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
@@ -45,38 +51,83 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun transform() {
+    fun `implement RealmModelInternal and generate internal properties`() {
         val inputs = Files("/sample")
 
         val result = compile(inputs)
 
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val kClazz = result.classLoader.loadClass("io.realm.example.Sample")
-        val newInstance = kClazz.newInstance()!!
+        val kClazz = result.classLoader.loadClass("sample.input.Sample")
+        val sampleModel = kClazz.newInstance()!!
 
-        assertTrue(newInstance is RealmModel)
-        assertTrue(newInstance is RealmModelInternal)
+        assertTrue(sampleModel is RealmModel)
+        assertTrue(sampleModel is RealmModelInternal)
 
         // Accessing getters/setters
-        newInstance.isManaged = true
-        newInstance.realmObjectPointer = 0xCAFEBABE
-        newInstance.realmPointer = 0XCAFED00D
-        newInstance.tableName = "Sample"
+        sampleModel.`$realm$IsManaged` = true
+        sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
+        sampleModel.`$realm$Pointer` = LongPointer(0XCAFED00D)
+        sampleModel.`$realm$TableName` = "Sample"
 
-        assertEquals(true, newInstance.isManaged)
-        assertEquals(0xCAFEBABE, newInstance.realmObjectPointer)
-        assertEquals(0XCAFED00D, newInstance.realmPointer)
-        assertEquals("Sample", newInstance.tableName)
+        assertEquals(true, sampleModel.`$realm$IsManaged`)
+        assertEquals(0xCAFEBABE, (sampleModel.`$realm$ObjectPointer` as LongPointer).ptr)
+        assertEquals(0XCAFED00D, (sampleModel.`$realm$Pointer` as LongPointer).ptr)
+        assertEquals("Sample", sampleModel.`$realm$TableName`)
 
-        val companionObject = newInstance::class.companionObjectInstance
+        inputs.assertGeneratedIR()
+    }
+
+    @Test
+    fun `synthetic schema method generated`() {
+        val inputs = Files("/sample")
+
+        val result = compile(inputs)
+
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val kClazz = result.classLoader.loadClass("sample.input.Sample")
+        val sampleModel = kClazz.newInstance()!!
+        val companionObject = sampleModel::class.companionObjectInstance
+
         assertTrue(companionObject is RealmCompanion)
 
-        // Check synthetic schema method has been added.
         val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
-        assertEquals(expected, companionObject.schema())
+        assertEquals(expected, companionObject.`$realm$schema`())
 
-        inputs.assertOutput()
+        inputs.assertGeneratedIR()
+    }
+
+    @Test
+    fun `modify accessors to call cinterop`() {
+        val inputs = Files("/sample")
+
+        val result = compile(inputs)
+
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val kClazz = result.classLoader.loadClass("sample.input.Sample")
+        val sampleModel = kClazz.newInstance()!!
+        val nameProperty = sampleModel::class.members.find { it.name == "name" }
+            ?: fail("Couldn't find property name of class Sample")
+        assertTrue(nameProperty is KMutableProperty<*>)
+        assertTrue(sampleModel is RealmModelInternal)
+
+        // In un-managed mode return only the backing field
+        sampleModel.`$realm$IsManaged` = false
+        assertEquals("Realm", nameProperty.call(sampleModel))
+
+        // Inject Mock NativeWrapper implementation
+        NativeWrapper.instance = MockNativeWrapper
+        sampleModel.`$realm$IsManaged` = true
+        sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
+
+        // set a value using the CInterop call
+        nameProperty.setter.call(sampleModel, "Zepp")
+        // get value using the CInterop call
+        assertEquals("Hello Zepp", nameProperty.call(sampleModel))
+
+        inputs.assertGeneratedIR()
     }
 
     private fun compile(inputs: Files, plugins: List<Registrar> = listOf(Registrar())): KotlinCompilation.Result =
@@ -100,6 +151,60 @@ class GenerationExtensionTest {
                     text.replace(file.path, name)
                 }
             )
+        }
+    }
+
+    class LongPointer(val ptr: Long) : NativePointer
+    object MockNativeWrapper : NativeWrapper {
+        // simulate a storage engine for setters accessors modification tests
+        private val storage = mutableMapOf<Any, Any?>()
+
+        override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
+            return "Hello ${storage["$pointer$propertyName"]}"
+        }
+
+        override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
+            storage["$pointer$propertyName"] = value
+        }
+
+        override fun openRealm(path: String, schema: String): NativePointer {
+            error("Should not be invoked")
+        }
+
+        override fun realmresultsQuery(pointer: NativePointer, objectType: String, query: String): NativePointer {
+            error("Should not be invoked")
+        }
+
+        override fun addObject(pointer: NativePointer, objectType: String): NativePointer {
+            error("Should not be invoked")
+        }
+
+        override fun beginTransaction(pointer: NativePointer) {
+            error("Should not be invoked")
+        }
+
+        override fun commitTransaction(pointer: NativePointer) {
+            error("Should not be invoked")
+        }
+
+        override fun cancelTransaction(pointer: NativePointer) {
+            error("Should not be invoked")
+        }
+
+        override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
+            error("Should not be invoked")
+        }
+
+        override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
+            error("Should not be invoked")
+        }
+
+        override fun queryGetSize(queryPointer: NativePointer): Long {
+            error("Should not be invoked")
+        }
+
+        override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
+            error("Should not be invoked")
         }
     }
 }
