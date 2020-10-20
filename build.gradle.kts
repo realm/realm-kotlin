@@ -51,3 +51,27 @@ tasks.register<Exec>("ktlintFormatTest") {
     workingDir = file("${rootDir}/test")
     commandLine = listOf("./gradlew", "ktlintFormat")
 }
+
+tasks.register("detekt") {
+    description = "Runs detekt on all projects."
+    group = "Verification"
+    dependsOn.addAll(listOf("detektPackages", "detektTest", "detektExample"))
+}
+
+tasks.register<Exec>("detektExample") {
+    description = "Run detekt on /example project"
+    workingDir = file("${rootDir}/example")
+    commandLine = listOf("./gradlew", "detekt")
+}
+
+tasks.register<Exec>("detektPackages") {
+    description = "Run detekt on /packages project"
+    workingDir = file("${rootDir}/packages")
+    commandLine = listOf("./gradlew", "detekt")
+}
+
+tasks.register<Exec>("detektTest") {
+    description = "Run detekt on /test project"
+    workingDir = file("${rootDir}/test")
+    commandLine = listOf("./gradlew", "detekt")
+}

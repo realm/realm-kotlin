@@ -40,11 +40,14 @@ class GenerationExtension : IrGenerationExtension {
             irFile.transformChildrenVoid()
         }
 
-        override fun visitFunctionNew(declaration: IrFunction): IrStatement {
-            return if (declaration.isPropertyAccessor &&
+        private fun isStringGetter(declaration: IrFunction): Boolean {
+            return declaration.isPropertyAccessor &&
                 declaration.isGetter &&
                 (declaration.returnType.isString() || declaration.returnType.isNullableString())
-            ) {
+        }
+
+        override fun visitFunctionNew(declaration: IrFunction): IrStatement {
+            return if (isStringGetter(declaration)) {
                 declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
                     override fun visitReturn(expression: IrReturn): IrExpression {
                         return IrBlockBuilder(context, currentScope?.scope!!, expression.startOffset, expression.endOffset).irBlock {

@@ -33,25 +33,39 @@ stage('Static Analysis') {
             // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
             lock("${env.NODE_NAME}-android") {
                 sh 'chmod +x gradlew && ./gradlew ktlintCheck'
+                sh 'chmod +x gradlew && ./gradlew detekt'
             }
         } finally {
             // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
             // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
-            // As a work-around we just stash the output of Ktlint for manual inspection.
+            // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
             sh '''
                 rm -rf /tmp/ktlint 
+                rm -rf /tmp/detekt 
                 mkdir /tmp/ktlint
+                mkdir /tmp/detekt
+                rsync -a --delete --ignore-errors example/app/build/reports/ktlint/ /tmp/ktlint/example/ || true 
                 rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true 
                 rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
                 rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
-                rsync -a --delete --ignore-errors packages/plugin-compiler-shaded/build/reports/ktlint/ /tmp/ktlint/plugin-compiler-shaded/  || true
                 rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
+                rsync -a --delete --ignore-errors example/app/build/reports/detekt/ /tmp/detekt/example/ || true 
+                rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true 
+                rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
+                rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''
             zip([
                     'zipFile': 'ktlint.zip',
                     'archive': true,
                     'dir' : '/tmp/ktlint'
+            ])
+            zip([
+                    'zipFile': 'detekt.zip',
+                    'archive': true,
+                    'dir' : '/tmp/detekt'
             ])
         }
     }

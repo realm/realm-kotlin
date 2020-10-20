@@ -16,6 +16,10 @@ version Realm.version
 
 apply plugin: 'maven-publish'
 
+detekt {
+    input = files(file("src/androidMain/kotlin"), file("src/commonMain/kotlin"))
+}
+
 // Common Kotlin configuration
 kotlin {
     sourceSets {

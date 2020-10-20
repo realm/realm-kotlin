@@ -2,7 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.application")
     id("kotlin-android-extensions")
-    id("realm-ktlint")
+    id("realm-lint")
 }
 
 repositories {

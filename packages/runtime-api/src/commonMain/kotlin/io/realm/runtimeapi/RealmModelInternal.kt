@@ -8,6 +8,7 @@ annotation class RealmObject
  *
  * This interface is not meant to be used externally (consider using [RealmModel] instead)
  */
+@Suppress("VariableNaming")
 interface RealmModelInternal : RealmModel {
     var `$realm$Pointer`: NativePointer?
     var `$realm$ObjectPointer`: NativePointer?
