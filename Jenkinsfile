@@ -28,13 +28,13 @@ pipeline {
     }
     post {
         failure {
-            notifySlack("*The realm-kotlin/${currentBranch} branch is broken!*")
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
         }
         unstable {
-            notifySlack("*The realm-kotlin/${currentBranch} branch is unstable!*")
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
         }
         fixed {
-            notifySlack("*The realm-kotlin/${currentBranch} branch has been fixed!*")
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
         }
     }
 }
@@ -249,7 +249,7 @@ def getArchive() {
     unstash 'source'
 }
 
-def notifySlackIfNeeded(String slackMessage) {
+def notifySlackIfRequired(String slackMessage) {
     // We should only generate Slack notifications for important branches that all team members use.
     if (slackNotificationBranches.contains(currentBranch)) {
         node {
