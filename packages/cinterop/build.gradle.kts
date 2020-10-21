@@ -176,9 +176,11 @@ tasks.create("realmWrapperJvm") {
     outputs.dir("src/jvmCommon/java")
     outputs.dir("src/jvmCommon/jni")
 }
-tasks.named("preBuild") {
-    dependsOn(tasks.named("realmWrapperJvm"))
-    dependsOn(tasks.named("capi_android_x86_64"))
+afterEvaluate {
+    tasks.named("externalNativeBuildDebug") {
+        dependsOn(tasks.named("realmWrapperJvm"))
+        dependsOn(tasks.named("capi_android_x86_64"))
+    }
 }
 
 
