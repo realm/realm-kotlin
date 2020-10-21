@@ -77,7 +77,8 @@ RUN yes | sdkmanager \
     'platforms;android-29' \
     'platform-tools' \
     'ndk;21.0.6113669' \
-    'system-images;android-29;default;x86'
+    'system-images;android-29;default;x86_64'
+
  
 # Make the SDK universally writable
 RUN chmod -R a+rwX ${ANDROID_HOME}
