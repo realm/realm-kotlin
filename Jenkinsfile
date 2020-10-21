@@ -8,6 +8,7 @@ slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 currentBranch = env.CHANGE_BRANCH
 
 pipeline {
+    agent none
     stages {
         stage('SCM') { 
             steps {
