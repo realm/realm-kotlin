@@ -9,9 +9,21 @@ currentBranch = env.CHANGE_BRANCH
 
 pipeline {
     stages {
-        stage('SCM') { runScm() }
-        stage('Static Analysis') { runStaticAnalysis() }
-        stage('Build') { runBuild() } 
+        stage('SCM') { 
+            steps {
+                runScm() 
+            }
+        }
+        stage('Static Analysis') { 
+            steps {
+                runStaticAnalysis() 
+            }
+        }
+        stage('Build') { 
+            steps {
+                runBuild() 
+            }
+        }       
     }
     post {
         failure {
