@@ -179,7 +179,7 @@ tasks.create("realmWrapperJvm") {
 afterEvaluate {
     tasks.named("externalNativeBuildDebug") {
         dependsOn(tasks.named("realmWrapperJvm"))
-        dependsOn(tasks.named("capi_android_x86_64"))
+        dependsOn(tasks.named("capi_android_x86_64")))
     }
 }
 
