@@ -1,8 +1,8 @@
 package io.realm
 
-import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVarOf
+import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cValue
@@ -10,7 +10,6 @@ import kotlinx.cinterop.cValuesOf
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
@@ -43,7 +42,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@ExperimentalUnsignedTypes
 class CinteropTest {
 
     // FIXME Testing basic C API wrapper interaction (like in AndroidTest's CinteropTest)
@@ -54,64 +52,29 @@ class CinteropTest {
 
         memScoped {
             val prop_1_1 = alloc<realm_property_info_t>().apply {
-                name.data = "int".cstr.ptr
-                name.size = 3.toULong()
-
+                name.setRealmString(this@memScoped, "int")
                 type = RLM_PROPERTY_TYPE_INT
-
                 collection_type = RLM_COLLECTION_TYPE_NONE
-
-                link_target.data = "".cstr.ptr
-                link_target.size = 0.toULong()
-
-                link_origin_property_name.data = "".cstr.ptr
-                link_origin_property_name.size = 0.toULong()
-
-//                key.col_key = 42  Unused when defining the schema.
-
                 flags = RLM_PROPERTY_NORMAL.toInt()
             }
 
-//            val classes: kotlinx.cinterop.CValuesRef<realm_class_info_t>? = allocArray<realm_class_info_t>(1)
             val classes: CPointer<realm_class_info_t> = allocArray(1)
             classes[0].apply {
-                name.data = "foo".cstr.ptr
-                name.size = 3.toULong()
-//
-                primary_key.data = "".cstr.ptr
-                primary_key.size = 0.toULong()
-
+                name.setRealmString(this@memScoped, "foo")
+                primary_key.setRealmString(this@memScoped, "")
                 num_properties = 1.toULong()
                 num_computed_properties = 0.toULong()
-
-//                key.table_key = 123.toUInt() Unused when defining the schema.
-
                 flags = RLM_CLASS_NORMAL.toInt()
             }
-            val classProperties: CPointer  <CPointerVarOf<CPointer<realm_property_info_t /* = realm_wrapper.realm_property_info */>>> = cValuesOf(prop_1_1.ptr).ptr
+
+            val classProperties: CPointer  <CPointerVarOf<CPointer<realm_property_info_t>>> = cValuesOf(prop_1_1.ptr).ptr
             val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
 
-            val error = cValue<realm_error_t>()
-            val realmGetLastError = realm_get_last_error(error)
-            assertFalse(realmGetLastError)
-
-            error.useContents {
-                assertEquals(0, kind.code)
-                assertNull(message.data)
-                assertEquals(0.toUInt(), this.error)
-            }
-
+            assertNoError()
             assertTrue(realm_schema_validate(realmSchemaNew))
 
             val config = realm_config_new()
-            val path = cValue<realm_string_t> {
-//                data = "alloc()".cstr.getPointer(MemScope()) alternatively
-                val p = "c_api_test.realm"
-                data = mycstring(p)
-                size = p.length.toULong()
-            }
-
-            realm_config_set_path(config, path)
+            realm_config_set_path(config, realmStringStruct(memScope, "c_api_test.realm"))
             realm_config_set_schema(config, realmSchemaNew)
             realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
             realm_config_set_schema_version(config, 1)
@@ -123,5 +86,25 @@ class CinteropTest {
         }
     }
 
-    fun mycstring(s: String): CPointer<ByteVarOf<Byte>> = s.cstr.place(nativeHeap.allocArray(s.length * 4))
+}
+
+fun realm_string_t.setRealmString(memScope: MemScope, str: String) {
+    data = str.cstr.getPointer(memScope)
+    size = str.length.toULong()
+}
+
+fun realmStringStruct(memScope: MemScope, str: String) = cValue<realm_string_t> {
+    setRealmString(memScope, str)
+}
+
+fun assertNoError() {
+    val error = cValue<realm_error_t>()
+    val realmGetLastError = realm_get_last_error(error)
+    assertFalse(realmGetLastError)
+
+    error.useContents {
+        assertEquals(0, kind.code)
+        assertNull(message.data)
+        assertEquals(0.toUInt(), this.error)
+    }
 }
