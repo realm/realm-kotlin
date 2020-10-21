@@ -151,13 +151,14 @@ kotlin {
     }
 }
 
+// Tasks for building
 tasks.create("capi_android_x86_64") {
     doLast {
         exec {
             workingDir("../../external/core")
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
             // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
-            environment(mapOf("ANDROID_NDK" to System.getenv("ANDROID_HOME") + "/ndk/21.0.6113669"))
+            environment(mapOf("ANDROID_NDK" to System.getenv("ANDROID_NDK_HOME")))
         }
     }
 }
@@ -190,8 +191,6 @@ tasks.create("capi_ios_simulator") {
         exec {
             workingDir("../../external/core")
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
-            // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
-            environment(mapOf("ANDROID_NDK" to System.getenv("ANDROID_NDK_HOME")))
         }
     }
 }
