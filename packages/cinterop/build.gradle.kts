@@ -219,3 +219,15 @@ tasks.create("capi_macos_x64") {
 tasks.named("cinteropRealm_wrapperIos") {
     dependsOn(tasks.named("capi_macos_x64"))
 }
+
+tasks.create("cleanJvmWrapper") {
+    destroyables.register("$projectDir/src/jvmCommon/java")
+    destroyables.register("$projectDir/src/jvmCommon/jni")
+    doLast {
+        delete("$projectDir/src/jvmCommon/java")
+        delete("$projectDir/src/jvmCommon/jni")
+    }
+}
+tasks.named("clean") {
+    dependsOn("cleanJvmWrapper")
+}
