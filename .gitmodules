@@ -1,4 +1,4 @@
 [submodule "external/core"]
 	path = external/core
-	url = git@github.com:realm/realm-core.git
+	url = https://github.com/realm/realm-core.git
 	branch = su/c-api
