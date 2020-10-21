@@ -3,7 +3,7 @@ package io.realm
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.NativeWrapper
 
-actual object CInterop : NativeWrapper {
+internal actual object CInterop : NativeWrapper {
     init {
         TODO()
     }
