@@ -6,7 +6,8 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 
-internal class RealmInitProvider : ContentProvider() {
+// TODO Currently public due to Instrumentation tests
+public class RealmInitProvider : ContentProvider() {
     companion object {
         lateinit var applicationContext: Context
     }
