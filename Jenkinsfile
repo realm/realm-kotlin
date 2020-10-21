@@ -4,7 +4,7 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches that are "important", so if they do not compile they will generate a Slack notification
-slackNotificationBranches = [ 'master', 'releases', 'next-major', 'cm/slack-notifications' ]
+slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 currentBranch = env.CHANGE_BRANCH
 
 pipeline {
