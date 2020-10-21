@@ -2,7 +2,7 @@ package io.realm
 
 import java.io.File
 
-actual object PlatformUtil {
+actual object PlatformUtils {
     actual fun getPathOrUseDefaultLocation(realmConfiguration: RealmConfiguration): String {
         val directory = realmConfiguration.path ?: RealmInitProvider.applicationContext.filesDir
         val realmName = realmConfiguration.name ?: "default"
