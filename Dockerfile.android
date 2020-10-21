@@ -45,6 +45,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
                           openjdk-8-jdk-headless \
                           qemu-kvm \
                           s3cmd \
+                          swig \
                           unzip \
                           virt-manager \
                           wget \
@@ -91,3 +92,12 @@ RUN mkdir /opt/android-ndk-tmp && \
 RUN chmod -R a+rwX ${ANDROID_HOME}
 
 ENV PATH "$ANDROID_HOME/cmake/3.6.4111459/bin:$PATH"
+
+# Building core from source requires CMake 3.15 or higher
+# Install CMake
+RUN cd /opt \
+    && wget https://cmake.org/files/v3.15/cmake-3.15.2-Linux-x86_64.tar.gz \
+    && tar zxvf cmake-3.15.2-Linux-x86_64.tar.gz
+
+ENV PATH "/opt/cmake-3.15.2-Linux-x86_64/bin:$PATH"
+
