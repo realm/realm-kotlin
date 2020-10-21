@@ -6,4 +6,4 @@ import io.realm.runtimeapi.NativePointer
 public actual typealias BindingPointer = LongPointerWrapper
 
 // TODO Currently public to work around this being used in Android Integration Tests
-public class LongPointerWrapper(val ptr: Long) : NativePointer
+public class LongPointerWrapper(public val ptr: Long) : NativePointer
