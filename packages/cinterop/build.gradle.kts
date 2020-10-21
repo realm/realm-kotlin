@@ -63,6 +63,7 @@ android {
             }
         }
 
+        ndkVersion = "21.0.6113669"
     }
     buildTypes {
         val release by getting {
@@ -159,13 +160,14 @@ kotlin {
     }
 }
 
+// Tasks for building
 tasks.create("capi_android_x86_64") {
     doLast {
         exec {
             workingDir("../../external/core")
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
             // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
-            environment(mapOf("ANDROID_NDK" to System.getenv("ANDROID_HOME") + "/ndk/21.0.6113669"))
+            environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
         }
     }
 }
@@ -198,8 +200,6 @@ tasks.create("capi_ios_simulator") {
         exec {
             workingDir("../../external/core")
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
-            // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
-            environment(mapOf("ANDROID_NDK" to System.getenv("ANDROID_NDK_HOME")))
         }
     }
 }
@@ -226,4 +226,16 @@ tasks.create("capi_macos_x64") {
 
 tasks.named("cinteropRealm_wrapperIos") {
     dependsOn(tasks.named("capi_macos_x64"))
+}
+
+tasks.create("cleanJvmWrapper") {
+    destroyables.register("$projectDir/src/jvmCommon/java")
+    destroyables.register("$projectDir/src/jvmCommon/jni")
+    doLast {
+        delete("$projectDir/src/jvmCommon/java")
+        delete("$projectDir/src/jvmCommon/jni")
+    }
+}
+tasks.named("clean") {
+    dependsOn("cleanJvmWrapper")
 }
