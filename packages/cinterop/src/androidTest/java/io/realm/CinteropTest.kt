@@ -1,5 +1,7 @@
 package io.realm
 
+import SWIGTYPE_p_realm_results
+import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -7,21 +9,29 @@ import realm_class_flags_e
 import realm_class_info_t
 import realm_col_key_t
 import realm_collection_type_e
+import realm_error_t
 import realm_property_flags_e
 import realm_property_info_t
 import realm_property_type_e
 import realm_schema_mode_e
+import realm_size_t
 import realm_table_key_t
+import realm_value_t
+import realm_value_type_e
 import realmc
 import java.math.BigInteger
-import kotlin.test.assertNotNull
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class CinteropTest {
 
+    // TODO Proper error handling; maybe generically by 'exception' or out-typemap on boolean
     @Test
     fun cinterop_swig() {
+        val context = InstrumentationRegistry.getInstrumentation().context
+
         System.loadLibrary("realmc")
         println(realmc.realm_get_library_version())
 
@@ -74,27 +84,6 @@ class CinteropTest {
             flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
         }
 
-        val prop_2_1 = realm_property_info_t().apply {
-            name = "int"
-            public_name = ""
-            type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
-            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
-            link_target = ""
-            link_origin_property_name = ""
-            key = realm_col_key_t()
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
-        }
-        val prop_2_2 = realm_property_info_t().apply {
-            name = "strings"
-            public_name = ""
-            type = realm_property_type_e.RLM_PROPERTY_TYPE_STRING
-            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_LIST
-            link_target = ""
-            link_origin_property_name = ""
-            key = realm_col_key_t()
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue() and realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
-        }
-
         val classes = realmc.new_classArray(2);
         val props = realmc.new_propertyArrayArray(2)
 
@@ -118,7 +107,7 @@ class CinteropTest {
                         link_target = ""
                         link_origin_property_name = ""
                         key = realm_col_key_t()
-                        flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
+                        flags = realm_property_flags_e.RLM_PROPERTY_INDEXED.swigValue() or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY.swigValue()
                     },
                     realm_property_info_t().apply {
                         name = "strings"
@@ -128,7 +117,7 @@ class CinteropTest {
                         link_target = ""
                         link_origin_property_name = ""
                         key = realm_col_key_t()
-                        flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue() and realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
+                        flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue() or realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
                     }
             ).forEachIndexed { i, prop ->
                 realmc.propertyArray_setitem(properties, i, prop);
@@ -136,18 +125,109 @@ class CinteropTest {
         }
         realmc.propertyArrayArray_setitem(props, 1, properties_2)
 
-
         val realmSchemaNew = realmc.realm_schema_new(classes, 2, props)
         assertTrue(realmc.realm_schema_validate(realmSchemaNew))
 
         val config: Long = realmc.realm_config_new()
 
-        realmc.realm_config_set_path(config, "c_api_test.realm")
+        realmc.realm_config_set_path(config,  context.filesDir.absolutePath + "/c_api_test.realm")
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config, BigInteger("1"))
 
         val realm = realmc.realm_open(config)
+        if (realm.ptr == 0L) {
+            val error = realm_error_t()
+            val realmGetLastError = realmc.realm_get_last_error(error)
+            val message = error.message
+            error(message)
+        }
+
+        realmc.realm_release(config)
+        realmc.realm_release(realmSchemaNew)
+
+        // Schema validates
+        val schema = realmc.realm_get_schema(realm)
+        assertTrue(realmc.realm_schema_validate(schema))
+        realmc.realm_release(schema)
+
+        assertEquals(2, realmc.realm_get_num_classes(realm))
+
+        // Output variables
+        val found: BooleanArray = booleanArrayOf(false)
+        val foo_info = realm_class_info_t()
+
+        assertFalse(found[0])
+        realmc.realm_find_class(realm, "foo", found, foo_info)
+        assertTrue(found[0])
+        realmc.realm_find_class(realm, "fo", found, foo_info)
+        assertFalse(found[0])
+        val bar_info = realm_class_info_t()
+        realmc.realm_find_class(realm, "bar", found, bar_info)
+        assertTrue(found[0])
+
+        // Output variables
+        val foo_int_property = realm_property_info_t()
+        realmc.realm_find_property(realm, foo_info.key, "int", found, foo_int_property)
+        assertTrue(found[0])
+        val foo_str_property = realm_property_info_t()
+        realmc.realm_find_property(realm, foo_info.key, "str", found, foo_str_property)
+        assertTrue(found[0])
+        // TODO Repeat for all properties on all classes
+
+        // Missing primary key
+        val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
+        val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
+        if (realmObjectCreate == 0L) {
+            val error = realm_error_t()
+            val realmGetLastError = realmc.realm_get_last_error(error)
+            val message = error.message
+        }
+        realmc.realm_commit(realm)
+
+        // Objects
+        val realmBeginWrite2: Boolean = realmc.realm_begin_write(realm)
+        val foo1: Long = realmc.realm_object_create(realm, foo_info.key)
+        val realmValueT = realm_value_t().apply {
+            type = realm_value_type_e.RLM_TYPE_INT
+            integer = 123
+        }
+        realmc.realm_set_value(foo1, foo_int_property.key, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 123 }, false)
+        realmc.realm_set_value(foo1, foo_str_property.key, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_STRING; string = "Hello, World!" }, false)
+        val bar1: Long = realmc.realm_object_create_with_primary_key(realm, bar_info.key, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 1 })
+
+        realmc.realm_get_value(foo1, foo_int_property.key, realm_value_t())
+
+        // TODO Find with primary key
+
+        // Query basics
+        val query: Long = realmc.realm_query_parse(realm, foo_info.key, "str == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_STRING; string = "Hello, World!" })
+
+        val count = realm_size_t()
+        realmc.realm_query_count(query, count)
+
+        val findFirstValue = realm_value_t()
+        val findFirstFound = booleanArrayOf(false)
+        realmc.realm_query_find_first(query, findFirstValue, findFirstFound)
+        assertTrue(findFirstFound[0])
+        assertEquals(realm_value_type_e.RLM_TYPE_LINK, findFirstValue.type)
+        assertEquals(foo_info.key.table_key, findFirstValue.link.target_table.table_key)
+        val realmObjectGetKey = realmc.realm_object_get_key(foo1)
+        // Will not be true unless executed on a fresh realm
+        assertEquals(realmObjectGetKey.obj_key, findFirstValue.link.target.obj_key)
+
+        val result: SWIGTYPE_p_realm_results = realmc.realm_query_find_all(query)
+
+        realmc.realm_results_count(result, count)
+        assertEquals(1, count.value)
+        // TODO Query basics? min, max, sum, average
+
+        // TODO Set wrong field type
+        // TODO Deletes
+        // TODO Lists
+        // TODO Notifications
+
+        realmc.realm_commit(realm)
     }
 
 }

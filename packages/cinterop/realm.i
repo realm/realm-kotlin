@@ -8,7 +8,7 @@
 // TODO
 //  - Memory management
 //  - Optimization
-//    - Transfer "value semantics" objects in one go
+//    - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
 %include "typemaps.i"
 %include "stdint.i"
@@ -30,6 +30,10 @@ realm_string_t rlm_str(const char* str)
 {
     return realm_string_t{str, std::strlen(str)};
 }
+std::string rlm_stdstr(realm_string_t val)
+{
+    return std::string(val.data, 0, val.size);
+}
 %}
 
 // Primitive/built in type handling
@@ -40,16 +44,18 @@ typedef jstring realm_string_t;
 %typemap(in) (realm_string_t) "$1 = rlm_str(jenv->GetStringUTFChars($arg,0));"
 %typemap(out) (realm_string_t) "$result = jenv->NewStringUTF(std::string($1.data, 0, $1.size).c_str());"
 
-//typedef long* realm_config_t;
-%typemap(jstype) realm_config_t* "long"
-%typemap(javain) realm_config_t* "$javainput"
-%typemap(javaout) realm_config_t* {
+%typemap(jstype) void* "long"
+%typemap(javain) void* "$javainput"
+%typemap(javaout) void* {
     return $jnicall;
 }
-// Reuse above mapping of point on all the other pointer types
-%apply realm_config_t* { realm_object_t* , realm_query_t*};
+
+// Reuse above type maps on other pointers too
+%apply void* { realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t* };
+
 
 //typedef long* realm_t;
+// FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
 %typemap(jstype) realm_t* "LongPointerWrapper"
 %typemap(javain) realm_t* "$javainput.ptr()"
 %typemap(javaout) realm_t* {
@@ -61,7 +67,39 @@ typedef jstring realm_string_t;
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
 
+// Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)
+
+// size_t output parameter
+struct realm_size_t {
+    size_t value;
+};
+%{
+struct realm_size_t {
+    size_t value;
+};
+%}
+%typemap(jni) (size_t* out_count) "long"
+%typemap(jtype) (size_t* out_count) "long"
+%typemap(jstype) (size_t* out_count) "realm_size_t"
+%typemap(javain) (size_t* out_count) "realm_size_t.getCPtr($javainput)"
+
+// bool output parameter
+%apply bool* OUTPUT { bool* out_found };
+
+// Wrap and throw on error indication
+// FIXME Find a way to apply this by pattern; alternatively do an out-typemap for bool (but don't know that can be done selectively either)
+%exception realm_find_class {
+        bool result = $action
+        if (!result) {
+            realm_error_t error;
+            // FIXME Check return value
+            realm_get_last_error(&error);
+            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
+            (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
+            return $null;
+        }
+}
 
 // Not yet available in library
 %ignore "realm_get_async_error";

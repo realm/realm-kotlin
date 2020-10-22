@@ -7,6 +7,11 @@ import kotlin.jvm.JvmName
 class LongPointerWrapper(@get:JvmName("ptr") val ptr : Long): NativePointer
 
 actual object RealmInterop {
+    // TODO Maybe pull out into separate method
+    init {
+        System.loadLibrary("realmc")
+    }
+
     actual fun realm_get_library_version(): String {
         return realmc.realm_get_library_version()
     }
