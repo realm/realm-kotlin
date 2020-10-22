@@ -11,17 +11,6 @@ repositories {
 group = Realm.group
 version = Realm.version
 
-kotlin {
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation(kotlin("stdlib-common"))
-                api(project(":runtime-api"))
-            }
-        }
-    }
-}
-
 android {
     compileSdkVersion(29)
     buildToolsVersion = "29.0.2"
@@ -55,7 +44,7 @@ android {
             }
         }
 
-        ndkVersion = "21.0.6113669"
+        ndkVersion = "21.1.6352462"
     }
     buildTypes {
         val release by getting {
@@ -69,64 +58,12 @@ android {
             setPath("src/jvmCommon/CMakeLists.txt")
         }
     }
-
 }
+
 kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
     }
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-common"))
-            }
-        }
-        // FIXME Maybe not the best idea to have in separate source set, but ideally we could reuse
-        //  it for all JVM platform, seems like there are issues for the IDE to recognize symbols
-        //  using this approach, but maybe a general thing (also issues with native cinterops)
-        val jvmCommon by creating {
-            dependsOn(commonMain)
-            kotlin.srcDir("src/jvmCommon/kotlin")
-        }
-        val androidMain by getting {
-            dependsOn(jvmCommon)
-            dependencies {
-                implementation(kotlin("stdlib"))
-            }
-        }
-        val androidTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation(kotlin("test-junit"))
-
-                implementation("junit:junit:4.12")
-                implementation("com.android.support.test:runner:1.0.2")
-                implementation("com.android.support.test:rules:1.0.2")
-            }
-        }
-        // FIXME Ideally we could reuse platform implementation just by using different cinterop
-        //  klibs, but seems like IDE does not resolve symbols, which is pretty annoying
-//        val nativeCommon by creating {
-//            dependsOn(commonMain)
-//            kotlin.srcDir("src/nativeCommon/kotlin")
-//        }
-        val macosMain by creating {
-//            dependsOn(nativeCommon)
-            kotlin.srcDir("src/iosMain/kotlin")
-        }
-        val iosMain by creating {
-            dependsOn(macosMain)
-        }
-    }
-}
-
-// Ios configuration
-kotlin {
-    // For ARM, should be changed to iosArm32 or iosArm64
-    // For Linux, should be changed to e.g. linuxX64
-    // For MacOS, should be changed to e.g. macosX64
-    // For Windows, should be changed to e.g. mingwX64
-
     // We should be able to reuse configuration across different architectures (x86_64/arv differentiation can be done in def file)
     // FIXME Ideally we could reuse it across all native builds, but would have to do it dynamically
     //  as it does not seem like we can do this from the current target "hierarchy" (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
@@ -150,6 +87,75 @@ kotlin {
             }
         }
     }
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+                api(project(":runtime-api"))
+            }
+        }
+
+        // FIXME Maybe not the best idea to have in separate source set, but ideally we could reuse
+        //  it for all JVM platform, seems like there are issues for the IDE to recognize symbols
+        //  using this approach, but maybe a general thing (also issues with native cinterops)
+        val jvmCommon by creating {
+            dependsOn(commonMain)
+            kotlin.srcDir("src/jvmCommon/kotlin")
+        }
+
+        val androidMain by getting {
+            dependsOn(jvmCommon)
+            dependencies {
+                implementation(kotlin("stdlib"))
+            }
+        }
+
+        val androidTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+
+                implementation("junit:junit:4.12")
+                implementation("com.android.support.test:runner:1.0.2")
+                implementation("com.android.support.test:rules:1.0.2")
+            }
+        }
+
+        val commonDarwin by creating {
+            dependsOn(commonMain)
+            kotlin.srcDir("src/commonDarwin/kotlin")
+        }
+
+        val iosMain by getting {
+            dependsOn(commonDarwin)
+        }
+
+        val macosMain by getting {
+            dependsOn(commonDarwin)
+        }
+
+        val darwinTest by creating {
+            dependsOn(commonDarwin)
+            kotlin.srcDir("src/darwinTest/kotlin")
+        }
+
+        val macosTest by getting {
+            dependsOn(darwinTest)
+        }
+
+        val iosTest by getting {
+            dependsOn(darwinTest)
+        }
+    }
+
+    targets.all {
+        compilations.all {
+            kotlinOptions {
+                freeCompilerArgs = listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
+            }
+        }
+    }
 }
 
 // Tasks for building
@@ -163,6 +169,7 @@ tasks.create("capi_android_x86_64") {
         }
     }
 }
+
 tasks.create("realmWrapperJvm") {
     doLast {
         exec {
@@ -178,6 +185,7 @@ tasks.create("realmWrapperJvm") {
     outputs.dir("src/jvmCommon/java")
     outputs.dir("src/jvmCommon/jni")
 }
+
 afterEvaluate {
     tasks.named("externalNativeBuildDebug") {
         dependsOn(tasks.named("realmWrapperJvm"))
@@ -185,17 +193,7 @@ afterEvaluate {
     }
 }
 
-
 // FIXME/TODO Core build fails, so currently reusing macos build which prior to Xcode 12 can be used for both macos and ios simulator
-tasks.create("capi_ios_simulator") {
-    doLast {
-        exec {
-            workingDir("../../external/core")
-            commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
-        }
-    }
-}
-
 tasks.create("capi_macos_x64") {
     doLast {
         exec {
@@ -217,6 +215,10 @@ tasks.create("capi_macos_x64") {
 }
 
 tasks.named("cinteropRealm_wrapperIos") {
+    dependsOn(tasks.named("capi_macos_x64"))
+}
+
+tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(tasks.named("capi_macos_x64"))
 }
 
