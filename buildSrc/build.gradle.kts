@@ -28,7 +28,7 @@ buildscript {
 dependencies {
     implementation("org.jlleitschuh.gradle:ktlint-gradle:${Versions.ktlintPlugin}")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin::${Versions.ktlintPlugin}")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
     implementation("com.android.tools.build:gradle:${Versions.androidBuildTools}") // FIXME: Figure out why this is required here
 }
 
