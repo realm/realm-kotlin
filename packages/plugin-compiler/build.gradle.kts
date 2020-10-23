@@ -12,13 +12,13 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
-    testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.2.6")
+    testImplementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
     testImplementation(project(":runtime-api"))
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "${Versions.jvmTarget}"
         freeCompilerArgs = listOf("-Xjvm-default=enable")
     }
 }
