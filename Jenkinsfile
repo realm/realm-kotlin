@@ -3,7 +3,44 @@ import groovy.json.JsonOutput
 
 @Library('realm-ci') _
 
-stage('SCM') {
+// Branches that are "important", so if they do not compile they will generate a Slack notification
+slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
+currentBranch = env.CHANGE_BRANCH
+
+pipeline {
+    agent none
+    stages {
+        stage('SCM') { 
+            steps {
+                runScm() 
+            }
+        }
+        stage('Static Analysis') { 
+            steps {
+                runStaticAnalysis() 
+            }
+        }
+        stage('Build') { 
+            steps {
+                runBuild() 
+            }
+        }       
+    }
+    post {
+        failure {
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
+        }
+        unstable {
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
+        }
+        fixed {
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
+        }
+    }
+}
+
+
+def runScm() {
     node('docker') {
         checkout([
                 $class           : 'GitSCM',
@@ -25,7 +62,7 @@ stage('SCM') {
     }
 }
 
-stage('Static Analysis') {
+def runStaticAnalysis() {
     node('android') {
         getArchive()
         try {
@@ -71,7 +108,7 @@ stage('Static Analysis') {
     }
 }
  
-stage('build') {
+def runBuild() {
     parralelExecutors = [:]
     parralelExecutors['compiler']  = jvm             {
         sh """
@@ -210,4 +247,21 @@ def androidEmulator(workerFunction) {
 def getArchive() {
     deleteDir()
     unstash 'source'
+}
+
+def notifySlackIfRequired(String slackMessage) {
+    // We should only generate Slack notifications for important branches that all team members use.
+    if (slackNotificationBranches.contains(currentBranch)) {
+        node {
+            withCredentials([[$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL']]) {
+                def payload = JsonOutput.toJson([
+                    username: "Realm CI",
+                    icon_emoji: ":realm_new:",
+                    text: "${slackMessage}\n<${env.BUILD_URL}|Click here> to check the build."
+                ])
+
+                sh "curl -X POST --data-urlencode \'payload=${payload}\' ${env.SLACK_URL}"
+            }
+        }
+    }
 }
