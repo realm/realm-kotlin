@@ -51,24 +51,33 @@ typedef jstring realm_string_t;
 }
 
 // Reuse above type maps on other pointers too
-%apply void* { realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t* };
-
-
-//typedef long* realm_t;
-// FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
-%typemap(jstype) realm_t* "LongPointerWrapper"
-%typemap(javain) realm_t* "$javainput.ptr()"
-%typemap(javaout) realm_t* {
-    return new LongPointerWrapper($jnicall);
+%apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t* };
+// For all functions returning a pointer, check for null and throw an error
+// FIXME Maybe too general?
+%typemap(out) SWIGTYPE* {
+    if (!result) {
+        realm_error_t error;
+        // FIXME Check return value
+        realm_get_last_error(&error);
+        jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
+        (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
+        return $null;
+    } else {
+        *($1_type*)&jresult = result;
+    }
 }
+// FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
+//%typemap(jstype) realm_t* "LongPointerWrapper"
+//%typemap(javain) realm_t* "$javainput.ptr()"
+//%typemap(javaout) realm_t* {
+//    return new LongPointerWrapper($jnicall);
+//}
 
+// Array wrappers to allow building (continuous allocated) arrays of the corresponding types from
 %include "carrays.i"
 %array_functions(realm_class_info_t, classArray);
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
-
-// Swig doesn't understand __attribute__ so eliminate it
-#define __attribute__(x)
 
 // size_t output parameter
 struct realm_size_t {
@@ -87,6 +96,9 @@ struct realm_size_t {
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found };
 
+// Just generate constants for the enum and pass them back and forth as integers
+%include "enumtypeunsafe.swg"
+%javaconst(1);
 // Wrap and throw on error indication
 // FIXME Find a way to apply this by pattern; alternatively do an out-typemap for bool (but don't know that can be done selectively either)
 %exception realm_find_class {
@@ -100,6 +112,11 @@ struct realm_size_t {
             return $null;
         }
 }
+
+// Make swig types package private (as opposed to public by default) to ensure that we don't expose
+// types outside the package
+%typemap(javaclassmodifiers) SWIGTYPE "class";
+%typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
 // Not yet available in library
 %ignore "realm_get_async_error";
@@ -141,5 +158,8 @@ struct realm_size_t {
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
 %ignore "realm_results_freeze";
+
+// Swig doesn't understand __attribute__ so eliminate it
+#define __attribute__(x)
 
 %include "realm.h"

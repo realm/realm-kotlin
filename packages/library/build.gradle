@@ -22,7 +22,8 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib-common')
                 implementation kotlin('reflect')
-                implementation(project(":cinterop"))
+                // If runtimeapi is merged with cinterop then we will have to expose both to the users
+                api(project(":cinterop"))
             }
         }
 

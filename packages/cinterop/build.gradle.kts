@@ -178,11 +178,11 @@ tasks.create("realmWrapperJvm") {
             //  #define RLM_EXPORT __attribute__((visibility("default"))),
             //  so did a local clone of the file.
             // TODO Maybe move to generated
-            commandLine("swig", "-java", "-c++", "-I../../external/core/src/realm", "-o", "src/jvmCommon/jni/realmc.cpp", "-outdir", "src/jvmCommon/java", "realm.i")
+            commandLine("swig", "-java", "-c++", "-I../../external/core/src/realm", "-o", "src/jvmCommon/jni/realmc.cpp", "-outdir", "src/jvmCommon/java/io/realm/interop", "-package", "io.realm.interop", "realm.i")
         }
     }
     inputs.file("realm.i")
-    outputs.dir("src/jvmCommon/java")
+    outputs.dir("src/jvmCommon/java/io/realm/interop")
     outputs.dir("src/jvmCommon/jni")
 }
 
