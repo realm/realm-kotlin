@@ -2,6 +2,9 @@ package io.realm.interop
 
 import io.realm.LongPointerWrapper
 
+
+// FIXME Align on cinterop naming.
+@Suppress("FunctionNaming")
 actual class RealmInterop {
 
     actual fun realm_config_new(): Long {

@@ -35,5 +35,4 @@ class RealmPlugin : Plugin<Project> {
             }
         }
     }
-
 }

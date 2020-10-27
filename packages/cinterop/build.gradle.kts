@@ -11,6 +11,8 @@ repositories {
 group = Realm.group
 version = Realm.version
 
+val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
+
 android {
     compileSdkVersion(29)
     buildToolsVersion = "29.0.2"
@@ -30,21 +32,9 @@ android {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
                 // Don't know how to set AndroidTest source dir, probably in its own source set by
                 // "val test by getting" instead
-                //androidTest.java.srcDirs += "src/androidTest/kotlin"
+                // androidTest.java.srcDirs += "src/androidTest/kotlin"
             }
         }
-        ndk {
-            // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-            abiFilters("x86_64")
-        }
-        // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
-        externalNativeBuild {
-            cmake {
-                arguments("-DANDROID_STL=c++_shared")
-            }
-        }
-
-        ndkVersion = "21.1.6352462"
     }
     buildTypes {
         val release by getting {
@@ -52,10 +42,26 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    // Innter externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
-    externalNativeBuild {
-        cmake {
-            setPath("src/jvmCommon/CMakeLists.txt")
+    // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
+    //  as this would cause the configuration phase to fail, while we don't even need the build
+    if (includeAndroidBuild) {
+        defaultConfig {
+            ndk {
+                // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
+                abiFilters("x86_64")
+            }
+            // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
+            externalNativeBuild {
+                cmake {
+                    arguments("-DANDROID_STL=c++_shared")
+                }
+            }
+        }
+        // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
+        externalNativeBuild {
+            cmake {
+                setPath("src/jvmCommon/CMakeLists.txt")
+            }
         }
     }
 }
@@ -172,8 +178,7 @@ kotlin {
     }
 }
 
-
-// Tasks for building
+// Tasks for building capi...replace with Monorepo or alike when ready
 tasks.create("capi_android_x86_64") {
     doLast {
         exec {
@@ -185,9 +190,11 @@ tasks.create("capi_android_x86_64") {
     }
 }
 
-afterEvaluate {
-    tasks.named("externalNativeBuildDebug") {
-        dependsOn(tasks.named("capi_android_x86_64"))
+if (includeAndroidBuild) {
+    afterEvaluate {
+        tasks.named("externalNativeBuildDebug") {
+            dependsOn(tasks.named("capi_android_x86_64"))
+        }
     }
 }
 

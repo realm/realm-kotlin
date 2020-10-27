@@ -1,7 +1,8 @@
 plugins {
-    id("org.jetbrains.kotlin.multiplatform") version "1.4.20-M1-63"
-    id "com.android.library"
+    id("org.jetbrains.kotlin.multiplatform")
+    id("com.android.library")
     id("realm-kotlin")
+    id("realm-lint")
 }
 
 repositories {

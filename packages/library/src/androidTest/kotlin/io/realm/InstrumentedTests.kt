@@ -28,9 +28,9 @@ class InstrumentedTests {
 //
 //        val realm = Realm.open(configuration)
 //
-////        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> START SLEEPING")
-////        SystemClock.sleep(10000 * 120)
-////        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> END SLEEPING")
+// //        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> START SLEEPING")
+// //        SystemClock.sleep(10000 * 120)
+// //        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> END SLEEPING")
 //        realm.beginTransaction()
 //        val managedPerson = realm.create(Person::class)
 //        managedPerson.age = 2
@@ -40,7 +40,6 @@ class InstrumentedTests {
 //        assertEquals(2, managedPerson.age)
 //        assertEquals("Sophia", managedPerson.name)
 //    }
-
 
 //    @Test
 //    fun queryObjects() {
@@ -74,5 +73,4 @@ class InstrumentedTests {
 //        assertEquals("FooBar", obj2.name)
 //        assertEquals(17, obj2.age)
 //    }
-
 }

@@ -11,6 +11,8 @@ object Realm {
 object Versions {
     const val shadowJar =  "5.2.0"
     const val kotlin = "1.4.20-M1-63"
+    const val ktlintPlugin = "9.4.1" // https://github.com/jlleitschuh/ktlint-gradle
+    const val ktlintVersion = "0.39.0" // https://github.com/pinterest/ktlint
     const val autoService = "1.0-rc6"
 }
 

@@ -1,7 +1,6 @@
 package io.realm
 
 import io.realm.model.Person
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -60,5 +59,4 @@ class CommonTests {
         assertEquals("FooBar", obj2.name)
         assertEquals(17, obj2.age)
     }
-
 }

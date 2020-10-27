@@ -1,10 +1,10 @@
 package io.realm
 
-import io.realm.runtimeapi.NativeWrapper
 import io.realm.runtimeapi.NativePointer
 import realm_value_type_e
 import realmcJNI.*
 import realmc.*
+import io.realm.runtimeapi.NativeWrapper
 
 actual object CInterop : NativeWrapper {
     init {
@@ -24,7 +24,7 @@ actual object CInterop : NativeWrapper {
 
         // Enum example
         realm_value_type_e.RLM_TYPE_BINARY
-        val swigToEnum: realm_value_type_e = realm_value_type_e.swigToEnum(5)
+        // val swigToEnum: realm_value_type_e = realm_value_type_e.swigToEnum(5)
 
     }
 
@@ -70,5 +70,4 @@ actual object CInterop : NativeWrapper {
     actual override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
         TODO("Not yet implemented")
     }
-
 }

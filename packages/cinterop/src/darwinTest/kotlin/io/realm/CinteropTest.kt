@@ -67,7 +67,7 @@ class CinteropTest {
                 flags = RLM_CLASS_NORMAL.toInt()
             }
 
-            val classProperties: CPointer  <CPointerVarOf<CPointer<realm_property_info_t>>> = cValuesOf(prop_1_1.ptr).ptr
+            val classProperties: CPointer <CPointerVarOf<CPointer<realm_property_info_t>>> = cValuesOf(prop_1_1.ptr).ptr
             val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
 
             assertNoError()
@@ -85,7 +85,6 @@ class CinteropTest {
             assertNotNull(schema)
         }
     }
-
 }
 
 fun realm_string_t.setRealmString(memScope: MemScope, str: String) {
