@@ -42,14 +42,14 @@ publishing {
 }
 
 // FIXME we need to delete all generated files under gen but keep the .gitkeep file for git
-//tasks.create("cleanJvmWrapper") {
+// tasks.create("cleanJvmWrapper") {
 //    destroyables.register("$projectDir/src/main/java/io/realm/interop/gen/")
 //    destroyables.register("$projectDir/src/jvmCommon/jni/realmc.cpp")
 //    doLast {
 //        delete("$projectDir/src/main/java/io/realm/interop/gen/")
 //        delete("$projectDir/../cinterop/src/jvmCommon/jni/realmc.cpp")
 //    }
-//}
-//tasks.named("clean") {
+// }
+// tasks.named("clean") {
 //    dependsOn("cleanJvmWrapper")
-//}
+// }

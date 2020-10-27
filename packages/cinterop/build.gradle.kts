@@ -226,4 +226,3 @@ tasks.named("cinteropRealm_wrapperIos") {
 tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(tasks.named("capi_macos_x64"))
 }
-
