@@ -22,9 +22,7 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib-common')
                 implementation kotlin('reflect')
-                // FIXME cinterop replaced by runtime-api (and added to Android and Darwin) until we have resolved how to get it to work for JVM
-                // implementation(project(":cinterop"))
-                api(project(":runtime-api"))
+                 implementation(project(":cinterop"))
             }
         }
 

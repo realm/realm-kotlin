@@ -1,9 +1,9 @@
 package io.realm
 
 import io.realm.runtimeapi.NativePointer
-import realm_value_type_e
-import realmcJNI.*
-import realmc.*
+import io.realm.interop.gen.realm_value_type_e
+import io.realm.interop.gen.realmcJNI
+import io.realm.interop.gen.realmc
 import io.realm.runtimeapi.NativeWrapper
 
 actual object CInterop : NativeWrapper {

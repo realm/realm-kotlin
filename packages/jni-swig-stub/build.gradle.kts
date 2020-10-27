@@ -21,12 +21,12 @@ tasks.create("realmWrapperJvm") {
     doLast {
         exec {
             workingDir(".")
-            commandLine("swig", "-java", "-c++", "-package", "io.realm.interop.gen", "-I../../external/core/src/realm", "-o", "../cinterop/src/jvmCommon/jni/realmc.cpp", "-outdir", "src/main/java/io/realm/interop/gen", "realm.i")
+            commandLine("swig", "-java", "-c++", "-package", "io.realm.interop.gen", "-I$projectDir/../../external/core/src/realm", "-o", "$projectDir/../cinterop/src/jvmCommon/jni/realmc.cpp", "-outdir", "$projectDir/src/main/java/io/realm/interop/gen", "realm.i")
         }
     }
     inputs.file("realm.i")
-    outputs.dir("src/main/java")
-    outputs.dir("../cinterop/src/jvmCommon/jni")
+    outputs.dir("$projectDir/src/main/java")
+    outputs.dir("$projectDir/../cinterop/src/jvmCommon/jni")
 }
 
 tasks.named("compileJava") {
