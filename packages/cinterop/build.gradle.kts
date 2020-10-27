@@ -11,6 +11,8 @@ repositories {
 group = Realm.group
 version = Realm.version
 
+val includeAndroidBuild = System.getProperty("ANDROID_HOME") != null
+
 android {
     compileSdkVersion(29)
     buildToolsVersion = "29.0.2"
@@ -43,7 +45,7 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
     //  as this would cause the configuration phase to fail, while we don't even need the build
-    if (System.getProperty("ANDROID_HOME") != null) {
+    if (includeAndroidBuild) {
         defaultConfig {
             ndk {
                 // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
@@ -190,10 +192,12 @@ tasks.create("realmWrapperJvm") {
     outputs.dir("src/jvmCommon/jni")
 }
 
-afterEvaluate {
-    tasks.findByName("externalNativeBuildDebug")?.apply {
-        dependsOn(tasks.named("realmWrapperJvm"))
-        dependsOn(tasks.named("capi_android_x86_64"))
+if (includeAndroidBuild) {
+    afterEvaluate {
+        tasks.named("externalNativeBuildDebug") {
+            dependsOn(tasks.named("realmWrapperJvm"))
+            dependsOn(tasks.named("capi_android_x86_64"))
+        }
     }
 }
 
