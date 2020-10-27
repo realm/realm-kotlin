@@ -52,10 +52,14 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    // Innter externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
-    externalNativeBuild {
-        cmake {
-            setPath("src/jvmCommon/CMakeLists.txt")
+    // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
+    // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
+    //  as this would cause the configuration phase to fail, while we don't even need the build
+    if (!sdkDirectory.endsWith("missingSdkDirectory")) {
+        externalNativeBuild {
+            cmake {
+                setPath("src/jvmCommon/CMakeLists.txt")
+            }
         }
     }
 }
@@ -158,7 +162,7 @@ kotlin {
     }
 }
 
-// Tasks for building
+// Tasks for building capi...replace with Monorepo or alike when ready
 tasks.create("capi_android_x86_64") {
     doLast {
         exec {
@@ -187,7 +191,7 @@ tasks.create("realmWrapperJvm") {
 }
 
 afterEvaluate {
-    tasks.named("externalNativeBuildDebug") {
+    tasks.findByName("externalNativeBuildDebug")?.apply {
         dependsOn(tasks.named("realmWrapperJvm"))
         dependsOn(tasks.named("capi_android_x86_64"))
     }
