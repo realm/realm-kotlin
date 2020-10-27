@@ -35,7 +35,8 @@ stage('build') {
         """
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
-    parralelExecutors['jvm']       = jvm             { test("jvmTest") }
+// FIXME Removed JVM until we have can build cinterop for JVM
+//    parralelExecutors['jvm']       = jvm             { test("jvmTest") }
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
     parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors

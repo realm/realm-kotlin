@@ -1,7 +1,5 @@
 package io.realm
 
-import io.realm.interop.RealmInterop.realm_config_new
-import io.realm.interop.RealmInterop.realm_open
 import io.realm.runtimeapi.NativePointer
 import kotlin.reflect.KClass
 
@@ -19,9 +17,7 @@ class Realm {
             val schema = "[ { \"name\": \"Person\", \"properties\": { \"name\": \"string\", \"age\": \"int\"}}]" //TODO use schema Array generated from type
             val realm = Realm()
             realm.realmConfiguration = realmConfiguration
-            val config = realm_config_new()
             // FIXME Add schema
-            realm.dbPointer = realm_open(config)
             return realm
         }
     }
