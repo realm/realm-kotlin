@@ -11,7 +11,7 @@ repositories {
 group = Realm.group
 version = Realm.version
 
-val includeAndroidBuild = System.getProperty("ANDROID_HOME") != null
+val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
 
 android {
     compileSdkVersion(29)
@@ -195,8 +195,10 @@ tasks.create("realmWrapperJvm") {
 if (includeAndroidBuild) {
     afterEvaluate {
         tasks.named("externalNativeBuildDebug") {
-            dependsOn(tasks.named("realmWrapperJvm"))
             dependsOn(tasks.named("capi_android_x86_64"))
+        }
+        tasks.named("generateJsonModelDebug") {
+            dependsOn(tasks.named("realmWrapperJvm"))
         }
     }
 }
