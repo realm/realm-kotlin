@@ -84,43 +84,43 @@ class CinteropTest {
             flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
         }
 
-        val classes = realmc.new_classArray(2);
+        val classes = realmc.new_classArray(2)
         val props = realmc.new_propertyArrayArray(2)
 
-        realmc.classArray_setitem(classes, 0, class_1);
-        realmc.classArray_setitem(classes, 1, class_2);
+        realmc.classArray_setitem(classes, 0, class_1)
+        realmc.classArray_setitem(classes, 1, class_2)
 
         val properties_1 = realmc.new_propertyArray(3).also {
-            realmc.propertyArray_setitem(it, 0, prop_1_1);
-            realmc.propertyArray_setitem(it, 1, prop_1_2);
-            realmc.propertyArray_setitem(it, 2, prop_1_3);
+            realmc.propertyArray_setitem(it, 0, prop_1_1)
+            realmc.propertyArray_setitem(it, 1, prop_1_2)
+            realmc.propertyArray_setitem(it, 2, prop_1_3)
         }
         realmc.propertyArrayArray_setitem(props, 0, properties_1)
 
         val properties_2 = realmc.new_propertyArray(2).also { properties ->
             listOf(
-                    realm_property_info_t().apply {
-                        name = "int"
-                        public_name = ""
-                        type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
-                        collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
-                        link_target = ""
-                        link_origin_property_name = ""
-                        key = realm_col_key_t()
-                        flags = realm_property_flags_e.RLM_PROPERTY_INDEXED.swigValue() or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY.swigValue()
-                    },
-                    realm_property_info_t().apply {
-                        name = "strings"
-                        public_name = ""
-                        type = realm_property_type_e.RLM_PROPERTY_TYPE_STRING
-                        collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_LIST
-                        link_target = ""
-                        link_origin_property_name = ""
-                        key = realm_col_key_t()
-                        flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue() or realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
-                    }
+                realm_property_info_t().apply {
+                    name = "int"
+                    public_name = ""
+                    type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
+                    collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
+                    link_target = ""
+                    link_origin_property_name = ""
+                    key = realm_col_key_t()
+                    flags = realm_property_flags_e.RLM_PROPERTY_INDEXED.swigValue() or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY.swigValue()
+                },
+                realm_property_info_t().apply {
+                    name = "strings"
+                    public_name = ""
+                    type = realm_property_type_e.RLM_PROPERTY_TYPE_STRING
+                    collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_LIST
+                    link_target = ""
+                    link_origin_property_name = ""
+                    key = realm_col_key_t()
+                    flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue() or realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
+                }
             ).forEachIndexed { i, prop ->
-                realmc.propertyArray_setitem(properties, i, prop);
+                realmc.propertyArray_setitem(properties, i, prop)
             }
         }
         realmc.propertyArrayArray_setitem(props, 1, properties_2)
@@ -130,7 +130,7 @@ class CinteropTest {
 
         val config: Long = realmc.realm_config_new()
 
-        realmc.realm_config_set_path(config,  context.filesDir.absolutePath + "/c_api_test.realm")
+        realmc.realm_config_set_path(config, ontext.filesDir.absolutePath + "/c_api_test.realm")
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config, BigInteger("1"))
@@ -229,5 +229,4 @@ class CinteropTest {
 
         realmc.realm_commit(realm)
     }
-
 }

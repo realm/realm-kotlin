@@ -23,7 +23,7 @@ class Realm {
     }
     //    fun open(dbName: String, schema: String) : Realm
     fun beginTransaction() {
-         TODO()
+        TODO()
     }
 
     fun commitTransaction() {
@@ -40,7 +40,7 @@ class Realm {
     fun <T : RealmModel> objects(clazz: KClass<T>, query: String): RealmResults<T> {
         val objectType = clazz.simpleName ?: error("Cannot get class name") // TODO infer type from T
         // TODO check nullability of pointer and throw
-        val query : NativePointer = TODO()
+        val query: NativePointer = TODO()
         return RealmResults(
             query,
             clazz,

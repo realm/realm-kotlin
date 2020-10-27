@@ -32,7 +32,7 @@ android {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
                 // Don't know how to set AndroidTest source dir, probably in its own source set by
                 // "val test by getting" instead
-                //androidTest.java.srcDirs += "src/androidTest/kotlin"
+                // androidTest.java.srcDirs += "src/androidTest/kotlin"
             }
         }
     }

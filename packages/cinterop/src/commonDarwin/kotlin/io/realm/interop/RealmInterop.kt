@@ -2,7 +2,6 @@ package io.realm.interop
 
 import io.realm.runtimeapi.NativePointer
 import kotlinx.cinterop.toKString
-import realm_wrapper.*
 
 actual object RealmInterop {
     actual fun realm_get_library_version(): String {
