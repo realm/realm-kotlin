@@ -5,6 +5,7 @@ include("plugin-compiler-shaded")
 include("library")
 include("runtime-api")
 include(":cinterop")
+include(":jni-swig-stub")
 
 pluginManagement {
     plugins {
