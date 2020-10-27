@@ -24,7 +24,7 @@ actual object CInterop : NativeWrapper {
 
         // Enum example
         realm_value_type_e.RLM_TYPE_BINARY
-        val swigToEnum: realm_value_type_e = realm_value_type_e.swigToEnum(5)
+        // val swigToEnum: realm_value_type_e = realm_value_type_e.swigToEnum(5)
 
     }
 

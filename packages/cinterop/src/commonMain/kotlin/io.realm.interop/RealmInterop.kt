@@ -2,8 +2,9 @@ package io.realm.interop
 
 import io.realm.runtimeapi.NativePointer
 
+// FIXME Align on cinterop naming.
+@Suppress("FunctionNaming")
 expect object RealmInterop {
-
     fun realm_get_library_version(): String
     fun realm_config_new(): NativePointer
     fun realm_config_set_path(config: NativePointer, path: String): Boolean
