@@ -1,3 +1,11 @@
-rootProject.name = 'Intro'
-
+pluginManagement {
+    repositories {
+        jcenter()
+        google()
+        gradlePluginPortal()
+        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
+    }
+}
+rootProject.name = 'KMP Example'
 include ':app'
+

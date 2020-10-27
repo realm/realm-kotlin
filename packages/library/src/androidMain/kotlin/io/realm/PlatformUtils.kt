@@ -9,6 +9,6 @@ actual object PlatformUtils {
 
         val tmpDir = File(RealmInitProvider.applicationContext.filesDir, ".realm.temp")
         tmpDir.mkdirs()
-        return "$directory/${realmName}.realm"
+        return "$directory/$realmName.realm"
     }
 }

@@ -8,7 +8,7 @@ import sample.model.Person
 import sample.model.PersonProxy
 import kotlin.reflect.KClass
 
-expect fun path() : String
+expect fun path(): String
 
 object PersonRepository {
     val realm: Realm by lazy {
