@@ -33,18 +33,6 @@ android {
                 //androidTest.java.srcDirs += "src/androidTest/kotlin"
             }
         }
-        ndk {
-            // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-            abiFilters("x86_64")
-        }
-        // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
-        externalNativeBuild {
-            cmake {
-                arguments("-DANDROID_STL=c++_shared")
-            }
-        }
-
-        ndkVersion = "21.1.6352462"
     }
     buildTypes {
         val release by getting {
@@ -55,7 +43,19 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
     //  as this would cause the configuration phase to fail, while we don't even need the build
-    if (!sdkDirectory.endsWith("missingSdkDirectory")) {
+    if (System.getProperty("ANDROID_HOME") != null) {
+        defaultConfig {
+            ndk {
+                // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
+                abiFilters("x86_64")
+            }
+            // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
+            externalNativeBuild {
+                cmake {
+                    arguments("-DANDROID_STL=c++_shared")
+                }
+            }
+        }
         externalNativeBuild {
             cmake {
                 setPath("src/jvmCommon/CMakeLists.txt")
