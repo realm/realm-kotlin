@@ -1,8 +1,5 @@
 package io.realm.interop
 
-import io.realm.LongPointerWrapper
-
-
 // FIXME Align on cinterop naming.
 @Suppress("FunctionNaming")
 actual class RealmInterop {
@@ -22,6 +19,4 @@ actual class RealmInterop {
     actual fun realm_close(arg0: NativePointer): Boolean {
         TODO("Not yet implemented")
     }
-
-
 }

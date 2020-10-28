@@ -1,9 +1,9 @@
 package io.realm
 
-import io.realm.runtimeapi.NativePointer
 import io.realm.interop.gen.realm_value_type_e
-import io.realm.interop.gen.realmcJNI
 import io.realm.interop.gen.realmc
+import io.realm.interop.gen.realmcJNI
+import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.NativeWrapper
 
 actual object CInterop : NativeWrapper {
@@ -18,14 +18,11 @@ actual object CInterop : NativeWrapper {
         realmc.realm_config_set_path(realmConfigNew, "PATH")
         realmc.realm_open(realmConfigNew)
 
-
         realmcJNI.custom("Claus")
-
 
         // Enum example
         realm_value_type_e.RLM_TYPE_BINARY
         // val swigToEnum: realm_value_type_e = realm_value_type_e.swigToEnum(5)
-
     }
 
     actual override fun openRealm(path: String, schema: String): NativePointer {

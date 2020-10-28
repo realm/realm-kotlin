@@ -8,11 +8,9 @@ java {
     dependencies {
         api(project(":runtime-api"))
     }
-
 }
 group = Realm.group
 version = Realm.version
-
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -47,10 +45,12 @@ tasks.create("cleanJvmWrapper") {
     destroyables.register("$projectDir/src/main/java/io/realm/interop/gen/")
     destroyables.register("$projectDir/src/jvmCommon/jni/realmc.cpp")
     doLast {
-        delete(fileTree("$projectDir/src/main/java/io/realm/interop/").matching {
-            include("*.java")
-            exclude("LongPointerWrapper.java") // not generated
-        })
+        delete(
+            fileTree("$projectDir/src/main/java/io/realm/interop/").matching {
+                include("*.java")
+                exclude("LongPointerWrapper.java") // not generated
+            }
+        )
         delete("$projectDir/src/main/jni/")
     }
 }
