@@ -8,9 +8,11 @@ java {
     dependencies {
         api(project(":runtime-api"))
     }
+
 }
 group = Realm.group
 version = Realm.version
+
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -21,12 +23,12 @@ tasks.create("realmWrapperJvm") {
     doLast {
         exec {
             workingDir(".")
-            commandLine("swig", "-java", "-c++", "-package", "io.realm.interop.gen", "-I$projectDir/../../external/core/src/realm", "-o", "$projectDir/../cinterop/src/jvmCommon/jni/realmc.cpp", "-outdir", "$projectDir/src/main/java/io/realm/interop/gen", "realm.i")
+            commandLine("swig", "-java", "-c++", "-package", "io.realm.interop", "-I$projectDir/../../external/core/src/realm", "-o", "$projectDir/src/main/jni/realmc.cpp", "-outdir", "$projectDir/src/main/java/io/realm/interop", "realm.i")
         }
     }
     inputs.file("realm.i")
-    outputs.dir("$projectDir/src/main/java")
-    outputs.dir("$projectDir/../cinterop/src/jvmCommon/jni")
+    outputs.dir("$projectDir/src/main/java/io/realm/interop")
+    outputs.dir("$projectDir/src/main/jni")
 }
 
 tasks.named("compileJava") {
@@ -41,15 +43,18 @@ publishing {
     }
 }
 
-// FIXME we need to delete all generated files under gen but keep the .gitkeep file for git
-// tasks.create("cleanJvmWrapper") {
-//    destroyables.register("$projectDir/src/main/java/io/realm/interop/gen/")
-//    destroyables.register("$projectDir/src/jvmCommon/jni/realmc.cpp")
-//    doLast {
-//        delete("$projectDir/src/main/java/io/realm/interop/gen/")
-//        delete("$projectDir/../cinterop/src/jvmCommon/jni/realmc.cpp")
-//    }
-// }
-// tasks.named("clean") {
-//    dependsOn("cleanJvmWrapper")
-// }
+tasks.create("cleanJvmWrapper") {
+    destroyables.register("$projectDir/src/main/java/io/realm/interop/gen/")
+    destroyables.register("$projectDir/src/jvmCommon/jni/realmc.cpp")
+    doLast {
+        delete(fileTree("$projectDir/src/main/java/io/realm/interop/").matching {
+            include("*.java")
+            exclude("LongPointerWrapper.java") // not generated
+        })
+        delete("$projectDir/src/main/jni/")
+    }
+}
+
+tasks.named("clean") {
+    dependsOn("cleanJvmWrapper")
+}
