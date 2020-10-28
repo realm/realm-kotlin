@@ -1,16 +1,17 @@
 package io.realm
 
+import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModelInternal
-import kotlinx.cinterop.COpaquePointerVar
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toLong
+import kotlinx.cinterop.*
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class InstrumentedTests {
+
+    // TODO Remove when 'library' and 'cinterop' with actual platform API is in place.
+    class CPointerWrapper(val ptr: CPointer<*>) : NativePointer
+
     @Test
     fun testRealmModelInternalPropertiesGenerated() {
         val p = Sample()
