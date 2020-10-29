@@ -1,6 +1,5 @@
 package io.realm.interop
 
-import io.realm.interop.gen.realmc
 import io.realm.runtimeapi.NativePointer
 
 actual object RealmInterop {

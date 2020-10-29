@@ -36,10 +36,9 @@ kotlin {
 }
 
 // JVM
-// FIXME Removed until we have resolved how to fix issue with cinterop
-//kotlin {
-//    jvm()
-//}
+kotlin {
+    jvm()
+}
 
 // Android configuration
 android {

@@ -85,7 +85,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs("${project.projectDir}/../../external/core/src/realm")
+                includeDirs(project.file("../../external/core/src/realm"))
             }
         }
     }
@@ -94,7 +94,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs("${project.projectDir}/../../external/core/src/realm")
+                includeDirs(project.file("../../external/core/src/realm"))
             }
         }
     }
@@ -182,7 +182,7 @@ kotlin {
 tasks.create("capi_android_x86_64") {
     doLast {
         exec {
-            workingDir("../../external/core")
+            workingDir(project.file("../../external/core"))
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
             // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
@@ -202,21 +202,21 @@ if (includeAndroidBuild) {
 tasks.create("capi_macos_x64") {
     doLast {
         exec {
-            workingDir("../../external/core")
+            workingDir(project.file("../../external/core"))
             commandLine("mkdir", "-p", "build-macos_x64")
         }
         exec {
-            workingDir("../../external/core/build-macos_x64")
+            workingDir(project.file("../../external/core/build-macos_x64"))
             commandLine("cmake", "-DCMAKE_BUILD_TYPE=debug", "-DREALM_ENABLE_SYNC=0", "-DREALM_NO_TESTS=1", "..")
         }
         exec {
-            workingDir("../../external/core/build-macos_x64")
+            workingDir(project.file("../../external/core/build-macos_x64"))
             commandLine("cmake", "--build", ".", "-j8")
         }
     }
 // TODO Fix inputs to prevent for proper incremental builds
 //    inputs.dir("../../external/core/build-macos_x64")
-    outputs.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so")
+    outputs.file(project.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so"))
 }
 
 tasks.named("cinteropRealm_wrapperIos") {
