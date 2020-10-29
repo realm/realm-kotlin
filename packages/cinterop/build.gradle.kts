@@ -11,6 +11,8 @@ repositories {
 group = Realm.group
 version = Realm.version
 
+val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
+
 android {
     compileSdkVersion(29)
     buildToolsVersion = "29.0.2"
@@ -30,21 +32,9 @@ android {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
                 // Don't know how to set AndroidTest source dir, probably in its own source set by
                 // "val test by getting" instead
-                //androidTest.java.srcDirs += "src/androidTest/kotlin"
+                // androidTest.java.srcDirs += "src/androidTest/kotlin"
             }
         }
-        ndk {
-            // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-            abiFilters("x86_64")
-        }
-        // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
-        externalNativeBuild {
-            cmake {
-                arguments("-DANDROID_STL=c++_shared")
-            }
-        }
-
-        ndkVersion = "21.1.6352462"
     }
     buildTypes {
         val release by getting {
@@ -52,19 +42,39 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    // Innter externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
-    externalNativeBuild {
-        cmake {
-            setPath("src/jvmCommon/CMakeLists.txt")
+    // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
+    //  as this would cause the configuration phase to fail, while we don't even need the build
+    if (includeAndroidBuild) {
+        defaultConfig {
+            ndk {
+                // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
+                abiFilters("x86_64")
+            }
+            // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
+            externalNativeBuild {
+                cmake {
+                    arguments("-DANDROID_STL=c++_shared")
+                }
+            }
+        }
+        // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
+        externalNativeBuild {
+            cmake {
+                setPath("src/jvmCommon/CMakeLists.txt")
+            }
         }
     }
 }
 
 kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+    }
     android("android") {
         publishLibraryVariants("release", "debug")
     }
-    jvm()
     // We should be able to reuse configuration across different architectures (x86_64/arv differentiation can be done in def file)
     // FIXME Ideally we could reuse it across all native builds, but would have to do it dynamically
     //  as it does not seem like we can do this from the current target "hierarchy" (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
@@ -75,7 +85,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs("${project.projectDir}/../../external/core/src/realm")
+                includeDirs(project.file("../../external/core/src/realm"))
             }
         }
     }
@@ -84,7 +94,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs("${project.projectDir}/../../external/core/src/realm")
+                includeDirs(project.file("../../external/core/src/realm"))
             }
         }
     }
@@ -103,6 +113,9 @@ kotlin {
         val jvmCommon by creating {
             dependsOn(commonMain)
             kotlin.srcDir("src/jvmCommon/kotlin")
+            dependencies {
+                api(project(":jni-swig-stub"))
+            }
         }
 
         val androidMain by getting {
@@ -112,6 +125,12 @@ kotlin {
             }
         }
 
+        val jvmMain by getting {
+            dependsOn(jvmCommon)
+            dependencies {
+                implementation(kotlin("stdlib"))
+            }
+        }
         val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
@@ -123,21 +142,21 @@ kotlin {
             }
         }
 
-        val commonDarwin by creating {
+        val darwinCommon by creating {
             dependsOn(commonMain)
-            kotlin.srcDir("src/commonDarwin/kotlin")
+            kotlin.srcDir("src/darwinCommon/kotlin")
         }
 
         val iosMain by getting {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
         }
 
         val macosMain by getting {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
         }
 
         val darwinTest by creating {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
             kotlin.srcDir("src/darwinTest/kotlin")
         }
 
@@ -159,11 +178,11 @@ kotlin {
     }
 }
 
-// Tasks for building
+// Tasks for building capi...replace with Monorepo or alike when ready
 tasks.create("capi_android_x86_64") {
     doLast {
         exec {
-            workingDir("../../external/core")
+            workingDir(project.file("../../external/core"))
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
             // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
@@ -171,26 +190,11 @@ tasks.create("capi_android_x86_64") {
     }
 }
 
-tasks.create("realmWrapperJvm") {
-    doLast {
-        exec {
-            workingDir(".")
-            // FIXME Use acutal realm.h file. Swig cannot handle the method prefix generated by
-            //  #define RLM_EXPORT __attribute__((visibility("default"))),
-            //  so did a local clone of the file.
-            // TODO Maybe move to generated
-            commandLine("swig", "-java", "-c++", "-I../../external/core/src/realm", "-o", "src/jvmCommon/jni/realmc.cpp", "-outdir", "src/jvmCommon/java/io/realm/interop", "-package", "io.realm.interop", "realm.i")
+if (includeAndroidBuild) {
+    afterEvaluate {
+        tasks.named("externalNativeBuildDebug") {
+            dependsOn(tasks.named("capi_android_x86_64"))
         }
-    }
-    inputs.file("realm.i")
-    outputs.dir("src/jvmCommon/java/io/realm/interop")
-    outputs.dir("src/jvmCommon/jni")
-}
-
-afterEvaluate {
-    tasks.named("externalNativeBuildDebug") {
-        dependsOn(tasks.named("realmWrapperJvm"))
-        dependsOn(tasks.named("capi_android_x86_64"))
     }
 }
 
@@ -198,21 +202,21 @@ afterEvaluate {
 tasks.create("capi_macos_x64") {
     doLast {
         exec {
-            workingDir("../../external/core")
+            workingDir(project.file("../../external/core"))
             commandLine("mkdir", "-p", "build-macos_x64")
         }
         exec {
-            workingDir("../../external/core/build-macos_x64")
+            workingDir(project.file("../../external/core/build-macos_x64"))
             commandLine("cmake", "-DCMAKE_BUILD_TYPE=debug", "-DREALM_ENABLE_SYNC=0", "-DREALM_NO_TESTS=1", "..")
         }
         exec {
-            workingDir("../../external/core/build-macos_x64")
+            workingDir(project.file("../../external/core/build-macos_x64"))
             commandLine("cmake", "--build", ".", "-j8")
         }
     }
 // TODO Fix inputs to prevent for proper incremental builds
 //    inputs.dir("../../external/core/build-macos_x64")
-    outputs.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so")
+    outputs.file(project.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so"))
 }
 
 tasks.named("cinteropRealm_wrapperIos") {
@@ -221,16 +225,4 @@ tasks.named("cinteropRealm_wrapperIos") {
 
 tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(tasks.named("capi_macos_x64"))
-}
-
-tasks.create("cleanJvmWrapper") {
-    destroyables.register("$projectDir/src/jvmCommon/java")
-    destroyables.register("$projectDir/src/jvmCommon/jni")
-    doLast {
-        delete("$projectDir/src/jvmCommon/java")
-        delete("$projectDir/src/jvmCommon/jni")
-    }
-}
-tasks.named("clean") {
-    dependsOn("cleanJvmWrapper")
 }

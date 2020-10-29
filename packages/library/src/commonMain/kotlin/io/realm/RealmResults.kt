@@ -21,5 +21,4 @@ class RealmResults<T : RealmModel> constructor(private val queryPointer: NativeP
         // call T factory to instantiate an Object of type T using it's pointer 'objectPointer'
         return model as T
     }
-
 }

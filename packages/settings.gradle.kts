@@ -4,7 +4,8 @@ include("plugin-compiler")
 include("plugin-compiler-shaded")
 include("library")
 include("runtime-api")
-include("cinterop")
+include(":cinterop")
+include(":jni-swig-stub")
 
 pluginManagement {
     plugins {
@@ -16,7 +17,7 @@ pluginManagement {
     }
     resolutionStrategy {
         eachPlugin {
-            if(requested.id.namespace == "com.android") {
+            if (requested.id.namespace == "com.android") {
                 useModule("com.android.tools.build:gradle:4.0.1")
             }
         }

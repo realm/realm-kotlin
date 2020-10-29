@@ -1,10 +1,6 @@
 plugins {
-    kotlin("multiplatform") version Versions.kotlin apply false
-    kotlin("jvm") version Versions.kotlin apply false
-    kotlin("kapt") version Versions.kotlin apply false
-
     id("com.android.library") apply false
-
+    id("realm-lint")
     `java-gradle-plugin`
 }
 

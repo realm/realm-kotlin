@@ -115,7 +115,7 @@ class CinteropTest {
 
         val config: Long = realmc.realm_config_new()
 
-        realmc.realm_config_set_path(config,  context.filesDir.absolutePath + "/c_api_test.realm")
+        realmc.realm_config_set_path(config, context.filesDir.absolutePath + "/c_api_test.realm")
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config, BigInteger("1"))
@@ -214,5 +214,4 @@ class CinteropTest {
 
         realmc.realm_commit(realm)
     }
-
 }

@@ -5,7 +5,7 @@ A POC of a Realm Kotlin Multiplatform library.
 - First [build](./cpp_engine/README.md) the CPP binaries.
 - Publish the library locally
 ```
-cd path/to/lib
+cd packages
 ./gradlew publishToMavenLocal
 ```
  

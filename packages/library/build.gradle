@@ -22,7 +22,7 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib-common')
                 implementation kotlin('reflect')
-                // If runtimeapi is merged with cinterop then we will have to expose both to the users
+                // If runtimeapi is merged with cinterop then we will are exposing both to the users
                 api(project(":cinterop"))
                 // FIXME Only used for parsing schema strings until properly typed
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
@@ -79,7 +79,7 @@ kotlin {
         androidMain {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
-                implementation(project(":cinterop"))
+                api(project(":cinterop"))
             }
         }
 
@@ -101,7 +101,7 @@ kotlin {
     sourceSets {
         nativeCommon {
             dependencies {
-                implementation(project(":cinterop"))
+                api(project(":cinterop"))
             }
         }
     }

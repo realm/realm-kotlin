@@ -6,17 +6,17 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 
-class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
+class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
 
     companion object {
         // TODO Find a way to align with gradles Config.* properties
         // Modules has to match ${project.group}:${project.name} to make composite build work
-        val groupId = "io.realm.kotlin"
-        val artifactId = "plugin-compiler"
-        val artifactIdShadeSuffix = "-shaded"
-        val version = PLUGIN_VERSION
+        const val groupId = "io.realm.kotlin"
+        const val artifactId = "plugin-compiler"
+        const val artifactIdShadeSuffix = "-shaded"
+        const val version = PLUGIN_VERSION
         // The id used for passing compiler options from command line
-        val compilerPluginId = "io.realm.kotlin"
+        const val compilerPluginId = "io.realm.kotlin"
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
@@ -43,5 +43,4 @@ class RealmCompilerSubplugin: KotlinCompilerPluginSupportPlugin {
             emptyList<SubpluginOption>()
         }
     }
-
 }

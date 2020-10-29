@@ -85,7 +85,6 @@ class CinteropTest {
             assertNotNull(schema)
         }
     }
-
 }
 
 fun realm_string_t.setRealmString(memScope: MemScope, str: String) {
