@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(CAPI "${CMAKE_SOURCE_DIR}/../../../../external/core/")
 set(CAPI_BUILD "${CAPI}/build-android-x86_64-Debug")
+set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 
 # Cannot seem to find the libraries with find_library, maybe Android build overrides some internals
 link_directories("${CAPI_BUILD}/src/realm")              # realm
@@ -12,7 +13,7 @@ link_directories("${CAPI_BUILD}/src/realm")              # realm-object-store
 link_directories("${CAPI_BUILD}/src/realm/object-store/c_api") # librealm-ffi-dbg.a
 link_directories("${CAPI_BUILD}/openssl/lib/")           # libcrypto.a libssl.a
 
-add_library(realmc SHARED jni/realmc.cpp)
+add_library(realmc SHARED ${SWIG_JNI}/realmc.cpp)
 
 include_directories("${CAPI}/src/")
 

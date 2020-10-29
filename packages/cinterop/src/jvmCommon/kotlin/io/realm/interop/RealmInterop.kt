@@ -1,10 +1,6 @@
 package io.realm.interop
 
 import io.realm.runtimeapi.NativePointer
-import kotlin.jvm.JvmName
-
-// JVM/Android specific pointer wrapper
-class LongPointerWrapper(@get:JvmName("ptr") val ptr: Long) : NativePointer
 
 actual object RealmInterop {
     // TODO Maybe pull out into separate method

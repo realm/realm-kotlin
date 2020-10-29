@@ -22,9 +22,7 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib-common')
                 implementation kotlin('reflect')
-                // FIXME cinterop replaced by runtime-api (and added to Android and Darwin) until we have resolved how to get it to work for JVM
-                // implementation(project(":cinterop"))
-                api(project(":runtime-api"))
+                 api(project(":cinterop"))
             }
         }
 
@@ -38,10 +36,9 @@ kotlin {
 }
 
 // JVM
-// FIXME Removed until we have resolved how to fix issue with cinterop
-//kotlin {
-//    jvm()
-//}
+kotlin {
+    jvm()
+}
 
 // Android configuration
 android {
@@ -79,7 +76,7 @@ kotlin {
         androidMain {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
-                implementation(project(":cinterop"))
+                api(project(":cinterop"))
             }
         }
 
@@ -101,7 +98,7 @@ kotlin {
     sourceSets {
         nativeCommon {
             dependencies {
-                implementation(project(":cinterop"))
+                api(project(":cinterop"))
             }
         }
     }

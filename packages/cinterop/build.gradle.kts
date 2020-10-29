@@ -67,6 +67,11 @@ android {
 }
 
 kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+    }
     android("android") {
         publishLibraryVariants("release", "debug")
     }
@@ -80,7 +85,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs("${project.projectDir}/../../external/core/src/realm")
+                includeDirs(project.file("../../external/core/src/realm"))
             }
         }
     }
@@ -89,7 +94,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs("${project.projectDir}/../../external/core/src/realm")
+                includeDirs(project.file("../../external/core/src/realm"))
             }
         }
     }
@@ -108,6 +113,9 @@ kotlin {
         val jvmCommon by creating {
             dependsOn(commonMain)
             kotlin.srcDir("src/jvmCommon/kotlin")
+            dependencies {
+                api(project(":jni-swig-stub"))
+            }
         }
 
         val androidMain by getting {
@@ -117,6 +125,12 @@ kotlin {
             }
         }
 
+        val jvmMain by getting {
+            dependsOn(jvmCommon)
+            dependencies {
+                implementation(kotlin("stdlib"))
+            }
+        }
         val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
@@ -128,21 +142,21 @@ kotlin {
             }
         }
 
-        val commonDarwin by creating {
+        val darwinCommon by creating {
             dependsOn(commonMain)
-            kotlin.srcDir("src/commonDarwin/kotlin")
+            kotlin.srcDir("src/darwinCommon/kotlin")
         }
 
         val iosMain by getting {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
         }
 
         val macosMain by getting {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
         }
 
         val darwinTest by creating {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
             kotlin.srcDir("src/darwinTest/kotlin")
         }
 
@@ -168,7 +182,7 @@ kotlin {
 tasks.create("capi_android_x86_64") {
     doLast {
         exec {
-            workingDir("../../external/core")
+            workingDir(project.file("../../external/core"))
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
             // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
@@ -176,26 +190,10 @@ tasks.create("capi_android_x86_64") {
     }
 }
 
-tasks.create("realmWrapperJvm") {
-    doLast {
-        exec {
-            workingDir(".")
-            // TODO Maybe move to generated
-            commandLine("swig", "-java", "-c++", "-I../../external/core/src/realm", "-o", "src/jvmCommon/jni/realmc.cpp", "-outdir", "src/jvmCommon/java", "realm.i")
-        }
-    }
-    inputs.file("realm.i")
-    outputs.dir("src/jvmCommon/java")
-    outputs.dir("src/jvmCommon/jni")
-}
-
 if (includeAndroidBuild) {
     afterEvaluate {
         tasks.named("externalNativeBuildDebug") {
             dependsOn(tasks.named("capi_android_x86_64"))
-        }
-        tasks.named("generateJsonModelDebug") {
-            dependsOn(tasks.named("realmWrapperJvm"))
         }
     }
 }
@@ -204,21 +202,21 @@ if (includeAndroidBuild) {
 tasks.create("capi_macos_x64") {
     doLast {
         exec {
-            workingDir("../../external/core")
+            workingDir(project.file("../../external/core"))
             commandLine("mkdir", "-p", "build-macos_x64")
         }
         exec {
-            workingDir("../../external/core/build-macos_x64")
+            workingDir(project.file("../../external/core/build-macos_x64"))
             commandLine("cmake", "-DCMAKE_BUILD_TYPE=debug", "-DREALM_ENABLE_SYNC=0", "-DREALM_NO_TESTS=1", "..")
         }
         exec {
-            workingDir("../../external/core/build-macos_x64")
+            workingDir(project.file("../../external/core/build-macos_x64"))
             commandLine("cmake", "--build", ".", "-j8")
         }
     }
 // TODO Fix inputs to prevent for proper incremental builds
 //    inputs.dir("../../external/core/build-macos_x64")
-    outputs.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so")
+    outputs.file(project.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so"))
 }
 
 tasks.named("cinteropRealm_wrapperIos") {
@@ -227,16 +225,4 @@ tasks.named("cinteropRealm_wrapperIos") {
 
 tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(tasks.named("capi_macos_x64"))
-}
-
-tasks.create("cleanJvmWrapper") {
-    destroyables.register("$projectDir/src/jvmCommon/java")
-    destroyables.register("$projectDir/src/jvmCommon/jni")
-    doLast {
-        delete("$projectDir/src/jvmCommon/java")
-        delete("$projectDir/src/jvmCommon/jni")
-    }
-}
-tasks.named("clean") {
-    dependsOn("cleanJvmWrapper")
 }

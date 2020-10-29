@@ -14,14 +14,9 @@
 %include "stdint.i"
 %include "arrays_java.i"
 
-// Manual imports in java module class
-%pragma(java) moduleimports=%{
-import io.realm.interop.LongPointerWrapper;
-%}
-
 // Manual additions to java module class
 %pragma(java) modulecode=%{
-  //  Manual addition
+//  Manual addition
 %}
 
 // Helpers included directly in cpp file
@@ -47,7 +42,7 @@ typedef jstring realm_string_t;
 %typemap(jstype) void* "long"
 %typemap(javain) void* "$javainput"
 %typemap(javaout) void* {
-    return $jnicall;
+return $jnicall;
 }
 
 // Reuse above type maps on other pointers too
@@ -57,9 +52,9 @@ typedef jstring realm_string_t;
 //typedef long* realm_t;
 // FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
 %typemap(jstype) realm_t* "LongPointerWrapper"
-%typemap(javain) realm_t* "$javainput.ptr()"
+%typemap(javain) realm_t* "$javainput.ptr"
 %typemap(javaout) realm_t* {
-    return new LongPointerWrapper($jnicall);
+return new LongPointerWrapper($jnicall);
 }
 
 %include "carrays.i"

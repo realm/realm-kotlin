@@ -1,24 +1,9 @@
-package io.realm
+package io.realm.interop
 
-import SWIGTYPE_p_realm_results
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
-import realm_class_flags_e
-import realm_class_info_t
-import realm_col_key_t
-import realm_collection_type_e
-import realm_error_t
-import realm_property_flags_e
-import realm_property_info_t
-import realm_property_type_e
-import realm_schema_mode_e
-import realm_size_t
-import realm_table_key_t
-import realm_value_t
-import realm_value_type_e
-import realmc
 import java.math.BigInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -130,7 +115,7 @@ class CinteropTest {
 
         val config: Long = realmc.realm_config_new()
 
-        realmc.realm_config_set_path(config, ontext.filesDir.absolutePath + "/c_api_test.realm")
+        realmc.realm_config_set_path(config, context.filesDir.absolutePath + "/c_api_test.realm")
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config, BigInteger("1"))
