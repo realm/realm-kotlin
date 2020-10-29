@@ -3,12 +3,16 @@ package io.realm
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import io.realm.interop.*
+import io.realm.model.Sample
 import io.realm.runtimeapi.NativePointer
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+
+import io.realm.runtimeapi.RealmCompanion
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
@@ -38,7 +42,7 @@ class InstrumentedTests {
         RealmInterop.realm_config_set_schema_version(config, 1)
 
         val classes = listOf(
-                Class(
+                Table(
                         name = "foo",
                         primaryKey = "",
                         flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
@@ -59,7 +63,7 @@ class InstrumentedTests {
                                 ),
                         )
                 ),
-                Class(
+                Table(
                         name = "bar",
                         primaryKey = "int",
                         flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
@@ -93,19 +97,15 @@ class InstrumentedTests {
         assertEquals(2, RealmInterop.realm_get_num_classes(realm))
 
         val key_foo  = RealmInterop.realm_find_class(realm, "foo")
-        val key_foo_str = RealmInterop.realm_find_property(realm, key_foo, "str")
 
         RealmInterop.realm_begin_write(realm)
 
         val foo = RealmInterop.realm_object_create(realm, key_foo)
 
-        assertEquals("", RealmInterop.realm_get_value(foo, PropertyType.RLM_PROPERTY_TYPE_STRING, key_foo_str))
+        assertEquals("", RealmInterop.realm_get_value(realm, foo, "foo", "str", PropertyType.RLM_PROPERTY_TYPE_STRING))
 
-        RealmInterop.realm_set_value(foo, key_foo_str, "Hello, World!", false)
-        assertEquals("Hello, World!", RealmInterop.realm_get_value(foo, PropertyType.RLM_PROPERTY_TYPE_STRING, key_foo_str))
-        //
-        RealmInterop.realm_set_value(realm, foo, "foo", "str", "Hello, World2!", false)
-        assertEquals("Hello, World2!", RealmInterop.realm_get_value(foo, PropertyType.RLM_PROPERTY_TYPE_STRING, key_foo_str))
+        RealmInterop.realm_set_value(realm, foo, "foo", "str", "Hello, World!", false)
+        assertEquals("Hello, World!", RealmInterop.realm_get_value(realm, foo, "foo", "str", PropertyType.RLM_PROPERTY_TYPE_STRING))
 
         RealmInterop.realm_commit(realm)
 

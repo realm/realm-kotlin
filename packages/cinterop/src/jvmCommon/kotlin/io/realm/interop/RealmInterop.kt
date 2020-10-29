@@ -19,12 +19,12 @@ actual object RealmInterop {
 
     // FIXME Maybe eliminate Class/Property and initialize native pointers to realm_class_info_t and
     //  realm_property_info_t directly in generated class
-    actual fun realm_schema_new(classes: List<Class>): NativePointer {
-        val count = classes.size
+    actual fun realm_schema_new(tables: List<Table>): NativePointer {
+        val count = tables.size
         val cclasses = realmc.new_classArray(count);
         val cproperties = realmc.new_propertyArrayArray(count)
 
-        for ((i, clazz) in classes.withIndex()) {
+        for ((i, clazz) in tables.withIndex()) {
             val properties = clazz.properties
             // Class
             val cclass = realm_class_info_t().apply {
@@ -134,7 +134,7 @@ actual object RealmInterop {
                 cvalue.string = value as String
             }
             else -> {
-                TODO()
+                TODO("Only string are support at the moment")
             }
         }
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
@@ -149,10 +149,10 @@ actual object RealmInterop {
         val cvalue = realm_value_t()
         realmc.realm_get_value((o as LongPointerWrapper).ptr, pinfo.key, cvalue)
         when (cvalue.type) {
-            realm_property_type_e.RLM_PROPERTY_TYPE_STRING ->
+            realm_value_type_e.RLM_TYPE_STRING ->
                 return cvalue.string as T
             else ->
-                TODO()
+                TODO("Only string are support at the moment")
         }
     }
 

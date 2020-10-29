@@ -33,16 +33,16 @@ class AccessorModifierIrGeneration(val pluginContext: IrPluginContext) {
                         logger("String property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("string", nullable)
 
-                        declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
-                            override fun visitReturn(expression: IrReturn): IrExpression {
-                                return IrBlockBuilder(pluginContext, currentScope?.scope!!, expression.startOffset, expression.endOffset).irBlock {
-                                    val irConcat = irConcat()
-                                    irConcat.addArgument(irString("Hello "))
-                                    irConcat.addArgument(expression.value)
-                                    +irReturn(irConcat)
-                                }
-                            }
-                        })
+//                        declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
+//                            override fun visitReturn(expression: IrReturn): IrExpression {
+//                                return IrBlockBuilder(pluginContext, currentScope?.scope!!, expression.startOffset, expression.endOffset).irBlock {
+//                                    val irConcat = irConcat()
+//                                    irConcat.addArgument(irString("Hello "))
+//                                    irConcat.addArgument(expression.value)
+//                                    +irReturn(irConcat)
+//                                }
+//                            }
+//                        })
                     }
                     declaration.isRealmLong() -> {
                         logger("Long property named ${declaration.name} is nullable $nullable")

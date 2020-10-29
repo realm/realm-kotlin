@@ -1,6 +1,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
+import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.functions
@@ -36,8 +38,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
             irClass.apply {
-                addNullableProperty(REALM_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
-                addNullableProperty(OBJECT_POINTER, pluginContext.irBuiltIns.longType.makeNullable())
+                addNullableProperty(REALM_POINTER, pluginContext.referenceClass(REALM_NATIVE_POINTER)!!.defaultType)
+                addNullableProperty(OBJECT_POINTER, pluginContext.referenceClass(REALM_NATIVE_POINTER)!!.defaultType)
                 addNullableProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable())
                 addNullableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType.makeNullable())
 

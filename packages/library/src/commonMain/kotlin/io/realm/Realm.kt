@@ -1,8 +1,11 @@
 package io.realm
 
+import io.realm.interop.RealmInterop
 import io.realm.interop.RealmInterop.realm_config_new
 import io.realm.interop.RealmInterop.realm_open
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
 class Realm {
@@ -16,22 +19,19 @@ class Realm {
             //   use the function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
 
-            val schema = "[ { \"name\": \"Person\", \"properties\": { \"name\": \"string\", \"age\": \"int\"}}]" //TODO use schema Array generated from type
             val realm = Realm()
             realm.realmConfiguration = realmConfiguration
-            val config = realm_config_new()
-            // FIXME Add schema
-            realm.dbPointer = realm_open(config)
+            realm.dbPointer = RealmInterop.realm_open(realmConfiguration.nativeConfig)
             return realm
         }
     }
     //    fun open(dbName: String, schema: String) : Realm
     fun beginTransaction() {
-         TODO()
+        RealmInterop.realm_begin_write(dbPointer!!)
     }
 
     fun commitTransaction() {
-        TODO()
+        RealmInterop.realm_commit(dbPointer!!)
     }
 
     fun cancelTransaction() {
@@ -60,8 +60,11 @@ class Realm {
     //    doing this operation in place)
     fun <T : RealmModel> create(type: KClass<T>) : T {
         val objectType = type.simpleName?: error("Cannot get class name")
-        val managedModel = realmConfiguration.modelFactory.invoke(type)
-        managedModel.objectPointer = TODO()
+        val managedModel = realmConfiguration.modelFactory.invoke(type) as RealmModelInternal
+        val name = type.simpleName!!
+        val key = RealmInterop.realm_find_class(dbPointer!!, name)
+        managedModel.realmPointer = dbPointer
+        managedModel.realmObjectPointer = RealmInterop.realm_object_create(dbPointer!!, key)
         managedModel.isManaged = true
         managedModel.tableName = objectType
         return managedModel as T

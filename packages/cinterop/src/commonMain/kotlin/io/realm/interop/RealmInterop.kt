@@ -9,7 +9,7 @@ expect object RealmInterop {
 
     fun realm_get_library_version(): String;
 
-    fun realm_schema_new(classes: List<Class>): NativePointer
+    fun realm_schema_new(tables: List<Table>): NativePointer
 
     fun realm_config_new(): NativePointer
     fun realm_config_set_path(config: NativePointer, path: String)

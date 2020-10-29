@@ -1,15 +1,22 @@
 package io.realm
 
+import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInternal
 import test.Sample
+import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SampleTests {
+
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
         val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
         assertEquals(expected, Sample.schema())
+        val x : KClass<out Any> = Sample::class
+        val actual: RealmCompanion = Sample.Companion as RealmCompanion
+        assertEquals(expected, actual.schema())
     }
 
     @Suppress("UNREACHABLE_CODE")
@@ -20,8 +27,8 @@ class SampleTests {
 
         // Accessing getters/setters
         realmModel.isManaged = true
-        realmModel.realmObjectPointer = 0xCAFEBABE
-        realmModel.realmPointer = 0XCAFED00D
+//        realmModel.realmObjectPointer = 0xCAFEBABE
+//        realmModel.realmPointer = 0XCAFED00D
         realmModel.tableName = "Sample"
 
         assertEquals(true, realmModel.isManaged)

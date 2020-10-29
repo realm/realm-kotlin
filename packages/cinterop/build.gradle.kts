@@ -64,6 +64,7 @@ kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
     }
+    jvm()
     // We should be able to reuse configuration across different architectures (x86_64/arv differentiation can be done in def file)
     // FIXME Ideally we could reuse it across all native builds, but would have to do it dynamically
     //  as it does not seem like we can do this from the current target "hierarchy" (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)

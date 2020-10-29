@@ -13,7 +13,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.2.6")
+    //
     testImplementation(project(":runtime-api"))
+    testImplementation(project(":cinterop"))
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
