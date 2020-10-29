@@ -1,22 +1,7 @@
-package io.realm
+package io.realm.interop
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
-import io.realm.interop.gen.SWIGTYPE_p_realm_results
-import io.realm.interop.gen.realm_class_flags_e
-import io.realm.interop.gen.realm_class_info_t
-import io.realm.interop.gen.realm_col_key_t
-import io.realm.interop.gen.realm_collection_type_e
-import io.realm.interop.gen.realm_error_t
-import io.realm.interop.gen.realm_property_flags_e
-import io.realm.interop.gen.realm_property_info_t
-import io.realm.interop.gen.realm_property_type_e
-import io.realm.interop.gen.realm_schema_mode_e
-import io.realm.interop.gen.realm_size_t
-import io.realm.interop.gen.realm_table_key_t
-import io.realm.interop.gen.realm_value_t
-import io.realm.interop.gen.realm_value_type_e
-import io.realm.interop.gen.realmc
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.math.BigInteger

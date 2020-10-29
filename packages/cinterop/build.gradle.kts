@@ -142,21 +142,21 @@ kotlin {
             }
         }
 
-        val commonDarwin by creating {
+        val darwinCommon by creating {
             dependsOn(commonMain)
-            kotlin.srcDir("src/commonDarwin/kotlin")
+            kotlin.srcDir("src/darwinCommon/kotlin")
         }
 
         val iosMain by getting {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
         }
 
         val macosMain by getting {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
         }
 
         val darwinTest by creating {
-            dependsOn(commonDarwin)
+            dependsOn(darwinCommon)
             kotlin.srcDir("src/darwinTest/kotlin")
         }
 

@@ -22,7 +22,7 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib-common')
                 implementation kotlin('reflect')
-                 implementation(project(":cinterop"))
+                 api(project(":cinterop"))
             }
         }
 
@@ -76,7 +76,7 @@ kotlin {
         androidMain {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
-                implementation(project(":cinterop"))
+                api(project(":cinterop"))
             }
         }
 
@@ -98,7 +98,7 @@ kotlin {
     sourceSets {
         nativeCommon {
             dependencies {
-                implementation(project(":cinterop"))
+                api(project(":cinterop"))
             }
         }
     }
