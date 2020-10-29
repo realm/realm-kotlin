@@ -1,3 +1,0 @@
-headers = stdint.h stdio.h wrapper.h
-headerFilter = stdint.h stdio.h wrapper.h
-linkerOpts = -framework Foundation -framework CoreFoundation -framework Security

@@ -17,21 +17,21 @@ class Realm {
             val schema = "[ { \"name\": \"Person\", \"properties\": { \"name\": \"string\", \"age\": \"int\"}}]" // TODO use schema Array generated from type
             val realm = Realm()
             realm.realmConfiguration = realmConfiguration
-            realm.dbPointer = CInterop.openRealm(PlatformUtils.getPathOrUseDefaultLocation(realmConfiguration), schema)
+            // FIXME Add schema
             return realm
         }
     }
     //    fun open(dbName: String, schema: String) : Realm
     fun beginTransaction() {
-        CInterop.beginTransaction(dbPointer!!)
+        TODO()
     }
 
     fun commitTransaction() {
-        CInterop.commitTransaction(dbPointer!!)
+        TODO()
     }
 
     fun cancelTransaction() {
-        CInterop.cancelTransaction(dbPointer!!)
+        TODO()
     }
 
     fun registerListener(f: () -> Unit) {
@@ -40,8 +40,9 @@ class Realm {
     fun <T : RealmModel> objects(clazz: KClass<T>, query: String): RealmResults<T> {
         val objectType = clazz.simpleName ?: error("Cannot get class name") // TODO infer type from T
         // TODO check nullability of pointer and throw
+        val query: NativePointer = TODO()
         return RealmResults(
-            CInterop.realmresultsQuery(dbPointer!!, objectType, query),
+            query,
             clazz,
             realmConfiguration.modelFactory
         )
@@ -55,7 +56,7 @@ class Realm {
     fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
         val managedModel = realmConfiguration.modelFactory.invoke(type)
-        managedModel.objectPointer = CInterop.addObject(dbPointer!!, objectType)
+        managedModel.objectPointer = TODO()
         managedModel.isManaged = true
         managedModel.tableName = objectType
         return managedModel as T

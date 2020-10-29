@@ -8,6 +8,11 @@ This repository holds the source code for the Kotlin version of Realm, which run
 
 # How to build:
 
+## Prerequisits
+- Swig
+
+## Commands to build
+
 ```
 git submodule update --init --recursive
 cd test

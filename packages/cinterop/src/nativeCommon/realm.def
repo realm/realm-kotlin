@@ -1,0 +1,6 @@
+headers = realm.h
+headerFilter = realm.h
+staticLibraries = librealm-ffi-static-dbg.a librealm-dbg.a librealm-parser-dbg.a librealm-object-store-dbg.a
+libraryPaths.macos_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
+libraryPaths.ios_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
+linkerOpts = -lz -framework Foundation -framework CoreFoundation -framework Security

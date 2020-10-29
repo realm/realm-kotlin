@@ -90,7 +90,7 @@ kotlin {
 }
 
 kotlin {
-    jvm() {}
+    jvm()
     sourceSets {
         jvmTest {
             dependencies {

@@ -13,6 +13,12 @@ class InstrumentedTests {
         assertNotNull(RealmInitProvider.applicationContext)
     }
 
+    @Test
+    fun cinterop_swig() {
+        System.loadLibrary("realmc")
+        println(io.realm.interop.RealmInterop.realm_get_library_version())
+    }
+
 //    @Test
 //    fun createObject() {
 //        val configuration = RealmConfiguration.Builder()
