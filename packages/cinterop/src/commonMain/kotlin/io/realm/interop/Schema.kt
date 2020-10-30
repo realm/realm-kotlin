@@ -5,6 +5,7 @@ package io.realm.interop
 //  enumerations, but for now the actuals define the values as they can then be linked directly to
 //  the C binding's values.
 
+// TODO Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
     RLM_SCHEMA_MODE_AUTOMATIC,
     RLM_SCHEMA_MODE_IMMUTABLE,
@@ -27,8 +28,8 @@ expect enum class PropertyType {
     ;
 
     // Consider adding property methods to make it easier to do generic code on all types. Or is this exactly what collection type is about
-    //fun isList()
-    //fun isReference()
+    // fun isList()
+    // fun isReference()
 }
 
 expect enum class CollectionType {

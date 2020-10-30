@@ -1,10 +1,10 @@
 package io.realm.interop
 
 import io.realm.runtimeapi.NativePointer
-import kotlinx.cinterop.*
-import realm_wrapper.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.toKString
 
-class CPointerWrapper(val ptr : CPointer<*>) : NativePointer//TODO maybe use <out CPointed> instead of *
+class CPointerWrapper(val ptr: CPointer<*>) : NativePointer // TODO maybe use <out CPointed> instead of *
 
 actual object RealmInterop {
     actual fun realm_get_library_version(): String {
@@ -73,5 +73,4 @@ actual object RealmInterop {
     actual fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
         TODO("Not yet implemented")
     }
-
 }

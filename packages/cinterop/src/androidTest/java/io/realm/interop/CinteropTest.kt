@@ -70,43 +70,43 @@ class CinteropTest {
             flags = realm_class_flags_e.RLM_CLASS_NORMAL
         }
 
-        val classes = realmc.new_classArray(2);
+        val classes = realmc.new_classArray(2)
         val props = realmc.new_propertyArrayArray(2)
 
-        realmc.classArray_setitem(classes, 0, class_1);
-        realmc.classArray_setitem(classes, 1, class_2);
+        realmc.classArray_setitem(classes, 0, class_1)
+        realmc.classArray_setitem(classes, 1, class_2)
 
         val properties_1 = realmc.new_propertyArray(3).also {
-            realmc.propertyArray_setitem(it, 0, prop_1_1);
-            realmc.propertyArray_setitem(it, 1, prop_1_2);
-            realmc.propertyArray_setitem(it, 2, prop_1_3);
+            realmc.propertyArray_setitem(it, 0, prop_1_1)
+            realmc.propertyArray_setitem(it, 1, prop_1_2)
+            realmc.propertyArray_setitem(it, 2, prop_1_3)
         }
         realmc.propertyArrayArray_setitem(props, 0, properties_1)
 
         val properties_2 = realmc.new_propertyArray(2).also { properties ->
             listOf(
-                    realm_property_info_t().apply {
-                        name = "int"
-                        public_name = ""
-                        type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
-                        collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
-                        link_target = ""
-                        link_origin_property_name = ""
-                        key = realm_col_key_t()
-                        flags = realm_property_flags_e.RLM_PROPERTY_INDEXED or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY
-                    },
-                    realm_property_info_t().apply {
-                        name = "strings"
-                        public_name = ""
-                        type = realm_property_type_e.RLM_PROPERTY_TYPE_STRING
-                        collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_LIST
-                        link_target = ""
-                        link_origin_property_name = ""
-                        key = realm_col_key_t()
-                        flags = realm_property_flags_e.RLM_PROPERTY_NORMAL or realm_property_flags_e.RLM_PROPERTY_NULLABLE
-                    }
+                realm_property_info_t().apply {
+                    name = "int"
+                    public_name = ""
+                    type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
+                    collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
+                    link_target = ""
+                    link_origin_property_name = ""
+                    key = realm_col_key_t()
+                    flags = realm_property_flags_e.RLM_PROPERTY_INDEXED or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY
+                },
+                realm_property_info_t().apply {
+                    name = "strings"
+                    public_name = ""
+                    type = realm_property_type_e.RLM_PROPERTY_TYPE_STRING
+                    collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_LIST
+                    link_target = ""
+                    link_origin_property_name = ""
+                    key = realm_col_key_t()
+                    flags = realm_property_flags_e.RLM_PROPERTY_NORMAL or realm_property_flags_e.RLM_PROPERTY_NULLABLE
+                }
             ).forEachIndexed { i, prop ->
-                realmc.propertyArray_setitem(properties, i, prop);
+                realmc.propertyArray_setitem(properties, i, prop)
             }
         }
         realmc.propertyArrayArray_setitem(props, 1, properties_2)

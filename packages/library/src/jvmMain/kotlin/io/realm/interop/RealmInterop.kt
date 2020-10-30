@@ -1,7 +1,6 @@
 package io.realm.interop
 
-import io.realm.LongPointerWrapper
-
+@Suppress("FunctionNaming", "LongParameterList")
 actual class RealmInterop {
 
     actual fun realm_config_new(): Long {
@@ -19,6 +18,4 @@ actual class RealmInterop {
     actual fun realm_close(arg0: NativePointer): Boolean {
         TODO("Not yet implemented")
     }
-
-
 }

@@ -2,19 +2,19 @@ package io.realm
 
 import io.realm.interop.Property
 import io.realm.interop.PropertyType
-import io.realm.interop.Table
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
+import io.realm.interop.Table
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModel
-import kotlin.reflect.KClass
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.reflect.KClass
 
 typealias ModelFactory = ((KClass<out RealmModel>) -> RealmModel)
 
@@ -23,11 +23,11 @@ typealias ModelFactory = ((KClass<out RealmModel>) -> RealmModel)
 // }
 
 class RealmConfiguration private constructor(
-        val path: String?, // Full path if we don't want to use the default location
-        val name: String?, // Optional Realm name (default is 'default')
-        val modelFactory: ModelFactory, // Factory to instantiate proxy object (since reflection is not supported in K/N)
-        val version: Long = 0,
-        val tables: List<Table> = listOf()
+    val path: String?, // Full path if we don't want to use the default location
+    val name: String?, // Optional Realm name (default is 'default')
+    val modelFactory: ModelFactory, // Factory to instantiate proxy object (since reflection is not supported in K/N)
+    val version: Long = 0,
+    val tables: List<Table> = listOf()
 ) {
 
     internal val nativeConfig: NativePointer
@@ -62,11 +62,12 @@ class RealmConfiguration private constructor(
         }
 
         // Highly explosive. Quick implementation to overcome that we don't have typed schemas in the compantion objects yet
-        private fun parseSchema(schema: String) : Table {
+        private fun parseSchema(schema: String): Table {
             val table: JsonObject = Json.parseToJsonElement(schema).jsonObject
             val name1 = table["name"]!!.jsonPrimitive.content
             val properties = table["properties"]!!.jsonArray.toList().map { element: JsonElement ->
                 val property = element as JsonObject
+                @Suppress("TooGenericExceptionThrown")
                 if (property.keys.size != 1) throw RuntimeException("Malformed schema: $schema")
                 val name = property.keys.first()
                 val attributes = property[name]!!.jsonObject
@@ -78,7 +79,6 @@ class RealmConfiguration private constructor(
             }
 
             return Table(name1, properties = properties)
-
         }
     }
 }

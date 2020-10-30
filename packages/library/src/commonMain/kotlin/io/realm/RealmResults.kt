@@ -5,9 +5,10 @@ import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
-class RealmResults<T : RealmModel> constructor(private val queryPointer: NativePointer,
-                                               private val clazz: KClass<T>,
-                                               private val modelFactory: ModelFactory
+class RealmResults<T : RealmModel> constructor(
+    private val queryPointer: NativePointer,
+    private val clazz: KClass<T>,
+    private val modelFactory: ModelFactory
 ) : AbstractList<T>() {
     override val size: Int
         get() = TODO() // CInterop.queryGetSize(queryPointer).toInt()

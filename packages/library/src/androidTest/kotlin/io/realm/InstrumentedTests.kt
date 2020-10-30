@@ -2,16 +2,19 @@ package io.realm
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
-import io.realm.interop.*
-import io.realm.model.Sample
+import io.realm.interop.ClassFlag
+import io.realm.interop.CollectionType
+import io.realm.interop.Property
+import io.realm.interop.PropertyFlag
+import io.realm.interop.PropertyType
+import io.realm.interop.RealmInterop
+import io.realm.interop.SchemaMode
+import io.realm.interop.Table
 import io.realm.runtimeapi.NativePointer
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-
-import io.realm.runtimeapi.RealmCompanion
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
@@ -31,6 +34,7 @@ class InstrumentedTests {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun realm() {
         System.loadLibrary("realmc")
         RealmInterop.realm_get_library_version()
@@ -42,45 +46,45 @@ class InstrumentedTests {
         RealmInterop.realm_config_set_schema_version(config, 1)
 
         val classes = listOf(
-                Table(
-                        name = "foo",
-                        primaryKey = "",
-                        flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
-                        properties = listOf(
-                                Property(
-                                        name = "int",
-                                        type = PropertyType.RLM_PROPERTY_TYPE_INT,
-                                ),
-                                Property(
-                                        name = "str",
-                                        type = PropertyType.RLM_PROPERTY_TYPE_STRING,
-                                ),
-                                Property(
-                                        name = "bars",
-                                        type = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-                                        collectionType = CollectionType.RLM_COLLECTION_TYPE_LIST,
-                                        linkTarget = "bar",
-                                ),
-                        )
-                ),
-                Table(
-                        name = "bar",
-                        primaryKey = "int",
-                        flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
-                        properties = listOf(
-                                Property(
-                                        name = "int",
-                                        type = PropertyType.RLM_PROPERTY_TYPE_INT,
-                                        flags = setOf(PropertyFlag.RLM_PROPERTY_INDEXED, PropertyFlag.RLM_PROPERTY_PRIMARY_KEY)
-                                ),
-                                Property(
-                                        name = "strings",
-                                        type = PropertyType.RLM_PROPERTY_TYPE_STRING,
-                                        collectionType = CollectionType.RLM_COLLECTION_TYPE_LIST,
-                                        flags = setOf(PropertyFlag.RLM_PROPERTY_NORMAL, PropertyFlag.RLM_PROPERTY_NULLABLE)
-                                ),
-                        )
-                ),
+            Table(
+                name = "foo",
+                primaryKey = "",
+                flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
+                properties = listOf(
+                    Property(
+                        name = "int",
+                        type = PropertyType.RLM_PROPERTY_TYPE_INT,
+                    ),
+                    Property(
+                        name = "str",
+                        type = PropertyType.RLM_PROPERTY_TYPE_STRING,
+                    ),
+                    Property(
+                        name = "bars",
+                        type = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+                        collectionType = CollectionType.RLM_COLLECTION_TYPE_LIST,
+                        linkTarget = "bar",
+                    ),
+                )
+            ),
+            Table(
+                name = "bar",
+                primaryKey = "int",
+                flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
+                properties = listOf(
+                    Property(
+                        name = "int",
+                        type = PropertyType.RLM_PROPERTY_TYPE_INT,
+                        flags = setOf(PropertyFlag.RLM_PROPERTY_INDEXED, PropertyFlag.RLM_PROPERTY_PRIMARY_KEY)
+                    ),
+                    Property(
+                        name = "strings",
+                        type = PropertyType.RLM_PROPERTY_TYPE_STRING,
+                        collectionType = CollectionType.RLM_COLLECTION_TYPE_LIST,
+                        flags = setOf(PropertyFlag.RLM_PROPERTY_NORMAL, PropertyFlag.RLM_PROPERTY_NULLABLE)
+                    ),
+                )
+            ),
         )
 
         val schema = RealmInterop.realm_schema_new(classes)
@@ -96,7 +100,7 @@ class InstrumentedTests {
 
         assertEquals(2, RealmInterop.realm_get_num_classes(realm))
 
-        val key_foo  = RealmInterop.realm_find_class(realm, "foo")
+        val key_foo = RealmInterop.realm_find_class(realm, "foo")
 
         RealmInterop.realm_begin_write(realm)
 
@@ -112,7 +116,6 @@ class InstrumentedTests {
         RealmInterop.realm_close(realm)
         RealmInterop.realm_release(realm)
     }
-
 
 //    @Test
 //    fun createObject() {

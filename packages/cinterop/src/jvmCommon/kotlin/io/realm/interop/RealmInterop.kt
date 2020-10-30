@@ -21,7 +21,7 @@ actual object RealmInterop {
     //  realm_property_info_t directly in generated class
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
         val count = tables.size
-        val cclasses = realmc.new_classArray(count);
+        val cclasses = realmc.new_classArray(count)
         val cproperties = realmc.new_propertyArrayArray(count)
 
         for ((i, clazz) in tables.withIndex()) {
@@ -33,7 +33,7 @@ actual object RealmInterop {
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = realm_table_key_t()
-                flags = clazz.flags.fold(0) { flags, element -> flags or element.value}
+                flags = clazz.flags.fold(0) { flags, element -> flags or element.value }
             }
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
@@ -55,7 +55,6 @@ actual object RealmInterop {
         }
         return LongPointerWrapper(realmc.realm_schema_new(cclasses, count.toLong(), cproperties))
     }
-
 
     actual fun realm_config_new(): NativePointer {
         return LongPointerWrapper(realmc.realm_config_new())
@@ -118,7 +117,7 @@ actual object RealmInterop {
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         val info = realm_class_info_t()
         val found = booleanArrayOf(false)
-         realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
+        realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
         if (!found[0]) {
             throw RuntimeException("Cannot find class: '$name")
         }
@@ -126,9 +125,9 @@ actual object RealmInterop {
     }
 
     private fun <T> realm_set_value(o: NativePointer, key: Long, value: T, isDefault: Boolean) {
-        val ckey = realm_col_key_t().apply { col_key = key}
+        val ckey = realm_col_key_t().apply { col_key = key }
         val cvalue = realm_value_t()
-        when(value!!::class){
+        when (value!!::class) {
             String::class -> {
                 cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                 cvalue.string = value as String
@@ -140,11 +139,11 @@ actual object RealmInterop {
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
     }
 
-    actual fun <T> realm_set_value(realm:NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
         realm_set_value(o, property_info(realm, table, col).key.col_key, value, isDefault)
     }
 
-    actual fun <T> realm_get_value(realm:NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
+    actual fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
         val pinfo = property_info(realm, table, col)
         val cvalue = realm_value_t()
         realmc.realm_get_value((o as LongPointerWrapper).ptr, pinfo.key, cvalue)
@@ -173,5 +172,4 @@ actual object RealmInterop {
         }
         return pinfo
     }
-
 }

@@ -4,10 +4,10 @@ package io.realm.interop
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 import io.realm.runtimeapi.NativePointer
 
-
+@Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
-    fun realm_get_library_version(): String;
+    fun realm_get_library_version(): String
 
     fun realm_schema_new(tables: List<Table>): NativePointer
 
@@ -33,11 +33,10 @@ expect object RealmInterop {
     // FIXME Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
     // FIXME Only operating on key/Long to get going
     // FIXME How to return boolean 'found'? Currently throwing runtime exceptions
-    fun realm_find_class(realm:NativePointer, name: String): Long
+    fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
     // FIXME Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
-    fun <T> realm_set_value(realm:NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean)
-    fun <T> realm_get_value(realm:NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T
-
+    fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T
 }
