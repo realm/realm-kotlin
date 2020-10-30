@@ -59,10 +59,10 @@ class Realm {
         val objectType = type.simpleName ?: error("Cannot get class name")
         val managedModel = realmConfiguration.modelFactory.invoke(type) as RealmModelInternal
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
-        managedModel.realmPointer = dbPointer
-        managedModel.realmObjectPointer = RealmInterop.realm_object_create(dbPointer!!, key)
-        managedModel.isManaged = true
-        managedModel.tableName = objectType
+        managedModel.`$realm$Pointer` = dbPointer
+        managedModel.`$realm$ObjectPointer` = RealmInterop.realm_object_create(dbPointer!!, key)
+        managedModel.`$realm$IsManaged` = true
+        managedModel.`$realm$TableName` = objectType
         return managedModel as T
     }
 }

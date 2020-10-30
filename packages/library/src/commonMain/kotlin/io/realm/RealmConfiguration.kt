@@ -55,7 +55,7 @@ class RealmConfiguration private constructor(
         fun classes(classes: List<RealmCompanion>) = apply { this.classes = classes }
         fun build(): RealmConfiguration {
             if (modelFactory != null) {
-                return RealmConfiguration(path, name, modelFactory!!, tables = classes.map { parseSchema(it.schema()) })
+                return RealmConfiguration(path, name, modelFactory!!, tables = classes.map { parseSchema(it.`$realm$schema`()) })
             } else {
                 error("modelFactory should be specified")
             }

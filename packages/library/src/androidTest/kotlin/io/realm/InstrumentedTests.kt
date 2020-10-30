@@ -12,6 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 import io.realm.runtimeapi.RealmCompanion
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {

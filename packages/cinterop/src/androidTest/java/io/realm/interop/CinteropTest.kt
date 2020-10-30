@@ -6,6 +6,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.math.BigInteger
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -162,11 +163,8 @@ class CinteropTest {
 
         // Missing primary key
         val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
-        val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
-        if (realmObjectCreate == 0L) {
-            val error = realm_error_t()
-            val realmGetLastError = realmc.realm_get_last_error(error)
-            val message = error.message
+        assertFailsWith<RuntimeException> {
+            val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
         }
         realmc.realm_commit(realm)
 

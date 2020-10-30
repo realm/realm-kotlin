@@ -10,10 +10,10 @@ class SampleTests {
 
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
-        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
-        assertEquals(expected, Sample.schema())
+        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"false\"}}]}"
+        assertEquals(expected, Sample.`$realm$schema`())
         val actual: RealmCompanion = Sample.Companion as RealmCompanion
-        assertEquals(expected, actual.schema())
+        assertEquals(expected, actual.`$realm$schema`())
     }
 
     @Test

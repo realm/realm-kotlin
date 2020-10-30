@@ -195,6 +195,9 @@ if (includeAndroidBuild) {
         tasks.named("externalNativeBuildDebug") {
             dependsOn(tasks.named("capi_android_x86_64"))
         }
+        tasks.named("generateJsonModelDebug") {
+            inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
+        }
     }
 }
 
