@@ -39,4 +39,25 @@ expect object RealmInterop {
     //  type and key-lookups internally
     fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean)
     fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T
+
+    // Typed convenience methods
+    fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String
+    fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String): String?
+
+//    override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
+//        TODO("Not yet implemented")
+//    }
+
 }

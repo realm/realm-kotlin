@@ -16,7 +16,6 @@
 
 // Manual imports in java module class
 %pragma(java) moduleimports=%{
-import io.realm.interop.LongPointerWrapper;
 %}
 
 // Manual additions to java module class

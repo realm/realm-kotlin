@@ -4,9 +4,6 @@ package io.realm.interop
 import io.realm.runtimeapi.NativePointer
 import kotlin.jvm.JvmName
 
-// JVM/Android specific pointer wrapper
-class LongPointerWrapper(@get:JvmName("ptr") val ptr: Long) : NativePointer
-
 actual object RealmInterop {
     // TODO Maybe pull library loading into separate method
     init {
@@ -172,4 +169,15 @@ actual object RealmInterop {
         }
         return pinfo
     }
+
+    // Typed convenience methods
+    actual fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String {
+        return realm_get_value<String>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
+    }
+    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) : String?{
+        realm_set_value(realm, o, table, col, value, false)
+        // FIXME Why a return value
+        return "All OK"
+    }
+
 }

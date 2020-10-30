@@ -43,16 +43,10 @@ class InstrumentedTests {
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
 
-        // FIXME io.realm.runtimeapi.NativeWrapper is not linked with RealmInterop
-        assertFailsWith<NotImplementedError> { assertEquals("", sample.name) }
-        assertFailsWith<NotImplementedError> { sample.name = "Hello, World!" }
-        assertFailsWith<NotImplementedError> { assertEquals("Hello, World!", sample.name) }
+        assertEquals("", sample.name)
+        sample.name = "Hello, World!"
+        assertEquals("Hello, World!", sample.name)
         realm.commitTransaction()
-
-        val unmanaged = Sample()
-        assertEquals("foo", unmanaged.name)
-        unmanaged.name = "Hello, World!"
-        assertEquals("Hello, World!", unmanaged.name)
     }
 
     @Test

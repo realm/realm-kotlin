@@ -49,9 +49,9 @@ import org.jetbrains.kotlin.name.Name
  */
 class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private lateinit var objectPointerProperty: IrProperty
+    private lateinit var dbPointerProperty: IrProperty
     private lateinit var isManagedProperty: IrProperty
     private lateinit var nativeWrapperClass: IrClass
-    private lateinit var nativeWrapperCompanion: IrClass
     private lateinit var objectGetStringFun: IrSimpleFunction
     private lateinit var objectSetStringFun: IrSimpleFunction
     private lateinit var objectGetInt64Fun: IrSimpleFunction
@@ -59,12 +59,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     //    private lateinit var objectGetBooleanFun: IrSimpleFunction
 //    private lateinit var objectSetBooleanFun: IrSimpleFunction
-    private lateinit var getInstanceProperty: IrProperty
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
         val className = irClass.name.asString()
         val fields = SchemaCollector.properties.getOrPut(className, { mutableMapOf() })
+
+        dbPointerProperty = irClass.properties.find {
+            it.name == REALM_POINTER
+        } ?: error("Could not find synthetic property ${REALM_POINTER.asString()}")
 
         objectPointerProperty = irClass.properties.find {
             it.name == OBJECT_POINTER
@@ -77,8 +80,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         nativeWrapperClass = pluginContext.referenceClass(NATIVE_WRAPPER)?.owner
             ?: error("${NATIVE_WRAPPER.asString()} not available")
 
-        nativeWrapperCompanion = nativeWrapperClass.companionObject() as IrClass
-
         objectGetStringFun = nativeWrapperClass.functions.find {
             it.name == C_INTEROP_OBJECT_GET_STRING
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_STRING.asString()}")
@@ -87,13 +88,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             it.name == C_INTEROP_OBJECT_SET_STRING
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_STRING.asString()}")
 
-        objectGetInt64Fun = nativeWrapperClass.functions.find {
-            it.name == C_INTEROP_OBJECT_GET_INT64
-        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INT64.asString()}")
-
-        objectSetInt64Fun = nativeWrapperClass.functions.find {
-            it.name == C_INTEROP_OBJECT_SET_INT64
-        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_INT64.asString()}")
+//        objectGetInt64Fun = nativeWrapperClass.functions.find {
+//            it.name == C_INTEROP_OBJECT_GET_INT64
+//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INT64.asString()}")
+//
+//        objectSetInt64Fun = nativeWrapperClass.functions.find {
+//            it.name == C_INTEROP_OBJECT_SET_INT64
+//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_INT64.asString()}")
 
 //        objectGetBooleanFun = nativeWrapperClass.functions.find {
 //            it.name == C_INTEROP_OBJECT_GET_BOOLEAN
@@ -102,10 +103,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 //        objectSetBooleanFun = nativeWrapperClass.functions.find {
 //            it.name == C_INTEROP_OBJECT_GET_BOOLEAN
 //        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_BOOLEAN.asString()}")
-
-        getInstanceProperty = nativeWrapperCompanion.properties.find {
-            it.name == Name.identifier("instance")
-        } ?: error("Could not find property <get-instance>")
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitProperty(declaration: IrProperty): IrStatement {
@@ -177,17 +174,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 //                $this: GET_VAR '<this>: dev.nhachicha.Child declared in dev.nhachicha.Child.<get-address>' type=dev.nhachicha.Child origin=null
 //              propertyName: CONST String type=kotlin.String value="address"
                     val cinteropCall = irCall(cInteropGetFunction, origin = IrStatementOrigin.GET_PROPERTY).also {
-                        it.dispatchReceiver = irCall(getInstanceProperty.getter!!).apply {
-                            dispatchReceiver = irGetObject(nativeWrapperCompanion.symbol)
-                        }
+                        it.dispatchReceiver = irGetObject(nativeWrapperClass.symbol)
                     }.apply {
                         putValueArgument(
-                            0,
+                                0,
+                                irCall(dbPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+                                    dispatchReceiver = irGet(property.getter!!.dispatchReceiverParameter!!)
+                                }
+                        )
+                        putValueArgument(
+                            1,
                             irCall(objectPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
                                 dispatchReceiver = irGet(property.getter!!.dispatchReceiverParameter!!)
                             }
                         )
-                        putValueArgument(1, irString(name))
+                        putValueArgument( 2, irString(irClass.name.identifier) )
+                        putValueArgument(3, irString(name))
                     }
 
                     // RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String declared in io.realm.example.Sample'
@@ -220,18 +222,23 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
 
                     val cinteropCall = irCall(cInteropSetFunction).also {
-                        it.dispatchReceiver = irCall(getInstanceProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
-                            dispatchReceiver = irGetObject(nativeWrapperCompanion.symbol)
-                        }
+                        it.dispatchReceiver = irGetObject(nativeWrapperClass.symbol)
                     }.apply {
                         putValueArgument(
-                            0,
+                                0,
+                                irCall(dbPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+                                    dispatchReceiver = irGet(property.setter!!.dispatchReceiverParameter!!)
+                                }
+                        )
+                        putValueArgument(
+                            1,
                             irCall(objectPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
                                 dispatchReceiver = irGet(property.setter!!.dispatchReceiverParameter!!)
                             }
                         )
-                        putValueArgument(1, irString(name))
-                        putValueArgument(2, irGet(declaration.valueParameters.first()))
+                        putValueArgument(2, irString(irClass.name.identifier))
+                        putValueArgument(3, irString(name))
+                        putValueArgument(4, irGet(declaration.valueParameters.first()))
                     }
 
                     +irReturn(
