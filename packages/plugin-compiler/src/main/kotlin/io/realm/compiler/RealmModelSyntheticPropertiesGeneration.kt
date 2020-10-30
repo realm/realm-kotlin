@@ -2,7 +2,6 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
-import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
