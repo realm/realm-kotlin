@@ -24,6 +24,7 @@ class RealmModelLoweringExtension : IrGenerationExtension {
 
 private class RealmModelLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
     override fun lower(irClass: IrClass) {
+        logger("Lowering class: ${irClass.name.identifier}")
         if (irClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndReturnSchema(irClass)
