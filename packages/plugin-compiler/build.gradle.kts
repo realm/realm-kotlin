@@ -25,11 +25,31 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 publishing {
     publications {
-        register("compilerPlugin", MavenPublication::class) {
-            groupId = Realm.group
+        register<MavenPublication>("compilerPlugin") {
             artifactId = Realm.compilerPluginId
-            version = Realm.version
             from(components["java"])
+            pom {
+                name.set("Compiler Plugin")
+                description.set("Compiler plugin for JVM based platforms for Realm Kotlin. This artifact is not " +
+                        "supposed to be consumed directly, but through " +
+                        "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead.")
+                url.set(Realm.projectUrl)
+                licenses {
+                    license {
+                        name.set(Realm.License.name)
+                        url.set(Realm.License.url)
+                    }
+                }
+                issueManagement {
+                    name.set(Realm.IssueManagement.name)
+                    url.set(Realm.IssueManagement.url)
+                }
+                scm {
+                    connection.set(Realm.SCM.connection)
+                    developerConnection.set(Realm.SCM.developerConnection)
+                    url.set(Realm.SCM.url)
+                }
+            }
         }
     }
 }

@@ -33,11 +33,31 @@ tasks {
 
 publishing {
     publications {
-        register("compilerPluginShaded", MavenPublication::class) {
+        register<MavenPublication>("compilerPluginShaded") {
             project.shadow.component(this)
-            groupId = Realm.group
             artifactId = Realm.compilerPluginIdNative
-            version = Realm.version
+            pom {
+                name.set("Shaded Compiler Plugin")
+                description.set("Shaded compiler plugin for native platforms for Realm Kotlin. This artifact is not " +
+                        "supposed to be consumed directly, but through " +
+                        "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead.")
+                url.set(Realm.projectUrl)
+                licenses {
+                    license {
+                        name.set(Realm.License.name)
+                        url.set(Realm.License.url)
+                    }
+                }
+                issueManagement {
+                    name.set(Realm.IssueManagement.name)
+                    url.set(Realm.IssueManagement.url)
+                }
+                scm {
+                    connection.set(Realm.SCM.connection)
+                    developerConnection.set(Realm.SCM.developerConnection)
+                    url.set(Realm.SCM.url)
+                }
+            }
         }
     }
 }

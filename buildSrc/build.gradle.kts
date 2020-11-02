@@ -26,6 +26,7 @@ buildscript {
 // These seem to propagate to all projects including the buildSrc/ directory, which also means
 // they are not allowed to set the version. It can only be set from here.
 dependencies {
+    implementation("org.jfrog.buildinfo:build-info-extractor-gradle:${Versions.artifactoryPlugin}")
     implementation("org.jlleitschuh.gradle:ktlint-gradle:${Versions.ktlintPlugin}")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
