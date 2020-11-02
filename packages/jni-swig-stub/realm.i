@@ -51,18 +51,43 @@ return $jnicall;
 
 // Reuse above type maps on other pointers too
 %apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t* };
-// For all functions returning a pointer, check for null and throw an error
-// FIXME Maybe too general?
+
+
+// For all functions returning a pointer or bool, check for null/false and throw an error
+// FIXME Maybe a bit too general
+// To bypass automatic error checks define the function explicitly here
+// before the typemaps until we have a distinction (typemap, etc.) in the C API that we can use for
+// targeting the typemap
+bool realm_object_is_valid(const realm_object_t*);
+
 %typemap(out) SWIGTYPE* {
     if (!result) {
         realm_error_t error;
         // FIXME Check return value
         realm_get_last_error(&error);
+        // TODO Cache class lookup
         jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-        (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
+        // Add wrapped method name to error for easier traceability
+        std::string message("[$symname]: " + rlm_stdstr(error.message));
+        (jenv)->ThrowNew(clazz, message.c_str());
         return $null;
     } else {
         *($1_type*)&jresult = result;
+    }
+}
+%typemap(out) bool {
+ if (!result) {
+        realm_error_t error;
+        // FIXME Check return value
+        realm_get_last_error(&error);
+        // TODO Cache class lookup
+        jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
+        // Add wrapped method name to error for easier traceability
+        std::string message("[$symname]: " + rlm_stdstr(error.message));
+        (jenv)->ThrowNew(clazz, message.c_str());
+        return false;
+    } else {
+        jresult = (jboolean)result;
     }
 }
 // FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
@@ -73,6 +98,7 @@ return $jnicall;
 //}
 
 // Array wrappers to allow building (continuous allocated) arrays of the corresponding types from
+// JVM
 %include "carrays.i"
 %array_functions(realm_class_info_t, classArray);
 %array_functions(realm_property_info_t, propertyArray);
@@ -98,19 +124,6 @@ struct realm_size_t {
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"
 %javaconst(1);
-// Wrap and throw on error indication
-// FIXME Find a way to apply this by pattern; alternatively do an out-typemap for bool (but don't know that can be done selectively either)
-%exception realm_find_class {
-        bool result = $action
-        if (!result) {
-            realm_error_t error;
-            // FIXME Check return value
-            realm_get_last_error(&error);
-            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-            (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
-            return $null;
-        }
-}
 
 // Make swig types package private (as opposed to public by default) to ensure that we don't expose
 // types outside the package

@@ -17,9 +17,6 @@ class InstrumentedTests {
 
     val context = InstrumentationRegistry.getInstrumentation().context
 
-    // TODO Remove when 'library' and 'cinterop' with actual platform API is in place.
-    class LongPointerWrapper(val ptr: Long) : NativePointer
-
     // Smoke test of compiling with library
     @Test
     fun contextIsNotNull() {

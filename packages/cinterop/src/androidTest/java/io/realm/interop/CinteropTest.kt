@@ -122,12 +122,6 @@ class CinteropTest {
         realmc.realm_config_set_schema_version(config, BigInteger("1"))
 
         val realm = realmc.realm_open(config)
-        if (realm == 0L) {
-            val error = realm_error_t()
-            val realmGetLastError = realmc.realm_get_last_error(error)
-            val message = error.message
-            error(message)
-        }
 
         realmc.realm_release(config)
         realmc.realm_release(realmSchemaNew)

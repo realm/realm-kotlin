@@ -195,6 +195,9 @@ if (includeAndroidBuild) {
         tasks.named("externalNativeBuildDebug") {
             dependsOn(tasks.named("capi_android_x86_64"))
         }
+        // Ensure that Swig wrapper is generated before compiling the JNI layer. This task needs
+        // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
+        // actuals
         tasks.named("generateJsonModelDebug") {
             inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
         }
