@@ -67,9 +67,7 @@ bool realm_object_is_valid(const realm_object_t*);
         realm_get_last_error(&error);
         // TODO Cache class lookup
         jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-        // Add wrapped method name to error for easier traceability
-        std::string message("[$symname]: " + rlm_stdstr(error.message));
-        (jenv)->ThrowNew(clazz, message.c_str());
+        (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
         return $null;
     } else {
         *($1_type*)&jresult = result;
@@ -82,9 +80,7 @@ bool realm_object_is_valid(const realm_object_t*);
         realm_get_last_error(&error);
         // TODO Cache class lookup
         jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-        // Add wrapped method name to error for easier traceability
-        std::string message("[$symname]: " + rlm_stdstr(error.message));
-        (jenv)->ThrowNew(clazz, message.c_str());
+        (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
         return false;
     } else {
         jresult = (jboolean)result;
