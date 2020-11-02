@@ -3,6 +3,7 @@ package io.realm.compiler
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.runtimeapi.RealmModelInterface
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.full.companionObject
@@ -11,6 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@Ignore
 class GenerationExtensionTest {
 
     @Test

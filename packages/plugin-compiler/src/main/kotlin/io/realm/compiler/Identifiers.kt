@@ -11,6 +11,7 @@ internal object Names {
     val OBJECT_TABLE_NAME = Name.identifier("tableName")
     val OBJECT_IS_MANAGED = Name.identifier("isManaged")
     val SET = Name.special("<set-?>")
+    val MEDIATOR = Name.identifier("Mediator")
 }
 
 internal object FqNames {
