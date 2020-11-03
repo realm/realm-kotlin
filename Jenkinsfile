@@ -20,28 +20,7 @@ pipeline {
     stages {
         stage('SCM') { 
             steps {
-                runScm() 
-            }
-            steps {
-                // Check type of Build. We are treating this as a release build if we are building
-                // the exact Git SHA that was tagged.
-                gitTag = readGitTag()
-                echo "Git tag: ${gitTag ?: 'none'}"
-                if (!gitTag) {
-                    gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
-                    echo "Building non-release: ${gitSha}"
-                    setBuildName(gitSha)
-                    publishBuild = false
-                } else {
-                    version = readFile('version.txt').trim()
-                    if (gitTag != "v${version}") {
-                        error "Git tag '${gitTag}' does not match v${version}"
-                    } else {
-                        echo "Building release: '${gitTag}'"
-                        setBuildName("Tag ${gitTag}")
-                        publishBuild = true
-                    }
-                }
+                runScm()
             }
         }
         stage('Static Analysis') { 
@@ -90,9 +69,25 @@ def runScm() {
                 userRemoteConfigs: scm.userRemoteConfigs
         ])
 
-        gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
-        echo "Building: ${gitSha}"
-        setBuildName(gitSha)
+        // Check type of Build. We are treating this as a release build if we are building
+        // the exact Git SHA that was tagged.
+        gitTag = readGitTag()
+        echo "Git tag: ${gitTag ?: 'none'}"
+        if (!gitTag) {
+            gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
+            echo "Building commit: ${gitSha}"
+            setBuildName(gitSha)
+            publishBuild = false
+        } else {
+            version = readFile('version.txt').trim()
+            if (gitTag != "v${version}") {
+                error "Git tag '${gitTag}' does not match v${version}"
+            } else {
+                echo "Building release: '${gitTag}'"
+                setBuildName("Tag ${gitTag}")
+                publishBuild = true
+            }
+        }
 
         stash includes: '**/*', name: 'source', excludes: './realm/realm-library/cpp_engine/external/realm-object-store/.dockerignore'
     }
