@@ -36,9 +36,7 @@ pipeline {
         stage('Publish to OJO') {
             when { expression { shouldReleaseSnapshot(version) } }
             steps {
-                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
-                    sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
-                }
+                runPublishToOjo()
             }
         }
     }
@@ -54,7 +52,6 @@ pipeline {
         }
     }
 }
-
 
 def runScm() {
     node('docker') {
@@ -153,6 +150,18 @@ def runBuild() {
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
     parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
+}
+
+def runPublishToOjo() {
+    node('android') {
+        // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
+        // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
+        lock("${env.NODE_NAME}-android") {
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
+                sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
+            }
+        }
+    }
 }
 
 def test(task) {
