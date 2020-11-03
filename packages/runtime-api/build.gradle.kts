@@ -107,9 +107,11 @@ publishing {
             artifactId = Realm.runtimeApiId
             pom {
                 name.set("Runtime API")
-                description.set("Runtime API shared between Realm Kotlin compiler plugin and library code. This " +
+                description.set(
+                    "Runtime API shared between Realm Kotlin compiler plugin and library code. This " +
                         "artifact is not supposed to be consumed directly, but through " +
-                        "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead.")
+                        "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+                )
                 url.set(Realm.projectUrl)
                 licenses {
                     license {

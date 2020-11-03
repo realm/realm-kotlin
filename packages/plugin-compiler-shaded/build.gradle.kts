@@ -39,9 +39,11 @@ publishing {
             artifactId = Realm.compilerPluginIdNative
             pom {
                 name.set("Shaded Compiler Plugin")
-                description.set("Shaded compiler plugin for native platforms for Realm Kotlin. This artifact is not " +
+                description.set(
+                    "Shaded compiler plugin for native platforms for Realm Kotlin. This artifact is not " +
                         "supposed to be consumed directly, but through " +
-                        "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead.")
+                        "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+                )
                 url.set(Realm.projectUrl)
                 licenses {
                     license {
@@ -65,14 +67,20 @@ publishing {
 
 artifactory {
     setContextUrl("https://oss.jfrog.org/artifactory")
-    publish(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-        repository(delegateClosureOf<groovy.lang.GroovyObject> {
-            setProperty("repoKey", "oss-snapshot-local")
-            setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
-            setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
-        })
-        defaults(delegateClosureOf<groovy.lang.GroovyObject> {
-            invokeMethod("publications", "compilerPluginShaded")
-        })
-    })
+    publish(
+        delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
+            repository(
+                delegateClosureOf<groovy.lang.GroovyObject> {
+                    setProperty("repoKey", "oss-snapshot-local")
+                    setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
+                    setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
+                }
+            )
+            defaults(
+                delegateClosureOf<groovy.lang.GroovyObject> {
+                    invokeMethod("publications", "compilerPluginShaded")
+                }
+            )
+        }
+    )
 }
