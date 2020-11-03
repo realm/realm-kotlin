@@ -10,6 +10,7 @@ object Realm {
     const val compilerPluginIdNative = "plugin-compiler-shaded"
     const val runtimeApiId = "runtime-api"
     const val projectUrl = "http://realm.io"
+
     object License {
         const val name = "The Apache License, Version 2.0"
         const val url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
@@ -26,11 +27,13 @@ object Realm {
 }
 
 object Versions {
-    const val androidMinSdk = 16
-    const val androidTargetSDK = 29
-    const val androidCompileSdkVersion = 29
-    const val androidBuildToolsVersion = "29.0.2"
-    const val androidBuildTools = "4.0.1"
+    object Android {
+        const val minSdk = 16
+        const val targetSDK = 29
+        const val compileSdkVersion = 29
+        const val buildToolsVersion = "29.0.2"
+        const val buildTools = "4.0.1"
+    }
     const val artifactoryPlugin = "4.18.0" // https://plugins.gradle.org/plugin/com.jfrog.artifactory
     const val autoService = "1.0-rc6"
     const val detektPlugin = "1.14.1"

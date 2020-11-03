@@ -4,6 +4,7 @@ plugins {
     `java`
     `maven-publish`
     id("com.github.johnrengelman.shadow") version Versions.shadowJar
+    id("com.jfrog.artifactory")
 }
 
 dependencies {
@@ -60,4 +61,18 @@ publishing {
             }
         }
     }
+}
+
+artifactory {
+    setContextUrl("https://oss.jfrog.org/artifactory")
+    publish(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
+        repository(delegateClosureOf<groovy.lang.GroovyObject> {
+            setProperty("repoKey", "oss-snapshot-local")
+            setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
+            setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
+        })
+        defaults(delegateClosureOf<groovy.lang.GroovyObject> {
+            invokeMethod("publications", "compilerPluginShaded")
+        })
+    })
 }

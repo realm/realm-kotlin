@@ -9,7 +9,7 @@ This repository holds the source code for the Kotlin version of Realm, which run
 # How to build:
 
 ## Prerequisits
-- Swig
+- Swig. On Mac this can be installed using Homebrew: `brew install swig`.
 
 ## Commands to build
 

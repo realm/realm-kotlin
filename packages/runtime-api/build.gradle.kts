@@ -104,7 +104,6 @@ kotlin {
 publishing {
     publications {
         register<MavenPublication>("RuntimeApi") {
-//            project.shadow.component(this)
             artifactId = Realm.runtimeApiId
             pom {
                 name.set("Runtime API")
