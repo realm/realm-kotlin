@@ -3,9 +3,17 @@ import groovy.json.JsonOutput
 
 @Library('realm-ci') _
 
+// Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
+releaseBranches = ['master', 'next-major']
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
+// Shortcut to current branch name that is being tested
 currentBranch = env.CHANGE_BRANCH
+// Will be set to `true` if this build is a full release that should be available on Bintray.
+// This is determined by comparing the current git tag to the version number of the build.
+publishBuild = false
+// Version of Realm Kotlin being tested. This values is defined in `<root>/version.txt`.
+version = null
 
 pipeline {
     agent none
@@ -13,6 +21,27 @@ pipeline {
         stage('SCM') { 
             steps {
                 runScm() 
+            }
+            steps {
+                // Check type of Build. We are treating this as a release build if we are building
+                // the exact Git SHA that was tagged.
+                gitTag = readGitTag()
+                echo "Git tag: ${gitTag ?: 'none'}"
+                if (!gitTag) {
+                    gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
+                    echo "Building non-release: ${gitSha}"
+                    setBuildName(gitSha)
+                    publishBuild = false
+                } else {
+                    version = readFile('version.txt').trim()
+                    if (gitTag != "v${version}") {
+                        error "Git tag '${gitTag}' does not match v${version}"
+                    } else {
+                        echo "Building release: '${gitTag}'"
+                        setBuildName("Tag ${gitTag}")
+                        publishBuild = true
+                    }
+                }
             }
         }
         stage('Static Analysis') { 
@@ -24,7 +53,14 @@ pipeline {
             steps {
                 runBuild() 
             }
-        }       
+        }
+        if (shouldReleaseSnapshot()) {
+            stage('Publish to OJO') {
+                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
+                    sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
+                }
+            }
+        }
     }
     post {
         failure {
@@ -264,4 +300,23 @@ def notifySlackIfRequired(String slackMessage) {
             }
         }
     }
+}
+
+def readGitTag() {
+    def command = 'git describe --exact-match --tags HEAD'
+    def returnStatus = sh(returnStatus: true, script: command)
+    if (returnStatus != 0) {
+        return null
+    }
+    return sh(returnStdout: true, script: command).trim()
+}
+
+boolean shouldReleaseSnapshot(version) {
+    if (!releaseBranches.contains(currentBranch)) {
+        return false
+    }
+    if (version == null || !version.endsWith("-SNAPSHOT")) {
+        return false
+    }
+    return true
 }
