@@ -1,6 +1,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.Names.DEFAULT_COMPANION
+import io.realm.compiler.Names.NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.SCHEMA_METHOD
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -24,7 +25,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
     override fun getSyntheticFunctionNames(thisDescriptor: ClassDescriptor): List<Name> {
         return if (thisDescriptor.isRealmObjectCompanion) {
-            listOf(SCHEMA_METHOD)
+            listOf(SCHEMA_METHOD, NEW_INSTANCE_METHOD)
         } else {
             emptyList()
         }
@@ -40,14 +41,17 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
     }
 
     override fun generateSyntheticMethods(thisDescriptor: ClassDescriptor, name: Name, bindingContext: BindingContext, fromSupertypes: List<SimpleFunctionDescriptor>, result: MutableCollection<SimpleFunctionDescriptor>) {
-        if (name != SCHEMA_METHOD) return
         if (thisDescriptor.isRealmObjectCompanion) {
             val classDescriptor = thisDescriptor.containingDeclaration as ClassDescriptor
-            result.add(createRealmObjectCompanionSchemaGetterDescriptor(thisDescriptor, classDescriptor))
+
+            when (name) {
+                SCHEMA_METHOD -> result.add(createRealmObjectCompanionSchemaGetterFunctionDescriptor(thisDescriptor, classDescriptor))
+                NEW_INSTANCE_METHOD -> result.add(createRealmObjectCompanionNewInstanceFunctionDescriptor(thisDescriptor, classDescriptor))
+            }
         }
     }
 
-    private fun createRealmObjectCompanionSchemaGetterDescriptor(
+    private fun createRealmObjectCompanionSchemaGetterFunctionDescriptor(
         companionClass: ClassDescriptor,
         realmObjectClass: ClassDescriptor
     ): SimpleFunctionDescriptor {
@@ -65,7 +69,31 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
                 emptyList(),
                 emptyList(),
                 realmObjectClass.builtIns.stringType,
-                Modality.FINAL,
+                Modality.OPEN,
+                DescriptorVisibilities.PUBLIC
+            )
+        }
+    }
+
+    private fun createRealmObjectCompanionNewInstanceFunctionDescriptor(
+        companionClass: ClassDescriptor,
+        realmObjectClass: ClassDescriptor
+    ): SimpleFunctionDescriptor {
+
+        return SimpleFunctionDescriptorImpl.create(
+            companionClass,
+            Annotations.EMPTY,
+            NEW_INSTANCE_METHOD,
+            CallableMemberDescriptor.Kind.SYNTHESIZED,
+            companionClass.source
+        ).apply {
+            initialize(
+                null,
+                companionClass.thisAsReceiverParameter,
+                emptyList(),
+                emptyList(),
+                realmObjectClass.builtIns.anyType,
+                Modality.OPEN,
                 DescriptorVisibilities.PUBLIC
             )
         }

@@ -8,6 +8,7 @@ internal object Names {
 
     val DEFAULT_COMPANION = Name.identifier("Companion")
     val SCHEMA_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
+    val NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
     val SET = Name.special("<set-?>")
     // names must match `RealmModelInternal` properties

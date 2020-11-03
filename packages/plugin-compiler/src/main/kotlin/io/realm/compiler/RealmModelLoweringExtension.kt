@@ -39,8 +39,9 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
 
-            // Add body for the schema synthetic method
-            generator.addSchema(irClass)
+            // Add body for synthetic methods
+            generator.addSchemaMethodBody(irClass)
+            generator.addNewInstanceMethodBody(irClass)
         } else {
             if (irClass.isCompanion && irClass.parentAsClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
                 val realmModelCompanion: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_COMPANION)

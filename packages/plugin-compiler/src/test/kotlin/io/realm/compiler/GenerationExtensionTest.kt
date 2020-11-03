@@ -12,6 +12,7 @@ import java.io.File
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -79,7 +80,7 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun `synthetic schema method generated`() {
+    fun `synthetic method generated`() {
         val inputs = Files("/sample")
 
         val result = compile(inputs)
@@ -94,7 +95,9 @@ class GenerationExtensionTest {
 
         val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
         assertEquals(expected, companionObject.`$realm$schema`())
-
+        val newInstance = companionObject.`$realm$newInstance`()
+        assertNotNull(newInstance)
+        assertEquals(kClazz, newInstance.javaClass)
         inputs.assertGeneratedIR()
     }
 
