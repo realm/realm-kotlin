@@ -153,7 +153,10 @@ def runBuild() {
 }
 
 def runPublishToOjo() {
-    node('android') {
+    // TODO: Just using `android` results in the below error. Looks like android nodes do not have the SDK installed? 
+    //  > SDK location not found. Define location with an ANDROID_SDK_ROOT environment variable or by setting the
+    //  sdk.dir path in your project's local properties file at '/home/jenkins/workspace/****_****-kotlin_PR-51/packages/local.properties'.
+    node('docker-cph-03') {
         // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
         // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
         lock("${env.NODE_NAME}-android") {
