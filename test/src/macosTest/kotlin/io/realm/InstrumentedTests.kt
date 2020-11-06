@@ -3,7 +3,11 @@ package io.realm
 // FIXME Do we actually want to expose this
 import io.realm.interop.CPointerWrapper
 import io.realm.runtimeapi.RealmModelInternal
-import kotlinx.cinterop.*
+import kotlinx.cinterop.COpaquePointerVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.toLong
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals

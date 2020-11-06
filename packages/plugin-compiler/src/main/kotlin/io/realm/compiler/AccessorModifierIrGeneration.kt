@@ -1,9 +1,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.NATIVE_WRAPPER
-import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_STRING
-import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_STRING
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -36,7 +34,6 @@ import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.makeNotNull
-import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
@@ -177,20 +174,21 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     val cinteropCall = irCall(cInteropGetFunction, origin = IrStatementOrigin.GET_PROPERTY).also {
                         it.dispatchReceiver = irGetObject(nativeWrapperClass.symbol)
                     }.apply {
+                        var i = 0
                         putValueArgument(
-                                0,
-                                irCall(dbPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
-                                    dispatchReceiver = irGet(property.getter!!.dispatchReceiverParameter!!)
-                                }
+                            i++,
+                            irCall(dbPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+                                dispatchReceiver = irGet(property.getter!!.dispatchReceiverParameter!!)
+                            }
                         )
                         putValueArgument(
-                            1,
+                            i++,
                             irCall(objectPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
                                 dispatchReceiver = irGet(property.getter!!.dispatchReceiverParameter!!)
                             }
                         )
-                        putValueArgument( 2, irString(irClass.name.identifier) )
-                        putValueArgument(3, irString(name))
+                        putValueArgument(i++, irString(irClass.name.identifier))
+                        putValueArgument(i++, irString(name))
                     }
 
                     // RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String declared in io.realm.example.Sample'
@@ -225,21 +223,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     val cinteropCall = irCall(cInteropSetFunction).also {
                         it.dispatchReceiver = irGetObject(nativeWrapperClass.symbol)
                     }.apply {
+                        var i = 0
                         putValueArgument(
-                                0,
-                                irCall(dbPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
-                                    dispatchReceiver = irGet(property.setter!!.dispatchReceiverParameter!!)
-                                }
+                            i++,
+                            irCall(dbPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+                                dispatchReceiver = irGet(property.setter!!.dispatchReceiverParameter!!)
+                            }
                         )
                         putValueArgument(
-                            1,
+                            i++,
                             irCall(objectPointerProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
                                 dispatchReceiver = irGet(property.setter!!.dispatchReceiverParameter!!)
                             }
                         )
-                        putValueArgument(2, irString(irClass.name.identifier))
-                        putValueArgument(3, irString(name))
-                        putValueArgument(4, irGet(declaration.valueParameters.first()))
+                        putValueArgument(i++, irString(irClass.name.identifier))
+                        putValueArgument(i++, irString(name))
+                        putValueArgument(i++, irGet(declaration.valueParameters.first()))
                     }
 
                     +irReturn(

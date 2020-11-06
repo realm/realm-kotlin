@@ -1,8 +1,36 @@
 package io.realm.interop
 
 import io.realm.runtimeapi.NativePointer
-import kotlinx.cinterop.*
-import realm_wrapper.*
+import kotlinx.cinterop.BooleanVar
+import kotlinx.cinterop.ByteVarOf
+import kotlinx.cinterop.CPointed
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.cValue
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.get
+import kotlinx.cinterop.getBytes
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.readValue
+import kotlinx.cinterop.set
+import kotlinx.cinterop.toKString
+import kotlinx.cinterop.value
+import realm_wrapper.realm_class_info_t
+import realm_wrapper.realm_config_t
+import realm_wrapper.realm_error_t
+import realm_wrapper.realm_find_property
+import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_property_info_t
+import realm_wrapper.realm_schema_mode
+import realm_wrapper.realm_string_t
+import realm_wrapper.realm_table_key_t
+import realm_wrapper.realm_value_t
+import realm_wrapper.realm_value_type
 
 private fun throwOnError() {
     memScoped {
@@ -12,17 +40,24 @@ private fun throwOnError() {
         }
     }
 }
-private fun throwOnError(boolean: Boolean): Boolean { if (!boolean) throwOnError(); return boolean }
-private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointed>? { if (pointer == null) throwOnError(); return pointer }
 
-class CPointerWrapper(ptr: CPointer<out CPointed>?) : NativePointer // TODO maybe use <out CPointed> instead of *
-{
+private fun throwOnError(boolean: Boolean): Boolean {
+    if (!boolean) throwOnError(); return boolean
+}
+
+private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointed>? {
+    if (pointer == null) throwOnError(); return pointer
+}
+
+// FIXME Consider making NativePointer/CPointerWrapper generic to enfore typing
+class CPointerWrapper(ptr: CPointer<out CPointed>?) : NativePointer {
     // FIXME Generic check for errors on null pointers returned from the C API. We probably have to
     //  do this more selectively, but for now just check all pointers.
     val ptr: CPointer<out CPointed>? = throwOnError(ptr)
 }
+
 // Convenience type cast
-private inline fun <T: CPointed> NativePointer.cptr(): CPointer<T> {
+private inline fun <T : CPointed> NativePointer.cptr(): CPointer<T> {
     return (this as CPointerWrapper).ptr as CPointer<T>
 }
 
@@ -35,6 +70,7 @@ fun realm_string_t.toKString(): String {
     val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
     return readBytes?.toKString()!!
 }
+
 fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     val cstr = s.cstr
     // FIXME Review/guard
@@ -42,6 +78,7 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     data = cstr.getPointer(memScope)
     return this
 }
+
 fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
@@ -77,7 +114,7 @@ actual object RealmInterop {
                     }
                 }
             }
-            return CPointerWrapper(realm_schema_new(cclasses, count.toULong(), cproperties))
+            return CPointerWrapper(realm_wrapper.realm_schema_new(cclasses, count.toULong(), cproperties))
         }
     }
 
@@ -142,7 +179,7 @@ actual object RealmInterop {
             val classInfo = alloc<realm_class_info_t>()
             throwOnError(realm_wrapper.realm_find_class(realm.cptr(), name.toRString(memScope), found.ptr, classInfo.ptr))
             if (!found.value) {
-                throw RuntimeException("Class \"$name\" not found");
+                throw RuntimeException("Class \"$name\" not found")
             }
             return classInfo.key.table_key.toLong()
         }
@@ -150,7 +187,7 @@ actual object RealmInterop {
 
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         val tableKey = cValue<realm_table_key_t> { table_key = key.toUInt() }
-        return CPointerWrapper(realm_object_create(realm.cptr(), tableKey))
+        return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), tableKey))
     }
 
     actual fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
@@ -184,7 +221,6 @@ actual object RealmInterop {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             realm_wrapper.realm_set_value_string(o.cptr(), propertyInfo.key.readValue(), value.toRString(memScope), false)
-
         }
         // FIXME Why a return value
         return "But, why?"
@@ -203,5 +239,4 @@ actual object RealmInterop {
         throwOnError(realm_find_property(realm.cptr(), classInfo.key.readValue(), col.toRString(memScope), found.ptr, propertyInfo.ptr))
         return propertyInfo
     }
-
 }

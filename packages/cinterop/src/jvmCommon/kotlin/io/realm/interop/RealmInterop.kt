@@ -160,6 +160,7 @@ actual object RealmInterop {
         }
         return classInfo
     }
+
     private fun propertyInfo(realm: NativePointer, classInfo: realm_class_info_t, col: String): realm_property_info_t {
         val found = booleanArrayOf(false)
         val pinfo = realm_property_info_t()
@@ -174,10 +175,10 @@ actual object RealmInterop {
     actual fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String {
         return realm_get_value<String>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
     }
-    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) : String?{
+
+    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String): String? {
         realm_set_value(realm, o, table, col, value, false)
         // FIXME Why a return value
         return "All OK"
     }
-
 }

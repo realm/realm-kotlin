@@ -21,27 +21,28 @@ class SampleTests {
     fun testRealmModelInternalAndMarkerAreImplemented() {
         val p = Sample()
         @Suppress("CAST_NEVER_SUCCEEDS")
-        p as? RealmModelInternal ?: error("Supertype RealmModelInternal was not added to Sample class")
+        p as? RealmModelInternal
+            ?: error("Supertype RealmModelInternal was not added to Sample class")
     }
 
     @Test
     fun realmConfig() {
         @Suppress("CAST_NEVER_SUCCEEDS")
         val configuration = RealmConfiguration.Builder()
-                // Should be removed once we have module generation in place
-                .factory { kClass ->
-                    when (kClass) {
-                        Sample::class -> Sample()
-                        else -> TODO()
-                    }
+            // Should be removed once we have module generation in place
+            .factory { kClass ->
+                when (kClass) {
+                    Sample::class -> Sample()
+                    else -> TODO()
                 }
-                // Should be removed once we have module generation in place
-                .classes(
-                    listOf(
-                            Sample.Companion as RealmCompanion
-                    )
-        )
-                .build()
+            }
+            // Should be removed once we have module generation in place
+            .classes(
+                listOf(
+                    Sample.Companion as RealmCompanion
+                )
+            )
+            .build()
         val realm = Realm.open(configuration)
         realm.beginTransaction()
         val sample = realm.create(Sample::class)

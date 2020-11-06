@@ -8,5 +8,4 @@ actual object PlatformHelper {
     actual fun directory(): String {
         return RealmInitializer.context.filesDir.absolutePath
     }
-
 }

@@ -25,14 +25,14 @@ class InstrumentedTests {
     @Test
     fun realmConfig() {
         val configuration = RealmConfiguration.Builder()
-                .factory { kClass ->
-                    when (kClass) {
-                        Sample::class -> Sample()
-                        else -> TODO()
-                    }
+            .factory { kClass ->
+                when (kClass) {
+                    Sample::class -> Sample()
+                    else -> TODO()
                 }
-                .classes(listOf(Sample.Companion as RealmCompanion))
-                .build()
+            }
+            .classes(listOf(Sample.Companion as RealmCompanion))
+            .build()
         val realm = Realm.open(configuration)
         realm.beginTransaction()
         val sample = realm.create(Sample::class)

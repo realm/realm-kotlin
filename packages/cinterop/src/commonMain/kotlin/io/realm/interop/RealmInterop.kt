@@ -59,5 +59,4 @@ expect object RealmInterop {
 //    override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
 //        TODO("Not yet implemented")
 //    }
-
 }
