@@ -2,6 +2,7 @@ package io.realm
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
+import io.realm.internal.RealmInitializer
 import io.realm.interop.ClassFlag
 import io.realm.interop.CollectionType
 import io.realm.interop.Property
@@ -24,7 +25,7 @@ class InstrumentedTests {
 
     @Test
     fun contextIsNotNull() {
-        assertNotNull(RealmInitProvider.applicationContext)
+        assertNotNull(RealmInitializer.context)
     }
 
     @Test

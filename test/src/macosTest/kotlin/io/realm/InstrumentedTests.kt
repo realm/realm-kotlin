@@ -1,25 +1,19 @@
 package io.realm
 
-import io.realm.runtimeapi.NativePointer
+// FIXME Do we actually want to expose this
+import io.realm.interop.CPointerWrapper
 import io.realm.runtimeapi.RealmModelInternal
-import kotlinx.cinterop.COpaquePointerVar
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toLong
+import kotlinx.cinterop.*
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class InstrumentedTests {
 
-    // TODO Remove when 'library' and 'cinterop' with actual platform API is in place.
-    class CPointerWrapper(val ptr: CPointer<*>) : NativePointer
-
     @Test
     fun testRealmModelInternalPropertiesGenerated() {
         val p = Sample()
+        @Suppress("CAST_NEVER_SUCCEEDS")
         val realmModel: RealmModelInternal = p as? RealmModelInternal ?: error("Supertype RealmModelInternal was not added to Sample class")
 
         memScoped {

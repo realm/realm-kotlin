@@ -2,7 +2,6 @@ package io.realm.interop
 // FIXME Rename io.realm.interop. to something with platform?
 
 import io.realm.runtimeapi.NativePointer
-import kotlin.jvm.JvmName
 
 actual object RealmInterop {
     // TODO Maybe pull library loading into separate method
@@ -137,11 +136,11 @@ actual object RealmInterop {
     }
 
     actual fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
-        realm_set_value(o, property_info(realm, table, col).key.col_key, value, isDefault)
+        realm_set_value(o, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
     }
 
     actual fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
-        val pinfo = property_info(realm, table, col)
+        val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
         realmc.realm_get_value((o as LongPointerWrapper).ptr, pinfo.key, cvalue)
         when (cvalue.type) {
@@ -152,20 +151,21 @@ actual object RealmInterop {
         }
     }
 
-    // Lookup property info from realm and table and column name
-    private fun property_info(realm: NativePointer, table: String, col: String): realm_property_info_t {
+    private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = booleanArrayOf(false)
-        val tinfo = realm_class_info_t()
-        realmc.realm_find_class((realm as LongPointerWrapper).ptr, table, found, tinfo)
+        val classInfo = realm_class_info_t()
+        realmc.realm_find_class((realm as LongPointerWrapper).ptr, table, found, classInfo)
         if (!found[0]) {
             throw RuntimeException("Cannot find class: '$table")
         }
+        return classInfo
+    }
+    private fun propertyInfo(realm: NativePointer, classInfo: realm_class_info_t, col: String): realm_property_info_t {
+        val found = booleanArrayOf(false)
         val pinfo = realm_property_info_t()
-        val ckey = realm_table_key_t().apply { table_key = tinfo.key.table_key }
-        found[0] = false
-        realmc.realm_find_property((realm as LongPointerWrapper).ptr, ckey, col, found, pinfo)
+        realmc.realm_find_property((realm as LongPointerWrapper).ptr, classInfo.key, col, found, pinfo)
         if (!found[0]) {
-            throw RuntimeException("Cannot find property: '$col' in '$table'")
+            throw RuntimeException("Cannot find property: '$col' in '$classInfo.name'")
         }
         return pinfo
     }

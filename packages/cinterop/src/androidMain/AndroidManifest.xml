@@ -1,5 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="io.realm.interop">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="io.realm.interop">
+
     <application>
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            tools:node="merge"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false">
+            <meta-data
+                android:name="io.realm.internal.RealmInitializer"
+                android:value="androidx.startup" />
+        </provider>
     </application>
 </manifest>

@@ -38,14 +38,12 @@ class RealmConfiguration private constructor(
         RealmInterop.realm_config_set_schema_mode(nativeConfig, SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC)
         RealmInterop.realm_config_set_schema_version(nativeConfig, version)
         val schema = RealmInterop.realm_schema_new(tables)
-        //
-        RealmInterop.realm_schema_validate(schema)
         RealmInterop.realm_config_set_schema(nativeConfig, schema)
     }
 
     data class Builder(
         var path: String? = null,
-        var name: String? = null,
+        var name: String = "default", // Optional Realm name (default is 'default')
         var modelFactory: ModelFactory? = null,
         var classes: List<RealmCompanion> = listOf()
     ) {
@@ -54,6 +52,10 @@ class RealmConfiguration private constructor(
         fun factory(factory: ModelFactory) = apply { this.modelFactory = factory }
         fun classes(classes: List<RealmCompanion>) = apply { this.classes = classes }
         fun build(): RealmConfiguration {
+            if (path == null) {
+                val directory = PlatformHelper.directory()
+                path = "${directory}${name}.realm"
+            }
             if (modelFactory != null) {
                 return RealmConfiguration(path, name, modelFactory!!, tables = classes.map { parseSchema(it.`$realm$schema`()) })
             } else {

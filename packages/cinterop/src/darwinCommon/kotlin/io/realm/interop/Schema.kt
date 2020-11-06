@@ -1,43 +1,47 @@
 package io.realm.interop
 
+import realm_wrapper.*
+
 // FIXME On JVM actuals cannot be combined in same file. Consider replicating that split here too,
 //  but await final placement.
 
-// FIXME Need platform specific mapping to actual values
-
-actual enum class SchemaMode {
-    RLM_SCHEMA_MODE_AUTOMATIC,
-    RLM_SCHEMA_MODE_IMMUTABLE,
-    RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE,
-    RLM_SCHEMA_MODE_RESET_FILE,
-    RLM_SCHEMA_MODE_ADDITIVE,
-    RLM_SCHEMA_MODE_MANUAL,
+// Interface to hold C API enumerated constant reference by SWIG constant
+// FIXME Guard for truncation
+interface Enumerated {
+    val value: UInt
 }
 
-actual enum class ClassFlag {
-    RLM_CLASS_NORMAL,
-    RLM_CLASS_EMBEDDED,
+actual enum class SchemaMode(override val value : UInt): Enumerated  {
+    RLM_SCHEMA_MODE_AUTOMATIC(realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC.value),
+    RLM_SCHEMA_MODE_IMMUTABLE(realm_schema_mode_e.RLM_SCHEMA_MODE_IMMUTABLE.value),
+    RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE(realm_schema_mode_e.RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE.value),
+    RLM_SCHEMA_MODE_RESET_FILE(realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE.value),
+    RLM_SCHEMA_MODE_ADDITIVE(realm_schema_mode_e.RLM_SCHEMA_MODE_ADDITIVE.value),
+    RLM_SCHEMA_MODE_MANUAL(realm_schema_mode_e.RLM_SCHEMA_MODE_MANUAL.value),
 }
 
-actual enum class PropertyType {
-    RLM_PROPERTY_TYPE_INT,
-    RLM_PROPERTY_TYPE_BOOL,
-    RLM_PROPERTY_TYPE_STRING,
-    RLM_PROPERTY_TYPE_BINARY,
-    RLM_PROPERTY_TYPE_ANY,
-    RLM_PROPERTY_TYPE_OBJECT,
+actual enum class ClassFlag(override val value: UInt): Enumerated {
+    RLM_CLASS_NORMAL(realm_wrapper.RLM_CLASS_NORMAL),
+    RLM_CLASS_EMBEDDED(realm_wrapper.RLM_CLASS_EMBEDDED),
 }
 
-actual enum class CollectionType {
-    RLM_COLLECTION_TYPE_NONE,
-    RLM_COLLECTION_TYPE_LIST,
-    RLM_COLLECTION_TYPE_SET,
-    RLM_COLLECTION_TYPE_DICTIONARY,
+actual enum class PropertyType(override val value: UInt): Enumerated {
+    RLM_PROPERTY_TYPE_INT(realm_wrapper.RLM_PROPERTY_TYPE_INT),
+    RLM_PROPERTY_TYPE_BOOL(realm_wrapper.RLM_PROPERTY_TYPE_BOOL),
+    RLM_PROPERTY_TYPE_STRING(realm_wrapper.RLM_PROPERTY_TYPE_STRING),
+    RLM_PROPERTY_TYPE_OBJECT(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT),
 }
 
-actual enum class PropertyFlag {
-    RLM_PROPERTY_NORMAL,
-    RLM_PROPERTY_NULLABLE,
-    RLM_PROPERTY_PRIMARY_KEY,
-    RLM_PROPERTY_INDEXED,
+actual enum class CollectionType(override val value: UInt): Enumerated {
+    RLM_COLLECTION_TYPE_NONE(realm_wrapper.RLM_COLLECTION_TYPE_NONE),
+    RLM_COLLECTION_TYPE_LIST(realm_wrapper.RLM_COLLECTION_TYPE_LIST),
+    RLM_COLLECTION_TYPE_SET(realm_wrapper.RLM_COLLECTION_TYPE_SET),
+    RLM_COLLECTION_TYPE_DICTIONARY(realm_wrapper.RLM_COLLECTION_TYPE_DICTIONARY),
+}
+
+actual enum class PropertyFlag(override val value: UInt): Enumerated {
+    RLM_PROPERTY_NORMAL(realm_wrapper.RLM_PROPERTY_NORMAL),
+    RLM_PROPERTY_NULLABLE(realm_wrapper.RLM_PROPERTY_NULLABLE),
+    RLM_PROPERTY_PRIMARY_KEY(realm_wrapper.RLM_PROPERTY_PRIMARY_KEY),
+    RLM_PROPERTY_INDEXED(realm_wrapper.RLM_PROPERTY_INDEXED),
 }

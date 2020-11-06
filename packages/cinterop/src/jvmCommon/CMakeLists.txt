@@ -8,7 +8,7 @@ set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 link_directories("${CAPI_BUILD}/src/realm")              # realm
 link_directories("${CAPI_BUILD}/src/realm/object-store") # realm-object-store
 link_directories("${CAPI_BUILD}/src/realm/parser")       # realm-parser
-link_directories("${CAPI_BUILD}/src/realm/sync")         # realm-sync
+#link_directories("${CAPI_BUILD}/src/realm/sync")         # realm-sync
 link_directories("${CAPI_BUILD}/src/realm")              # realm-object-store
 link_directories("${CAPI_BUILD}/src/realm/object-store/c_api") # librealm-ffi-dbg.a
 link_directories("${CAPI_BUILD}/openssl/lib/")           # libcrypto.a libssl.a
@@ -46,4 +46,4 @@ get_target_property(openssl_include_DIR OpenSSL::Crypto INTERFACE_INCLUDE_DIRECT
 get_target_property(crypto_LIB OpenSSL::Crypto IMPORTED_LOCATION)
 get_target_property(ssl_LIB OpenSSL::SSL IMPORTED_LOCATION)
 
-target_link_libraries(realmc log android realm-ffi-static-dbg realm-object-store-dbg realm-sync-dbg stdc++  realm-parser-dbg realm-dbg OpenSSL::SSL OpenSSL::Crypto  z)
+target_link_libraries(realmc log android realm-ffi-static-dbg realm-object-store-dbg stdc++ realm-parser-dbg realm-dbg OpenSSL::SSL OpenSSL::Crypto z)

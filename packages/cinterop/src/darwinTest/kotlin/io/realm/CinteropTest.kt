@@ -1,40 +1,8 @@
 package io.realm
 
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.CPointerVarOf
-import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.cValue
-import kotlinx.cinterop.cValuesOf
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.get
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toKString
-import kotlinx.cinterop.useContents
-import realm_wrapper.RLM_CLASS_NORMAL
-import realm_wrapper.RLM_COLLECTION_TYPE_NONE
-import realm_wrapper.RLM_PROPERTY_NORMAL
-import realm_wrapper.RLM_PROPERTY_TYPE_INT
-import realm_wrapper.realm_class_info_t
-import realm_wrapper.realm_config_new
-import realm_wrapper.realm_config_set_path
-import realm_wrapper.realm_config_set_schema
-import realm_wrapper.realm_config_set_schema_mode
-import realm_wrapper.realm_config_set_schema_version
-import realm_wrapper.realm_error_t
-import realm_wrapper.realm_get_last_error
-import realm_wrapper.realm_get_library_version
-import realm_wrapper.realm_get_schema
-import realm_wrapper.realm_open
-import realm_wrapper.realm_property_info_t
-import realm_wrapper.realm_schema_mode_e
-import realm_wrapper.realm_schema_new
-import realm_wrapper.realm_schema_t
-import realm_wrapper.realm_schema_validate
-import realm_wrapper.realm_string_t
-import realm_wrapper.realm_t
+import io.realm.interop.*
+import kotlinx.cinterop.*
+import realm_wrapper.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -44,11 +12,10 @@ import kotlin.test.assertTrue
 
 class CinteropTest {
 
-    // FIXME Testing basic C API wrapper interaction (like in AndroidTest's CinteropTest)
     @Test
     fun cinterop_cinterop() {
 
-        println(realm_get_library_version()!!.toKString())
+        println(realm_wrapper.realm_get_library_version()!!.toKString())
 
         memScoped {
             val prop_1_1 = alloc<realm_property_info_t>().apply {
@@ -67,7 +34,7 @@ class CinteropTest {
                 flags = RLM_CLASS_NORMAL.toInt()
             }
 
-            val classProperties: CPointer <CPointerVarOf<CPointer<realm_property_info_t>>> = cValuesOf(prop_1_1.ptr).ptr
+            val classProperties: CPointer<CPointerVarOf<CPointer<realm_property_info_t>>> = cValuesOf(prop_1_1.ptr).ptr
             val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
 
             assertNoError()
@@ -80,9 +47,55 @@ class CinteropTest {
             realm_config_set_schema_version(config, 1)
 
             val realm: CPointer<realm_t>? = realm_open(config)
+            assertEquals(1U, realm_get_num_classes(realm))
             assertNotNull(realm)
             val schema: CPointer<realm_schema_t>? = realm_get_schema(realm)
             assertNotNull(schema)
+
+            val found = alloc<BooleanVar>()
+            val classInfo = alloc<realm_class_info_t>()
+            val realmFindClass = realm_find_class(realm, realmStringStruct(memScope, "foo"), found.ptr, classInfo.ptr)
+            assertTrue(realmFindClass)
+            assertTrue(found.value)
+            assertEquals("foo", classInfo.name.toKString())
+            assertEquals(1UL, classInfo.num_properties)
+
+            val propertyInfo = alloc<realm_property_info_t>()
+            val realmFindProperty = realm_wrapper.realm_find_property(realm, classInfo.key.readValue(), realmStringStruct(memScope, "int"), found.ptr, propertyInfo.ptr)
+            assertTrue(realmFindProperty)
+            assertTrue(found.value)
+            assertEquals("int", propertyInfo.name.toKString())
+        }
+    }
+
+    @Test
+    fun cinterop_realmInterop() {
+        val tables = listOf(
+                Table(
+                        name = "foo",
+                        primaryKey = "",
+                        flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
+                        properties = listOf(
+                                Property(name = "int",
+                                        type = PropertyType.RLM_PROPERTY_TYPE_INT,
+                                        collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
+                                        flags = setOf(PropertyFlag.RLM_PROPERTY_NORMAL))
+                        )
+                )
+        )
+
+        val schema = RealmInterop.realm_schema_new(tables)
+
+        memScoped {
+            val nativeConfig = RealmInterop.realm_config_new()
+
+            RealmInterop.realm_config_set_path(nativeConfig, "default.realm")
+            RealmInterop.realm_config_set_schema(nativeConfig, schema)
+            RealmInterop.realm_config_set_schema_mode(nativeConfig, SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC)
+            RealmInterop.realm_config_set_schema_version(nativeConfig, 1)
+
+            val realm = RealmInterop.realm_open(nativeConfig)
+            assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
         }
     }
 }

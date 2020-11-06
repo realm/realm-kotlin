@@ -6,6 +6,10 @@ plugins {
 
 dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+    // Added to prevent warnings about inconsistent versions
+    // w: Runtime JAR files in the classpath should have the same version. These files were found in the classpath:
+    // w: Consider providing an explicit dependency on kotlin-reflect 1.4 to prevent strange errors
+    implementation(kotlin("reflect"))
     compileOnly(Deps.autoService)
     kapt(Deps.autoServiceAnnotation)
 

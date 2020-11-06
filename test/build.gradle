@@ -24,11 +24,14 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation("io.realm.kotlin:cinterop:+")
+                // FIXME Seems like the compiler plugin doesn't inject it correctly in all cases...
+                //  might only be an IDE issue throug
+                implementation("io.realm.kotlin:library:+")
             }
         }
 
         commonTest {
+            dependsOn(commonMain)
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
@@ -92,30 +95,16 @@ kotlin {
 
 kotlin {
     jvm()
-    sourceSets {
-        jvmTest {
-            dependencies {
-                implementation kotlin('test')
-                implementation kotlin('test-junit')
-            }
-        }
-    }
 }
 
 kotlin {
-    iosX64("ios") {
-    }
-    sourceSets {
-        iosMain { }
-        iosTest { }
-    }
+    iosX64("ios")
 }
 
 kotlin {
     macosX64("macos") {
     }
     sourceSets {
-        macosMain { }
         macosTest { }
     }
 }
