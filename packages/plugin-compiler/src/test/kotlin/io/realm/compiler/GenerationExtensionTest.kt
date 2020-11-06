@@ -3,7 +3,6 @@ package io.realm.compiler
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.NativeWrapper
 import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
@@ -117,8 +116,6 @@ class GenerationExtensionTest {
         sampleModel.`$realm$IsManaged` = false
         assertEquals("Realm", nameProperty.call(sampleModel))
 
-        // Inject Mock NativeWrapper implementation
-        NativeWrapper.instance = MockNativeWrapper
         sampleModel.`$realm$IsManaged` = true
         sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
 
@@ -155,56 +152,4 @@ class GenerationExtensionTest {
     }
 
     class LongPointer(val ptr: Long) : NativePointer
-    object MockNativeWrapper : NativeWrapper {
-        // simulate a storage engine for setters accessors modification tests
-        private val storage = mutableMapOf<Any, Any?>()
-
-        override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
-            return "Hello ${storage["$pointer$propertyName"]}"
-        }
-
-        override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
-            storage["$pointer$propertyName"] = value
-        }
-
-        override fun openRealm(path: String, schema: String): NativePointer {
-            error("Should not be invoked")
-        }
-
-        override fun realmresultsQuery(pointer: NativePointer, objectType: String, query: String): NativePointer {
-            error("Should not be invoked")
-        }
-
-        override fun addObject(pointer: NativePointer, objectType: String): NativePointer {
-            error("Should not be invoked")
-        }
-
-        override fun beginTransaction(pointer: NativePointer) {
-            error("Should not be invoked")
-        }
-
-        override fun commitTransaction(pointer: NativePointer) {
-            error("Should not be invoked")
-        }
-
-        override fun cancelTransaction(pointer: NativePointer) {
-            error("Should not be invoked")
-        }
-
-        override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
-            error("Should not be invoked")
-        }
-
-        override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
-            error("Should not be invoked")
-        }
-
-        override fun queryGetSize(queryPointer: NativePointer): Long {
-            error("Should not be invoked")
-        }
-
-        override fun queryGetObjectAt(queryPointer: NativePointer, objectType: String, index: Int): NativePointer {
-            error("Should not be invoked")
-        }
-    }
 }
