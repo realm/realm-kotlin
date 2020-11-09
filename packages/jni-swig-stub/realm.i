@@ -63,28 +63,26 @@ bool realm_object_is_valid(const realm_object_t*);
 %typemap(out) SWIGTYPE* {
     if (!result) {
         realm_error_t error;
-        // FIXME Check return value
-        realm_get_last_error(&error);
-        // TODO Cache class lookup
-        jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-        (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
-        return $null;
-    } else {
-        *($1_type*)&jresult = result;
+        if (realm_get_last_error(&error)) {
+            // TODO Cache class lookup
+            // FIXME Extract all error information and throw exceptions based on type
+            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
+            (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
+        }
     }
+    *($1_type*)&jresult = result;
 }
 %typemap(out) bool {
- if (!result) {
+    if (!result) {
         realm_error_t error;
-        // FIXME Check return value
-        realm_get_last_error(&error);
-        // TODO Cache class lookup
-        jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-        (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
-        return false;
-    } else {
-        jresult = (jboolean)result;
+        if (realm_get_last_error(&error)) {
+            // TODO Cache class lookup
+            // FIXME Extract all error information and throw exceptions based on type
+            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
+            (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
+        }
     }
+    jresult = (jboolean)result;
 }
 // FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
 //%typemap(jstype) realm_t* "LongPointerWrapper"

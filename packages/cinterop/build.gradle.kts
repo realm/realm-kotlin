@@ -11,12 +11,17 @@ repositories {
 group = Realm.group
 version = Realm.version
 
-// Native libraries are not recognized correctly in the when sharing code in multiple platforms, so
-// track whether we are in the IDE and only add source set to multiple platforms if we are not in
-// the IDE
+// It is currently not possible to commonize user-defined libraries to use them across platforms.
+// To get IDE recognition of symbols the cinterop oriented code is put into a specific platform's
+// source set, but as the interface is actually platform agnostic compiling for the other platforms
+// still works
+// https://youtrack.jetbrains.com/issue/KT-40975
 // FIXME Maybe make it possible to switch which platform the common parts are added to. Currently
 //  adding the common parts to macos
 val idea = System.getProperty("idea.active") == "true"
+
+// Disable Android build when the SDK is not avaiable to allow building native parts on machines
+// without the Android SDK
 val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
 
 android {
@@ -152,8 +157,7 @@ kotlin {
         val darwinCommon by creating {
             dependsOn(commonMain)
             // Native symbols are not recognized correctly if platform is unknown when adding
-            // source sets, so add this explicitly in each platform source set instead
-            // kotlin.srcDir("src/darwinCommon/kotlin")
+            // source sets, so add common sources explicitly in "macosMain" and "iosMain" instead
         }
 
         val macosMain by getting {
@@ -163,13 +167,8 @@ kotlin {
 
         val iosMain by getting {
             dependsOn(darwinCommon)
-
-            // It is currently not possible to commonize user-defined libraries to use them across
-            // platforms. To get IDE recognition of symbols the cinterop oriented code is put into
-            // a specific platform's source set, but as the interface is actually platform agnostic
-            // compiling for the other platforms still works
-            // https://youtrack.jetbrains.com/issue/KT-40975
-            // FIXME Apparently it ruins IDE recognizing the symbols to have it in two platforms
+            // Only add common sources to one platform when in the IDE. See comment at 'idea'
+            // difinition for full details.
             if (!idea) {
                 kotlin.srcDir("src/darwinCommon/kotlin")
             }
@@ -178,8 +177,7 @@ kotlin {
         val darwinTest by creating {
             dependsOn(darwinCommon)
             // Native symbols are not recognized correctly if platform is unknown when adding
-            // source sets, so add this explicitly in each platform source set instead
-            // kotlin.srcDir("src/darwinTest/kotlin")
+            // source sets, so add common sources explicitly in "macosTest" and "iosTest" instead
         }
 
         val macosTest by getting {
@@ -191,6 +189,8 @@ kotlin {
         val iosTest by getting {
             dependsOn(darwinTest)
             dependsOn(iosMain)
+            // Only add common sources to one platform when in the IDE. See comment at 'idea'
+            // difinition for full details.
             if (!idea) {
                 kotlin.srcDir("src/darwinTest/kotlin")
             }

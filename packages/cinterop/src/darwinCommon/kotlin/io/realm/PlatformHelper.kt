@@ -2,7 +2,7 @@ package io.realm
 
 actual object PlatformHelper {
 
-    actual fun directory(): String {
+    actual fun appFilesDirectory(): String {
         return ""
     }
 }

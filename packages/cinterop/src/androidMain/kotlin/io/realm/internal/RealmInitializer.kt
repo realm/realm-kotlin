@@ -6,6 +6,9 @@ import androidx.startup.Initializer
 class RealmInitializer : Initializer<Context> {
 
     companion object {
+        // FIXME We should not store the context as it conflicts with live refresh in Android
+        //  Studio. Just grab required fields instead and maybe store them directly in
+        //  PlatformHelper.
         lateinit var context: Context
     }
 

@@ -53,7 +53,7 @@ class RealmConfiguration private constructor(
         fun classes(classes: List<RealmCompanion>) = apply { this.classes = classes }
         fun build(): RealmConfiguration {
             if (path == null) {
-                val directory = PlatformHelper.directory()
+                val directory = PlatformHelper.appFilesDirectory()
                 path = "$directory$name.realm"
             }
             if (modelFactory != null) {

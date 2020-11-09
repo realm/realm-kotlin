@@ -36,6 +36,7 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
+            // FIXME Extract all error information and throw exceptions based on type
             throw RuntimeException(error.message.toKString())
         }
     }
