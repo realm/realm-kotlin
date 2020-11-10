@@ -12,7 +12,7 @@ currentBranch = env.CHANGE_BRANCH
 // Will be set to `true` if this build is a full release that should be available on Bintray.
 // This is determined by comparing the current git tag to the version number of the build.
 publishBuild = false
-// Version of Realm Kotlin being tested. This values is defined in `<root>/version.txt`.
+// Version of Realm Kotlin being tested. This values is defined in `buildSrc/src/main/kotlin/Config.kt`.
 version = null
 
 pipeline {
@@ -70,14 +70,14 @@ def runScm() {
         // Check type of Build. We are treating this as a release build if we are building
         // the exact Git SHA that was tagged.
         gitTag = readGitTag()
+        version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2')
         echo "Git tag: ${gitTag ?: 'none'}"
         if (!gitTag) {
             gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
-            echo "Building commit: ${gitSha}"
+            echo "Building commit: ${version} - ${gitSha}"
             setBuildName(gitSha)
             publishBuild = false
         } else {
-            version = readFile('version.txt').trim()
             if (gitTag != "v${version}") {
                 error "Git tag '${gitTag}' does not match v${version}"
             } else {
