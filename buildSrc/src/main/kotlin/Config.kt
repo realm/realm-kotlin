@@ -1,6 +1,7 @@
 object Realm {
     const val version = "0.0.1-SNAPSHOT"
     const val group = "io.realm.kotlin"
+    const val projectUrl = "http://realm.io"
     const val plugin = "realm-kotlin"
     const val pluginId = "$plugin"
     const val appLibraryId = "app-library"
@@ -8,15 +9,18 @@ object Realm {
     // Modules has to match ${project.group}:${project.name} to make composite build work
     const val compilerPluginId = "plugin-compiler"
     const val compilerPluginIdNative = "plugin-compiler-shaded"
+    const val cInteropId = "cinterop"
+    const val jniSwigStubsId = "jni-swig-stub"
     const val runtimeApiId = "runtime-api"
-    const val projectUrl = "http://realm.io"
+    const val gradlePluginId = "gradle-plugin"
 
     object License {
         const val name = "The Apache License, Version 2.0"
         const val url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        const val distribution = "repo"
     }
     object IssueManagement {
-        const val name = "Github"
+        const val system = "Github"
         const val url = "https://github.com/realm/realm-kotlin/issues"
     }
     object SCM {

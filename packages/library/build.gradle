@@ -10,9 +10,6 @@ repositories {
     mavenLocal()
 }
 
-group Realm.group
-version Realm.version
-
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
 
@@ -35,7 +32,6 @@ kotlin {
         }
     }
 
-    // Note that the Kotlin metadata is here, too.
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html
     configure([targets["metadata"], jvm()]) {
         mavenPublication {
@@ -193,7 +189,7 @@ def commonPom = {
         }
     }
     issueManagement {
-        system Realm.classes[1].name
+        system Realm.classes[1].system
         url Realm.classes[1].url
     }
     scm {

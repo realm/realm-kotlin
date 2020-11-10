@@ -5,6 +5,8 @@ plugins {
     id("com.jfrog.artifactory")
 }
 
+val mavenPublicationName = "compilerPlugin"
+
 dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
     compileOnly(Deps.autoService)
@@ -26,7 +28,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 publishing {
     publications {
-        register<MavenPublication>("compilerPlugin") {
+        register<MavenPublication>(mavenPublicationName) {
             artifactId = Realm.compilerPluginId
             from(components["java"])
             pom {
@@ -44,7 +46,7 @@ publishing {
                     }
                 }
                 issueManagement {
-                    name.set(Realm.IssueManagement.name)
+                    system.set(Realm.IssueManagement.system)
                     url.set(Realm.IssueManagement.url)
                 }
                 scm {
@@ -70,7 +72,7 @@ artifactory {
             )
             defaults(
                 delegateClosureOf<groovy.lang.GroovyObject> {
-                    invokeMethod("publications", "compilerPlugin")
+                    invokeMethod("publications", mavenPublicationName)
                 }
             )
         }

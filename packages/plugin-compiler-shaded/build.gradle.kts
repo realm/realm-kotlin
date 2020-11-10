@@ -11,6 +11,8 @@ dependencies {
     implementation(project(":plugin-compiler"))
 }
 
+val mavenPublicationName = "compilerPluginShaded"
+
 tasks {
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("")
@@ -34,7 +36,7 @@ tasks {
 
 publishing {
     publications {
-        register<MavenPublication>("compilerPluginShaded") {
+        register<MavenPublication>(mavenPublicationName) {
             project.shadow.component(this)
             artifactId = Realm.compilerPluginIdNative
             pom {
@@ -52,7 +54,7 @@ publishing {
                     }
                 }
                 issueManagement {
-                    name.set(Realm.IssueManagement.name)
+                    system.set(Realm.IssueManagement.system)
                     url.set(Realm.IssueManagement.url)
                 }
                 scm {
@@ -78,7 +80,7 @@ artifactory {
             )
             defaults(
                 delegateClosureOf<groovy.lang.GroovyObject> {
-                    invokeMethod("publications", "compilerPluginShaded")
+                    invokeMethod("publications", mavenPublicationName)
                 }
             )
         }

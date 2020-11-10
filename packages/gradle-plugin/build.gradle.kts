@@ -10,6 +10,8 @@ dependencies {
     compileOnly(kotlin("gradle-plugin"))
 }
 
+val mavenPublicationName = "gradlePlugin"
+
 gradlePlugin {
     plugins {
         create("RealmPlugin") {
@@ -22,11 +24,11 @@ gradlePlugin {
 
 publishing {
     publications {
-        register<MavenPublication>("gradlePlugin") {
+        register<MavenPublication>(mavenPublicationName) {
             artifactId = Realm.compilerPluginIdNative
             pom {
                 name.set("Gradle Plugin")
-                artifactId = "plugin-gradle"
+                artifactId = Realm.gradlePluginId
                 from(components["java"])
                 description.set("Gradle plugin for Realm Kotlin. Realm is a mobile database: Build better apps faster.")
                 url.set(Realm.projectUrl)
@@ -37,7 +39,7 @@ publishing {
                     }
                 }
                 issueManagement {
-                    name.set(Realm.IssueManagement.name)
+                    system.set(Realm.IssueManagement.system)
                     url.set(Realm.IssueManagement.url)
                 }
                 scm {
@@ -63,7 +65,7 @@ artifactory {
             )
             defaults(
                 delegateClosureOf<groovy.lang.GroovyObject> {
-                    invokeMethod("publications", "gradlePlugin")
+                    invokeMethod("publications", mavenPublicationName)
                 }
             )
         }
