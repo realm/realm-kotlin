@@ -180,11 +180,10 @@ kotlin {
         mavenPublication {
             val targetPublication = this@mavenPublication
             tasks.withType<AbstractPublishToMaven>()
-                    .matching { it.publication == targetPublication }
-                    .all { onlyIf { findProperty("isMainHost") == "true" } }
+                .matching { it.publication == targetPublication }
+                .all { onlyIf { findProperty("isMainHost") == "true" } }
         }
     }
-
 }
 
 // Tasks for building capi...replace with Monorepo or alike when ready
@@ -241,9 +240,9 @@ publishing {
         pom {
             name.set("C Interop")
             description.set(
-                    "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
-                            "supposed to be consumed directly, but through " +
-                            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+                "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
+                    "supposed to be consumed directly, but through " +
+                    "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
             )
             url.set(Realm.projectUrl)
             licenses {
@@ -268,21 +267,26 @@ publishing {
 artifactory {
     setContextUrl("https://oss.jfrog.org/artifactory")
     publish(
-            delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-                repository(
-                        delegateClosureOf<groovy.lang.GroovyObject> {
-                            setProperty("repoKey", "oss-snapshot-local")
-                            setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
-                            setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
-                        }
-                )
-                defaults(delegateClosureOf<groovy.lang.GroovyObject> {
+        delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
+            repository(
+                delegateClosureOf<groovy.lang.GroovyObject> {
+                    setProperty("repoKey", "oss-snapshot-local")
+                    setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
+                    setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
+                }
+            )
+            defaults(
+                delegateClosureOf<groovy.lang.GroovyObject> {
                     // List fetched from https://medium.com/vmware-end-user-computing/publishing-kotlin-multiplatform-artifacts-to-artifactory-maven-a283ae5912d6
                     // TODO Unclear if we should name "iosArm64" and "macosX64" as well?
-                    invokeMethod("publications", arrayOf(
+                    invokeMethod(
+                        "publications",
+                        arrayOf(
                             "androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata"
-                    ))
-                })
-            }
+                        )
+                    )
+                }
+            )
+        }
     )
 }
