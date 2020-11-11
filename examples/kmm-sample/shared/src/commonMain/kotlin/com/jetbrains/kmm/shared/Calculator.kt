@@ -2,6 +2,12 @@ package com.jetbrains.kmm.shared
 
 class Calculator {
     companion object {
-        fun sum(a: Int, b: Int): Int = a + b
+
+        val repository: ExpressionRepository by lazy { ExpressionRepository() }
+
+        fun sum(a: Int, b: Int): Int {
+            repository.addExpression("$a + $b")
+            return a + b
+        }
     }
 }
