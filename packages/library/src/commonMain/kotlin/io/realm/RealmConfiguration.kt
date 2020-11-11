@@ -54,7 +54,7 @@ class RealmConfiguration private constructor(
         fun build(): RealmConfiguration {
             if (path == null) {
                 val directory = PlatformHelper.appFilesDirectory()
-                path = "$directory$name.realm"
+                path = "$directory/$name.realm"
             }
             if (factory != null) {
                 return RealmConfiguration(path, name, factory!!, tables = classes.map { parseSchema(it.`$realm$schema`()) })
