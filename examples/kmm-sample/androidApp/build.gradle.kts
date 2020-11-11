@@ -33,3 +33,9 @@ android {
         }
     }
 }
+
+// FIXME Can be remove if we apply realm-kotlin plugin
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.useIR = true
+}

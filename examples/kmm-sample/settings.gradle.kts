@@ -4,6 +4,8 @@ pluginManagement {
         google()
         jcenter()
         mavenCentral()
+        // FIXME Consider adding OJO repository, but for now just use local builds
+        mavenLocal()
     }
     resolutionStrategy {
         eachPlugin {
@@ -18,4 +20,3 @@ rootProject.name = "KmmSample"
 
 include(":androidApp")
 include(":shared")
-

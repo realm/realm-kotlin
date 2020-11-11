@@ -4,33 +4,46 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 
 @Suppress("unused")
 class RealmPlugin : Plugin<Project> {
 
-    override fun apply(target: Project) {
-        target.pluginManager.apply(RealmCompilerSubplugin::class.java)
+    override fun apply(project: Project) {
+        project.pluginManager.apply(RealmCompilerSubplugin::class.java)
 
-        // FIXME Need to differentiate on kotlin plugin variants; for now assuming MPP
-        target.plugins.withId("org.jetbrains.kotlin.multiplatform") {
-            val kotlin = target.extensions.getByType(KotlinMultiplatformExtension::class.java)
-            target.afterEvaluate {
-                kotlin.targets.all { target ->
-                    target.compilations.all { compilation ->
-                        // Inject library dependency
-                        compilation.dependencies {
-                            implementation("io.realm.kotlin:library:${io.realm.gradle.PLUGIN_VERSION}")
-                        }
-                        // Setup correct compiler options
-                        // FIXME Are these to dangerous to apply under the hood?
-                        val options = compilation.kotlinOptions
-                        when (options) {
-                            is KotlinJvmOptions -> {
-                                options.jvmTarget = "1.8"
-                                options.useIR = true
-                            }
-                        }
-                    }
+        // Stand alone Android projects have not initialized kotlin plugin when applying this, so
+        // postpone dependency injection till after evaluation
+        project.afterEvaluate {
+            val kotlin = project.extensions.findByName("kotlin")
+            // TODO To ease configuration we could/should inject dependencies to our library, but
+            //  await better insight into when/what to inject and supply appropriate opt-out
+            //  options through our own extension?
+            //  Dependencies should probably be added by source set and not by target, as
+            //  kotlin.sourceSets.getByName("commonMain").dependencies (or "main" for Android), but
+            when (kotlin) {
+                is KotlinSingleTargetExtension -> {
+                    updateKotlinOption(kotlin.target)
+                }
+                is KotlinMultiplatformExtension -> {
+                    kotlin.targets.all { target -> updateKotlinOption(target) }
+                }
+                // TODO Should we report errors? Probably an oversighted case
+                // else ->
+                //    TODO("Cannot 'realm-kotlin' library dependency to ${kotlin::class.qualifiedName}")
+            }
+        }
+    }
+
+    private fun updateKotlinOption(target: KotlinTarget) {
+        target.compilations.all { compilation ->
+            // Setup correct compiler options
+            // FIXME Are these to dangerous to apply under the hood?
+            when (val options = compilation.kotlinOptions) {
+                is KotlinJvmOptions -> {
+                    options.jvmTarget = "1.8"
+                    options.useIR = true
                 }
             }
         }

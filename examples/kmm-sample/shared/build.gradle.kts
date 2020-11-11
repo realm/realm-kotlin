@@ -4,6 +4,8 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     id("kotlin-android-extensions")
+    // FIXME Fetch version from realm repository
+    id("realm-kotlin") version "0.0.1-SNAPSHOT"
 }
 group = "com.jetbrains"
 version = "1.0-SNAPSHOT"
@@ -16,7 +18,8 @@ repositories {
 }
 kotlin {
     android()
-    ios {
+    // TODO Realm is not available for non-X64 hosts yet
+    iosX64("ios") {
         binaries {
             framework {
                 baseName = "shared"
@@ -24,7 +27,12 @@ kotlin {
         }
     }
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                // FIXME Fetch version from realm repository
+                implementation("io.realm.kotlin:library:0.0.1-SNAPSHOT")
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
@@ -65,7 +73,9 @@ val packForXcode by tasks.creating(Sync::class) {
     group = "build"
     val mode = System.getenv("CONFIGURATION") ?: "DEBUG"
     val sdkName = System.getenv("SDK_NAME") ?: "iphonesimulator"
-    val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
+    // FIXME Defining ios target as iosX64 somehow hides the ioxX64 target
+    // val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
+    val targetName = "ios"
     val framework = kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)
     inputs.property("mode", mode)
     dependsOn(framework.linkTask)

@@ -91,7 +91,7 @@ kotlin {
                 implementation 'junit:junit:4.12'
                 implementation 'com.android.support.test:runner:1.0.2'
                 implementation 'com.android.support.test:rules:1.0.2'
-                implementation(kotlin("reflect:1.4.20-M1-63"))
+                implementation(kotlin("reflect:$Versions.kotlin"))
             }
         }
     }
