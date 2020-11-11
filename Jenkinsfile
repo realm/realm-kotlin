@@ -285,6 +285,10 @@ def readGitTag() {
 }
 
 boolean shouldReleaseSnapshot(version) {
+    if (1 == 1) {
+        // FIXME: Disable SNAPSHOT releases until we can combine the native code for multiple platforms.
+        return false
+    }
     if (!releaseBranches.contains(currentBranch)) {
         return false
     }
