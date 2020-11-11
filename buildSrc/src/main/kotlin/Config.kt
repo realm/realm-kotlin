@@ -4,8 +4,6 @@ object Realm {
     const val projectUrl = "http://realm.io"
     const val plugin = "realm-kotlin"
     const val pluginId = "$plugin"
-    const val appLibraryId = "app-library"
-    const val databaseLibraryId = "database-library"
     // Modules has to match ${project.group}:${project.name} to make composite build work
     const val compilerPluginId = "plugin-compiler"
     const val compilerPluginIdNative = "plugin-compiler-shaded"

@@ -4,6 +4,15 @@ plugins {
     `kotlin-dsl-precompiled-script-plugins`
 }
 
+gradlePlugin {
+    plugins {
+        register("realm-publisher") {
+            id = "realm-publisher"
+            implementationClass = "io.realm.RealmPublishPlugin"
+        }
+    }
+}
+
 repositories {
     google()
     jcenter()
@@ -19,6 +28,7 @@ buildscript {
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+        classpath("org.jfrog.buildinfo:build-info-extractor-gradle:${Versions.artifactoryPlugin}")
     }
 }
 
@@ -31,6 +41,8 @@ dependencies {
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
     implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}") // FIXME: Figure out why this is required here
+    implementation("com.android.tools.build:gradle-api:${Versions.Android.buildTools}")
+    implementation(kotlin("script-runtime"))
 }
 
 kotlinDslPluginOptions {

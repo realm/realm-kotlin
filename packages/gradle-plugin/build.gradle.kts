@@ -2,8 +2,7 @@ plugins {
     kotlin("jvm")
     kotlin("kapt")
     `java-gradle-plugin`
-    `maven-publish`
-    id("com.jfrog.artifactory")
+    id("realm-publisher")
 }
 
 dependencies {
@@ -22,54 +21,26 @@ gradlePlugin {
     }
 }
 
-publishing {
-    publications {
-        register<MavenPublication>(mavenPublicationName) {
-            artifactId = Realm.compilerPluginIdNative
-            pom {
-                name.set("Gradle Plugin")
-                artifactId = Realm.gradlePluginId
-                from(components["java"])
-                description.set("Gradle plugin for Realm Kotlin. Realm is a mobile database: Build better apps faster.")
-                url.set(Realm.projectUrl)
-                licenses {
-                    license {
-                        name.set(Realm.License.name)
-                        url.set(Realm.License.url)
-                    }
-                }
-                issueManagement {
-                    system.set(Realm.IssueManagement.system)
-                    url.set(Realm.IssueManagement.url)
-                }
-                scm {
-                    connection.set(Realm.SCM.connection)
-                    developerConnection.set(Realm.SCM.developerConnection)
-                    url.set(Realm.SCM.url)
-                }
-            }
-        }
+realmPublish {
+    pom {
+        name = "Gradle Plugin"
+        description = "Gradle plugin for Realm Kotlin. Realm is a mobile database: Build better apps faster."
+    }
+    ojo {
+        publications = arrayOf(mavenPublicationName)
     }
 }
 
-artifactory {
-    setContextUrl("https://oss.jfrog.org/artifactory")
-    publish(
-        delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-            repository(
-                delegateClosureOf<groovy.lang.GroovyObject> {
-                    setProperty("repoKey", "oss-snapshot-local")
-                    setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
-                    setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
-                }
-            )
-            defaults(
-                delegateClosureOf<groovy.lang.GroovyObject> {
-                    invokeMethod("publications", mavenPublicationName)
-                }
-            )
+publishing {
+    publications {
+        register<MavenPublication>(mavenPublicationName) {
+            artifactId = Realm.gradlePluginId
+            pom {
+                artifactId = Realm.gradlePluginId
+                from(components["java"])
+            }
         }
-    )
+    }
 }
 
 // Make version information available at runtime

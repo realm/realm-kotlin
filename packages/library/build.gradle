@@ -1,6 +1,7 @@
 plugins {
     id "org.jetbrains.kotlin.multiplatform"
     id "com.android.library"
+    id "realm-publisher"
 }
 
 repositories {
@@ -9,9 +10,6 @@ repositories {
     mavenCentral()
     mavenLocal()
 }
-
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.artifactory'
 
 // Common Kotlin configuration
 kotlin {
@@ -160,50 +158,16 @@ configurations {
     compileClasspath
 }
 
-// See https://kotlinlang.org/docs/reference/mpp-publish-lib.html
-artifactory {
-    contextUrl = 'https://oss.jfrog.org/artifactory'
-    publish {
-        repository {
-            repoKey = 'oss-snapshot-local'
-            username = project.hasProperty('bintrayUser') ? bintrayUser : 'noUser'
-            password = project.hasProperty('bintrayKey') ? bintrayKey : 'noKey'
-        }
+realmPublish {
+    pom {
+        name = "Library"
+        description = "Library code for Realm Kotlin. This artifact is not " +
+                "supposed to be consumed directly, but through " +
+                "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+    ojo {
         // List fetched from https://medium.com/vmware-end-user-computing/publishing-kotlin-multiplatform-artifacts-to-artifactory-maven-a283ae5912d6
-        defaults {
-            // TODO Unclear if we should name "iosArm64" and "macosX64" as well?
-            publications ("androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata")
-        }
+        // TODO Unclear if we should name "iosArm64" and "macosX64" as well?
+        publications = ["androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata"]
     }
 }
-
-// Add common POM elements to all publications
-// FIXME: I don't know how to access Kotlin inner object classes from Groovy. This is a giant hack. Convert this file
-//  to .kts as quickly as possible.
-def commonPom = {
-    licenses {
-        license {
-            name Realm.classes.first().name
-            url Realm.classes.first().url
-            distribution 'repo'
-        }
-    }
-    issueManagement {
-        system Realm.classes[1].system
-        url Realm.classes[1].url
-    }
-    scm {
-        url Realm.classes.last().url
-        connection Realm.classes.last().connection
-        developerConnection Realm.classes.last().developerConnection
-    }
-}
-publishing {
-    publications.all {
-        pom.withXml {
-            def root = asNode()
-            root.children().last() + commonPom
-        }
-    }
-}
-
