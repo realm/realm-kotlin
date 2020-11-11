@@ -1,3 +1,6 @@
+// If you want to run against the local source repository just include the build with
+// includeBuild("../../packages")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -16,7 +19,6 @@ pluginManagement {
     }
 }
 rootProject.name = "KmmSample"
-
 
 include(":androidApp")
 include(":shared")

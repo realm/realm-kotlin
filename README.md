@@ -36,3 +36,11 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 ```
 
 Note: klint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+
+# Samples
+
+## Kotlin Multiplatform Sample
+
+The folder `examples/kmm-sample` contains an example showing how to use Realm in a multiplatform
+project, sharing code for using Realm in the `shared` module. The project is based on
+`https://github.com/Kotlin/kmm-sample`.
