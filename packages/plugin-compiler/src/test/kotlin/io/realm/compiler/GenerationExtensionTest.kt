@@ -124,7 +124,7 @@ class GenerationExtensionTest {
         // set a value using the CInterop call
         // nameProperty.setter.call(sampleModel, "Zepp")
         // get value using the CInterop call
-        //assertEquals("Hello Zepp", nameProperty.call(sampleModel))
+        // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
 
         inputs.assertGeneratedIR()
     }
