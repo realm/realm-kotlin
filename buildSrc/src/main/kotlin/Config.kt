@@ -31,7 +31,7 @@ object Realm {
 object Versions {
     object Android {
         const val minSdk = 16
-        const val targetSDK = 29
+        const val targetSdk = 29
         const val compileSdkVersion = 29
         const val buildToolsVersion = "29.0.2"
         const val buildTools = "4.0.1"

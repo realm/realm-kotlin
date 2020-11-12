@@ -55,7 +55,7 @@ android {
 
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSDK)
+        targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1 // TODO: What should we set this to, if anything?
         versionName = Realm.version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
