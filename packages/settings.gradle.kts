@@ -1,5 +1,5 @@
 rootProject.name = "realm-kotlin"
-include("plugin-gradle")
+include("gradle-plugin")
 include("plugin-compiler")
 include("plugin-compiler-shaded")
 include("library")

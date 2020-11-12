@@ -1,19 +1,42 @@
 object Realm {
     const val version = "0.0.1-SNAPSHOT"
     const val group = "io.realm.kotlin"
+    const val projectUrl = "http://realm.io"
     const val plugin = "realm-kotlin"
     const val pluginId = "$plugin"
     // Modules has to match ${project.group}:${project.name} to make composite build work
     const val compilerPluginId = "plugin-compiler"
     const val compilerPluginIdNative = "plugin-compiler-shaded"
+    const val cInteropId = "cinterop"
+    const val jniSwigStubsId = "jni-swig-stub"
+    const val runtimeApiId = "runtime-api"
+    const val gradlePluginId = "gradle-plugin"
+
+    object License {
+        const val name = "The Apache License, Version 2.0"
+        const val url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        const val distribution = "repo"
+    }
+    object IssueManagement {
+        const val system = "Github"
+        const val url = "https://github.com/realm/realm-kotlin/issues"
+    }
+    object SCM {
+        const val connection = "scm:git:git://github.com/realm/realm-kotlin.git"
+        const val developerConnection = "scm:git:ssh://github.com/realm/realm-kotlin.git"
+        const val url = "https://github.com/realm/realm-kotlin"
+    }
 }
 
 object Versions {
-    const val androidMinSdk = 16
-    const val androidTargetSDK = 29
-    const val androidCompileSdkVersion = 29
-    const val androidBuildToolsVersion = "29.0.2"
-    const val androidBuildTools = "4.0.1"
+    object Android {
+        const val minSdk = 16
+        const val targetSDK = 29
+        const val compileSdkVersion = 29
+        const val buildToolsVersion = "29.0.2"
+        const val buildTools = "4.0.1"
+    }
+    const val artifactoryPlugin = "4.18.0" // https://plugins.gradle.org/plugin/com.jfrog.artifactory
     const val autoService = "1.0-rc6"
     const val detektPlugin = "1.14.1"
     const val jvmTarget = "1.8"

@@ -1,8 +1,10 @@
 plugins {
     kotlin("jvm")
     kotlin("kapt")
-    `maven-publish`
+    id("realm-publisher")
 }
+
+val mavenPublicationName = "compilerPlugin"
 
 dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
@@ -23,12 +25,22 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     }
 }
 
+realmPublish {
+    pom {
+        name = "Compiler Plugin"
+        description = "Compiler plugin for JVM based platforms for Realm Kotlin. This artifact is not " +
+            "supposed to be consumed directly, but through " +
+            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+    ojo {
+        publications = arrayOf(mavenPublicationName)
+    }
+}
+
 publishing {
     publications {
-        register("compilerPlugin", MavenPublication::class) {
-            groupId = Realm.group
+        register<MavenPublication>(mavenPublicationName) {
             artifactId = Realm.compilerPluginId
-            version = Realm.version
             from(components["java"])
         }
     }
