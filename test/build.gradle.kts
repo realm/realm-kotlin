@@ -15,11 +15,6 @@ repositories {
     maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
 }
 
-//group Realm.group
-//version Realm.version
-//
-//apply plugin: 'maven-publish'
-//
 // Common Kotlin configuration
 kotlin {
     sourceSets {
