@@ -68,6 +68,11 @@ android {
             isMinifyEnabled = false
         }
     }
+    // FIXME connectedAndroidTest does not trigger any test. Tried to apply the workaround, but
+    //  does not seem to work, maybe due to naming, ordering, etc. Workaround seemed to be working
+    //  for Groovy build files. Have not investigated further.
+    // https://youtrack.jetbrains.com/issue/KT-35016
+    sourceSets.getByName("androidTest").java.srcDir(file("src/androidTest/kotlin"))
 }
 val packForXcode by tasks.creating(Sync::class) {
     group = "build"
