@@ -175,6 +175,7 @@ kotlin {
     }
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
+    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
     configure(listOf(targets["metadata"], jvm())) {
         mavenPublication {
             val targetPublication = this@mavenPublication

@@ -31,6 +31,7 @@ kotlin {
     }
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html
+    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
     configure([targets["metadata"], jvm()]) {
         mavenPublication {
             def targetPublication = this
