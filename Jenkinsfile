@@ -117,7 +117,8 @@ def runBuild() {
         """
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
-    parralelExecutors['jvm']       = jvm             { test("jvmTest") }
+    // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
+    // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
     parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
