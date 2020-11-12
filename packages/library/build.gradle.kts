@@ -37,8 +37,8 @@ kotlin {
         mavenPublication {
             val targetPublication = this@mavenPublication
             tasks.withType<AbstractPublishToMaven>()
-                    .matching { it.publication == targetPublication }
-                    .all { onlyIf { findProperty("isMainHost") == "true" } }
+                .matching { it.publication == targetPublication }
+                .all { onlyIf { findProperty("isMainHost") == "true" } }
         }
     }
 }
@@ -166,8 +166,8 @@ realmPublish {
     pom {
         name = "Library"
         description = "Library code for Realm Kotlin. This artifact is not " +
-                "supposed to be consumed directly, but through " +
-                "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+            "supposed to be consumed directly, but through " +
+            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
     ojo {
         // List fetched from https://medium.com/vmware-end-user-computing/publishing-kotlin-multiplatform-artifacts-to-artifactory-maven-a283ae5912d6
