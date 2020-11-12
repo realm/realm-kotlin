@@ -1,6 +1,6 @@
 package io.realm
 
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModelInternal
 import junit.framework.TestCase.assertNotNull
