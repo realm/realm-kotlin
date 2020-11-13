@@ -9,8 +9,10 @@ class ExpressionRepository {
     val realm: Realm by lazy {
         val configuration = RealmConfiguration.Builder()
             // FIXME Remove when object creation is internalized
+            //  https://github.com/realm/realm-kotlin/issues/54
             .factory { _ -> Expression() }
             // FIXME Remove when shcema definition is internalized
+            //  https://github.com/realm/realm-kotlin/issues/54
             .classes(
                 listOf(
                     Expression.Companion as RealmCompanion
