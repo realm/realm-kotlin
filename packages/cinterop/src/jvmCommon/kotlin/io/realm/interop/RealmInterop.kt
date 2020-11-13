@@ -13,8 +13,6 @@ actual object RealmInterop {
         return realmc.realm_get_library_version()
     }
 
-    // FIXME Maybe eliminate Class/Property and initialize native pointers to realm_class_info_t and
-    //  realm_property_info_t directly in generated class
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
         val count = tables.size
         val cclasses = realmc.new_classArray(count)
@@ -61,7 +59,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
-        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode.value)
+        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode.nativeValue)
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {

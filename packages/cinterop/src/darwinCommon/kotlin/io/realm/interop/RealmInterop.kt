@@ -50,7 +50,7 @@ private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointe
     if (pointer == null) throwOnError(); return pointer
 }
 
-// FIXME Consider making NativePointer/CPointerWrapper generic to enfore typing
+// FIXME Consider making NativePointer/CPointerWrapper generic to enforce typing
 class CPointerWrapper(ptr: CPointer<out CPointed>?) : NativePointer {
     // FIXME Generic check for errors on null pointers returned from the C API. We probably have to
     //  do this more selectively, but for now just check all pointers.
@@ -103,15 +103,15 @@ actual object RealmInterop {
                     primary_key.set(memScope, clazz.primaryKey)
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
-                    flags = clazz.flags.fold(0) { flags, element -> flags or element.value.toInt() }
+                    flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                 }
                 cproperties[i] = allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
                         name.set(memScope, property.name)
-                        type = property.type.value
-                        collection_type = property.collectionType.value
-                        flags = property.flags.fold(0) { flags, element -> flags or element.value.toInt() }
+                        type = property.type.nativeValue
+                        collection_type = property.collectionType.nativeValue
+                        flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                     }
                 }
             }

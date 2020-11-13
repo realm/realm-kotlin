@@ -118,6 +118,7 @@ def runBuild() {
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
     // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
+    //  https://github.com/realm/realm-kotlin/issues/62
     // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
     parralelExecutors['macos']   = macos           { test("macosTest") }
