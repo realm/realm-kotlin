@@ -49,17 +49,19 @@ allprojects {
         buildUponDefaultConfig = true // preconfigure defaults
         config = files("$configDir/detekt/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
         baseline = file("$configDir/detekt/baseline.xml") // a way of suppressing issues before introducing detekt
-        input = files(file("src/androidMain/kotlin"),
-                file("src/androidTest/kotlin"),
-                file("src/commonMain/kotlin"),
-                file("src/commonTest/kotlin"),
-                file("src/iosMain/kotlin"),
-                file("src/iosTest/kotlin"),
-                file("src/jvmMain/kotlin"),
-                file("src/main/kotlin"),
-                file("src/macosMain/kotlin"),
-                file("src/macosTest/kotlin"),
-                file("src/test/kotlin"))
+        input = files(
+            file("src/androidMain/kotlin"),
+            file("src/androidTest/kotlin"),
+            file("src/commonMain/kotlin"),
+            file("src/commonTest/kotlin"),
+            file("src/iosMain/kotlin"),
+            file("src/iosTest/kotlin"),
+            file("src/jvmMain/kotlin"),
+            file("src/main/kotlin"),
+            file("src/macosMain/kotlin"),
+            file("src/macosTest/kotlin"),
+            file("src/test/kotlin")
+        )
 
         reports {
             html.enabled = true // observe findings in your browser with structure and code snippets

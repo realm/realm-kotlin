@@ -1,4 +1,4 @@
-package com.jetbrains.kmm.shared
+package io.realm.example.kmmsample
 
 @Suppress("EmptyDefaultConstructor", "MemberNameEqualsClassName")
 actual class Platform actual constructor() {

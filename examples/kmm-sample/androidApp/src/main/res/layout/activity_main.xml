@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/main_view"
-    tools:context="com.jetbrains.kmm.androidApp.MainActivity">
+    tools:context="io.realm.example.kmmsample.androidApp.MainActivity">
 
   <LinearLayout
       android:layout_width="wrap_content"

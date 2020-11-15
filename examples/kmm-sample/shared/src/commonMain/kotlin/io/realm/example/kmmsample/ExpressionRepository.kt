@@ -1,4 +1,4 @@
-package com.jetbrains.kmm.shared
+package io.realm.example.kmmsample
 
 import io.realm.Realm
 import io.realm.RealmConfiguration

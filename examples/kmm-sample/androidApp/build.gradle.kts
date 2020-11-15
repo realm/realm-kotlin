@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     kotlin("android")
     id("kotlin-android-extensions")
+    // Apply Realm specific linting plugin to get common Realm linting tasks
+    id("realm-lint")
 }
 group = "com.jetbrains"
 version = "1.0-SNAPSHOT"
@@ -21,7 +23,7 @@ dependencies {
 android {
     compileSdkVersion(29)
     defaultConfig {
-        applicationId = "com.jetbrains.androidApp"
+        applicationId = "io.realm.example.kmmsample.androidApp"
         minSdkVersion(24)
         targetSdkVersion(29)
         versionCode = 1

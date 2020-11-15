@@ -1,14 +1,13 @@
-package com.jetbrains.kmm.androidApp
+package io.realm.example.kmmsample.androidApp
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
-import com.jetbrains.kmm.shared.Greeting
-import com.jetbrains.kmm.shared.Calculator
 import android.widget.TextView
-import com.jetbrains.androidApp.R
+import androidx.appcompat.app.AppCompatActivity
+import io.realm.example.kmmsample.Calculator
+import io.realm.example.kmmsample.Greeting
 
 fun greet(): String {
     return Greeting().greeting()
@@ -27,13 +26,13 @@ class MainActivity : AppCompatActivity() {
 
         val sumTV: TextView = findViewById(R.id.textViewSum)
 
-        val textWatcher = object: TextWatcher {
+        val textWatcher = object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 try {
                     val numA = Integer.parseInt(numATV.text.toString())
                     val numB = Integer.parseInt(numBTV.text.toString())
-                    sumTV.text =  "= " + Calculator.sum(numA, numB).toString()
-                } catch(e: NumberFormatException) {
+                    sumTV.text = "= " + Calculator.sum(numA, numB).toString()
+                } catch (e: NumberFormatException) {
                     sumTV.text = "= 🤔"
                 }
             }
@@ -45,6 +44,5 @@ class MainActivity : AppCompatActivity() {
 
         numATV.addTextChangedListener(textWatcher)
         numBTV.addTextChangedListener(textWatcher)
-
     }
 }
