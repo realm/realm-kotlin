@@ -1,6 +1,22 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+
 plugins {
     id("org.jlleitschuh.gradle.ktlint")
     id("io.gitlab.arturbosch.detekt")
+}
+
+val configDir = locateConfigDir(File(File(".").absolutePath)).path
+
+// Searches upwards in the file tree for a directory containing a 'config'-folder
+fun locateConfigDir(current: File): File {
+    if (current.path == "/") error("Couldn't find config folder in file tree")
+    val configDir = Paths.get(current.path, "config")
+    return if (Files.exists(configDir) && File(configDir.toUri()).isDirectory) {
+        configDir.toFile()
+    } else {
+        locateConfigDir(current.parentFile)
+    }
 }
 
 allprojects {
@@ -9,7 +25,7 @@ allprojects {
 
     ktlint {
         version.set(Versions.ktlintVersion)
-        additionalEditorconfigFile.set(file("$rootDir/../config/ktlint/.editorconfig"))
+        additionalEditorconfigFile.set(file("$configDir/ktlint/.editorconfig"))
         debug.set(false)
         verbose.set(true)
         android.set(false)
@@ -31,8 +47,8 @@ allprojects {
     detekt {
         failFast = true // fail build on any finding
         buildUponDefaultConfig = true // preconfigure defaults
-        config = files("$rootDir/../config/detekt/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
-        baseline = file("$rootDir/../config/detekt/baseline.xml") // a way of suppressing issues before introducing detekt
+        config = files("$configDir/detekt/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
+        baseline = file("$configDir/detekt/baseline.xml") // a way of suppressing issues before introducing detekt
         input = files(file("src/androidMain/kotlin"),
                 file("src/androidTest/kotlin"),
                 file("src/commonMain/kotlin"),

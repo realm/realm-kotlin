@@ -4,8 +4,11 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     id("kotlin-android-extensions")
+    // Apply Realm Kotlin plugin
     // FIXME Fetch version from realm repository
     id("realm-kotlin") version "0.0.1-SNAPSHOT"
+    // Apply Realm specific linting plugin to get common Realm linting tasks
+    id("realm-lint")
 }
 group = "com.jetbrains"
 version = "1.0-SNAPSHOT"

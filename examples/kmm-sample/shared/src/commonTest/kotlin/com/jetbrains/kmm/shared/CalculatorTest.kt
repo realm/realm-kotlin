@@ -9,5 +9,4 @@ class CalculatorTest {
     fun testSum() {
         assertEquals(3, Calculator.sum(1, 2))
     }
-
 }

@@ -1,6 +1,6 @@
 package com.jetbrains.kmm.shared
 
-class Calculator {
+class Calculator private constructor() {
     companion object {
 
         val repository: ExpressionRepository by lazy { ExpressionRepository() }

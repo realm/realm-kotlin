@@ -5,5 +5,5 @@ import io.realm.runtimeapi.RealmObject
 
 @RealmObject
 class Expression : RealmModel {
-    var string : String = ""
+    var expressionString: String = ""
 }

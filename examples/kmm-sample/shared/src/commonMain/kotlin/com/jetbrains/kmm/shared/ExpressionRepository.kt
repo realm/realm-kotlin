@@ -23,13 +23,12 @@ class ExpressionRepository {
         Realm.open(configuration)
     }
 
-    fun addExpression(expression: String) : Expression {
+    fun addExpression(expression: String): Expression {
         realm.beginTransaction()
         val expression = realm.create(Expression::class).apply {
-            string = expression
+            expressionString = expression
         }
         realm.commitTransaction()
         return expression
     }
-
 }
