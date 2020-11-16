@@ -62,7 +62,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            realm_clean_last_error()
+            realm_clear_last_error();
             // TODO Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
             jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
@@ -75,7 +75,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            realm_clean_last_error()
+            realm_clear_last_error();
             // TODO Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
             jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");

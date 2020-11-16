@@ -27,7 +27,7 @@ actual object RealmInterop {
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = realm_table_key_t()
-                flags = clazz.flags.fold(0) { flags, element -> flags or element.value }
+                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue }
             }
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
@@ -35,12 +35,12 @@ actual object RealmInterop {
                 val cproperty = realm_property_info_t().apply {
                     name = property.name
                     public_name = property.publicName
-                    type = property.type.value
-                    collection_type = property.collectionType.value
+                    type = property.type.nativeValue
+                    collection_type = property.collectionType.nativeValue
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
                     key = realm_col_key_t() // property.key
-                    flags = property.flags.fold(0) { flags, element -> flags or element.value }
+                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue }
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
             }
