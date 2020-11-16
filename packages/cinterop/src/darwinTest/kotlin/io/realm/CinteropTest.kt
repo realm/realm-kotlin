@@ -22,6 +22,7 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
@@ -162,13 +163,10 @@ class CinteropTest {
         memScoped {
             val s = alloc<realm_string_t>()
             s.set(memScope, "Realm")
-            assertEquals(5UL, s.size)
-            var i = 0
-            assertEquals('R'.toByte(),s.data!![i++])
-            assertEquals('e'.toByte(),s.data!![i++])
-            assertEquals('a'.toByte(),s.data!![i++])
-            assertEquals('l'.toByte(),s.data!![i++])
-            assertEquals('m'.toByte(),s.data!![i++])
+            val actualSize = s.size.toInt()
+            assertEquals(5, actualSize)
+            val data = s.data!!.readBytes(actualSize)
+            assertTrue("Realm".encodeToByteArray(0, actualSize).contentEquals(data))
         }
     }
 
