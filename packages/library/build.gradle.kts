@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
+
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -152,7 +152,7 @@ kotlin {
 }
 
 // Needs running emulator
-//tasks.named("iosTest") {
+// tasks.named("iosTest") {
 //    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
 //    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
 //    group = JavaBasePlugin.VERIFICATION_GROUP
@@ -164,7 +164,7 @@ kotlin {
 //            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
 //        }
 //    }
-//}
+// }
 
 realmPublish {
     pom {
