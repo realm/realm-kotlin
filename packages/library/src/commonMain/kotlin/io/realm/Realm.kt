@@ -1,8 +1,12 @@
 package io.realm
 
+import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
+// TODO Document platform specific internals (RealmInitilizer, etc.)
 class Realm {
     private var dbPointer: NativePointer? = null // TODO nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
     private lateinit var realmConfiguration: RealmConfiguration
@@ -14,20 +18,19 @@ class Realm {
             //   use the function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
 
-            val schema = "[ { \"name\": \"Person\", \"properties\": { \"name\": \"string\", \"age\": \"int\"}}]" // TODO use schema Array generated from type
             val realm = Realm()
             realm.realmConfiguration = realmConfiguration
-            // FIXME Add schema
+            realm.dbPointer = RealmInterop.realm_open(realmConfiguration.nativeConfig)
             return realm
         }
     }
     //    fun open(dbName: String, schema: String) : Realm
     fun beginTransaction() {
-        TODO()
+        RealmInterop.realm_begin_write(dbPointer!!)
     }
 
     fun commitTransaction() {
-        TODO()
+        RealmInterop.realm_commit(dbPointer!!)
     }
 
     fun cancelTransaction() {
@@ -55,10 +58,12 @@ class Realm {
     //    doing this operation in place)
     fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
-        val managedModel = realmConfiguration.modelFactory.invoke(type)
-        managedModel.objectPointer = TODO()
-        managedModel.isManaged = true
-        managedModel.tableName = objectType
+        val managedModel = realmConfiguration.modelFactory.invoke(type) as RealmModelInternal
+        val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
+        managedModel.`$realm$Pointer` = dbPointer
+        managedModel.`$realm$ObjectPointer` = RealmInterop.realm_object_create(dbPointer!!, key)
+        managedModel.`$realm$IsManaged` = true
+        managedModel.`$realm$TableName` = objectType
         return managedModel as T
     }
 }
