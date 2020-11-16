@@ -6,6 +6,7 @@ import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
+// TODO Document platform specific internals (RealmInitilizer, etc.)
 class Realm {
     private var dbPointer: NativePointer? = null // TODO nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
     private lateinit var realmConfiguration: RealmConfiguration

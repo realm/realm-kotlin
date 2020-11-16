@@ -52,18 +52,17 @@ return $jnicall;
 // Reuse above type maps on other pointers too
 %apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t* };
 
-
-// For all functions returning a pointer or bool, check for null/false and throw an error
-// FIXME Maybe a bit too general
-// To bypass automatic error checks define the function explicitly here
-// before the typemaps until we have a distinction (typemap, etc.) in the C API that we can use for
-// targeting the typemap
+// For all functions returning a pointer or bool, check for null/false and throw an error if
+// realm_get_last_error returns true.
+// To bypass automatic error checks define the function explicitly here before the type maps until
+// we have a distinction (type map, etc.) in the C API that we can use for targeting the type map.
 bool realm_object_is_valid(const realm_object_t*);
 
 %typemap(out) SWIGTYPE* {
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
+            realm_clean_last_error()
             // TODO Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
             jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
@@ -76,6 +75,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
+            realm_clean_last_error()
             // TODO Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
             jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");

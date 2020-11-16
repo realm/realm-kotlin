@@ -21,6 +21,7 @@ import kotlinx.cinterop.set
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
+import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
@@ -36,6 +37,7 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
+            realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             throw RuntimeException(error.message.toKString())
         }
@@ -62,8 +64,10 @@ private inline fun <T : CPointed> NativePointer.cptr(): CPointer<T> {
     return (this as CPointerWrapper).ptr as CPointer<T>
 }
 
-// FIXME Do we need to handle data == null as String?
-fun realm_string_t.toKString(): String {
+fun realm_string_t.toKString(): String? {
+    if (data == null) {
+        return null
+    }
     if (size == 0UL) {
         return ""
     }
@@ -74,8 +78,7 @@ fun realm_string_t.toKString(): String {
 
 fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     val cstr = s.cstr
-    // FIXME Review/guard
-    size = cstr.getBytes().size.toULong() - 1UL
+    size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
     data = cstr.getPointer(memScope)
     return this
 }
@@ -211,7 +214,8 @@ actual object RealmInterop {
             realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_STRING ->
-                    return value.string.toKString()
+                    // FIXME Where should we handle nullability
+                    return value.string.toKString()!!
                 else ->
                     TODO("Only string is supported")
             }
