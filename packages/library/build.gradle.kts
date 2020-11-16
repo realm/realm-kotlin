@@ -17,8 +17,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation kotlin('stdlib-common')
-                implementation kotlin('reflect')
+                implementation(kotlin("stdlib-common"))
+                implementation(kotlin("reflect"))
                 // If runtimeapi is merged with cinterop then we will are exposing both to the users
                 // Runtime holds annotations, etc. that has to be exposed to users
                 api(project(":runtime-api"))
