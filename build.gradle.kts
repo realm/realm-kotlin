@@ -6,7 +6,7 @@ buildscript {
 
 val subprojects = listOf("packages", "test", "examples/kmm-sample")
 fun taskName(subdir: String): String {
-    return subdir.replace("[-/]".toRegex(), "_").split("_").map { element -> element.capitalize() }.joinToString(separator = "")
+    return subdir.split("/", "-").map { it.capitalize() }.joinToString(separator = "")
 }
 
 tasks.register("ktlintCheck") {
