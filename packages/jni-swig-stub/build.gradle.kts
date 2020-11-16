@@ -1,7 +1,9 @@
 plugins {
     id("java-library")
-    `maven-publish`
+    id("realm-publisher")
 }
+
+val mavenPublicationName = "jniSwigStubs"
 
 java {
     withSourcesJar()
@@ -9,8 +11,6 @@ java {
         api(project(":runtime-api"))
     }
 }
-group = Realm.group
-version = Realm.version
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -33,9 +33,22 @@ tasks.named("compileJava") {
     dependsOn("realmWrapperJvm")
 }
 
+realmPublish {
+    pom {
+        name = "JNI Swig Stubs"
+        description = "Wrapper for interacting with Realm Kotlin native code from the JVM. This artifact is not " +
+            "supposed to be consumed directly, but through " +
+            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+    ojo {
+        publications = arrayOf(mavenPublicationName)
+    }
+}
+
 publishing {
     publications {
-        create<MavenPublication>("maven") {
+        register<MavenPublication>(mavenPublicationName) {
+            artifactId = Realm.jniSwigStubsId
             from(components["java"])
         }
     }

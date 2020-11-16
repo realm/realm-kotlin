@@ -3,16 +3,24 @@ import groovy.json.JsonOutput
 
 @Library('realm-ci') _
 
+// Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
+releaseBranches = ['master', 'next-major']
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
+// Shortcut to current branch name that is being tested
 currentBranch = env.CHANGE_BRANCH
+// Will be set to `true` if this build is a full release that should be available on Bintray.
+// This is determined by comparing the current git tag to the version number of the build.
+publishBuild = false
+// Version of Realm Kotlin being tested. This values is defined in `buildSrc/src/main/kotlin/Config.kt`.
+version = null
 
 pipeline {
     agent none
     stages {
         stage('SCM') { 
             steps {
-                runScm() 
+                runScm()
             }
         }
         stage('Static Analysis') { 
@@ -24,7 +32,13 @@ pipeline {
             steps {
                 runBuild() 
             }
-        }       
+        }
+        stage('Publish to OJO') {
+            when { expression { shouldReleaseSnapshot(version) } }
+            steps {
+                runPublishToOjo()
+            }
+        }
     }
     post {
         failure {
@@ -38,7 +52,6 @@ pipeline {
         }
     }
 }
-
 
 def runScm() {
     node('docker') {
@@ -54,9 +67,25 @@ def runScm() {
                 userRemoteConfigs: scm.userRemoteConfigs
         ])
 
-        gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
-        echo "Building: ${gitSha}"
-        setBuildName(gitSha)
+        // Check type of Build. We are treating this as a release build if we are building
+        // the exact Git SHA that was tagged.
+        gitTag = readGitTag()
+        version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
+        echo "Git tag: ${gitTag ?: 'none'}"
+        if (!gitTag) {
+            gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
+            echo "Building commit: ${version} - ${gitSha}"
+            setBuildName(gitSha)
+            publishBuild = false
+        } else {
+            if (gitTag != "v${version}") {
+                error "Git tag '${gitTag}' does not match v${version}"
+            } else {
+                echo "Building release: '${gitTag}'"
+                setBuildName("Tag ${gitTag}")
+                publishBuild = true
+            }
+        }
 
         stash includes: '**/*', name: 'source', excludes: './realm/realm-library/cpp_engine/external/realm-object-store/.dockerignore'
     }
@@ -125,6 +154,16 @@ def runBuild() {
     parallel parralelExecutors
 }
 
+def runPublishToOjo() {
+    node('docker-cph-03') {
+        androidDockerBuild({
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
+                sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
+            }
+        })
+    }
+}
+
 def test(task) {
     sh """
         cd test
@@ -148,20 +187,34 @@ def jvm(workerFunction) {
         //  considerations now, so just reusing an Android machine with gradle caching etc.
         node('android') {
             getArchive()
-
             // TODO Consider adding a specific jvm docker image instead. For now just reuse Android
             //  one as it fulfills the toolchain requirement
-            def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
+            androidDockerBuild {
+                workerFunction()
+            }
+        }
+    }
+}
 
-            image.inside(
-                // TODO Abstract common setup across executor methods (jvm, androidDevice, androidEmulator)
-                "-e HOME=/tmp " +
-                "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
-                "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
-                // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
-                "-v ${HOME}/gradle-cache:/tmp/.gradle " +
-                // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
-                "-v ${HOME}/ccache:/tmp/.ccache "
+def androidDockerBuild(workerFunction) {
+    return {
+        def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
+        // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
+        // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
+        sh "echo Waiting for log ${env.NODE_NAME}-android"
+        lock("${env.NODE_NAME}-android") {
+            image.inside("-e HOME=/tmp " +
+                            "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
+                            "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
+                            // Mounting ~/.android/adbkey(.pub) to reuse the adb keys
+                            "-v ${HOME}/.android:/tmp/.android " +
+                            // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
+                            "-v ${HOME}/gradle-cache:/tmp/.gradle " +
+                            // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
+                            "-v ${HOME}/ccache:/tmp/.ccache " +
+                            // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
+                            "-v /dev/bus/usb:/dev/bus/usb " +
+                            "--privileged"
             ) {
                 workerFunction()
             }
@@ -173,28 +226,8 @@ def androidDevice(workerFunction) {
     return {
         node('android') {
             getArchive()
-            def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
-
-            // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
-            // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
-            lock("${env.NODE_NAME}-android") {
-                image.inside(
-                    // TODO Abstract common setup across executor methods (jvm, androidDevice, androidEmulator)
-                    "-e HOME=/tmp " +
-                    "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
-                    "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
-                    // Mounting ~/.android/adbkey(.pub) to reuse the adb keys
-                    "-v ${HOME}/.android:/tmp/.android " +
-                    // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
-                    "-v ${HOME}/gradle-cache:/tmp/.gradle " +
-                    // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
-                    "-v ${HOME}/ccache:/tmp/.ccache " +
-                    // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
-                    "-v /dev/bus/usb:/dev/bus/usb " +
-                    "--privileged"
-                ) {
-                    workerFunction()
-                }
+            androidDockerBuild {
+                workerFunction()
             }
         }
     }
@@ -204,42 +237,18 @@ def androidEmulator(workerFunction) {
     return {
         node('docker-cph-03') {
             getArchive()
-            def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
-
-            // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
-            // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
-            sh "echo Waiting for log ${env.NODE_NAME}-android"
-            lock("${env.NODE_NAME}-android") {
-                sh "echo Executing with lock ${env.NODE_NAME}-android"
-                image.inside(
-                        // TODO Abstract common setup across executor methods (jvm, androidDevice, androidEmulator)
-                        "-e HOME=/tmp " +
-                        "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
-                        "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
-                        // Mounting ~/.android/adbkey(.pub) to reuse the adb keys
-                        "-v ${HOME}/.android:/tmp/.android " +
-                        // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
-                        "-v ${HOME}/gradle-cache:/tmp/.gradle " +
-                        // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
-                        "-v ${HOME}/ccache:/tmp/.ccache " +
-                        // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
-                        "-v /dev/bus/usb:/dev/bus/usb " +
-                        "--privileged " +
-                        "-v /dev/kvm:/dev/kvm " +
-                        "-e ANDROID_SERIAL=emulator-5554"
-                ) {
-                    sh """
+            androidDockerBuild {
+                sh """
                         yes '\n' | avdmanager create avd -n CIEmulator -k 'system-images;android-29;default;x86_64' --force
                         # https://stackoverflow.com/questions/56198290/problems-with-adb-exe
                         adb start-server
                         # Need to go to ANDROID_HOME due to https://askubuntu.com/questions/1005944/emulator-avd-does-not-launch-the-virtual-device
                         cd \$ANDROID_HOME/tools && emulator -avd CIEmulator -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098 &
                     """
-                    try {
-                        workerFunction()
-                    } finally {
-                        sh "adb emu kill"
-                    }
+                try {
+                    workerFunction()
+                } finally {
+                    sh "adb emu kill"
                 }
             }
         }
@@ -266,4 +275,27 @@ def notifySlackIfRequired(String slackMessage) {
             }
         }
     }
+}
+
+def readGitTag() {
+    def command = 'git describe --exact-match --tags HEAD'
+    def returnStatus = sh(returnStatus: true, script: command)
+    if (returnStatus != 0) {
+        return null
+    }
+    return sh(returnStdout: true, script: command).trim()
+}
+
+boolean shouldReleaseSnapshot(version) {
+    if (1 == 1) {
+        // FIXME: Disable SNAPSHOT releases until we can combine the native code for multiple platforms.
+        return false
+    }
+    if (!releaseBranches.contains(currentBranch)) {
+        return false
+    }
+    if (version == null || !version.endsWith("-SNAPSHOT")) {
+        return false
+    }
+    return true
 }

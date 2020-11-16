@@ -2,12 +2,14 @@ plugins {
     kotlin("jvm")
     kotlin("kapt")
     `java-gradle-plugin`
-    `maven-publish`
+    id("realm-publisher")
 }
 
 dependencies {
     compileOnly(kotlin("gradle-plugin"))
 }
+
+val mavenPublicationName = "gradlePlugin"
 
 gradlePlugin {
     plugins {
@@ -19,15 +21,24 @@ gradlePlugin {
     }
 }
 
-// TODO If we could find out how to grap gradle plugin component and publish it instead of
-//  from(components["java"]) we could be able to combine multiple plugins with different source sets
-//  into this module by speficing the gradlePlugin source sets with
-//   pluginSourceSet = sourceSets.named("plugin").get()
+realmPublish {
+    pom {
+        name = "Gradle Plugin"
+        description = "Gradle plugin for Realm Kotlin. Realm is a mobile database: Build better apps faster."
+    }
+    ojo {
+        publications = arrayOf(mavenPublicationName)
+    }
+}
+
 publishing {
     publications {
-        register("gradlePlugin", MavenPublication::class) {
-            artifactId = "plugin-gradle"
-            from(components["java"])
+        register<MavenPublication>(mavenPublicationName) {
+            artifactId = Realm.gradlePluginId
+            pom {
+                artifactId = Realm.gradlePluginId
+                from(components["java"])
+            }
         }
     }
 }
