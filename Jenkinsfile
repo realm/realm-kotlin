@@ -146,7 +146,9 @@ def runBuild() {
         """
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
-    parralelExecutors['jvm']       = jvm             { test("jvmTest") }
+    // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
+    //  https://github.com/realm/realm-kotlin/issues/62
+    // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
     parralelExecutors['macos']   = macos           { test("macosTest") }
     parallel parralelExecutors
@@ -195,27 +197,25 @@ def jvm(workerFunction) {
 }
 
 def androidDockerBuild(workerFunction) {
-    return {
-        def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
-        // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
-        // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
-        sh "echo Waiting for log ${env.NODE_NAME}-android"
-        lock("${env.NODE_NAME}-android") {
-            image.inside("-e HOME=/tmp " +
-                            "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
-                            "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
-                            // Mounting ~/.android/adbkey(.pub) to reuse the adb keys
-                            "-v ${HOME}/.android:/tmp/.android " +
-                            // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
-                            "-v ${HOME}/gradle-cache:/tmp/.gradle " +
-                            // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
-                            "-v ${HOME}/ccache:/tmp/.ccache " +
-                            // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
-                            "-v /dev/bus/usb:/dev/bus/usb " +
-                            "--privileged"
-            ) {
-                workerFunction()
-            }
+    def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
+    // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
+    // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
+    sh "echo Waiting for log ${env.NODE_NAME}-android"
+    lock("${env.NODE_NAME}-android") {
+        image.inside("-e HOME=/tmp " +
+                        "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
+                        "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
+                        // Mounting ~/.android/adbkey(.pub) to reuse the adb keys
+                        "-v ${HOME}/.android:/tmp/.android " +
+                        // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
+                        "-v ${HOME}/gradle-cache:/tmp/.gradle " +
+                        // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
+                        "-v ${HOME}/ccache:/tmp/.ccache " +
+                        // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
+                        "-v /dev/bus/usb:/dev/bus/usb " +
+                        "--privileged"
+        ) {
+            workerFunction()
         }
     }
 }

@@ -3,6 +3,7 @@ package io.realm
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModelInternal
 import kotlinx.cinterop.COpaquePointerVar
+import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
@@ -14,12 +15,14 @@ import kotlin.test.assertEquals
 
 class InstrumentedTests {
 
-    // TODO Remove when 'library' and 'cinterop' with actual platform API is in place.
-    class CPointerWrapper(val ptr: CPointer<*>) : NativePointer
-
+    // FIXME Local implementation of pointer wrapper to support test. Using the internal one would
+    //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
+    //  test is needed at all at this level
+    class CPointerWrapper(val ptr: CPointer<out CPointed>?) : NativePointer
     @Test
     fun testRealmModelInternalPropertiesGenerated() {
         val p = Sample()
+        @Suppress("CAST_NEVER_SUCCEEDS")
         val realmModel: RealmModelInternal = p as? RealmModelInternal ?: error("Supertype RealmModelInternal was not added to Sample class")
 
         memScoped {

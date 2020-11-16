@@ -8,6 +8,10 @@ val mavenPublicationName = "compilerPlugin"
 
 dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+    // Added to prevent warnings about inconsistent versions
+    // w: Runtime JAR files in the classpath should have the same version. These files were found in the classpath:
+    // w: Consider providing an explicit dependency on kotlin-reflect 1.4 to prevent strange errors
+    implementation(kotlin("reflect"))
     compileOnly(Deps.autoService)
     kapt(Deps.autoServiceAnnotation)
 
@@ -16,6 +20,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
     testImplementation(project(":runtime-api"))
+    testImplementation(project(":cinterop"))
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

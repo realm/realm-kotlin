@@ -21,6 +21,9 @@ kotlin {
         getByName("commonMain") {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                // FIXME Seems like the compiler plugin doesn't inject it correctly in all cases...
+                //  might only be an IDE issue throug
+                // implementation("io.realm.kotlin:library:+")
             }
         }
 
@@ -101,19 +104,13 @@ kotlin {
 }
 
 kotlin {
-    iosX64("ios") {
-    }
-    sourceSets {
-        getByName("iosMain") { }
-        getByName("iosTest") { }
-    }
+    iosX64("ios")
 }
 
 kotlin {
     macosX64("macos") {
     }
     sourceSets {
-        getByName("macosMain") { }
         getByName("macosTest") { }
     }
 }

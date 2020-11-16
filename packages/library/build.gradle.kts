@@ -17,9 +17,16 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(kotlin("stdlib-common"))
-                implementation(kotlin("reflect"))
-                api(project(":cinterop"))
+                implementation kotlin('stdlib-common')
+                implementation kotlin('reflect')
+                // If runtimeapi is merged with cinterop then we will are exposing both to the users
+                // Runtime holds annotations, etc. that has to be exposed to users
+                api(project(":runtime-api"))
+                // Cinterop does not hold anything required by users
+                implementation(project(":cinterop"))
+                // FIXME Only used for parsing schema strings until properly typed. Remove when
+                //  https://github.com/realm/realm-kotlin/issues/54 is done.
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
             }
         }
 
@@ -107,9 +114,7 @@ kotlin {
 kotlin {
     sourceSets {
         create("nativeCommon") {
-            dependencies {
-                api(project(":cinterop"))
-            }
+            dependsOn(getByName("commonMain"))
         }
     }
 }
@@ -147,19 +152,19 @@ kotlin {
 }
 
 // Needs running emulator
-tasks.named("iosTest") {
-    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-    group = JavaBasePlugin.VERIFICATION_GROUP
-    description = "Runs tests for target 'ios' on an iOS simulator"
-
-    doLast {
-        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-        exec {
-            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
-        }
-    }
-}
+//tasks.named("iosTest") {
+//    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
+//    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
+//    group = JavaBasePlugin.VERIFICATION_GROUP
+//    description = "Runs tests for target 'ios' on an iOS simulator"
+//
+//    doLast {
+//        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
+//        exec {
+//            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
+//        }
+//    }
+//}
 
 realmPublish {
     pom {

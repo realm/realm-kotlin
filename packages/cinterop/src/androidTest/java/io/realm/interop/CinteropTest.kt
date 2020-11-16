@@ -6,6 +6,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.math.BigInteger
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -26,7 +27,7 @@ class CinteropTest {
             num_properties = 3
             num_computed_properties = 0
             key = realm_table_key_t()
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL
         }
 
         val prop_1_1 = realm_property_info_t().apply {
@@ -37,7 +38,7 @@ class CinteropTest {
             link_target = ""
             link_origin_property_name = ""
             key = realm_col_key_t()
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
         }
         val prop_1_2 = realm_property_info_t().apply {
             name = "str"
@@ -47,7 +48,7 @@ class CinteropTest {
             link_target = ""
             link_origin_property_name = ""
             key = realm_col_key_t()
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
         }
         val prop_1_3 = realm_property_info_t().apply {
             name = "bars"
@@ -57,7 +58,7 @@ class CinteropTest {
             link_target = "bar"
             link_origin_property_name = ""
             key = realm_col_key_t()
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
         }
 
         val class_2 = realm_class_info_t().apply {
@@ -66,7 +67,7 @@ class CinteropTest {
             num_properties = 2
             num_computed_properties = 0
             key = realm_table_key_t()
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL
         }
 
         val classes = realmc.new_classArray(2)
@@ -92,7 +93,7 @@ class CinteropTest {
                     link_target = ""
                     link_origin_property_name = ""
                     key = realm_col_key_t()
-                    flags = realm_property_flags_e.RLM_PROPERTY_INDEXED.swigValue() or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY.swigValue()
+                    flags = realm_property_flags_e.RLM_PROPERTY_INDEXED or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY
                 },
                 realm_property_info_t().apply {
                     name = "strings"
@@ -102,7 +103,7 @@ class CinteropTest {
                     link_target = ""
                     link_origin_property_name = ""
                     key = realm_col_key_t()
-                    flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue() or realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
+                    flags = realm_property_flags_e.RLM_PROPERTY_NORMAL or realm_property_flags_e.RLM_PROPERTY_NULLABLE
                 }
             ).forEachIndexed { i, prop ->
                 realmc.propertyArray_setitem(properties, i, prop)
@@ -121,12 +122,6 @@ class CinteropTest {
         realmc.realm_config_set_schema_version(config, BigInteger("1"))
 
         val realm = realmc.realm_open(config)
-        if (realm.ptr == 0L) {
-            val error = realm_error_t()
-            val realmGetLastError = realmc.realm_get_last_error(error)
-            val message = error.message
-            error(message)
-        }
 
         realmc.realm_release(config)
         realmc.realm_release(realmSchemaNew)
@@ -162,11 +157,8 @@ class CinteropTest {
 
         // Missing primary key
         val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
-        val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
-        if (realmObjectCreate == 0L) {
-            val error = realm_error_t()
-            val realmGetLastError = realmc.realm_get_last_error(error)
-            val message = error.message
+        assertFailsWith<RuntimeException> {
+            val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
         }
         realmc.realm_commit(realm)
 
