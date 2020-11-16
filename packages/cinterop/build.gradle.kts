@@ -1,15 +1,12 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
-    `maven-publish`
+    id("realm-publisher")
 }
 
 repositories {
     google() // Android build needs com.android.tools.lint:lint-gradle:27.0.1
 }
-
-group = Realm.group
-version = Realm.version
 
 // It is currently not possible to commonize user-defined libraries to use them across platforms.
 // To get IDE recognition of symbols the cinterop oriented code is put into a specific platform's
@@ -204,6 +201,17 @@ kotlin {
             }
         }
     }
+
+    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
+    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    configure(listOf(targets["metadata"], jvm())) {
+        mavenPublication {
+            val targetPublication = this@mavenPublication
+            tasks.withType<AbstractPublishToMaven>()
+                .matching { it.publication == targetPublication }
+                .all { onlyIf { findProperty("isMainHost") == "true" } }
+        }
+    }
 }
 
 // Tasks for building capi...replace with Monorepo or alike when ready
@@ -259,4 +267,16 @@ tasks.named("cinteropRealm_wrapperIos") {
 
 tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(tasks.named("capi_macos_x64"))
+}
+
+realmPublish {
+    pom {
+        name = "C Interop"
+        description = "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
+            "supposed to be consumed directly, but through " +
+            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+    ojo {
+        publications = arrayOf("androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata")
+    }
 }

@@ -121,6 +121,7 @@ class GenerationExtensionTest {
 
         // FIXME Bypass actual setter/getter invocation as it requires actual JNI compilation of
         //  cinterop-jvm which is not yet in place.
+        //  https://github.com/realm/realm-kotlin/issues/62
         // set a value using the CInterop call
         // nameProperty.setter.call(sampleModel, "Zepp")
         // get value using the CInterop call

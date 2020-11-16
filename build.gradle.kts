@@ -44,3 +44,10 @@ subprojects.forEach { subdir ->
         commandLine = listOf("./gradlew", "detekt")
     }
 }
+
+tasks.register<Exec>("ojoUpload") {
+    description = "Publish all Realm SNAPSHOT artifacts to OJO"
+    group = "Publishing"
+    workingDir = file("${rootDir}/packages")
+    commandLine = listOf("./gradlew", "artifactoryPublish")
+}

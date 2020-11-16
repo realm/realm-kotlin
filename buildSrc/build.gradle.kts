@@ -4,6 +4,15 @@ plugins {
     `kotlin-dsl-precompiled-script-plugins`
 }
 
+gradlePlugin {
+    plugins {
+        register("realm-publisher") {
+            id = "realm-publisher"
+            implementationClass = "io.realm.RealmPublishPlugin"
+        }
+    }
+}
+
 repositories {
     google()
     jcenter()
@@ -19,8 +28,8 @@ buildscript {
         maven("https://dl.bintray.com/kotlin/kotlin-dev")
     }
     dependencies {
-        // FIXME Cannot define this as constant outside of buildscript block
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20-RC")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+        classpath("org.jfrog.buildinfo:build-info-extractor-gradle:${Versions.artifactoryPlugin}")
     }
 }
 
@@ -28,10 +37,13 @@ buildscript {
 // These seem to propagate to all projects including the buildSrc/ directory, which also means
 // they are not allowed to set the version. It can only be set from here.
 dependencies {
-    implementation("org.jlleitschuh.gradle:ktlint-gradle:9.4.1")
-    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.14.1")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20-RC")
-    implementation("com.android.tools.build:gradle:4.0.1") // FIXME: Figure out why this is required here
+    implementation("org.jfrog.buildinfo:build-info-extractor-gradle:${Versions.artifactoryPlugin}")
+    implementation("org.jlleitschuh.gradle:ktlint-gradle:${Versions.ktlintPlugin}")
+    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+    implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}") // FIXME: Figure out why this is required here
+    implementation("com.android.tools.build:gradle-api:${Versions.Android.buildTools}")
+    implementation(kotlin("script-runtime"))
 }
 
 kotlinDslPluginOptions {

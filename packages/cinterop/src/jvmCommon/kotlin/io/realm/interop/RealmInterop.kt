@@ -13,8 +13,6 @@ actual object RealmInterop {
         return realmc.realm_get_library_version()
     }
 
-    // FIXME Maybe eliminate Class/Property and initialize native pointers to realm_class_info_t and
-    //  realm_property_info_t directly in generated class
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
         val count = tables.size
         val cclasses = realmc.new_classArray(count)
@@ -29,7 +27,7 @@ actual object RealmInterop {
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = realm_table_key_t()
-                flags = clazz.flags.fold(0) { flags, element -> flags or element.value }
+                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue }
             }
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
@@ -37,12 +35,12 @@ actual object RealmInterop {
                 val cproperty = realm_property_info_t().apply {
                     name = property.name
                     public_name = property.publicName
-                    type = property.type.value
-                    collection_type = property.collectionType.value
+                    type = property.type.nativeValue
+                    collection_type = property.collectionType.nativeValue
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
                     key = realm_col_key_t() // property.key
-                    flags = property.flags.fold(0) { flags, element -> flags or element.value }
+                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue }
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
             }
@@ -61,7 +59,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
-        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode.value)
+        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode.nativeValue)
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {

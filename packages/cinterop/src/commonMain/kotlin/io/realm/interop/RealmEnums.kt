@@ -1,11 +1,6 @@
 package io.realm.interop
 
 // TODO Should probably be somewhere else...maybe in runtime-api?
-// FIXME We could maintain all enumerations manually here by encapsulating the values in the
-//  enumerations, but for now the actuals define the values as they can then be linked directly to
-//  the C binding's values.
-
-// TODO Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
     RLM_SCHEMA_MODE_AUTOMATIC,
     RLM_SCHEMA_MODE_IMMUTABLE,

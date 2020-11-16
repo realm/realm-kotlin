@@ -21,6 +21,7 @@ import kotlinx.cinterop.set
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
+import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
@@ -36,6 +37,7 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
+            realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             throw RuntimeException(error.message.toKString())
         }
@@ -50,7 +52,7 @@ private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointe
     if (pointer == null) throwOnError(); return pointer
 }
 
-// FIXME Consider making NativePointer/CPointerWrapper generic to enfore typing
+// FIXME Consider making NativePointer/CPointerWrapper generic to enforce typing
 class CPointerWrapper(ptr: CPointer<out CPointed>?) : NativePointer {
     // FIXME Generic check for errors on null pointers returned from the C API. We probably have to
     //  do this more selectively, but for now just check all pointers.
@@ -62,7 +64,13 @@ private inline fun <T : CPointed> NativePointer.cptr(): CPointer<T> {
     return (this as CPointerWrapper).ptr as CPointer<T>
 }
 
-// FIXME Do we need to handle data == null as String?
+fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
+    val cstr = s.cstr
+    data = cstr.getPointer(memScope)
+    size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
+    return this
+}
+
 fun realm_string_t.toKString(): String {
     if (size == 0UL) {
         return ""
@@ -70,14 +78,6 @@ fun realm_string_t.toKString(): String {
     val data: CPointer<ByteVarOf<Byte>>? = this.data
     val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
     return readBytes?.toKString()!!
-}
-
-fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
-    val cstr = s.cstr
-    // FIXME Review/guard
-    size = cstr.getBytes().size.toULong() - 1UL
-    data = cstr.getPointer(memScope)
-    return this
 }
 
 fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
@@ -103,15 +103,15 @@ actual object RealmInterop {
                     primary_key.set(memScope, clazz.primaryKey)
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
-                    flags = clazz.flags.fold(0) { flags, element -> flags or element.value.toInt() }
+                    flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                 }
                 cproperties[i] = allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
                         name.set(memScope, property.name)
-                        type = property.type.value
-                        collection_type = property.collectionType.value
-                        flags = property.flags.fold(0) { flags, element -> flags or element.value.toInt() }
+                        type = property.type.nativeValue
+                        collection_type = property.collectionType.nativeValue
+                        flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                     }
                 }
             }
@@ -212,6 +212,9 @@ actual object RealmInterop {
             when (value.type) {
                 realm_value_type.RLM_TYPE_STRING ->
                     return value.string.toKString()
+                // FIXME Where should we handle nullability. Current prototype does not allow nulls
+                // realm_value_type.RLM_TYPE_NULL ->
+                //     return null
                 else ->
                     TODO("Only string is supported")
             }

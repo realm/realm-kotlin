@@ -1,7 +1,8 @@
 package io.realm.interop
 
-// TODO Should probably be somewhere else...maybe in runtime-api?
-actual enum class PropertyType(override val value: Int) : Enumerated {
+// FIXME Compiler does not pick up the actual if not in a separate file, so not following RealmEnums.kt structure, but
+//  might have to move anyway, so keeping the structure unaligned for now.
+actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated {
     RLM_PROPERTY_TYPE_BOOL(realm_property_type_e.RLM_PROPERTY_TYPE_BOOL),
     RLM_PROPERTY_TYPE_INT(realm_property_type_e.RLM_PROPERTY_TYPE_INT),
     RLM_PROPERTY_TYPE_STRING(realm_property_type_e.RLM_PROPERTY_TYPE_STRING),
