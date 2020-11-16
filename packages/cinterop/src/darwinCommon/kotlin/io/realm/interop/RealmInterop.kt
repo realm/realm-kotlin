@@ -64,23 +64,20 @@ private inline fun <T : CPointed> NativePointer.cptr(): CPointer<T> {
     return (this as CPointerWrapper).ptr as CPointer<T>
 }
 
-fun realm_string_t.toKString(): String? {
-    if (data == null) {
-        return null
-    }
+fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
+    val cstr = s.cstr
+    data = cstr.getPointer(memScope)
+    size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
+    return this
+}
+
+fun realm_string_t.toKString(): String {
     if (size == 0UL) {
         return ""
     }
     val data: CPointer<ByteVarOf<Byte>>? = this.data
     val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
     return readBytes?.toKString()!!
-}
-
-fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
-    val cstr = s.cstr
-    size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
-    data = cstr.getPointer(memScope)
-    return this
 }
 
 fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
@@ -214,8 +211,10 @@ actual object RealmInterop {
             realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_STRING ->
-                    // FIXME Where should we handle nullability
-                    return value.string.toKString()!!
+                    return value.string.toKString()
+                // FIXME Where should we handle nullability. Current prototype does not allow nulls
+                // realm_value_type.RLM_TYPE_NULL ->
+                //     return null
                 else ->
                     TODO("Only string is supported")
             }

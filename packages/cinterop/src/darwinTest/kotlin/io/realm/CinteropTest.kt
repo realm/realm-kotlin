@@ -8,6 +8,7 @@ import io.realm.interop.PropertyType
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.interop.Table
+import io.realm.interop.set
 import io.realm.interop.toKString
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.CPointer
@@ -144,6 +145,54 @@ class CinteropTest {
             val realm = RealmInterop.realm_open(nativeConfig)
             assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
         }
+    }
+
+    @Test
+    fun realmStringSet_empty() {
+        memScoped {
+            val s = alloc<realm_string_t>()
+            s.set(memScope, "")
+            assertEquals(0UL, s.size)
+            assertNull(s.data)
+        }
+    }
+
+    @Test
+    fun realmStringSet_string() {
+        memScoped {
+            val s = alloc<realm_string_t>()
+            s.set(memScope, "Realm")
+            assertEquals(5UL, s.size)
+            var i = 0
+            assertEquals('R'.toByte(),s.data!![i++])
+            assertEquals('e'.toByte(),s.data!![i++])
+            assertEquals('a'.toByte(),s.data!![i++])
+            assertEquals('l'.toByte(),s.data!![i++])
+            assertEquals('m'.toByte(),s.data!![i++])
+        }
+    }
+
+    @Test
+    fun toKString_empty() {
+        var r: String? = null
+        memScoped {
+            val s = alloc<realm_string_t>()
+            s.set(memScope, "")
+            r = s.toKString()
+        }
+        assertEquals("", r)
+    }
+
+    @Test
+    fun toRString_string() {
+        val value = "Realm"
+        var r: String? = null
+        memScoped {
+            val s = alloc<realm_string_t>()
+            s.set(memScope, value)
+            r = s.toKString()
+        }
+        assertEquals(value, r)
     }
 }
 
