@@ -174,9 +174,7 @@ actual object RealmInterop {
         return realm_get_value<String>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
     }
 
-    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String): String? {
+    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
         realm_set_value(realm, o, table, col, value, false)
-        // FIXME Why a return value
-        return "All OK"
     }
 }

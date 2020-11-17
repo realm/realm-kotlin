@@ -42,7 +42,7 @@ expect object RealmInterop {
 
     // Typed convenience methods
     fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String
-    fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String): String?
+    fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String)
 
 //    override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
 //        TODO("Not yet implemented")
