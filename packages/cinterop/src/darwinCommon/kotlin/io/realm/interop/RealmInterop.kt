@@ -65,9 +65,14 @@ private inline fun <T : CPointed> NativePointer.cptr(): CPointer<T> {
 }
 
 fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
-    val cstr = s.cstr
-    data = cstr.getPointer(memScope)
-    size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
+    if (s.isEmpty()) {
+        data = null
+        size = 0UL
+    } else {
+        val cstr = s.cstr
+        data = cstr.getPointer(memScope)
+        size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
+    }
     return this
 }
 
