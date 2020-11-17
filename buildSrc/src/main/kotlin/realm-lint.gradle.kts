@@ -6,7 +6,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
 }
 
-val configDir = locateConfigDir(File(File(".").absolutePath)).path
+val configDir = locateConfigDir(File(File("$rootDir").absolutePath)).path
 
 // Searches upwards in the file tree for a directory containing a 'config'-folder
 fun locateConfigDir(current: File): File {
