@@ -94,14 +94,12 @@ def runScm() {
 def runStaticAnalysis() {
     node('android') {
         getArchive()
+        // ktlintCheck requires Android SDK for configuration of examples/kmm-sample/androidApp, so
+        // executing in docker context
         androidDockerBuild {
             try {
-                // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
-                // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
-                lock("${env.NODE_NAME}-android") {
-                    sh 'chmod +x gradlew && ./gradlew ktlintCheck'
-                    sh 'chmod +x gradlew && ./gradlew detekt'
-                }
+                sh 'chmod +x gradlew && ./gradlew ktlintCheck'
+                sh 'chmod +x gradlew && ./gradlew detekt'
             } finally {
                 // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
                 // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
