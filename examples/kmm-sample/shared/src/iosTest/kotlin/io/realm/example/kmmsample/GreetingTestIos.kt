@@ -1,4 +1,4 @@
-package com.jetbrains.kmm.shared
+package io.realm.example.kmmsample
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
