@@ -94,18 +94,19 @@ def runScm() {
 def runStaticAnalysis() {
     node('android') {
         getArchive()
-        try {
-            // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
-            // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
-            lock("${env.NODE_NAME}-android") {
-                sh 'chmod +x gradlew && ./gradlew ktlintCheck'
-                sh 'chmod +x gradlew && ./gradlew detekt'
-            }
-        } finally {
-            // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
-            // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
-            // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
-            sh '''
+        androidDockerBuild {
+            try {
+                // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
+                // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
+                lock("${env.NODE_NAME}-android") {
+                    sh 'chmod +x gradlew && ./gradlew ktlintCheck'
+                    sh 'chmod +x gradlew && ./gradlew detekt'
+                }
+            } finally {
+                // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
+                // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
+                // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
+                sh '''
                 rm -rf /tmp/ktlint 
                 rm -rf /tmp/detekt 
                 mkdir /tmp/ktlint
@@ -123,16 +124,17 @@ def runStaticAnalysis() {
                 rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''
-            zip([
-                    'zipFile': 'ktlint.zip',
-                    'archive': true,
-                    'dir' : '/tmp/ktlint'
-            ])
-            zip([
-                    'zipFile': 'detekt.zip',
-                    'archive': true,
-                    'dir' : '/tmp/detekt'
-            ])
+                zip([
+                        'zipFile': 'ktlint.zip',
+                        'archive': true,
+                        'dir'    : '/tmp/ktlint'
+                ])
+                zip([
+                        'zipFile': 'detekt.zip',
+                        'archive': true,
+                        'dir'    : '/tmp/detekt'
+                ])
+            }
         }
     }
 }
