@@ -8,17 +8,22 @@ repositories {
     google() // Android build needs com.android.tools.lint:lint-gradle:27.0.1
 }
 
-// It is currently not possible to commonize user-defined libraries to use them across platforms.
-// To get IDE recognition of symbols the cinterop oriented code is put into a specific platform's
-// source set, but as the interface is actually platform agnostic compiling for the other platforms
-// still works
-// https://youtrack.jetbrains.com/issue/KT-40975
-// FIXME Maybe make it possible to switch which platform the common parts are added to. Currently
-//  adding the common parts to macos
+// TODO It is currently not possible to commonize user-defined libraries to use them across
+//  platforms. To get IDE recognition of such code that is not yet commonized, we selectively add
+//  the code only to one of the target platform's source set when 'idea.active' property
+//  it true. This allows the IDE to resolve the symbols while still building correctly for all
+//  platforms in other situations.
+//  https://youtrack.jetbrains.com/issue/KT-40975
+// TODO PROPOSAL Maybe make it possible to switch which platform the common parts are added to or
+//  somehow derive a `isMainHost` property as proposed in
+//  https://kotlinlang.org/docs/reference/mpp-publish-lib.html
+//  Currently just adding the common darwin parts to macos-target.
 val idea = System.getProperty("idea.active") == "true"
 
-// Disable Android build when the SDK is not avaiable to allow building native parts on machines
-// without the Android SDK
+// FIXME MPP-BUILD Disable Android build when the SDK is not avaiable to allow building native parts
+//  on machines without the Android SDK. Should not be needed if we build anything on a single host
+//  with Android SDK.
+//  https://github.com/realm/realm-kotlin/issues/76
 val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
 
 android {
@@ -50,12 +55,14 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
-    //  as this would cause the configuration phase to fail, while we don't even need the build
+    // FIXME MPP-BUILD On platforms that does not have an Android SDK we should skip trying to
+    //  setup ndk build as this would cause the configuration phase to fail, while we don't even
+    //  need the build
     if (includeAndroidBuild) {
         defaultConfig {
             ndk {
-                // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
+                // FIXME MPP-BUILD Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
+                //  Issue-Android devices
                 abiFilters("x86_64")
             }
             // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
@@ -83,11 +90,15 @@ kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
     }
-    // We should be able to reuse configuration across different architectures (x86_64/arv differentiation can be done in def file)
-    // FIXME Ideally we could reuse it across all native builds, but would have to do it dynamically
-    //  as it does not seem like we can do this from the current target "hierarchy" (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
-    // FIXME If the native target is not specified fully (with architecture) the cinterop
-    //  symbols won't be recognized by the IDE which is pretty annoying.
+    // Cinterops seems sharable across architectures (x86_64/arm) with option of differentiation in
+    // the def, but not across platforms in the current target  "hierarchy"
+    // (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
+    // FIXME MPP-BUILD If the native target is not specified fully (with architecture) the cinterop
+    //  symbols won't be recognized by the IDE which is pretty annoying. Maybe fixed by only adding
+    //  the source set to a single platform source set (see 'idea_active' definition in top of the
+    //  file).
+    // FIXME MPP-BUILD Relative paths in def-file resolves differently dependent of task entry point.
+    //  https://youtrack.jetbrains.com/issue/KT-43439
     iosX64("ios") {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
@@ -115,9 +126,10 @@ kotlin {
             }
         }
 
-        // FIXME Maybe not the best idea to have in separate source set, but ideally we could reuse
-        //  it for all JVM platform, seems like there are issues for the IDE to recognize symbols
-        //  using this approach, but maybe a general thing (also issues with native cinterops)
+        // FIXME MPP-BUILD Maybe not the best idea to have in separate source set, but ideally we
+        //  could reuse it for all JVM platform, seems like there are issues for the IDE to
+        //  recognize symbols using this approach, but maybe a general thing (also issues with
+        //  native cinterops)
         val jvmCommon by creating {
             dependsOn(commonMain)
             kotlin.srcDir("src/jvmCommon/kotlin")
@@ -203,7 +215,7 @@ kotlin {
     }
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
     configure(listOf(targets["metadata"], jvm())) {
         mavenPublication {
             val targetPublication = this@mavenPublication
@@ -220,7 +232,6 @@ tasks.create("capi_android_x86_64") {
         exec {
             workingDir(project.file("../../external/core"))
             commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
-            // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
         }
     }
@@ -240,7 +251,9 @@ if (includeAndroidBuild) {
     }
 }
 
-// FIXME/TODO Core build fails, so currently reusing macos build which prior to Xcode 12 can be used for both macos and ios simulator
+// FIXME MPP-BUILD Core build for iOS fails, so currently reusing macos build which prior to Xcode
+//  12 can be used for both macos and ios simulator
+//  https://github.com/realm/realm-kotlin/issues/72
 tasks.create("capi_macos_x64") {
     doLast {
         exec {
@@ -256,7 +269,7 @@ tasks.create("capi_macos_x64") {
             commandLine("cmake", "--build", ".", "-j8")
         }
     }
-// TODO Fix inputs to prevent for proper incremental builds
+// FIXME MPP-BUILD Fix inputs to prevent for proper incremental builds
 //    inputs.dir("../../external/core/build-macos_x64")
     outputs.file(project.file("../../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a"))
 }

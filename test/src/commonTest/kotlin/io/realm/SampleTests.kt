@@ -29,14 +29,14 @@ class SampleTests {
     fun realmConfig() {
         @Suppress("CAST_NEVER_SUCCEEDS")
         val configuration = RealmConfiguration.Builder()
-            // Should be removed once we have module generation in place
+            // FIXME MEDIATOR Should be removed once we have module generation in place
             .factory { kClass ->
                 when (kClass) {
                     Sample::class -> Sample()
                     else -> TODO()
                 }
             }
-            // Should be removed once we have module generation in place
+            // FIXME MEDIATOR Should be removed once we have module generation in place
             .classes(
                 listOf(
                     Sample.Companion as RealmCompanion

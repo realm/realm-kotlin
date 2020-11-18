@@ -7,7 +7,7 @@ interface NativeEnumerated {
     val nativeValue: UInt
 }
 
-// FIXME On JVM actuals cannot be combined in same file. Consider replicating that split here too,
+// FIXME API-SCHEMA On JVM actuals cannot be combined in same file. Consider replicating that split here too,
 //  but await final placement.
 
 actual enum class SchemaMode(override val nativeValue: UInt) : NativeEnumerated {

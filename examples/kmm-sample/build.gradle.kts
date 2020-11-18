@@ -6,7 +6,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // FIXME Fetch this from realm repository
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20-RC")
         classpath("com.android.tools.build:gradle:4.0.1")
     }

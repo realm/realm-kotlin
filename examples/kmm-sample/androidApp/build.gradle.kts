@@ -2,6 +2,9 @@ plugins {
     id("com.android.application")
     kotlin("android")
     id("kotlin-android-extensions")
+    // Apply Realm Kotlin plugin even though we technically do not need it, to ensure that we have
+    // the right kotlinOptions
+    id("realm-kotlin") version Realm.version
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
@@ -34,10 +37,4 @@ android {
             isMinifyEnabled = false
         }
     }
-}
-
-// FIXME Can be remove if we apply realm-kotlin plugin
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.useIR = true
 }

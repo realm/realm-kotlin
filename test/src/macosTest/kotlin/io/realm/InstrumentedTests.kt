@@ -1,6 +1,7 @@
 package io.realm
 
-// FIXME Do we actually want to expose this
+// FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
+//  or moved.
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModelInternal
 import kotlinx.cinterop.COpaquePointerVar
@@ -16,7 +17,8 @@ import kotlin.test.assertEquals
 
 class InstrumentedTests {
 
-    // FIXME Local implementation of pointer wrapper to support test. Using the internal one would
+    // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
+    //  or moved. Local implementation of pointer wrapper to support test. Using the internal one would
     //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
     //  test is needed at all at this level
     class CPointerWrapper(val ptr: CPointer<out CPointed>?) : NativePointer

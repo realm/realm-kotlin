@@ -5,6 +5,8 @@ import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
+// FIXME Query support
+//  https://github.com/realm/realm-kotlin/issues/64
 class RealmResults<T : RealmModel> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<T>,

@@ -17,9 +17,9 @@ class RealmPlugin : Plugin<Project> {
         // postpone dependency injection till after evaluation
         project.afterEvaluate {
             val kotlin = project.extensions.findByName("kotlin")
-            // TODO To ease configuration we could/should inject dependencies to our library, but
-            //  await better insight into when/what to inject and supply appropriate opt-out
-            //  options through our own extension?
+            // TODO AUTO-SETUP To ease configuration we could/should inject dependencies to our
+            //  library, but await better insight into when/what to inject and supply appropriate
+            //  opt-out options through our own extension?
             //  Dependencies should probably be added by source set and not by target, as
             //  kotlin.sourceSets.getByName("commonMain").dependencies (or "main" for Android), but
             when (kotlin) {
@@ -29,7 +29,7 @@ class RealmPlugin : Plugin<Project> {
                 is KotlinMultiplatformExtension -> {
                     kotlin.targets.all { target -> updateKotlinOption(target) }
                 }
-                // TODO Should we report errors? Probably an oversighted case
+                // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
                 // else ->
                 //    TODO("Cannot 'realm-kotlin' library dependency to ${kotlin::class.qualifiedName}")
             }
@@ -39,7 +39,7 @@ class RealmPlugin : Plugin<Project> {
     private fun updateKotlinOption(target: KotlinTarget) {
         target.compilations.all { compilation ->
             // Setup correct compiler options
-            // FIXME Are these to dangerous to apply under the hood?
+            // FIXME AUTO-SETUP Are these to dangerous to apply under the hood?
             when (val options = compilation.kotlinOptions) {
                 is KotlinJvmOptions -> {
                     options.jvmTarget = "1.8"

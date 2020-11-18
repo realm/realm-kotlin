@@ -24,10 +24,9 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                // FIXME Removed automatic dependency injection to ensure observability of
+                // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
-                // FIXME We do not have the version available in Versions yet
-                implementation("io.realm.kotlin:library:+")
+                implementation("io.realm.kotlin:library:$Realm.version")
             }
         }
 

@@ -1,6 +1,6 @@
 package io.realm.interop
 
-// TODO Should probably be somewhere else...maybe in runtime-api?
+// FIXME API-SCHEMA Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
     RLM_SCHEMA_MODE_AUTOMATIC,
     RLM_SCHEMA_MODE_IMMUTABLE,

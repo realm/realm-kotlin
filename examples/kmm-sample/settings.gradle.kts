@@ -7,7 +7,8 @@ pluginManagement {
         google()
         jcenter()
         mavenCentral()
-        // FIXME Consider adding OJO repository, but for now just use local builds
+        // FIXME Update sample projects to use public releases/snapshot OJO
+        //  https://github.com/realm/realm-kotlin/issues/74
         mavenLocal()
     }
     resolutionStrategy {

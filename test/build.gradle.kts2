@@ -45,7 +45,6 @@ android {
 kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
-        // FIXME We need to apply this to all compilations
         compilations.all {
             kotlinOptions {
                 kotlinOptions.jvmTarget = "1.8"

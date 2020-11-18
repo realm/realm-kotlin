@@ -6,6 +6,6 @@ actual object PlatformHelper {
 
     // Returns the root directory of the platform's App data
     actual fun appFilesDirectory(): String {
-        return RealmInitializer.context.filesDir.absolutePath
+        return RealmInitializer.filesDir.absolutePath
     }
 }

@@ -146,7 +146,8 @@ def runBuild() {
         """
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
-    // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
+    // FIXME MPP-BUILD Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is
+    //  not yet in place.
     //  https://github.com/realm/realm-kotlin/issues/62
     // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
     parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
@@ -183,12 +184,12 @@ def macos(workerFunction) {
 
 def jvm(workerFunction) {
     return {
-        // FIXME Could just use a docker node, but do not have overview on all the caching
+        // TODO MPP-BUILD Could just use a docker node, but do not have overview on all the caching
         //  considerations now, so just reusing an Android machine with gradle caching etc.
         node('android') {
             getArchive()
-            // TODO Consider adding a specific jvm docker image instead. For now just reuse Android
-            //  one as it fulfills the toolchain requirement
+            // TODO MPP-BUILD Consider adding a specific jvm docker image instead. For now just
+            //  reuse Android one as it fulfills the toolchain requirement
             androidDockerBuild {
                 workerFunction()
             }
@@ -286,7 +287,7 @@ def readGitTag() {
 
 boolean shouldReleaseSnapshot(version) {
     if (1 == 1) {
-        // FIXME: Disable SNAPSHOT releases until we can combine the native code for multiple platforms.
+        // FIXME MPP-BUILD Disable SNAPSHOT releases until we can combine the native code for multiple platforms.
         return false
     }
     if (!releaseBranches.contains(currentBranch)) {
