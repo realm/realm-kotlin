@@ -1,8 +1,8 @@
 package io.realm.compiler
 
+import io.realm.compiler.Names.COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.DEFAULT_COMPANION
-import io.realm.compiler.Names.NEW_INSTANCE_METHOD
-import io.realm.compiler.Names.SCHEMA_METHOD
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -24,14 +24,18 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
     override fun getSyntheticCompanionObjectNameIfNeeded(thisDescriptor: ClassDescriptor): Name? = DEFAULT_COMPANION
 
     override fun getSyntheticFunctionNames(thisDescriptor: ClassDescriptor): List<Name> {
-        return if (thisDescriptor.isRealmObjectCompanion) {
-            listOf(SCHEMA_METHOD, NEW_INSTANCE_METHOD)
-        } else {
-            emptyList()
+        return when {
+            thisDescriptor.isRealmObjectCompanion -> {
+                listOf(COMPANION_SCHEMA_METHOD, COMPANION_NEW_INSTANCE_METHOD)
+            }
+            else -> {
+                emptyList()
+            }
         }
     }
 
     override fun addSyntheticSupertypes(thisDescriptor: ClassDescriptor, supertypes: MutableList<KotlinType>) {
+
         if (thisDescriptor.annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)) {
             val defaultType = thisDescriptor.module.resolveClassByFqName(FqNames.REALM_MODEL_INTERFACE_MARKER, NoLookupLocation.FROM_BACKEND)?.defaultType
                 ?: throw error("Couldn't resolve `RealmModel` from ${thisDescriptor.name.identifier}")
@@ -41,12 +45,14 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
     }
 
     override fun generateSyntheticMethods(thisDescriptor: ClassDescriptor, name: Name, bindingContext: BindingContext, fromSupertypes: List<SimpleFunctionDescriptor>, result: MutableCollection<SimpleFunctionDescriptor>) {
-        if (thisDescriptor.isRealmObjectCompanion) {
-            val classDescriptor = thisDescriptor.containingDeclaration as ClassDescriptor
+        when {
+            thisDescriptor.isRealmObjectCompanion -> {
+                val classDescriptor = thisDescriptor.containingDeclaration as ClassDescriptor
 
-            when (name) {
-                SCHEMA_METHOD -> result.add(createRealmObjectCompanionSchemaGetterFunctionDescriptor(thisDescriptor, classDescriptor))
-                NEW_INSTANCE_METHOD -> result.add(createRealmObjectCompanionNewInstanceFunctionDescriptor(thisDescriptor, classDescriptor))
+                when (name) {
+                    COMPANION_SCHEMA_METHOD -> result.add(createRealmObjectCompanionSchemaGetterFunctionDescriptor(thisDescriptor, classDescriptor))
+                    COMPANION_NEW_INSTANCE_METHOD -> result.add(createRealmObjectCompanionNewInstanceFunctionDescriptor(thisDescriptor, classDescriptor))
+                }
             }
         }
     }
@@ -59,7 +65,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
         return SimpleFunctionDescriptorImpl.create(
             companionClass,
             Annotations.EMPTY,
-            SCHEMA_METHOD,
+            COMPANION_SCHEMA_METHOD,
             CallableMemberDescriptor.Kind.SYNTHESIZED,
             companionClass.source
         ).apply {
@@ -83,7 +89,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
         return SimpleFunctionDescriptorImpl.create(
             companionClass,
             Annotations.EMPTY,
-            NEW_INSTANCE_METHOD,
+            COMPANION_NEW_INSTANCE_METHOD,
             CallableMemberDescriptor.Kind.SYNTHESIZED,
             companionClass.source
         ).apply {

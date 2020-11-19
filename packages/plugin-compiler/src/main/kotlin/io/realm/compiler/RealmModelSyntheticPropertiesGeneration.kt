@@ -3,12 +3,12 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
-import io.realm.compiler.Names.NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.REALM_POINTER
-import io.realm.compiler.Names.SCHEMA_METHOD
 import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -66,13 +66,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val name = irClass.name.identifier
         val fields: MutableMap<String, Pair<String, Boolean>> = SchemaCollector.properties.getOrDefault(name, mutableMapOf())
 
-        val function = companionObject.functions.first { it.name == SCHEMA_METHOD }
+        val function = companionObject.functions.first { it.name == COMPANION_SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(irString(schemaString(name, fields)))
         }
 
-        function.overriddenSymbols = listOf(realmCompanionInterface.owner.functions.first { it.name == SCHEMA_METHOD }.symbol)
+        function.overriddenSymbols = listOf(realmCompanionInterface.owner.functions.first { it.name == COMPANION_SCHEMA_METHOD }.symbol)
     }
 
     // Generate body for the synthetic new instance method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
@@ -80,7 +80,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val function = companionObject.functions.first { it.name == NEW_INSTANCE_METHOD }
+        val function = companionObject.functions.first { it.name == COMPANION_NEW_INSTANCE_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
             val defaultCtor = irClass.constructors.find { it.isPrimary }
@@ -98,7 +98,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 )
             )
         }
-        function.overriddenSymbols = listOf(realmCompanionInterface.owner.functions.first { it.name == NEW_INSTANCE_METHOD }.symbol)
+        function.overriddenSymbols = listOf(realmCompanionInterface.owner.functions.first { it.name == COMPANION_NEW_INSTANCE_METHOD }.symbol)
     }
 
     private fun IrClass.addProperty(propertyName: Name, propertyType: IrType, initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody) {
@@ -193,8 +193,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val itField = fields.iterator()
         while (itField.hasNext()) {
-            val fields = itField.next()
-            builder.append("{\"${fields.key}\": {\"type\": \"${fields.value.first}\", \"nullable\": \"${fields.value.second}\"}}")
+            val field = itField.next()
+            builder.append("{\"${field.key}\": {\"type\": \"${field.value.first}\", \"nullable\": \"${field.value.second}\"}}")
             if (itField.hasNext()) {
                 builder.append(",")
             }

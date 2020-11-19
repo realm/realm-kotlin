@@ -27,9 +27,11 @@ class RealmModelLoweringExtension : IrGenerationExtension {
 private class RealmModelLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
     override fun lower(irClass: IrClass) {
         if (irClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
+            SchemaCollector.realmObjectClassesIrClasses.add(irClass)
+
             // add super type RealmModelInternal
             val realmModelClass: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
-                ?: error("RealmModelInternal interface not found")
+                ?: error("${REALM_MODEL_INTERFACE.asString()} interface not found")
             irClass.superTypes += realmModelClass.defaultType
 
             // Generate RealmModelInternal properties overrides
