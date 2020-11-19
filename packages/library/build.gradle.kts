@@ -1,5 +1,3 @@
-
-
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
@@ -13,6 +11,7 @@ repositories {
     mavenLocal()
 }
 
+// Common Kotlin configuration
 kotlin {
     sourceSets {
         commonMain {
