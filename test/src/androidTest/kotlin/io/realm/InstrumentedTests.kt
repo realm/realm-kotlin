@@ -1,26 +1,51 @@
 package io.realm
 
 import android.support.test.runner.AndroidJUnit4
-import io.realm.runtimeapi.NativePointer
+import io.realm.internal.RealmInitializer
+import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInternal
+import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
-import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
 
-    // TODO Remove when 'library' and 'cinterop' with actual platform API is in place.
-    class LongPointerWrapper(val ptr: Long) : NativePointer
-
     // Smoke test of compiling with library
     @Test
     fun contextIsNotNull() {
-        assertNotNull(RealmInitProvider.applicationContext)
+        assertNotNull(RealmInitializer.context)
     }
 
+    // This could be a common test, but included here for convenience as there is no other easy
+    // way to trigger individual common test on Android
+    // https://youtrack.jetbrains.com/issue/KT-34535
+    @Test
+    fun realmConfig() {
+        val configuration = RealmConfiguration.Builder()
+            .factory { kClass ->
+                when (kClass) {
+                    Sample::class -> Sample()
+                    else -> TODO()
+                }
+            }
+            .classes(listOf(Sample.Companion as RealmCompanion))
+            .build()
+        val realm = Realm.open(configuration)
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class)
+        kotlin.test.assertEquals("", sample.name)
+        sample.name = "Hello, World!"
+        kotlin.test.assertEquals("Hello, World!", sample.name)
+        realm.commitTransaction()
+    }
+
+    // FIXME Local implementation of pointer wrapper to support test. Using the internal one would
+    //  require jni-swig-stub to be api dependency from cinterop/library. Don't know if the test is
+    //  needed at all at this level
+    class LongPointerWrapper(val ptr: Long) : io.realm.runtimeapi.NativePointer
     @Test
     fun testRealmModelInternalPropertiesGenerated() {
         val p = Sample()

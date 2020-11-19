@@ -1,16 +1,24 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
-    `maven-publish`
+    id("realm-publisher")
 }
 
 repositories {
     google() // Android build needs com.android.tools.lint:lint-gradle:27.0.1
 }
 
-group = Realm.group
-version = Realm.version
+// It is currently not possible to commonize user-defined libraries to use them across platforms.
+// To get IDE recognition of symbols the cinterop oriented code is put into a specific platform's
+// source set, but as the interface is actually platform agnostic compiling for the other platforms
+// still works
+// https://youtrack.jetbrains.com/issue/KT-40975
+// FIXME Maybe make it possible to switch which platform the common parts are added to. Currently
+//  adding the common parts to macos
+val idea = System.getProperty("idea.active") == "true"
 
+// Disable Android build when the SDK is not avaiable to allow building native parts on machines
+// without the Android SDK
 val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
 
 android {
@@ -122,6 +130,7 @@ kotlin {
             dependsOn(jvmCommon)
             dependencies {
                 implementation(kotlin("stdlib"))
+                implementation("androidx.startup:startup-runtime:1.0.0")
             }
         }
 
@@ -144,28 +153,44 @@ kotlin {
 
         val darwinCommon by creating {
             dependsOn(commonMain)
+            // Native symbols are not recognized correctly if platform is unknown when adding
+            // source sets, so add common sources explicitly in "macosMain" and "iosMain" instead
+        }
+
+        val macosMain by getting {
+            dependsOn(darwinCommon)
             kotlin.srcDir("src/darwinCommon/kotlin")
         }
 
         val iosMain by getting {
             dependsOn(darwinCommon)
-        }
-
-        val macosMain by getting {
-            dependsOn(darwinCommon)
+            // Only add common sources to one platform when in the IDE. See comment at 'idea'
+            // difinition for full details.
+            if (!idea) {
+                kotlin.srcDir("src/darwinCommon/kotlin")
+            }
         }
 
         val darwinTest by creating {
             dependsOn(darwinCommon)
-            kotlin.srcDir("src/darwinTest/kotlin")
+            // Native symbols are not recognized correctly if platform is unknown when adding
+            // source sets, so add common sources explicitly in "macosTest" and "iosTest" instead
         }
 
         val macosTest by getting {
             dependsOn(darwinTest)
+            dependsOn(macosMain)
+            kotlin.srcDir("src/darwinTest/kotlin")
         }
 
         val iosTest by getting {
             dependsOn(darwinTest)
+            dependsOn(iosMain)
+            // Only add common sources to one platform when in the IDE. See comment at 'idea'
+            // difinition for full details.
+            if (!idea) {
+                kotlin.srcDir("src/darwinTest/kotlin")
+            }
         }
     }
 
@@ -176,6 +201,17 @@ kotlin {
             }
         }
     }
+
+    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
+    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    configure(listOf(targets["metadata"], jvm())) {
+        mavenPublication {
+            val targetPublication = this@mavenPublication
+            tasks.withType<AbstractPublishToMaven>()
+                .matching { it.publication == targetPublication }
+                .all { onlyIf { findProperty("isMainHost") == "true" } }
+        }
+    }
 }
 
 // Tasks for building capi...replace with Monorepo or alike when ready
@@ -183,7 +219,7 @@ tasks.create("capi_android_x86_64") {
     doLast {
         exec {
             workingDir(project.file("../../external/core"))
-            commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_NO_TESTS=ON")
+            commandLine("tools/cross_compile.sh", "-t", "Debug", "-a", "x86_64", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
             // FIXME Maybe use new android extension option to define and get NDK https://developer.android.com/studio/releases/#4-0-0-ndk-dir
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
         }
@@ -194,6 +230,12 @@ if (includeAndroidBuild) {
     afterEvaluate {
         tasks.named("externalNativeBuildDebug") {
             dependsOn(tasks.named("capi_android_x86_64"))
+        }
+        // Ensure that Swig wrapper is generated before compiling the JNI layer. This task needs
+        // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
+        // actuals
+        tasks.named("generateJsonModelDebug") {
+            inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
         }
     }
 }
@@ -216,7 +258,7 @@ tasks.create("capi_macos_x64") {
     }
 // TODO Fix inputs to prevent for proper incremental builds
 //    inputs.dir("../../external/core/build-macos_x64")
-    outputs.file(project.file("../../external/core/build-macos_x64/librealm-objectstore-wrapper-android-dynamic.so"))
+    outputs.file(project.file("../../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a"))
 }
 
 tasks.named("cinteropRealm_wrapperIos") {
@@ -225,4 +267,16 @@ tasks.named("cinteropRealm_wrapperIos") {
 
 tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(tasks.named("capi_macos_x64"))
+}
+
+realmPublish {
+    pom {
+        name = "C Interop"
+        description = "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
+            "supposed to be consumed directly, but through " +
+            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+    ojo {
+        publications = arrayOf("androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata")
+    }
 }

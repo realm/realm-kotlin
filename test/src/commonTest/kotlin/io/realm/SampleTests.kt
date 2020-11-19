@@ -1,6 +1,7 @@
 package io.realm
 
 import io.realm.runtimeapi.Mediator
+import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInternal
 import test.A
 import test.B
@@ -14,24 +15,56 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class SampleTests {
+
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
         val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"false\"}}]}"
         assertEquals(expected, Sample.`$realm$schema`())
+        @Suppress("CAST_NEVER_SUCCEEDS")
+        val actual: RealmCompanion = Sample.Companion as RealmCompanion
+        assertEquals(expected, actual.`$realm$schema`())
     }
 
     @Test
     fun testRealmModelInternalAndMarkerAreImplemented() {
         val p = Sample()
+        @Suppress("CAST_NEVER_SUCCEEDS")
         p as? RealmModelInternal
-            ?: error("Supertype RealmModelInternal was not added to Sample class")
+                ?: error("Supertype RealmModelInternal was not added to Sample class")
+    }
+
+    @Test
+    fun realmConfig() {
+        @Suppress("CAST_NEVER_SUCCEEDS")
+        val configuration = RealmConfiguration.Builder()
+                // Should be removed once we have module generation in place
+                .factory { kClass ->
+                    when (kClass) {
+                        Sample::class -> Sample()
+                        else -> TODO()
+                    }
+                }
+                // Should be removed once we have module generation in place
+                .classes(
+                        listOf(
+                                Sample.Companion as RealmCompanion
+                        )
+                )
+                .build()
+        val realm = Realm.open(configuration)
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class)
+        kotlin.test.assertEquals("", sample.name)
+        sample.name = "Hello, World!"
+        kotlin.test.assertEquals("Hello, World!", sample.name)
+        realm.commitTransaction()
     }
 
     @Test
     fun testMediatorIsGeneratedForRealmModuleClasses() {
         val entities = Entities()
         var mediator = entities as? Mediator
-            ?: error("Supertype Mediator was not added to Entities module")
+                ?: error("Supertype Mediator was not added to Entities module")
         var schema = mediator.schema()
         assertEquals(4, schema.size) // all classes: Sample, A, B and C
 
@@ -47,7 +80,7 @@ class SampleTests {
 
         val subsetModule = Subset()
         mediator = subsetModule as? Mediator
-            ?: error("Supertype Mediator was not added to Subset module")
+                ?: error("Supertype Mediator was not added to Subset module")
         schema = mediator.schema()
 
         assertEquals(2, schema.size) // classes: A and C only

@@ -1,6 +1,7 @@
 plugins {
     id "org.jetbrains.kotlin.multiplatform"
     id "com.android.library"
+    id "realm-publisher"
 }
 
 repositories {
@@ -10,11 +11,6 @@ repositories {
     mavenLocal()
 }
 
-group Realm.group
-version Realm.version
-
-apply plugin: 'maven-publish'
-
 // Common Kotlin configuration
 kotlin {
     sourceSets {
@@ -22,7 +18,14 @@ kotlin {
             dependencies {
                 implementation kotlin('stdlib-common')
                 implementation kotlin('reflect')
-                 api(project(":cinterop"))
+                // If runtimeapi is merged with cinterop then we will are exposing both to the users
+                // Runtime holds annotations, etc. that has to be exposed to users
+                api(project(":runtime-api"))
+                // Cinterop does not hold anything required by users
+                implementation(project(":cinterop"))
+                // FIXME Only used for parsing schema strings until properly typed. Remove when
+                //  https://github.com/realm/realm-kotlin/issues/54 is done.
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
             }
         }
 
@@ -31,6 +34,17 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
+        }
+    }
+
+    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html
+    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    configure([targets["metadata"], jvm()]) {
+        mavenPublication {
+            def targetPublication = this
+            tasks.withType(AbstractPublishToMaven.class)
+                .matching { task -> task.publication == targetPublication }
+                .all { task -> onlyIf { t -> t.findProperty("isMainHost") == "true" } }
         }
     }
 }
@@ -97,12 +111,11 @@ kotlin {
 kotlin {
     sourceSets {
         nativeCommon {
-            dependencies {
-                api(project(":cinterop"))
-            }
+            dependsOn(commonMain)
         }
     }
 }
+
 // IOS Configurastion
 kotlin {
     // For ARM, should be changed to iosArm32 or iosArm64
@@ -151,3 +164,16 @@ configurations {
     compileClasspath
 }
 
+realmPublish {
+    pom {
+        name = "Library"
+        description = "Library code for Realm Kotlin. This artifact is not " +
+                "supposed to be consumed directly, but through " +
+                "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+    ojo {
+        // List fetched from https://medium.com/vmware-end-user-computing/publishing-kotlin-multiplatform-artifacts-to-artifactory-maven-a283ae5912d6
+        // TODO Unclear if we should name "iosArm64" and "macosX64" as well?
+        publications = ["androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata"]
+    }
+}

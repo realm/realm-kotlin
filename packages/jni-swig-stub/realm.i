@@ -14,6 +14,10 @@
 %include "stdint.i"
 %include "arrays_java.i"
 
+// Manual imports in java module class
+%pragma(java) moduleimports=%{
+%}
+
 // Manual additions to java module class
 %pragma(java) modulecode=%{
 //  Manual addition
@@ -46,24 +50,53 @@ return $jnicall;
 }
 
 // Reuse above type maps on other pointers too
-%apply void* { realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t* };
+%apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t* };
 
+// For all functions returning a pointer or bool, check for null/false and throw an error if
+// realm_get_last_error returns true.
+// To bypass automatic error checks define the function explicitly here before the type maps until
+// we have a distinction (type map, etc.) in the C API that we can use for targeting the type map.
+bool realm_object_is_valid(const realm_object_t*);
 
-//typedef long* realm_t;
-// FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
-%typemap(jstype) realm_t* "LongPointerWrapper"
-%typemap(javain) realm_t* "$javainput.ptr"
-%typemap(javaout) realm_t* {
-return new LongPointerWrapper($jnicall);
+%typemap(out) SWIGTYPE* {
+    if (!result) {
+        realm_error_t error;
+        if (realm_get_last_error(&error)) {
+            realm_clear_last_error();
+            // TODO Cache class lookup
+            // FIXME Extract all error information and throw exceptions based on type
+            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
+            (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
+        }
+    }
+    *($1_type*)&jresult = result;
 }
+%typemap(out) bool {
+    if (!result) {
+        realm_error_t error;
+        if (realm_get_last_error(&error)) {
+            realm_clear_last_error();
+            // TODO Cache class lookup
+            // FIXME Extract all error information and throw exceptions based on type
+            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
+            (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
+        }
+    }
+    jresult = (jboolean)result;
+}
+// FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
+//%typemap(jstype) realm_t* "LongPointerWrapper"
+//%typemap(javain) realm_t* "$javainput.ptr()"
+//%typemap(javaout) realm_t* {
+//    return new LongPointerWrapper($jnicall);
+//}
 
+// Array wrappers to allow building (continuous allocated) arrays of the corresponding types from
+// JVM
 %include "carrays.i"
 %array_functions(realm_class_info_t, classArray);
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
-
-// Swig doesn't understand __attribute__ so eliminate it
-#define __attribute__(x)
 
 // size_t output parameter
 struct realm_size_t {
@@ -82,19 +115,14 @@ struct realm_size_t {
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found };
 
-// Wrap and throw on error indication
-// FIXME Find a way to apply this by pattern; alternatively do an out-typemap for bool (but don't know that can be done selectively either)
-%exception realm_find_class {
-        bool result = $action
-        if (!result) {
-            realm_error_t error;
-            // FIXME Check return value
-            realm_get_last_error(&error);
-            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-            (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
-            return $null;
-        }
-}
+// Just generate constants for the enum and pass them back and forth as integers
+%include "enumtypeunsafe.swg"
+%javaconst(1);
+
+// Make swig types package private (as opposed to public by default) to ensure that we don't expose
+// types outside the package
+%typemap(javaclassmodifiers) SWIGTYPE "class";
+%typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
 // Not yet available in library
 %ignore "realm_get_async_error";
@@ -136,5 +164,8 @@ struct realm_size_t {
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
 %ignore "realm_results_freeze";
+
+// Swig doesn't understand __attribute__ so eliminate it
+#define __attribute__(x)
 
 %include "realm.h"

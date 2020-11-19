@@ -4,3 +4,13 @@ staticLibraries = librealm-ffi-static-dbg.a librealm-dbg.a librealm-parser-dbg.a
 libraryPaths.macos_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
 libraryPaths.ios_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
 linkerOpts = -lz -framework Foundation -framework CoreFoundation -framework Security
+
+---
+// Cannot pass realm_value_t by value so do customized wrapper. We might need hot paths anyway...
+// .../interop/RealmInterop.kt: (219, 85): type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
+static bool realm_set_value_string(realm_object_t* object, realm_col_key_t col, realm_string_t new_value, bool is_default) {
+    realm_value_t value;
+    value.type = RLM_TYPE_STRING;
+    value.string = new_value;
+    return realm_set_value(object, col, value, is_default);
+}
