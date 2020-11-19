@@ -3,6 +3,7 @@ package io.realm
 import io.realm.runtimeapi.Mediator
 import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.RealmModule
 import test.A
 import test.B
 import test.C
@@ -34,23 +35,12 @@ class SampleTests {
     }
 
     @Test
+    @Suppress("CAST_NEVER_SUCCEEDS")
     fun realmConfig() {
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        val configuration = RealmConfiguration.Builder()
-            // Should be removed once we have module generation in place
-            .factory { kClass ->
-                when (kClass) {
-                    Sample::class -> Sample()
-                    else -> TODO()
-                }
-            }
-            // Should be removed once we have module generation in place
-            .classes(
-                listOf(
-                    Sample.Companion as RealmCompanion
-                )
-            )
-            .build()
+        @RealmModule(Sample::class)
+        class MySchema
+
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
         val realm = Realm.open(configuration)
         realm.beginTransaction()
         val sample = realm.create(Sample::class)

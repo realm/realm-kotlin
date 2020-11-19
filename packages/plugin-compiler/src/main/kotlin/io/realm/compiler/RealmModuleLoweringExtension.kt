@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrClassImpl
+import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.expressions.IrVarargElement
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
@@ -36,7 +37,7 @@ private class RealmModuleLowering(private val pluginContext: IrPluginContext) : 
         if (irClass.annotations.hasAnnotation(REALM_MODULE_ANNOTATION)) {
             // add super type RealmModelInternal
             val realmMediatorClass: IrClassSymbol = pluginContext.referenceClass(REALM_MEDIATOR_INTERFACE)
-                ?: error("${REALM_MEDIATOR_INTERFACE.asString()} not found")
+                    ?: error("${REALM_MEDIATOR_INTERFACE.asString()} not found")
             irClass.superTypes += realmMediatorClass.defaultType
 
             val models = listOfParticipatingModelClasses(irClass)
@@ -47,23 +48,47 @@ private class RealmModuleLowering(private val pluginContext: IrPluginContext) : 
         }
     }
 
-    private fun listOfParticipatingModelClasses(irClass: IrClass): List<Triple<IrClassifierSymbol, IrType, IrClassImpl>> {
+    private fun listOfParticipatingModelClasses(irClass: IrClass): List<Triple<IrClassifierSymbol, IrType, IrClassSymbol>> {
         // if the annotation has specified a set of models use them otherwise use all collected
         // @RealmObject classes
-        val models = mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassImpl>>()
+        val models = mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
 
         val annotationArgument = irClass.getAnnotation(REALM_MODULE_ANNOTATION)
         val arrayOfClasses: IrVarargImpl = annotationArgument?.getValueArgument(0) as IrVarargImpl
         for (clazz: IrVarargElement in arrayOfClasses.elements) {
             (clazz as IrClassReferenceImpl).apply {
-                models.add(Triple(clazz.symbol, clazz.classType, (clazz.symbol.owner as IrClass).companionObject() as IrClassImpl))
+                val companionSymbol: IrClassSymbol = when (val companionObject =
+                        (clazz.symbol.owner as IrClass).companionObject()) {
+                    is IrLazyClass -> { // TODO maybe use platform.isJVM ?
+                        companionObject.symbol
+                    }
+                    is IrClassImpl -> {
+                        companionObject.symbol
+                    }
+                    else -> {
+                        error("Cannot cast Companion Object as IrLazyClass or IrClassImpl")
+                    }
+                }
+                models.add(Triple(clazz.symbol, clazz.classType, companionSymbol))
             }
         }
 
         // if models if empty, fallback to the default behaviour (i.e collect all models)
         if (models.isEmpty()) {
             for (model in SchemaCollector.realmObjectClassesIrClasses) {
-                models.add(Triple(model.symbol, model.defaultType, model.companionObject() as IrClassImpl))
+                val companionSymbol: IrClassSymbol = when (val companionObject =
+                        model.companionObject()) {
+                    is IrLazyClass -> {
+                        companionObject.symbol
+                    }
+                    is IrClassImpl -> {
+                        companionObject.symbol
+                    }
+                    else -> {
+                        error("Cannot cast Companion Object as IrLazyClass or IrClassImpl")
+                    }
+                }
+                models.add(Triple(model.symbol, model.defaultType, companionSymbol))
             }
         }
         return models

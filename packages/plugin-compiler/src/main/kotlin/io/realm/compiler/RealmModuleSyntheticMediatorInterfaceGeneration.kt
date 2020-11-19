@@ -185,7 +185,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
     private object REALM_MEDIATOR_ORIGIN : IrDeclarationOriginImpl("MEDIATOR")
 
     @ObsoleteDescriptorBasedAPI
-    fun addInterfaceMethodImplementation(irClass: IrClass, models: List<Triple<IrClassifierSymbol, IrType, IrClassImpl>>): IrClass =
+    fun addInterfaceMethodImplementation(irClass: IrClass, models: List<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>): IrClass =
         irClass.apply {
             val mediatorMappingProperty = addInternalMapProperty(REALM_MEDIATOR_MAPPING_PROPERTY, models)
             addRealmMediatorSchemaMethod(mediatorMappingProperty)
@@ -194,7 +194,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
 
     @ObsoleteDescriptorBasedAPI
     @Suppress("LongMethod")
-    private fun IrClass.addInternalMapProperty(propertyName: Name, models: List<Triple<IrClassifierSymbol, IrType, IrClassImpl /*Companion Class*/>>): IrProperty {
+    private fun IrClass.addInternalMapProperty(propertyName: Name, models: List<Triple<IrClassifierSymbol, IrType, IrClassSymbol /*Companion Class*/>>): IrProperty {
         val property = addProperty {
             at(this@addInternalMapProperty.startOffset, this@addInternalMapProperty.endOffset)
             name = propertyName
@@ -290,7 +290,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                                     )
                                     putValueArgument(
                                         1,
-                                        irGetObject(model.third.symbol)
+                                        irGetObject(model.third)
                                     )
                                 }
                             )

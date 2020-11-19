@@ -2,8 +2,8 @@ package io.realm
 
 import android.support.test.runner.AndroidJUnit4
 import io.realm.internal.RealmInitializer
-import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.RealmModule
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
@@ -24,15 +24,10 @@ class InstrumentedTests {
     // https://youtrack.jetbrains.com/issue/KT-34535
     @Test
     fun realmConfig() {
-        val configuration = RealmConfiguration.Builder()
-            .factory { kClass ->
-                when (kClass) {
-                    Sample::class -> Sample()
-                    else -> TODO()
-                }
-            }
-            .classes(listOf(Sample.Companion as RealmCompanion))
-            .build()
+        @RealmModule(Sample::class)
+        class MySchema
+
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
         val realm = Realm.open(configuration)
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
