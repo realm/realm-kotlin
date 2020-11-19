@@ -17,11 +17,11 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 class RealmConfiguration private constructor(
-        val path: String?, // Full path if we don't want to use the default location
-        val name: String?, // Optional Realm name (default is 'default')
-        val schema: Mediator, // TODO create a schema type, to fail at compile time?
-        val version: Long = 0,
-        val tables: List<Table> = listOf()
+    val path: String?, // Full path if we don't want to use the default location
+    val name: String?, // Optional Realm name (default is 'default')
+    val schema: Mediator, // TODO create a schema type, to fail at compile time?
+    val version: Long = 0,
+    val tables: List<Table> = listOf()
 ) {
 
     internal val nativeConfig: NativePointer
@@ -36,10 +36,10 @@ class RealmConfiguration private constructor(
     }
 
     data class Builder(
-            var path: String? = null,
-            var name: String = "default", // Optional Realm name (default is 'default')
-            var schema: Any,
-            var classes: List<RealmCompanion> = listOf()
+        var path: String? = null,
+        var name: String = "default", // Optional Realm name (default is 'default')
+        var schema: Any,
+        var classes: List<RealmCompanion> = listOf()
     ) {
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
@@ -57,8 +57,10 @@ class RealmConfiguration private constructor(
                 val directory = PlatformHelper.appFilesDirectory()
                 path = "$directory$name.realm"
             }
-            return RealmConfiguration(path, name, schema as Mediator,
-                    tables = (schema as Mediator).schema().map { parseSchema(it as String) })
+            return RealmConfiguration(
+                path, name, schema as Mediator,
+                tables = (schema as Mediator).schema().map { parseSchema(it as String) }
+            )
         }
 
         // Highly explosive. Quick implementation to overcome that we don't have typed schemas in the compantion objects yet

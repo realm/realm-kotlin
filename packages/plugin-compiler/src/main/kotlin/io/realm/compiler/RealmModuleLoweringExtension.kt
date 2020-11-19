@@ -37,7 +37,7 @@ private class RealmModuleLowering(private val pluginContext: IrPluginContext) : 
         if (irClass.annotations.hasAnnotation(REALM_MODULE_ANNOTATION)) {
             // add super type RealmModelInternal
             val realmMediatorClass: IrClassSymbol = pluginContext.referenceClass(REALM_MEDIATOR_INTERFACE)
-                    ?: error("${REALM_MEDIATOR_INTERFACE.asString()} not found")
+                ?: error("${REALM_MEDIATOR_INTERFACE.asString()} not found")
             irClass.superTypes += realmMediatorClass.defaultType
 
             val models = listOfParticipatingModelClasses(irClass)
@@ -57,8 +57,10 @@ private class RealmModuleLowering(private val pluginContext: IrPluginContext) : 
         val arrayOfClasses: IrVarargImpl = annotationArgument?.getValueArgument(0) as IrVarargImpl
         for (clazz: IrVarargElement in arrayOfClasses.elements) {
             (clazz as IrClassReferenceImpl).apply {
-                val companionSymbol: IrClassSymbol = when (val companionObject =
-                        (clazz.symbol.owner as IrClass).companionObject()) {
+                val companionSymbol: IrClassSymbol = when (
+                    val companionObject =
+                        (clazz.symbol.owner as IrClass).companionObject()
+                ) {
                     is IrLazyClass -> { // TODO maybe use platform.isJVM ?
                         companionObject.symbol
                     }
@@ -76,8 +78,10 @@ private class RealmModuleLowering(private val pluginContext: IrPluginContext) : 
         // if models if empty, fallback to the default behaviour (i.e collect all models)
         if (models.isEmpty()) {
             for (model in SchemaCollector.realmObjectClassesIrClasses) {
-                val companionSymbol: IrClassSymbol = when (val companionObject =
-                        model.companionObject()) {
+                val companionSymbol: IrClassSymbol = when (
+                    val companionObject =
+                        model.companionObject()
+                ) {
                     is IrLazyClass -> {
                         companionObject.symbol
                     }
