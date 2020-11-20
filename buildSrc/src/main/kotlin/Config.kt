@@ -40,7 +40,7 @@ object Versions {
     const val autoService = "1.0-rc6"
     const val detektPlugin = "1.14.1"
     const val jvmTarget = "1.8"
-    const val kotlin = "1.4.20-M1-63"
+    const val kotlin = "1.4.20-RC"
     const val kotlinCompileTesting = "1.2.6" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "9.4.1" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.39.0" // https://github.com/pinterest/ktlint

@@ -1,5 +1,6 @@
 package io.realm
 
+// FIXME Do we actually want to expose this
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModelInternal
 import kotlinx.cinterop.COpaquePointerVar

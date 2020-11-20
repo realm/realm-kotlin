@@ -81,3 +81,11 @@ Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ
 All dependency versions and other constants we might want to share between projects are defined inside the file 
 `buildSrc/src/main/kotlin/Config.kt`. Any new dependencies should be added to this file as well, so we only have one
 location for these.
+
+# Samples
+
+## Kotlin Multiplatform Sample
+
+The folder `examples/kmm-sample` contains an example showing how to use Realm in a multiplatform
+project, sharing code for using Realm in the `shared` module. The project is based on
+`https://github.com/Kotlin/kmm-sample`.
