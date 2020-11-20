@@ -21,9 +21,10 @@ kotlin {
         getByName("commonMain") {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                // FIXME Seems like the compiler plugin doesn't inject it correctly in all cases...
-                //  might only be an IDE issue throug
-                // implementation("io.realm.kotlin:library:+")
+                // FIXME Removed automatic dependency injection to ensure observability of
+                //  requirements for now
+                // FIXME We do not have the version available in Versions yet
+                implementation("io.realm.kotlin:library:+")
             }
         }
 

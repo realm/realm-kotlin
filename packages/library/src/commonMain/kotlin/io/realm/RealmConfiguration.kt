@@ -44,20 +44,20 @@ class RealmConfiguration private constructor(
     data class Builder(
         var path: String? = null,
         var name: String = "default", // Optional Realm name (default is 'default')
-        var modelFactory: ModelFactory? = null,
+        var factory: ModelFactory? = null,
         var classes: List<RealmCompanion> = listOf()
     ) {
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
-        fun factory(factory: ModelFactory) = apply { this.modelFactory = factory }
+        fun factory(factory: ModelFactory) = apply { this.factory = factory }
         fun classes(classes: List<RealmCompanion>) = apply { this.classes = classes }
         fun build(): RealmConfiguration {
             if (path == null) {
                 val directory = PlatformHelper.appFilesDirectory()
-                path = "$directory$name.realm"
+                path = "$directory/$name.realm"
             }
-            if (modelFactory != null) {
-                return RealmConfiguration(path, name, modelFactory!!, tables = classes.map { parseSchema(it.`$realm$schema`()) })
+            if (factory != null) {
+                return RealmConfiguration(path, name, factory!!, tables = classes.map { parseSchema(it.`$realm$schema`()) })
             } else {
                 error("modelFactory should be specified")
             }

@@ -65,9 +65,14 @@ private inline fun <T : CPointed> NativePointer.cptr(): CPointer<T> {
 }
 
 fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
-    val cstr = s.cstr
-    data = cstr.getPointer(memScope)
-    size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
+    if (s.isEmpty()) {
+        data = null
+        size = 0UL
+    } else {
+        val cstr = s.cstr
+        data = cstr.getPointer(memScope)
+        size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
+    }
     return this
 }
 
@@ -221,13 +226,11 @@ actual object RealmInterop {
         }
     }
 
-    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String): String? {
+    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             realm_wrapper.realm_set_value_string(o.cptr(), propertyInfo.key.readValue(), value.toRString(memScope), false)
         }
-        // FIXME Why a return value
-        return "But, why?"
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
