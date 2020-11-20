@@ -22,14 +22,13 @@ val idea = System.getProperty("idea.active") == "true"
 val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
 
 android {
-    compileSdkVersion(29)
-    buildToolsVersion = "29.0.2"
+    compileSdkVersion(Versions.Android.compileSdkVersion)
+    buildToolsVersion = Versions.Android.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion(21)
-        targetSdkVersion(29)
-        versionCode = 1
-        versionName = "1.0"
+        minSdkVersion(Versions.Android.minSdk)
+        targetSdkVersion(Versions.Android.targetSdk)
+        versionName = Realm.version
         testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
 
         sourceSets {
@@ -77,7 +76,7 @@ android {
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
+            kotlinOptions.jvmTarget = Versions.jvmTarget
         }
     }
     android("android") {
@@ -144,10 +143,10 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
-
-                implementation("junit:junit:4.12")
-                implementation("com.android.support.test:runner:1.0.2")
-                implementation("com.android.support.test:rules:1.0.2")
+                implementation("junit:junit:${Versions.junit}")
+                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
+                implementation("androidx.test:runner:${Versions.androidxTest}")
+                implementation("androidx.test:rules:${Versions.androidxTest}")
             }
         }
 

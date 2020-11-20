@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="io.realm">
+          package="io.realm.testapp">
     <application>
     </application>
 </manifest>
