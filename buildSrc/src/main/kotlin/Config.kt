@@ -31,14 +31,17 @@ object Realm {
 object Versions {
     object Android {
         const val minSdk = 16
-        const val targetSDK = 29
+        const val targetSdk = 29
         const val compileSdkVersion = 29
         const val buildToolsVersion = "29.0.2"
         const val buildTools = "4.0.1"
     }
+    const val androidxJunit = "1.1.2" // https://maven.google.com/web/index.html#androidx.test.ext:junit
+    const val androidxTest = "1.3.0" // https://maven.google.com/web/index.html#androidx.test:rules
     const val artifactoryPlugin = "4.18.0" // https://plugins.gradle.org/plugin/com.jfrog.artifactory
     const val autoService = "1.0-rc6"
     const val detektPlugin = "1.14.1"
+    const val junit = "4.12"
     const val jvmTarget = "1.8"
     const val kotlin = "1.4.20-RC"
     const val kotlinCompileTesting = "1.2.6" // https://github.com/tschuchortdev/kotlin-compile-testing

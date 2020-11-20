@@ -62,7 +62,7 @@ android {
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSDK)
+        targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1
         versionName = Realm.version.toString()
     }

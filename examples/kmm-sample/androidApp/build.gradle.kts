@@ -29,7 +29,7 @@ android {
         applicationId = "io.realm.example.kmmsample.androidApp"
         // FIXME Use Versions.Android.minSdk when it is aligned in the SDK
         minSdkVersion(21)
-        targetSdkVersion(Versions.Android.targetSDK)
+        targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1
         versionName = Realm.version
     }

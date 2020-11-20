@@ -6,12 +6,9 @@ plugins {
 
 repositories {
     google()
+    jcenter()
     mavenCentral()
     mavenLocal()
-}
-
-detekt {
-    input = files(file("src/androidMain/kotlin"), file("src/commonMain/kotlin"))
 }
 
 // Common Kotlin configuration
@@ -20,12 +17,28 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                implementation(kotlin("reflect"))
+                // If runtimeapi is merged with cinterop then we will be exposing both to the users
+                // Runtime holds annotations, etc. that has to be exposed to users
+                api(project(":runtime-api"))
+                // Cinterop does not hold anything required by users
+                implementation(project(":cinterop"))
+                // FIXME MEDIATOR Only used for parsing schema strings until properly typed. Remove when
+                //  https://github.com/realm/realm-kotlin/issues/54 is done.
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
             }
         }
     }
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
     configure(listOf(targets["metadata"], jvm())) {
         mavenPublication {
             val targetPublication = this@mavenPublication
@@ -49,9 +62,8 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
-        versionCode = 1 // TODO What should we set this to, if anything?
         versionName = Realm.version
-        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
             getByName("main") {
@@ -66,7 +78,7 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -80,8 +92,28 @@ kotlin {
         getByName("androidMain") {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
-                implementation(kotlin("stdlib"))
+                api(project(":cinterop"))
             }
+        }
+
+        getByName("androidTest") {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+                implementation("junit:junit:${Versions.junit}")
+                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
+                implementation("androidx.test:runner:${Versions.androidxTest}")
+                implementation("androidx.test:rules:${Versions.androidxTest}")
+                implementation(kotlin("reflect:${Versions.kotlin}"))
+            }
+        }
+    }
+}
+
+kotlin {
+    sourceSets {
+        create("nativeCommon") {
+            dependsOn(getByName("commonMain"))
         }
     }
 }
@@ -92,9 +124,12 @@ kotlin {
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
     // For Windows, should be changed to e.g. mingwX64
-    iosX64("ios")
+    iosX64("ios") {}
     sourceSets {
         getByName("iosMain") {
+            dependsOn(getByName("nativeCommon"))
+        }
+        getByName("iosTest") {
         }
     }
 }
@@ -105,18 +140,36 @@ kotlin {
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
     // For Windows, should be changed to e.g. mingwX64
-    macosX64("macos")
+    macosX64("macos") {}
     sourceSets {
         getByName("macosMain") {
+            dependsOn(getByName("nativeCommon"))
+        }
+        getByName("macosTest") {
         }
     }
 }
 
+// Needs running emulator
+// tasks.named("iosTest") {
+//    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
+//    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
+//    group = JavaBasePlugin.VERIFICATION_GROUP
+//    description = "Runs tests for target 'ios' on an iOS simulator"
+//
+//    doLast {
+//        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
+//        exec {
+//            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
+//        }
+//    }
+// }
+
 realmPublish {
     pom {
-        name = "Runtime API"
-        description = "Runtime API shared between Realm Kotlin compiler plugin and library code. This " +
-            "artifact is not supposed to be consumed directly, but through " +
+        name = "Library"
+        description = "Library code for Realm Kotlin. This artifact is not " +
+            "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
     ojo {
