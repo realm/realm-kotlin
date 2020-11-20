@@ -114,10 +114,10 @@ kotlin {
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
             kotlinOptions.freeCompilerArgs = mutableListOf(
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/librealm-dbg.a",
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/parser/librealm-parser-dbg.a",
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/object-store/librealm-object-store-dbg.a"
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/librealm-dbg.a",
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/parser/librealm-parser-dbg.a",
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/librealm-object-store-dbg.a"
             )
         }
     }
@@ -136,10 +136,10 @@ kotlin {
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
             kotlinOptions.freeCompilerArgs = mutableListOf(
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/librealm-dbg.a",
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/parser/librealm-parser-dbg.a",
-                "-include-binary", "${rootDir}/../external/core/build-macos_x64/src/realm/object-store/librealm-object-store-dbg.a"
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/librealm-dbg.a",
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/parser/librealm-parser-dbg.a",
+                "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/librealm-object-store-dbg.a"
             )
         }
     }

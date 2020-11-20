@@ -194,7 +194,6 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), tableKey))
     }
 
-
     // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
     //  getter/setter, or through specialized methods.
     //  https://github.com/realm/realm-kotlin/issues/69
