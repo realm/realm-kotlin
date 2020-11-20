@@ -23,7 +23,7 @@ kotlin {
                 implementation(kotlin("stdlib-common"))
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
-                implementation("io.realm.kotlin:library:$Realm.version")
+                implementation("io.realm.kotlin:library:${Realm.version}")
             }
         }
 

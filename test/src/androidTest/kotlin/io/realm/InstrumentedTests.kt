@@ -16,7 +16,7 @@ class InstrumentedTests {
     // Smoke test of compiling with library
     @Test
     fun contextIsNotNull() {
-        assertNotNull(RealmInitializer.context)
+        assertNotNull(RealmInitializer.filesDir)
     }
 
     // This could be a common test, but included here for convenience as there is no other easy
