@@ -10,7 +10,6 @@ val configDir = locateConfigDir(File(File("$rootDir").absolutePath)).path
 
 // Searches upwards in the file tree for a directory containing a 'config'-folder
 fun locateConfigDir(current: File): File {
-    println("Searching for config path: ${current.absolutePath}")
     val configDir = Paths.get(current.path, "config")
     return if (Files.exists(configDir) && File(configDir.toUri()).isDirectory) {
         configDir.toFile()

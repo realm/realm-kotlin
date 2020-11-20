@@ -6,12 +6,12 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20-RC")
-        classpath("com.android.tools.build:gradle:4.0.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+        classpath("com.android.tools.build:gradle:${Versions.Android.buildTools}")
     }
 }
-group = "com.jetbrains"
-version = "1.0-SNAPSHOT"
+group = "io.realm.example"
+version = Realm.version
 
 subprojects {
     repositories {
