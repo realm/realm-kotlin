@@ -5,13 +5,12 @@ plugins {
     id("com.android.library")
     id("kotlin-android-extensions")
     // Apply Realm Kotlin plugin
-    // FIXME Fetch version from realm repository
-    id("realm-kotlin") version "0.0.1-SNAPSHOT"
+    id("realm-kotlin") version Realm.version
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
-group = "com.jetbrains"
-version = "1.0-SNAPSHOT"
+group = "io.realm.example"
+version = Realm.version
 
 repositories {
     gradlePluginPortal()
@@ -58,13 +57,13 @@ kotlin {
     }
 }
 android {
-    compileSdkVersion(29)
+    compileSdkVersion(Versions.Android.compileSdkVersion)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdkVersion(24)
-        targetSdkVersion(29)
+        minSdkVersion(Versions.Android.minSdk)
+        targetSdkVersion(Versions.Android.targetSDK)
         versionCode = 1
-        versionName = "1.0"
+        versionName = Realm.version.toString()
     }
     buildTypes {
         getByName("release") {
