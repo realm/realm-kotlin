@@ -112,7 +112,7 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs = mutableListOf(
+            kotlinOptions.freeCompilerArgs += mutableListOf(
                 "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
                 "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/librealm-dbg.a",
                 "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/parser/librealm-parser-dbg.a",
@@ -134,7 +134,7 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs = mutableListOf(
+            kotlinOptions.freeCompilerArgs += mutableListOf(
                 "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
                 "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/librealm-dbg.a",
                 "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/parser/librealm-parser-dbg.a",
@@ -234,7 +234,7 @@ kotlin {
     targets.all {
         compilations.all {
             kotlinOptions {
-                freeCompilerArgs = listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
+                freeCompilerArgs += listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
             }
         }
     }
