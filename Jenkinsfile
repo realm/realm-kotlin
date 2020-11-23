@@ -155,7 +155,7 @@ def runBuild() {
 }
 
 def runPublishToOjo() {
-    node('docker-cph-03') {
+    node('osx_kotlin') {
         androidDockerBuild({
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
                 sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
@@ -185,7 +185,7 @@ def jvm(workerFunction) {
     return {
         // FIXME Could just use a docker node, but do not have overview on all the caching
         //  considerations now, so just reusing an Android machine with gradle caching etc.
-        node('android') {
+        node('osx_kotlin') {
             getArchive()
             // TODO Consider adding a specific jvm docker image instead. For now just reuse Android
             //  one as it fulfills the toolchain requirement
@@ -222,7 +222,7 @@ def androidDockerBuild(workerFunction) {
 
 def androidDevice(workerFunction) {
     return {
-        node('android') {
+        node('osx_kotlin') {
             getArchive()
             androidDockerBuild {
                 workerFunction()
@@ -233,7 +233,7 @@ def androidDevice(workerFunction) {
 
 def androidEmulator(workerFunction) {
     return {
-        node('docker-cph-03') {
+        node('osx_kotlin') {
             getArchive()
             androidDockerBuild {
                 sh """
