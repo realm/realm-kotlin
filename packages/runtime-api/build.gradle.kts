@@ -25,6 +25,7 @@ kotlin {
     }
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
+    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
     configure(listOf(targets["metadata"], jvm())) {
         mavenPublication {
             val targetPublication = this@mavenPublication
@@ -42,14 +43,14 @@ kotlin {
 
 // Android configuration
 android {
-    compileSdkVersion(29)
-    buildToolsVersion = "29.0.2"
+    compileSdkVersion(Versions.Android.compileSdkVersion)
+    buildToolsVersion = Versions.Android.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion(21)
-        targetSdkVersion(29)
-        versionCode = 1
-        versionName = "1.0"
+        minSdkVersion(Versions.Android.minSdk)
+        targetSdkVersion(Versions.Android.targetSdk)
+        versionCode = 1 // TODO What should we set this to, if anything?
+        versionName = Realm.version
         testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
 
         sourceSets {
