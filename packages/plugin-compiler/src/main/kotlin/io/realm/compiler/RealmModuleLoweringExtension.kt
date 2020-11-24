@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrClassImpl
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.getAnnotation
-import org.jetbrains.kotlin.ir.util.hasAnnotation
 
 class RealmModuleLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
@@ -32,18 +32,18 @@ class RealmModuleLoweringExtension : IrGenerationExtension {
 }
 
 private class RealmModuleLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
+    val realmMediatorClass: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE).symbol
+    val generator = RealmModuleSyntheticMediatorInterfaceGeneration(pluginContext)
+
     @ObsoleteDescriptorBasedAPI
     override fun lower(irClass: IrClass) {
-        if (irClass.annotations.hasAnnotation(REALM_MODULE_ANNOTATION)) {
+        if (irClass.isRealmModuleAnnotated) {
             // add super type RealmModelInternal
-            val realmMediatorClass: IrClassSymbol = pluginContext.referenceClass(REALM_MEDIATOR_INTERFACE)
-                ?: error("${REALM_MEDIATOR_INTERFACE.asString()} not found")
             irClass.superTypes += realmMediatorClass.defaultType
 
             val models = listOfParticipatingModelClasses(irClass)
 
             // Generate Mediator interface overrides
-            val generator = RealmModuleSyntheticMediatorInterfaceGeneration(pluginContext)
             generator.addInterfaceMethodImplementation(irClass, models)
         }
     }
@@ -57,44 +57,32 @@ private class RealmModuleLowering(private val pluginContext: IrPluginContext) : 
         val arrayOfClasses: IrVarargImpl = annotationArgument?.getValueArgument(0) as IrVarargImpl
         for (clazz: IrVarargElement in arrayOfClasses.elements) {
             (clazz as IrClassReferenceImpl).apply {
-                val companionSymbol: IrClassSymbol = when (
-                    val companionObject =
-                        (clazz.symbol.owner as IrClass).companionObject()
-                ) {
-                    is IrLazyClass -> { // TODO maybe use platform.isJVM ?
-                        companionObject.symbol
-                    }
-                    is IrClassImpl -> {
-                        companionObject.symbol
-                    }
-                    else -> {
-                        error("Cannot cast Companion Object as IrLazyClass or IrClassImpl")
-                    }
-                }
+                val companionSymbol: IrClassSymbol = getSymbolOrThrow((clazz.symbol.owner as IrClass).companionObject())
                 models.add(Triple(clazz.symbol, clazz.classType, companionSymbol))
             }
         }
 
         // if models if empty, fallback to the default behaviour (i.e collect all models)
         if (models.isEmpty()) {
-            for (model in SchemaCollector.realmObjectClassesIrClasses) {
-                val companionSymbol: IrClassSymbol = when (
-                    val companionObject =
-                        model.companionObject()
-                ) {
-                    is IrLazyClass -> {
-                        companionObject.symbol
-                    }
-                    is IrClassImpl -> {
-                        companionObject.symbol
-                    }
-                    else -> {
-                        error("Cannot cast Companion Object as IrLazyClass or IrClassImpl")
-                    }
-                }
+            for (model in SchemaCollector.properties.keys) {
+                val companionSymbol: IrClassSymbol = getSymbolOrThrow(model.companionObject())
                 models.add(Triple(model.symbol, model.defaultType, companionSymbol))
             }
         }
         return models
+    }
+
+    private fun getSymbolOrThrow(companionObject: IrDeclaration?): IrClassSymbol {
+        return when (companionObject) {
+            is IrLazyClass -> { // TODO maybe use platform.isJVM ?
+                companionObject.symbol
+            }
+            is IrClassImpl -> {
+                companionObject.symbol
+            }
+            else -> {
+                error("Cannot cast Companion Object as IrLazyClass or IrClassImpl")
+            }
+        }
     }
 }

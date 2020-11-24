@@ -2,7 +2,6 @@ package io.realm.compiler
 
 import io.realm.compiler.Names.COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.COMPANION_SCHEMA_METHOD
-import io.realm.compiler.Names.DEFAULT_COMPANION
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -13,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.types.KotlinType
 
 class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
-    override fun getSyntheticCompanionObjectNameIfNeeded(thisDescriptor: ClassDescriptor): Name? = DEFAULT_COMPANION
+    override fun getSyntheticCompanionObjectNameIfNeeded(thisDescriptor: ClassDescriptor): Name? = DEFAULT_NAME_FOR_COMPANION_OBJECT
 
     override fun getSyntheticFunctionNames(thisDescriptor: ClassDescriptor): List<Name> {
         return when {

@@ -26,12 +26,9 @@ class RealmModelLoweringExtension : IrGenerationExtension {
 
 private class RealmModelLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
     override fun lower(irClass: IrClass) {
-        if (irClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
-            SchemaCollector.realmObjectClassesIrClasses.add(irClass)
-
+        if (irClass.isRealmModelAnnotated) {
             // add super type RealmModelInternal
-            val realmModelClass: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
-                ?: error("${REALM_MODEL_INTERFACE.asString()} interface not found")
+            val realmModelClass: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERFACE).symbol
             irClass.superTypes += realmModelClass.defaultType
 
             // Generate RealmModelInternal properties overrides
@@ -46,8 +43,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             generator.addNewInstanceMethodBody(irClass)
         } else {
             if (irClass.isCompanion && irClass.parentAsClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
-                val realmModelCompanion: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_COMPANION)
-                    ?: error("RealmCompanion interface not found")
+                val realmModelCompanion: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION).symbol
                 irClass.superTypes += realmModelCompanion.defaultType
             }
         }

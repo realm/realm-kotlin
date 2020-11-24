@@ -60,8 +60,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
-        val className = irClass.name.asString()
-        val fields = SchemaCollector.properties.getOrPut(className, { mutableMapOf() })
+        val fields = SchemaCollector.properties.getOrPut(irClass, { mutableMapOf() })
 
         dbPointerProperty = irClass.properties.find {
             it.name == REALM_POINTER
@@ -75,8 +74,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             it.name == OBJECT_IS_MANAGED
         } ?: error("Could not find synthetic property ${OBJECT_IS_MANAGED.asString()}")
 
-        nativeWrapperClass = pluginContext.referenceClass(NATIVE_WRAPPER)?.owner
-            ?: error("${NATIVE_WRAPPER.asString()} not available")
+        nativeWrapperClass = pluginContext.lookupClassOrThrow(NATIVE_WRAPPER)
 
         objectGetStringFun = nativeWrapperClass.functions.find {
             it.name == C_INTEROP_OBJECT_GET_STRING

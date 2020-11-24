@@ -39,7 +39,6 @@ internal object FqNames {
     val REALM_MODEL_INTERFACE = FqName("io.realm.runtimeapi.RealmModelInternal")
     val REALM_MODEL_COMPANION = FqName("io.realm.runtimeapi.RealmCompanion")
     val NATIVE_WRAPPER = FqName("io.realm.interop.RealmInterop")
-    val NATIVE_POINTER = FqName("io.realm.runtimeapi.NativePointer")
     // External visible interface of Realm objects
     val REALM_MODEL_INTERFACE_MARKER = FqName("io.realm.runtimeapi.RealmModel")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.runtimeapi.Mediator")

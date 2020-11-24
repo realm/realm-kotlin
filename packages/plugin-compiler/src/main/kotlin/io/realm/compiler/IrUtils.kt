@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
+import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -44,7 +46,10 @@ val ClassDescriptor.isRealmObjectCompanion
 val ClassDescriptor.isRealmObject
     get() = annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)
 
-val ClassDescriptor.isRealmModuleAnnotated
+val IrClass.isRealmModelAnnotated
+    get() = annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)
+
+val IrClass.isRealmModuleAnnotated
     get() = annotations.hasAnnotation(FqNames.REALM_MODULE_ANNOTATION)
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
@@ -62,23 +67,28 @@ internal fun IrPropertyBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.endOffset = endOffset
 }
 
-internal fun findFunctionByName(functions: Sequence<IrSimpleFunction>, name: String): IrSimpleFunction {
+internal fun IrClass.lookupFunction(name: String): IrSimpleFunction {
     return functions.firstOrNull { it.name.asString() == name }
-        ?: throw AssertionError("Function $name is not declared")
+        ?: throw AssertionError("Function $name was not found")
 }
 
-internal fun findFunctionInClass(pluginContext: IrPluginContext, fqName: FqName, function: String): IrSimpleFunction {
-    return pluginContext.referenceClass(fqName)?.owner?.functions?.first {
+internal fun IrPluginContext.lookupFunctionInClass(fqName: FqName, function: String): IrSimpleFunction {
+    return lookupClassOrThrow(fqName).functions.first {
         it.name == Name.identifier(function)
-    } ?: error("Can not find '$function' method in '${fqName.asString()}'")
+    }
+}
+
+internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
+    return referenceClass(name)?.owner
+        ?: error("Cannot find ${name.asString()} on platform $platform.")
+}
+
+internal fun IrPluginContext.lookupConstructorInClass(fqName: FqName, filter: (ctor: IrConstructorSymbol) -> Boolean): IrConstructorSymbol {
+    return referenceConstructors(fqName).first {
+        filter(it)
+    }
 }
 
 object SchemaCollector {
-    val properties = mutableMapOf<String, MutableMap<String, Pair<String, Boolean>>>()
-    val realmObjectClassesIrClasses = mutableListOf<IrClass>()
-
-    fun reset() {
-        properties.clear()
-        realmObjectClassesIrClasses.clear()
-    }
+    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, Boolean>>>()
 }

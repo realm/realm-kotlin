@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
         messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
-        SchemaCollector.reset()
+        SchemaCollector.properties.clear()
+
         SyntheticResolveExtension.registerExtension(project, RealmModelSyntheticCompanionExtension())
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
         IrGenerationExtension.registerExtension(project, RealmModuleLoweringExtension())

@@ -69,7 +69,6 @@ import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.util.withReferenceScope
 import org.jetbrains.kotlin.name.Name
@@ -89,12 +88,9 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
     private lateinit var arrayListCtor: IrConstructorSymbol
     private lateinit var iteratorIrClass: IrClass
 
-    private val realmCompanionIrClassSymbol: IrClassSymbol = pluginContext.referenceClass(REALM_MODEL_COMPANION)
-        ?: error("Cannot find '${REALM_MODEL_COMPANION.asString()}'")
-    private val listIrClass: IrClass = pluginContext.referenceClass(KOTLIN_COLLECTION_LIST)?.owner
-        ?: error("Cannot find '${KOTLIN_COLLECTION_LIST.asString()}'")
-    private val mediatorIrClass = pluginContext.referenceClass(REALM_MEDIATOR_INTERFACE)?.owner
-        ?: error("Cannot find '${REALM_MEDIATOR_INTERFACE.asString()}'")
+    private val realmCompanionIrClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
+    private val listIrClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTION_LIST)
+    private val mediatorIrClass = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE)
 
     private var mapValuesProperty: IrPropertySymbol
     private var mapPutFunction: IrSimpleFunction
@@ -109,82 +105,75 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
     init {
         when {
             pluginContext.platform.isNative() -> {
-                hashMapIrClass = pluginContext.referenceClass(KOTLIN_COLLECTIONS_HASHMAP)?.owner
-                    ?: error("Cannot reference '${KOTLIN_COLLECTIONS_HASHMAP.asString()}' on native platform ${pluginContext.platform}")
-                mapIteratorFunction = findFunctionInClass(pluginContext, KOTLIN_COLLECTIONS_ABSTRACT_COLLECTION, "iterator")
-                arrayListIrClassSymbol = pluginContext.referenceClass(KOTLIN_COLLECTIONS_ARRAY_LIST)
-                    ?: error("Cannot find '${JAVA_UTIL_ARRAY_LIST.asString()}'")
-                arrayListCtor = pluginContext.referenceConstructors(KOTLIN_COLLECTIONS_ARRAY_LIST).first {
-                    (
-                        it.owner.valueParameters.size == 1 &&
-                            it.owner.valueParameters[0].type.isInt()
-                        )
-                }
-                iteratorIrClass = pluginContext.referenceClass(KOTLIN_COLLECTIONS_ITERATOR)?.owner
-                    ?: error("Cannot find '${KOTLIN_COLLECTIONS_ITERATOR.asString()}'")
+                hashMapIrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_HASHMAP)
+                hashMapIrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_HASHMAP)
+                mapIteratorFunction = pluginContext.lookupFunctionInClass(KOTLIN_COLLECTIONS_ABSTRACT_COLLECTION, "iterator")
+                arrayListIrClassSymbol = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_ARRAY_LIST).symbol
 
-                hashMapCtor = pluginContext.referenceConstructors(KOTLIN_COLLECTIONS_HASHMAP).first {
-                    (
-                        it.owner.valueParameters.size == 1 &&
-                            it.owner.valueParameters[0].type.isInt()
-                        )
+                arrayListCtor = pluginContext.lookupConstructorInClass(KOTLIN_COLLECTIONS_ARRAY_LIST) {
+                    it.owner.valueParameters.size == 1 &&
+                        it.owner.valueParameters[0].type.isInt()
                 }
-                collectionType = pluginContext.referenceClass(KOTLIN_COLLECTIONS_MUTABLE_COLLECTION)?.owner?.typeWith(arguments = listOf(realmCompanionIrClassSymbol.defaultType))!!
+                arrayListCtor = pluginContext.lookupConstructorInClass(KOTLIN_COLLECTIONS_ARRAY_LIST) {
+                    it.owner.valueParameters.size == 1 &&
+                        it.owner.valueParameters[0].type.isInt()
+                }
+                iteratorIrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_ITERATOR)
+
+                hashMapCtor = pluginContext.lookupConstructorInClass(KOTLIN_COLLECTIONS_HASHMAP) {
+                    it.owner.valueParameters.size == 1 &&
+                        it.owner.valueParameters[0].type.isInt()
+                }
+                collectionType = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MUTABLE_COLLECTION).typeWith(arguments = listOf(realmCompanionIrClass.symbol.defaultType))
             }
             pluginContext.platform.isJvm() -> {
-                hashMapIrClass = pluginContext.referenceClass(JAVA_UTIL_HASHMAP)?.owner
-                    ?: error("Can not reference '${JAVA_UTIL_HASHMAP.asString()}' on native platform ${pluginContext.platform}")
-                mapIteratorFunction = findFunctionInClass(pluginContext, JAVA_UTIL_ABSTRACT_COLLECTION, "iterator")
-                arrayListIrClassSymbol = pluginContext.referenceClass(JAVA_UTIL_ARRAY_LIST)
-                    ?: error("Can not find '${JAVA_UTIL_ARRAY_LIST.asString()}'")
-                arrayListCtor = pluginContext.referenceConstructors(JAVA_UTIL_ARRAY_LIST).first {
-                    (
-                        it.owner.valueParameters.size == 1 &&
-                            (it.owner.valueParameters[0].type as IrTypeBase).kotlinType!!.isInt()
-                        )
+                hashMapIrClass = pluginContext.lookupClassOrThrow(JAVA_UTIL_HASHMAP)
+                mapIteratorFunction = pluginContext.lookupFunctionInClass(JAVA_UTIL_ABSTRACT_COLLECTION, "iterator")
+                arrayListIrClassSymbol = pluginContext.lookupClassOrThrow(JAVA_UTIL_ARRAY_LIST).symbol
+                arrayListCtor = pluginContext.lookupConstructorInClass(JAVA_UTIL_ARRAY_LIST) {
+                    it.owner.valueParameters.size == 1 &&
+                        (it.owner.valueParameters[0].type as IrTypeBase).kotlinType!!.isInt()
                 }
-                iteratorIrClass = pluginContext.referenceClass(JAVA_UTIL_ITERATOR)?.owner
-                    ?: error("Can not find '${JAVA_UTIL_ITERATOR.asString()}'")
-                hashMapCtor = pluginContext.referenceConstructors(JAVA_UTIL_HASHMAP).first {
-                    (
-                        it.owner.valueParameters.size == 1 &&
-                            (it.owner.valueParameters[0].type as IrTypeBase).kotlinType!!.isInt()
-                        )
+                iteratorIrClass = pluginContext.lookupClassOrThrow(JAVA_UTIL_ITERATOR)
+                hashMapCtor = pluginContext.lookupConstructorInClass(JAVA_UTIL_HASHMAP) {
+                    it.owner.valueParameters.size == 1 &&
+                        (it.owner.valueParameters[0].type as IrTypeBase).kotlinType!!.isInt()
                 }
-                collectionType = pluginContext.referenceClass(JAVA_UTIL_COLLECTION)?.owner?.typeWith(arguments = listOf(realmCompanionIrClassSymbol.defaultType))!!
+                collectionType = pluginContext.lookupClassOrThrow(JAVA_UTIL_COLLECTION).typeWith(arguments = listOf(realmCompanionIrClass.symbol.defaultType))
             }
             else -> {
                 logError("Unsupported platform ${pluginContext.platform}")
             }
         }
-        mapPutFunction = findFunctionByName(hashMapIrClass.functions, "put")
-        mapGetFunction = findFunctionByName(hashMapIrClass.functions, "get")
+        mapPutFunction = hashMapIrClass.lookupFunction("put")
+        mapGetFunction = hashMapIrClass.lookupFunction("get")
         mapValuesProperty = hashMapIrClass.properties.first {
             it.name == Name.identifier("values")
         }.symbol
 
-        hasNextFunction = findFunctionByName(iteratorIrClass.functions, "hasNext")
-        nextFunction = findFunctionByName(iteratorIrClass.functions, "next")
-        listAddFunction = findFunctionByName(arrayListIrClassSymbol.owner.functions, "add")
+        hasNextFunction = iteratorIrClass.lookupFunction("hasNext")
+        nextFunction = iteratorIrClass.lookupFunction("next")
+        listAddFunction = arrayListIrClassSymbol.owner.lookupFunction("add")
 
         companionMapType = hashMapIrClass.symbol.typeWith(
             pluginContext.irBuiltIns.kClassClass.starProjectedType,
-            realmCompanionIrClassSymbol.defaultType
+            realmCompanionIrClass.symbol.defaultType
         )
 
-        collectionIteratorType = iteratorIrClass.typeWith(arguments = listOf(realmCompanionIrClassSymbol.defaultType))
+        collectionIteratorType = iteratorIrClass.typeWith(arguments = listOf(realmCompanionIrClass.symbol.defaultType))
     }
 
-    private val mediatorNewInstanceMethod: IrSimpleFunction = findFunctionByName(mediatorIrClass.functions, REALM_MEDIATOR_NEW_INSTANCE_METHOD.asString())
-    private val mediatorSchemaMethod: IrSimpleFunction = findFunctionByName(mediatorIrClass.functions, REALM_MEDIATOR_SCHEMA_METHOD.asString())
-    private val realmCompanionNewInstanceFunction: IrSimpleFunction = findFunctionByName(realmCompanionIrClassSymbol.owner.functions, COMPANION_NEW_INSTANCE_METHOD.asString())
-    private val realmCompanionRealmSchemaFunction: IrSimpleFunction = findFunctionByName(realmCompanionIrClassSymbol.owner.functions, COMPANION_SCHEMA_METHOD.asString())
+    private val mediatorNewInstanceMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_NEW_INSTANCE_METHOD.asString())
+    private val mediatorSchemaMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_SCHEMA_METHOD.asString())
+    private val realmCompanionNewInstanceFunction: IrSimpleFunction = realmCompanionIrClass.lookupFunction(COMPANION_NEW_INSTANCE_METHOD.asString())
+    private val realmCompanionRealmSchemaFunction: IrSimpleFunction = realmCompanionIrClass.lookupFunction(COMPANION_SCHEMA_METHOD.asString())
 
     @Suppress("ClassNaming")
     private object REALM_MEDIATOR_ORIGIN : IrDeclarationOriginImpl("MEDIATOR")
 
     @ObsoleteDescriptorBasedAPI
     fun addInterfaceMethodImplementation(irClass: IrClass, models: List<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>): IrClass =
+        // TODO move the implementation into the default Mediator interface, only the HashMap initializer block is specific per RealmModule
         irClass.apply {
             val mediatorMappingProperty = addInternalMapProperty(REALM_MEDIATOR_MAPPING_PROPERTY, models)
             addRealmMediatorSchemaMethod(mediatorMappingProperty)
@@ -227,7 +216,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                         // <class: V>: io.realm.runtimeapi.RealmCompanion
                         // p0: CONST Int type=kotlin.Int value=2
                         putTypeArgument(0, pluginContext.irBuiltIns.kClassClass.starProjectedType)
-                        putTypeArgument(1, realmCompanionIrClassSymbol.owner.defaultType)
+                        putTypeArgument(1, realmCompanionIrClass.defaultType)
                         putValueArgument(0, IrConstImpl.int(startOffset, endOffset, pluginContext.irBuiltIns.intType, numberOfModelInSchema))
                     }
             )
@@ -315,7 +304,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             overriddenSymbols = listOf(mediatorNewInstanceMethod.symbol)
             val clazzParameter = addValueParameter(name = "clazz", type = pluginContext.irBuiltIns.kClassClass.starProjectedType)
             body = pluginContext.blockBody(symbol) {
-                val realmCompanionType = realmCompanionIrClassSymbol.defaultType
+                val realmCompanionType = realmCompanionIrClass.defaultType
                 val elementVar = irTemporaryVar(
                     nameHint = "companion",
                     value = IrCallImpl(
@@ -374,7 +363,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                             IrConstImpl.int(
                                 startOffset, endOffset,
                                 type = pluginContext.irBuiltIns.intType,
-                                value = SchemaCollector.realmObjectClassesIrClasses.size
+                                value = SchemaCollector.properties.size
                             )
                         )
                     }
@@ -406,7 +395,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                 )
                 val mutableIteratorVar = irTemporaryVar(nameHint = "iterator", value = callIterator.expression)
 
-                val elementVar = irTemporaryVarDeclaration(realmCompanionIrClassSymbol.defaultType.makeNullable(), nameHint = "element", isMutable = true)
+                val elementVar = irTemporaryVarDeclaration(realmCompanionIrClass.defaultType.makeNullable(), nameHint = "element", isMutable = true)
 
                 +IrWhileLoopImpl(
                     startOffset, endOffset,
@@ -423,7 +412,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                             elementVar.symbol,
                             IrCallImpl(
                                 startOffset, endOffset,
-                                type = realmCompanionIrClassSymbol.defaultType,
+                                type = realmCompanionIrClass.defaultType,
                                 symbol = nextFunction.symbol,
                                 typeArgumentsCount = 0,
                                 valueArgumentsCount = 0
