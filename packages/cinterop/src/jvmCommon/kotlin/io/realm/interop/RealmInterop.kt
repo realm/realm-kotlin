@@ -184,7 +184,7 @@ actual object RealmInterop {
         realm_set_value(realm, o, table, col, value, false)
     }
 
-    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any ): NativePointer {
+    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
         val count = args.size
         val classKey = classInfo(realm, table).key
         val x = classKey.table_key
@@ -195,7 +195,7 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
     }
 
-    actual fun <T: RealmModel> realm_query_find_first(realm: NativePointer) : Link {
+    actual fun <T : RealmModel> realm_query_find_first(realm: NativePointer): Link {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
         realmc.realm_query_find_first(realm.cptr(), value, found)
@@ -242,7 +242,7 @@ actual object RealmInterop {
     // FIXME EVALUATE 
     //  - Can we always derive value type or do we also have coercion, etc.
     private fun <T> realm_value_t.get(): T {
-        return when(PropertyType.of(this.type)) {
+        return when (PropertyType.of(this.type)) {
             PropertyType.RLM_PROPERTY_TYPE_STRING -> string as T
             else -> TODO()
         }
@@ -250,17 +250,15 @@ actual object RealmInterop {
 
     private fun value(o: Any): realm_value_t {
         val value: realm_value_t = realm_value_t()
-        when(o) {
+        when (o) {
             is String -> {
                 value.type = realm_value_type_e.RLM_TYPE_STRING
-                value.string  = o
+                value.string = o
             }
             else -> {
                 TODO("Value conversion not yet implemented for : ${o.javaClass}")
             }
-
         }
         return value
     }
-
 }

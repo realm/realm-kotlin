@@ -8,7 +8,7 @@ import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
-fun <T: RealmModel> RealmModelInternal.manage(realm: NativePointer, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmModel> RealmModelInternal.manage(realm: NativePointer, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Pointer` = realm
     this.`$realm$TableName` = type.simpleName
@@ -19,7 +19,7 @@ fun <T: RealmModel> RealmModelInternal.manage(realm: NativePointer, type: KClass
 }
 
 // TODO API-INTERNAL
-fun <T: RealmModel> RealmModelInternal.link(realm: NativePointer, type: KClass<T>, link: Link): T {
+fun <T : RealmModel> RealmModelInternal.link(realm: NativePointer, type: KClass<T>, link: Link): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Pointer` = realm
     this.`$realm$TableName` = type.simpleName
@@ -27,4 +27,3 @@ fun <T: RealmModel> RealmModelInternal.link(realm: NativePointer, type: KClass<T
     this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm, link.tableKey, link.objKey)
     return this as T
 }
-

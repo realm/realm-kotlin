@@ -1,7 +1,6 @@
 package io.realm
 
 import io.realm.internal.link
-import io.realm.internal.manage
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
@@ -31,7 +30,7 @@ class RealmQuery<T : RealmModel>(
     fun all(): List<T> {
         val result: NativePointer = RealmInterop.realm_query_find_all(nativeQuery)
         val count: Long = RealmInterop.realm_results_count(result)
-        return LongRange(0,max(0L, count-1)).map { i ->
+        return LongRange(0, max(0L, count - 1)).map { i ->
             val link: Link = RealmInterop.realm_results_get<T>(result, i)
             val o = factory() as RealmModelInternal
             o.link(nativeRealm, clazz, link)

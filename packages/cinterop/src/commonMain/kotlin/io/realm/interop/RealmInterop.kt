@@ -54,7 +54,7 @@ expect object RealmInterop {
 
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
 
-    fun <T: RealmModel> realm_query_find_first(realm: NativePointer) : Link
+    fun <T : RealmModel> realm_query_find_first(realm: NativePointer): Link
     fun realm_query_find_all(query: NativePointer): NativePointer
 
     fun realm_results_count(results: NativePointer): Long
@@ -62,5 +62,4 @@ expect object RealmInterop {
     fun <T> realm_results_get(results: NativePointer, index: Long): Link
 
     fun realm_get_object(realm: NativePointer, tableKey: Long, objKey: Long): NativePointer
-
 }

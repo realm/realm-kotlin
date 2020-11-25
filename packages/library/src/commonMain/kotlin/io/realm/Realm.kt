@@ -51,6 +51,7 @@ class Realm {
         vararg args: Any
     ): RealmQuery<T> {
         val objectType = clazz.simpleName ?: error("Cannot get class name")
+        @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
         val query: NativePointer =
             RealmInterop.realm_query_parse(dbPointer!!, objectType, query, *args)
         // FIXME Verify if closed

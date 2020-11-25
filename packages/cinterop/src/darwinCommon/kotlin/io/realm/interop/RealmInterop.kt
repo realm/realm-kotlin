@@ -263,7 +263,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any) : NativePointer {
+    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
         memScoped {
             val count = args.size
             val cArgs = allocArray<realm_value_t>(count)
@@ -279,7 +279,7 @@ actual object RealmInterop {
         }
     }
 
-private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
+    private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()
         throwOnError(realm_wrapper.realm_find_class(realm.cptr(), table.toRString(memScope), found.ptr, classInfo.ptr))
