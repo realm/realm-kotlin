@@ -40,6 +40,12 @@ class InstrumentedTests {
         sample.name = "Hello, World!"
         kotlin.test.assertEquals("Hello, World!", sample.name)
         realm.commitTransaction()
+
+        val first1: Sample = realm.query(Sample::class).first()
+        val objects1: List<Sample> = realm.query(Sample::class).all()
+        
+        val first2: Sample = realm.query(Sample::class, "name == $0", "Hello, World!").first()
+        val objects2: List<Sample> = realm.query(Sample::class, "name == $0", "Hello, World!").all()
     }
 
     // FIXME API-CLEANUP Local implementation of pointer wrapper to support test. Using the internal

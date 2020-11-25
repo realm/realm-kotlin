@@ -1,7 +1,9 @@
 package io.realm.interop
 
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import io.realm.internal.RealmInitializer
+import io.realm.runtimeapi.NativePointer
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.math.BigInteger
@@ -198,6 +200,11 @@ class CinteropTest {
         assertEquals(1, count.value)
         // TODO Query basics? min, max, sum, average
         //  https://github.com/realm/realm-kotlin/issues/64
+        val minFound = booleanArrayOf(false)
+        val minValue = realm_value_t()
+        realmc.realm_results_min(result, foo_int_property.key, minValue, minFound)
+        assertEquals(realm_value_type_e.RLM_TYPE_INT, minValue.type)
+        assertEquals(123, minValue.integer)
 
         // TODO API-FULL Set wrong field type
 

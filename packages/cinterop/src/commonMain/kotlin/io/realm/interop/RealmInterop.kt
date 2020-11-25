@@ -2,7 +2,9 @@ package io.realm.interop
 
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
+import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModel
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -49,4 +51,16 @@ expect object RealmInterop {
 //    }
 //    override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
 //    }
+
+    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
+
+    fun <T: RealmModel> realm_query_find_first(realm: NativePointer) : Link
+    fun realm_query_find_all(query: NativePointer): NativePointer
+
+    fun realm_results_count(results: NativePointer): Long
+    // FIXME OPTIMIZE Get many
+    fun <T> realm_results_get(results: NativePointer, index: Long): Link
+
+    fun realm_get_object(realm: NativePointer, tableKey: Long, objKey: Long): NativePointer
+
 }

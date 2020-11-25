@@ -2,7 +2,9 @@ package io.realm.interop
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
+import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModel
 
 actual object RealmInterop {
     // TODO API-CLEANUP Maybe pull library loading into separate method
@@ -181,4 +183,84 @@ actual object RealmInterop {
     actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
         realm_set_value(realm, o, table, col, value, false)
     }
+
+    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any ): NativePointer {
+        val count = args.size
+        val classKey = classInfo(realm, table).key
+        val x = classKey.table_key
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, value(arg))
+        }
+        return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
+    }
+
+    actual fun <T: RealmModel> realm_query_find_first(realm: NativePointer) : Link {
+        val value = realm_value_t()
+        val found = booleanArrayOf(false)
+        realmc.realm_query_find_first(realm.cptr(), value, found)
+        // FIXME Validate that we have:
+        //  - found anything
+        //  - it is a link
+        //  - i matches the specific type
+        if (!found[0]) {
+            error("Query did not find anything")
+        }
+        if (value.type != realm_value_type_e.RLM_TYPE_LINK) {
+            error("Query did not return link but ${value.type}")
+        }
+        return Link(value.link.target.obj_key, value.link.target_table.table_key)
+    }
+
+    actual fun realm_query_find_all(query: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_results_count(results: NativePointer): Long {
+        val count = realm_size_t()
+        realmc.realm_results_count(results.cptr(), count)
+        return count.value
+    }
+
+    // TODO OPTIMIZE Getting a range
+    actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
+        val value = realm_value_t()
+        realmc.realm_results_get(results.cptr(), index, value)
+        return Link(value.link.target.obj_key, value.link.target_table.table_key)
+    }
+
+    actual fun realm_get_object(realm: NativePointer, tableKey: Long, objKey: Long): NativePointer {
+        val table = realm_table_key_t().apply { table_key = tableKey }
+        val obj = realm_obj_key_t().apply { obj_key = objKey }
+        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), table, obj))
+    }
+
+    fun NativePointer.cptr(): Long {
+        return (this as LongPointerWrapper).ptr
+    }
+
+    // FIXME EVALUATE 
+    //  - Can we always derive value type or do we also have coercion, etc.
+    private fun <T> realm_value_t.get(): T {
+        return when(PropertyType.of(this.type)) {
+            PropertyType.RLM_PROPERTY_TYPE_STRING -> string as T
+            else -> TODO()
+        }
+    }
+
+    private fun value(o: Any): realm_value_t {
+        val value: realm_value_t = realm_value_t()
+        when(o) {
+            is String -> {
+                value.type = realm_value_type_e.RLM_TYPE_STRING
+                value.string  = o
+            }
+            else -> {
+                TODO("Value conversion not yet implemented for : ${o.javaClass}")
+            }
+
+        }
+        return value
+    }
+
 }

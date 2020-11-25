@@ -1,5 +1,6 @@
 package io.realm
 
+import io.realm.internal.manage
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
@@ -24,6 +25,7 @@ class Realm {
             return realm
         }
     }
+
     //    fun open(dbName: String, schema: String) : Realm
     fun beginTransaction() {
         RealmInterop.realm_begin_write(dbPointer!!)
@@ -42,16 +44,19 @@ class Realm {
 
     // FIXME Query support
     //  https://github.com/realm/realm-kotlin/issues/64
-    fun <T : RealmModel> objects(clazz: KClass<T>, query: String): RealmResults<T> {
-        val objectType = clazz.simpleName ?: error("Cannot get class name") // TODO infer type from T
-        // TODO check nullability of pointer and throw
-        val query: NativePointer = TODO()
-        return RealmResults(
-            query,
-            clazz,
-            realmConfiguration.modelFactory
-        )
+    // FIXME API-QUERY
+    fun <T : RealmModel> query(
+        clazz: KClass<T>,
+        query: String = "TRUEPREDICATE",
+        vararg args: Any
+    ): RealmQuery<T> {
+        val objectType = clazz.simpleName ?: error("Cannot get class name")
+        val query: NativePointer =
+            RealmInterop.realm_query_parse(dbPointer!!, objectType, query, *args)
+        // FIXME Verify if closed
+        return RealmQuery(dbPointer!!, query, clazz, { realmConfiguration.modelFactory(clazz) as T })
     }
+
     //    reflection is not supported in K/N so we can't offer method like
     //    inline fun <reified T : RealmModel> create() : T
     //    to create a dynamically managed model. we're limited thus to persist methods
@@ -62,10 +67,10 @@ class Realm {
         val objectType = type.simpleName ?: error("Cannot get class name")
         val managedModel = realmConfiguration.modelFactory.invoke(type) as RealmModelInternal
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
-        managedModel.`$realm$Pointer` = dbPointer
-        managedModel.`$realm$ObjectPointer` = RealmInterop.realm_object_create(dbPointer!!, key)
-        managedModel.`$realm$IsManaged` = true
-        managedModel.`$realm$TableName` = objectType
-        return managedModel as T
+        return managedModel.manage(
+            dbPointer!!,
+            type,
+            RealmInterop.realm_object_create(dbPointer!!, key)
+        )
     }
 }

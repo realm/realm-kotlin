@@ -16,7 +16,6 @@ import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.readValue
 import kotlinx.cinterop.set
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
@@ -107,19 +106,28 @@ actual object RealmInterop {
                     primary_key.set(memScope, clazz.primaryKey)
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
-                    flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                    flags =
+                        clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                 }
-                cproperties[i] = allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
+                cproperties[i] =
+                    allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
                         name.set(memScope, property.name)
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
-                        flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                        flags =
+                            property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                     }
                 }
             }
-            return CPointerWrapper(realm_wrapper.realm_schema_new(cclasses, count.toULong(), cproperties))
+            return CPointerWrapper(
+                realm_wrapper.realm_schema_new(
+                    cclasses,
+                    count.toULong(),
+                    cproperties
+                )
+            )
         }
     }
 
@@ -129,7 +137,12 @@ actual object RealmInterop {
 
     actual fun realm_config_set_path(config: NativePointer, path: String) {
         memScoped {
-            throwOnError(realm_wrapper.realm_config_set_path(config.cptr(), path.toRString(memScope)))
+            throwOnError(
+                realm_wrapper.realm_config_set_path(
+                    config.cptr(),
+                    path.toRString(memScope)
+                )
+            )
         }
     }
 
@@ -181,7 +194,14 @@ actual object RealmInterop {
         memScoped {
             val found = alloc<BooleanVar>()
             val classInfo = alloc<realm_class_info_t>()
-            throwOnError(realm_wrapper.realm_find_class(realm.cptr(), name.toRString(memScope), found.ptr, classInfo.ptr))
+            throwOnError(
+                realm_wrapper.realm_find_class(
+                    realm.cptr(),
+                    name.toRString(memScope),
+                    found.ptr,
+                    classInfo.ptr
+                )
+            )
             if (!found.value) {
                 throw RuntimeException("Class \"$name\" not found")
             }
@@ -234,11 +254,32 @@ actual object RealmInterop {
     actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_string(o.cptr(), propertyInfo.key.readValue(), value.toRString(memScope), false)
+            realm_wrapper.realm_set_value_string(
+                o.cptr(),
+                propertyInfo.key.readValue(),
+                value.toRString(memScope),
+                false
+            )
         }
     }
 
-    private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
+    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any) : NativePointer {
+        memScoped {
+            val count = args.size
+            val cArgs = allocArray<realm_value_t>(count)
+            return CPointerWrapper(
+                realm_wrapper.realm_query_parse(
+                    realm.cptr(),
+                    classInfo(realm, table).key.readValue(),
+                    query.toRString(memScope),
+                    count.toULong(),
+                    cArgs
+                )
+            )
+        }
+    }
+
+private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()
         throwOnError(realm_wrapper.realm_find_class(realm.cptr(), table.toRString(memScope), found.ptr, classInfo.ptr))
