@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#!groovy
 import groovy.json.JsonOutput
 
 @Library('realm-ci') _
