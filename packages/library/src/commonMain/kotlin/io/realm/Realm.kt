@@ -42,21 +42,6 @@ class Realm {
     fun registerListener(f: () -> Unit) {
     }
 
-    // FIXME Query support
-    //  https://github.com/realm/realm-kotlin/issues/64
-    // FIXME API-QUERY
-    fun <T : RealmModel> query(
-        clazz: KClass<T>,
-        query: String = "TRUEPREDICATE",
-        vararg args: Any
-    ): RealmQuery<T> {
-        val objectType = clazz.simpleName ?: error("Cannot get class name")
-        @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
-        val query: NativePointer =
-            RealmInterop.realm_query_parse(dbPointer!!, objectType, query, *args)
-        // FIXME Verify if closed
-        return RealmQuery(dbPointer!!, query, clazz, { realmConfiguration.modelFactory(clazz) as T })
-    }
 
     //    reflection is not supported in K/N so we can't offer method like
     //    inline fun <reified T : RealmModel> create() : T
@@ -74,4 +59,15 @@ class Realm {
             RealmInterop.realm_object_create(dbPointer!!, key)
         )
     }
+
+    fun <T: RealmModel> objects(clazz: KClass<T>): RealmResults<T> {
+        return RealmResults(
+            dbPointer!!,
+            @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
+            { RealmInterop.realm_query_parse(dbPointer!!, clazz.simpleName!!, "TRUEPREDICATE") },
+            clazz,
+            realmConfiguration.modelFactory
+        )
+    }
+
 }

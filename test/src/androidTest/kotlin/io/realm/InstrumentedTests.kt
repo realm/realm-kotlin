@@ -9,6 +9,7 @@ import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
@@ -41,11 +42,16 @@ class InstrumentedTests {
         kotlin.test.assertEquals("Hello, World!", sample.name)
         realm.commitTransaction()
 
-        val first1: Sample = realm.query(Sample::class).first()
-        val objects1: List<Sample> = realm.query(Sample::class).all()
+        val objects1: RealmResults<Sample> = realm.objects(Sample::class)
 
-        val first2: Sample = realm.query(Sample::class, "name == $0", "Hello, World!").first()
-        val objects2: List<Sample> = realm.query(Sample::class, "name == $0", "Hello, World!").all()
+        val objects2: RealmResults<Sample> = realm.objects(Sample::class).query("name == $0", "Hello, World!")
+        val sample2 = objects2[0]
+
+        val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
+        // Will first fail when accessing the acutal elements as the query is lazily evaluated
+        assertFailsWith<RuntimeException> {
+            println(objects3)
+        }
     }
 
     // FIXME API-CLEANUP Local implementation of pointer wrapper to support test. Using the internal

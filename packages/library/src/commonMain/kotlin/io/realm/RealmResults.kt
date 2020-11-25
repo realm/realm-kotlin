@@ -1,5 +1,8 @@
 package io.realm
 
+import io.realm.internal.link
+import io.realm.interop.RealmInterop
+import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
@@ -8,20 +11,31 @@ import kotlin.reflect.KClass
 // FIXME Query support
 //  https://github.com/realm/realm-kotlin/issues/64
 class RealmResults<T : RealmModel> constructor(
-    private val queryPointer: NativePointer,
+    private val realm: NativePointer,
+    private val queryPointer: () -> NativePointer,
     private val clazz: KClass<T>,
     private val modelFactory: ModelFactory
-) : AbstractList<T>() {
+) : AbstractList<T>(), Queryable<T> {
+
+    val query: NativePointer by lazy { queryPointer() }
+    val result: NativePointer by lazy { RealmInterop.realm_query_find_all(query) }
+
     override val size: Int
-        get() = TODO() // CInterop.queryGetSize(queryPointer).toInt()
+        get() = RealmInterop.realm_results_count(result).toInt()
 
     override fun get(index: Int): T {
+        val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
         val model = modelFactory.invoke(clazz) as RealmModelInternal
-//        val objectPointer = TODO() // CInterop.queryGetObjectAt(queryPointer, clazz.simpleName!!, index)
-//        model.isManaged = true
-//        model.realmObjectPointer = objectPointer
-//        model.tableName = clazz.simpleName
-        // call T factory to instantiate an Object of type T using it's pointer 'objectPointer'
+        model.link(realm, clazz, link)
         return model as T
+    }
+
+    override fun query(query: String, vararg args: Any): RealmResults<T> {
+        return RealmResults(
+            realm,
+            { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
+            clazz,
+            modelFactory,
+        )
     }
 }
