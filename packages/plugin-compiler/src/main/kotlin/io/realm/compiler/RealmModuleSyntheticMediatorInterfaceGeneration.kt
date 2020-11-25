@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.builders.irSetVar
+import org.jetbrains.kotlin.ir.builders.irSet
 import org.jetbrains.kotlin.ir.builders.irTemporaryVar
 import org.jetbrains.kotlin.ir.builders.irTemporaryVarDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -408,7 +408,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                         context, scope, startOffset, endOffset,
                         resultType = pluginContext.irBuiltIns.unitType
                     ).irBlock {
-                        +irSetVar(
+                        +irSet(
                             elementVar.symbol,
                             IrCallImpl(
                                 startOffset, endOffset,
