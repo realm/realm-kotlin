@@ -8,6 +8,8 @@ import io.realm.interop.PropertyType
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.interop.Table
+import io.realm.interop.set
+import io.realm.interop.toKString
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVarOf
@@ -17,8 +19,13 @@ import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cValuesOf
 import kotlinx.cinterop.cstr
+import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.readValue
+import kotlinx.cinterop.toKString
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import realm_wrapper.RLM_CLASS_NORMAL
 import realm_wrapper.RLM_COLLECTION_TYPE_NONE

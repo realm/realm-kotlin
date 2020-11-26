@@ -5,6 +5,7 @@ import io.realm.runtimeapi.RealmModelInternal
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class SampleTests {
 
@@ -50,5 +51,17 @@ class SampleTests {
         sample.name = "Hello, World!"
         kotlin.test.assertEquals("Hello, World!", sample.name)
         realm.commitTransaction()
+
+        val objects1: RealmResults<Sample> = realm.objects(Sample::class)
+        val sample1 = objects1[0]
+
+        val objects2: RealmResults<Sample> = realm.objects(Sample::class).query("name == $0", "Hello, World!")
+        val sample2 = objects2[0]
+
+        val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
+        // Will first fail when accessing the acutal elements as the query is lazily evaluated
+        assertFailsWith<RuntimeException> {
+            println(objects3)
+        }
     }
 }

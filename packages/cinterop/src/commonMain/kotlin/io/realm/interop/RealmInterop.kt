@@ -38,12 +38,12 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
     // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
-    fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean)
-    fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T
+    fun <T> realm_set_value(realm: NativePointer, obj: NativePointer, table: String, col: String, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(realm: NativePointer, obj: NativePointer, table: String, col: String, type: PropertyType): T
 
     // Typed convenience methods
-    fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String
-    fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String)
+    fun objectGetString(realm: NativePointer, obj: NativePointer, table: String, col: String): String
+    fun objectSetString(realm: NativePointer, obj: NativePointer, table: String, col: String, value: String)
 
     // FIXME Support for all types
     //  https://github.com/realm/realm-kotlin/issues/69
@@ -61,5 +61,5 @@ expect object RealmInterop {
     // FIXME OPTIMIZE Get many
     fun <T> realm_results_get(results: NativePointer, index: Long): Link
 
-    fun realm_get_object(realm: NativePointer, tableKey: Long, objKey: Long): NativePointer
+    fun realm_get_object(realm: NativePointer, link: Link): NativePointer
 }

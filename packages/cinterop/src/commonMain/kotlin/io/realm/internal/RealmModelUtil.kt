@@ -13,7 +13,7 @@ fun <T : RealmModel> RealmModelInternal.manage(realm: NativePointer, type: KClas
     this.`$realm$Pointer` = realm
     this.`$realm$TableName` = type.simpleName
     this.`$realm$ObjectPointer` = objectPointer
-    // FIXME Initialize actual link; requires handling of link in compiler plugin
+    // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
     // this.link = RealmInterop.realm_object_as_link()
     return this as T
 }
@@ -23,7 +23,7 @@ fun <T : RealmModel> RealmModelInternal.link(realm: NativePointer, type: KClass<
     this.`$realm$IsManaged` = true
     this.`$realm$Pointer` = realm
     this.`$realm$TableName` = type.simpleName
-    // FIXME Could be lazy loaded from link; requires handling of link in compiler plugin
-    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm, link.tableKey, link.objKey)
+    // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
+    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm, link)
     return this as T
 }

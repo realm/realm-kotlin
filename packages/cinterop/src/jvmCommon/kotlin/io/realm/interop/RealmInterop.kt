@@ -138,14 +138,14 @@ actual object RealmInterop {
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
     }
 
-    actual fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
-        realm_set_value(o, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
+    actual fun <T> realm_set_value(realm: NativePointer, obj: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
+        realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
     }
 
-    actual fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
+    actual fun <T> realm_get_value(realm: NativePointer, obj: NativePointer, table: String, col: String, type: PropertyType): T {
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
-        realmc.realm_get_value((o as LongPointerWrapper).ptr, pinfo.key, cvalue)
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, pinfo.key, cvalue)
         when (cvalue.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
                 return cvalue.string as T
@@ -176,12 +176,12 @@ actual object RealmInterop {
     }
 
     // Typed convenience methods
-    actual fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String {
-        return realm_get_value<String>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
+    actual fun objectGetString(realm: NativePointer, obj: NativePointer, table: String, col: String): String {
+        return realm_get_value<String>(realm, obj, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
     }
 
-    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
-        realm_set_value(realm, o, table, col, value, false)
+    actual fun objectSetString(realm: NativePointer, obj: NativePointer, table: String, col: String, value: String) {
+        realm_set_value(realm, obj, table, col, value, false)
     }
 
     actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
@@ -206,10 +206,7 @@ actual object RealmInterop {
         if (!found[0]) {
             error("Query did not find anything")
         }
-        if (value.type != realm_value_type_e.RLM_TYPE_LINK) {
-            error("Query did not return link but ${value.type}")
-        }
-        return Link(value.link.target.obj_key, value.link.target_table.table_key)
+        return value.asLink()
     }
 
     actual fun realm_query_find_all(query: NativePointer): NativePointer {
@@ -226,12 +223,12 @@ actual object RealmInterop {
     actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
         val value = realm_value_t()
         realmc.realm_results_get(results.cptr(), index, value)
-        return Link(value.link.target.obj_key, value.link.target_table.table_key)
+        return value.asLink()
     }
 
-    actual fun realm_get_object(realm: NativePointer, tableKey: Long, objKey: Long): NativePointer {
-        val table = realm_table_key_t().apply { table_key = tableKey }
-        val obj = realm_obj_key_t().apply { obj_key = objKey }
+    actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
+        val table = realm_table_key_t().apply { table_key = link.tableKey }
+        val obj = realm_obj_key_t().apply { obj_key = link.objKey }
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), table, obj))
     }
 
@@ -256,9 +253,16 @@ actual object RealmInterop {
                 value.string = o
             }
             else -> {
-                TODO("Value conversion not yet implemented for : ${o.javaClass}")
+                TODO("Value conversion not yet implemented for : ${o::class.simpleName}")
             }
         }
         return value
+    }
+
+    private fun realm_value_t.asLink(): Link {
+        if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
+            error("Value is not of type link: $this.type")
+        }
+        return Link(this.link.target.obj_key, this.link.target_table.table_key)
     }
 }

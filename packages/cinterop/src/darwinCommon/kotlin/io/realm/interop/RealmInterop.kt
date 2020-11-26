@@ -1,12 +1,15 @@
 package io.realm.interop
 
+import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModel
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cValue
@@ -16,6 +19,7 @@ import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.readValue
 import kotlinx.cinterop.set
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
@@ -25,6 +29,7 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_obj_key
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_string_t
@@ -36,10 +41,11 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
+            val runtimeException = RuntimeException(error.message.toKString())
             realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             //  https://github.com/realm/realm-kotlin/issues/70
-            throw RuntimeException(error.message.toKString())
+            throw runtimeException
         }
     }
 }
@@ -70,6 +76,18 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
         val cstr = s.cstr
         data = cstr.getPointer(memScope)
         size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
+    }
+    return this
+}
+
+fun realm_value_t.set(memScope: MemScope, value: Any): realm_value_t {
+    when (value) {
+        is String -> {
+            type = realm_value_type.RLM_TYPE_STRING
+            string.set(memScope, value)
+        }
+        else ->
+            TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
     }
     return this
 }
@@ -147,11 +165,21 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
-        throwOnError(realm_wrapper.realm_config_set_schema_mode(config.cptr(), realm_schema_mode.RLM_SCHEMA_MODE_ADDITIVE))
+        throwOnError(
+            realm_wrapper.realm_config_set_schema_mode(
+                config.cptr(),
+                realm_schema_mode.RLM_SCHEMA_MODE_ADDITIVE
+            )
+        )
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
-        throwOnError(realm_wrapper.realm_config_set_schema_version(config.cptr(), version.toULong()))
+        throwOnError(
+            realm_wrapper.realm_config_set_schema_version(
+                config.cptr(),
+                version.toULong()
+            )
+        )
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
@@ -217,7 +245,14 @@ actual object RealmInterop {
     // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
     //  getter/setter, or through specialized methods.
     //  https://github.com/realm/realm-kotlin/issues/69
-    actual fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(
+        realm: NativePointer,
+        obj: NativePointer,
+        table: String,
+        col: String,
+        value: T,
+        isDefault: Boolean
+    ) {
         TODO("Not yet implemented") // https://github.com/realm/realm-kotlin/issues/69
         // Cannot pass realm_value_t by value to cinterop layer so added specialization in realm.def
         // Calling
@@ -229,15 +264,26 @@ actual object RealmInterop {
     // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
     //  getter/setter, or through specialized methods.
     //  https://github.com/realm/realm-kotlin/issues/69
-    actual fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
+    actual fun <T> realm_get_value(
+        realm: NativePointer,
+        obj: NativePointer,
+        table: String,
+        col: String,
+        type: PropertyType
+    ): T {
         TODO("Not yet implemented") // https://github.com/realm/realm-kotlin/issues/69
     }
 
-    actual fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String {
+    actual fun objectGetString(
+        realm: NativePointer,
+        obj: NativePointer,
+        table: String,
+        col: String
+    ): String {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
+            realm_wrapper.realm_get_value(obj.cptr(), propertyInfo.key.readValue(), value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_STRING ->
                     return value.string.toKString()
@@ -251,11 +297,17 @@ actual object RealmInterop {
         }
     }
 
-    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
+    actual fun objectSetString(
+        realm: NativePointer,
+        obj: NativePointer,
+        table: String,
+        col: String,
+        value: String
+    ) {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             realm_wrapper.realm_set_value_string(
-                o.cptr(),
+                obj.cptr(),
                 propertyInfo.key.readValue(),
                 value.toRString(memScope),
                 false
@@ -263,10 +315,20 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
+    actual fun realm_query_parse(
+        realm: NativePointer,
+        table: String,
+        query: String,
+        vararg args: Any
+    ): NativePointer {
         memScoped {
             val count = args.size
             val cArgs = allocArray<realm_value_t>(count)
+            args.mapIndexed { i, arg ->
+                cArgs[i].apply {
+                    set(memScope, arg)
+                }
+            }
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
@@ -279,17 +341,84 @@ actual object RealmInterop {
         }
     }
 
+    actual fun <T : RealmModel> realm_query_find_first(realm: NativePointer): Link {
+        memScoped {
+            val found = alloc<BooleanVar>()
+            val value = alloc<realm_value_t>()
+            throwOnError(realm_wrapper.realm_query_find_first(realm.cptr(), value.ptr, found.ptr))
+            if (!found.value) {
+                error("Query did not find anything")
+            }
+            if (value.type != realm_value_type.RLM_TYPE_INT) {
+                error("Query did not return link but ${value.type}")
+            }
+            return Link(value.link.target.obj_key, value.link.target_table.table_key.toLong())
+        }
+    }
+
+    actual fun realm_query_find_all(query: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_results_count(results: NativePointer): Long {
+        memScoped {
+            val count = alloc<ULongVar>()
+            throwOnError(realm_wrapper.realm_results_count(results.cptr(), count.ptr))
+            return count.value.toLong()
+        }
+    }
+
+    actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
+        memScoped {
+            val value = alloc<realm_value_t>()
+            throwOnError(realm_wrapper.realm_results_get(results.cptr(), index.toULong(), value.ptr))
+            return value.asLink()
+        }
+    }
+
+    actual fun realm_get_object( realm: NativePointer, link: Link ): NativePointer {
+        val tableKey = cValue<realm_table_key_t> { table_key = link.tableKey.toUInt() }
+        val objKey = cValue<realm_obj_key> { obj_key = link.objKey }
+        return CPointerWrapper(realm_wrapper.realm_get_object(realm.cptr(), tableKey, objKey))
+    }
+
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()
-        throwOnError(realm_wrapper.realm_find_class(realm.cptr(), table.toRString(memScope), found.ptr, classInfo.ptr))
+        throwOnError(
+            realm_wrapper.realm_find_class(
+                realm.cptr(),
+                table.toRString(memScope),
+                found.ptr,
+                classInfo.ptr
+            )
+        )
         return classInfo
     }
 
-    private fun MemScope.propertyInfo(realm: NativePointer, classInfo: realm_class_info_t, col: String): realm_property_info_t {
+    private fun MemScope.propertyInfo(
+        realm: NativePointer,
+        classInfo: realm_class_info_t,
+        col: String
+    ): realm_property_info_t {
         val found = alloc<BooleanVar>()
         val propertyInfo = alloc<realm_property_info_t>()
-        throwOnError(realm_find_property(realm.cptr(), classInfo.key.readValue(), col.toRString(memScope), found.ptr, propertyInfo.ptr))
+        throwOnError(
+            realm_find_property(
+                realm.cptr(),
+                classInfo.key.readValue(),
+                col.toRString(memScope),
+                found.ptr,
+                propertyInfo.ptr
+            )
+        )
         return propertyInfo
+    }
+
+    private fun realm_value_t.asLink(): Link {
+        if (this.type != realm_value_type.RLM_TYPE_LINK) {
+            error("Value is not of type link: $this.type")
+        }
+        return Link(this.link.target.obj_key, this.link.target_table.table_key.toLong())
     }
 }

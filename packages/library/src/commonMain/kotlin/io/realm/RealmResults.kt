@@ -8,8 +8,10 @@ import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
-// FIXME Query support
-//  https://github.com/realm/realm-kotlin/issues/64
+// FIXME API-QUERY
+//  - Lazy API makes it harded to debug
+//  - Postponing execution to actually accessing the elements also prevents query parser errors to
+//    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 class RealmResults<T : RealmModel> constructor(
     private val realm: NativePointer,
     private val queryPointer: () -> NativePointer,
@@ -17,8 +19,8 @@ class RealmResults<T : RealmModel> constructor(
     private val modelFactory: ModelFactory
 ) : AbstractList<T>(), Queryable<T> {
 
-    val query: NativePointer by lazy { queryPointer() }
-    val result: NativePointer by lazy { RealmInterop.realm_query_find_all(query) }
+    private val query: NativePointer by lazy { queryPointer() }
+    private val result: NativePointer by lazy { RealmInterop.realm_query_find_all(query) }
 
     override val size: Int
         get() = RealmInterop.realm_results_count(result).toInt()
