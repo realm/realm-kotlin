@@ -34,13 +34,10 @@ android {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
         versionName = Realm.version
-        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
             val main by getting {
-                // Cannot set these on KMM kotlin source set
-                java.srcDir("src/jvmCommon/java")
-                jni.srcDir("src/jvmCommon/jni")
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
                 // Don't know how to set AndroidTest source dir, probably in its own source set by
                 // "val test by getting" instead
@@ -157,25 +154,28 @@ kotlin {
         //  native cinterops)
         val jvmCommon by creating {
             dependsOn(commonMain)
-            kotlin.srcDir("src/jvmCommon/kotlin")
+            // IDE does not resolve 'jni-swig-module'-symbols in 'src/jvmCommon/kotlin/' if source
+            // set is added here. Probably similar to issues around cinterop symbols not be
+            // resolveable when added to both macos and ios platform. Current work around is to
+            // add the common code explicitly to android and jvm source sets.
+            // kotlin.srcDir("src/jvmCommon/kotlin")
             dependencies {
+                implementation(kotlin("stdlib"))
                 api(project(":jni-swig-stub"))
             }
         }
 
         val androidMain by getting {
             dependsOn(jvmCommon)
+            kotlin.srcDir("src/jvmCommon/kotlin")
             dependencies {
-                implementation(kotlin("stdlib"))
                 implementation("androidx.startup:startup-runtime:1.0.0")
             }
         }
 
         val jvmMain by getting {
             dependsOn(jvmCommon)
-            dependencies {
-                implementation(kotlin("stdlib"))
-            }
+            kotlin.srcDir("src/jvmCommon/kotlin")
         }
         val androidTest by getting {
             dependencies {
