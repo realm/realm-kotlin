@@ -8,7 +8,6 @@ import io.realm.interop.Table
 import io.realm.runtimeapi.Mediator
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmCompanion
-import io.realm.runtimeapi.RealmModel
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
