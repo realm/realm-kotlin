@@ -75,7 +75,7 @@ class Realm {
         )
     }
 
-    fun <T: RealmModel> objects(clazz: KClass<T>): RealmResults<T> {
+    fun <T : RealmModel> objects(clazz: KClass<T>): RealmResults<T> {
         return RealmResults(
             dbPointer!!,
             @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
@@ -84,5 +84,4 @@ class Realm {
             realmConfiguration.schema
         )
     }
-
 }

@@ -19,12 +19,12 @@ package io.realm.example.kmmsample
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.runtimeapi.RealmCompanion
 
 class ExpressionRepository {
 
     val realm: Realm by lazy {
-        val configuration = RealmConfiguration.Builder(schema = Entities())
+        val configuration = RealmConfiguration.Builder()
+            .schema(Entities())
             .build()
 
         Realm.open(configuration)
