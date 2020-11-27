@@ -1,7 +1,24 @@
+/*
+ * Copyright 2020 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.runtimeapi.Mediator
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModel
@@ -11,6 +28,8 @@ import java.io.File
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -78,7 +97,7 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun `synthetic schema method generated`() {
+    fun `synthetic method generated`() {
         val inputs = Files("/sample")
 
         val result = compile(inputs)
@@ -93,7 +112,9 @@ class GenerationExtensionTest {
 
         val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
         assertEquals(expected, companionObject.`$realm$schema`())
-
+        val newInstance = companionObject.`$realm$newInstance`()
+        assertNotNull(newInstance)
+        assertEquals(kClazz, newInstance.javaClass)
         inputs.assertGeneratedIR()
     }
 
@@ -126,6 +147,43 @@ class GenerationExtensionTest {
         // nameProperty.setter.call(sampleModel, "Zepp")
         // get value using the CInterop call
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
+
+        inputs.assertGeneratedIR()
+    }
+
+    @Test
+    fun `should generate mediator implementation`() {
+        val inputs = Files("/modules")
+
+        val result = compile(inputs)
+
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val kClazz = result.classLoader.loadClass("modules.input.Entities")
+        val entitiesModule = kClazz.newInstance()!!
+
+        assertTrue(entitiesModule is Mediator)
+        val schema: List<Any> = entitiesModule.schema()
+        assertNotNull(schema)
+        assertEquals(3, schema.size)
+
+        val kClassB = result.classLoader.loadClass("modules.input.B")
+        assertNotNull(kClassB)
+        assertNotNull(entitiesModule.newInstance(kClassB.kotlin))
+
+        val kClassC = result.classLoader.loadClass("modules.input.C")
+        assertNotNull(kClassC)
+        assertNotNull(entitiesModule.newInstance(kClassC.kotlin))
+
+        assertNotEquals(kClassB, kClassC)
+
+        // subset of model included in the schema
+        val subsetKclazz = result.classLoader.loadClass("modules.input.Subset")
+        val subsetModule = subsetKclazz.newInstance()!!
+        assertTrue(subsetModule is Mediator)
+        val subsetSchema: List<Any> = subsetModule.schema()
+        assertNotNull(subsetSchema)
+        assertEquals(2, subsetSchema.size)
 
         inputs.assertGeneratedIR()
     }

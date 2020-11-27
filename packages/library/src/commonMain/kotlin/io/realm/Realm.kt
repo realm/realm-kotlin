@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm
 
 import io.realm.internal.manage
@@ -42,7 +58,6 @@ class Realm {
     fun registerListener(f: () -> Unit) {
     }
 
-
     //    reflection is not supported in K/N so we can't offer method like
     //    inline fun <reified T : RealmModel> create() : T
     //    to create a dynamically managed model. we're limited thus to persist methods
@@ -51,7 +66,7 @@ class Realm {
     //    doing this operation in place)
     fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
-        val managedModel = realmConfiguration.modelFactory.invoke(type) as RealmModelInternal
+        val managedModel = realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
         return managedModel.manage(
             dbPointer!!,
@@ -66,7 +81,7 @@ class Realm {
             @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
             { RealmInterop.realm_query_parse(dbPointer!!, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
-            realmConfiguration.modelFactory
+            realmConfiguration.schema
         )
     }
 
