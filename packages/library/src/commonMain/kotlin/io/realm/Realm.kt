@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm
 
 import io.realm.interop.RealmInterop
@@ -49,7 +65,7 @@ class Realm {
         return RealmResults(
             query,
             clazz,
-            realmConfiguration.modelFactory
+            realmConfiguration.schema
         )
     }
     //    reflection is not supported in K/N so we can't offer method like
@@ -60,7 +76,7 @@ class Realm {
     //    doing this operation in place)
     fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
-        val managedModel = realmConfiguration.modelFactory.invoke(type) as RealmModelInternal
+        val managedModel = realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
         managedModel.`$realm$Pointer` = dbPointer
         managedModel.`$realm$ObjectPointer` = RealmInterop.realm_object_create(dbPointer!!, key)
