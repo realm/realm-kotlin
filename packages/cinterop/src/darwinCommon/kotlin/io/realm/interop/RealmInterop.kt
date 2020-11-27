@@ -392,7 +392,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_object( realm: NativePointer, link: Link ): NativePointer {
+    actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
         val tableKey = cValue<realm_table_key_t> { table_key = link.tableKey.toUInt() }
         val objKey = cValue<realm_obj_key> { obj_key = link.objKey }
         return CPointerWrapper(realm_wrapper.realm_get_object(realm.cptr(), tableKey, objKey))

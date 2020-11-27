@@ -51,6 +51,7 @@ class RealmResults<T : RealmModel> constructor(
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return RealmResults(
             realm,
+            @Suppress("SpreadOperator")
             { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
             clazz,
             schema,

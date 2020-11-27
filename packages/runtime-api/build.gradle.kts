@@ -67,7 +67,7 @@ android {
         targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1 // TODO What should we set this to, if anything?
         versionName = Realm.version
-        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
             getByName("main") {

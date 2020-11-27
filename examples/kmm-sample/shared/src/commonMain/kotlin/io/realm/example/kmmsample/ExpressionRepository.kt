@@ -24,17 +24,7 @@ import io.realm.runtimeapi.RealmCompanion
 class ExpressionRepository {
 
     val realm: Realm by lazy {
-        val configuration = RealmConfiguration.Builder()
-            // FIXME MEDIATOR Remove when object creation is internalized
-            //  https://github.com/realm/realm-kotlin/issues/54
-            .factory { _ -> Expression() }
-            // FIXME MEDIATOR Remove when shcema definition is internalized
-            //  https://github.com/realm/realm-kotlin/issues/54
-            .classes(
-                listOf(
-                    Expression.Companion as RealmCompanion
-                )
-            )
+        val configuration = RealmConfiguration.Builder(schema = Entities())
             .build()
 
         Realm.open(configuration)
