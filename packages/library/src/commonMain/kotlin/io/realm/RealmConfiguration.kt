@@ -43,19 +43,16 @@ class RealmConfiguration private constructor(
     ) {
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
-        fun schema(schema: Any) = apply {
-            if (schema is RealmModel) {
-                this.schema = schema as Mediator
-            } else {
-                error("schema parameter should be a class annotated with @RealmModule")
-            }
-        }
+        fun schema(schema: Any) = apply { this.schema = schema }
 
         fun classes(classes: List<RealmCompanion>) = apply { this.classes = classes }
         fun build(): RealmConfiguration {
             if (path == null) {
                 val directory = PlatformHelper.appFilesDirectory()
                 path = "$directory/$name.realm"
+            }
+            if (schema !is Mediator) {
+                error("schema parameter should be a class annotated with @RealmModule")
             }
             return RealmConfiguration(
                 path, name, schema as Mediator,
