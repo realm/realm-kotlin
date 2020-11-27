@@ -63,7 +63,7 @@ class Realm {
         return RealmResults(
             query,
             clazz,
-            realmConfiguration.modelFactory
+            realmConfiguration.schema
         )
     }
     //    reflection is not supported in K/N so we can't offer method like
@@ -74,7 +74,7 @@ class Realm {
     //    doing this operation in place)
     fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
-        val managedModel = realmConfiguration.modelFactory.invoke(type) as RealmModelInternal
+        val managedModel = realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
         managedModel.`$realm$Pointer` = dbPointer
         managedModel.`$realm$ObjectPointer` = RealmInterop.realm_object_create(dbPointer!!, key)

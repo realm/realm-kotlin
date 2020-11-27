@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.runtimeapi.Mediator
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
@@ -24,13 +25,14 @@ import kotlin.reflect.KClass
 class RealmResults<T : RealmModel> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<T>,
-    private val modelFactory: ModelFactory
+    private val schema: Mediator
 ) : AbstractList<T>() {
     override val size: Int
         get() = TODO() // CInterop.queryGetSize(queryPointer).toInt()
 
     override fun get(index: Int): T {
-        val model = modelFactory.invoke(clazz) as RealmModelInternal
+        val model = schema.newInstance(clazz) as RealmModelInternal
+
 //        val objectPointer = TODO() // CInterop.queryGetObjectAt(queryPointer, clazz.simpleName!!, index)
 //        model.isManaged = true
 //        model.realmObjectPointer = objectPointer

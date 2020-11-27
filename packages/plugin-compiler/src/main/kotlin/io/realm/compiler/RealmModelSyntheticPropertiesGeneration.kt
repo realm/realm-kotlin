@@ -16,13 +16,15 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.FqNames.NATIVE_POINTER
+import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
+import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
+import io.realm.compiler.Names.COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.REALM_POINTER
-import io.realm.compiler.Names.SCHEMA_METHOD
 import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -44,21 +46,23 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.name.Name
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
-    private val realmModelInternal = pluginContext.referenceClass(REALM_MODEL_INTERFACE)
-        ?: error("${REALM_MODEL_INTERFACE.asString()} is not available")
-    private val nullableNativePointerInterface = pluginContext.referenceClass(NATIVE_POINTER)?.createType(true, emptyList())
-        ?: error("${NATIVE_POINTER.asString()} interface not found")
+    private val realmModelInternal = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERFACE)
+    private val nullableNativePointerInterface = pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
+        .symbol.createType(true, emptyList())
+    private val realmCompanionInterface = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
@@ -69,18 +73,45 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
-    fun addSchema(irClass: IrClass) {
+    fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val name = irClass.name.identifier
-        val fields: MutableMap<String, Pair<String, Boolean>> = SchemaCollector.properties.getOrDefault(name, mutableMapOf())
+        val fields: MutableMap<String, Pair<String, Boolean>> = SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        val function = companionObject.functions.first { it.name == SCHEMA_METHOD }
+        val function = companionObject.functions.first { it.name == COMPANION_SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            +irReturn(irString(schemaString(name, fields)))
+            +irReturn(irString(schemaString(irClass.name.identifier, fields)))
         }
+
+        function.overriddenSymbols = listOf(realmCompanionInterface.functions.first { it.name == COMPANION_SCHEMA_METHOD }.symbol)
+    }
+
+    // Generate body for the synthetic new instance method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
+    fun addNewInstanceMethodBody(irClass: IrClass) {
+        val companionObject = irClass.companionObject() as? IrClass
+            ?: error("Companion object not available")
+
+        val function = companionObject.functions.first { it.name == COMPANION_NEW_INSTANCE_METHOD }
+        function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
+        function.body = pluginContext.blockBody(function.symbol) {
+            val defaultCtor = irClass.constructors.find { it.isPrimary }
+                ?: error("Can not find primary constructor")
+            +irReturn(
+                IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
+                    startOffset,
+                    endOffset,
+                    defaultCtor.returnType,
+                    defaultCtor.symbol,
+                    0,
+                    0,
+                    0,
+                    origin = null
+                )
+            )
+        }
+        function.overriddenSymbols = listOf(realmCompanionInterface.functions.first { it.name == COMPANION_NEW_INSTANCE_METHOD }.symbol)
     }
 
     private fun IrClass.addProperty(propertyName: Name, propertyType: IrType, initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody) {
@@ -121,7 +152,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
         // overridden:
         //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInternal
-        val propertyAccessorGetter = realmModelInternal.owner.getPropertyGetter(propertyName.asString())
+        val propertyAccessorGetter = realmModelInternal.getPropertyGetter(propertyName.asString())
             ?: error("${propertyName.asString()} function getter symbol is not available")
         getter.overriddenSymbols = listOf(propertyAccessorGetter)
 
@@ -151,7 +182,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         // overridden:
         //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmModelInternal
-        val realmPointerSetter = realmModelInternal.owner.getPropertySetter(propertyName.asString())
+        val realmPointerSetter = realmModelInternal.getPropertySetter(propertyName.asString())
             ?: error("${propertyName.asString()} function getter symbol is not available")
         setter.overriddenSymbols = listOf(realmPointerSetter)
 
@@ -175,8 +206,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val itField = fields.iterator()
         while (itField.hasNext()) {
-            val fields = itField.next()
-            builder.append("{\"${fields.key}\": {\"type\": \"${fields.value.first}\", \"nullable\": \"${fields.value.second}\"}}")
+            val field = itField.next()
+            builder.append("{\"${field.key}\": {\"type\": \"${field.value.first}\", \"nullable\": \"${field.value.second}\"}}")
             if (itField.hasNext()) {
                 builder.append(",")
             }
