@@ -248,6 +248,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), table, obj))
     }
 
+    actual fun realm_results_delete_all(results: NativePointer) {
+        realmc.realm_results_delete_all(results.cptr())
+    }
+
     fun NativePointer.cptr(): Long {
         return (this as LongPointerWrapper).ptr
     }

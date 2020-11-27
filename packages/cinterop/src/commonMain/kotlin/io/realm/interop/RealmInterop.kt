@@ -78,4 +78,6 @@ expect object RealmInterop {
     fun <T> realm_results_get(results: NativePointer, index: Long): Link
 
     fun realm_get_object(realm: NativePointer, link: Link): NativePointer
+
+    fun realm_results_delete_all(results: NativePointer)
 }

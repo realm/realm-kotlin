@@ -398,6 +398,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_get_object(realm.cptr(), tableKey, objKey))
     }
 
+    actual fun realm_results_delete_all(results: NativePointer) {
+        realm_wrapper.realm_results_delete_all(results.cptr())
+    }
+
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()

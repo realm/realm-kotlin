@@ -57,4 +57,10 @@ class RealmResults<T : RealmModel> constructor(
             schema,
         )
     }
+
+    fun delete() {
+        // TODO OPTIMIZE Are there more efficient ways to do this? realm_query_delete_all is not
+        //  available in C-API yet.
+        RealmInterop.realm_results_delete_all(result)
+    }
 }

@@ -64,6 +64,12 @@ class InstrumentedTests {
         assertFailsWith<RuntimeException> {
             println(objects3)
         }
+
+        realm.beginTransaction()
+        realm.objects(Sample::class).delete()
+        realm.commitTransaction()
+
+        assertEquals(0, realm.objects(Sample::class).size)
     }
 
     // FIXME API-CLEANUP Local implementation of pointer wrapper to support test. Using the internal

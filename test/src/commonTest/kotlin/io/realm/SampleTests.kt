@@ -78,6 +78,12 @@ class SampleTests {
         assertFailsWith<RuntimeException> {
             println(objects3)
         }
+
+        realm.beginTransaction()
+        realm.objects(Sample::class).delete()
+        realm.commitTransaction()
+
+        assertEquals(0, realm.objects(Sample::class).size)
     }
 
     @Test
