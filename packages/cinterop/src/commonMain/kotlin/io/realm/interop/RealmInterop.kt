@@ -19,7 +19,6 @@ package io.realm.interop
 // FIXME Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -79,7 +78,6 @@ expect object RealmInterop {
 
     fun realm_object_delete(obj: NativePointer)
     // FIXME Rest of delete calls are related to queries
-    //  https://github.com/realm/realm-kotlin/issues/67
     //  https://github.com/realm/realm-kotlin/issues/64
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
     // RLM_API bool realm_results_delete_all(realm_results_t*);

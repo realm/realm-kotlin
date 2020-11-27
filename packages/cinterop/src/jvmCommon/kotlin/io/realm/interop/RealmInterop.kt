@@ -18,7 +18,6 @@ package io.realm.interop
 // FIXME Rename io.realm.interop. to something with platform?
 
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
 
 actual object RealmInterop {
     // TODO Maybe pull library loading into separate method
