@@ -18,6 +18,7 @@ package io.realm.interop
 // FIXME Rename io.realm.interop. to something with platform?
 
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModel
 
 actual object RealmInterop {
     // TODO Maybe pull library loading into separate method
@@ -192,5 +193,9 @@ actual object RealmInterop {
 
     actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
         realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun realm_object_delete(obj: NativePointer) {
+        realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
     }
 }

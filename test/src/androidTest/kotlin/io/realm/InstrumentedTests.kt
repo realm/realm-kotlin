@@ -26,6 +26,7 @@ import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
@@ -56,6 +57,13 @@ class InstrumentedTests {
         kotlin.test.assertEquals("", sample.name)
         sample.name = "Hello, World!"
         kotlin.test.assertEquals("Hello, World!", sample.name)
+        realm.commitTransaction()
+
+        realm.beginTransaction()
+        Realm.delete(sample)
+        assertFailsWith<IllegalArgumentException> {
+            Realm.delete(sample)
+        }
         realm.commitTransaction()
     }
 
