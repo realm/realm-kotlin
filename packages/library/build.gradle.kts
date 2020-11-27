@@ -39,8 +39,7 @@ kotlin {
                 api(project(":runtime-api"))
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
-                // FIXME MEDIATOR Only used for parsing schema strings until properly typed. Remove when
-                //  https://github.com/realm/realm-kotlin/issues/54 is done.
+                // FIXME API-SCHEMA Only used for parsing schema strings until properly typed.
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
             }
         }
