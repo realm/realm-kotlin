@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import groovy.json.JsonOutput
 
 @Library('realm-ci') _
@@ -22,7 +21,7 @@ import groovy.json.JsonOutput
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
 releaseBranches = ['master', 'next-major']
 // Branches that are "important", so if they do not compile they will generate a Slack notification
-slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
+slackNotificationBranches = ['master', 'releases', 'next-major']
 // Shortcut to current branch name that is being tested
 currentBranch = env.CHANGE_BRANCH
 // Will be set to `true` if this build is a full release that should be available on Bintray.
@@ -31,30 +30,41 @@ publishBuild = false
 // Version of Realm Kotlin being tested. This values is defined in `buildSrc/src/main/kotlin/Config.kt`.
 version = null
 
+// Mac CI dedicated machine
+osx_kotlin = 'osx_kotlin'
+
 pipeline {
     agent none
     stages {
-        stage('SCM') { 
+        stage('SCM') {
             steps {
                 runScm()
             }
         }
-        stage('Static Analysis') { 
+        stage('Build') { // check if we can compile all artifacts
             steps {
-                runStaticAnalysis() 
+                runBuild()
             }
         }
-        stage('Build') { 
+
+        stage('Static Analysis') { // checkstyle verification
             steps {
-                runBuild() 
+                runStaticAnalysis()
             }
         }
-        stage('Publish to OJO') {
-            when { expression { shouldReleaseSnapshot(version) } }
+
+        stage('Tests') { // unit and integration tests
             steps {
-                runPublishToOjo()
+                runTests()
             }
         }
+
+//        stage('Publish to OJO') { // publish artifacts
+//            when { expression { shouldReleaseSnapshot(version) } }
+//            steps {
+//                runPublishToOjo()
+//            }
+//        }
     }
     post {
         failure {
@@ -70,7 +80,7 @@ pipeline {
 }
 
 def runScm() {
-    node('docker') {
+    node(osx_kotlin) {
         checkout([
                 $class           : 'GitSCM',
                 branches         : scm.branches,
@@ -107,164 +117,97 @@ def runScm() {
     }
 }
 
+def runBuild() {
+    getArchive()
+    sh '''
+          export ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/
+          export NDK_HOME=/Users/realm/Library/Android/sdk/ndk/22.0.6917172
+          export ANDROID_NDK=$NDK_HOME
+          export ANDROID_NDK_HOME=$NDK_HOME
+          export PATH=$PATH:/usr/local/bin
+          cd packages
+          chmod +x gradlew && ./gradlew clean assemble --info --stacktrace
+        '''
+}
+
 def runStaticAnalysis() {
-    node('android') {
-        getArchive()
-        // ktlintCheck requires Android SDK for configuration of examples/kmm-sample/androidApp, so
-        // executing in docker context
-        androidDockerBuild {
-            try {
-                sh 'chmod +x gradlew && ./gradlew ktlintCheck'
-                sh 'chmod +x gradlew && ./gradlew detekt'
-            } finally {
-                // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
-                // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
-                // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
-                sh '''
-                rm -rf /tmp/ktlint 
-                rm -rf /tmp/detekt 
+    try {
+        sh './gradlew ktlintCheck'
+        sh './gradlew detekt'
+    } finally {
+        // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
+        // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
+        // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
+        sh '''
+                rm -rf /tmp/ktlint
+                rm -rf /tmp/detekt
                 mkdir /tmp/ktlint
                 mkdir /tmp/detekt
-                rsync -a --delete --ignore-errors example/app/build/reports/ktlint/ /tmp/ktlint/example/ || true 
-                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true 
+                rsync -a --delete --ignore-errors example/app/build/reports/ktlint/ /tmp/ktlint/example/ || true
+                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
                 rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
                 rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
                 rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
-                rsync -a --delete --ignore-errors example/app/build/reports/detekt/ /tmp/detekt/example/ || true 
-                rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true 
+                rsync -a --delete --ignore-errors example/app/build/reports/detekt/ /tmp/detekt/example/ || true
+                rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
                 rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
                 rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
                 rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''
-                zip([
-                        'zipFile': 'ktlint.zip',
-                        'archive': true,
-                        'dir'    : '/tmp/ktlint'
-                ])
-                zip([
-                        'zipFile': 'detekt.zip',
-                        'archive': true,
-                        'dir'    : '/tmp/detekt'
-                ])
-            }
-        }
+        zip([
+                'zipFile': 'ktlint.zip',
+                'archive': true,
+                'dir'    : '/tmp/ktlint'
+        ])
+        zip([
+                'zipFile': 'detekt.zip',
+                'archive': true,
+                'dir'    : '/tmp/detekt'
+        ])
     }
 }
- 
-def runBuild() {
+
+def runTests() {
     parralelExecutors = [:]
-    parralelExecutors['compiler']  = jvm             {
+    parralelExecutors['compiler'] = run {
         sh """
             cd packages
             ./gradlew clean :plugin-compiler:test --info --stacktrace
         """
-        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
+        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
     // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
     //  https://github.com/realm/realm-kotlin/issues/62
     // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
-    parralelExecutors['android']   = androidEmulator { test("connectedAndroidTest") }
-    parralelExecutors['macos']   = macos           { test("macosTest") }
+    parralelExecutors['android'] = run { test("connectedAndroidTest") }
+    parralelExecutors['macos'] = run { test("macosTest") }
     parallel parralelExecutors
 }
 
-def runPublishToOjo() {
-    node('osx_kotlin') {
-        androidDockerBuild({
-            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
-                sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
-            }
-        })
-    }
-}
+//def runPublishToOjo() {
+//    node('docker-cph-03') {
+//        androidDockerBuild({
+//            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
+//                sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
+//            }
+//        })
+//    }
+//}
 
 def test(task) {
     sh """
         cd test
-        ./gradlew clean $task --info --stacktrace
+        ./gradlew $task --info --stacktrace
     """
-    step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
+    step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
 }
 
-def macos(workerFunction) {
+def run(workerFunction) {
     return {
-        node('osx') {
-            getArchive()
+        node(osx_kotlin) {
             workerFunction()
-        }
-    }
-}
-
-def jvm(workerFunction) {
-    return {
-        // FIXME Could just use a docker node, but do not have overview on all the caching
-        //  considerations now, so just reusing an Android machine with gradle caching etc.
-        node('osx_kotlin') {
-            getArchive()
-            // TODO Consider adding a specific jvm docker image instead. For now just reuse Android
-            //  one as it fulfills the toolchain requirement
-            androidDockerBuild {
-                workerFunction()
-            }
-        }
-    }
-}
-
-def androidDockerBuild(workerFunction) {
-    def image = buildDockerEnv('ci/realm-kotlin:android-build', extra_args: '-f Dockerfile.android')
-    // Locking on the "android" lock to prevent concurrent usage of the gradle-cache
-    // @see https://github.com/realm/realm-java/blob/00698d1/Jenkinsfile#L65
-    sh "echo Waiting for log ${env.NODE_NAME}-android"
-    lock("${env.NODE_NAME}-android") {
-        image.inside("-e HOME=/tmp " +
-                        "-e _JAVA_OPTIONS=-Duser.home=/tmp " +
-                        "-e REALM_CORE_DOWNLOAD_DIR=/tmp/.gradle " +
-                        // Mounting ~/.android/adbkey(.pub) to reuse the adb keys
-                        "-v ${HOME}/.android:/tmp/.android " +
-                        // Mounting ~/gradle-cache as ~/.gradle to prevent gradle from being redownloaded
-                        "-v ${HOME}/gradle-cache:/tmp/.gradle " +
-                        // Mounting ~/ccache as ~/.ccache to reuse the cache across builds
-                        "-v ${HOME}/ccache:/tmp/.ccache " +
-                        // Mounting /dev/bus/usb with --privileged to allow connecting to the device via USB
-                        "-v /dev/bus/usb:/dev/bus/usb " +
-                        "--privileged"
-        ) {
-            workerFunction()
-        }
-    }
-}
-
-def androidDevice(workerFunction) {
-    return {
-        node('osx_kotlin') {
-            getArchive()
-            androidDockerBuild {
-                workerFunction()
-            }
-        }
-    }
-}
-
-def androidEmulator(workerFunction) {
-    return {
-        node('osx_kotlin') {
-            getArchive()
-            androidDockerBuild {
-                sh """
-                        yes '\n' | avdmanager create avd -n CIEmulator -k 'system-images;android-29;default;x86_64' --force
-                        # https://stackoverflow.com/questions/56198290/problems-with-adb-exe
-                        adb start-server
-                        # Need to go to ANDROID_HOME due to https://askubuntu.com/questions/1005944/emulator-avd-does-not-launch-the-virtual-device
-                        cd \$ANDROID_HOME/tools && emulator -avd CIEmulator -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098 &
-                    """
-                try {
-                    workerFunction()
-                } finally {
-                    sh "adb emu kill"
-                }
-            }
         }
     }
 }
@@ -280,9 +223,9 @@ def notifySlackIfRequired(String slackMessage) {
         node {
             withCredentials([[$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL']]) {
                 def payload = JsonOutput.toJson([
-                    username: "Realm CI",
-                    icon_emoji: ":realm_new:",
-                    text: "${slackMessage}\n<${env.BUILD_URL}|Click here> to check the build."
+                        username  : "Realm CI",
+                        icon_emoji: ":realm_new:",
+                        text      : "${slackMessage}\n<${env.BUILD_URL}|Click here> to check the build."
                 ])
 
                 sh "curl -X POST --data-urlencode \'payload=${payload}\' ${env.SLACK_URL}"
