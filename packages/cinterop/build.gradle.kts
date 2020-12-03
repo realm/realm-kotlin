@@ -36,6 +36,7 @@ val idea = System.getProperty("idea.active") == "true"
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
+    ndkVersion = "22.0.6917172"
 
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)

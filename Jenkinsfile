@@ -118,72 +118,80 @@ def runScm() {
 }
 
 def runBuild() {
-    getArchive()
-    sh '''
-          export ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/
-          export NDK_HOME=/Users/realm/Library/Android/sdk/ndk/22.0.6917172
-          export ANDROID_NDK=$NDK_HOME
-          export ANDROID_NDK_HOME=$NDK_HOME
-          export PATH=$PATH:/usr/local/bin
-          cd packages
-          chmod +x gradlew && ./gradlew clean assemble --info --stacktrace
-        '''
+    node(osx_kotlin) {
+        getArchive()
+        sh '''
+              export ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/
+              export NDK_HOME=/Users/realm/Library/Android/sdk/ndk/22.0.6917172
+              export ANDROID_NDK=$NDK_HOME
+              export ANDROID_NDK_HOME=$NDK_HOME
+              export PATH=$PATH:/usr/local/bin
+              cd packages
+              chmod +x gradlew && ./gradlew clean assemble --info --stacktrace
+            '''
+    }
 }
 
 def runStaticAnalysis() {
-    try {
-        sh './gradlew ktlintCheck'
-        sh './gradlew detekt'
-    } finally {
-        // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
-        // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
-        // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
-        sh '''
-                rm -rf /tmp/ktlint
-                rm -rf /tmp/detekt
-                mkdir /tmp/ktlint
-                mkdir /tmp/detekt
-                rsync -a --delete --ignore-errors example/app/build/reports/ktlint/ /tmp/ktlint/example/ || true
-                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
-                rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
-                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
-                rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
-                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
-                rsync -a --delete --ignore-errors example/app/build/reports/detekt/ /tmp/detekt/example/ || true
-                rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
-                rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
-                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
-                rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
-                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
+    node(osx_kotlin) {
+        try {
+            sh '''
+            export ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/
+            ./gradlew ktlintCheck detekt
             '''
-        zip([
-                'zipFile': 'ktlint.zip',
-                'archive': true,
-                'dir'    : '/tmp/ktlint'
-        ])
-        zip([
-                'zipFile': 'detekt.zip',
-                'archive': true,
-                'dir'    : '/tmp/detekt'
-        ])
+        } finally {
+            // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
+            // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
+            // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
+            sh '''
+                    rm -rf /tmp/ktlint
+                    rm -rf /tmp/detekt
+                    mkdir /tmp/ktlint
+                    mkdir /tmp/detekt
+                    rsync -a --delete --ignore-errors example/app/build/reports/ktlint/ /tmp/ktlint/example/ || true
+                    rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
+                    rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
+                    rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
+                    rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+                    rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
+                    rsync -a --delete --ignore-errors example/app/build/reports/detekt/ /tmp/detekt/example/ || true
+                    rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
+                    rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
+                    rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
+                    rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
+                    rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
+                '''
+            zip([
+                    'zipFile': 'ktlint.zip',
+                    'archive': true,
+                    'dir'    : '/tmp/ktlint'
+            ])
+            zip([
+                    'zipFile': 'detekt.zip',
+                    'archive': true,
+                    'dir'    : '/tmp/detekt'
+            ])
+        }
     }
 }
 
 def runTests() {
-    parralelExecutors = [:]
-    parralelExecutors['compiler'] = run {
-        sh """
-            cd packages
-            ./gradlew clean :plugin-compiler:test --info --stacktrace
-        """
-        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
+    node(osx_kotlin) {
+        parralelExecutors = [:]
+        parralelExecutors['compiler'] = run {
+            sh """
+                cd packages
+                ./gradlew clean :plugin-compiler:test --info --stacktrace
+            """
+            step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
+        }
+        // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
+        //  https://github.com/realm/realm-kotlin/issues/62
+        // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
+        parralelExecutors['android'] = run { test("connectedAndroidTest") }
+        parralelExecutors['macos'] = run { test("macosTest") }
+        parallel parralelExecutors
     }
-    // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
-    //  https://github.com/realm/realm-kotlin/issues/62
-    // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
-    parralelExecutors['android'] = run { test("connectedAndroidTest") }
-    parralelExecutors['macos'] = run { test("macosTest") }
-    parallel parralelExecutors
 }
 
 //def runPublishToOjo() {
