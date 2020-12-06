@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import groovy.json.JsonOutput
 
 @Library('realm-ci') _
@@ -21,7 +22,7 @@ import groovy.json.JsonOutput
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
 releaseBranches = ['master', 'next-major']
 // Branches that are "important", so if they do not compile they will generate a Slack notification
-slackNotificationBranches = ['master', 'releases', 'next-major']
+slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
 currentBranch = env.CHANGE_BRANCH
 // Will be set to `true` if this build is a full release that should be available on Bintray.
@@ -35,36 +36,44 @@ osx_kotlin = 'osx_kotlin'
 
 pipeline {
     agent none
+    environment {
+          ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
+          NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
+          ANDROID_NDK="${NDK_HOME}"
+          ANDROID_NDK_HOME="${NDK_HOME}"
+    }
     stages {
         stage('SCM') {
             steps {
                 runScm()
             }
         }
-        stage('Build') { // check if we can compile all artifacts
+        stage('Build') {
             steps {
                 runBuild()
             }
         }
-
-        stage('Static Analysis') { // checkstyle verification
+        stage('Static Analysis') {
             steps {
                 runStaticAnalysis()
             }
         }
-
-        stage('Tests') { // unit and integration tests
+        stage('Tests Macos') {
             steps {
-                runTests()
+                test("macosTest")
             }
         }
-
-//        stage('Publish to OJO') { // publish artifacts
-//            when { expression { shouldReleaseSnapshot(version) } }
-//            steps {
-//                runPublishToOjo()
-//            }
-//        }
+        stage('Tests Android') {
+            steps {
+                test("connectedAndroidTest")
+            }
+        }
+        stage('Publish to OJO') {
+            when { expression { shouldReleaseSnapshot(version) } }
+            steps {
+                runPublishToOjo()
+            }
+        }
     }
     post {
         failure {
@@ -119,16 +128,14 @@ def runScm() {
 
 def runBuild() {
     node(osx_kotlin) {
-        getArchive()
-        sh '''
-              export ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/
-              export NDK_HOME=/Users/realm/Library/Android/sdk/ndk/22.0.6917172
-              export ANDROID_NDK=$NDK_HOME
-              export ANDROID_NDK_HOME=$NDK_HOME
-              export PATH=$PATH:/usr/local/bin
-              cd packages
-              chmod +x gradlew && ./gradlew clean assemble --info --stacktrace
-            '''
+        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+            getArchive()
+            startEmulatorInBgIfNeeded()
+            sh '''
+                  cd packages
+                  chmod +x gradlew && ./gradlew clean assemble --info --stacktrace --no-daemon
+                '''
+        }
     }
 }
 
@@ -136,8 +143,7 @@ def runStaticAnalysis() {
     node(osx_kotlin) {
         try {
             sh '''
-            export ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/
-            ./gradlew ktlintCheck detekt
+            ./gradlew --no-daemon ktlintCheck detekt
             '''
         } finally {
             // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
@@ -148,17 +154,17 @@ def runStaticAnalysis() {
                     rm -rf /tmp/detekt
                     mkdir /tmp/ktlint
                     mkdir /tmp/detekt
-                    rsync -a --delete --ignore-errors example/app/build/reports/ktlint/ /tmp/ktlint/example/ || true
+                    rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
                     rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
                     rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
                     rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
-                    rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+                    rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
                     rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
-                    rsync -a --delete --ignore-errors example/app/build/reports/detekt/ /tmp/detekt/example/ || true
+                    rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
                     rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
                     rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
                     rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
-                    rsync -a --delete --ignore-errors packages/plugin-gradle/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
+                    rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
                     rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
                 '''
             zip([
@@ -175,49 +181,27 @@ def runStaticAnalysis() {
     }
 }
 
-def runTests() {
-    node(osx_kotlin) {
-        parralelExecutors = [:]
-        parralelExecutors['compiler'] = run {
-            sh """
-                cd packages
-                ./gradlew clean :plugin-compiler:test --info --stacktrace
-            """
-            step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
-        }
-        // FIXME Bypass jvm tests it requires actual JNI compilation of cinterop-jvm which is not yet in place.
-        //  https://github.com/realm/realm-kotlin/issues/62
-        // parralelExecutors['jvm']       = jvm             { test("jvmTest") }
-        parralelExecutors['android'] = run { test("connectedAndroidTest") }
-        parralelExecutors['macos'] = run { test("macosTest") }
-        parallel parralelExecutors
+def runPublishToOjo() {
+    node('docker-cph-03') {
+        androidDockerBuild({
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
+                sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
+            }
+        })
     }
 }
-
-//def runPublishToOjo() {
-//    node('docker-cph-03') {
-//        androidDockerBuild({
-//            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
-//                sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
-//            }
-//        })
-//    }
-//}
 
 def test(task) {
-    sh """
-        cd test
-        ./gradlew $task --info --stacktrace
-    """
-    step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
-}
-
-def run(workerFunction) {
-    return {
-        node(osx_kotlin) {
-            workerFunction()
+    node(osx_kotlin) {
+        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+            sh """
+                cd test
+                ./gradlew $task --info --stacktrace --no-daemon
+            """
+            step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
         }
     }
+
 }
 
 def getArchive() {
@@ -231,9 +215,9 @@ def notifySlackIfRequired(String slackMessage) {
         node {
             withCredentials([[$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL']]) {
                 def payload = JsonOutput.toJson([
-                        username  : "Realm CI",
-                        icon_emoji: ":realm_new:",
-                        text      : "${slackMessage}\n<${env.BUILD_URL}|Click here> to check the build."
+                    username: "Realm CI",
+                    icon_emoji: ":realm_new:",
+                    text: "${slackMessage}\n<${env.BUILD_URL}|Click here> to check the build."
                 ])
 
                 sh "curl -X POST --data-urlencode \'payload=${payload}\' ${env.SLACK_URL}"
@@ -249,6 +233,14 @@ def readGitTag() {
         return null
     }
     return sh(returnStdout: true, script: command).trim()
+}
+
+def startEmulatorInBgIfNeeded() {
+    def command = '$ANDROID_SDK_ROOT/platform-tools/adb shell pidof com.android.phone'
+    def returnStatus = sh(returnStatus: true, script: command)
+    if (returnStatus != 0) {
+        sh '/usr/local/Cellar/daemonize/1.7.8/sbin/daemonize  -E JENKINS_NODE_COOKIE=dontKillMe  $ANDROID_SDK_ROOT/emulator/emulator -avd Pixel_2_API_30_x86_64 -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098'
+    }
 }
 
 boolean shouldReleaseSnapshot(version) {
