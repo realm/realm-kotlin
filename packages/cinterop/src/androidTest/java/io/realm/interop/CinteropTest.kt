@@ -208,7 +208,7 @@ class CinteropTest {
         // Will not be true unless executed on a fresh realm
         assertEquals(realmObjectGetKey.obj_key, findFirstValue.link.target.obj_key)
 
-        val results = realmc.realm_query_find_all(query)
+        val results: Long = realmc.realm_query_find_all(query)
 
         realmc.realm_results_count(results, count)
         assertEquals(1, count.value)
@@ -217,6 +217,7 @@ class CinteropTest {
         val minFound = booleanArrayOf(false)
         val minValue = realm_value_t()
         realmc.realm_results_min(results, foo_int_property.key, minValue, minFound)
+        assertTrue(minFound.get(0))
         assertEquals(realm_value_type_e.RLM_TYPE_INT, minValue.type)
         assertEquals(123, minValue.integer)
 

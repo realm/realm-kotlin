@@ -357,15 +357,15 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T : RealmModel> realm_query_find_first(realm: NativePointer): Link {
+    actual fun realm_query_find_first(realm: NativePointer): Link? {
         memScoped {
             val found = alloc<BooleanVar>()
             val value = alloc<realm_value_t>()
             throwOnError(realm_wrapper.realm_query_find_first(realm.cptr(), value.ptr, found.ptr))
             if (!found.value) {
-                error("Query did not find anything")
+                return null
             }
-            if (value.type != realm_value_type.RLM_TYPE_INT) {
+            if (value.type != realm_value_type.RLM_TYPE_LINK) {
                 error("Query did not return link but ${value.type}")
             }
             return Link(value.link.target.obj_key, value.link.target_table.table_key.toLong())
@@ -395,11 +395,12 @@ actual object RealmInterop {
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
         val tableKey = cValue<realm_table_key_t> { table_key = link.tableKey.toUInt() }
         val objKey = cValue<realm_obj_key> { obj_key = link.objKey }
-        return CPointerWrapper(realm_wrapper.realm_get_object(realm.cptr(), tableKey, objKey))
+        val ptr = throwOnError(realm_wrapper.realm_get_object(realm.cptr(), tableKey, objKey))
+        return CPointerWrapper(ptr)
     }
 
     actual fun realm_results_delete_all(results: NativePointer) {
-        realm_wrapper.realm_results_delete_all(results.cptr())
+        throwOnError(realm_wrapper.realm_results_delete_all(results.cptr()))
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

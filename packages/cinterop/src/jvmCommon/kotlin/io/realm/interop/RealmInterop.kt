@@ -211,16 +211,12 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
     }
 
-    actual fun <T : RealmModel> realm_query_find_first(realm: NativePointer): Link {
+    actual fun realm_query_find_first(realm: NativePointer): Link? {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
         realmc.realm_query_find_first(realm.cptr(), value, found)
-        // FIXME Validate that we have:
-        //  - found anything
-        //  - it is a link
-        //  - i matches the specific type
         if (!found[0]) {
-            error("Query did not find anything")
+            return null
         }
         return value.asLink()
     }
@@ -256,15 +252,6 @@ actual object RealmInterop {
         return (this as LongPointerWrapper).ptr
     }
 
-    // FIXME EVALUATE 
-    //  - Can we always derive value type or do we also have coercion, etc.
-    private fun <T> realm_value_t.get(): T {
-        return when (PropertyType.of(this.type)) {
-            PropertyType.RLM_PROPERTY_TYPE_STRING -> string as T
-            else -> TODO()
-        }
-    }
-
     private fun value(o: Any): realm_value_t {
         val value: realm_value_t = realm_value_t()
         when (o) {
@@ -272,6 +259,7 @@ actual object RealmInterop {
                 value.type = realm_value_type_e.RLM_TYPE_STRING
                 value.string = o
             }
+            // FIXME API-FULL Add support for query argument type conversion for all primitive types
             else -> {
                 TODO("Value conversion not yet implemented for : ${o::class.simpleName}")
             }

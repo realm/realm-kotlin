@@ -176,7 +176,6 @@ kotlin {
             // add the common code explicitly to android and jvm source sets.
             // kotlin.srcDir("src/jvmCommon/kotlin")
             dependencies {
-                implementation(kotlin("stdlib"))
                 api(project(":jni-swig-stub"))
             }
         }
