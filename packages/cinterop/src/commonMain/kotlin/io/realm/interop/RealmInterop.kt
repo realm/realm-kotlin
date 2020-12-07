@@ -53,12 +53,12 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
     // FIXME Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
-    fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean)
-    fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T
+    fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T
 
     // Typed convenience methods
-    fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String
-    fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String)
+    fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String
+    fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String)
 
 //    override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
 //        TODO("Not yet implemented")

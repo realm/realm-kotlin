@@ -26,10 +26,14 @@ import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
+import java.lang.IllegalStateException
 import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
+
+    @RealmModule(Sample::class)
+    class MySchema
 
     // Smoke test of compiling with library
     @Test
@@ -42,22 +46,30 @@ class InstrumentedTests {
     // https://youtrack.jetbrains.com/issue/KT-34535
     @Test
     fun realmConfig() {
-        @RealmModule(Sample::class)
-        class MySchema
-
         val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
         val realm = Realm.open(configuration)
+
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         kotlin.test.assertEquals("", sample.name)
         sample.name = "Hello, World!"
         kotlin.test.assertEquals("Hello, World!", sample.name)
         realm.commitTransaction()
+    }
+
+    @Test
+    fun delete() {
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        val realm = Realm.open(configuration)
 
         realm.beginTransaction()
+        val sample = realm.create(Sample::class)
         Realm.delete(sample)
         assertFailsWith<IllegalArgumentException> {
             Realm.delete(sample)
+        }
+        assertFailsWith<IllegalStateException> {
+            sample.name = "sadf"
         }
         realm.commitTransaction()
     }

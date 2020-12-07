@@ -149,11 +149,17 @@ actual object RealmInterop {
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
     }
 
-    actual fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Cannot update deleted object")
+        }
         realm_set_value(o, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
     }
 
-    actual fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
+    actual fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Cannot update deleted object")
+        }
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
         realmc.realm_get_value((o as LongPointerWrapper).ptr, pinfo.key, cvalue)
@@ -186,11 +192,11 @@ actual object RealmInterop {
     }
 
     // Typed convenience methods
-    actual fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String {
+    actual fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String {
         return realm_get_value<String>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
     }
 
-    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
+    actual fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String) {
         realm_set_value(realm, o, table, col, value, false)
     }
 
