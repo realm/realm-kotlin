@@ -58,6 +58,11 @@ pipeline {
                 runStaticAnalysis()
             }
         }
+        stage('Tests Compiler Plugin') {
+            steps {
+                runCompilerPluginTest()
+            }
+        }
         stage('Tests Macos') {
             steps {
                 test("macosTest")
@@ -190,6 +195,19 @@ def runPublishToOjo() {
         })
     }
 }
+
+def runCompilerPluginTest() {
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        node(osx_kotlin) {
+            sh """
+                cd packages
+                ./gradlew --no-daemon clean :plugin-compiler:test --info --stacktrace
+            """
+            step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
+        }
+    }
+}
+
 
 def test(task) {
     node(osx_kotlin) {
