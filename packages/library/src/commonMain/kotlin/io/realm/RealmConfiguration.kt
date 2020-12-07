@@ -21,27 +21,20 @@ import io.realm.interop.PropertyType
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.interop.Table
+import io.realm.runtimeapi.Mediator
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmCompanion
-import io.realm.runtimeapi.RealmModel
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlin.reflect.KClass
-
-typealias ModelFactory = ((KClass<out RealmModel>) -> RealmModel)
-
-// fun <R : RealmModel> getInstance(type: KClass<R>) : R {
-//    return null!!
-// }
 
 class RealmConfiguration private constructor(
     val path: String?, // Full path if we don't want to use the default location
     val name: String?, // Optional Realm name (default is 'default')
-    val modelFactory: ModelFactory, // Factory to instantiate proxy object (since reflection is not supported in K/N)
+    val schema: Mediator, // TODO create a schema type, to fail at compile time?
     val version: Long = 0,
     val tables: List<Table> = listOf()
 ) {
@@ -60,23 +53,26 @@ class RealmConfiguration private constructor(
     data class Builder(
         var path: String? = null,
         var name: String = "default", // Optional Realm name (default is 'default')
-        var factory: ModelFactory? = null,
+        var schema: Any,
         var classes: List<RealmCompanion> = listOf()
     ) {
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
-        fun factory(factory: ModelFactory) = apply { this.factory = factory }
+        fun schema(schema: Any) = apply { this.schema = schema }
+
         fun classes(classes: List<RealmCompanion>) = apply { this.classes = classes }
         fun build(): RealmConfiguration {
             if (path == null) {
                 val directory = PlatformHelper.appFilesDirectory()
                 path = "$directory/$name.realm"
             }
-            if (factory != null) {
-                return RealmConfiguration(path, name, factory!!, tables = classes.map { parseSchema(it.`$realm$schema`()) })
-            } else {
-                error("modelFactory should be specified")
+            if (schema !is Mediator) {
+                error("schema parameter should be a class annotated with @RealmModule")
             }
+            return RealmConfiguration(
+                path, name, schema as Mediator,
+                tables = (schema as Mediator).schema().map { parseSchema(it as String) }
+            )
         }
 
         // Highly explosive. Quick implementation to overcome that we don't have typed schemas in the compantion objects yet
