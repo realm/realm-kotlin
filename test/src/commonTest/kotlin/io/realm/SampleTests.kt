@@ -39,7 +39,7 @@ class SampleTests {
     @RealmModule(Sample::class)
     class MySchema
 
-    lateinit var realm : Realm
+    lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {

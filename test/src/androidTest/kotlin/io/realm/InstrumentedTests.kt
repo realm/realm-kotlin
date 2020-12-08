@@ -28,8 +28,6 @@ import test.Sample
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import java.lang.IllegalStateException
-import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
@@ -37,7 +35,7 @@ class InstrumentedTests {
     @RealmModule(Sample::class)
     class MySchema
 
-    lateinit var realm : Realm
+    lateinit var realm: Realm
 
     @Before
     fun setup() {
@@ -66,11 +64,10 @@ class InstrumentedTests {
 
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
-        kotlin.test.assertEquals("", sample.name)
+        assertEquals("", sample.name)
         sample.name = s
-        kotlin.test.assertEquals(s, sample.name)
+        assertEquals(s, sample.name)
         realm.commitTransaction()
-
     }
 
     @Test
