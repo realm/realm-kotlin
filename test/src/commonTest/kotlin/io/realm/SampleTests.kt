@@ -29,10 +29,14 @@ import test.Sample
 import test.Subset
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class SampleTests {
+
+    @RealmModule(Sample::class)
+    class MySchema
 
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
@@ -54,16 +58,31 @@ class SampleTests {
     @Test
     @Suppress("CAST_NEVER_SUCCEEDS")
     fun realmConfig() {
-        @RealmModule(Sample::class)
-        class MySchema
-
         val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
         val realm = Realm.open(configuration)
+
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
-        kotlin.test.assertEquals("", sample.name)
+        assertEquals("", sample.name)
         sample.name = "Hello, World!"
-        kotlin.test.assertEquals("Hello, World!", sample.name)
+        assertEquals("Hello, World!", sample.name)
+        realm.commitTransaction()
+    }
+
+    @Test
+    fun delete() {
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        val realm = Realm.open(configuration)
+
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class)
+        Realm.delete(sample)
+        assertFailsWith<IllegalArgumentException> {
+            Realm.delete(sample)
+        }
+        assertFailsWith<IllegalStateException> {
+            sample.name = "sadf"
+        }
         realm.commitTransaction()
     }
 

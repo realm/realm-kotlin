@@ -212,7 +212,7 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), tableKey))
     }
 
-    actual fun <T> realm_set_value(realm: NativePointer, o: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
         TODO()
         // Cannot pass realm_value_t by value to cinterop layer so added specialization in realm.def
         // Calling
@@ -221,11 +221,15 @@ actual object RealmInterop {
         // e: .../realm/interop/RealmInterop.kt: (219, 85): type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
     }
 
-    actual fun <T> realm_get_value(realm: NativePointer, o: NativePointer, table: String, col: String, type: PropertyType): T {
+    actual fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T {
         TODO("Not yet implemented")
     }
 
-    actual fun objectGetString(realm: NativePointer, o: NativePointer, table: String, col: String): String {
+    // Invoked from compiler plugin generated code
+    actual fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Invalid/deleted object")
+        }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
@@ -242,11 +246,19 @@ actual object RealmInterop {
         }
     }
 
-    actual fun objectSetString(realm: NativePointer, o: NativePointer, table: String, col: String, value: String) {
+    // Invoked from compiler plugin generated code
+    actual fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String) {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Cannot update deleted object")
+        }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             realm_wrapper.realm_set_value_string(o.cptr(), propertyInfo.key.readValue(), value.toRString(memScope), false)
         }
+    }
+
+    actual fun realm_object_delete(obj: NativePointer) {
+        throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.unmanage
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
@@ -39,8 +40,18 @@ class Realm {
             realm.dbPointer = RealmInterop.realm_open(realmConfiguration.nativeConfig)
             return realm
         }
+
+        // FIXME API-MUTABLE-REALM This should actually only be possible on a mutable realm, i.e. inside
+        //  a transaction
+        // FIXME EVALUATE Should this be on RealmModel instead?
+        fun <T : RealmModel> delete(obj: T) {
+            val internalObject = obj as RealmModelInternal
+            internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
+                ?: throw IllegalArgumentException("Cannot delete unmanaged object")
+            internalObject.unmanage()
+        }
     }
-    //    fun open(dbName: String, schema: String) : Realm
+
     fun beginTransaction() {
         RealmInterop.realm_begin_write(dbPointer!!)
     }
@@ -82,4 +93,8 @@ class Realm {
         managedModel.`$realm$TableName` = objectType
         return managedModel as T
     }
+
+    // FIXME Consider adding a delete-all along with query support
+    //  https://github.com/realm/realm-kotlin/issues/64
+    // fun <T : RealmModel> delete(clazz: KClass<T>)
 }
