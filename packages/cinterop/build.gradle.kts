@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
@@ -17,13 +33,10 @@ repositories {
 //  adding the common parts to macos
 val idea = System.getProperty("idea.active") == "true"
 
-// Disable Android build when the SDK is not avaiable to allow building native parts on machines
-// without the Android SDK
-val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
-
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
+    ndkVersion = "22.0.6917172"
 
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
@@ -49,26 +62,22 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
-    //  as this would cause the configuration phase to fail, while we don't even need the build
-    if (includeAndroidBuild) {
-        defaultConfig {
-            ndk {
-                // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-                abiFilters("x86_64")
-            }
-            // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
-            externalNativeBuild {
-                cmake {
-                    arguments("-DANDROID_STL=c++_shared")
-                }
-            }
+    defaultConfig {
+        ndk {
+            // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
+            abiFilters("x86_64")
         }
-        // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
+        // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
-                setPath("src/jvmCommon/CMakeLists.txt")
+                arguments("-DANDROID_STL=c++_shared")
             }
+        }
+    }
+    // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
+    externalNativeBuild {
+        cmake {
+            setPath("src/jvmCommon/CMakeLists.txt")
         }
     }
 }
@@ -225,17 +234,15 @@ tasks.create("capi_android_x86_64") {
     }
 }
 
-if (includeAndroidBuild) {
-    afterEvaluate {
-        tasks.named("externalNativeBuildDebug") {
-            dependsOn(tasks.named("capi_android_x86_64"))
-        }
-        // Ensure that Swig wrapper is generated before compiling the JNI layer. This task needs
-        // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
-        // actuals
-        tasks.named("generateJsonModelDebug") {
-            inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
-        }
+afterEvaluate {
+    tasks.named("externalNativeBuildDebug") {
+        dependsOn(tasks.named("capi_android_x86_64"))
+    }
+    // Ensure that Swig wrapper is generated before compiling the JNI layer. This task needs
+    // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
+    // actuals
+    tasks.named("generateJsonModelDebug") {
+        inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
     }
 }
 

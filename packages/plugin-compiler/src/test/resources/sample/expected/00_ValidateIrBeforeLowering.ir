@@ -65,7 +65,7 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           RETURN type=kotlin.Nothing from='public final fun dumpSchema (): kotlin.String declared in sample.input.Sample'
             STRING_CONCATENATION type=kotlin.String
-              CALL 'public final fun $realm$schema (): kotlin.String declared in sample.input.Sample.Companion' type=kotlin.String origin=null
+              CALL 'public open fun $realm$schema (): kotlin.String declared in sample.input.Sample.Companion' type=kotlin.String origin=null
                 $this: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.runtimeapi.RealmCompanion]' type=sample.input.Sample.Companion
       CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.runtimeapi.RealmCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
@@ -86,11 +86,20 @@ MODULE_FRAGMENT name:<main>
           overridden:
             public open fun toString (): kotlin.String declared in kotlin.Any
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        FUN name:$realm$schema visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.String
+        FUN name:$realm$schema visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.String
+          overridden:
+            public abstract fun $realm$schema (): kotlin.String declared in io.realm.runtimeapi.RealmCompanion
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public final fun $realm$schema (): kotlin.String declared in sample.input.Sample.Companion'
+            RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.String declared in sample.input.Sample.Companion'
               CONST String type=kotlin.String value="{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
+        FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun $realm$newInstance (): kotlin.Any declared in io.realm.runtimeapi.RealmCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in sample.input.Sample.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Sample' type=sample.input.Sample origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.runtimeapi.RealmModel
