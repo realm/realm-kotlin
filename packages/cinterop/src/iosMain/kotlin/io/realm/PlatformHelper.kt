@@ -16,14 +16,16 @@
 
 package io.realm
 
+import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
-import platform.Foundation.temporaryDirectory
+import platform.Foundation.NSURL
+import platform.Foundation.NSUserDomainMask
 
 actual object PlatformHelper {
-
     actual fun appFilesDirectory(): String {
-        // FIXME Do not know the convention for where to put data
-        val currentDirectoryPath: String? = NSFileManager.defaultManager.temporaryDirectory().path
-        return currentDirectoryPath!!
+        return (
+            NSFileManager.defaultManager.URLsForDirectory(NSDocumentDirectory, NSUserDomainMask)
+                .first() as NSURL
+            )?.path ?: error("Could not identify default document directory")
     }
 }
