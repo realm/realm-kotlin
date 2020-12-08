@@ -38,4 +38,8 @@ class ExpressionRepository {
         realm.commitTransaction()
         return expression
     }
+
+    fun expressions(): List<Expression> {
+        return realm.objects(Expression::class)
+    }
 }
