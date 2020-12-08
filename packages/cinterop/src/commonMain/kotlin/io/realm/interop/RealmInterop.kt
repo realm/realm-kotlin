@@ -16,7 +16,7 @@
 
 package io.realm.interop
 
-// FIXME Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
+// FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 import io.realm.runtimeapi.NativePointer
 
@@ -46,12 +46,11 @@ expect object RealmInterop {
     fun realm_begin_write(realm: NativePointer)
     fun realm_commit(realm: NativePointer)
 
-    // FIXME Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
-    // FIXME Only operating on key/Long to get going
-    // FIXME How to return boolean 'found'? Currently throwing runtime exceptions
+    // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
+    // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
-    // FIXME Optimize with direct paths instead of generic type parameter. Currently wrapping
+    // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
     fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
     fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T
@@ -60,20 +59,11 @@ expect object RealmInterop {
     fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String
     fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String)
 
-//    override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
-//        TODO("Not yet implemented")
-//    }
-//
+    // FIXME Support for all types
+    //  https://github.com/realm/realm-kotlin/issues/69
 //    override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
-//        TODO("Not yet implemented")
 //    }
-//
 //    override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
-//        TODO("Not yet implemented")
 //    }
 
     fun realm_object_delete(obj: NativePointer)

@@ -55,6 +55,7 @@ private fun throwOnError() {
         if (realm_get_last_error(error.ptr)) {
             realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
+            //  https://github.com/realm/realm-kotlin/issues/70
             throw RuntimeException(error.message.toKString())
         }
     }
@@ -68,10 +69,8 @@ private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointe
     if (pointer == null) throwOnError(); return pointer
 }
 
-// FIXME Consider making NativePointer/CPointerWrapper generic to enforce typing
+// FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
 class CPointerWrapper(ptr: CPointer<out CPointed>?) : NativePointer {
-    // FIXME Generic check for errors on null pointers returned from the C API. We probably have to
-    //  do this more selectively, but for now just check all pointers.
     val ptr: CPointer<out CPointed>? = throwOnError(ptr)
 }
 
@@ -183,7 +182,6 @@ actual object RealmInterop {
     }
 
     actual fun realm_release(o: NativePointer) {
-        // FIXME Can this one not throw
         realm_wrapper.realm_release((o as CPointerWrapper).ptr)
     }
 
@@ -212,8 +210,11 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), tableKey))
     }
 
+    // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
+    //  getter/setter, or through specialized methods.
+    //  https://github.com/realm/realm-kotlin/issues/69
     actual fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
-        TODO()
+        TODO("Not yet implemented") // https://github.com/realm/realm-kotlin/issues/69
         // Cannot pass realm_value_t by value to cinterop layer so added specialization in realm.def
         // Calling
         //     realm_wrapper.realm_set_value(o.cptr(), propertyInfo.key.readValue(), x.readValue(), false)
@@ -221,8 +222,11 @@ actual object RealmInterop {
         // e: .../realm/interop/RealmInterop.kt: (219, 85): type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
     }
 
+    // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
+    //  getter/setter, or through specialized methods.
+    //  https://github.com/realm/realm-kotlin/issues/69
     actual fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T {
-        TODO("Not yet implemented")
+        TODO("Not yet implemented") // https://github.com/realm/realm-kotlin/issues/69
     }
 
     // Invoked from compiler plugin generated code
@@ -238,10 +242,11 @@ actual object RealmInterop {
                 realm_value_type.RLM_TYPE_STRING ->
                     return value.string.toKString()
                 // FIXME Where should we handle nullability. Current prototype does not allow nulls
-                // realm_value_type.RLM_TYPE_NULL ->
-                //     return null
+                //  realm_value_type.RLM_TYPE_NULL ->
+                //      return null
+                //  https://github.com/realm/realm-kotlin/issues/71
                 else ->
-                    TODO("Only string is supported")
+                    error("objectGetString should only be called for string properties")
             }
         }
     }

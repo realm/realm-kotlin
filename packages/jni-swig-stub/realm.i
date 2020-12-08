@@ -5,10 +5,10 @@
 #include <string>
 %}
 
-// TODO
-//  - Memory management
-//  - Optimization
-//    - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
+// TODO Memory management: Verify finalizers, etc.
+//  Maybe in relation to https://github.com/realm/realm-kotlin/issues/23
+// TODO OPTIMIZATION
+//  - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
 %include "typemaps.i"
 %include "stdint.i"
@@ -37,7 +37,7 @@ std::string rlm_stdstr(realm_string_t val)
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;
-// FIXME Optimize...maybe port JStringAccessor from realm-
+// TODO OPTIMIZATION Optimize...maybe port JStringAccessor from realm-java
 //%typemap(jtype) realm_string_t "String"
 //%typemap(jstype) realm_string_t "String"
 %typemap(in) (realm_string_t) "$1 = rlm_str(jenv->GetStringUTFChars($arg,0));"
@@ -63,8 +63,9 @@ bool realm_object_is_valid(const realm_object_t*);
         realm_error_t error;
         if (realm_get_last_error(&error)) {
             realm_clear_last_error();
-            // TODO Cache class lookup
+            // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
+            //  https://github.com/realm/realm-kotlin/issues/70
             jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
             (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
         }
@@ -76,7 +77,7 @@ bool realm_object_is_valid(const realm_object_t*);
         realm_error_t error;
         if (realm_get_last_error(&error)) {
             realm_clear_last_error();
-            // TODO Cache class lookup
+            // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
             jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
             (jenv)->ThrowNew(clazz, rlm_stdstr(error.message).c_str());
@@ -84,7 +85,7 @@ bool realm_object_is_valid(const realm_object_t*);
     }
     jresult = (jboolean)result;
 }
-// FIXME Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
+// Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
 //%typemap(jstype) realm_t* "LongPointerWrapper"
 //%typemap(javain) realm_t* "$javainput.ptr()"
 //%typemap(javaout) realm_t* {

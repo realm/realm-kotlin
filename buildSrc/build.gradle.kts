@@ -57,7 +57,7 @@ dependencies {
     implementation("org.jlleitschuh.gradle:ktlint-gradle:${Versions.ktlintPlugin}")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
-    implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}") // FIXME: Figure out why this is required here
+    implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}") // TODO LATER Don't know why this has to be here. See if we can remove this
     implementation("com.android.tools.build:gradle-api:${Versions.Android.buildTools}")
     implementation(kotlin("script-runtime"))
 }

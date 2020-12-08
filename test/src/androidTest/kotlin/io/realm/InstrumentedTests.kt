@@ -38,7 +38,7 @@ class InstrumentedTests {
     // Smoke test of compiling with library
     @Test
     fun contextIsNotNull() {
-        assertNotNull(RealmInitializer.context)
+        assertNotNull(RealmInitializer.filesDir)
     }
 
     // This could be a common test, but included here for convenience as there is no other easy
@@ -74,9 +74,10 @@ class InstrumentedTests {
         realm.commitTransaction()
     }
 
-    // FIXME Local implementation of pointer wrapper to support test. Using the internal one would
-    //  require jni-swig-stub to be api dependency from cinterop/library. Don't know if the test is
-    //  needed at all at this level
+    // FIXME API-CLEANUP Local implementation of pointer wrapper to support test. Using the internal
+    //  one would require jni-swig-stub to be api dependency from cinterop/library. Don't know if
+    //  the test is needed at all at this level
+    //  https://github.com/realm/realm-kotlin/issues/56
     class LongPointerWrapper(val ptr: Long) : io.realm.runtimeapi.NativePointer
     @Test
     fun testRealmModelInternalPropertiesGenerated() {

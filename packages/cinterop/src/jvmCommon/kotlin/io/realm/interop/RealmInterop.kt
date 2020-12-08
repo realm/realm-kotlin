@@ -15,12 +15,14 @@
  */
 
 package io.realm.interop
-// FIXME Rename io.realm.interop. to something with platform?
+// FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
+//  https://github.com/realm/realm-kotlin/issues/56
 
 import io.realm.runtimeapi.NativePointer
 
 actual object RealmInterop {
-    // TODO Maybe pull library loading into separate method
+    // TODO API-CLEANUP Maybe pull library loading into separate method
+    //  https://github.com/realm/realm-kotlin/issues/56
     init {
         System.loadLibrary("realmc")
     }
@@ -100,6 +102,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
+        // TODO API-SCHEMA
         TODO("Not yet implemented")
     }
 
@@ -167,6 +170,7 @@ actual object RealmInterop {
             realm_value_type_e.RLM_TYPE_STRING ->
                 return cvalue.string as T
             else ->
+                // TODO API-FULL Implement all types
                 TODO("Only string are support at the moment")
         }
     }
