@@ -83,6 +83,23 @@ class SampleTests {
     }
 
     @Test
+    fun delete() {
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        val realm = Realm.open(configuration)
+
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class)
+        Realm.delete(sample)
+        assertFailsWith<IllegalArgumentException> {
+            Realm.delete(sample)
+        }
+        assertFailsWith<IllegalStateException> {
+            sample.name = "sadf"
+        }
+        realm.commitTransaction()
+    }
+
+    @Test
     fun query() {
         val s = "Hello, World!"
 

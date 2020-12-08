@@ -154,11 +154,17 @@ actual object RealmInterop {
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
     }
 
-    actual fun <T> realm_set_value(realm: NativePointer, obj: NativePointer, table: String, col: String, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Cannot update deleted object")
+        }
         realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
     }
 
-    actual fun <T> realm_get_value(realm: NativePointer, obj: NativePointer, table: String, col: String, type: PropertyType): T {
+    actual fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Invalid/deleted object")
+        }
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, pinfo.key, cvalue)
@@ -192,7 +198,7 @@ actual object RealmInterop {
     }
 
     // Typed convenience methods
-    actual fun objectGetString(realm: NativePointer, obj: NativePointer, table: String, col: String): String {
+    actual fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String {
         return realm_get_value<String>(realm, obj, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
     }
 
@@ -244,8 +250,16 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), table, obj))
     }
 
+    actual fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
     actual fun realm_results_delete_all(results: NativePointer) {
         realmc.realm_results_delete_all(results.cptr())
+    }
+
+    actual fun realm_object_delete(obj: NativePointer) {
+        realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
     }
 
     fun NativePointer.cptr(): Long {

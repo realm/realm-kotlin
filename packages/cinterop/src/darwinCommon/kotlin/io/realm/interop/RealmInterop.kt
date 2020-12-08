@@ -262,8 +262,8 @@ actual object RealmInterop {
     //  getter/setter, or through specialized methods.
     //  https://github.com/realm/realm-kotlin/issues/69
     actual fun <T> realm_set_value(
-        realm: NativePointer,
-        obj: NativePointer,
+        realm: NativePointer?,
+        obj: NativePointer?,
         table: String,
         col: String,
         value: T,
@@ -281,8 +281,8 @@ actual object RealmInterop {
     //  getter/setter, or through specialized methods.
     //  https://github.com/realm/realm-kotlin/issues/69
     actual fun <T> realm_get_value(
-        realm: NativePointer,
-        obj: NativePointer,
+        realm: NativePointer?,
+        obj: NativePointer?,
         table: String,
         col: String,
         type: PropertyType
@@ -290,12 +290,16 @@ actual object RealmInterop {
         TODO("Not yet implemented") // https://github.com/realm/realm-kotlin/issues/69
     }
 
+    // Invoked from compiler plugin generated code
     actual fun objectGetString(
-        realm: NativePointer,
-        obj: NativePointer,
+        realm: NativePointer?,
+        obj: NativePointer?,
         table: String,
         col: String
     ): String {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Invalid/deleted object")
+        }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
@@ -313,13 +317,17 @@ actual object RealmInterop {
         }
     }
 
+    // Invoked from compiler plugin generated code
     actual fun objectSetString(
-        realm: NativePointer,
-        obj: NativePointer,
+        realm: NativePointer?,
+        obj: NativePointer?,
         table: String,
         col: String,
         value: String
     ) {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Cannot update deleted object")
+        }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             realm_wrapper.realm_set_value_string(
@@ -401,6 +409,10 @@ actual object RealmInterop {
 
     actual fun realm_results_delete_all(results: NativePointer) {
         throwOnError(realm_wrapper.realm_results_delete_all(results.cptr()))
+    }
+
+    actual fun realm_object_delete(obj: NativePointer) {
+        throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

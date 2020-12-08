@@ -28,6 +28,8 @@ import test.Sample
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import java.lang.IllegalStateException
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
@@ -118,6 +120,23 @@ class InstrumentedTests {
         realm.commitTransaction()
 
         assertEquals(0, realm.objects(Sample::class).size)
+    }
+
+    @Test
+    fun delete() {
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        val realm = Realm.open(configuration)
+
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class)
+        Realm.delete(sample)
+        assertFailsWith<IllegalArgumentException> {
+            Realm.delete(sample)
+        }
+        assertFailsWith<IllegalStateException> {
+            sample.name = "sadf"
+        }
+        realm.commitTransaction()
     }
 
     // FIXME API-CLEANUP Local implementation of pointer wrapper to support test. Using the internal

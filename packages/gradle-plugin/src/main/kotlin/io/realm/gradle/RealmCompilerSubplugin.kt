@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
 
     companion object {
-        // TODO POSTPONED Consider embedding these from the build.gradle's pluginVersion task just
+        // TODO LATER Consider embedding these from the build.gradle's pluginVersion task just
         //  as with the version. But leave it for now as they should be quite stable.
         // Modules has to match ${project.group}:${project.name} to make composite build work
         const val groupId = "io.realm.kotlin"

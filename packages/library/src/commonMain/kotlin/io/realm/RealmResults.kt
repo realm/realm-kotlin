@@ -25,7 +25,7 @@ import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
-// FIXME API-QUERY
+// FIXME API-QUERY Final query design is tracked in https://github.com/realm/realm-kotlin/issues/84
 //  - Lazy API makes it harded to debug
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
@@ -60,7 +60,8 @@ class RealmResults<T : RealmModel> constructor(
 
     fun delete() {
         // TODO OPTIMIZE Are there more efficient ways to do this? realm_query_delete_all is not
-        //  available in C-API yet.
+        //  available in C-API yet, but should probably await final query design
+        //  https://github.com/realm/realm-kotlin/issues/84
         RealmInterop.realm_results_delete_all(result)
     }
 }

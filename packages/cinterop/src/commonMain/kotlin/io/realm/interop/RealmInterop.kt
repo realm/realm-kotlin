@@ -54,12 +54,12 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
     // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
-    fun <T> realm_set_value(realm: NativePointer, obj: NativePointer, table: String, col: String, value: T, isDefault: Boolean)
-    fun <T> realm_get_value(realm: NativePointer, obj: NativePointer, table: String, col: String, type: PropertyType): T
+    fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
 
     // Typed convenience methods
-    fun objectGetString(realm: NativePointer, obj: NativePointer, table: String, col: String): String
-    fun objectSetString(realm: NativePointer, obj: NativePointer, table: String, col: String, value: String)
+    fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String
+    fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String)
 
     // FIXME Support for all types
     //  https://github.com/realm/realm-kotlin/issues/69
@@ -80,4 +80,10 @@ expect object RealmInterop {
     fun realm_get_object(realm: NativePointer, link: Link): NativePointer
 
     fun realm_results_delete_all(results: NativePointer)
+
+    fun realm_object_delete(obj: NativePointer)
+    // FIXME Rest of delete calls are related to queries
+    //  https://github.com/realm/realm-kotlin/issues/64
+    // RLM_API bool realm_query_delete_all(const realm_query_t*);
+    // RLM_API bool realm_results_delete_all(realm_results_t*);
 }
