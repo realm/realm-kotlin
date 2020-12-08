@@ -33,13 +33,10 @@ repositories {
 //  adding the common parts to macos
 val idea = System.getProperty("idea.active") == "true"
 
-// Disable Android build when the SDK is not avaiable to allow building native parts on machines
-// without the Android SDK
-val includeAndroidBuild = System.getenv("ANDROID_HOME") != null
-
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
+    ndkVersion = "22.0.6917172"
 
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
@@ -65,26 +62,22 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    // HACK On platforms that does not have an Android SDK we should skip trying to setup ndk build
-    //  as this would cause the configuration phase to fail, while we don't even need the build
-    if (includeAndroidBuild) {
-        defaultConfig {
-            ndk {
-                // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-                abiFilters("x86_64")
-            }
-            // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
-            externalNativeBuild {
-                cmake {
-                    arguments("-DANDROID_STL=c++_shared")
-                }
-            }
+    defaultConfig {
+        ndk {
+            // FIXME Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
+            abiFilters("x86_64")
         }
-        // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
+        // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
-                setPath("src/jvmCommon/CMakeLists.txt")
+                arguments("-DANDROID_STL=c++_shared")
             }
+        }
+    }
+    // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
+    externalNativeBuild {
+        cmake {
+            setPath("src/jvmCommon/CMakeLists.txt")
         }
     }
 }
@@ -241,17 +234,15 @@ tasks.create("capi_android_x86_64") {
     }
 }
 
-if (includeAndroidBuild) {
-    afterEvaluate {
-        tasks.named("externalNativeBuildDebug") {
-            dependsOn(tasks.named("capi_android_x86_64"))
-        }
-        // Ensure that Swig wrapper is generated before compiling the JNI layer. This task needs
-        // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
-        // actuals
-        tasks.named("generateJsonModelDebug") {
-            inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
-        }
+afterEvaluate {
+    tasks.named("externalNativeBuildDebug") {
+        dependsOn(tasks.named("capi_android_x86_64"))
+    }
+    // Ensure that Swig wrapper is generated before compiling the JNI layer. This task needs
+    // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
+    // actuals
+    tasks.named("generateJsonModelDebug") {
+        inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
     }
 }
 
