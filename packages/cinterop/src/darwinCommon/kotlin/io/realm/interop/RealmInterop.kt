@@ -228,7 +228,7 @@ actual object RealmInterop {
     // Invoked from compiler plugin generated code
     actual fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String {
         if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
+            throw IllegalStateException("Invalid/deleted object")
         }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)

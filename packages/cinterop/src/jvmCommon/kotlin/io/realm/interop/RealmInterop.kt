@@ -158,7 +158,7 @@ actual object RealmInterop {
 
     actual fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T {
         if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
+            throw IllegalStateException("Invalid/deleted object")
         }
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
