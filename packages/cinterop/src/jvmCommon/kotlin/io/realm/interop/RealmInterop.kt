@@ -20,7 +20,6 @@ package io.realm.interop
 
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
 
 actual object RealmInterop {
     // TODO API-CLEANUP Maybe pull library loading into separate method
@@ -155,14 +154,14 @@ actual object RealmInterop {
     }
 
     actual fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
+        if (realm == null || obj == null) {
+            throw IllegalStateException("Invalid/deleted object")
         }
         realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
     }
 
     actual fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T {
-        if (realm == null || o == null) {
+        if (realm == null || obj == null) {
             throw IllegalStateException("Invalid/deleted object")
         }
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
@@ -201,8 +200,7 @@ actual object RealmInterop {
     actual fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String {
         return realm_get_value<String>(realm, obj, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
     }
-
-    actual fun objectSetString(realm: NativePointer, obj: NativePointer, table: String, col: String, value: String) {
+    actual fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String) {
         realm_set_value(realm, obj, table, col, value, false)
     }
 
@@ -248,10 +246,6 @@ actual object RealmInterop {
         val table = realm_table_key_t().apply { table_key = link.tableKey }
         val obj = realm_obj_key_t().apply { obj_key = link.objKey }
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), table, obj))
-    }
-
-    actual fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String) {
-        realm_set_value(realm, o, table, col, value, false)
     }
 
     actual fun realm_results_delete_all(results: NativePointer) {

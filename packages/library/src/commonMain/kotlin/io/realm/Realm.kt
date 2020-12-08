@@ -53,7 +53,6 @@ class Realm {
         }
     }
 
-
     fun beginTransaction() {
         RealmInterop.realm_begin_write(dbPointer!!)
     }

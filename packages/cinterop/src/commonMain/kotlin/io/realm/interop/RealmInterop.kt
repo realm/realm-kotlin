@@ -20,7 +20,6 @@ package io.realm.interop
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {

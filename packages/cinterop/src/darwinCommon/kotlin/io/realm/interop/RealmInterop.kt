@@ -18,7 +18,6 @@ package io.realm.interop
 
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.CPointed
@@ -297,7 +296,7 @@ actual object RealmInterop {
         table: String,
         col: String
     ): String {
-        if (realm == null || o == null) {
+        if (realm == null || obj == null) {
             throw IllegalStateException("Invalid/deleted object")
         }
         memScoped {
@@ -325,8 +324,8 @@ actual object RealmInterop {
         col: String,
         value: String
     ) {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
+        if (realm == null || obj == null) {
+            throw IllegalStateException("Invalid/deleted object")
         }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
