@@ -114,7 +114,7 @@ class RealmPublishPlugin : Plugin<Project> {
     }
 
     private fun configureArtifactory(project: Project, options: ArtifactoryOptions) {
-        println(if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
+        println(if (System.properties.containsKey('bintrayUser')) System.getProperty("bintrayUser") else "noUser")
         project.convention.getPluginByName<ArtifactoryPluginConvention>("artifactory").apply {
             setContextUrl("https://oss.jfrog.org/artifactory")
             publish(
@@ -122,8 +122,8 @@ class RealmPublishPlugin : Plugin<Project> {
                         repository(
                                 delegateClosureOf<groovy.lang.GroovyObject> {
                                     setProperty("repoKey", "oss-snapshot-local")
-                                    setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
-                                    setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
+                                    setProperty("username", if (System.properties.containsKey('bintrayUser')) System.getProperty("bintrayUser") else "noUser")
+                                    setProperty("password", if (System.properties.containsKey('bintrayKey')) System.getProperty("bintrayKey") else "noKey")
                                 }
                         )
                         defaults(
