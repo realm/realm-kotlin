@@ -51,6 +51,7 @@ expect object RealmInterop {
     // FIXME How to return boolean 'found'? Currently throwing runtime exceptions
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
+
     // FIXME Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
     fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
@@ -60,25 +61,17 @@ expect object RealmInterop {
     fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String
     fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String)
 
-//    override fun objectGetString(pointer: NativePointer, propertyName: String): String? {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun objectSetString(pointer: NativePointer, propertyName: String, value: String?) {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
-//        TODO("Not yet implemented")
-//    }
+    fun objectGetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long
+    fun objectSetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long)
 
+    fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean
+    fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean)
+
+    // delete
     fun realm_object_delete(obj: NativePointer)
     // FIXME Rest of delete calls are related to queries
     //  https://github.com/realm/realm-kotlin/issues/64
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
     // RLM_API bool realm_results_delete_all(realm_results_t*);
+
 }

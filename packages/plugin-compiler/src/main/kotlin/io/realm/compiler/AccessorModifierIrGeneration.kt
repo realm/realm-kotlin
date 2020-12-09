@@ -17,7 +17,11 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.NATIVE_WRAPPER
+import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_BOOLEAN
+import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_STRING
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_BOOLEAN
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_INT64
 import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_STRING
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -66,13 +70,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private lateinit var dbPointerProperty: IrProperty
     private lateinit var isManagedProperty: IrProperty
     private lateinit var nativeWrapperClass: IrClass
+
     private lateinit var objectGetStringFun: IrSimpleFunction
     private lateinit var objectSetStringFun: IrSimpleFunction
     private lateinit var objectGetInt64Fun: IrSimpleFunction
     private lateinit var objectSetInt64Fun: IrSimpleFunction
-
-    //    private lateinit var objectGetBooleanFun: IrSimpleFunction
-//    private lateinit var objectSetBooleanFun: IrSimpleFunction
+    private lateinit var objectGetBooleanFun: IrSimpleFunction
+    private lateinit var objectSetBooleanFun: IrSimpleFunction
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
@@ -100,21 +104,21 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             it.name == C_INTEROP_OBJECT_SET_STRING
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_STRING.asString()}")
 
-//        objectGetInt64Fun = nativeWrapperClass.functions.find {
-//            it.name == C_INTEROP_OBJECT_GET_INT64
-//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INT64.asString()}")
-//
-//        objectSetInt64Fun = nativeWrapperClass.functions.find {
-//            it.name == C_INTEROP_OBJECT_SET_INT64
-//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_INT64.asString()}")
+        objectGetInt64Fun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_GET_INT64
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INT64.asString()}")
 
-//        objectGetBooleanFun = nativeWrapperClass.functions.find {
-//            it.name == C_INTEROP_OBJECT_GET_BOOLEAN
-//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_BOOLEAN.asString()}")
-//
-//        objectSetBooleanFun = nativeWrapperClass.functions.find {
-//            it.name == C_INTEROP_OBJECT_GET_BOOLEAN
-//        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_BOOLEAN.asString()}")
+        objectSetInt64Fun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_SET_INT64
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_INT64.asString()}")
+
+        objectGetBooleanFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_GET_BOOLEAN
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_BOOLEAN.asString()}")
+
+        objectSetBooleanFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_SET_BOOLEAN
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_BOOLEAN.asString()}")
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitProperty(declaration: IrProperty): IrStatement {
@@ -148,12 +152,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.makeNotNull().isBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
-//                        if (declaration.isGetter) {
-//                            fields[name] = Pair("boolean", nullable)
-//                            modifyGetterAccessor(irClass, currentScope, name, objectGetBooleanFun, declaration)
-//                        } else {
-//                            modifySetterAccessor(irClass, currentScope, name, objectSetBooleanFun, declaration)
-//                        }
+                        fields[name] = Pair("boolean", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetBooleanFun, declaration.getter!!)
+                        modifySetterAccessor(irClass, name, objectSetBooleanFun, declaration.setter!!)
                     }
                     else -> {
                         logInfo("Type not processed: ${declaration.dump()}")

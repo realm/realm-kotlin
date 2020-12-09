@@ -22,6 +22,7 @@ import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.CValue
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
@@ -35,6 +36,7 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.set
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
@@ -46,6 +48,7 @@ import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_table_key_t
+import realm_wrapper.realm_value
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 
@@ -213,12 +216,10 @@ actual object RealmInterop {
     }
 
     actual fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
-        TODO()
-        // Cannot pass realm_value_t by value to cinterop layer so added specialization in realm.def
-        // Calling
-        //     realm_wrapper.realm_set_value(o.cptr(), propertyInfo.key.readValue(), x.readValue(), false)
-        // Will fail to compile with
-        // e: .../realm/interop/RealmInterop.kt: (219, 85): type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
+         TODO("Unsupported")
+        // Anonymous union are not supported in Kotlin/Native https://youtrack.jetbrains.com/issue/KT-43833
+        // which will call to `realm_wrapper.realm_set_value` using a `cValue<realm_value>` throw a
+        // type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
     }
 
     actual fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T {
@@ -241,7 +242,7 @@ actual object RealmInterop {
                 // realm_value_type.RLM_TYPE_NULL ->
                 //     return null
                 else ->
-                    TODO("Only string is supported")
+                    error("Expected String property got ${value.type.name}")
             }
         }
     }
@@ -254,6 +255,66 @@ actual object RealmInterop {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             realm_wrapper.realm_set_value_string(o.cptr(), propertyInfo.key.readValue(), value.toRString(memScope), false)
+        }
+    }
+
+    actual fun objectGetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Invalid/deleted object")
+        }
+        memScoped {
+            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
+            val value = alloc<realm_value_t>()
+            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
+            when (value.type) {
+                realm_value_type.RLM_TYPE_INT ->
+                    return value.integer
+                // FIXME Where should we handle nullability. Current prototype does not allow nulls
+                // realm_value_type.RLM_TYPE_NULL ->
+                //     return null
+                else ->
+                    error("Expected Int property got ${value.type.name}")
+            }
+        }
+    }
+
+    actual fun objectSetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long) {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Cannot update deleted object")
+        }
+        memScoped {
+            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
+            realm_wrapper.realm_set_value_int64(o.cptr(), propertyInfo.key.readValue(), value, false)
+        }
+    }
+
+    actual fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Invalid/deleted object")
+        }
+        memScoped {
+            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
+            val value = alloc<realm_value_t>()
+            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
+            when (value.type) {
+                realm_value_type.RLM_TYPE_BOOL ->
+                    return value.boolean
+                // FIXME Where should we handle nullability. Current prototype does not allow nulls
+                // realm_value_type.RLM_TYPE_NULL ->
+                //     return null
+                else ->
+                    error("Expected Boolean property got ${value.type.name}")
+            }
+        }
+    }
+
+    actual fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean) {
+        if (realm == null || o == null) {
+            throw IllegalStateException("Cannot update deleted object")
+        }
+        memScoped {
+            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
+            realm_wrapper.realm_set_value_boolean(o.cptr(), propertyInfo.key.readValue(), value, false)
         }
     }
 

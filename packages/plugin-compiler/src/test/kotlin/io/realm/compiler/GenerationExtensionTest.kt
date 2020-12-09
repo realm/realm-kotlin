@@ -110,7 +110,11 @@ class GenerationExtensionTest {
 
         assertTrue(companionObject is RealmCompanion)
 
-        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}]}"
+        val expected = "{\"name\": \"Sample\", \"properties\": [" +
+                "{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}," +
+                "{\"age\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
+                "{\"adult\": {\"type\": \"boolean\", \"nullable\": \"true\"}}" +
+                "]}"
         assertEquals(expected, companionObject.`$realm$schema`())
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)

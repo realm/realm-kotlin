@@ -142,8 +142,16 @@ actual object RealmInterop {
                 cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                 cvalue.string = value as String
             }
+            Long::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                cvalue.integer = value as Long
+            }
+            Boolean::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_BOOL
+                cvalue._boolean = value as Boolean
+            }
             else -> {
-                TODO("Only string are support at the moment")
+                TODO("Only string, Int and Boolean are supported at the moment")
             }
         }
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
@@ -163,12 +171,16 @@ actual object RealmInterop {
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
         realmc.realm_get_value((o as LongPointerWrapper).ptr, pinfo.key, cvalue)
-        when (cvalue.type) {
+        return when (cvalue.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
-                return cvalue.string as T
+                cvalue.string
+            realm_value_type_e.RLM_TYPE_INT ->
+                cvalue.integer
+            realm_value_type_e.RLM_TYPE_BOOL ->
+                cvalue._boolean
             else ->
-                TODO("Only string are support at the moment")
-        }
+                TODO("Only string, Int and Boolean are supported at the moment")
+        } as T
     }
 
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
@@ -197,6 +209,22 @@ actual object RealmInterop {
     }
 
     actual fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun objectGetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long {
+        return realm_get_value<Long>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_INT)
+    }
+
+    actual fun objectSetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean {
+        return realm_get_value<Boolean>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_BOOL)
+    }
+
+    actual fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean) {
         realm_set_value(realm, o, table, col, value, false)
     }
 
