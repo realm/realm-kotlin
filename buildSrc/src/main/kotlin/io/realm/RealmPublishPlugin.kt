@@ -114,7 +114,6 @@ class RealmPublishPlugin : Plugin<Project> {
     }
 
     private fun configureArtifactory(project: Project, options: ArtifactoryOptions) {
-        println(if (System.getProperties().containsKey("bintrayUser")) System.getProperty("bintrayUser") else "noUser")
         project.convention.getPluginByName<ArtifactoryPluginConvention>("artifactory").apply {
             setContextUrl("https://oss.jfrog.org/artifactory")
             publish(
