@@ -48,6 +48,10 @@ class RealmResults<T : RealmModel> constructor(
         return model as T
     }
 
+    // Query string follows the Swift/JS filter/sort-syntax as described in
+    // https://realm.io/docs/javascript/latest/#filtering
+    // Ex.:
+    //   'color = "tan" AND name BEGINSWITH "B" SORT(name DESC) LIMIT(5)'
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return RealmResults(
