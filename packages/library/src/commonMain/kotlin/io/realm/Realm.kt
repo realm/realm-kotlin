@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.manage
 import io.realm.internal.unmanage
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
@@ -67,18 +68,6 @@ class Realm {
     fun registerListener(f: () -> Unit) {
     }
 
-    // FIXME Query support
-    //  https://github.com/realm/realm-kotlin/issues/64
-    fun <T : RealmModel> objects(clazz: KClass<T>, query: String): RealmResults<T> {
-        val objectType = clazz.simpleName ?: error("Cannot get class name") // TODO infer type from T
-        // TODO check nullability of pointer and throw
-        val query: NativePointer = TODO()
-        return RealmResults(
-            query,
-            clazz,
-            realmConfiguration.schema
-        )
-    }
     //    reflection is not supported in K/N so we can't offer method like
     //    inline fun <reified T : RealmModel> create() : T
     //    to create a dynamically managed model. we're limited thus to persist methods
@@ -89,11 +78,21 @@ class Realm {
         val objectType = type.simpleName ?: error("Cannot get class name")
         val managedModel = realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
-        managedModel.`$realm$Pointer` = dbPointer
-        managedModel.`$realm$ObjectPointer` = RealmInterop.realm_object_create(dbPointer!!, key)
-        managedModel.`$realm$IsManaged` = true
-        managedModel.`$realm$TableName` = objectType
-        return managedModel as T
+        return managedModel.manage(
+            dbPointer!!,
+            type,
+            RealmInterop.realm_object_create(dbPointer!!, key)
+        )
+    }
+
+    fun <T : RealmModel> objects(clazz: KClass<T>): RealmResults<T> {
+        return RealmResults(
+            dbPointer!!,
+            @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
+            { RealmInterop.realm_query_parse(dbPointer!!, clazz.simpleName!!, "TRUEPREDICATE") },
+            clazz,
+            realmConfiguration.schema
+        )
     }
 
     // FIXME Consider adding a delete-all along with query support

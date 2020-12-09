@@ -18,6 +18,7 @@ package io.realm.interop
 
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
+import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
 @Suppress("FunctionNaming", "LongParameterList")
@@ -52,12 +53,12 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
     // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
-    fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
-    fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T
+    fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
 
     // Typed convenience methods
-    fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String
-    fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String)
+    fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String
+    fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String)
 
     // FIXME Support for all types
     //  https://github.com/realm/realm-kotlin/issues/69
@@ -65,6 +66,19 @@ expect object RealmInterop {
 //    }
 //    override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
 //    }
+
+    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
+
+    fun realm_query_find_first(realm: NativePointer): Link?
+    fun realm_query_find_all(query: NativePointer): NativePointer
+
+    fun realm_results_count(results: NativePointer): Long
+    // FIXME OPTIMIZE Get many
+    fun <T> realm_results_get(results: NativePointer, index: Long): Link
+
+    fun realm_get_object(realm: NativePointer, link: Link): NativePointer
+
+    fun realm_results_delete_all(results: NativePointer)
 
     fun realm_object_delete(obj: NativePointer)
     // FIXME Rest of delete calls are related to queries

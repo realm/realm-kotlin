@@ -19,22 +19,12 @@ package io.realm.example.kmmsample
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.runtimeapi.RealmCompanion
 
 class ExpressionRepository {
 
     val realm: Realm by lazy {
         val configuration = RealmConfiguration.Builder()
-            // FIXME MEDIATOR Remove when object creation is internalized
-            //  https://github.com/realm/realm-kotlin/issues/54
-            .factory { _ -> Expression() }
-            // FIXME MEDIATOR Remove when shcema definition is internalized
-            //  https://github.com/realm/realm-kotlin/issues/54
-            .classes(
-                listOf(
-                    Expression.Companion as RealmCompanion
-                )
-            )
+            .schema(Entities())
             .build()
 
         Realm.open(configuration)
@@ -47,5 +37,9 @@ class ExpressionRepository {
         }
         realm.commitTransaction()
         return expression
+    }
+
+    fun expressions(): List<Expression> {
+        return realm.objects(Expression::class)
     }
 }

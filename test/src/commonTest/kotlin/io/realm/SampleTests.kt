@@ -27,6 +27,7 @@ import test.C
 import test.Entities
 import test.Sample
 import test.Subset
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -37,6 +38,20 @@ class SampleTests {
 
     @RealmModule(Sample::class)
     class MySchema
+
+    lateinit var realm: Realm
+
+    @BeforeTest
+    fun setup() {
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        realm = Realm.open(configuration)
+        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
+        //  https://github.com/realm/realm-kotlin/issues/95
+        realm.beginTransaction()
+        realm.objects(Sample::class).delete()
+        realm.commitTransaction()
+        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+    }
 
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
@@ -56,16 +71,14 @@ class SampleTests {
     }
 
     @Test
-    @Suppress("CAST_NEVER_SUCCEEDS")
-    fun realmConfig() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        val realm = Realm.open(configuration)
+    fun createAndUpdate() {
+        val s = "Hello, World!"
 
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         assertEquals("", sample.name)
-        sample.name = "Hello, World!"
-        assertEquals("Hello, World!", sample.name)
+        sample.name = s
+        assertEquals(s, sample.name)
         realm.commitTransaction()
     }
 
@@ -84,6 +97,55 @@ class SampleTests {
             sample.name = "sadf"
         }
         realm.commitTransaction()
+    }
+
+    @Test
+    fun query() {
+        val s = "Hello, World!"
+
+        realm.beginTransaction()
+        realm.create(Sample::class).run { name = s }
+        realm.create(Sample::class).run { name = "Hello, Realm!" }
+        realm.commitTransaction()
+
+        val objects1: RealmResults<Sample> = realm.objects(Sample::class)
+        assertEquals(2, objects1.size)
+
+        val objects2: RealmResults<Sample> =
+            realm.objects(Sample::class).query("name == $0", s)
+        assertEquals(1, objects2.size)
+        for (sample in objects2) {
+            assertEquals(s, sample.name)
+        }
+    }
+
+    @Test
+    fun query_parseErrorThrows() {
+        val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
+        // Will first fail when accessing the acutal elements as the query is lazily evaluated
+        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
+        //  in realm-java ;)
+        //  https://github.com/realm/realm-kotlin/issues/70
+        assertFailsWith<RuntimeException> {
+            println(objects3)
+        }
+    }
+
+    @Test
+    fun query_delete() {
+        realm.beginTransaction()
+        realm.create(Sample::class).run { name = "Hello, World!" }
+        realm.create(Sample::class).run { name = "Hello, Realm!" }
+        realm.commitTransaction()
+
+        val objects1: RealmResults<Sample> = realm.objects(Sample::class)
+        assertEquals(2, objects1.size)
+
+        realm.beginTransaction()
+        realm.objects(Sample::class).delete()
+        realm.commitTransaction()
+
+        assertEquals(0, realm.objects(Sample::class).size)
     }
 
     @Test

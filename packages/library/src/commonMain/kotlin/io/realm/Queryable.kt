@@ -1,5 +1,4 @@
 /*
- * Copyright 2020 JetBrains s.r.o.
  * Copyright 2020 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -10,22 +9,20 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
-package io.realm.example.kmmsample
+package io.realm
 
 import io.realm.runtimeapi.RealmModel
-import io.realm.runtimeapi.RealmModule
-import io.realm.runtimeapi.RealmObject
 
-@RealmObject
-class Expression : RealmModel {
-    var expressionString: String = ""
+// FIXME QUERY-API
+//  - Realms, Results and Lists are queryable, but might not be needed as an interface
+//    dependent on how the final API is going to look like.
+//  - Query could alternatively be separated into builder to await constructing new results until
+//    actually executing the query
+interface Queryable<T : RealmModel> {
+    fun query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>
 }
-
-@RealmModule(Expression::class)
-class Entities

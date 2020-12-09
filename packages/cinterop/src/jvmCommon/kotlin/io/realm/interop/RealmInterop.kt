@@ -18,6 +18,7 @@ package io.realm.interop
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
+import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
 actual object RealmInterop {
@@ -152,20 +153,20 @@ actual object RealmInterop {
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
     }
 
-    actual fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
+    actual fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
+        if (realm == null || obj == null) {
+            throw IllegalStateException("Invalid/deleted object")
         }
-        realm_set_value(o, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
+        realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
     }
 
-    actual fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T {
-        if (realm == null || o == null) {
+    actual fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T {
+        if (realm == null || obj == null) {
             throw IllegalStateException("Invalid/deleted object")
         }
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
-        realmc.realm_get_value((o as LongPointerWrapper).ptr, pinfo.key, cvalue)
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, pinfo.key, cvalue)
         when (cvalue.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
                 return cvalue.string as T
@@ -196,15 +197,88 @@ actual object RealmInterop {
     }
 
     // Typed convenience methods
-    actual fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String {
-        return realm_get_value<String>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
+    actual fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String {
+        return realm_get_value<String>(realm, obj, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
+    }
+    actual fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String) {
+        realm_set_value(realm, obj, table, col, value, false)
     }
 
-    actual fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String) {
-        realm_set_value(realm, o, table, col, value, false)
+    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
+        val count = args.size
+        val classKey = classInfo(realm, table).key
+        val x = classKey.table_key
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, value(arg))
+        }
+        return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
+    }
+
+    actual fun realm_query_find_first(realm: NativePointer): Link? {
+        val value = realm_value_t()
+        val found = booleanArrayOf(false)
+        realmc.realm_query_find_first(realm.cptr(), value, found)
+        if (!found[0]) {
+            return null
+        }
+        return value.asLink()
+    }
+
+    actual fun realm_query_find_all(query: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_results_count(results: NativePointer): Long {
+        val count = realm_size_t()
+        realmc.realm_results_count(results.cptr(), count)
+        return count.value
+    }
+
+    // TODO OPTIMIZE Getting a range
+    actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
+        val value = realm_value_t()
+        realmc.realm_results_get(results.cptr(), index, value)
+        return value.asLink()
+    }
+
+    actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
+        val table = realm_table_key_t().apply { table_key = link.tableKey }
+        val obj = realm_obj_key_t().apply { obj_key = link.objKey }
+        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), table, obj))
+    }
+
+    actual fun realm_results_delete_all(results: NativePointer) {
+        realmc.realm_results_delete_all(results.cptr())
     }
 
     actual fun realm_object_delete(obj: NativePointer) {
         realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
+    }
+
+    fun NativePointer.cptr(): Long {
+        return (this as LongPointerWrapper).ptr
+    }
+
+    private fun value(o: Any): realm_value_t {
+        val value: realm_value_t = realm_value_t()
+        when (o) {
+            is String -> {
+                value.type = realm_value_type_e.RLM_TYPE_STRING
+                value.string = o
+            }
+            // FIXME API-FULL Add support for query argument type conversion for all primitive types
+            else -> {
+                TODO("Value conversion not yet implemented for : ${o::class.simpleName}")
+            }
+        }
+        return value
+    }
+
+    private fun realm_value_t.asLink(): Link {
+        if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
+            error("Value is not of type link: $this.type")
+        }
+        return Link(this.link.target.obj_key, this.link.target_table.table_key)
     }
 }

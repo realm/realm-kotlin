@@ -14,6 +14,9 @@ struct ContentView: View {
             return "🤔"
         }
     }
+    private var count: Int {
+        return calculator.history().count
+    }
     
     var body: some View {
         VStack(alignment: .center) {
@@ -31,6 +34,7 @@ struct ContentView: View {
                 Text("=")
                 Text(sum)
             }
+            Text("History count: " + String(count))
         }
     }
 }

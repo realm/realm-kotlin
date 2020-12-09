@@ -15,8 +15,8 @@
  */
 package io.realm
 
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
 import io.realm.interop.ClassFlag
 import io.realm.interop.CollectionType
@@ -40,7 +40,7 @@ class InstrumentedTests {
 
     @Test
     fun contextIsNotNull() {
-        assertNotNull(RealmInitializer.context)
+        assertNotNull(RealmInitializer.filesDir)
     }
 
     @Test
