@@ -20,7 +20,7 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = ['master', 'next-major']
+releaseBranches = ['master', 'next-major', 'cm/ojo-upload']
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
@@ -187,12 +187,13 @@ def runStaticAnalysis() {
 }
 
 def runPublishToOjo() {
-    node('docker-cph-03') {
-        androidDockerBuild({
+    node(osx_kotlin) {
+        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
+                getArchive()
                 sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
             }
-        })
+        }
     }
 }
 
