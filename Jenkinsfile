@@ -191,7 +191,13 @@ def runPublishToOjo() {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
                 getArchive()
-                sh "./gradlew --no-daemon -DbintrayUser=${env.BINTRAY_USER} -DbintrayKey=${env.BINTRAY_KEY} ojoUpload"
+                // For some reason calling the "ojoUpload" root task does not seem to propagate properties correctly
+                // to the Publisher Plugin. This only seems to be a problem on the CI Build machine. For now, call 
+                // artifactoryPublish directly.
+                sh """
+                cd packages
+                ./gradlew --no-daemon -DbintrayUser=${env.BINTRAY_USER} -DbintrayKey=${env.BINTRAY_KEY} artifactoryPublish
+                """
             }
         }
     }
