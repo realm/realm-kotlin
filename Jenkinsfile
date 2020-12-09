@@ -191,7 +191,7 @@ def runPublishToOjo() {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
                 getArchive()
-                sh "chmod +x gradlew && ./gradlew -PbintrayUser=${env.BINTRAY_USER} -PbintrayKey=${env.BINTRAY_KEY} ojoUpload --stacktrace"
+                sh "./gradlew --no-daemon -DbintrayUser=${env.BINTRAY_USER} -DbintrayKey=${env.BINTRAY_KEY} ojoUpload"
             }
         }
     }
