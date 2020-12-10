@@ -16,8 +16,8 @@
 
 package io.realm.interop
 
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.math.BigInteger
@@ -29,7 +29,6 @@ import kotlin.test.assertTrue
 @RunWith(AndroidJUnit4::class)
 class CinteropTest {
 
-    // TODO Proper error handling; maybe generically by 'exception' or out-typemap on boolean
     @Test
     fun cinterop_swig() {
         val context = InstrumentationRegistry.getInstrumentation().context
@@ -169,7 +168,7 @@ class CinteropTest {
         val foo_str_property = realm_property_info_t()
         realmc.realm_find_property(realm, foo_info.key, "str", found, foo_str_property)
         assertTrue(found[0])
-        // TODO Repeat for all properties on all classes
+        // TODO API-FULL Repeat for all properties on all classes
 
         // Missing primary key
         val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
@@ -191,7 +190,7 @@ class CinteropTest {
 
         realmc.realm_get_value(foo1, foo_int_property.key, realm_value_t())
 
-        // TODO Find with primary key
+        // TODO API-FULL Find with primary key
 
         // Query basics
         val query: Long = realmc.realm_query_parse(realm, foo_info.key, "str == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_STRING; string = "Hello, World!" })
@@ -209,16 +208,28 @@ class CinteropTest {
         // Will not be true unless executed on a fresh realm
         assertEquals(realmObjectGetKey.obj_key, findFirstValue.link.target.obj_key)
 
-        val result: SWIGTYPE_p_realm_results = realmc.realm_query_find_all(query)
+        val results: Long = realmc.realm_query_find_all(query)
 
-        realmc.realm_results_count(result, count)
+        realmc.realm_results_count(results, count)
         assertEquals(1, count.value)
         // TODO Query basics? min, max, sum, average
+        //  https://github.com/realm/realm-kotlin/issues/64
+        val minFound = booleanArrayOf(false)
+        val minValue = realm_value_t()
+        realmc.realm_results_min(results, foo_int_property.key, minValue, minFound)
+        assertTrue(minFound.get(0))
+        assertEquals(realm_value_type_e.RLM_TYPE_INT, minValue.type)
+        assertEquals(123, minValue.integer)
 
-        // TODO Set wrong field type
+        // TODO API-FULL Set wrong field type
+
         // TODO Deletes
+        //  https://github.com/realm/realm-kotlin/issues/67
         // TODO Lists
+        //  https://github.com/realm/realm-kotlin/issues/68
+
         // TODO Notifications
+        //  https://github.com/realm/realm-kotlin/issues/65
 
         realmc.realm_commit(realm)
     }

@@ -23,11 +23,11 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectGetString (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.String declared in io.realm.interop.RealmInterop' type=kotlin.String origin=GET_PROPERTY
+                    then: CALL 'public final fun objectGetString (realm: io.realm.runtimeapi.NativePointer?, obj: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.String declared in io.realm.interop.RealmInterop' type=kotlin.String origin=GET_PROPERTY
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
                       realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
                         $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
+                      obj: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
                         $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
                       table: CONST String type=kotlin.String value="Sample"
                       col: CONST String type=kotlin.String value="stringField"
@@ -46,11 +46,11 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetString (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.String): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
+                    then: CALL 'public final fun objectSetString (realm: io.realm.runtimeapi.NativePointer?, obj: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.String): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
                       realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
                         $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
+                      obj: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
                         $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringField>' type=sample.input.Sample origin=null
                       table: CONST String type=kotlin.String value="Sample"
                       col: CONST String type=kotlin.String value="stringField"

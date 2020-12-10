@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.realm.interop;
-import io.realm.runtimeapi.NativePointer;
-
-// JVM/Android specific pointer wrapper
-class LongPointerWrapper implements NativePointer {
-    public final long ptr;
-    public LongPointerWrapper(long pointer) {
-        ptr = pointer;
-    }
-}
+// Temporary moved to `cinterop/src/jvmCommon/` to avoid IDE issues resolving symbols.
+// package io.realm.interop;
+//
+// import io.realm.runtimeapi.NativePointer;
+//
+// // JVM/Android specific pointer wrapper
+// class LongPointerWrapper implements NativePointer {
+//     public final long ptr;
+//     public LongPointerWrapper(long pointer) {
+//         ptr = pointer;
+//     }
+// }

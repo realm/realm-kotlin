@@ -39,8 +39,7 @@ kotlin {
                 api(project(":runtime-api"))
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
-                // FIXME Only used for parsing schema strings until properly typed. Remove when
-                //  https://github.com/realm/realm-kotlin/issues/54 is done.
+                // FIXME API-SCHEMA Only used for parsing schema strings until properly typed.
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
             }
         }
@@ -54,7 +53,7 @@ kotlin {
     }
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
     configure(listOf(targets["metadata"], jvm())) {
         mavenPublication {
             val targetPublication = this@mavenPublication
@@ -190,7 +189,7 @@ realmPublish {
     }
     ojo {
         // List fetched from https://medium.com/vmware-end-user-computing/publishing-kotlin-multiplatform-artifacts-to-artifactory-maven-a283ae5912d6
-        // TODO Unclear if we should name "iosArm64" and "macosX64" as well?
+        // TODO MPP-BUILD Unclear if we should name "iosArm64" and "macosX64" as well?
         publications = arrayOf("androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata")
     }
 }

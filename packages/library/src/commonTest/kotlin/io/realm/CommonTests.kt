@@ -23,7 +23,9 @@ import kotlin.test.assertEquals
 
 // Common tests will run on iOS device (./gradlew iosTest) or Android device (connectedAndroidTest)
 // additional platfomr specifc test will also be included
-@Ignore // FIXME re-enable
+// FIXME API-CLEANUP Reenable test. Test should be place in the correct module
+//  https://github.com/realm/realm-kotlin/issues/56
+@Ignore
 class CommonTests {
 
     @Test
@@ -68,6 +70,7 @@ class CommonTests {
         val objects: RealmResults<Person> = realm.objects<Person>(Person::class, "name beginswith \"Foo\" SORT(name DESCENDING)")
 
         // FIXME We are never deleting objects so the count will keep increasing
+        //  https://github.com/realm/realm-kotlin/issues/67
 //        assertEquals(2, objects.size)
         val obj1 = objects[0]
         val obj2 = objects[1]

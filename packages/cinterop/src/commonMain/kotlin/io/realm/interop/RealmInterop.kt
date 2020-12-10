@@ -16,8 +16,9 @@
 
 package io.realm.interop
 
-// FIXME Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
+// FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
+import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
 @Suppress("FunctionNaming", "LongParameterList")
@@ -46,20 +47,19 @@ expect object RealmInterop {
     fun realm_begin_write(realm: NativePointer)
     fun realm_commit(realm: NativePointer)
 
-    // FIXME Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
-    // FIXME Only operating on key/Long to get going
-    // FIXME How to return boolean 'found'? Currently throwing runtime exceptions
+    // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
+    // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
 
-    // FIXME Optimize with direct paths instead of generic type parameter. Currently wrapping
+    // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
-    fun <T> realm_set_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
-    fun <T> realm_get_value(realm: NativePointer?, o: NativePointer?, table: String, col: String, type: PropertyType): T
+    fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
 
     // Typed convenience methods
-    fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String
-    fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String)
+    fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String
+    fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String)
 
     // covers Char, Byte, Short, Int and Long
     fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long
@@ -74,7 +74,20 @@ expect object RealmInterop {
     fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean
     fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean)
 
+    // query
+    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
+
+    fun realm_query_find_first(realm: NativePointer): Link?
+    fun realm_query_find_all(query: NativePointer): NativePointer
+
+    fun realm_results_count(results: NativePointer): Long
+    // FIXME OPTIMIZE Get many
+    fun <T> realm_results_get(results: NativePointer, index: Long): Link
+
+    fun realm_get_object(realm: NativePointer, link: Link): NativePointer
+
     // delete
+    fun realm_results_delete_all(results: NativePointer)
     fun realm_object_delete(obj: NativePointer)
     // FIXME Rest of delete calls are related to queries
     //  https://github.com/realm/realm-kotlin/issues/64

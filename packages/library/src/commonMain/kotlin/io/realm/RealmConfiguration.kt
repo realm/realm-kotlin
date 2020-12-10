@@ -53,7 +53,7 @@ class RealmConfiguration private constructor(
     data class Builder(
         var path: String? = null,
         var name: String = "default", // Optional Realm name (default is 'default')
-        var schema: Any,
+        var schema: Any? = null,
         var classes: List<RealmCompanion> = listOf()
     ) {
         fun path(path: String) = apply { this.path = path }
@@ -64,6 +64,8 @@ class RealmConfiguration private constructor(
         fun build(): RealmConfiguration {
             if (path == null) {
                 val directory = PlatformHelper.appFilesDirectory()
+                // FIXME Proper platform agnostic file separator: File.separator is not available for Kotlin/Native
+                //  https://github.com/realm/realm-kotlin/issues/75
                 path = "$directory/$name.realm"
             }
             if (schema !is Mediator) {

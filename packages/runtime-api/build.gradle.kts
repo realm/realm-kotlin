@@ -67,7 +67,7 @@ android {
         targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1 // TODO What should we set this to, if anything?
         versionName = Realm.version
-        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
             getByName("main") {
@@ -137,7 +137,7 @@ realmPublish {
     }
     ojo {
         // List fetched from https://medium.com/vmware-end-user-computing/publishing-kotlin-multiplatform-artifacts-to-artifactory-maven-a283ae5912d6
-        // TODO Unclear if we should name "iosArm64" and "macosX64" as well?
+        // TODO MPP-BUILD Unclear if we should name "iosArm64" and "macosX64" as well?
         publications = arrayOf("androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata")
     }
 }

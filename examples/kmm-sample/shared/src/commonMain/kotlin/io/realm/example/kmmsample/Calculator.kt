@@ -27,5 +27,9 @@ class Calculator private constructor() {
             repository.addExpression("$a + $b")
             return a + b
         }
+
+        fun history(): List<Expression> {
+            return repository.expressions()
+        }
     }
 }

@@ -39,6 +39,7 @@ repositories {
 kotlin {
     android()
     // TODO Realm is not available for non-X64 hosts yet
+    //  https://github.com/realm/realm-kotlin/issues/72
     iosX64("ios") {
         binaries {
             framework {
@@ -49,8 +50,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // FIXME Fetch version from realm repository
-                implementation("io.realm.kotlin:library:0.0.1-SNAPSHOT")
+                // TODO AUTO-SETUP
+                implementation("io.realm.kotlin:library:${Realm.version}")
             }
         }
         val commonTest by getting {
@@ -92,13 +93,16 @@ android {
     //  does not seem to work, maybe due to naming, ordering, etc. Workaround seemed to be working
     //  for Groovy build files. Have not investigated further.
     // https://youtrack.jetbrains.com/issue/KT-35016
+    // https://github.com/realm/realm-kotlin/issues/73
     sourceSets.getByName("androidTest").java.srcDir(file("src/androidTest/kotlin"))
 }
 val packForXcode by tasks.creating(Sync::class) {
     group = "build"
     val mode = System.getenv("CONFIGURATION") ?: "DEBUG"
     val sdkName = System.getenv("SDK_NAME") ?: "iphonesimulator"
-    // FIXME Defining ios target as iosX64 somehow hides the ioxX64 target
+    // TODO MPP-BUILD Defining ios target as iosX64 somehow hides the ioxX64 target. Can be removed when full
+    //  ios builds are in place
+    //  https://github.com/realm/realm-kotlin/issues/72
     // val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
     val targetName = "ios"
     val framework = kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)

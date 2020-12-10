@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
         val numBTV: EditText = findViewById(R.id.editTextNumberDecimalB)
 
         val sumTV: TextView = findViewById(R.id.textViewSum)
+        val countTV: TextView = findViewById(R.id.textHistoryCount)
 
         val textWatcher = object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -35,6 +36,7 @@ class MainActivity : AppCompatActivity() {
                 } catch (e: NumberFormatException) {
                     sumTV.text = "= 🤔"
                 }
+                countTV.text = "History count: ${Calculator.history().size}"
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

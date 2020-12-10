@@ -16,10 +16,9 @@
 
 package io.realm.interop
 
-// FIXME Platform independent property definition. Maybe rework into utility method called in Realm
-//  object's companion schema mechanism depending on how we relate this to the actual schema/runtime
-//  realm_property_info_t.
-// TODO Should probably be somewhere else...maybe in runtime-api?
+// FIXME API-SCHEMA Platform independent property definition. Maybe rework into utility method
+//  called in Realm object's companion schema mechanism depending on how we relate this to the
+//  actual schema/runtime realm_property_info_t.
 @Suppress("LongParameterList")
 class Property(
     val name: String,
