@@ -18,10 +18,14 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.NATIVE_WRAPPER
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_BOOLEAN
-import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_INT64
+import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_DOUBLE
+import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_FLOAT
+import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_INTEGER
 import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_STRING
 import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_BOOLEAN
-import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_INT64
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_DOUBLE
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_FLOAT
+import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_INTEGER
 import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_STRING
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -49,9 +53,14 @@ import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.types.isBoolean
+import org.jetbrains.kotlin.ir.types.isByte
+import org.jetbrains.kotlin.ir.types.isChar
+import org.jetbrains.kotlin.ir.types.isDouble
+import org.jetbrains.kotlin.ir.types.isFloat
 import org.jetbrains.kotlin.ir.types.isInt
 import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.types.isNullable
+import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.dump
@@ -59,6 +68,7 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 /**
@@ -73,10 +83,34 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private lateinit var objectGetStringFun: IrSimpleFunction
     private lateinit var objectSetStringFun: IrSimpleFunction
-    private lateinit var objectGetInt64Fun: IrSimpleFunction
-    private lateinit var objectSetInt64Fun: IrSimpleFunction
+    private lateinit var objectGetIntegerFun: IrSimpleFunction
+    private lateinit var objectSetIntegerFun: IrSimpleFunction
     private lateinit var objectGetBooleanFun: IrSimpleFunction
     private lateinit var objectSetBooleanFun: IrSimpleFunction
+    private lateinit var objectGetFloatFun: IrSimpleFunction
+    private lateinit var objectSetFloatFun: IrSimpleFunction
+    private lateinit var objectGetDoubleFun: IrSimpleFunction
+    private lateinit var objectSetDoubleFun: IrSimpleFunction
+
+    private var functionLongToChar: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
+    private var functionCharToLong: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Char"), "toLong")
+
+    private var functionLongToByte: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toByte")
+    private var functionByteToLong: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Byte"), "toLong")
+
+    private var functionLongToShort: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toShort")
+    private var functionShortToLong: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Short"), "toLong")
+
+    private var functionLongToInt: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toInt")
+    private var functionIntToLong: IrSimpleFunction =
+        pluginContext.lookupFunctionInClass(FqName("kotlin.Int"), "toLong")
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
@@ -104,13 +138,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             it.name == C_INTEROP_OBJECT_SET_STRING
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_STRING.asString()}")
 
-        objectGetInt64Fun = nativeWrapperClass.functions.find {
-            it.name == C_INTEROP_OBJECT_GET_INT64
-        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INT64.asString()}")
+        objectGetIntegerFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_GET_INTEGER
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_INTEGER.asString()}")
 
-        objectSetInt64Fun = nativeWrapperClass.functions.find {
-            it.name == C_INTEROP_OBJECT_SET_INT64
-        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_INT64.asString()}")
+        objectSetIntegerFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_SET_INTEGER
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_INTEGER.asString()}")
 
         objectGetBooleanFun = nativeWrapperClass.functions.find {
             it.name == C_INTEROP_OBJECT_GET_BOOLEAN
@@ -119,6 +153,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         objectSetBooleanFun = nativeWrapperClass.functions.find {
             it.name == C_INTEROP_OBJECT_SET_BOOLEAN
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_BOOLEAN.asString()}")
+
+        objectGetFloatFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_GET_FLOAT
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_FLOAT.asString()}")
+
+        objectSetFloatFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_SET_FLOAT
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_FLOAT.asString()}")
+
+        objectGetDoubleFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_GET_DOUBLE
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_GET_DOUBLE.asString()}")
+
+        objectSetDoubleFun = nativeWrapperClass.functions.find {
+            it.name == C_INTEROP_OBJECT_SET_DOUBLE
+        } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_DOUBLE.asString()}")
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitProperty(declaration: IrProperty): IrStatement {
@@ -138,23 +188,53 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         modifyGetterAccessor(irClass, name, objectGetStringFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetStringFun, declaration.setter!!)
                     }
-                    propertyType.makeNotNull().isLong() -> {
-                        logInfo("Long property named ${declaration.name} is nullable $nullable")
+                    propertyType.makeNotNull().isByte() -> {
+                        logInfo("Byte property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("int", nullable)
-                        modifyGetterAccessor(irClass, name, objectGetInt64Fun, declaration.getter!!)
-                        modifySetterAccessor(irClass, name, objectSetInt64Fun, declaration.setter!!)
+                        modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToByte)
+                        modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionByteToLong)
+                    }
+                    propertyType.makeNotNull().isChar() -> {
+                        logInfo("Char property named ${declaration.name} is nullable $nullable")
+                        fields[name] = Pair("int", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToChar)
+                        modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionCharToLong)
+                    }
+                    propertyType.makeNotNull().isShort() -> {
+                        logInfo("Short property named ${declaration.name} is nullable $nullable")
+                        fields[name] = Pair("int", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToShort)
+                        modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionShortToLong)
                     }
                     propertyType.makeNotNull().isInt() -> {
                         logInfo("Int property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("int", nullable)
-                        modifyGetterAccessor(irClass, name, objectGetInt64Fun, declaration.getter!!)
-                        modifySetterAccessor(irClass, name, objectSetInt64Fun, declaration.setter!!)
+                        modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToInt)
+                        modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionIntToLong)
+                    }
+                    propertyType.makeNotNull().isLong() -> {
+                        logInfo("Long property named ${declaration.name} is nullable $nullable")
+                        fields[name] = Pair("int", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!)
+                        modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!)
                     }
                     propertyType.makeNotNull().isBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("boolean", nullable)
                         modifyGetterAccessor(irClass, name, objectGetBooleanFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetBooleanFun, declaration.setter!!)
+                    }
+                    propertyType.makeNotNull().isFloat() -> {
+                        logInfo("Float property named ${declaration.name} is nullable $nullable")
+                        fields[name] = Pair("float", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetFloatFun, declaration.getter!!)
+                        modifySetterAccessor(irClass, name, objectSetFloatFun, declaration.setter!!)
+                    }
+                    propertyType.makeNotNull().isDouble() -> {
+                        logInfo("Double property named ${declaration.name} is nullable $nullable")
+                        fields[name] = Pair("double", nullable)
+                        modifyGetterAccessor(irClass, name, objectGetDoubleFun, declaration.getter!!)
+                        modifySetterAccessor(irClass, name, objectSetDoubleFun, declaration.setter!!)
                     }
                     else -> {
                         logInfo("Type not processed: ${declaration.dump()}")
@@ -166,7 +246,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         })
     }
 
-    private fun modifyGetterAccessor(irClass: IrClass, name: String, cInteropGetFunction: IrSimpleFunction, declaration: IrFunction) {
+    private fun modifyGetterAccessor(irClass: IrClass, name: String, cInteropGetFunction: IrSimpleFunction, declaration: IrFunction, fromLongToType: IrFunction? = null) {
         declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitReturn(expression: IrReturn): IrExpression {
                 return IrBlockBuilder(pluginContext, Scope(declaration.symbol), expression.startOffset, expression.endOffset).irBlock {
@@ -203,9 +283,16 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             }
                         )
                         putValueArgument(i++, irString(irClass.name.identifier))
-                        putValueArgument(i++, irString(name))
+                        putValueArgument(i, irString(name))
                     }
 
+                    val cinteropExpression = if (fromLongToType != null) {
+                        irCall(fromLongToType).also {
+                            it.dispatchReceiver = cinteropCall
+                        }
+                    } else {
+                        cinteropCall
+                    }
                     // RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String declared in io.realm.example.Sample'
                     //                WHEN type=kotlin.String origin=IF
                     //                  BRANCH
@@ -213,7 +300,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         irIfThenElse(
                             property.getter!!.returnType,
                             isManagedCall,
-                            cinteropCall, // property is managed call C-Interop function
+                            cinteropExpression, // property is managed call C-Interop function
                             irGetField(irGet(property.getter!!.dispatchReceiverParameter!!), property.backingField!!), // unmanaged property call backing field value
                             origin = IrStatementOrigin.IF,
                         )
@@ -223,7 +310,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         })
     }
 
-    private fun modifySetterAccessor(irClass: IrClass, name: String, cInteropSetFunction: IrSimpleFunction, declaration: IrFunction) {
+    private fun modifySetterAccessor(irClass: IrClass, name: String, cInteropSetFunction: IrSimpleFunction, declaration: IrFunction, functionTypeToLong: IrFunction? = null) {
         declaration.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitSetField(expression: IrSetField): IrExpression {
                 return IrBlockBuilder(pluginContext, Scope(declaration.symbol), expression.startOffset, expression.endOffset).irBlock {
@@ -253,7 +340,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         putValueArgument(i++, irString(irClass.name.identifier))
                         putValueArgument(i++, irString(name))
-                        putValueArgument(i++, irGet(declaration.valueParameters.first()))
+                        val expression = if (functionTypeToLong != null) {
+                            irCall(functionTypeToLong).also { it.dispatchReceiver = irGet(declaration.valueParameters.first()) }
+                        } else {
+                            irGet(declaration.valueParameters.first())
+                        }
+                        putValueArgument(i, expression)
                     }
 
                     +irReturn(

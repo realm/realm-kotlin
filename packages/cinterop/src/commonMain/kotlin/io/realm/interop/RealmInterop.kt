@@ -61,8 +61,15 @@ expect object RealmInterop {
     fun objectGetString(realm: NativePointer?, o: NativePointer?, table: String, col: String): String
     fun objectSetString(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: String)
 
-    fun objectGetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long
-    fun objectSetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long)
+    // covers Char, Byte, Short, Int and Long
+    fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long
+    fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long)
+
+    fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float
+    fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float)
+
+    fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double
+    fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double)
 
     fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean
     fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean)
@@ -73,5 +80,4 @@ expect object RealmInterop {
     //  https://github.com/realm/realm-kotlin/issues/64
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
     // RLM_API bool realm_results_delete_all(realm_results_t*);
-
 }

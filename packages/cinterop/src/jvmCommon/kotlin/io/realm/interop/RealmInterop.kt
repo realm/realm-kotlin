@@ -150,8 +150,16 @@ actual object RealmInterop {
                 cvalue.type = realm_value_type_e.RLM_TYPE_BOOL
                 cvalue._boolean = value as Boolean
             }
+            Float::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_FLOAT
+                cvalue.fnum = value as Float
+            }
+            Double::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
+                cvalue.dnum = value as Double
+            }
             else -> {
-                TODO("Only string, Int and Boolean are supported at the moment")
+                error("Unsupported type ${value!!::class.qualifiedName}")
             }
         }
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
@@ -178,8 +186,12 @@ actual object RealmInterop {
                 cvalue.integer
             realm_value_type_e.RLM_TYPE_BOOL ->
                 cvalue._boolean
+            realm_value_type_e.RLM_TYPE_FLOAT ->
+                cvalue.fnum
+            realm_value_type_e.RLM_TYPE_DOUBLE ->
+                cvalue.dnum
             else ->
-                TODO("Only string, Int and Boolean are supported at the moment")
+                error("Unsupported type ${cvalue.type}")
         } as T
     }
 
@@ -212,11 +224,11 @@ actual object RealmInterop {
         realm_set_value(realm, o, table, col, value, false)
     }
 
-    actual fun objectGetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long {
+    actual fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long {
         return realm_get_value<Long>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_INT)
     }
 
-    actual fun objectSetInt64(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long) {
+    actual fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long) {
         realm_set_value(realm, o, table, col, value, false)
     }
 
@@ -225,6 +237,22 @@ actual object RealmInterop {
     }
 
     actual fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float {
+        return realm_get_value<Float>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_FLOAT)
+    }
+
+    actual fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double {
+        return realm_get_value<Double>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_DOUBLE)
+    }
+
+    actual fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double) {
         realm_set_value(realm, o, table, col, value, false)
     }
 

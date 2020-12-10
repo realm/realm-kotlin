@@ -111,10 +111,15 @@ class GenerationExtensionTest {
         assertTrue(companionObject is RealmCompanion)
 
         val expected = "{\"name\": \"Sample\", \"properties\": [" +
-                "{\"name\": {\"type\": \"string\", \"nullable\": \"true\"}}," +
-                "{\"age\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
-                "{\"adult\": {\"type\": \"boolean\", \"nullable\": \"true\"}}" +
-                "]}"
+            "{\"stringField\": {\"type\": \"string\", \"nullable\": \"true\"}}," +
+            "{\"byteField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
+            "{\"charField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
+            "{\"shortField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
+            "{\"intField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
+            "{\"longField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
+            "{\"booleanField\": {\"type\": \"boolean\", \"nullable\": \"true\"}}," +
+            "{\"floatField\": {\"type\": \"float\", \"nullable\": \"true\"}}," +
+            "{\"doubleField\": {\"type\": \"double\", \"nullable\": \"true\"}}]}"
         assertEquals(expected, companionObject.`$realm$schema`())
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)
@@ -132,7 +137,7 @@ class GenerationExtensionTest {
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
         val sampleModel = kClazz.newInstance()!!
-        val nameProperty = sampleModel::class.members.find { it.name == "name" }
+        val nameProperty = sampleModel::class.members.find { it.name == "stringField" }
             ?: fail("Couldn't find property name of class Sample")
         assertTrue(nameProperty is KMutableProperty<*>)
         assertTrue(sampleModel is RealmModelInternal)

@@ -41,3 +41,18 @@ static bool realm_set_value_boolean(realm_object_t* object, realm_col_key_t col,
     value.integer = new_value;
     return realm_set_value(object, col, value, is_default);
 }
+
+static bool realm_set_value_float(realm_object_t* object, realm_col_key_t col, float new_value, bool is_default) {
+    realm_value_t value;
+    value.type = RLM_TYPE_FLOAT;
+    value.fnum = new_value;
+    return realm_set_value(object, col, value, is_default);
+}
+
+static bool realm_set_value_double(realm_object_t* object, realm_col_key_t col, double new_value, bool is_default) {
+    realm_value_t value;
+    value.type = RLM_TYPE_DOUBLE;
+    value.dnum = new_value;
+    return realm_set_value(object, col, value, is_default);
+}
+

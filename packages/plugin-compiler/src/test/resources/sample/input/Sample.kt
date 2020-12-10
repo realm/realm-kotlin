@@ -19,8 +19,14 @@ import io.realm.runtimeapi.RealmObject
 
 @RealmObject
 class Sample {
-    var name: String? = "Realm"
-    var age: Int? = 42
-    var adult: Boolean? = true
+    var stringField: String? = "Realm"
+    var byteField: Byte? = 0xA
+    var charField: Char? = 'a'
+    var shortField: Short? = 17
+    var intField: Int? = 42
+    var longField: Long? = 256
+    var booleanField: Boolean? = true
+    var floatField: Float? = 3.14f
+    var doubleField: Double? = 1.19840122
     fun dumpSchema() : String = "${Sample.`$realm$schema`()}"
 }
