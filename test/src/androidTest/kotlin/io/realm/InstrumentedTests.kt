@@ -17,14 +17,18 @@
 
 package io.realm
 
+import android.os.Handler
+import android.os.HandlerThread
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.internal.RealmInitializer
+import io.realm.interop.Callback
 import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
+import java.util.concurrent.CountDownLatch
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -117,6 +121,32 @@ class InstrumentedTests {
         realm.commitTransaction()
 
         assertEquals(0, realm.objects(Sample::class).size)
+    }
+
+    @Test
+    fun notification() {
+        val thread = HandlerThread("test")
+        thread.start()
+        val handler = Handler(thread.looper)
+        val countDownLatch = CountDownLatch(1)
+
+        handler.post {
+            val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+            realm = Realm.open(configuration)
+            realm.beginTransaction()
+            val sample = realm.create(Sample::class).apply { name = "Hello, World!" }
+            realm.commitTransaction()
+            Realm.addNotificationListener(sample, object : Callback {
+                override fun onChange() {
+                    countDownLatch.countDown()
+                }
+            })
+            realm.beginTransaction()
+            sample.name = "ASDF"
+            realm.commitTransaction()
+        }
+
+        countDownLatch.await()
     }
 
     @Test

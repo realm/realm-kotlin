@@ -1,4 +1,5 @@
-%module realmc
+%module(directors="1") realmc
+
 %{
 #include "realm/realm.h"
 #include <cstring>
@@ -45,12 +46,14 @@ typedef jstring realm_string_t;
 
 %typemap(jstype) void* "long"
 %typemap(javain) void* "$javainput"
+%typemap(javadirectorin) void* "$1"
 %typemap(javaout) void* {
 return $jnicall;
 }
 
 // Reuse above type maps on other pointers too
-%apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*, realm_results_t* };
+%apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*,
+               realm_results_t*, realm_notification_token_t*, realm_object_changes_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -101,12 +104,10 @@ bool realm_object_is_valid(const realm_object_t*);
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
 %array_functions(realm_value_t, valueArray);
+%array_functions(realm_col_key_t, colKeyArray);
 
 // size_t output parameter
-struct realm_size_t {
-    size_t value;
-};
-%{
+%inline %{
 struct realm_size_t {
     size_t value;
 };
@@ -126,6 +127,7 @@ struct realm_size_t {
 // Make swig types package private (as opposed to public by default) to ensure that we don't expose
 // types outside the package
 %typemap(javaclassmodifiers) SWIGTYPE "class";
+%typemap(javaclassmodifiers) NotificationCallback "public class";
 %typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
 // Not yet available in library
@@ -173,3 +175,36 @@ struct realm_size_t {
 #define __attribute__(x)
 
 %include "realm.h"
+
+// How to
+// - delete all listeners
+// - release callbacks (from GC or explicit)
+%typemap(directorin, descriptor="J") const realm_object_changes_t* "*(const realm_object_changes_t **)&$input = $1;"
+%feature("director") NotificationCallback;
+%inline %{
+class NotificationCallback {
+public:
+    virtual void onChange(const realm_object_changes_t*) {}
+    virtual ~NotificationCallback() {}
+};
+// Return value is currently only used to trigger injection of error checks
+realm_notification_token_t* realm_object_add_notification_callbackJNI(
+        realm_object_t* object,
+        NotificationCallback* callback
+        ) {
+    return realm_object_add_notification_callback(
+            object,
+            callback,
+            // FIXME NOTIFICATION free userdata callback
+            [] (void *userdata) { },
+            // change callback
+            [] (void* userdata, const realm_object_changes_t* changes) {
+                static_cast<NotificationCallback*>(userdata)->onChange(changes);
+            },
+            // FIXME API-NOTIFICATION Error callback
+            [] ( void* userdata, const realm_async_error_t* ) {},
+            // FIXME INVESTIGATE
+            realm_scheduler_make_default()
+    );
+}
+%}

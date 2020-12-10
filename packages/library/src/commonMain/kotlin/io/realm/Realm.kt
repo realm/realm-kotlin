@@ -18,6 +18,7 @@ package io.realm
 
 import io.realm.internal.manage
 import io.realm.internal.unmanage
+import io.realm.interop.Callback
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
@@ -50,6 +51,13 @@ class Realm {
             internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
                 ?: throw IllegalArgumentException("Cannot delete unmanaged object")
             internalObject.unmanage()
+        }
+
+        fun <T : RealmModel> addNotificationListener(obj: T, callback: Callback) {
+            val internalObject = obj as RealmModelInternal
+            internalObject.`$realm$ObjectPointer`?.let {
+                RealmInterop.realm_object_add_notification_callback(it, callback)
+            } ?: throw IllegalArgumentException("Cannot register listeners on unmanaged object")
         }
     }
 

@@ -93,4 +93,6 @@ expect object RealmInterop {
     //  https://github.com/realm/realm-kotlin/issues/64
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
     // RLM_API bool realm_results_delete_all(realm_results_t*);
+
+    fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback)
 }

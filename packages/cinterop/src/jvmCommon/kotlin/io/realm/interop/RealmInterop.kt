@@ -199,6 +199,26 @@ actual object RealmInterop {
         } as T
     }
 
+    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback) {
+        // FIXME NOTIFICATION Handle returned notification token
+        realmc.realm_object_add_notification_callbackJNI(
+            obj.cptr(),
+            object: io.realm.interop.NotificationCallback() {
+                override fun onChange(pointer: Long) {
+                    // FIXME Clean up debug output
+                    println("change: isDeleted:${realmc.realm_object_changes_is_deleted(pointer)}")
+                    val count = realmc.realm_object_changes_get_num_modified_properties(pointer)
+                    println("change: updates:$count")
+                    val colKeys = realmc.new_colKeyArray(count.toInt())
+                    val realmObjectChangesGetModifiedProperties =
+                        realmc.realm_object_changes_get_modified_properties(pointer, colKeys, count)
+                    println("change: updates fetched:$realmObjectChangesGetModifiedProperties")
+                    callback.onChange()
+                }
+            }
+        )
+    }
+
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = booleanArrayOf(false)
         val classInfo = realm_class_info_t()
