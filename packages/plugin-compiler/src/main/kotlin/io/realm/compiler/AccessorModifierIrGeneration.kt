@@ -171,6 +171,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_DOUBLE.asString()}")
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
+            @Suppress("LongMethod")
             override fun visitProperty(declaration: IrProperty): IrStatement {
                 val name = declaration.name.asString()
 
