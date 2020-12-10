@@ -121,8 +121,8 @@ class RealmPublishPlugin : Plugin<Project> {
                         repository(
                                 delegateClosureOf<groovy.lang.GroovyObject> {
                                     setProperty("repoKey", "oss-snapshot-local")
-                                    setProperty("username", if (project.hasProperty("bintrayUser")) project.properties["bintrayUser"] else "noUser")
-                                    setProperty("password", if (project.hasProperty("bintrayKey")) project.properties["bintrayKey"] else "noKey")
+                                    setProperty("username", if (System.getProperties().containsKey("bintrayUser")) System.getProperty("bintrayUser") else "noUser")
+                                    setProperty("password", if (System.getProperties().containsKey("bintrayKey")) System.getProperty("bintrayKey") else "noKey")
                                 }
                         )
                         defaults(
