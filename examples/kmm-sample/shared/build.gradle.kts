@@ -39,7 +39,7 @@ buildscript {
         classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
     }
 }
-apply(plugin="realm-kotlin")
+apply(plugin = "realm-kotlin")
 
 group = "io.realm.example"
 version = Realm.version
