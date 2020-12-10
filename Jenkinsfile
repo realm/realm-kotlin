@@ -20,7 +20,7 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'next-major' ]
+releaseBranches = [ 'master', 'releases', 'next-major' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
@@ -190,7 +190,6 @@ def runPublishToOjo() {
     node(osx_kotlin) {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
-                getArchive()
                 // For some reason calling the "ojoUpload" root task does not seem to propagate properties correctly
                 // to the Publisher Plugin. This only seems to be a problem on the CI Build machine. For now, call 
                 // artifactoryPublish directly.
