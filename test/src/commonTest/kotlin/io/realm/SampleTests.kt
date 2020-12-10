@@ -56,15 +56,15 @@ class SampleTests {
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
         val expected = "{\"name\": \"Sample\", \"properties\": [" +
-                "{\"stringField\": {\"type\": \"string\", \"nullable\": \"false\"}}," +
-                "{\"byteField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-                "{\"charField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-                "{\"shortField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-                "{\"intField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-                "{\"longField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-                "{\"booleanField\": {\"type\": \"boolean\", \"nullable\": \"false\"}}," +
-                "{\"floatField\": {\"type\": \"float\", \"nullable\": \"false\"}}," +
-                "{\"doubleField\": {\"type\": \"double\", \"nullable\": \"false\"}}]}"
+            "{\"stringField\": {\"type\": \"string\", \"nullable\": \"false\"}}," +
+            "{\"byteField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+            "{\"charField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+            "{\"shortField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+            "{\"intField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+            "{\"longField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+            "{\"booleanField\": {\"type\": \"boolean\", \"nullable\": \"false\"}}," +
+            "{\"floatField\": {\"type\": \"float\", \"nullable\": \"false\"}}," +
+            "{\"doubleField\": {\"type\": \"double\", \"nullable\": \"false\"}}]}"
         assertEquals(expected, Sample.`$realm$schema`())
         @Suppress("CAST_NEVER_SUCCEEDS")
         val actual: RealmCompanion = Sample.Companion as RealmCompanion
