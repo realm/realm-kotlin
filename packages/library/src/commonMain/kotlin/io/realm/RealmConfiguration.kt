@@ -91,6 +91,8 @@ class RealmConfiguration private constructor(
                     "string" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "int" -> PropertyType.RLM_PROPERTY_TYPE_INT
                     "boolean" -> PropertyType.RLM_PROPERTY_TYPE_BOOL
+                    "float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
+                    "double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     else -> error("Unsupported type ${attributes["type"]!!.jsonPrimitive.content}")
                 }
                 Property(name = name, type = type)

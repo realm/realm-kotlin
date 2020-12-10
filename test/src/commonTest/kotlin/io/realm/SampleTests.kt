@@ -55,7 +55,16 @@ class SampleTests {
 
     @Test
     fun testSyntheticSchemaMethodIsGenerated() {
-        val expected = "{\"name\": \"Sample\", \"properties\": [{\"name\": {\"type\": \"string\", \"nullable\": \"false\"}}]}"
+        val expected = "{\"name\": \"Sample\", \"properties\": [" +
+                "{\"stringField\": {\"type\": \"string\", \"nullable\": \"false\"}}," +
+                "{\"byteField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+                "{\"charField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+                "{\"shortField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+                "{\"intField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+                "{\"longField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
+                "{\"booleanField\": {\"type\": \"boolean\", \"nullable\": \"false\"}}," +
+                "{\"floatField\": {\"type\": \"float\", \"nullable\": \"false\"}}," +
+                "{\"doubleField\": {\"type\": \"double\", \"nullable\": \"false\"}}]}"
         assertEquals(expected, Sample.`$realm$schema`())
         @Suppress("CAST_NEVER_SUCCEEDS")
         val actual: RealmCompanion = Sample.Companion as RealmCompanion
@@ -76,9 +85,9 @@ class SampleTests {
 
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
-        assertEquals("", sample.name)
-        sample.name = s
-        assertEquals(s, sample.name)
+        assertEquals("", sample.stringField)
+        sample.stringField = s
+        assertEquals(s, sample.stringField)
         realm.commitTransaction()
     }
 
@@ -94,7 +103,7 @@ class SampleTests {
             Realm.delete(sample)
         }
         assertFailsWith<IllegalStateException> {
-            sample.name = "sadf"
+            sample.stringField = "sadf"
         }
         realm.commitTransaction()
     }
@@ -104,18 +113,18 @@ class SampleTests {
         val s = "Hello, World!"
 
         realm.beginTransaction()
-        realm.create(Sample::class).run { name = s }
-        realm.create(Sample::class).run { name = "Hello, Realm!" }
+        realm.create(Sample::class).run { stringField = s }
+        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
         realm.commitTransaction()
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
 
         val objects2: RealmResults<Sample> =
-            realm.objects(Sample::class).query("name == $0", s)
+            realm.objects(Sample::class).query("stringField == $0", s)
         assertEquals(1, objects2.size)
         for (sample in objects2) {
-            assertEquals(s, sample.name)
+            assertEquals(s, sample.stringField)
         }
     }
 
@@ -134,8 +143,8 @@ class SampleTests {
     @Test
     fun query_delete() {
         realm.beginTransaction()
-        realm.create(Sample::class).run { name = "Hello, World!" }
-        realm.create(Sample::class).run { name = "Hello, Realm!" }
+        realm.create(Sample::class).run { stringField = "Hello, World!" }
+        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
         realm.commitTransaction()
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)

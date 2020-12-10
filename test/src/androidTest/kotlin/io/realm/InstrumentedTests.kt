@@ -64,9 +64,9 @@ class InstrumentedTests {
 
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
-        assertEquals("", sample.name)
-        sample.name = s
-        assertEquals(s, sample.name)
+        assertEquals("", sample.stringField)
+        sample.stringField = s
+        assertEquals(s, sample.stringField)
         realm.commitTransaction()
     }
 
@@ -75,26 +75,26 @@ class InstrumentedTests {
         val s = "Hello, World!"
 
         realm.beginTransaction()
-        realm.create(Sample::class).run { name = s }
-        realm.create(Sample::class).run { name = "Hello, Realm!" }
+        realm.create(Sample::class).run { stringField = s }
+        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
         realm.commitTransaction()
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
 
         val objects2: RealmResults<Sample> =
-            realm.objects(Sample::class).query("name == $0", s)
+            realm.objects(Sample::class).query("stringField == $0", s)
         assertEquals(1, objects2.size)
         for (sample in objects2) {
-            assertEquals(s, sample.name)
+            assertEquals(s, sample.stringField)
         }
     }
 
     @Test
     fun query_parseErrorThrows() {
         val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
-        // Will first fail when accessing the acutal elements as the query is lazily evaluated
-        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
+        // Will first fail when accessing the actual elements as the query is lazily evaluated
+        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationException as
         //  in realm-java ;)
         //  https://github.com/realm/realm-kotlin/issues/70
         assertFailsWith<RuntimeException> {
@@ -105,8 +105,8 @@ class InstrumentedTests {
     @Test
     fun query_delete() {
         realm.beginTransaction()
-        realm.create(Sample::class).run { name = "Hello, World!" }
-        realm.create(Sample::class).run { name = "Hello, Realm!" }
+        realm.create(Sample::class).run { stringField = "Hello, World!" }
+        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
         realm.commitTransaction()
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
@@ -131,7 +131,7 @@ class InstrumentedTests {
             Realm.delete(sample)
         }
         assertFailsWith<IllegalStateException> {
-            sample.name = "sadf"
+            sample.stringField = "sadf"
         }
         realm.commitTransaction()
     }

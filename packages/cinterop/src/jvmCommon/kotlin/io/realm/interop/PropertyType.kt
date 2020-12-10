@@ -27,7 +27,6 @@ actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated
     RLM_PROPERTY_TYPE_FLOAT(realm_property_type_e.RLM_PROPERTY_TYPE_FLOAT),
     RLM_PROPERTY_TYPE_DOUBLE(realm_property_type_e.RLM_PROPERTY_TYPE_DOUBLE);
 
-
     // TODO OPTIMIZE
     companion object {
         fun of(i: Int): PropertyType {
