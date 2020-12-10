@@ -146,8 +146,24 @@ actual object RealmInterop {
                 cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                 cvalue.string = value as String
             }
+            Long::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                cvalue.integer = value as Long
+            }
+            Boolean::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_BOOL
+                cvalue._boolean = value as Boolean
+            }
+            Float::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_FLOAT
+                cvalue.fnum = value as Float
+            }
+            Double::class -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
+                cvalue.dnum = value as Double
+            }
             else -> {
-                TODO("Only string are support at the moment")
+                error("Unsupported type ${value!!::class.qualifiedName}")
             }
         }
         realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
@@ -167,13 +183,20 @@ actual object RealmInterop {
         val pinfo = propertyInfo(realm, classInfo(realm, table), col)
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, pinfo.key, cvalue)
-        when (cvalue.type) {
+        return when (cvalue.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
-                return cvalue.string as T
+                cvalue.string
+            realm_value_type_e.RLM_TYPE_INT ->
+                cvalue.integer
+            realm_value_type_e.RLM_TYPE_BOOL ->
+                cvalue._boolean
+            realm_value_type_e.RLM_TYPE_FLOAT ->
+                cvalue.fnum
+            realm_value_type_e.RLM_TYPE_DOUBLE ->
+                cvalue.dnum
             else ->
-                // TODO API-FULL Implement all types
-                TODO("Only string are support at the moment")
-        }
+                error("Unsupported type ${cvalue.type}")
+        } as T
     }
 
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
@@ -252,6 +275,38 @@ actual object RealmInterop {
         realmc.realm_results_delete_all(results.cptr())
     }
 
+    actual fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long {
+        return realm_get_value<Long>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_INT)
+    }
+
+    actual fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean {
+        return realm_get_value<Boolean>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_BOOL)
+    }
+
+    actual fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float {
+        return realm_get_value<Float>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_FLOAT)
+    }
+
+    actual fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
+    actual fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double {
+        return realm_get_value<Double>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_DOUBLE)
+    }
+
+    actual fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double) {
+        realm_set_value(realm, o, table, col, value, false)
+    }
+
     actual fun realm_object_delete(obj: NativePointer) {
         realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
     }
@@ -267,7 +322,22 @@ actual object RealmInterop {
                 value.type = realm_value_type_e.RLM_TYPE_STRING
                 value.string = o
             }
-            // FIXME API-FULL Add support for query argument type conversion for all primitive types
+            is Byte, is Short, is Int, is Long -> {
+                value.type = realm_value_type_e.RLM_TYPE_INT
+                value.integer = (o as Number).toLong()
+            }
+            is Char -> {
+                value.type = realm_value_type_e.RLM_TYPE_INT
+                value.integer = o.toLong()
+            }
+            is Float -> {
+                value.type = realm_value_type_e.RLM_TYPE_FLOAT
+                value.fnum = o
+            }
+            is Double -> {
+                value.type = realm_value_type_e.RLM_TYPE_DOUBLE
+                value.dnum = o
+            }
             else -> {
                 TODO("Value conversion not yet implemented for : ${o::class.simpleName}")
             }

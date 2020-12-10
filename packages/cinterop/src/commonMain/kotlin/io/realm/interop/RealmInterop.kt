@@ -51,6 +51,7 @@ expect object RealmInterop {
     // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
+
     // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
     fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
@@ -60,13 +61,20 @@ expect object RealmInterop {
     fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String
     fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String)
 
-    // FIXME Support for all types
-    //  https://github.com/realm/realm-kotlin/issues/69
-//    override fun objectGetInt64(pointer: NativePointer, propertyName: String): Long? {
-//    }
-//    override fun objectSetInt64(pointer: NativePointer, propertyName: String, value: Long) {
-//    }
+    // covers Char, Byte, Short, Int and Long
+    fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long
+    fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long)
 
+    fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float
+    fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float)
+
+    fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double
+    fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double)
+
+    fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean
+    fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean)
+
+    // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
 
     fun realm_query_find_first(realm: NativePointer): Link?
@@ -78,8 +86,8 @@ expect object RealmInterop {
 
     fun realm_get_object(realm: NativePointer, link: Link): NativePointer
 
+    // delete
     fun realm_results_delete_all(results: NativePointer)
-
     fun realm_object_delete(obj: NativePointer)
     // FIXME Rest of delete calls are related to queries
     //  https://github.com/realm/realm-kotlin/issues/64

@@ -89,7 +89,11 @@ class RealmConfiguration private constructor(
                 val attributes = property[name]!!.jsonObject
                 val type = when (attributes["type"]!!.jsonPrimitive.content) {
                     "string" -> PropertyType.RLM_PROPERTY_TYPE_STRING
-                    else -> TODO()
+                    "int" -> PropertyType.RLM_PROPERTY_TYPE_INT
+                    "boolean" -> PropertyType.RLM_PROPERTY_TYPE_BOOL
+                    "float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
+                    "double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
+                    else -> error("Unsupported type ${attributes["type"]!!.jsonPrimitive.content}")
                 }
                 Property(name = name, type = type)
             }
