@@ -31,6 +31,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -196,5 +197,63 @@ class SampleTests {
 
         assertNotEquals(subsetInstanceA, instanceA)
         assertNotEquals(subsetInstanceC, instanceC)
+    }
+
+    @Test
+    fun primitiveTypes() {
+        realm.beginTransaction()
+        realm.create(Sample::class).apply {
+            stringField = "Realm Kotlin"
+            byteField = 0xb
+            charField = 'b'
+            shortField = 1
+            intField = 2
+            longField = 1024
+            booleanField = false
+            floatField = 1.99f
+            doubleField = 1.19851106
+        }
+        realm.commitTransaction()
+
+        var objects: RealmResults<Sample> = realm.objects(Sample::class)
+        assertEquals(1, objects.size)
+
+        assertEquals("Realm Kotlin", objects[0].stringField)
+        assertEquals(0xb, objects[0].byteField)
+        assertEquals('b', objects[0].charField)
+        assertEquals(1, objects[0].shortField)
+        assertEquals(2, objects[0].intField)
+        assertEquals(1024, objects[0].longField)
+        assertFalse(objects[0].booleanField)
+        assertEquals(1.99f, objects[0].floatField)
+        assertEquals(1.19851106, objects[0].doubleField)
+
+        // querying on each type
+        objects = realm.objects(Sample::class).query("stringField == $0", "Realm Kotlin") // string
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("byteField == $0", 0xb) // byte
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("charField == $0", 'b') // char
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("shortField == $0", 1) // short
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("intField == $0", 2) // int
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("longField == $0", 1024) // long
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("booleanField == false") // FIXME query("booleanField == $0", false) is not working
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("floatField == $0", 1.99f)
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("doubleField == $0", 1.19851106)
+        assertEquals(1, objects.size)
     }
 }

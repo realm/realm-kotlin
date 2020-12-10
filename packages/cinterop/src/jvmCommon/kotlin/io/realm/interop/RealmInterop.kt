@@ -322,7 +322,22 @@ actual object RealmInterop {
                 value.type = realm_value_type_e.RLM_TYPE_STRING
                 value.string = o
             }
-            // FIXME API-FULL Add support for query argument type conversion for all primitive types
+            is Byte, is Short, is Int, is Long -> {
+                value.type = realm_value_type_e.RLM_TYPE_INT
+                value.integer = (o as Number).toLong()
+            }
+            is Char -> {
+                value.type = realm_value_type_e.RLM_TYPE_INT
+                value.integer = o.toLong()
+            }
+            is Float -> {
+                value.type = realm_value_type_e.RLM_TYPE_FLOAT
+                value.fnum = o
+            }
+            is Double -> {
+                value.type = realm_value_type_e.RLM_TYPE_DOUBLE
+                value.dnum = o
+            }
             else -> {
                 TODO("Value conversion not yet implemented for : ${o::class.simpleName}")
             }

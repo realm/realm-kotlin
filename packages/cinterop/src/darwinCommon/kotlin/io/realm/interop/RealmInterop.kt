@@ -101,6 +101,22 @@ fun realm_value_t.set(memScope: MemScope, value: Any): realm_value_t {
             type = realm_value_type.RLM_TYPE_STRING
             string.set(memScope, value)
         }
+        is Byte, is Short, is Int, is Long -> {
+            type = realm_value_type.RLM_TYPE_INT
+            integer = (value as Number).toLong()
+        }
+        is Char -> {
+            type = realm_value_type.RLM_TYPE_INT
+            integer = value.toLong()
+        }
+        is Float -> {
+            type = realm_value_type.RLM_TYPE_FLOAT
+            fnum = value
+        }
+        is Double -> {
+            type = realm_value_type.RLM_TYPE_DOUBLE
+            dnum = value
+        }
         else ->
             TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
     }
