@@ -31,6 +31,7 @@ import org.gradle.kotlin.dsl.getPluginByName
 import org.gradle.kotlin.dsl.withType
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
+import java.net.URL
 
 // Custom options for POM configurations that might differ between Realm modules
 open class PomOptions {
@@ -114,24 +115,15 @@ class RealmPublishPlugin : Plugin<Project> {
     }
 
     private fun configureArtifactory(project: Project, options: ArtifactoryOptions) {
-        project.convention.getPluginByName<ArtifactoryPluginConvention>("artifactory").apply {
-            setContextUrl("https://oss.jfrog.org/artifactory")
-            publish(
-                    delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-                        repository(
-                                delegateClosureOf<groovy.lang.GroovyObject> {
-                                    setProperty("repoKey", "oss-snapshot-local")
-                                    setProperty("username", if (System.getProperties().containsKey("bintrayUser")) System.getProperty("bintrayUser") else "noUser")
-                                    setProperty("password", if (System.getProperties().containsKey("bintrayKey")) System.getProperty("bintrayKey") else "noKey")
-                                }
-                        )
-                        defaults(
-                                delegateClosureOf<groovy.lang.GroovyObject> {
-                                    invokeMethod("publications", options.publications)
-                                }
-                        )
-                    }
-            )
+        project.extensions.getByType<PublishingExtension>().apply {
+            repositories.maven {
+                name = "ojo"
+                url = URL("https://oss.jfrog.org/artifactory/oss-snapshot-local").toURI()
+                credentials {
+                    username = if (System.getProperties().containsKey("bintrayUser")) System.getProperty("bintrayUser") else "noUser"
+                    password = if (System.getProperties().containsKey("bintrayKey")) System.getProperty("bintrayKey") else "noKey"
+                }
+            }
         }
     }
 }

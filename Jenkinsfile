@@ -195,7 +195,7 @@ def runPublishToOjo() {
                 // artifactoryPublish directly.
                 sh """
                 cd packages
-                ./gradlew --no-daemon -DbintrayUser=${env.BINTRAY_USER} -DbintrayKey=${env.BINTRAY_KEY} artifactoryPublish
+                ./gradlew --no-daemon -DbintrayUser=${env.BINTRAY_USER} -DbintrayKey=${env.BINTRAY_KEY} publishAllPublicationsToOjoRepository
                 """
             }
         }
