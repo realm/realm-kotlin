@@ -17,6 +17,7 @@
 
 package io.realm
 
+import Realm
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -24,13 +25,9 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.delegateClosureOf
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.getPluginByName
 import org.gradle.kotlin.dsl.withType
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
-import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import java.net.URL
 
 // Custom options for POM configurations that might differ between Realm modules
@@ -43,7 +40,6 @@ open class PomOptions {
 // Custom options for Artifactory configurations that might differ between Realm modules
 open class ArtifactoryOptions {
     open var isEnabled: Boolean = true
-    open var publications: Array<String> = arrayOf()
 }
 
 // Configure how the Realm module is published
@@ -65,7 +61,6 @@ open class RealmPublishExtensions {
 class RealmPublishPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = project.run {
         plugins.apply(MavenPublishPlugin::class.java)
-        plugins.apply(ArtifactoryPlugin::class.java)
         extensions.create<RealmPublishExtensions>("realmPublish")
         afterEvaluate {
             project.extensions.findByType<RealmPublishExtensions>()?.run {
