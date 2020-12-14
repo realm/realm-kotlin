@@ -17,6 +17,7 @@
 
 package io.realm
 
+import Realm
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -24,13 +25,10 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.delegateClosureOf
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.getPluginByName
 import org.gradle.kotlin.dsl.withType
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
-import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
+import java.net.URL
 
 // Custom options for POM configurations that might differ between Realm modules
 open class PomOptions {
@@ -42,7 +40,6 @@ open class PomOptions {
 // Custom options for Artifactory configurations that might differ between Realm modules
 open class ArtifactoryOptions {
     open var isEnabled: Boolean = true
-    open var publications: Array<String> = arrayOf()
 }
 
 // Configure how the Realm module is published
@@ -64,7 +61,6 @@ open class RealmPublishExtensions {
 class RealmPublishPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = project.run {
         plugins.apply(MavenPublishPlugin::class.java)
-        plugins.apply(ArtifactoryPlugin::class.java)
         extensions.create<RealmPublishExtensions>("realmPublish")
         afterEvaluate {
             project.extensions.findByType<RealmPublishExtensions>()?.run {
@@ -114,24 +110,15 @@ class RealmPublishPlugin : Plugin<Project> {
     }
 
     private fun configureArtifactory(project: Project, options: ArtifactoryOptions) {
-        project.convention.getPluginByName<ArtifactoryPluginConvention>("artifactory").apply {
-            setContextUrl("https://oss.jfrog.org/artifactory")
-            publish(
-                    delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-                        repository(
-                                delegateClosureOf<groovy.lang.GroovyObject> {
-                                    setProperty("repoKey", "oss-snapshot-local")
-                                    setProperty("username", if (System.getProperties().containsKey("bintrayUser")) System.getProperty("bintrayUser") else "noUser")
-                                    setProperty("password", if (System.getProperties().containsKey("bintrayKey")) System.getProperty("bintrayKey") else "noKey")
-                                }
-                        )
-                        defaults(
-                                delegateClosureOf<groovy.lang.GroovyObject> {
-                                    invokeMethod("publications", options.publications)
-                                }
-                        )
-                    }
-            )
+        project.extensions.getByType<PublishingExtension>().apply {
+            repositories.maven {
+                name = "ojo"
+                url = URL("https://oss.jfrog.org/artifactory/oss-snapshot-local").toURI()
+                credentials {
+                    username = if (System.getProperties().containsKey("bintrayUser")) System.getProperty("bintrayUser") else "noUser"
+                    password = if (System.getProperties().containsKey("bintrayKey")) System.getProperty("bintrayKey") else "noKey"
+                }
+            }
         }
     }
 }

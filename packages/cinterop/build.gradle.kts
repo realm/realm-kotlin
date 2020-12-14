@@ -312,7 +312,5 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
-    ojo {
-        publications = arrayOf("androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata")
-    }
+    ojo { }
 }

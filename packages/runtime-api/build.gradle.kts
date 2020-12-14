@@ -135,9 +135,5 @@ realmPublish {
             "artifact is not supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
-    ojo {
-        // List fetched from https://medium.com/vmware-end-user-computing/publishing-kotlin-multiplatform-artifacts-to-artifactory-maven-a283ae5912d6
-        // TODO MPP-BUILD Unclear if we should name "iosArm64" and "macosX64" as well?
-        publications = arrayOf("androidDebug", "androidRelease", "ios", "macos", "jvm", "kotlinMultiplatform", "metadata")
-    }
+    ojo { }
 }

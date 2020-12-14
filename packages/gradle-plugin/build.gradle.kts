@@ -34,6 +34,12 @@ gradlePlugin {
             displayName = "Realm compiler plugin"
             implementationClass = "io.realm.gradle.RealmPlugin"
         }
+        // FIXME Disable publishing of marker artifact as it is currently causing authentication
+        //  issues when uploading to http://oss.jfrog.org/oss-snapshot-local.
+        //  NOTE This also disables publication of the marker artifact when publishing to local
+        //  maven repository
+        //  https://github.com/realm/realm-kotlin/issues/100
+        isAutomatedPublishing = false
     }
 }
 
@@ -42,9 +48,7 @@ realmPublish {
         name = "Gradle Plugin"
         description = "Gradle plugin for Realm Kotlin. Realm is a mobile database: Build better apps faster."
     }
-    ojo {
-        publications = arrayOf(mavenPublicationName)
-    }
+    ojo { }
 }
 
 publishing {
