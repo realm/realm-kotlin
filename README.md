@@ -5,34 +5,9 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
-# Quick Startup 
+# Quick Startup Video
 
-### Apply the gradle plugin
-
-- Add the class path dependency to the project level `build.gradle` file
-```Gradle
-buildscript {
-    repositories {
-        maven {
-            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
-        }
-    }
-    dependencies {
-        classpath 'io.realm.kotlin:plugin-gradle:0.0.1-SNAPSHOT'
-    }
-}
-
-allprojects {
-    repositories {
-        maven {
-            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
-        }
-    }
-} 
-```
-
-- Apply the `realm-kotlin` plugin at the application level `build.gradle`
-FIXME complete with Gradle definition for shared and android once https://github.com/realm/realm-kotlin/pull/101 is merged
+[![](http://img.youtube.com/vi/m7lkLu2TE8c/0.jpg)](http://www.youtube.com/watch?v=m7lkLu2TE8c "Realm Kotlin Multiplatform Quick Start")
 
 ### Define your model
 
