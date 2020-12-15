@@ -5,7 +5,56 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
+# Quick Startup Video
 
+[![](http://img.youtube.com/vi/m7lkLu2TE8c/0.jpg)](http://www.youtube.com/watch?v=m7lkLu2TE8c "Realm Kotlin Multiplatform Quick Start")
+
+### Define your model
+
+```Kotlin
+@RealmObject
+class Person : RealmModel {
+    var name: String = ""
+    var age: Int = 0
+}
+```
+Other primitive types are supported: `Char`, `Byte`, `Short`, `Long`, `Boolean`, `Float`, `Double`
+
+### Define your schema and open a Realm
+```Kotlin
+@RealmModule(Person::class)
+class MySchema
+
+val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+var realm: Realm = Realm.open(configuration)
+```
+
+### Write Transaction 
+```Kotlin
+realm.beginTransaction()
+// create a new persisted instance
+val person = realm.create(Person::class).apply {
+        name = "Foo"
+        age = 42
+}
+realm.commitTransaction()
+```
+
+### Query
+- Querying all objects of a certain type.
+
+```Kotlin
+val objects: RealmResults<Person> = realm.objects(Person::class)
+```
+- Querying using a predicate.
+
+```Kotlin
+val objects: RealmResults<Person> =
+            realm.objects(Person::class).query("name == $0", "Foo")
+```
+
+Next: head to the full KMM [example](./examples/kmm-sample).  
+ 
 # Developer Preview
 
 The Realm Kotlin SDK is in Developer Preview. All API's might change without warning and no guarantees are given about stability. *Do not use in production*.  
