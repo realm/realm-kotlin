@@ -18,7 +18,6 @@ package io.realm
 
 import io.realm.internal.manage
 import io.realm.internal.unmanage
-import io.realm.Callback
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
