@@ -57,7 +57,7 @@ class InstrumentedTests {
     }
 
     @Test
-    fun notification() {
+    fun notification_object() {
         realm.beginTransaction()
         val sample = realm.create(Sample::class).apply { stringField = "Hello, World!" }
         realm.commitTransaction()
@@ -73,6 +73,21 @@ class InstrumentedTests {
         sample.stringField = "ASDF"
         realm.commitTransaction()
 
+        CFRunLoopRun()
+    }
+
+    @Test
+    fun notification_results() {
+        val samples = realm.objects(Sample::class)
+        samples.addListener(object : Callback {
+            override fun onChange() {
+                println("onChange")
+                CFRunLoopStop(CFRunLoopGetCurrent());
+            }
+        })
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class).apply { stringField = "Hello, World!" }
+        realm.commitTransaction()
         CFRunLoopRun()
     }
 

@@ -62,6 +62,17 @@ class RealmResults<T : RealmModel> constructor(
         )
     }
 
+    fun addListener(callback: Callback) {
+        RealmInterop.realm_results_add_notification_callback(
+                result,
+                object : io.realm.interop.Callback {
+                    override fun onChange(change: NativePointer) {
+                        callback.onChange()
+                    }
+                }
+        )
+    }
+
     fun delete() {
         // TODO OPTIMIZE Are there more efficient ways to do this? realm_query_delete_all is not
         //  available in C-API yet, but should probably await final query design

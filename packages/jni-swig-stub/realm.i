@@ -179,12 +179,12 @@ struct realm_size_t {
 // How to
 // - delete all listeners
 // - release callbacks (from GC or explicit)
-%typemap(directorin, descriptor="J") const realm_object_changes_t* "*(const realm_object_changes_t **)&$input = $1;"
+%typemap(directorin, descriptor="J") const void* "*(const void **)&$input = $1;"
 %feature("director") NotificationCallback;
 %inline %{
 class NotificationCallback {
 public:
-    virtual void onChange(const realm_object_changes_t*) {}
+    virtual void onChange(const void*) {}
     virtual ~NotificationCallback() {}
 };
 // Return value is currently only used to trigger injection of error checks
@@ -200,10 +200,30 @@ realm_notification_token_t* realm_object_add_notification_callbackJNI(
             [] (void *userdata) { },
             // change callback
             [] (void* userdata, const realm_object_changes_t* changes) {
-                static_cast<NotificationCallback*>(userdata)->onChange(changes);
+                static_cast<NotificationCallback*>(userdata)->onChange(static_cast<const void*>(changes));
             },
             // FIXME API-NOTIFICATION Error callback
             [] ( void* userdata, const realm_async_error_t* ) {},
+            // FIXME INVESTIGATE
+            realm_scheduler_make_default()
+    );
+}
+realm_notification_token_t* realm_results_add_notification_callbackJNI(
+        realm_results_t* results,
+        NotificationCallback* callback
+) {
+    return realm_results_add_notification_callback(
+            results,
+            // Use the callback as user data
+            callback,
+            // FIXME NOTIFICATION free userdata callback
+            [] (void *userdata) { },
+            // change callback
+            [] (void* userdata, const realm_collection_changes_t* changes) {
+                static_cast<NotificationCallback*>(userdata)->onChange(static_cast<const void*>(changes));
+            },
+            // FIXME API-NOTIFICATION Error callback
+            [] ( void* userdata, const realm_async_error_t* ) { },
             // FIXME INVESTIGATE
             realm_scheduler_make_default()
     );

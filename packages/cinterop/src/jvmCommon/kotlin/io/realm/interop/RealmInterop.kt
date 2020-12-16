@@ -18,6 +18,7 @@ package io.realm.interop
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
+import io.realm.interop.RealmInterop.cptr
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
@@ -208,6 +209,18 @@ actual object RealmInterop {
                     callback.onChange(LongPointerWrapper(pointer))
                 }
             }
+        )
+    }
+
+    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback) {
+        // FIXME NOTIFICATION Handle returned notification token
+        realmc.realm_results_add_notification_callbackJNI(
+                results.cptr(),
+                object: io.realm.interop.NotificationCallback() {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(pointer))
+                    }
+                }
         )
     }
 

@@ -123,7 +123,7 @@ class InstrumentedTests {
     }
 
     @Test
-    fun notification() {
+    fun notification_object() {
         val thread = HandlerThread("test")
         thread.start()
         val handler = Handler(thread.looper)
@@ -137,11 +137,38 @@ class InstrumentedTests {
             realm.commitTransaction()
             Realm.addNotificationListener(sample, object : Callback {
                 override fun onChange() {
+                    println("onChange")
                     countDownLatch.countDown()
                 }
             })
             realm.beginTransaction()
             sample.stringField = "ASDF"
+            realm.commitTransaction()
+        }
+
+        countDownLatch.await()
+    }
+
+    @Test
+    fun notification_results() {
+        val thread = HandlerThread("test")
+        thread.start()
+        val handler = Handler(thread.looper)
+        val countDownLatch = CountDownLatch(1)
+
+        handler.post {
+            val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+            realm = Realm.open(configuration)
+
+            val samples = realm.objects(Sample::class)
+            samples.addListener(object : Callback {
+                override fun onChange() {
+                    println("onChange")
+                    countDownLatch.countDown()
+                }
+            })
+            realm.beginTransaction()
+            val sample = realm.create(Sample::class).apply { stringField = "Hello, World!" }
             realm.commitTransaction()
         }
 
