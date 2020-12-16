@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package io.realm.interop
+package io.realm
 
-// FIXME API-NOTIFICATION
-actual interface Callback {
-    actual fun onChange()
+interface Callback {
+    fun onChange()
 }

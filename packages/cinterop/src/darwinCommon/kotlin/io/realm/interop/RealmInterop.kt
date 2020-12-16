@@ -20,13 +20,16 @@ import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
@@ -36,10 +39,12 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.set
+import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
+import realm_wrapper.realm_col_key
 import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
@@ -546,6 +551,33 @@ actual object RealmInterop {
 
     actual fun realm_object_delete(obj: NativePointer) {
         throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
+    }
+
+    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback) {
+        // FIXME NOTIFICATION Handle returned notification token
+        // FIXME Clean up debug output
+        val scheduler = realm_wrapper.realm_scheduler_make_default()
+        println("Scheduler: ${realm_wrapper.realm_scheduler_has_default_factory()}")
+        println("Scheduler: ${realm_wrapper.realm_scheduler_is_on_thread(scheduler)}")
+        println("Scheduler: ${realm_wrapper.realm_scheduler_can_deliver_notifications(scheduler)}")
+
+        realm_wrapper.realm_object_add_notification_callback(
+            obj.cptr(),
+            // Use the callback as user data
+            StableRef.create(callback).asCPointer(),
+            // FIXME NOTIFICATION Free userdata callback
+            staticCFunction<COpaquePointer?, Unit> { },
+            // Change callback
+            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
+                val asStableRef: StableRef<Callback> = userdata!!.asStableRef()
+                // FIXME NOTIFICATION Verify memory scope of change
+                asStableRef.get().onChange(CPointerWrapper(change))
+            },
+            // FIXME NOTIFICATION Error callback
+            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, error -> },
+            // FIXME INVESTIGATE
+            realm_wrapper.realm_scheduler_make_default()
+        )
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

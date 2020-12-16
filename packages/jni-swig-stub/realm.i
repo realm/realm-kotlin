@@ -194,6 +194,7 @@ realm_notification_token_t* realm_object_add_notification_callbackJNI(
         ) {
     return realm_object_add_notification_callback(
             object,
+            // Use the callback as user data
             callback,
             // FIXME NOTIFICATION free userdata callback
             [] (void *userdata) { },

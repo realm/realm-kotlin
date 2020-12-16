@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
-expect interface Callback {
-    fun onChange()
+import io.realm.runtimeapi.NativePointer
+
+interface Callback {
+    fun onChange(change: NativePointer)
 }

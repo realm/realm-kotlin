@@ -122,13 +122,26 @@ kotlin {
 
 kotlin {
     iosX64("ios")
+    sourceSets {
+        val commonTest by getting
+        val nativeTest by creating {
+            dependsOn(commonTest)
+            kotlin.srcDir("src/nativeTest/kotlin")
+        }
+        getByName("iosTest") {
+            dependsOn(nativeTest)
+        }
+    }
 }
 
 kotlin {
     macosX64("macos") {
     }
     sourceSets {
-        getByName("macosTest") { }
+        val nativeTest by getting
+        getByName("macosTest") {
+            dependsOn(nativeTest)
+        }
     }
 }
 

@@ -21,7 +21,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.internal.RealmInitializer
-import io.realm.interop.Callback
 import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
 import org.junit.Before
@@ -134,7 +133,7 @@ class InstrumentedTests {
             val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
             realm = Realm.open(configuration)
             realm.beginTransaction()
-            val sample = realm.create(Sample::class).apply { name = "Hello, World!" }
+            val sample = realm.create(Sample::class).apply { stringField = "Hello, World!" }
             realm.commitTransaction()
             Realm.addNotificationListener(sample, object : Callback {
                 override fun onChange() {
@@ -142,7 +141,7 @@ class InstrumentedTests {
                 }
             })
             realm.beginTransaction()
-            sample.name = "ASDF"
+            sample.stringField = "ASDF"
             realm.commitTransaction()
         }
 

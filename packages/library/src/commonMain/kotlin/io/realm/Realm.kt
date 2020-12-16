@@ -18,7 +18,7 @@ package io.realm
 
 import io.realm.internal.manage
 import io.realm.internal.unmanage
-import io.realm.interop.Callback
+import io.realm.Callback
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
@@ -56,7 +56,22 @@ class Realm {
         fun <T : RealmModel> addNotificationListener(obj: T, callback: Callback) {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let {
-                RealmInterop.realm_object_add_notification_callback(it, callback)
+                RealmInterop.realm_object_add_notification_callback(it, object: io.realm.interop.Callback {
+                    override fun onChange(change: NativePointer) {
+                        // FIXME Clean up debug output
+//                        println("change: isDeleted:${realm_wrapper.realm_object_changes_is_deleted(change)}")
+//                        val count = realm_wrapper.realm_object_changes_get_num_modified_properties(change)
+//                        println("change: updates:$count")
+//                        memScoped {
+//                            val colKeys = allocArray<realm_col_key>(count.toInt())
+//                            val realmObjectChangesGetModifiedProperties =
+//                                    realm_wrapper.realm_object_changes_get_modified_properties(change, colKeys, count)
+//                            println("change: updates fetched:$realmObjectChangesGetModifiedProperties")
+//                        }
+                        // Perform actual callbackTODO("Not yet implemented")
+                        callback.onChange()
+                    }
+                })
             } ?: throw IllegalArgumentException("Cannot register listeners on unmanaged object")
         }
     }

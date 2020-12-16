@@ -21,6 +21,7 @@ package io.realm
 //  or moved.
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.RealmModule
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -28,11 +29,52 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toLong
+import platform.CoreFoundation.CFRunLoopGetCurrent
+import platform.CoreFoundation.CFRunLoopRun
+import platform.CoreFoundation.CFRunLoopStop
 import test.Sample
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class InstrumentedTests {
+
+    @RealmModule(Sample::class)
+    class MySchema
+
+    lateinit var realm: Realm
+
+    @BeforeTest
+    fun setup() {
+        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        realm = Realm.open(configuration)
+        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
+        //  https://github.com/realm/realm-kotlin/issues/95
+        realm.beginTransaction()
+        realm.objects(Sample::class).delete()
+        realm.commitTransaction()
+        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+    }
+
+    @Test
+    fun notification() {
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class).apply { stringField = "Hello, World!" }
+        realm.commitTransaction()
+
+        Realm.addNotificationListener(sample, object : Callback {
+            override fun onChange() {
+                println("onChange")
+                CFRunLoopStop(CFRunLoopGetCurrent());
+            }
+        })
+
+        realm.beginTransaction()
+        sample.stringField = "ASDF"
+        realm.commitTransaction()
+
+        CFRunLoopRun()
+    }
 
     // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
     //  or moved. Local implementation of pointer wrapper to support test. Using the internal one would

@@ -205,15 +205,7 @@ actual object RealmInterop {
             obj.cptr(),
             object: io.realm.interop.NotificationCallback() {
                 override fun onChange(pointer: Long) {
-                    // FIXME Clean up debug output
-                    println("change: isDeleted:${realmc.realm_object_changes_is_deleted(pointer)}")
-                    val count = realmc.realm_object_changes_get_num_modified_properties(pointer)
-                    println("change: updates:$count")
-                    val colKeys = realmc.new_colKeyArray(count.toInt())
-                    val realmObjectChangesGetModifiedProperties =
-                        realmc.realm_object_changes_get_modified_properties(pointer, colKeys, count)
-                    println("change: updates fetched:$realmObjectChangesGetModifiedProperties")
-                    callback.onChange()
+                    callback.onChange(LongPointerWrapper(pointer))
                 }
             }
         )
