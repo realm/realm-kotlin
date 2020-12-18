@@ -204,8 +204,8 @@ realm_notification_token_t* realm_object_add_notification_callbackJNI(
             },
             // FIXME API-NOTIFICATION Error callback
             [] ( void* userdata, const realm_async_error_t* ) {},
-            // FIXME INVESTIGATE
-            realm_scheduler_make_default()
+            // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+            NULL
     );
 }
 realm_notification_token_t* realm_results_add_notification_callbackJNI(
@@ -224,8 +224,8 @@ realm_notification_token_t* realm_results_add_notification_callbackJNI(
             },
             // FIXME API-NOTIFICATION Error callback
             [] ( void* userdata, const realm_async_error_t* ) { },
-            // FIXME INVESTIGATE
-            realm_scheduler_make_default()
+            // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+            NULL
     );
 }
 %}
