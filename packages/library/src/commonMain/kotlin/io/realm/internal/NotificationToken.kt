@@ -14,9 +14,23 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.internal
 
-interface Callback {
-    fun onChange()
-    // FIXME API-NOTIFICATION Consider adding an onError(throwable: Throwable)
+import io.realm.Disposable
+import io.realm.interop.RealmInterop
+import io.realm.runtimeapi.NativePointer
+
+
+class NotificationToken<T>(t: T, private val token: NativePointer) : Disposable {
+
+    private var t: T? = t
+
+    override fun cancel() {
+        RealmInterop.realm_release(token)
+        t = null
+    }
+
+    fun finalize() {
+        cancel()
+    }
 }

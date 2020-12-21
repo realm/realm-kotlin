@@ -196,14 +196,18 @@ realm_notification_token_t* realm_object_add_notification_callbackJNI(
             object,
             // Use the callback as user data
             callback,
-            // FIXME NOTIFICATION free userdata callback
+            // FIXME NOTIFICATION Free userdata callback, unclear if this is only triggered after
+            //  releasing the notification token, or if it also part of reporting errors and thus
+            //  ending subscription
             [] (void *userdata) { },
             // change callback
             [] (void* userdata, const realm_object_changes_t* changes) {
+                // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
+                //  like the C-API error callback below
                 static_cast<NotificationCallback*>(userdata)->onChange(static_cast<const void*>(changes));
             },
-            // FIXME API-NOTIFICATION Error callback
-            [] ( void* userdata, const realm_async_error_t* ) {},
+            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+            [] ( void* userdata, const realm_async_error_t* async_error) { },
             // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
             NULL
     );
@@ -216,14 +220,18 @@ realm_notification_token_t* realm_results_add_notification_callbackJNI(
             results,
             // Use the callback as user data
             callback,
-            // FIXME NOTIFICATION free userdata callback
+            // FIXME NOTIFICATION Free userdata callback, unclear if this is only triggered after
+            //  releasing the notification token, or if it also part of reporting errors and thus
+            //  ending subscription
             [] (void *userdata) { },
             // change callback
             [] (void* userdata, const realm_collection_changes_t* changes) {
+                // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
+                //  like the C-API error callback below
                 static_cast<NotificationCallback*>(userdata)->onChange(static_cast<const void*>(changes));
             },
-            // FIXME API-NOTIFICATION Error callback
-            [] ( void* userdata, const realm_async_error_t* ) { },
+            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+            [] ( void* userdata, const realm_async_error_t* async_error) { },
             // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
             NULL
     );

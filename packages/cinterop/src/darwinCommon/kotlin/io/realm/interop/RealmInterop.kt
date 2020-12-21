@@ -573,8 +573,8 @@ actual object RealmInterop {
                 // FIXME NOTIFICATION Verify memory scope of change
                 asStableRef.get().onChange(CPointerWrapper(change))
             },
-            // FIXME NOTIFICATION Error callback
-            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, error -> },
+            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
             // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
             null
         )
@@ -593,8 +593,8 @@ actual object RealmInterop {
                 // FIXME NOTIFICATION Verify memory scope of change
                 asStableRef.get().onChange(CPointerWrapper(change))
             },
-            // FIXME NOTIFICATION Error callback
-            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, error -> },
+            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
             // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
             null
         )

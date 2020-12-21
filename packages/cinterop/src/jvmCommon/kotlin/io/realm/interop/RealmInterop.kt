@@ -200,16 +200,16 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback) {
+    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
         // FIXME NOTIFICATION Handle returned notification token
-        realmc.realm_object_add_notification_callbackJNI(
+        return LongPointerWrapper(realmc.realm_object_add_notification_callbackJNI(
             obj.cptr(),
             object: io.realm.interop.NotificationCallback() {
                 override fun onChange(pointer: Long) {
                     callback.onChange(LongPointerWrapper(pointer))
                 }
             }
-        )
+        ))
     }
 
     actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback) {

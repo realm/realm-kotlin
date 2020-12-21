@@ -94,6 +94,6 @@ expect object RealmInterop {
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
     // RLM_API bool realm_results_delete_all(realm_results_t*);
 
-    fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback)
+    fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer
     fun realm_results_add_notification_callback(results: NativePointer, callback: Callback)
 }
