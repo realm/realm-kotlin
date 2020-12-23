@@ -65,7 +65,7 @@ class RealmResults<T : RealmModel> constructor(
 
     // FIXME INVESTIGATE Callback is triggered synchronously on beginTransaction(). Maybe just a
     //  fast forward of versions?
-    fun addListener(callback: Callback): Disposable {
+    fun addListener(callback: Callback): Registration {
         val token = RealmInterop.realm_results_add_notification_callback(
                 result,
                 object : io.realm.interop.Callback {

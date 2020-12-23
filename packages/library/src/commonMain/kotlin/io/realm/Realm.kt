@@ -54,7 +54,7 @@ class Realm {
         }
 
         // Callback is triggered synchroneously on beginTransaction()
-        fun <T : RealmModel> addNotificationListener(obj: T, objectChangeListener: Callback): Disposable {
+        fun <T : RealmModel> addNotificationListener(obj: T, objectChangeListener: Callback): Registration {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let {
                 val callback = object : io.realm.interop.Callback {

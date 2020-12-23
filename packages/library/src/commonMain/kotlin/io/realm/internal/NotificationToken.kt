@@ -16,12 +16,12 @@
 
 package io.realm.internal
 
-import io.realm.Disposable
+import io.realm.Registration
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 
 
-class NotificationToken<T>(t: T, private val token: NativePointer) : Disposable {
+class NotificationToken<T>(t: T, private val token: NativePointer) : Registration {
 
     private var t: T? = t
 

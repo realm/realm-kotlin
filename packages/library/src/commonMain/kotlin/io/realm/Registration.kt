@@ -16,6 +16,6 @@
 
 package io.realm
 
-interface Disposable {
+interface Registration {
     fun cancel()
 }
