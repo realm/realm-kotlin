@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.NotificationToken
 import io.realm.internal.link
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
@@ -64,8 +65,8 @@ class RealmResults<T : RealmModel> constructor(
 
     // FIXME INVESTIGATE Callback is triggered synchronously on beginTransaction(). Maybe just a
     //  fast forward of versions?
-    fun addListener(callback: Callback) {
-        RealmInterop.realm_results_add_notification_callback(
+    fun addListener(callback: Callback): Disposable {
+        val token = RealmInterop.realm_results_add_notification_callback(
                 result,
                 object : io.realm.interop.Callback {
                     override fun onChange(collectionChanges: NativePointer) {
@@ -73,6 +74,7 @@ class RealmResults<T : RealmModel> constructor(
                     }
                 }
         )
+        return NotificationToken(callback, token)
     }
 
     fun delete() {

@@ -64,8 +64,10 @@ class InstrumentedTests {
 
         Realm.addNotificationListener(sample, object : Callback {
             override fun onChange() {
-                println("onChange")
-                CFRunLoopStop(CFRunLoopGetCurrent());
+                println("onChange ${sample.stringField}")
+                if (sample.stringField == "ASDF") {
+                    CFRunLoopStop(CFRunLoopGetCurrent());
+                }
             }
         })
 

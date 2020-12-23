@@ -14,27 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.util
 
-import io.realm.Disposable
-import io.realm.interop.RealmInterop
-import io.realm.runtimeapi.NativePointer
+import kotlinx.coroutines.CoroutineScope
 
+expect class RunLoopThread: CoroutineScope {
 
-class NotificationToken<T>(t: T, private val token: NativePointer) : Disposable {
+    fun run(block: RunLoopThread.() -> Unit)
 
-    private var t: T? = t
-
-    override fun cancel() {
-        if (t != null) {
-            RealmInterop.realm_release(token)
-        }
-        t = null
-    }
-
-    // FIXME Only works on JVM, but KN Cleaner is not available before v1.4.30-M1-eap-48
-    //  https://github.com/realm/realm-kotlin/issues/23
-    fun finalize() {
-        cancel()
-    }
+    fun terminate()
 }

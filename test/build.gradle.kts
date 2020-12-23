@@ -41,6 +41,7 @@ kotlin {
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
                 implementation("io.realm.kotlin:library:${Realm.version}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
             }
         }
 
@@ -93,6 +94,7 @@ kotlin {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
                 implementation(kotlin("stdlib"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
         getByName("androidTest") {

@@ -16,32 +16,36 @@
 
 package io.realm
 
-import android.os.Handler
-import android.os.HandlerThread
 import io.realm.runtimeapi.RealmModule
+import io.realm.util.RunLoopThread
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.junit.Before
 import org.junit.Test
 import test.Sample
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
-import kotlin.test.fail
+import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 private val INITIAL = "Hello, World!"
 private val FIRST = "FIRST"
 private val SECOND = "SECOND"
 
+@OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 class NotificationTests {
 
     @RealmModule(Sample::class)
     class MySchema
 
-    lateinit var realm: Realm
+    lateinit var configuration: RealmConfiguration
 
     @Before
     fun setup() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        realm = Realm.open(configuration)
+        configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        val realm = Realm.open(configuration)
         // FIXME Cleaning up realm to overcome lack of support for deleting actual files
         //  https://github.com/realm/realm-kotlin/issues/95
         realm.beginTransaction()
@@ -51,155 +55,151 @@ class NotificationTests {
     }
 
     @Test
-    fun objectListener() {
-        val thread = HandlerThread("test")
-        thread.start()
-        val handler = Handler(thread.looper)
-        val countDownLatch = CountDownLatch(1)
+    fun objectListener() = RunLoopThread().run {
+        val c = Channel<String>(1)
 
-        handler.post {
-            val configuration = RealmConfiguration.Builder(schema = InstrumentedTests.MySchema()).build()
-            val realm = Realm.open(configuration)
-            realm.beginTransaction()
-            val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-            realm.commitTransaction()
-            Realm.addNotificationListener(sample, object : Callback {
-                override fun onChange() {
-                    println("onChange ${sample.stringField}")
-                    when (sample.stringField) {
-                        INITIAL -> {}
-                        FIRST -> countDownLatch.countDown()
-                        else ->
-                            fail("Notifications not canceled")
-                    }
-                    countDownLatch.countDown()
+        val realm = Realm.open(configuration)
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
+        realm.commitTransaction()
+
+        Realm.addNotificationListener(sample, object : Callback {
+            override fun onChange() {
+                val stringField = sample.stringField
+                this@run.launch {
+                    c.send(stringField)
                 }
-            })
+            }
+        })
+
+        launch {
             realm.beginTransaction()
+            assertEquals(INITIAL, c.receive())
             sample.stringField = FIRST
             realm.commitTransaction()
+            assertEquals(FIRST, c.receive())
+            realm.close()
+            terminate()
         }
-
-
-        countDownLatch.await()
     }
 
     @Test
-    fun objectListener_cancel() {
-        val thread = HandlerThread("test")
-        thread.start()
-        val handler = Handler(thread.looper)
-        val listen = CountDownLatch(1)
-        val update = CountDownLatch(1)
+    fun objectListener_cancel() = RunLoopThread().run {
+        val c = Channel<String>(1)
 
-        var token: Disposable? = null
-        handler.post {
-            val configuration = RealmConfiguration.Builder(schema = InstrumentedTests.MySchema()).build()
-            val realm = Realm.open(configuration)
-            realm.beginTransaction()
-            val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-            realm.commitTransaction()
-            token = Realm.addNotificationListener(sample, object : Callback {
-                override fun onChange() {
-                    println("onChange: ${sample.stringField}")
-                    when (sample.stringField) {
-                        INITIAL -> {}
-                        FIRST -> update.countDown()
-                        else ->
-                            fail("Notifications not canceled")
-                    }
+        val realm = Realm.open(configuration)
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
+        realm.commitTransaction()
+
+        val token = Realm.addNotificationListener(sample, object : Callback {
+            override fun onChange() {
+                val stringField = sample.stringField
+                this@run.launch {
+                    c.send(stringField)
                 }
-            })
-            listen.countDown()
+            }
+        })
+
+        launch {
+            realm.beginTransaction()
+            assertEquals(INITIAL, c.receive())
+            sample.stringField = FIRST
+            realm.commitTransaction()
+            assertEquals(FIRST, c.receive())
+
+            token.cancel()
+
+            realm.beginTransaction()
+            sample.stringField = SECOND
+            realm.commitTransaction()
+
+            delay(1.seconds)
+            assertTrue(c.isEmpty)
+
+            realm.close()
+            terminate()
         }
-        listen.await()
-
-        realm.beginTransaction()
-        realm.objects(Sample::class)[0].stringField = FIRST
-        realm.commitTransaction()
-
-        update.await()
-
-        token!!.cancel()
-
-        realm.beginTransaction()
-        realm.objects(Sample::class)[0].stringField = SECOND
-        realm.commitTransaction()
-
-        Thread.sleep(1000)
     }
 
     @Test
-    fun objectListener_cancelByGC() {
-        val thread = HandlerThread("test")
-        thread.start()
-        val handler = Handler(thread.looper)
-        val listen = CountDownLatch(1)
-        val update = CountDownLatch(1)
+    fun objectListener_cancelByGC() = RunLoopThread().run {
+        val c = Channel<String>(1)
 
-        var token: Disposable? = null
-        handler.post {
-            val configuration = RealmConfiguration.Builder(schema = InstrumentedTests.MySchema()).build()
-            val realm = Realm.open(configuration)
-            realm.beginTransaction()
-            val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-            realm.commitTransaction()
-            token = Realm.addNotificationListener(sample, object : Callback {
-                override fun onChange() {
-                    println("onChange: ${sample.stringField}")
-                    when (sample.stringField) {
-                        INITIAL -> {}
-                        FIRST -> update.countDown()
-                        else ->
-                            fail("Notifications not canceled")
-                    }
+        val realm = Realm.open(configuration)
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
+        realm.commitTransaction()
+
+        var token: Disposable? = Realm.addNotificationListener(sample, object : Callback {
+            override fun onChange() {
+                val stringField = sample.stringField
+                this@run.launch {
+                    c.send(stringField)
                 }
-            })
-            listen.countDown()
+            }
+        })
+
+        launch {
+            realm.beginTransaction()
+            assertEquals(INITIAL, c.receive())
+            sample.stringField = FIRST
+            realm.commitTransaction()
+            assertEquals(FIRST, c.receive())
+
+            // Clear reference to token and trigger garbage collection
+            token = null
+            System.gc()
+            // Leave some time for garbage collector to kick in ... impirically chosen
+            delay(2.seconds)
+
+            realm.beginTransaction()
+            sample.stringField = SECOND
+            realm.commitTransaction()
+
+            delay(1.seconds)
+            assertTrue(c.isEmpty)
+
+            realm.close()
+            terminate()
         }
-        listen.await()
-
-        realm.beginTransaction()
-        realm.objects(Sample::class)[0].stringField = FIRST
-        realm.commitTransaction()
-
-        update.await()
-
-        // Clear reference to token and trigger garbage collection
-        token = null
-        System.gc()
-        // Leave some time for carbage collector to kick in
-        Thread.sleep(2000)
-
-        realm.beginTransaction()
-        realm.objects(Sample::class)[0].stringField = SECOND
-        realm.commitTransaction()
-        CountDownLatch(1).await(5, TimeUnit.SECONDS)
     }
 
     @Test
-    fun resultsListener() {
-        val thread = HandlerThread("test")
-        thread.start()
-        val handler = Handler(thread.looper)
-        val countDownLatch = CountDownLatch(1)
+    fun resultsListener() = RunLoopThread().run {
+        val c = Channel<List<Sample>>(1)
 
-        handler.post {
-            val configuration = RealmConfiguration.Builder(schema = InstrumentedTests.MySchema()).build()
-            realm = Realm.open(configuration)
+        val realm = Realm.open(configuration)
 
-            val samples = realm.objects(Sample::class)
-            samples.addListener(object : Callback {
-                override fun onChange() {
-                    println("onChange")
-                    countDownLatch.countDown()
-                }
-            })
+        val results = realm.objects(Sample::class)
+        val token = results.addListener(object : Callback {
+            override fun onChange() {
+                val updatedResults = results.toList()
+                this@run.launch { c.send(updatedResults) }
+            }
+        })
+
+        launch {
             realm.beginTransaction()
+            assertEquals(0, c.receive().size)
             val sample = realm.create(Sample::class).apply { stringField = INITIAL }
             realm.commitTransaction()
-        }
 
-        countDownLatch.await()
+            val result = c.receive()
+            assertEquals(1, result.size)
+            assertEquals(sample.stringField, result[0].stringField)
+
+            token.cancel()
+
+            realm.beginTransaction()
+            realm.create(Sample::class).apply { stringField = INITIAL }
+            realm.commitTransaction()
+
+            delay(1.seconds)
+            assertTrue(c.isEmpty)
+
+            realm.close()
+            terminate()
+        }
     }
 }

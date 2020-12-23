@@ -124,4 +124,11 @@ class Realm {
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
+
+    fun close() {
+        dbPointer?.let {
+            RealmInterop.realm_close (it)
+        }
+        dbPointer = null
+    }
 }

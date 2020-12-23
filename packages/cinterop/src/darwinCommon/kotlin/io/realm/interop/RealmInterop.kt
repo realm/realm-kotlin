@@ -553,7 +553,7 @@ actual object RealmInterop {
         throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
-    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback) {
+    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
         // FIXME NOTIFICATION Handle returned notification token
         // FIXME Clean up debug output
         val scheduler = realm_wrapper.realm_scheduler_make_default()
@@ -561,7 +561,7 @@ actual object RealmInterop {
         println("Scheduler: ${realm_wrapper.realm_scheduler_is_on_thread(scheduler)}")
         println("Scheduler: ${realm_wrapper.realm_scheduler_can_deliver_notifications(scheduler)}")
 
-        realm_wrapper.realm_object_add_notification_callback(
+        return CPointerWrapper(realm_wrapper.realm_object_add_notification_callback(
             obj.cptr(),
             // Use the callback as user data
             StableRef.create(callback).asCPointer(),
@@ -577,11 +577,11 @@ actual object RealmInterop {
             staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
             // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
             null
-        )
+        ))
     }
 
-    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback) {
-        realm_wrapper.realm_results_add_notification_callback(
+    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_add_notification_callback(
             results.cptr(),
             // Use the callback as user data
             StableRef.create(callback).asCPointer(),
@@ -597,7 +597,7 @@ actual object RealmInterop {
             staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
             // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
             null
-        )
+        ))
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
