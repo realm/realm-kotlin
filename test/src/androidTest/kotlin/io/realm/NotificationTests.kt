@@ -131,7 +131,7 @@ class NotificationTests {
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
 
-        var token: Disposable? = Realm.addNotificationListener(sample, object : Callback {
+        var token: Registration? = Realm.addNotificationListener(sample, object : Callback {
             override fun onChange() {
                 val stringField = sample.stringField
                 this@run.launch {

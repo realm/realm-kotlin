@@ -16,6 +16,7 @@
 
 package io.realm.util
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -26,7 +27,8 @@ import kotlin.coroutines.CoroutineContext
 
 actual class RunLoopThread : CoroutineScope {
 
-    override val coroutineContext: CoroutineContext by lazy { io.realm.Main + exceptionHandler }
+    private val dispatcher : CoroutineDispatcher by lazy { Main }
+    override val coroutineContext: CoroutineContext by lazy { dispatcher + exceptionHandler }
 
     private var error : Throwable? = null
 
