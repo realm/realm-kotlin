@@ -21,8 +21,13 @@ plugins {
     id("realm-publisher")
 }
 
+repositories {
+    google()
+}
+
 dependencies {
     compileOnly(kotlin("gradle-plugin"))
+    compileOnly("com.android.tools.build:gradle:${Versions.Android.buildTools}")
 }
 
 val mavenPublicationName = "gradlePlugin"

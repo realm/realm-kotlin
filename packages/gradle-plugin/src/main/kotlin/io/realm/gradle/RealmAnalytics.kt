@@ -16,6 +16,7 @@
 
 package io.realm.gradle
 
+import com.android.build.gradle.BaseExtension
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionAdapter
@@ -30,12 +31,11 @@ import java.net.SocketException
 import java.net.URL
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.*
+import java.util.Scanner
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.xml.bind.DatatypeConverter
 import kotlin.experimental.and
-
 
 // Asynchronously submits build information to Realm when the gradle compile task run
 //
@@ -92,10 +92,14 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
     }
 
     private fun jsonPayload(project: Project): String {
-        val userId: String = ComputerIdentifierGenerator.get()
-        val appId: String = anonymousAppId(project)
+        val userId = ComputerIdentifierGenerator.get()
+        val appId = anonymousAppId(project)
         val osType = System.getProperty("os.name")
         val osVersion = System.getProperty("os.version")
+
+        val projectAndroidExtension: BaseExtension? = project.extensions.findByName("android") as BaseExtension?
+        val minSDK = projectAndroidExtension?.defaultConfig?.minSdkVersion?.apiString
+        val targetSDK = projectAndroidExtension?.defaultConfig?.targetSdkVersion?.apiString
 
         return """{
                    "event": "$EVENT_NAME",
@@ -108,6 +112,8 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
                       "Realm Version": "${RealmCompilerSubplugin.version}",
                       "Host OS Type": "$osType",
                       "Host OS Version": "$osVersion",
+                      "Target OS Minimum Version": "$minSDK",
+                      "Target OS Version": "$targetSDK"
                    }
                 }"""
     }
@@ -126,6 +132,7 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
         return hexStringify(sha256Hash("$packageName.$projectName".toByteArray()))
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun sendAnalytics(json: String) {
         try {
             val pool = Executors.newSingleThreadExecutor()
@@ -162,6 +169,7 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
 internal object ComputerIdentifierGenerator {
     private const val UNKNOWN = "unknown"
     private val OS = System.getProperty("os.name").toLowerCase()
+    @Suppress("TooGenericExceptionCaught")
     fun get(): String {
         return try {
             when {
@@ -267,6 +275,7 @@ private fun sha256Hash(data: ByteArray?): ByteArray {
  * @param data the byte array to convert
  * @return the hex-string of the byte array
  */
+@Suppress("MagicNumber")
 private fun hexStringify(data: ByteArray): String {
     val stringBuilder = java.lang.StringBuilder()
     for (singleByte: Byte in data) {
