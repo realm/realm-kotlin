@@ -18,6 +18,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("realm-publisher")
+    id("org.jetbrains.dokka") version Versions.dokka
 }
 
 repositories {
@@ -188,4 +189,29 @@ realmPublish {
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
     ojo { }
+}
+
+tasks.dokkaHtml.configure {
+    moduleName.set("Realm Kotlin SDK")
+    dokkaSourceSets {
+        configureEach {
+            moduleVersion.set(Realm.version)
+            reportUndocumented.set(true)
+            skipEmptyPackages.set(true)
+            perPackageOption {
+                matchingRegex.set(".*\\.internal\\..*")
+                suppress.set(true)
+            }
+        }
+        val commonMain by getting {
+            includes.from("overview.md", "io.realm.md")
+            sourceRoot("../runtime-api/src/commonMain/kotlin")
+        }
+    }
+}
+
+tasks.register("dokkaJar", Jar::class) {
+    dependsOn("dokkaHtml")
+    archiveClassifier.set("dokka")
+    from(tasks.named("dokkaHtml").get().outputs)
 }
