@@ -73,6 +73,11 @@ pipeline {
                 test("connectedAndroidTest")
             }
         }
+        stage('Prepare distribution') {
+            steps {  
+                runGenerateDocs()
+            }
+        }
         stage('Publish to OJO') {
             when { expression { shouldReleaseSnapshot(version) } }
             steps {
@@ -226,6 +231,18 @@ def test(task) {
         }
     }
 
+}
+
+def runGenerateDocs() {
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        node(osx_kotlin) {
+            sh """
+                cd packages
+                ./gradlew --no-daemon :library:dokkaJar --info --stacktrace
+            """
+            archiveArtifacts artifacts: 'packages/library/build/libs/library-*-dokka.jar'
+        }
+    }
 }
 
 def getArchive() {
