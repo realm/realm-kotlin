@@ -18,7 +18,7 @@
 object Realm {
     const val version = "0.0.1-SNAPSHOT"
     const val group = "io.realm.kotlin"
-    const val projectUrl = "http://realm.io"
+    const val projectUrl = "https://realm.io"
     const val plugin = "realm-kotlin"
     const val pluginId = "$plugin"
     // Modules has to match ${project.group}:${project.name} to make composite build work
@@ -31,7 +31,7 @@ object Realm {
 
     object License {
         const val name = "The Apache License, Version 2.0"
-        const val url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        const val url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
         const val distribution = "repo"
     }
     object IssueManagement {
@@ -59,7 +59,7 @@ object Versions {
     const val detektPlugin = "1.14.1"
     const val junit = "4.12"
     const val jvmTarget = "1.8"
-    const val kotlin = "1.4.20"
+    const val kotlin = "1.4.30-M1"
     const val kotlinCompileTesting = "1.2.6" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "9.4.1" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.39.0" // https://github.com/pinterest/ktlint

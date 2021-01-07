@@ -39,8 +39,7 @@ import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSet
-import org.jetbrains.kotlin.ir.builders.irTemporaryVar
-import org.jetbrains.kotlin.ir.builders.irTemporaryVarDeclaration
+import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOriginImpl
@@ -305,7 +304,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             val clazzParameter = addValueParameter(name = "clazz", type = pluginContext.irBuiltIns.kClassClass.starProjectedType)
             body = pluginContext.blockBody(symbol) {
                 val realmCompanionType = realmCompanionIrClass.defaultType
-                val elementVar = irTemporaryVar(
+                val elementVar = irTemporary(
                     nameHint = "companion",
                     value = IrCallImpl(
                         mapGetFunction.startOffset, mapGetFunction.endOffset,
@@ -368,7 +367,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                         )
                     }
                 )
-                val listVar = irTemporaryVar(nameHint = "list", value = initializeListWithSize.expression)
+                val listVar = irTemporary(nameHint = "list", value = initializeListWithSize.expression)
                 val callIterator = IrExpressionBodyImpl(
                     startOffset, endOffset,
                     IrCallImpl(
@@ -393,9 +392,9 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                             }
                     }
                 )
-                val mutableIteratorVar = irTemporaryVar(nameHint = "iterator", value = callIterator.expression)
+                val mutableIteratorVar = irTemporary(nameHint = "iterator", value = callIterator.expression)
 
-                val elementVar = irTemporaryVarDeclaration(realmCompanionIrClass.defaultType.makeNullable(), nameHint = "element", isMutable = true)
+                val elementVar = irTemporary(irType = realmCompanionIrClass.defaultType.makeNullable(), nameHint = "element", isMutable = true)
 
                 +IrWhileLoopImpl(
                     startOffset, endOffset,
