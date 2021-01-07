@@ -45,7 +45,7 @@ actual object RealmInterop {
                 primary_key = clazz.primaryKey
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
-                key = realm_table_key_t()
+                key = -1 // Use constant directly to avoid JNI round trip to realmc.getRLM_INVALID_CLASS_KEY()
                 flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue }
             }
             // Properties
@@ -58,7 +58,7 @@ actual object RealmInterop {
                     collection_type = property.collectionType.nativeValue
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
-                    key = realm_col_key_t() // property.key
+                    key = -1 // Use constant directly to avoid JNI round trip to realmc.getRLM_INVALID_PROPERTY_KEY()
                     flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue }
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
@@ -124,8 +124,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
-        val ckey = realm_table_key_t().apply { table_key = key }
-        return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, ckey))
+        return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
@@ -135,11 +134,10 @@ actual object RealmInterop {
         if (!found[0]) {
             throw RuntimeException("Cannot find class: '$name")
         }
-        return info.key.table_key
+        return info.key
     }
 
     private fun <T> realm_set_value(o: NativePointer, key: Long, value: T, isDefault: Boolean) {
-        val ckey = realm_col_key_t().apply { col_key = key }
         val cvalue = realm_value_t()
         when (value!!::class) {
             String::class -> {
@@ -166,14 +164,14 @@ actual object RealmInterop {
                 error("Unsupported type ${value!!::class.qualifiedName}")
             }
         }
-        realmc.realm_set_value((o as LongPointerWrapper).ptr, ckey, cvalue, isDefault)
+        realmc.realm_set_value((o as LongPointerWrapper).ptr, key, cvalue, isDefault)
     }
 
     actual fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
         if (realm == null || obj == null) {
             throw IllegalStateException("Invalid/deleted object")
         }
-        realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key.col_key, value, isDefault)
+        realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key, value, isDefault)
     }
 
     actual fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T {
@@ -230,7 +228,6 @@ actual object RealmInterop {
     actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
         val count = args.size
         val classKey = classInfo(realm, table).key
-        val x = classKey.table_key
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
             realmc.valueArray_setitem(cArgs, i, value(arg))
@@ -266,9 +263,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
-        val table = realm_table_key_t().apply { table_key = link.tableKey }
-        val obj = realm_obj_key_t().apply { obj_key = link.objKey }
-        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), table, obj))
+        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.tableKey, link.objKey))
     }
 
     actual fun realm_results_delete_all(results: NativePointer) {
@@ -328,7 +323,7 @@ actual object RealmInterop {
             }
             is Char -> {
                 value.type = realm_value_type_e.RLM_TYPE_INT
-                value.integer = o.toLong()
+                value.integer = o as Long
             }
             is Float -> {
                 value.type = realm_value_type_e.RLM_TYPE_FLOAT
@@ -349,6 +344,6 @@ actual object RealmInterop {
         if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target.obj_key, this.link.target_table.table_key)
+        return Link(this.link.target, this.link.target_table)
     }
 }

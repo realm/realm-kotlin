@@ -39,7 +39,6 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.readValue
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
@@ -82,7 +81,11 @@ class CinteropTest {
 
         memScoped {
             val prop_1_1 = alloc<realm_property_info_t>().apply {
-                name.setRealmString(this@memScoped, "int")
+                // All strings need to be initialized
+                name = "int".cstr.ptr
+                public_name = "".cstr.ptr
+                link_target = "".cstr.ptr
+                link_origin_property_name = "".cstr.ptr
                 type = RLM_PROPERTY_TYPE_INT
                 collection_type = RLM_COLLECTION_TYPE_NONE
                 flags = RLM_PROPERTY_NORMAL.toInt()
@@ -90,8 +93,8 @@ class CinteropTest {
 
             val classes: CPointer<realm_class_info_t> = allocArray(1)
             classes[0].apply {
-                name.setRealmString(this@memScoped, "foo")
-                primary_key.setRealmString(this@memScoped, "")
+                name = "foo".cstr.ptr
+                primary_key = "".cstr.ptr
                 num_properties = 1.toULong()
                 num_computed_properties = 0.toULong()
                 flags = RLM_CLASS_NORMAL.toInt()
@@ -104,7 +107,7 @@ class CinteropTest {
             assertTrue(realm_schema_validate(realmSchemaNew))
 
             val config = realm_config_new()
-            realm_config_set_path(config, realmStringStruct(memScope, "c_api_test.realm"))
+            realm_config_set_path(config, "c_api_test.realm")
             realm_config_set_schema(config, realmSchemaNew)
             realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
             realm_config_set_schema_version(config, 1)
@@ -117,17 +120,17 @@ class CinteropTest {
 
             val found = alloc<BooleanVar>()
             val classInfo = alloc<realm_class_info_t>()
-            val realmFindClass = realm_find_class(realm, realmStringStruct(memScope, "foo"), found.ptr, classInfo.ptr)
+            val realmFindClass = realm_find_class(realm, "foo", found.ptr, classInfo.ptr)
             assertTrue(realmFindClass)
             assertTrue(found.value)
-            assertEquals("foo", classInfo.name.toKString())
+            assertEquals("foo", classInfo.name?.toKString())
             assertEquals(1UL, classInfo.num_properties)
 
             val propertyInfo = alloc<realm_property_info_t>()
-            val realmFindProperty = realm_wrapper.realm_find_property(realm, classInfo.key.readValue(), realmStringStruct(memScope, "int"), found.ptr, propertyInfo.ptr)
+            val realmFindProperty = realm_wrapper.realm_find_property(realm, classInfo.key, "int", found.ptr, propertyInfo.ptr)
             assertTrue(realmFindProperty)
             assertTrue(found.value)
-            assertEquals("int", propertyInfo.name.toKString())
+            assertEquals("int", propertyInfo.name?.toKString())
         }
     }
 
@@ -226,7 +229,7 @@ fun assertNoError() {
 
     error.useContents {
         assertEquals(0, kind.code)
-        assertNull(message.data)
+        assertNull(message)
         assertEquals(0.toUInt(), this.error)
     }
 }

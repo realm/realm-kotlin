@@ -103,10 +103,7 @@ bool realm_object_is_valid(const realm_object_t*);
 %array_functions(realm_value_t, valueArray);
 
 // size_t output parameter
-struct realm_size_t {
-    size_t value;
-};
-%{
+%inline %{
 struct realm_size_t {
     size_t value;
 };
@@ -128,6 +125,10 @@ struct realm_size_t {
 %typemap(javaclassmodifiers) SWIGTYPE "class";
 %typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
+// Ignored due to incorrect type cast in Swig-generated wrapper for "const realm_property_key_t*"
+// which is not cast correctly to the underlying C-API method.
+%ignore "realm_get_values";
+%ignore "realm_set_values";
 // Not yet available in library
 %ignore "realm_get_async_error";
 %ignore "realm_get_last_error_as_async_error";
