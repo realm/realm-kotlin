@@ -1,6 +1,6 @@
 %module realmc
 %{
-#include "realm/realm.h"
+#include "realm.h"
 #include <cstring>
 #include <string>
 %}
@@ -62,7 +62,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message.data);
+            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
             // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
@@ -77,7 +77,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message.data);
+            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
             // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
