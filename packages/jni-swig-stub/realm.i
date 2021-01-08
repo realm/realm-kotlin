@@ -125,8 +125,9 @@ struct realm_size_t {
 %typemap(javaclassmodifiers) SWIGTYPE "class";
 %typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
-// Ignored due to incorrect type cast in Swig-generated wrapper for "const realm_property_key_t*"
-// which is not cast correctly to the underlying C-API method.
+// FIXME OPTIMIZE Support getting/setting multiple attributes. Ignored for now due to incorrect
+//  type cast in Swig-generated wrapper for "const realm_property_key_t*" which is not cast
+//  correctly to the underlying C-API method.
 %ignore "realm_get_values";
 %ignore "realm_set_values";
 // Not yet available in library
