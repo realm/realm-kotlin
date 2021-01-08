@@ -323,7 +323,7 @@ actual object RealmInterop {
             }
             is Char -> {
                 value.type = realm_value_type_e.RLM_TYPE_INT
-                value.integer = o as Long
+                value.integer = o.toLong()
             }
             is Float -> {
                 value.type = realm_value_type_e.RLM_TYPE_FLOAT
