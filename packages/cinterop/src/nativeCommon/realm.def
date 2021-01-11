@@ -28,35 +28,35 @@ struct dirent * readdir$INODE64( DIR * dir )
 // These functions are a work around to avoid anonymous union not being supported in Kotlin/Native https://youtrack.jetbrains.com/issue/KT-43833
 // which will call to `realm_wrapper.realm_set_value` using a `cValue<realm_value>` throw a
 // type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
-static bool realm_set_value_string(realm_object_t* object, realm_col_key_t col, realm_string_t new_value, bool is_default) {
+static bool realm_set_value_string(realm_object_t* object, realm_property_key_t col, realm_string_t new_value, bool is_default) {
     realm_value_t value;
     value.type = RLM_TYPE_STRING;
     value.string = new_value;
     return realm_set_value(object, col, value, is_default);
 }
 
-static bool realm_set_value_int64(realm_object_t* object, realm_col_key_t col, int64_t new_value, bool is_default) {
+static bool realm_set_value_int64(realm_object_t* object, realm_property_key_t col, int64_t new_value, bool is_default) {
     realm_value_t value;
     value.type = RLM_TYPE_INT;
     value.integer = new_value;
     return realm_set_value(object, col, value, is_default);
 }
 
-static bool realm_set_value_boolean(realm_object_t* object, realm_col_key_t col, bool new_value, bool is_default) {
+static bool realm_set_value_boolean(realm_object_t* object, realm_property_key_t col, bool new_value, bool is_default) {
     realm_value_t value;
     value.type = RLM_TYPE_BOOL;
     value.integer = new_value;
     return realm_set_value(object, col, value, is_default);
 }
 
-static bool realm_set_value_float(realm_object_t* object, realm_col_key_t col, float new_value, bool is_default) {
+static bool realm_set_value_float(realm_object_t* object, realm_property_key_t col, float new_value, bool is_default) {
     realm_value_t value;
     value.type = RLM_TYPE_FLOAT;
     value.fnum = new_value;
     return realm_set_value(object, col, value, is_default);
 }
 
-static bool realm_set_value_double(realm_object_t* object, realm_col_key_t col, double new_value, bool is_default) {
+static bool realm_set_value_double(realm_object_t* object, realm_property_key_t col, double new_value, bool is_default) {
     realm_value_t value;
     value.type = RLM_TYPE_DOUBLE;
     value.dnum = new_value;

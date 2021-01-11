@@ -4,5 +4,7 @@ package io.realm.runtimeapi
 // FIXME Do we need a type variable here?
 class Link(
     var objKey: Long,
+    // Could potentially be narrowed to Int, but Swig automatically returns long for the underlying
+    // uint32_t, while cinterop uses UInt!?
     var tableKey: Long,
 )

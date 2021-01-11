@@ -1,6 +1,6 @@
 %module realmc
 %{
-#include "realm/realm.h"
+#include "realm.h"
 #include <cstring>
 #include <string>
 %}
@@ -62,7 +62,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message.data);
+            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
             // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
@@ -77,7 +77,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message.data);
+            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
             // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
@@ -103,10 +103,7 @@ bool realm_object_is_valid(const realm_object_t*);
 %array_functions(realm_value_t, valueArray);
 
 // size_t output parameter
-struct realm_size_t {
-    size_t value;
-};
-%{
+%inline %{
 struct realm_size_t {
     size_t value;
 };
@@ -128,6 +125,11 @@ struct realm_size_t {
 %typemap(javaclassmodifiers) SWIGTYPE "class";
 %typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
+// FIXME OPTIMIZE Support getting/setting multiple attributes. Ignored for now due to incorrect
+//  type cast in Swig-generated wrapper for "const realm_property_key_t*" which is not cast
+//  correctly to the underlying C-API method.
+%ignore "realm_get_values";
+%ignore "realm_set_values";
 // Not yet available in library
 %ignore "realm_get_async_error";
 %ignore "realm_get_last_error_as_async_error";
