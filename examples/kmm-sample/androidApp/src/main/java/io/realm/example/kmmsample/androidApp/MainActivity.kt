@@ -6,6 +6,7 @@ import android.text.TextWatcher
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import io.realm.Registration
 import io.realm.example.kmmsample.Calculator
 import io.realm.example.kmmsample.Greeting
 
@@ -14,6 +15,10 @@ fun greet(): String {
 }
 
 class MainActivity : AppCompatActivity() {
+
+    lateinit var countTV: TextView
+    var registration: Registration? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -25,7 +30,8 @@ class MainActivity : AppCompatActivity() {
         val numBTV: EditText = findViewById(R.id.editTextNumberDecimalB)
 
         val sumTV: TextView = findViewById(R.id.textViewSum)
-        val countTV: TextView = findViewById(R.id.textHistoryCount)
+        countTV = findViewById(R.id.textHistoryCount)
+
 
         val textWatcher = object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -36,7 +42,6 @@ class MainActivity : AppCompatActivity() {
                 } catch (e: NumberFormatException) {
                     sumTV.text = "= 🤔"
                 }
-                countTV.text = "History count: ${Calculator.history().size}"
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -44,7 +49,22 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         }
 
+        countTV.text = "History count: ${Calculator.history().size}"
+
         numATV.addTextChangedListener(textWatcher)
         numBTV.addTextChangedListener(textWatcher)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registration = Calculator.listen {
+            countTV.text = "History count: ${Calculator.history().size}"
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        registration?.cancel()
+        registration = null
     }
 }

@@ -17,8 +17,10 @@
 
 package io.realm.example.kmmsample
 
+import io.realm.Callback
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.Registration
 
 class ExpressionRepository {
 
@@ -41,5 +43,13 @@ class ExpressionRepository {
 
     fun expressions(): List<Expression> {
         return realm.objects(Expression::class)
+    }
+
+    fun listen(block: () -> Unit): Registration {
+        return realm.objects(Expression::class).addListener(object: Callback {
+            override fun onChange() {
+                block()
+            }
+        })
     }
 }

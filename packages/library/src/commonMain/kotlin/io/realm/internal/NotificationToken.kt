@@ -20,7 +20,6 @@ import io.realm.Registration
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 
-
 class NotificationToken<T>(t: T, private val token: NativePointer) : Registration {
 
     private var t: T? = t
@@ -32,9 +31,10 @@ class NotificationToken<T>(t: T, private val token: NativePointer) : Registratio
         t = null
     }
 
-    // FIXME Only works on JVM, but KN Cleaner is not available before v1.4.30-M1-eap-48
+    // FIXME API We currently favor to do explicit registration.
+    //  Only works on JVM. KN Cleaner is not available before v1.4.30-M1-eap-48
     //  https://github.com/realm/realm-kotlin/issues/23
-    fun finalize() {
-        cancel()
-    }
+    //  fun finalize() {
+    //      cancel()
+    //  }
 }
