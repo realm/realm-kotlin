@@ -36,12 +36,15 @@ class CinteropTest {
         System.loadLibrary("realmc")
         println(realmc.realm_get_library_version())
 
+        val rlmInvalidPropertyKey = realmc.getRLM_INVALID_PROPERTY_KEY()
+        val rlmInvalidClassKey = realmc.getRLM_INVALID_CLASS_KEY()
+
         val class_1 = realm_class_info_t().apply {
             name = "foo"
             primary_key = ""
             num_properties = 3
             num_computed_properties = 0
-            key = realm_table_key_t()
+            key = rlmInvalidClassKey
             flags = realm_class_flags_e.RLM_CLASS_NORMAL
         }
 
@@ -52,7 +55,7 @@ class CinteropTest {
             collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
             link_target = ""
             link_origin_property_name = ""
-            key = realm_col_key_t()
+            key = rlmInvalidPropertyKey
             flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
         }
         val prop_1_2 = realm_property_info_t().apply {
@@ -62,7 +65,7 @@ class CinteropTest {
             collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
             link_target = ""
             link_origin_property_name = ""
-            key = realm_col_key_t()
+            key = rlmInvalidPropertyKey
             flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
         }
         val prop_1_3 = realm_property_info_t().apply {
@@ -72,7 +75,7 @@ class CinteropTest {
             collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_LIST
             link_target = "bar"
             link_origin_property_name = ""
-            key = realm_col_key_t()
+            key = rlmInvalidPropertyKey
             flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
         }
 
@@ -81,7 +84,7 @@ class CinteropTest {
             primary_key = "int"
             num_properties = 2
             num_computed_properties = 0
-            key = realm_table_key_t()
+            key = rlmInvalidClassKey
             flags = realm_class_flags_e.RLM_CLASS_NORMAL
         }
 
@@ -107,7 +110,7 @@ class CinteropTest {
                     collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
                     link_target = ""
                     link_origin_property_name = ""
-                    key = realm_col_key_t()
+                    key = rlmInvalidPropertyKey
                     flags = realm_property_flags_e.RLM_PROPERTY_INDEXED or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY
                 },
                 realm_property_info_t().apply {
@@ -117,7 +120,7 @@ class CinteropTest {
                     collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_LIST
                     link_target = ""
                     link_origin_property_name = ""
-                    key = realm_col_key_t()
+                    key = rlmInvalidPropertyKey
                     flags = realm_property_flags_e.RLM_PROPERTY_NORMAL or realm_property_flags_e.RLM_PROPERTY_NULLABLE
                 }
             ).forEachIndexed { i, prop ->
@@ -203,10 +206,10 @@ class CinteropTest {
         realmc.realm_query_find_first(query, findFirstValue, findFirstFound)
         assertTrue(findFirstFound[0])
         assertEquals(realm_value_type_e.RLM_TYPE_LINK, findFirstValue.type)
-        assertEquals(foo_info.key.table_key, findFirstValue.link.target_table.table_key)
+        assertEquals(foo_info.key, findFirstValue.link.target_table)
         val realmObjectGetKey = realmc.realm_object_get_key(foo1)
         // Will not be true unless executed on a fresh realm
-        assertEquals(realmObjectGetKey.obj_key, findFirstValue.link.target.obj_key)
+        assertEquals(realmObjectGetKey, findFirstValue.link.target)
 
         val results: Long = realmc.realm_query_find_all(query)
 
