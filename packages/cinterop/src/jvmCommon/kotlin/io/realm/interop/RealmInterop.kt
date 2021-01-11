@@ -21,7 +21,11 @@ package io.realm.interop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
+private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
+private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
+
 actual object RealmInterop {
+
     // TODO API-CLEANUP Maybe pull library loading into separate method
     //  https://github.com/realm/realm-kotlin/issues/56
     init {
@@ -45,7 +49,7 @@ actual object RealmInterop {
                 primary_key = clazz.primaryKey
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
-                key = -1 // Use constant directly to avoid JNI round trip to realmc.getRLM_INVALID_CLASS_KEY()
+                key = INVALID_CLASS_KEY
                 flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue }
             }
             // Properties
@@ -58,7 +62,7 @@ actual object RealmInterop {
                     collection_type = property.collectionType.nativeValue
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
-                    key = -1 // Use constant directly to avoid JNI round trip to realmc.getRLM_INVALID_PROPERTY_KEY()
+                    key = INVALID_PROPERTY_KEY
                     flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue }
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
