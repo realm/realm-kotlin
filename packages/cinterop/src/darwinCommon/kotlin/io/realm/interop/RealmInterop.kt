@@ -43,7 +43,6 @@ import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
-import realm_wrapper.realm_col_key
 import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
@@ -544,24 +543,18 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
-        // FIXME NOTIFICATION Handle returned notification token
-        // FIXME Clean up debug output
-        val scheduler = realm_wrapper.realm_scheduler_make_default()
-        println("Scheduler: ${realm_wrapper.realm_scheduler_has_default_factory()}")
-        println("Scheduler: ${realm_wrapper.realm_scheduler_is_on_thread(scheduler)}")
-        println("Scheduler: ${realm_wrapper.realm_scheduler_can_deliver_notifications(scheduler)}")
-
         return CPointerWrapper(realm_wrapper.realm_object_add_notification_callback(
             obj.cptr(),
             // Use the callback as user data
             StableRef.create(callback).asCPointer(),
-            // FIXME NOTIFICATION Free userdata callback
-            staticCFunction<COpaquePointer?, Unit> { },
+            staticCFunction<COpaquePointer?, Unit> { userdata ->
+                val ref: StableRef<Callback> = userdata!!.asStableRef()
+                ref.dispose()
+            },
             // Change callback
             staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
-                val asStableRef: StableRef<Callback> = userdata!!.asStableRef()
-                // FIXME NOTIFICATION Verify memory scope of change
-                asStableRef.get().onChange(CPointerWrapper(change))
+                val ref: StableRef<Callback> = userdata!!.asStableRef()
+                ref.get().onChange(CPointerWrapper(change))
             },
             // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
             staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
@@ -575,13 +568,14 @@ actual object RealmInterop {
             results.cptr(),
             // Use the callback as user data
             StableRef.create(callback).asCPointer(),
-            // FIXME NOTIFICATION Free userdata callback
-            staticCFunction<COpaquePointer?, Unit> { },
+            staticCFunction<COpaquePointer?, Unit> { userdata ->
+                val ref: StableRef<Callback> = userdata!!.asStableRef()
+                ref.dispose()
+            },
             // Change callback
             staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
-                val asStableRef: StableRef<Callback> = userdata!!.asStableRef()
-                // FIXME NOTIFICATION Verify memory scope of change
-                asStableRef.get().onChange(CPointerWrapper(change))
+                val ref: StableRef<Callback> = userdata!!.asStableRef()
+                ref.get().onChange(CPointerWrapper(change))
             },
             // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
             staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },

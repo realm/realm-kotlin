@@ -16,7 +16,8 @@
 
 package io.realm
 
-interface Callback {
+fun interface Callback {
     fun onChange()
-    // FIXME API-NOTIFICATION Consider adding an onError(throwable: Throwable)
+    // FIXME API-NOTIFICATION Consider adding an onError(throwable: Throwable), but cannot be done
+    //  with functional interface
 }

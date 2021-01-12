@@ -26,6 +26,6 @@ fun RealmModel.delete() {
     Realm.delete(this)
 }
 
-fun RealmModel.addNotificationListener(objectChangeListener: Callback) {
-    Realm.addNotificationListener(this, objectChangeListener)
+fun RealmModel.observe(objectChangeListener: Callback): Cancellable {
+    return Realm.observe(this, objectChangeListener)
 }

@@ -4,7 +4,7 @@ import shared
 struct ContentView: View {
     let calculator = Calculator.Companion()
     let greet = Greeting().greeting()
-    @State var token: LibraryRegistration? = nil
+    @State var token: LibraryCancellable? = nil
     
     init() {
         // FIXME onAppear/Disappear does not seem to be called like onResume/Pause,

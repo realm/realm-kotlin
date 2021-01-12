@@ -66,9 +66,9 @@ class RealmResults<T : RealmModel> constructor(
     /**
      * Observe changes to a Realm result.
      *
-     * Follows the pattern of [Realm.addNotificationListener]
+     * Follows the pattern of [Realm.observe]
      */
-    fun addListener(callback: Callback): Cancellable {
+    fun observe(callback: Callback): Cancellable {
         val token = RealmInterop.realm_results_add_notification_callback(
                 result,
                 object : io.realm.interop.Callback {

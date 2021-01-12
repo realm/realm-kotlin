@@ -6,8 +6,8 @@
 #include <string>
 %}
 
-// TODO Memory management: Verify finalizers, etc.
-//  Maybe in relation to https://github.com/realm/realm-kotlin/issues/23
+// FIXME MEMORY Verify finalizers, etc.
+//  https://github.com/realm/realm-kotlin/issues/93
 // TODO OPTIMIZATION
 //  - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
@@ -201,9 +201,8 @@ realm_notification_token_t* realm_object_add_notification_callbackJNI(
             object,
             // Use the callback as user data
             callback,
-            // FIXME NOTIFICATION Free userdata callback, unclear if this is only triggered after
-            //  releasing the notification token, or if it also part of reporting errors and thus
-            //  ending subscription
+            // FIXME MEMORY Verify that JVM callback is actual collected
+            //  https://github.com/realm/realm-kotlin/issues/93
             [] (void *userdata) {
                 static_cast<NotificationCallback*>(userdata)->~NotificationCallback();
             },
@@ -227,9 +226,8 @@ realm_notification_token_t* realm_results_add_notification_callbackJNI(
             results,
             // Use the callback as user data
             callback,
-            // FIXME NOTIFICATION Free userdata callback, unclear if this is only triggered after
-            //  releasing the notification token, or if it also part of reporting errors and thus
-            //  ending subscription
+            // FIXME MEMORY Verify that JVM callback is actual collected
+            //  https://github.com/realm/realm-kotlin/issues/93
             [] (void *userdata) {
                 static_cast<NotificationCallback*>(userdata)->~NotificationCallback();
             },

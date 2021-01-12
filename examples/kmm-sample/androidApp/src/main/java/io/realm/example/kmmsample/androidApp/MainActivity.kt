@@ -6,7 +6,7 @@ import android.text.TextWatcher
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import io.realm.Registration
+import io.realm.Cancellable
 import io.realm.example.kmmsample.Calculator
 import io.realm.example.kmmsample.Greeting
 
@@ -16,8 +16,8 @@ fun greet(): String {
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var countTV: TextView
-    var registration: Registration? = null
+    private lateinit var countTV: TextView
+    private var registration: Cancellable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -56,29 +56,30 @@ class Realm {
         /**
          * Observe change.
          *
-         * Triggers calls to [objectChangeListener] when there are changes to [obj].
+         * Triggers calls to [callback] when there are changes to [obj].
          *
          * To receive asynchronous callbacks this must be called:
          * - Android: on a thread with a looper
          * - iOS/macOS: on the main thread (as we currently do not support opening Realms with
-         *   different schedulers)
+         *   different schedulers similarly to
+         *   https://github.com/realm/realm-cocoa/blob/master/Realm/RLMRealm.mm#L424)
          *
          * Notes:
          * - Calls are triggered synchronously on a [beginTransaction] when the version is advanced.
          * - Ignoring the return value will eliminate the possibility to cancel the registration
-         *   and will leak the [objectChangeListener] and internals related to the registration.
+         *   and will leak the [callback] and internals related to the registration.
          */
         // @CheckReturnValue Not available for Kotlin?
-        fun <T : RealmModel> addNotificationListener(obj: T, objectChangeListener: Callback): Cancellable {
+        fun <T : RealmModel> observe(obj: T, callback: Callback): Cancellable {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let {
-                val callback = object : io.realm.interop.Callback {
+                val internalCallback = object : io.realm.interop.Callback {
                     override fun onChange(objectChanges: NativePointer) {
-                        objectChangeListener.onChange()
+                        callback.onChange()
                     }
                 }
-                val token = RealmInterop.realm_object_add_notification_callback(it, callback)
-                return NotificationToken(callback, token)
+                val token = RealmInterop.realm_object_add_notification_callback(it, internalCallback)
+                return NotificationToken(internalCallback, token)
             } ?: throw IllegalArgumentException("Cannot register listeners on unmanaged object")
         }
     }

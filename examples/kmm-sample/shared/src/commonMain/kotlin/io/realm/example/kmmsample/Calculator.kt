@@ -18,7 +18,7 @@
 
 package io.realm.example.kmmsample
 
-import io.realm.Registration
+import io.realm.Cancellable
 
 class Calculator private constructor() {
     companion object {
@@ -30,7 +30,7 @@ class Calculator private constructor() {
             return a + b
         }
 
-        fun listen(block: () -> Unit): Registration {
+        fun listen(block: () -> Unit): Cancellable {
             return this.repository.listen(block)
         }
 

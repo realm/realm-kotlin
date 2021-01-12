@@ -62,14 +62,12 @@ class NotificationTests {
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
 
-        Realm.addNotificationListener(sample, object : Callback {
-            override fun onChange() {
-                val stringField = sample.stringField
-                this@run.launch {
-                    c.send(stringField)
-                }
+        sample.observe {
+            val stringField = sample.stringField
+            this@run.launch {
+                c.send(stringField)
             }
-        })
+        }
 
         launch {
             realm.beginTransaction()
@@ -91,14 +89,12 @@ class NotificationTests {
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
 
-        val token = Realm.addNotificationListener(sample, object : Callback {
-            override fun onChange() {
-                val stringField = sample.stringField
-                this@run.launch {
-                    c.send(stringField)
-                }
+        val token = sample.observe {
+            val stringField = sample.stringField
+            this@run.launch {
+                c.send(stringField)
             }
-        })
+        }
 
         launch {
             realm.beginTransaction()
@@ -128,12 +124,10 @@ class NotificationTests {
         val realm = Realm.open(configuration)
 
         val results = realm.objects(Sample::class)
-        val token = results.addListener(object : Callback {
-            override fun onChange() {
-                val updatedResults = results.toList()
-                this@run.launch { c.send(updatedResults) }
-            }
-        })
+        val token = results.observe {
+            val updatedResults = results.toList()
+            this@run.launch { c.send(updatedResults) }
+        }
 
         launch {
             realm.beginTransaction()
@@ -169,14 +163,12 @@ class NotificationTests {
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
 
-        Realm.addNotificationListener(sample, object : Callback {
-            override fun onChange() {
-                val stringField = sample.stringField
-                this@run.launch {
-                    c.send(stringField)
-                }
+        sample.observe {
+            val stringField = sample.stringField
+            this@run.launch {
+                c.send(stringField)
             }
-        })
+        }
 
         launch {
             realm.beginTransaction()
@@ -198,14 +190,12 @@ class NotificationTests {
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
 
-        val token = Realm.addNotificationListener(sample, object : Callback {
-            override fun onChange() {
-                val stringField = sample.stringField
-                this@run.launch {
-                    c.send(stringField)
-                }
+        val token = Realm.observe(sample) {
+            val stringField = sample.stringField
+            this@run.launch {
+                c.send(stringField)
             }
-        })
+        }
 
         launch {
             realm.beginTransaction()
