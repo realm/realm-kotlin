@@ -29,6 +29,8 @@ class RealmPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.pluginManager.apply(RealmCompilerSubplugin::class.java)
 
+        project.gradle.addListener(RealmAnalytics())
+
         // Stand alone Android projects have not initialized kotlin plugin when applying this, so
         // postpone dependency injection till after evaluation
         project.afterEvaluate {

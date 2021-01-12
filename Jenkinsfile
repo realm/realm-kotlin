@@ -41,6 +41,7 @@ pipeline {
           NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
           ANDROID_NDK="${NDK_HOME}"
           ANDROID_NDK_HOME="${NDK_HOME}"
+          REALM_DISABLE_ANALYTICS=true
     }
     stages {
         stage('SCM') {
