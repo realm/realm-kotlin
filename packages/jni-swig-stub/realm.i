@@ -104,7 +104,6 @@ bool realm_object_is_valid(const realm_object_t*);
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
 %array_functions(realm_value_t, valueArray);
-%array_functions(realm_col_key_t, colKeyArray);
 
 // size_t output parameter
 %inline %{
@@ -194,7 +193,6 @@ public:
     virtual void onChange(const void*) {}
     virtual ~NotificationCallback() {}
 };
-// Return value is currently only used to trigger injection of error checks
 realm_notification_token_t* realm_object_add_notification_callbackJNI(
         realm_object_t* object,
         NotificationCallback* callback
@@ -206,7 +204,9 @@ realm_notification_token_t* realm_object_add_notification_callbackJNI(
             // FIXME NOTIFICATION Free userdata callback, unclear if this is only triggered after
             //  releasing the notification token, or if it also part of reporting errors and thus
             //  ending subscription
-            [] (void *userdata) { },
+            [] (void *userdata) {
+                static_cast<NotificationCallback*>(userdata)->~NotificationCallback();
+            },
             // change callback
             [] (void* userdata, const realm_object_changes_t* changes) {
                 // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
@@ -230,7 +230,9 @@ realm_notification_token_t* realm_results_add_notification_callbackJNI(
             // FIXME NOTIFICATION Free userdata callback, unclear if this is only triggered after
             //  releasing the notification token, or if it also part of reporting errors and thus
             //  ending subscription
-            [] (void *userdata) { },
+            [] (void *userdata) {
+                static_cast<NotificationCallback*>(userdata)->~NotificationCallback();
+            },
             // change callback
             [] (void* userdata, const realm_collection_changes_t* changes) {
                 // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback

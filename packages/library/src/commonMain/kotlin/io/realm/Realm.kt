@@ -53,23 +53,27 @@ class Realm {
             internalObject.unmanage()
         }
 
-        // Callback is triggered synchroneously on beginTransaction()
-        fun <T : RealmModel> addNotificationListener(obj: T, objectChangeListener: Callback): Registration {
+        /**
+         * Observe change.
+         *
+         * Triggers calls to [objectChangeListener] when there are changes to [obj].
+         *
+         * To receive asynchronous callbacks this must be called:
+         * - Android: on a thread with a looper
+         * - iOS/macOS: on the main thread (as we currently do not support opening Realms with
+         *   different schedulers)
+         *
+         * Notes:
+         * - Calls are triggered synchronously on a [beginTransaction] when the version is advanced.
+         * - Ignoring the return value will eliminate the possibility to cancel the registration
+         *   and will leak the [objectChangeListener] and internals related to the registration.
+         */
+        // @CheckReturnValue Not available for Kotlin?
+        fun <T : RealmModel> addNotificationListener(obj: T, objectChangeListener: Callback): Cancellable {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let {
                 val callback = object : io.realm.interop.Callback {
                     override fun onChange(objectChanges: NativePointer) {
-                        // FIXME Clean up debug output
-//                        println("change: isDeleted:${realm_wrapper.realm_object_changes_is_deleted(change)}")
-//                        val count = realm_wrapper.realm_object_changes_get_num_modified_properties(change)
-//                        println("change: updates:$count")
-//                        memScoped {
-//                            val colKeys = allocArray<realm_col_key>(count.toInt())
-//                            val realmObjectChangesGetModifiedProperties =
-//                                    realm_wrapper.realm_object_changes_get_modified_properties(change, colKeys, count)
-//                            println("change: updates fetched:$realmObjectChangesGetModifiedProperties")
-//                        }
-                        // Perform actual callbackTODO("Not yet implemented")
                         objectChangeListener.onChange()
                     }
                 }
@@ -89,9 +93,6 @@ class Realm {
 
     fun cancelTransaction() {
         TODO()
-    }
-
-    fun registerListener(f: () -> Unit) {
     }
 
     //    reflection is not supported in K/N so we can't offer method like

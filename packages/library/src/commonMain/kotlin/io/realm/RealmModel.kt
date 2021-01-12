@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,16 @@
 
 package io.realm
 
-interface Registration {
-    fun cancel()
+import io.realm.runtimeapi.RealmModel
+
+// FIXME API Currently just adding these as extension methods as putting them directly into
+//  RealmModel would break compiler plugin. Reiterate along with
+//  https://github.com/realm/realm-kotlin/issues/83
+
+fun RealmModel.delete() {
+    Realm.delete(this)
+}
+
+fun RealmModel.addNotificationListener(objectChangeListener: Callback) {
+    Realm.addNotificationListener(this, objectChangeListener)
 }

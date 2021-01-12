@@ -16,11 +16,11 @@
 
 package io.realm.internal
 
-import io.realm.Registration
+import io.realm.Cancellable
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 
-class NotificationToken<T>(t: T, private val token: NativePointer) : Registration {
+class NotificationToken<T>(t: T, private val token: NativePointer) : Cancellable {
 
     private var t: T? = t
 
