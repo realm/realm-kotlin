@@ -1,0 +1,65 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform'
+    id("com.android.library")
+}
+
+group 'io.realm.kotlin'
+version '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url = "https://kotlin.bintray.com/kotlinx/" }
+}
+
+kotlin {
+    /* Targets configuration omitted. 
+    *  To find out how to configure the targets, please follow the link:
+    *  https://kotlinlang.org/docs/reference/building-mpp-with-gradle.html#setting-up-targets */
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation kotlin('stdlib-common')
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1"
+
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+    }
+}
+
+
+// Android configuration
+android {
+    compileSdkVersion(29)
+    buildToolsVersion = "29.0.2"
+
+    defaultConfig {
+        minSdkVersion(21)
+        targetSdkVersion(29)
+        versionCode = 1
+        versionName = "1.0"
+        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+
+        sourceSets {
+            getByName("main") {
+                manifest.srcFile("src/androidMain/AndroidManifest.xml")
+                jniLibs.srcDir("src/androidMain/jniLibs")
+                getByName("androidTest") {
+                    java.srcDirs("src/androidTest/kotlin")
+                }
+            }
+        }
+    }
+}
+
+kotlin {
+    android()
+    macosX64("macos")
+}
