@@ -67,7 +67,7 @@ class Realm {
          * Notes:
          * - Calls are triggered synchronously on a [beginTransaction] when the version is advanced.
          * - Ignoring the return value will eliminate the possibility to cancel the registration
-         *   and will leak the [callback] and internals related to the registration.
+         *   and will leak the [callback] and potentially the internals related to the registration.
          */
         // @CheckReturnValue Not available for Kotlin?
         fun <T : RealmModel> observe(obj: T, callback: Callback): Cancellable {
