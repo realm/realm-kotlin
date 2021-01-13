@@ -543,45 +543,45 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_add_notification_callback(
-            obj.cptr(),
-            // Use the callback as user data
-            StableRef.create(callback).asCPointer(),
-            staticCFunction<COpaquePointer?, Unit> { userdata ->
-                val ref: StableRef<Callback> = userdata!!.asStableRef()
-                ref.dispose()
-            },
-            // Change callback
-            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
-                val ref: StableRef<Callback> = userdata!!.asStableRef()
-                ref.get().onChange(CPointerWrapper(change))
-            },
-            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
-            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
-            // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
-            null
-        ))
+        return CPointerWrapper(
+            realm_wrapper.realm_object_add_notification_callback(
+                obj.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                },
+                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
+                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                null
+            )
+        )
     }
 
     actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_results_add_notification_callback(
-            results.cptr(),
-            // Use the callback as user data
-            StableRef.create(callback).asCPointer(),
-            staticCFunction<COpaquePointer?, Unit> { userdata ->
-                val ref: StableRef<Callback> = userdata!!.asStableRef()
-                ref.dispose()
-            },
-            // Change callback
-            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
-                val ref: StableRef<Callback> = userdata!!.asStableRef()
-                ref.get().onChange(CPointerWrapper(change))
-            },
-            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
-            staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
-            // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
-            null
-        ))
+        return CPointerWrapper(
+            realm_wrapper.realm_results_add_notification_callback(
+                results.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                },
+                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
+                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                null
+            )
+        )
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

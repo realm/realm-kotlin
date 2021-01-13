@@ -70,14 +70,14 @@ class RealmResults<T : RealmModel> constructor(
      */
     fun observe(callback: Callback): Cancellable {
         val token = RealmInterop.realm_results_add_notification_callback(
-                result,
-                object : io.realm.interop.Callback {
-                    override fun onChange(collectionChanges: NativePointer) {
-                        // FIXME Need to expose change details to the user
-                        //  https://github.com/realm/realm-kotlin/issues/115
-                        callback.onChange()
-                    }
+            result,
+            object : io.realm.interop.Callback {
+                override fun onChange(collectionChanges: NativePointer) {
+                    // FIXME Need to expose change details to the user
+                    //  https://github.com/realm/realm-kotlin/issues/115
+                    callback.onChange()
                 }
+            }
         )
         return NotificationToken(callback, token)
     }

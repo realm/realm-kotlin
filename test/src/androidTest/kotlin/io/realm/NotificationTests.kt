@@ -29,9 +29,9 @@ import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
-private val INITIAL = "Hello, World!"
-private val FIRST = "FIRST"
-private val SECOND = "SECOND"
+private const val INITIAL = "Hello, World!"
+private const val FIRST = "FIRST"
+private const val SECOND = "SECOND"
 
 // FIXME This file is sym-linked into the `nativeTest`-equivalent. Ideally it would just all be in
 //  `commonTest` but as it is currently not possible to trigger common tests on Android it is

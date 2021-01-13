@@ -131,7 +131,7 @@ class Realm {
 
     fun close() {
         dbPointer?.let {
-            RealmInterop.realm_close (it)
+            RealmInterop.realm_close(it)
         }
         dbPointer = null
     }

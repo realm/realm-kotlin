@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() {
         val sumTV: TextView = findViewById(R.id.textViewSum)
         countTV = findViewById(R.id.textHistoryCount)
 
-
         val textWatcher = object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 try {
