@@ -38,7 +38,6 @@ actual class RunLoopThread: CoroutineScope {
 
     val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         error = exception
-        println("CoroutineExceptionHandler got $exception")
         terminate()
     }
 
