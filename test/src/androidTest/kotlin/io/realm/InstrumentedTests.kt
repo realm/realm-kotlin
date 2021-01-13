@@ -17,8 +17,6 @@
 
 package io.realm
 
-import android.os.Handler
-import android.os.HandlerThread
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.internal.RealmInitializer
 import io.realm.runtimeapi.RealmModelInternal
@@ -27,7 +25,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
-import java.util.concurrent.CountDownLatch
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull

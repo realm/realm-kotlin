@@ -45,6 +45,6 @@ class ExpressionRepository {
     }
 
     fun listen(block: () -> Unit): Cancellable {
-        return realm.objects(Expression::class).addListener { block() }
+        return realm.objects(Expression::class).observe { block() }
     }
 }

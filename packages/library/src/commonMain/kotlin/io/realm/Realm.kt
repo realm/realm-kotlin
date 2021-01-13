@@ -75,6 +75,8 @@ class Realm {
             internalObject.`$realm$ObjectPointer`?.let {
                 val internalCallback = object : io.realm.interop.Callback {
                     override fun onChange(objectChanges: NativePointer) {
+                        // FIXME Need to expose change details to the user
+                        //  https://github.com/realm/realm-kotlin/issues/115
                         callback.onChange()
                     }
                 }

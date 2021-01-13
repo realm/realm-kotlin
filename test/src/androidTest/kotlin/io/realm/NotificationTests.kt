@@ -33,6 +33,11 @@ private val INITIAL = "Hello, World!"
 private val FIRST = "FIRST"
 private val SECOND = "SECOND"
 
+// FIXME This file is sym-linked into the `nativeTest`-equivalent. Ideally it would just all be in
+//  `commonTest` but as it is currently not possible to trigger common tests on Android it is
+//  replicated in the various source sets. Sym-linking to `commonTest` would create overlapping
+//  definitions.
+//  https://youtrack.jetbrains.com/issue/KT-34535
 @OptIn(ExperimentalTime::class)
 class NotificationTests {
 
@@ -64,7 +69,7 @@ class NotificationTests {
 
         sample.observe {
             val stringField = sample.stringField
-            this@run.launch {
+            launch {
                 c.send(stringField)
             }
         }
@@ -91,7 +96,7 @@ class NotificationTests {
 
         val token = sample.observe {
             val stringField = sample.stringField
-            this@run.launch {
+            launch {
                 c.send(stringField)
             }
         }
@@ -153,34 +158,6 @@ class NotificationTests {
         }
     }
 
-    // FIXME Add test for closing realm without unregistering listeners
-    @Test
-    fun closeWithoutCancelingListener() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        sample.observe {
-            val stringField = sample.stringField
-            this@run.launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-            realm.close()
-            terminate()
-        }
-    }
-
     @Test
     fun closeWithoutCancel() = RunLoopThread().run {
         val c = Channel<String>(1)
@@ -213,5 +190,4 @@ class NotificationTests {
             terminate()
         }
     }
-
 }

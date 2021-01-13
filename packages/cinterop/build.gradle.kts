@@ -111,7 +111,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs(project.file("../../external/core/src/realm"))
+                includeDirs(project.file("../../external/core/src/"))
             }
             // Relative paths in def file depends are resolved differently dependent on execution
             // location
@@ -128,7 +128,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs(project.file("../../external/core/src/realm"))
+                includeDirs(project.file("../../external/core/src/"))
             }
             // Relative paths in def file depends are resolved differently dependent on execution
             // location

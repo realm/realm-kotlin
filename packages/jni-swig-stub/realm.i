@@ -182,7 +182,6 @@ struct realm_size_t {
 
 // How to
 // - delete all listeners
-// - release callbacks (from GC or explicit)
 %typemap(directorin, descriptor="J") const void* "*(const void **)&$input = $1;"
 %feature("director") NotificationCallback;
 // Ensures that the C++ callback object keeps a strong reference to the Java equivalent
