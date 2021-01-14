@@ -59,3 +59,4 @@ class RealmConfiguration private constructor() {
         fun allowQueriesOnUiThread(allowQueriesOnUiThread: Boolean): Builder { TODO() }
         fun build(): RealmConfiguration { TODO () }
     }
+}

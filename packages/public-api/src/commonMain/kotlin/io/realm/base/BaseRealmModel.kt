@@ -1,5 +1,8 @@
 package io.realm.base
 
-interface BaseRealmModel {
+import io.realm.ManageableObject
+
+interface BaseRealmModel: ManageableObject {
+
 
 }

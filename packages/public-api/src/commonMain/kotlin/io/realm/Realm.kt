@@ -10,10 +10,10 @@ import kotlin.reflect.KClass
 // Top level class
 // This is Thread safe Realm, see https://docs.google.com/document/d/1EA3CiACX4oNrx8jWYUMI_xPeDr-9RDMTGxrws-Uwgrc/edit
 // for how this can be implemented
-class Realm: BaseRealm() {
+open class Realm: BaseRealm() {
 
     interface Transaction {
-        fun execute(realm: Realm)
+        fun execute(realm: MutableRealm)
     }
 
     val configuration: RealmConfiguration = TODO()
@@ -33,92 +33,35 @@ class Realm: BaseRealm() {
     // Changes are available as Flows
     suspend fun observe(): Flow<Realm> { TODO() }
 
-    // Standard transaction methods
-    fun beginTransaction() { TODO() }
-    fun cancelTransaction() { TODO() }
-    fun commitTransaction() { TODO() }
-    fun isInTransaction() { TODO() }
-
     // The standard transaction wrapper now only comes as a coroutine variant
-    suspend fun executeTransaction(transaction: Transaction) { TODO() }
+    suspend fun <E, R> executeTransaction(frozenArg: E, function: (realm: MutableRealm, liveArg: E?) -> R): R { TODO() }
+    suspend fun <R> executeTransaction(function: (realm: MutableRealm) -> R): R { TODO() }
 
-    // Freezing Realms
-    fun freeze(): Realm { TODO() }
-    fun isFrozen(): Boolean { TODO() }
+    // TODO: We need non-coroutine writes for Java support. But directly or through some extension?
+    fun <E, R> write(frozenArg: E, function: (MutableRealm, liveArg: E?) -> R): R { TODO() }
+    fun <R> write(function: (MutableRealm) -> R): R { TODO() }
 
-    // Managing refresh
-    fun refresh() { TODO() }
-    fun waitForChange() { TODO("Remove from public API?") }
-    fun stopWaitForChange() { TODO("Remove from public API?") }
-    fun setAutoRefresh(enabled: Boolean) { TODO("Remove from public API?") }
-    fun isAutoRefresh(): Boolean { TODO("Remove from public API?") }
+    // Pin Realm to a specific version.
+    fun <R> pin(function: (realm: Realm) -> R) { TODO() }
 
     // Unfortunately Closable is not an interface in Kotlin Common, so we cannot implement the Closable interface
     // Unsure what impact his have?
     fun close() { TODO() }
     fun isClosed() { TODO() }
 
-    // Creating objects or getting them into Realm
-    // How does these look in Cocoa, JS and .NET
-    //~//    fun <E : RealmObject> add(obj: E, updateMode ): E
-    //    void insert(Collection<? extends RealmModel> objects)
-    //    void insert(RealmModel object)
-    //    void insertOrUpdate(Collection<? extends RealmModel> objects)
-    //    void insertOrUpdate(RealmModel object)
-    //    <E extends RealmModel> E createEmbeddedObject(Class<E> clazz, RealmModel parentObject, String parentProperty)
-    //    <E extends RealmModel> E createObject(Class<E> clazz)
-    //    <E extends RealmModel> E createObject(Class<E> clazz, Object primaryKeyValue)
-//    fun <E: RealmObject> create(clazz: KClass<E>): E  { TODO() }
-//    fun <E: EmbeddedObject> create(clazz: KClass<E>): E  { TODO() }
-    fun <E: RealmObject> add(obj: E): E { TODO() } // What do Cocoa do
-    fun <E: RealmObject> addOrUpdate(obj: E, overrideSameValues: Boolean = false) { TODO() }
-    fun <E: EmbeddedObject, P: RealmObject> add(obj: E, parent: P, property: String) { TODO() }
-
-    // Copying objects out of Realm again
-    fun <E : RealmObject> copyFromRealm(realmObject: E, maxDepth: Long = Long.MAX_VALUE): E { TODO() }
-    fun <E : RealmObject> copyFromRealm(realmObjects: Iterable<E>, maxDepth: Long = Long.MAX_VALUE): List<E> { TODO() }
-
     // Queries
-    // What to call these methods: object is a keyword, filter doesn't really fit single object find
-    // `objects/object`, `findAll/findFirst`, `filter/filterFirst`
+    // Shortcut for looking up objects using primary key is only available with coroutines
+    // Every other use case must go through the RealmQuery class. This is in order to keep
+    // the number of methods down, not to include name clashes
+    // The naming of these two methods differ a lot between SDK's. Right now I settled on
+    // `find` which is used in .NET and because `object` used elsewhere is a keyword and `filter`
+    // because that is the standard method name for this in Kotlin collections.
     suspend fun <E : BaseRealmModel> find(clazz: KClass<E>, primaryKey: Any): E? { TODO() }
-    //    fun <E : BaseRealmModel> filterFirst(clazz: KClass<E>, filter: String = ""): RealmOptional<E> { TODO() }
-    fun <E : BaseRealmModel> filter(clazz: KClass<E>, filter: String = ""): RealmResults<E> { TODO() }
+    fun <E : BaseRealmModel> filter(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
     fun isEmpty(): Boolean { TODO() }
 
-    // Deletions
-    fun <E: BaseRealmModel> delete(clazz: KClass<E>) { TODO() }
-    fun deleteAll() { TODO() }
-
     // Backups
-    fun writeCopyTo(destination: RealmFile) { TODO() }
-//    void writeCopyTo(File destination)
-//    void writeEncryptedCopyTo(File destination, byte[] key)
-
-
-
-
-
-    // Extension functions added in a future update
-    // These are only available on JVM as InputStream et. al are Java API's
-    // Open Question: What kind of JSON support is required for Kotlin Multiplatform?
-//    fun <E : RealmObject> createAllFromJson(KClass<E> clazz, stream: InputStream)
-//    <E extends RealmModel> void createAllFromJson(Class<E> clazz, InputStream inputStream)
-//    <E extends RealmModel> void	createAllFromJson(Class<E> clazz, org.json.JSONArray json)
-//    <E extends RealmModel> void	createAllFromJson(Class<E> clazz, String json)
-//    <E extends RealmModel> E createObjectFromJson(Class<E> clazz, InputStream inputStream)
-//    <E extends RealmModel> E createObjectFromJson(Class<E> clazz, org.json.JSONObject json)
-//    <E extends RealmModel> E createObjectFromJson(Class<E> clazz, String json)
-//    <E extends RealmModel> void	createOrUpdateAllFromJson(Class<E> clazz, InputStream in)
-//    <E extends RealmModel> void	createOrUpdateAllFromJson(Class<E> clazz, org.json.JSONArray json)
-//    <E extends RealmModel> void	createOrUpdateAllFromJson(Class<E> clazz, String json)
-//    <E extends RealmModel> E createOrUpdateObjectFromJson(Class<E> clazz, InputStream in)
-//    <E extends RealmModel> E createOrUpdateObjectFromJson(Class<E> clazz, org.json.JSONObject json)
-//    <E extends RealmModel> E createOrUpdateObjectFromJson(Class<E> clazz, String json)
-//    <E extends RealmModel> void createAllFromJson(Class<E> clazz, InputStream inputStream)
-//    <E extends RealmModel> void	createAllFromJson(Class<E> clazz, org.json.JSONArray json)
-//    <E extends RealmModel> void	createAllFromJson(Class<E> clazz, String json)
-
+    fun writeCopyTo(destination: RealmFile, encryptionKey: ByteArray? = null) { TODO() }
 
     companion object {
         // How to do init()? Realm.init()? Seems hard to achieve. See Android source set for extension method
@@ -139,8 +82,5 @@ class Realm: BaseRealm() {
         fun compactRealm(config: RealmConfiguration): Boolean { TODO() }
         fun deleteRealm(config: RealmConfiguration): Boolean { TODO() }
         fun migrateRealm(config: RealmConfiguration): Boolean { TODO() }
-
-        fun getGlobalInstanceCount(config: RealmConfiguration) { TODO() }
-        fun getLocalInstanceCount(config: RealmConfiguration) { TODO() }
     }
 }

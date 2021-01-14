@@ -1,14 +1,13 @@
 package io.realm
 
 import io.realm.base.BaseRealmModel
-import io.realm.moonshoot.ProjectViewData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KClass
 
 // Implement List instead of MutableList, because you cannot modify this list directly.
-class RealmResults<E: BaseRealmModel> : List<E> {
+class RealmResults<E: BaseRealmModel> : List<E>, Queryable<E> {
 
     // Further filter the result
     fun filter(filter: String): RealmResults<E> { TODO() }
@@ -41,28 +40,31 @@ class RealmResults<E: BaseRealmModel> : List<E> {
     // Bulk updates
     fun createSnapshot(): RealmResults<E> { TODO() }
 
-    fun setBlob(property: String, value: ByteArray) { TODO() }
-    fun setBoolean(property: String, value: Boolean) { TODO() }
-    fun setByte(property: String, value: Byte) { TODO() }
-    fun setDate(property: String, value: LocalDateTime) { TODO() }
-    // fun setDecimal128(property: String, value: Decimal128) { TODO() }
-    fun setDouble(property: String, value: Double) { TODO() }
-    fun setFloat(property: String, value: Float) { TODO() }
-    fun setInt(property: String, value: Int) { TODO() }
-    // <T> void	setList(String fieldName, RealmList<T> list)
-    fun setLong(property: String, value: Long) { TODO() }
-    fun setNull(property: String) { TODO() }
-    fun setObject(property: String, realmObject: BaseRealmModel) { TODO() }
-    // void	setObjectId(String fieldName, ObjectId value)
-    fun setShort(property: String, value: Short) { TODO() }
-    fun setString(property: String, value: String) { TODO() }
-    fun setValue(property: String, value: Any) { TODO() }
+    // Replace all the `setX()` methods with `setValue(value: Any?)`
+    // We support 16 different types right now, and will add at least 4 more
+    // with the new datatypes. Even though it would technically be more typesafe
+    // it feels a little stupid to expose that many types.
+    fun setValue(property: String, value: Any?) { TODO() }
+
+//    fun setBlob(property: String, value: ByteArray) { TODO() }
+//    fun setBoolean(property: String, value: Boolean) { TODO() }
+//    fun setByte(property: String, value: Byte) { TODO() }
+//    fun setDate(property: String, value: LocalDateTime) { TODO() }
+//    fun setDecimal128(property: String, value: Decimal128) { TODO() }
+//    fun setDouble(property: String, value: Double) { TODO() }
+//    fun setFloat(property: String, value: Float) { TODO() }
+//    fun setInt(property: String, value: Int) { TODO() }
+//    fun setList(property: String, value: RealmList<BaseRealmModel>) { TODO() }
+//    fun setLong(property: String, value: Long) { TODO() }
+//    fun setNull(property: String) { TODO() }
+//    fun setObject(property: String, realmObject: BaseRealmModel) { TODO() }
+//    fun setObjectId(property: String, value: ObjectId) { TODO() }
+//    fun setShort(property: String, value: Short) { TODO() }
+//    fun setString(property: String, value: String) { TODO() }
 
     // Utility methods
     val realm: Realm = TODO()
     fun asJSON(): String { TODO() }
-    fun freeze(): RealmResults<E> { TODO() }
-    fun isFrozen(): Boolean { TODO() }
     fun isManaged(): Boolean { TODO() }
     fun isValid(): Boolean { TODO() }
 
