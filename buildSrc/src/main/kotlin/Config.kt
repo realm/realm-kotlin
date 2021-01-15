@@ -57,6 +57,7 @@ object Versions {
     const val androidxTest = "1.3.0" // https://maven.google.com/web/index.html#androidx.test:rules
     const val autoService = "1.0-rc6"
     const val detektPlugin = "1.14.1"
+    const val dokka = "1.4.20" // https://github.com/Kotlin/dokka
     const val junit = "4.12"
     const val jvmTarget = "1.8"
     const val kotlin = "1.4.20"
