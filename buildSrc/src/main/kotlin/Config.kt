@@ -58,6 +58,7 @@ object Versions {
     const val autoService = "1.0-rc6"
     const val coroutines = "1.4.2"
     const val detektPlugin = "1.14.1"
+    const val dokka = "1.4.20" // https://github.com/Kotlin/dokka
     const val junit = "4.12"
     const val jvmTarget = "1.8"
     const val kotlin = "1.4.20"
