@@ -550,10 +550,12 @@ actual object RealmInterop {
                 StableRef.create(callback).asCPointer(),
                 staticCFunction<COpaquePointer?, Unit> { userdata ->
                     userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
                     userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                        ?: error("Notification callback data should never be null")
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
@@ -571,10 +573,12 @@ actual object RealmInterop {
                 StableRef.create(callback).asCPointer(),
                 staticCFunction<COpaquePointer?, Unit> { userdata ->
                     userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
                     userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                        ?: error("Notification callback data should never be null")
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },

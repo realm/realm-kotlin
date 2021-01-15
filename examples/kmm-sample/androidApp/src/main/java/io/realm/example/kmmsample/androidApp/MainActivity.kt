@@ -17,7 +17,7 @@ fun greet(): String {
 class MainActivity : AppCompatActivity() {
 
     private lateinit var countTV: TextView
-    private var registration: Cancellable? = null
+    private lateinit var registration: Cancellable
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +64,5 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         registration?.cancel()
-        registration = null
     }
 }
