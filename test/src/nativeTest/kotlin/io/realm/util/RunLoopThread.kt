@@ -27,10 +27,10 @@ import kotlin.coroutines.CoroutineContext
 
 actual class RunLoopThread : CoroutineScope {
 
-    private val dispatcher : CoroutineDispatcher by lazy { Main }
+    private val dispatcher: CoroutineDispatcher by lazy { Main }
     override val coroutineContext: CoroutineContext by lazy { dispatcher + exceptionHandler }
 
-    private var error : Throwable? = null
+    private var error: Throwable? = null
 
     val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         error = exception
@@ -45,6 +45,6 @@ actual class RunLoopThread : CoroutineScope {
     }
 
     actual fun terminate() {
-        CFRunLoopStop(CFRunLoopGetCurrent());
+        CFRunLoopStop(CFRunLoopGetCurrent())
     }
 }

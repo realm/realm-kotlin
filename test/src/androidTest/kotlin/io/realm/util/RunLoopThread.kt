@@ -25,7 +25,7 @@ import kotlinx.coroutines.async
 import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.CoroutineContext
 
-actual class RunLoopThread: CoroutineScope {
+actual class RunLoopThread : CoroutineScope {
 
     private val exit = CountDownLatch(1)
 
@@ -34,7 +34,7 @@ actual class RunLoopThread: CoroutineScope {
 
     override val coroutineContext: CoroutineContext by lazy { handler.asCoroutineDispatcher() + exceptionHandler }
 
-    private var error : Throwable? = null
+    private var error: Throwable? = null
 
     val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         error = exception

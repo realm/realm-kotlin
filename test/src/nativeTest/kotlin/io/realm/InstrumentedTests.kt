@@ -62,12 +62,12 @@ class InstrumentedTests {
         val sample = realm.create(Sample::class).apply { stringField = "Hello, World!" }
         realm.commitTransaction()
 
-        Realm.observe(sample, {
+        Realm.observe(sample) {
             println("onChange ${sample.stringField}")
             if (sample.stringField == "ASDF") {
-                CFRunLoopStop(CFRunLoopGetCurrent());
+                CFRunLoopStop(CFRunLoopGetCurrent())
             }
-        })
+        }
 
         realm.beginTransaction()
         sample.stringField = "ASDF"
@@ -81,7 +81,7 @@ class InstrumentedTests {
         val samples = realm.objects(Sample::class)
         samples.observe {
             println("onChange")
-            CFRunLoopStop(CFRunLoopGetCurrent());
+            CFRunLoopStop(CFRunLoopGetCurrent())
         }
         realm.beginTransaction()
         val sample = realm.create(Sample::class).apply { stringField = "Hello, World!" }
