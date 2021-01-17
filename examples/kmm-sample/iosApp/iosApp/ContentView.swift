@@ -5,35 +5,27 @@ struct ContentView: View {
     let calculator = Calculator.Companion()
     let greet = Greeting().greeting()
     @State var token: LibraryCancellable? = nil
+    var counter: Counter
     
-    init() {
-        // FIXME onAppear/Disappear does not seem to be called like onResume/Pause,
-        // so just register the callback in init for now
-        listen()
+    class Counter: ObservableObject {
+        var count: Int
+        init(count: Int) {
+            self.count = count
+        }
     }
     
-    func onAppear(perform action: (() -> Void)? = nil) -> some View {
-        print("onAppear")
-        listen()
-        return self;
+    init () {
+        counter = Counter(count : self.calculator.history().count)
     }
     
-    func onDisappear(perform action: (() -> Void)? = nil) -> some View {
-        print("onDisappear")
-        token?.cancel();
-        return self;
-    }
-    
-    private func listen() {
+    private func listen()-> LibraryCancellable {
         do {
-            self.token = try calculator.listen {
-                // FIXME Update count through callback...but don't know how
-                //  reference the class. Maybe encapsulate the listener in an
-                //  observable object
-                print("History updated")
+            return try calculator.listen {
+                self.counter.count = self.calculator.history().count
+                print("History updated \(self.counter.count)")
             }
         } catch {
-            print("error: \(error)")
+            print("Failed to register for notifications: \(error)")
         }
     }
     
@@ -48,7 +40,7 @@ struct ContentView: View {
     }
     
     private var count: Int {
-        return calculator.history().count
+        return counter.count
     }
     
     var body: some View {
@@ -68,6 +60,12 @@ struct ContentView: View {
                 Text(sum)
             }
             Text("History count: " + String(count))
+        }.onAppear() {
+            print("onAppear")
+            self.token = self.listen()
+        }.onDisappear() {
+            print("onDisppear")
+            self.token?.cancel()
         }
     }
 }
