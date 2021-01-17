@@ -29,9 +29,6 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toLong
-import platform.CoreFoundation.CFRunLoopGetCurrent
-import platform.CoreFoundation.CFRunLoopRun
-import platform.CoreFoundation.CFRunLoopStop
 import test.Sample
 import kotlin.test.BeforeTest
 import kotlin.test.Test
