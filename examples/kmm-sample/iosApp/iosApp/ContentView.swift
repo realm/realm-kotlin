@@ -4,33 +4,12 @@ import shared
 struct ContentView: View {
     let calculator = Calculator.Companion()
     let greet = Greeting().greeting()
-    @State var token: LibraryCancellable? = nil
-    var counter: Counter
-    
-    class Counter: ObservableObject {
-        var count: Int
-        init(count: Int) {
-            self.count = count
-        }
-    }
-    
-    init () {
-        counter = Counter(count : self.calculator.history().count)
-    }
-    
-    private func listen()-> LibraryCancellable {
-        do {
-            return try calculator.listen {
-                self.counter.count = self.calculator.history().count
-                print("History updated \(self.counter.count)")
-            }
-        } catch {
-            print("Failed to register for notifications: \(error)")
-        }
-    }
     
     @State private var firstNum: String = "0"
     @State private var secondNum: String = "0"
+    
+    @State var token: LibraryCancellable? = nil
+        
     private var sum: String {
         if let firstNum = Int32(firstNum), let secondNum = Int32(secondNum) {
             return String(calculator.sum(a: firstNum, b: secondNum))
@@ -40,7 +19,7 @@ struct ContentView: View {
     }
     
     private var count: Int {
-        return counter.count
+        return self.calculator.history().count
     }
     
     var body: some View {
@@ -59,15 +38,24 @@ struct ContentView: View {
                 Text("=")
                 Text(sum)
             }
-            Text("History count: " + String(count))
+            Text("History count: \(count)")
         }.onAppear() {
-            print("onAppear")
             self.token = self.listen()
         }.onDisappear() {
-            print("onDisppear")
             self.token?.cancel()
         }
     }
+    
+    private func listen() -> LibraryCancellable {
+        do {
+            return try calculator.listen {
+                print("History updated \(self.calculator.history().count)")
+            }
+        } catch {
+            fatalError("Failed to register for notifications: \(error)")
+        }
+    }
+    
 }
 
 struct ContentView_Previews: PreviewProvider {
