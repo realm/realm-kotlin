@@ -10,11 +10,7 @@ import kotlin.reflect.KClass
 // Top level class
 // This is Thread safe Realm, see https://docs.google.com/document/d/1EA3CiACX4oNrx8jWYUMI_xPeDr-9RDMTGxrws-Uwgrc/edit
 // for how this can be implemented
-open class Realm: BaseRealm() {
-
-    interface Transaction {
-        fun execute(realm: MutableRealm)
-    }
+class Realm: BaseRealm() {
 
     val configuration: RealmConfiguration = TODO()
     val schema: RealmSchema = TODO()
@@ -26,23 +22,22 @@ open class Realm: BaseRealm() {
     // Notifications for these will be delivered from the Notifier thread, which
     // means that if they drive the UI they must manually be posted back to the UI handler
     // API still undecided. See https://github.com/realm/realm-kotlin/pull/107#issue-541008514
-    fun addChangeListener(listener: RealmChangeListener<Realm>) { TODO() }
-    fun removeChangeListener(listener: RealmChangeListener<Realm>)  { TODO() }
-    fun removeAllListeners() { TODO() }
+    fun addChangeListener(listener: RealmChangeListener<Realm>): Cancellable { TODO() }
+    fun cancelAllChangeListeners() { TODO() }
 
     // Changes are available as Flows
     suspend fun observe(): Flow<Realm> { TODO() }
 
     // The standard transaction wrapper now only comes as a coroutine variant
-    suspend fun <E, R> executeTransaction(frozenArg: E, function: (realm: MutableRealm, liveArg: E?) -> R): R { TODO() }
-    suspend fun <R> executeTransaction(function: (realm: MutableRealm) -> R): R { TODO() }
+    suspend fun <E, R> executeTransaction(frozenArg: E, function: suspend MutableRealm.(liveArg: E?) -> R): R { TODO() }
+    suspend fun <R> executeTransaction(function: suspend MutableRealm.() -> R): R { TODO() }
 
     // TODO: We need non-coroutine writes for Java support. But directly or through some extension?
     fun <E, R> write(frozenArg: E, function: (MutableRealm, liveArg: E?) -> R): R { TODO() }
     fun <R> write(function: (MutableRealm) -> R): R { TODO() }
 
-    // Pin Realm to a specific version.
-    fun <R> pin(function: (realm: Realm) -> R) { TODO() }
+    // Pin Realm to a specific version while a closure is running
+    fun <R> pin(function: Realm.(realm: Realm) -> R) { TODO() }
 
     // Unfortunately Closable is not an interface in Kotlin Common, so we cannot implement the Closable interface
     // Unsure what impact his have?
@@ -56,8 +51,8 @@ open class Realm: BaseRealm() {
     // The naming of these two methods differ a lot between SDK's. Right now I settled on
     // `find` which is used in .NET and because `object` used elsewhere is a keyword and `filter`
     // because that is the standard method name for this in Kotlin collections.
-    suspend fun <E : BaseRealmModel> find(clazz: KClass<E>, primaryKey: Any): E? { TODO() }
-    fun <E : BaseRealmModel> filter(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
+    suspend fun <E : BaseRealmModel<E>> find(clazz: KClass<E>, primaryKey: Any): E? { TODO() }
+    fun <E : BaseRealmModel<E>> filter(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
     fun isEmpty(): Boolean { TODO() }
 
     // Backups

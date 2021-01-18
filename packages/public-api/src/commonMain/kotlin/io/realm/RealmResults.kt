@@ -2,82 +2,75 @@ package io.realm
 
 import io.realm.base.BaseRealmModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KClass
 
 // Implement List instead of MutableList, because you cannot modify this list directly.
-class RealmResults<E: BaseRealmModel> : List<E>, Queryable<E> {
+class RealmResults<E> : List<E>, OrderedRealmCollection<E>, Queryable<E> {
 
-    // Further filter the result
-    fun filter(filter: String): RealmResults<E> { TODO() }
-    fun sort(): RealmResults<E> { TODO() }
-    fun distinct(): RealmResults<E> { TODO("This one doesn't exist in Java. Oversight?") }
-
-    // rename from first(val)/last(val) in Java to firstOrDefault to match firstOrNull collection methods in Kotlin
-    fun firstOrDefault(default: E): E { TODO() }
-    fun lastOrDefault(default: E): E { TODO() }
-
-    // Aggregate methods. Exposing as Flows instead of synchronous methods
-    suspend fun minDate(property: String): Flow<LocalDateTime> { TODO() }
-    suspend fun maxDate(property: String): Flow<LocalDateTime> { TODO() }
-    suspend fun min(property: String): Flow<Number> { TODO() }
-    suspend fun max(property: String): Flow<Number> { TODO() }
-    suspend fun average(property: String): Flow<Double> { TODO() }
-    suspend fun sum(property: String): Flow<Number> { TODO() }
+    // Further filter the result. From Queryable interface. Should we hide these behind a `query()/where()` method?
+    override fun filter(filter: String, vararg arguments: Any?): RealmQuery<E> {  { TODO() } }
+    override fun sort(field: String, sortOrder: Sort): RealmQuery<E> { TODO() }
+    override fun sort(fieldName1: String?, sortOrder1: Sort, fieldName2: String, sortOrder2: Sort): RealmResults<E> { TODO() }
+    override fun sort(fieldNames: Array<String?>, sortOrders: Array<Sort>): RealmResults<E> { TODO() }
+    override fun distinct(field: String): RealmQuery<E> { TODO() }
+    override fun count(): Flow<Long> { TODO() }
+    override fun min(property: String): Flow<Number?> { TODO() }
+    override fun max(property: String): Flow<Number?> { TODO() }
+    override fun sum(property: String): Flow<Number?> { TODO() }
+    override fun average(property: String): Flow<Double?> { TODO() }
+    override fun maxDate(property: String): Flow<Instant?> { TODO() }
+    override fun minDate(property: String): Flow<Instant?> { TODO() }
 
     // Listen to changes
-    // Don't support addChangeListener/removeChangeListener/removeAllListeners just yet
-    suspend fun observe(): Flow<RealmResults<E>> { TODO() }
-//    suspend fun observeChangeSet(): Flow<CollectionChange<OrderedCollectionChangeSet, RealmResults<E>>>
+    fun addChangeListener(listener: (results: RealmResults<E>, change: OrderedCollectionChange<E, RealmResults<E>>) -> Unit): Cancellable { TODO() }
+    fun cancelAllChangeListeners() { TODO() }
+    fun observe(): Flow<RealmResults<E>> { TODO() }
+    suspend fun observeChangeSet(): Flow<OrderedCollectionChange<E, RealmResults<E>>> { TODO() }
 
-    // Deletions: Copy methods from Java
-    fun deleteAllFromRealm() { TODO() }
-    fun deleteFirstFromRealm() { TODO() }
-    fun deleteLastFromRealm() { TODO() }
-    fun deleteFromRealm(location: Int) { TODO() }
-
-    // Bulk updates
     fun createSnapshot(): RealmResults<E> { TODO() }
 
+    // Bulk updates
     // Replace all the `setX()` methods with `setValue(value: Any?)`
     // We support 16 different types right now, and will add at least 4 more
     // with the new datatypes. Even though it would technically be more typesafe
     // it feels a little stupid to expose that many types.
     fun setValue(property: String, value: Any?) { TODO() }
 
-//    fun setBlob(property: String, value: ByteArray) { TODO() }
-//    fun setBoolean(property: String, value: Boolean) { TODO() }
-//    fun setByte(property: String, value: Byte) { TODO() }
-//    fun setDate(property: String, value: LocalDateTime) { TODO() }
-//    fun setDecimal128(property: String, value: Decimal128) { TODO() }
-//    fun setDouble(property: String, value: Double) { TODO() }
-//    fun setFloat(property: String, value: Float) { TODO() }
-//    fun setInt(property: String, value: Int) { TODO() }
-//    fun setList(property: String, value: RealmList<BaseRealmModel>) { TODO() }
-//    fun setLong(property: String, value: Long) { TODO() }
-//    fun setNull(property: String) { TODO() }
-//    fun setObject(property: String, realmObject: BaseRealmModel) { TODO() }
-//    fun setObjectId(property: String, value: ObjectId) { TODO() }
-//    fun setShort(property: String, value: Short) { TODO() }
-//    fun setString(property: String, value: String) { TODO() }
-
     // Utility methods
     val realm: Realm = TODO()
     fun asJSON(): String { TODO() }
-    fun isManaged(): Boolean { TODO() }
-    fun isValid(): Boolean { TODO() }
+    override fun isManaged(): Boolean { TODO() }
+    override fun isValid(): Boolean { TODO() }
 
     // Interface methods
-    override val size: Int get() = TODO("Not yet implemented")
-    override fun contains(element: E): Boolean { TODO("Not yet implemented") }
-    override fun containsAll(elements: Collection<E>): Boolean { TODO("Not yet implemented") }
-    override fun get(index: Int): E { TODO("Not yet implemented") }
-    override fun indexOf(element: E): Int { TODO("Not yet implemented") }
-    override fun isEmpty(): Boolean { TODO("Not yet implemented") }
-    override fun iterator(): Iterator<E> { TODO("Not yet implemented") }
-    override fun lastIndexOf(element: E): Int { TODO("Not yet implemented") }
-    override fun listIterator(): ListIterator<E> { TODO("Not yet implemented") }
-    override fun listIterator(index: Int): ListIterator<E> { TODO("Not yet implemented") }
-    override fun subList(fromIndex: Int, toIndex: Int): List<E> { TODO("Not yet implemented") }
+    override val size: Int get() = TODO()
+    override fun contains(element: E): Boolean { TODO() }
+    override fun containsAll(elements: Collection<E>): Boolean { TODO() }
+    override fun get(index: Int): E { TODO() }
+    override fun indexOf(element: E): Int { TODO() }
+    override fun isEmpty(): Boolean { TODO() }
+    override fun iterator(): MutableIterator<E> { TODO() }
+    override fun lastIndexOf(element: E): Int { TODO() }
+    override fun listIterator(): ListIterator<E> { TODO() }
+    override fun listIterator(index: Int): ListIterator<E> { TODO() }
+    override fun subList(fromIndex: Int, toIndex: Int): List<E> { TODO() }
+
+    // OrderedRealmCollection methods
+    override fun first(): E { TODO() }
+    override fun firstOrDefault(defaultValue: E?): E? { TODO() }
+    override fun last(): E { TODO() }
+    override fun lastOrDefault(defaultValue: E?): E? { TODO() }
+    override fun deleteFromRealm(location: Int) { TODO() }
+    override fun deleteFirstFromRealm(): Boolean { TODO() }
+    override fun deleteLastFromRealm(): Boolean { TODO() }
+    override fun deleteAllFromRealm(): Boolean { TODO() }
+    override fun add(element: E): Boolean { TODO() }
+    override fun addAll(elements: Collection<E>): Boolean { TODO() }
+    override fun clear() { TODO() }
+    override fun remove(element: E): Boolean { TODO() }
+    override fun removeAll(elements: Collection<E>): Boolean { TODO() }
+    override fun retainAll(elements: Collection<E>): Boolean { TODO() }
 }

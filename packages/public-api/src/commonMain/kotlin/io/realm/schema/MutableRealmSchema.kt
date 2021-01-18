@@ -1,4 +1,5 @@
 package io.realm.schema
 
-interface MutableRealmSchema : RealmSchema {
+class MutableRealmSchema : RealmSchema {
+    internal constructor() {}
 }

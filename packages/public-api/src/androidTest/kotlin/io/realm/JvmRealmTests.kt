@@ -1,6 +1,5 @@
 package io.realm
 
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 
 class JvmRealmTests {

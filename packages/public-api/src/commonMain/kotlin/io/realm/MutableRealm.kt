@@ -1,8 +1,12 @@
 package io.realm
 
 import io.realm.base.BaseRealmModel
+import io.realm.example.Project
+import io.realm.example.Task
 import io.realm.schema.RealmSchema
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 
 /**
  * [Realm] only allows access to immutable data. For that reason, a number of API's found on the
@@ -35,20 +39,25 @@ class MutableRealm { // TODO: This class does not extend Realm right now, unclea
     fun isInTransaction(): Boolean { TODO() }
 
     // Adding objects to Realm
-    fun <E: RealmObject> add(obj: E): E { TODO() }
-    fun <E: RealmObject> addOrUpdate(obj: E, overrideSameValues: Boolean = false) { TODO() }
-    fun <E: EmbeddedObject, P: RealmObject> add(obj: E, parent: P, property: String) { TODO() }
+    fun <E: RealmObject<E>> add(obj: E): E { TODO() }
+    fun <E: RealmObject<E>> addOrUpdate(obj: E, overrideSameValues: Boolean = false) { TODO() }
+    fun <E: EmbeddedRealmObject<E>, P: RealmObject<P>> add(embeddedObject: E, parent: P, property: String) { TODO() }
+    fun <E: EmbeddedRealmObject<E>, P: RealmObject<P>> add(embeddedObject: E, parent: P, property: KProperty1<P, Any>) { TODO() }
 
     // Deletions
-    fun <E: BaseRealmModel> delete(clazz: KClass<E>) { TODO() }
+    fun <E: BaseRealmModel<E>> delete(clazz: KClass<E>) { TODO() }
     fun deleteAll() { TODO() }
 
     // Users should not be able to close mutable Realms.
     internal fun close() { TODO() }
 
     // Query methods
-    fun <E : BaseRealmModel> find(frozenObject: E): E? { TODO() } // Find live object based on frozen object. Naming?
-    suspend fun <E : BaseRealmModel> find(clazz: KClass<E>, primaryKey: Any): E? { TODO() }
-    fun <E : BaseRealmModel> filter(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
+    suspend fun <E : BaseRealmModel<E>> find(clazz: KClass<E>, primaryKey: Any): E? { TODO() }
+    fun <E : BaseRealmModel<E>> filter(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
     fun isEmpty(): Boolean { TODO() }
+
+    // Get Live object from frozen object. Looking up based on ObjKey is fast enough that it doesn't
+    // have to be a suspend function.
+    // QUESTION: Is there a better name? find(), thaw(), findWritable(), findLatest(), update(), something else?
+    suspend fun <E : BaseRealmModel<E>> find(frozenObject: E): E? { TODO() }
 }
