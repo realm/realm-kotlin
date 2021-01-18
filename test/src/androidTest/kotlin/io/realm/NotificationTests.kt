@@ -67,6 +67,8 @@ class NotificationTests {
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
 
+        assertEquals(INITIAL, sample.stringField)
+
         sample.observe {
             val stringField = sample.stringField
             launch {
@@ -93,6 +95,8 @@ class NotificationTests {
         realm.beginTransaction()
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
+
+        assertEquals(INITIAL, sample.stringField)
 
         val token = sample.observe {
             val stringField = sample.stringField
@@ -129,6 +133,9 @@ class NotificationTests {
         val realm = Realm.open(configuration)
 
         val results = realm.objects(Sample::class)
+
+        assertEquals(0, results.size)
+
         val token = results.observe {
             val updatedResults = results.toList()
             this@run.launch { c.send(updatedResults) }
@@ -166,6 +173,8 @@ class NotificationTests {
         realm.beginTransaction()
         val sample = realm.create(Sample::class).apply { stringField = INITIAL }
         realm.commitTransaction()
+
+        assertEquals(INITIAL, sample.stringField)
 
         val token = Realm.observe(sample) {
             val stringField = sample.stringField
