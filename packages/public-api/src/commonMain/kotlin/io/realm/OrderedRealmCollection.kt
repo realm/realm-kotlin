@@ -2,7 +2,7 @@ package io.realm
 
 import io.realm.base.BaseRealmModel
 
-interface OrderedRealmCollection<E> : List<E>, RealmCollection<E>, Queryable<E> {
+interface OrderedRealmCollection<E> : List<E>, RealmCollection<E> {
     fun first(): E
     fun firstOrDefault(defaultValue: E?): E?
     fun last(): E

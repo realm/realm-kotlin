@@ -4,7 +4,11 @@ import io.realm.base.BaseRealmModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
-class RealmList<E>(override val size: Int = 0): MutableList<E>, OrderedRealmCollection<E>, Queryable<E> {
+class RealmList<E>(override val size: Int = 0): MutableList<E>, OrderedRealmCollection<E> {
+
+    // Further filter the result.
+    fun where(filter: String = ""): RealmQuery<E> { TODO() }
+
     override fun contains(element: E): Boolean { TODO() }
     override fun containsAll(elements: Collection<E>): Boolean { TODO() }
     override fun get(index: Int): E { TODO() }
@@ -32,13 +36,6 @@ class RealmList<E>(override val size: Int = 0): MutableList<E>, OrderedRealmColl
     override fun deleteFromRealm(location: Int) { TODO() }
     override fun deleteFirstFromRealm(): Boolean { TODO() }
     override fun deleteLastFromRealm(): Boolean { TODO() }
-    override fun count(): Flow<Long> { TODO() }
-    override fun min(property: String): Flow<Number?> { TODO() }
-    override fun max(property: String): Flow<Number?> { TODO() }
-    override fun sum(property: String): Flow<Number?> { TODO() }
-    override fun average(property: String): Flow<Double?> { TODO() }
-    override fun maxDate(property: String): Flow<Instant?> { TODO() }
-    override fun minDate(property: String): Flow<Instant?> { TODO() }
     override fun deleteAllFromRealm(): Boolean { TODO() }
 }
 

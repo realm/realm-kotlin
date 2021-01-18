@@ -8,21 +8,10 @@ import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KClass
 
 // Implement List instead of MutableList, because you cannot modify this list directly.
-class RealmResults<E> : List<E>, OrderedRealmCollection<E>, Queryable<E> {
+class RealmResults<E> : List<E>, OrderedRealmCollection<E> {
 
-    // Further filter the result. From Queryable interface. Should we hide these behind a `query()/where()` method?
-    override fun filter(filter: String, vararg arguments: Any?): RealmQuery<E> {  { TODO() } }
-    override fun sort(field: String, sortOrder: Sort): RealmQuery<E> { TODO() }
-    override fun sort(fieldName1: String?, sortOrder1: Sort, fieldName2: String, sortOrder2: Sort): RealmResults<E> { TODO() }
-    override fun sort(fieldNames: Array<String?>, sortOrders: Array<Sort>): RealmResults<E> { TODO() }
-    override fun distinct(field: String): RealmQuery<E> { TODO() }
-    override fun count(): Flow<Long> { TODO() }
-    override fun min(property: String): Flow<Number?> { TODO() }
-    override fun max(property: String): Flow<Number?> { TODO() }
-    override fun sum(property: String): Flow<Number?> { TODO() }
-    override fun average(property: String): Flow<Double?> { TODO() }
-    override fun maxDate(property: String): Flow<Instant?> { TODO() }
-    override fun minDate(property: String): Flow<Instant?> { TODO() }
+    // Further filter the result.
+    fun where(filter: String = ""): RealmQuery<E> { TODO() }
 
     // Listen to changes
     fun addChangeListener(listener: (results: RealmResults<E>, change: OrderedCollectionChange<E, RealmResults<E>>) -> Unit): Cancellable { TODO() }

@@ -18,7 +18,7 @@ class RealmConfiguration private constructor() {
     val assetFilePath: String? = TODO()
     val schemaVersion: Long = TODO()
     val migrationType: MigrationType = TODO()
-    val initialDataTransaction: Realm.Transaction? = TODO()
+    val initialDataTransaction: (realm:Realm) -> Unit = TODO()
     val isReadOnly: Boolean = TODO()
     val compactOnLaunch: CompactOnLaunchCallback? = TODO()
     val maxNumberOfActiveVersions: Long = TODO()
@@ -26,7 +26,7 @@ class RealmConfiguration private constructor() {
     val allowQueriesOnUiThread: Boolean = TODO()
     val isSyncConfiguration: Boolean
         get() = false
-    val realmObjectClasses: Set<BaseRealmModel>
+    val realmObjectClasses: Set<BaseRealmModel<*>>
         get() = TODO()
 
     fun hasAssetFile(): Boolean { TODO() }
@@ -48,9 +48,8 @@ class RealmConfiguration private constructor() {
         // Unsure how schemas are defined in the Kotlin SDK? This 3 methods are supported in Realm Java
         fun modules(baseModule: Any?, vararg additionalModules: Any?): Builder { TODO() }
         fun addModule(module: Any): Builder { TODO() }
-        fun schema(vararg schemaClasses: KClass<out BaseRealmModel>): Builder { TODO() }
-
-        fun initialData(transaction: Realm.Transaction): Builder { TODO() }
+        fun schema(vararg schemaClasses: KClass<BaseRealmModel<*>>): Builder { TODO() }
+        fun initialData(transaction: Realm.(realm: Realm) -> Unit): Builder { TODO() }
         fun assetFile(assetFile: String): Builder { TODO() }
         fun readOnly(): Builder { TODO() }
         fun compactOnLaunch(compactOnLaunch: CompactOnLaunchCallback?): Builder { TODO() }
