@@ -20,13 +20,16 @@ import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
@@ -35,6 +38,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.set
+import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
@@ -536,6 +540,52 @@ actual object RealmInterop {
 
     actual fun realm_object_delete(obj: NativePointer) {
         throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
+    }
+
+    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_object_add_notification_callback(
+                obj.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                        ?: error("Notification callback data should never be null")
+                },
+                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
+                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                null
+            )
+        )
+    }
+
+    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_results_add_notification_callback(
+                results.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                        ?: error("Notification callback data should never be null")
+                },
+                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
+                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                null
+            )
+        )
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

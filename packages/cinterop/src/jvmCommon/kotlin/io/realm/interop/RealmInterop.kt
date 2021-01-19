@@ -18,6 +18,7 @@ package io.realm.interop
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
+import io.realm.interop.RealmInterop.cptr
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
@@ -199,6 +200,32 @@ actual object RealmInterop {
             else ->
                 error("Unsupported type ${cvalue.type}")
         } as T
+    }
+
+    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
+        return LongPointerWrapper(
+            realmc.realm_object_add_notification_callbackJNI(
+                obj.cptr(),
+                object : io.realm.interop.NotificationCallback() {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(pointer))
+                    }
+                }
+            )
+        )
+    }
+
+    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
+        return LongPointerWrapper(
+            realmc.realm_results_add_notification_callbackJNI(
+                results.cptr(),
+                object : io.realm.interop.NotificationCallback() {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(pointer))
+                    }
+                }
+            )
+        )
     }
 
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {

@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.NotificationToken
 import io.realm.internal.link
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
@@ -60,6 +61,25 @@ class RealmResults<T : RealmModel> constructor(
             clazz,
             schema,
         )
+    }
+
+    /**
+     * Observe changes to a Realm result.
+     *
+     * Follows the pattern of [Realm.observe]
+     */
+    fun observe(callback: Callback): Cancellable {
+        val token = RealmInterop.realm_results_add_notification_callback(
+            result,
+            object : io.realm.interop.Callback {
+                override fun onChange(collectionChanges: NativePointer) {
+                    // FIXME Need to expose change details to the user
+                    //  https://github.com/realm/realm-kotlin/issues/115
+                    callback.onChange()
+                }
+            }
+        )
+        return NotificationToken(callback, token)
     }
 
     fun delete() {

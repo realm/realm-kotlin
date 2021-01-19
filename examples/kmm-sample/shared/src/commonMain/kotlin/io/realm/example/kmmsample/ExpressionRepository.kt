@@ -17,6 +17,7 @@
 
 package io.realm.example.kmmsample
 
+import io.realm.Cancellable
 import io.realm.Realm
 import io.realm.RealmConfiguration
 
@@ -41,5 +42,9 @@ class ExpressionRepository {
 
     fun expressions(): List<Expression> {
         return realm.objects(Expression::class)
+    }
+
+    fun listen(block: () -> Unit): Cancellable {
+        return realm.objects(Expression::class).observe { block() }
     }
 }

@@ -41,6 +41,7 @@ kotlin {
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
                 implementation("io.realm.kotlin:library:${Realm.version}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
             }
         }
 
@@ -93,6 +94,7 @@ kotlin {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
                 implementation(kotlin("stdlib"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
         getByName("androidTest") {
@@ -122,13 +124,26 @@ kotlin {
 
 kotlin {
     iosX64("ios")
+    sourceSets {
+        val commonTest by getting
+        val nativeTest by creating {
+            dependsOn(commonTest)
+            kotlin.srcDir("src/nativeTest/kotlin")
+        }
+        getByName("iosTest") {
+            dependsOn(nativeTest)
+        }
+    }
 }
 
 kotlin {
     macosX64("macos") {
     }
     sourceSets {
-        getByName("macosTest") { }
+        val nativeTest by getting
+        getByName("macosTest") {
+            dependsOn(nativeTest)
+        }
     }
 }
 

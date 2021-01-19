@@ -2,8 +2,6 @@
 
 Realm Kotlin Multiplatform SDK
 
-## Overview
-
-## Usage
+// TODO Write meaningful docs when API settles a bit more
 
 
