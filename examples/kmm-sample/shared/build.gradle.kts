@@ -121,6 +121,7 @@ val packForXcode by tasks.creating(Sync::class) {
     // val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
     val targetName = "ios"
     val framework = kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)
+    framework.compilation.kotlinOptions.freeCompilerArgs += listOf("-Xverbose-phases=Linker")
     inputs.property("mode", mode)
     dependsOn(framework.linkTask)
     val targetDir = File(buildDir, "xcode-frameworks")
