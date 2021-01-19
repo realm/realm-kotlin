@@ -24,7 +24,7 @@ releaseBranches = [ 'master', 'releases', 'next-major' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
-currentBranch = env.CHANGE_BRANCH
+currentBranch = env.BRANCH_NAME
 // Will be set to `true` if this build is a full release that should be available on Bintray.
 // This is determined by comparing the current git tag to the version number of the build.
 publishBuild = false
@@ -112,7 +112,7 @@ def runScm() {
         // the exact Git SHA that was tagged.
         gitTag = readGitTag()
         version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
-        echo "Git tag: ${gitTag ?: 'none'}"
+        echo "Git branch/tag: ${currentBranch}/${gitTag ?: 'none'}"
         if (!gitTag) {
             gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
             echo "Building commit: ${version} - ${gitSha}"
