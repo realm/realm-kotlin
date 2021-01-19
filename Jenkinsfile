@@ -24,7 +24,7 @@ releaseBranches = [ 'master', 'releases', 'next-major' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
-currentBranch = env.CHANGE_BRANCH
+currentBranch = env.BRANCH_NAME
 // Will be set to `true` if this build is a full release that should be available on Bintray.
 // This is determined by comparing the current git tag to the version number of the build.
 publishBuild = false
