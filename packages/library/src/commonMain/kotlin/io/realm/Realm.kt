@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.NotificationToken
 import io.realm.internal.manage
 import io.realm.internal.unmanage
 import io.realm.interop.RealmInterop
@@ -51,6 +52,38 @@ class Realm {
                 ?: throw IllegalArgumentException("Cannot delete unmanaged object")
             internalObject.unmanage()
         }
+
+        /**
+         * Observe change.
+         *
+         * Triggers calls to [callback] when there are changes to [obj].
+         *
+         * To receive asynchronous callbacks this must be called:
+         * - Android: on a thread with a looper
+         * - iOS/macOS: on the main thread (as we currently do not support opening Realms with
+         *   different schedulers similarly to
+         *   https://github.com/realm/realm-cocoa/blob/master/Realm/RLMRealm.mm#L424)
+         *
+         * Notes:
+         * - Calls are triggered synchronously on a [beginTransaction] when the version is advanced.
+         * - Ignoring the return value will eliminate the possibility to cancel the registration
+         *   and will leak the [callback] and potentially the internals related to the registration.
+         */
+        // @CheckReturnValue Not available for Kotlin?
+        fun <T : RealmModel> observe(obj: T, callback: Callback): Cancellable {
+            val internalObject = obj as RealmModelInternal
+            internalObject.`$realm$ObjectPointer`?.let {
+                val internalCallback = object : io.realm.interop.Callback {
+                    override fun onChange(objectChanges: NativePointer) {
+                        // FIXME Need to expose change details to the user
+                        //  https://github.com/realm/realm-kotlin/issues/115
+                        callback.onChange()
+                    }
+                }
+                val token = RealmInterop.realm_object_add_notification_callback(it, internalCallback)
+                return NotificationToken(internalCallback, token)
+            } ?: throw IllegalArgumentException("Cannot register listeners on unmanaged object")
+        }
     }
 
     fun beginTransaction() {
@@ -63,9 +96,6 @@ class Realm {
 
     fun cancelTransaction() {
         TODO()
-    }
-
-    fun registerListener(f: () -> Unit) {
     }
 
     //    reflection is not supported in K/N so we can't offer method like
@@ -98,4 +128,11 @@ class Realm {
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
+
+    fun close() {
+        dbPointer?.let {
+            RealmInterop.realm_close(it)
+        }
+        dbPointer = null
+    }
 }

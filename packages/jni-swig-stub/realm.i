@@ -1,12 +1,13 @@
-%module realmc
+%module(directors="1") realmc
+
 %{
-#include "realm/realm.h"
+#include "realm.h"
 #include <cstring>
 #include <string>
 %}
 
-// TODO Memory management: Verify finalizers, etc.
-//  Maybe in relation to https://github.com/realm/realm-kotlin/issues/23
+// FIXME MEMORY Verify finalizers, etc.
+//  https://github.com/realm/realm-kotlin/issues/93
 // TODO OPTIMIZATION
 //  - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
@@ -45,12 +46,14 @@ typedef jstring realm_string_t;
 
 %typemap(jstype) void* "long"
 %typemap(javain) void* "$javainput"
+%typemap(javadirectorin) void* "$1"
 %typemap(javaout) void* {
 return $jnicall;
 }
 
 // Reuse above type maps on other pointers too
-%apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*, realm_results_t* };
+%apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*,
+               realm_results_t*, realm_notification_token_t*, realm_object_changes_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -62,7 +65,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message.data);
+            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
             // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
@@ -77,7 +80,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message.data);
+            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
             // TODO API-SCHEMA Cache class lookup
             // FIXME Extract all error information and throw exceptions based on type
@@ -103,10 +106,7 @@ bool realm_object_is_valid(const realm_object_t*);
 %array_functions(realm_value_t, valueArray);
 
 // size_t output parameter
-struct realm_size_t {
-    size_t value;
-};
-%{
+%inline %{
 struct realm_size_t {
     size_t value;
 };
@@ -126,8 +126,14 @@ struct realm_size_t {
 // Make swig types package private (as opposed to public by default) to ensure that we don't expose
 // types outside the package
 %typemap(javaclassmodifiers) SWIGTYPE "class";
+%typemap(javaclassmodifiers) NotificationCallback "public class";
 %typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
+// FIXME OPTIMIZE Support getting/setting multiple attributes. Ignored for now due to incorrect
+//  type cast in Swig-generated wrapper for "const realm_property_key_t*" which is not cast
+//  correctly to the underlying C-API method.
+%ignore "realm_get_values";
+%ignore "realm_set_values";
 // Not yet available in library
 %ignore "realm_get_async_error";
 %ignore "realm_get_last_error_as_async_error";
@@ -173,3 +179,67 @@ struct realm_size_t {
 #define __attribute__(x)
 
 %include "realm.h"
+
+// How to
+// - delete all listeners
+%typemap(directorin, descriptor="J") const void* "*(const void **)&$input = $1;"
+%feature("director") NotificationCallback;
+// Ensures that the C++ callback object keeps a strong reference to the Java equivalent
+SWIG_DIRECTOR_OWNED(NotificationCallback)
+%inline %{
+class NotificationCallback {
+public:
+    virtual void onChange(const void*) {}
+    virtual ~NotificationCallback() {}
+};
+realm_notification_token_t* realm_object_add_notification_callbackJNI(
+        realm_object_t* object,
+        NotificationCallback* callback
+        ) {
+    return realm_object_add_notification_callback(
+            object,
+            // Use the callback as user data
+            callback,
+            // FIXME MEMORY Verify that JVM callback is actual collected
+            //  https://github.com/realm/realm-kotlin/issues/93
+            [] (void *userdata) {
+                static_cast<NotificationCallback*>(userdata)->~NotificationCallback();
+            },
+            // change callback
+            [] (void* userdata, const realm_object_changes_t* changes) {
+                // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
+                //  like the C-API error callback below
+                static_cast<NotificationCallback*>(userdata)->onChange(static_cast<const void*>(changes));
+            },
+            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+            [] ( void* userdata, const realm_async_error_t* async_error) { },
+            // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+            NULL
+    );
+}
+realm_notification_token_t* realm_results_add_notification_callbackJNI(
+        realm_results_t* results,
+        NotificationCallback* callback
+) {
+    return realm_results_add_notification_callback(
+            results,
+            // Use the callback as user data
+            callback,
+            // FIXME MEMORY Verify that JVM callback is actual collected
+            //  https://github.com/realm/realm-kotlin/issues/93
+            [] (void *userdata) {
+                static_cast<NotificationCallback*>(userdata)->~NotificationCallback();
+            },
+            // change callback
+            [] (void* userdata, const realm_collection_changes_t* changes) {
+                // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
+                //  like the C-API error callback below
+                static_cast<NotificationCallback*>(userdata)->onChange(static_cast<const void*>(changes));
+            },
+            // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+            [] ( void* userdata, const realm_async_error_t* async_error) { },
+            // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+            NULL
+    );
+}
+%}

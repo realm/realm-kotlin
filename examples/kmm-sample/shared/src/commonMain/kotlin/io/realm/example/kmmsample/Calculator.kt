@@ -18,14 +18,20 @@
 
 package io.realm.example.kmmsample
 
+import io.realm.Cancellable
+
 class Calculator private constructor() {
     companion object {
 
-        val repository: ExpressionRepository by lazy { ExpressionRepository() }
+        private val repository: ExpressionRepository by lazy { ExpressionRepository() }
 
         fun sum(a: Int, b: Int): Int {
             repository.addExpression("$a + $b")
             return a + b
+        }
+
+        fun listen(block: () -> Unit): Cancellable {
+            return this.repository.listen(block)
         }
 
         fun history(): List<Expression> {

@@ -20,13 +20,16 @@ import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
@@ -34,8 +37,8 @@ import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.readValue
 import kotlinx.cinterop.set
+import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
@@ -44,11 +47,9 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
-import realm_wrapper.realm_obj_key
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_string_t
-import realm_wrapper.realm_table_key_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 
@@ -56,7 +57,7 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val runtimeException = RuntimeException(error.message.toKString())
+            val runtimeException = RuntimeException(error.message?.toKString())
             realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             //  https://github.com/realm/realm-kotlin/issues/70
@@ -151,8 +152,8 @@ actual object RealmInterop {
                 val properties = clazz.properties
                 // Class
                 cclasses[i].apply {
-                    name.set(memScope, clazz.name)
-                    primary_key.set(memScope, clazz.primaryKey)
+                    name = clazz.name.cstr.ptr
+                    primary_key = clazz.primaryKey.cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags =
@@ -162,7 +163,10 @@ actual object RealmInterop {
                     allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
-                        name.set(memScope, property.name)
+                        name = property.name.cstr.ptr
+                        public_name = "".cstr.ptr
+                        link_target = "".cstr.ptr
+                        link_origin_property_name = "".cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
                         flags =
@@ -185,14 +189,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_path(config: NativePointer, path: String) {
-        memScoped {
-            throwOnError(
-                realm_wrapper.realm_config_set_path(
-                    config.cptr(),
-                    path.toRString(memScope)
-                )
-            )
-        }
+        throwOnError(realm_wrapper.realm_config_set_path(config.cptr(), path))
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
@@ -256,7 +253,7 @@ actual object RealmInterop {
             throwOnError(
                 realm_wrapper.realm_find_class(
                     realm.cptr(),
-                    name.toRString(memScope),
+                    name,
                     found.ptr,
                     classInfo.ptr
                 )
@@ -264,13 +261,12 @@ actual object RealmInterop {
             if (!found.value) {
                 throw RuntimeException("Class \"$name\" not found")
             }
-            return classInfo.key.table_key.toLong()
+            return classInfo.key.toLong()
         }
     }
 
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
-        val tableKey = cValue<realm_table_key_t> { table_key = key.toUInt() }
-        return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), tableKey))
+        return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
     }
 
     // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
@@ -316,7 +312,7 @@ actual object RealmInterop {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(obj.cptr(), propertyInfo.key.readValue(), value.ptr)
+            realm_wrapper.realm_get_value(obj.cptr(), propertyInfo.key, value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_STRING ->
                     return value.string.toKString()
@@ -345,7 +341,7 @@ actual object RealmInterop {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             realm_wrapper.realm_set_value_string(
                 obj.cptr(),
-                propertyInfo.key.readValue(),
+                propertyInfo.key,
                 value.toRString(memScope),
                 false
             )
@@ -369,8 +365,8 @@ actual object RealmInterop {
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
-                    classInfo(realm, table).key.readValue(),
-                    query.toRString(memScope),
+                    classInfo(realm, table).key,
+                    query,
                     count.toULong(),
                     cArgs
                 )
@@ -389,7 +385,7 @@ actual object RealmInterop {
             if (value.type != realm_value_type.RLM_TYPE_LINK) {
                 error("Query did not return link but ${value.type}")
             }
-            return Link(value.link.target.obj_key, value.link.target_table.table_key.toLong())
+            return Link(value.link.target, value.link.target_table.toLong())
         }
     }
 
@@ -414,9 +410,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
-        val tableKey = cValue<realm_table_key_t> { table_key = link.tableKey.toUInt() }
-        val objKey = cValue<realm_obj_key> { obj_key = link.objKey }
-        val ptr = throwOnError(realm_wrapper.realm_get_object(realm.cptr(), tableKey, objKey))
+        val ptr = throwOnError(realm_wrapper.realm_get_object(realm.cptr(), link.tableKey.toUInt(), link.objKey))
         return CPointerWrapper(ptr)
     }
 
@@ -431,7 +425,7 @@ actual object RealmInterop {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
+            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_INT ->
                     return value.integer
@@ -450,7 +444,7 @@ actual object RealmInterop {
         }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_int64(o.cptr(), propertyInfo.key.readValue(), value, false)
+            realm_wrapper.realm_set_value_int64(o.cptr(), propertyInfo.key, value, false)
         }
     }
 
@@ -461,7 +455,7 @@ actual object RealmInterop {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
+            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_BOOL ->
                     return value.boolean
@@ -480,7 +474,7 @@ actual object RealmInterop {
         }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_boolean(o.cptr(), propertyInfo.key.readValue(), value, false)
+            realm_wrapper.realm_set_value_boolean(o.cptr(), propertyInfo.key, value, false)
         }
     }
 
@@ -491,7 +485,7 @@ actual object RealmInterop {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
+            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_FLOAT ->
                     return value.fnum
@@ -510,7 +504,7 @@ actual object RealmInterop {
         }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_float(o.cptr(), propertyInfo.key.readValue(), value, false)
+            realm_wrapper.realm_set_value_float(o.cptr(), propertyInfo.key, value, false)
         }
     }
 
@@ -521,7 +515,7 @@ actual object RealmInterop {
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
             val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key.readValue(), value.ptr)
+            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
             when (value.type) {
                 realm_value_type.RLM_TYPE_DOUBLE ->
                     return value.dnum
@@ -540,12 +534,58 @@ actual object RealmInterop {
         }
         memScoped {
             val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_double(o.cptr(), propertyInfo.key.readValue(), value, false)
+            realm_wrapper.realm_set_value_double(o.cptr(), propertyInfo.key, value, false)
         }
     }
 
     actual fun realm_object_delete(obj: NativePointer) {
         throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
+    }
+
+    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_object_add_notification_callback(
+                obj.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                        ?: error("Notification callback data should never be null")
+                },
+                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
+                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                null
+            )
+        )
+    }
+
+    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_results_add_notification_callback(
+                results.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                        ?: error("Notification callback data should never be null")
+                },
+                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
+                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                null
+            )
+        )
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
@@ -554,7 +594,7 @@ actual object RealmInterop {
         throwOnError(
             realm_wrapper.realm_find_class(
                 realm.cptr(),
-                table.toRString(memScope),
+                table,
                 found.ptr,
                 classInfo.ptr
             )
@@ -572,8 +612,8 @@ actual object RealmInterop {
         throwOnError(
             realm_find_property(
                 realm.cptr(),
-                classInfo.key.readValue(),
-                col.toRString(memScope),
+                classInfo.key,
+                col,
                 found.ptr,
                 propertyInfo.ptr
             )
@@ -585,6 +625,6 @@ actual object RealmInterop {
         if (this.type != realm_value_type.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target.obj_key, this.link.target_table.table_key.toLong())
+        return Link(this.link.target, this.link.target_table.toLong())
     }
 }
