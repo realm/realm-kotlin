@@ -15,10 +15,11 @@ class Task(var name: String): EmbeddedRealmObject<Task>
 
 class ApiExample {
 
+    val realm = Realm.open()
+
     fun doSomethingWith(vararg arg: Any?) { TODO() }
 
     fun crud() {
-        val realm = Realm.open()
 
         // Create object
         GlobalScope.launch {
@@ -93,8 +94,7 @@ class ApiExample {
     }
 
     fun observingChanges() {
-        val realm = Realm.open()
-        val query: RealmQuery<Project> = realm.filter(Project::class)
+        val query: RealmQuery<Project> = realm.where(Project::class)
 
         // Using Flows
         GlobalScope.launch {
@@ -123,11 +123,9 @@ class ApiExample {
     }
 
     fun queries() {
-        val realm = Realm.open()
-
         // Queries that drive the UI
         GlobalScope.launch {
-            realm.filter(Project::class, "created < ${Clock.System.now()}")
+            realm.where(Project::class, "created < ${Clock.System.now()}")
                     .filter("tasks.@count < 5")
                     .sort("name")
                     .observe()
@@ -136,20 +134,21 @@ class ApiExample {
                     }
 
             realm.find(Project::class, 1)!!.tasks
-                    .filter("name BEGINSWITH 'Task'")
+                    .where("name BEGINSWITH 'Task'")
                     .sort("name")
-                    .observe()
-                    .first()
+                    .observeFirst()
+                    .collect { task: Task? ->
+                        doSomethingWith(task)
+                    }
         }
 
-        // Business logic queries
+        // Business logic queries (inside transaction)
         GlobalScope.launch {
             realm.executeTransaction {
-
                 val project1 = find(Project::class, 1)!!
                 val project2 = find(Project::class, 2)!!
-                val task1 = project1.tasks.filter("name = 'My Task'").observe().first()
-                val task2 = project2.tasks.filter("name = 'My Task'").observe().first()
+                val task1: Task? = project1.tasks.where("name = 'My Task'").findFirst()
+                val task2: Task? = project2.tasks.where("name = 'My Task'").findFirst()
 
                 if (project1.created < project2.created) {
                     doSomethingWith(task1, task2)
@@ -158,12 +157,98 @@ class ApiExample {
         }
     }
 
+    // Realworld example of writes:
+    // https://github.com/WildAid/o-fish-android/blob/main/app/src/main/java/org/wildaid/ofish/data/RealmDataSource.kt#L112
 
 
+    suspend fun badThings1_advanceRealm() {
 
+        // Realm can advance between queries
+        val project = realm.find(Project::class, 1)!!
+        val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAll()
 
-    fun interactionMutableImmutableRealm() {
+        // Solutions
+
+        // 1. Navigate the object graph instead of multiple queries
+        project.tasks
+
+        // 2. Express what you want in a single query
+        // Not possible in this example
+
+        // 3. Use realm.pin
+        realm.pin {
+            val project = realm.find(Project::class, 1)!!
+            val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAll()
+            project.tasks == tasks // true
+        }
+
+        // 4. Run logic inside write transaction
+        realm.executeTransaction {
+            val project = realm.find(Project::class, 1)!!
+            val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAll()
+            project.tasks == tasks // true
+        }
+
+        realm.write {
+            val project = realm.where(Project::class,"id == 1").findFirstSync()!!
+            val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAllSync()
+            project.tasks == tasks // true
+        }
 
     }
 
+    suspend fun badThings2_assumeThatFrozenObjectIsUpToDate() {
+        val project = realm.find(Project::class, 1)!!
+        realm.executeTransaction {
+            if (project.created < Clock.System.now()) {
+                // Run some logic inside the transaction based on old state of project created from
+                // outside the transaction
+            }
+        }
+
+        // Solutions
+
+        // Documentation: By lifting thread constraints, this kind of pattern becomes possible, where
+        // it previously would crash when using async transactions. Synchronous transactions would
+        // automatically update all objects so it would be safe.
+
+        // Correct way is fetching all objects inside the transaction
+        realm.executeTransaction {
+            val project = realm.find(Project::class, 1)!!
+            if (project.created < Clock.System.now()) {
+                // Run correct logic
+            }
+        }
+    }
+
+    suspend fun badThings3_tryingToWriteToFrozenObject() {
+        val project = realm.find(Project::class, 1)!!
+        realm.executeTransaction {
+            project.name = "New name" // Throws exception
+        }
+
+        // Solutions
+        // This is no different than today. Good exception message and documentation.
+
+        // 1. Use find inside transaction
+        realm.executeTransaction {
+            find(project)!!.name = "New name"
+        }
+
+        // 2. Use update method inside transaction
+        realm.executeTransaction {
+            project.update {
+                it?.apply {
+                    name = "New Name"
+                }
+            }
+
+            // 3. Pass in argument
+            realm.executeTransaction(project) { p ->
+                p?.apply {
+                    name = "New Name"
+                }
+            }
+        }
+    }
 }

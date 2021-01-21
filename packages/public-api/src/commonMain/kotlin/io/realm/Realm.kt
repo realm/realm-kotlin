@@ -37,7 +37,7 @@ class Realm: BaseRealm() {
     fun <R> write(function: (MutableRealm) -> R): R { TODO() }
 
     // Pin Realm to a specific version while a closure is running
-    fun <R> pin(function: Realm.(realm: Realm) -> R) { TODO() }
+    fun <R> pin(function: suspend Realm.(realm: Realm) -> R) { TODO() }
 
     // Unfortunately Closable is not an interface in Kotlin Common, so we cannot implement the Closable interface
     // Unsure what impact his have?
@@ -49,10 +49,10 @@ class Realm: BaseRealm() {
     // Every other use case must go through the RealmQuery class. This is in order to keep
     // the number of methods down, not to include name clashes
     // The naming of these two methods differ a lot between SDK's. Right now I settled on
-    // `find` which is used in .NET and because `object` used elsewhere is a keyword and `filter`
-    // because that is the standard method name for this in Kotlin collections.
+    // `find` which is used in .NET and because `object` used elsewhere is a keyword and `where`
+    // because that was used in Realm Java and this iteration are keeping the RealmQuery class.
     suspend fun <E : BaseRealmModel<E>> find(clazz: KClass<E>, primaryKey: Any): E? { TODO() }
-    fun <E : BaseRealmModel<E>> filter(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
+    fun <E : BaseRealmModel<E>> where(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
     fun isEmpty(): Boolean { TODO() }
 
     // Backups

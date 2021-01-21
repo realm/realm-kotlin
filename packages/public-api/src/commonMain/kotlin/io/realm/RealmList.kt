@@ -7,7 +7,7 @@ import kotlinx.datetime.Instant
 class RealmList<E>(override val size: Int = 0): MutableList<E>, OrderedRealmCollection<E> {
 
     // Further filter the result.
-    fun where(filter: String = ""): RealmQuery<E> { TODO() }
+    fun where(predicate: String = ""): RealmQuery<E> { TODO() }
 
     override fun contains(element: E): Boolean { TODO() }
     override fun containsAll(elements: Collection<E>): Boolean { TODO() }
