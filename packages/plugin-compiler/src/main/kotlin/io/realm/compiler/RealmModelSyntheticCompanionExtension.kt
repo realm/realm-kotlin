@@ -16,8 +16,8 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.Names.COMPANION_NEW_INSTANCE_METHOD
-import io.realm.compiler.Names.COMPANION_SCHEMA_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -42,7 +42,10 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
     override fun getSyntheticFunctionNames(thisDescriptor: ClassDescriptor): List<Name> {
         return when {
             thisDescriptor.isRealmObjectCompanion -> {
-                listOf(COMPANION_SCHEMA_METHOD, COMPANION_NEW_INSTANCE_METHOD)
+                listOf(
+                    REALM_OBJECT_COMPANION_SCHEMA_METHOD,
+                    REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+                )
             }
             else -> {
                 emptyList()
@@ -54,7 +57,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
         if (thisDescriptor.annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)) {
             val defaultType = thisDescriptor.module.resolveClassByFqName(FqNames.REALM_MODEL_INTERFACE_MARKER, NoLookupLocation.FROM_BACKEND)?.defaultType
-                ?: throw error("Couldn't resolve `RealmModel` from ${thisDescriptor.name.identifier}")
+                ?: error("Couldn't resolve `RealmModel` from ${thisDescriptor.name.identifier}")
             supertypes.add(defaultType)
         }
         super.addSyntheticSupertypes(thisDescriptor, supertypes)
@@ -66,8 +69,8 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
                 val classDescriptor = thisDescriptor.containingDeclaration as ClassDescriptor
 
                 when (name) {
-                    COMPANION_SCHEMA_METHOD -> result.add(createRealmObjectCompanionSchemaGetterFunctionDescriptor(thisDescriptor, classDescriptor))
-                    COMPANION_NEW_INSTANCE_METHOD -> result.add(createRealmObjectCompanionNewInstanceFunctionDescriptor(thisDescriptor, classDescriptor))
+                    REALM_OBJECT_COMPANION_SCHEMA_METHOD -> result.add(createRealmObjectCompanionSchemaGetterFunctionDescriptor(thisDescriptor, classDescriptor))
+                    REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD -> result.add(createRealmObjectCompanionNewInstanceFunctionDescriptor(thisDescriptor, classDescriptor))
                 }
             }
         }
@@ -81,7 +84,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
         return SimpleFunctionDescriptorImpl.create(
             companionClass,
             Annotations.EMPTY,
-            COMPANION_SCHEMA_METHOD,
+            REALM_OBJECT_COMPANION_SCHEMA_METHOD,
             CallableMemberDescriptor.Kind.SYNTHESIZED,
             companionClass.source
         ).apply {
@@ -90,7 +93,10 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
                 companionClass.thisAsReceiverParameter,
                 emptyList(),
                 emptyList(),
-                realmObjectClass.builtIns.stringType,
+                // FIXME Howto resolve types from "runtime" module. Should be
+                //  `io.realm.internal.Table`, but doesn't seem to break as long as the actual
+                //  implementation return type can be cast to this return type
+                realmObjectClass.builtIns.anyType,
                 Modality.OPEN,
                 DescriptorVisibilities.PUBLIC
             )
@@ -105,7 +111,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
         return SimpleFunctionDescriptorImpl.create(
             companionClass,
             Annotations.EMPTY,
-            COMPANION_NEW_INSTANCE_METHOD,
+            REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD,
             CallableMemberDescriptor.Kind.SYNTHESIZED,
             companionClass.source
         ).apply {

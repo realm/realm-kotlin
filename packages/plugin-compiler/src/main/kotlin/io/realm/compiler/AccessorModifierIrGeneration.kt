@@ -221,7 +221,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.makeNotNull().isBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("boolean", nullable)
+                        fields[name] = Pair("bool", nullable)
                         modifyGetterAccessor(irClass, name, objectGetBooleanFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetBooleanFun, declaration.setter!!)
                     }

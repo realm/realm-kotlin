@@ -19,8 +19,9 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
-import io.realm.compiler.Names.COMPANION_NEW_INSTANCE_METHOD
-import io.realm.compiler.Names.COMPANION_SCHEMA_METHOD
+import io.realm.compiler.FqNames.TABLE
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
@@ -31,6 +32,8 @@ import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
 import org.jetbrains.kotlin.ir.builders.declarations.addProperty
@@ -44,25 +47,31 @@ import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.companionObject
-import org.jetbrains.kotlin.ir.util.constructors
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
+import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInternal = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERFACE)
     private val nullableNativePointerInterface = pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
         .symbol.createType(true, emptyList())
-    private val realmCompanionInterface = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
+    private val realmObjectCompanionInterface = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
+    private val table = pluginContext.lookupClassOrThrow(TABLE)
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
@@ -73,19 +82,106 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
+    // FIXME OPTIMIZE Move all lookups to class level
+    // TODO OPTIMIZE should be a one time only constructed object
+    @OptIn(ObsoleteDescriptorBasedAPI::class)
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val fields: MutableMap<String, Pair<String, Boolean>> = SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
+        val fields: MutableMap<String, Pair<String, Boolean>> =
+            SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        val function = companionObject.functions.first { it.name == COMPANION_SCHEMA_METHOD }
+        val function = companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
-        function.body = pluginContext.blockBody(function.symbol) {
-            +irReturn(irString(schemaString(irClass.name.identifier, fields)))
-        }
 
-        function.overriddenSymbols = listOf(realmCompanionInterface.functions.first { it.name == COMPANION_SCHEMA_METHOD }.symbol)
+        val tableConstructor =
+            table.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
+
+        val classFlag: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.ClassFlag"))
+        val classFlags = classFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+
+        val property = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.Property"))
+        val propertyConstructor = property.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
+        val propertyFlag: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.PropertyFlag"))
+        val propertyFlags = propertyFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+        val propertyType: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.PropertyType"))
+        val propertyTypes = propertyType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+        val collectionType: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.CollectionType"))
+        val collectionTypes = collectionType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+
+        function.body = pluginContext.blockBody(function.symbol) {
+            +irReturn(
+                IrConstructorCallImpl(
+                    startOffset,
+                    endOffset,
+                    type = table.defaultType,
+                    symbol = tableConstructor.symbol,
+                    constructorTypeArgumentsCount = 0,
+                    typeArgumentsCount = 0,
+                    valueArgumentsCount = 4
+                ).apply {
+                    // Name
+                    putValueArgument(0, irString(irClass.name.identifier))
+                    // Primary key
+                    putValueArgument(1, irString(""))
+                    // Flags
+                    putValueArgument(
+                        2,
+                        buildSetOf(pluginContext, this@blockBody, classFlag.defaultType, listOf(
+                            IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, classFlag.defaultType, classFlags.first { it.name == Name.identifier("RLM_CLASS_NORMAL") }.symbol)
+                        ))
+                    )
+                    // Properties
+                    putValueArgument(
+                        3,
+                        buildListOf(pluginContext, this@blockBody, property.defaultType,
+                            fields.map { entry ->
+                                val type = propertyTypes.firstOrNull {
+                                    it.name.identifier.toLowerCaseAsciiOnly()
+                                        .contains(entry.value.first)
+                                } ?: error("Unknown type ${entry.value.first}")
+                                IrConstructorCallImpl(
+                                    startOffset,
+                                    endOffset,
+                                    type = property.defaultType,
+                                    symbol = propertyConstructor.symbol,
+                                    constructorTypeArgumentsCount = 0,
+                                    typeArgumentsCount = 0,
+                                    valueArgumentsCount = 7
+                                ).apply {
+                                    // Name
+                                    putValueArgument(0, irString(entry.key))
+                                    // Public name
+                                    putValueArgument(1, irString(""))
+                                    // Type
+                                    putValueArgument(2,
+                                            IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyType.defaultType, type.symbol)
+                                    )
+                                    // Collection type
+                                    putValueArgument(3,
+                                        IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, collectionType.defaultType, collectionTypes.first { it.name.identifier == "RLM_COLLECTION_TYPE_NONE" }.symbol)
+                                    )
+                                    // Link target
+                                    putValueArgument(4, irString(""))
+                                    // Link property name
+                                    putValueArgument(5, irString(""))
+                                    // Property flags
+                                    putValueArgument(6,
+                                        buildSetOf(pluginContext, this@blockBody, propertyFlag.defaultType,
+                                            listOf(IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyFlag.defaultType, propertyFlags.first { it.name.identifier == "RLM_PROPERTY_NORMAL" }.symbol))
+                                        )
+                                    )
+                                }
+                            }
+                        )
+                    )
+                }
+
+            )
+        }
+        function.overriddenSymbols =
+            listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }.symbol)
     }
 
     // Generate body for the synthetic new instance method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
@@ -93,10 +189,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val function = companionObject.functions.first { it.name == COMPANION_NEW_INSTANCE_METHOD }
+        val function = companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            val defaultCtor = irClass.constructors.find { it.isPrimary }
+            val defaultCtor = irClass.primaryConstructor
                 ?: error("Can not find primary constructor")
             +irReturn(
                 IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
@@ -111,7 +207,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 )
             )
         }
-        function.overriddenSymbols = listOf(realmCompanionInterface.functions.first { it.name == COMPANION_NEW_INSTANCE_METHOD }.symbol)
+        function.overriddenSymbols = listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }.symbol)
     }
 
     private fun IrClass.addProperty(propertyName: Name, propertyType: IrType, initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody) {

@@ -40,8 +40,6 @@ kotlin {
                 api(project(":runtime-api"))
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
-                // FIXME API-SCHEMA Only used for parsing schema strings until properly typed.
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
             }
         }
 

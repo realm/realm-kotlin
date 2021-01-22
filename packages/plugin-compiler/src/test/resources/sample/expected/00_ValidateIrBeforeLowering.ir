@@ -481,14 +481,14 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           RETURN type=kotlin.Nothing from='public final fun dumpSchema (): kotlin.String declared in sample.input.Sample'
             STRING_CONCATENATION type=kotlin.String
-              CALL 'public open fun $realm$schema (): kotlin.String declared in sample.input.Sample.Companion' type=kotlin.String origin=null
-                $this: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.runtimeapi.RealmCompanion]' type=sample.input.Sample.Companion
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.runtimeapi.RealmCompanion]
+              CALL 'public open fun $realm$schema (): kotlin.Any declared in sample.input.Sample.Companion' type=kotlin.Any origin=null
+                $this: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=sample.input.Sample.Companion
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
         CONSTRUCTOR visibility:private <> () returnType:sample.input.Sample.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.runtimeapi.RealmCompanion]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -502,16 +502,124 @@ MODULE_FRAGMENT name:<main>
           overridden:
             public open fun toString (): kotlin.String declared in kotlin.Any
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        FUN name:$realm$schema visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.String
+        FUN name:$realm$schema visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.Any
           overridden:
-            public abstract fun $realm$schema (): kotlin.String declared in io.realm.runtimeapi.RealmCompanion
+            public abstract fun $realm$schema (): io.realm.interop.Table declared in io.realm.internal.RealmObjectCompanion
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.String declared in sample.input.Sample.Companion'
-              CONST String type=kotlin.String value="{\"name\": \"Sample\", \"properties\": [{\"stringField\": {\"type\": \"string\", \"nullable\": \"true\"}},{\"byteField\": {\"type\": \"int\", \"nullable\": \"true\"}},{\"charField\": {\"type\": \"int\", \"nullable\": \"true\"}},{\"shortField\": {\"type\": \"int\", \"nullable\": \"true\"}},{\"intField\": {\"type\": \"int\", \"nullable\": \"true\"}},{\"longField\": {\"type\": \"int\", \"nullable\": \"true\"}},{\"booleanField\": {\"type\": \"boolean\", \"nullable\": \"true\"}},{\"floatField\": {\"type\": \"float\", \"nullable\": \"true\"}},{\"doubleField\": {\"type\": \"double\", \"nullable\": \"true\"}}]}"
+            RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Sample.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
+                name: CONST String type=kotlin.String value="Sample"
+                primaryKey: CONST String type=kotlin.String value=""
+                flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.ClassFlag> origin=null
+                  <T>: io.realm.interop.ClassFlag
+                  elements: VARARG type=kotlin.Array<io.realm.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.interop.ClassFlag>
+                    GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_CLASS_NORMAL' type=io.realm.interop.ClassFlag
+                properties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.interop.Property> origin=null
+                  <T>: io.realm.interop.Property
+                  elements: VARARG type=kotlin.Array<io.realm.interop.Property> varargElementType=kotlin.collections.List<io.realm.interop.Property>
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="stringField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="byteField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="charField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="shortField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="intField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="longField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="booleanField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_BOOL' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="floatField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_FLOAT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="doubleField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DOUBLE' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.Any
           overridden:
-            public abstract fun $realm$newInstance (): kotlin.Any declared in io.realm.runtimeapi.RealmCompanion
+            public abstract fun $realm$newInstance (): kotlin.Any declared in io.realm.internal.RealmObjectCompanion
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in sample.input.Sample.Companion'

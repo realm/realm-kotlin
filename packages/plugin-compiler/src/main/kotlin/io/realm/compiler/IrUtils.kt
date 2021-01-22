@@ -18,23 +18,39 @@ package io.realm.compiler
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.codegen.arity
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrPropertyBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
+import org.jetbrains.kotlin.ir.builders.irCall
+import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
+import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrVarargElement
+import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.irCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.calls.components.isVararg
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
 // Remove this extension when this will be re-introduced? see https://kotlinlang.slack.com/archives/C7L3JB43G/p1600888883006300
@@ -108,3 +124,61 @@ internal fun IrPluginContext.lookupConstructorInClass(fqName: FqName, filter: (c
 object SchemaCollector {
     val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, Boolean>>>()
 }
+
+internal fun <T: IrExpression> buildOf(
+    context: IrPluginContext,
+    builder: IrBlockBodyBuilder,
+    function: IrSimpleFunctionSymbol,
+    containerType: IrClass,
+    elementType: IrType,
+    args: List<T>
+): IrExpression {
+    return with(builder) {
+        irCall(
+            function,
+            typeArgumentsCount = 1,
+            valueArgumentsCount = 1,
+            type = containerType.typeWith(elementType)
+        ).apply {
+            putTypeArgument(0, elementType)
+            putValueArgument(
+                0,
+                IrVarargImpl(
+                    UNDEFINED_OFFSET,
+                    UNDEFINED_OFFSET,
+                    context.irBuiltIns.arrayClass.typeWith(elementType),
+                    type,
+                    args.toList()
+                )
+            )
+        }
+    }
+}
+
+@ObsoleteDescriptorBasedAPI
+internal fun <T: IrExpression> buildSetOf(
+    context: IrPluginContext,
+    builder: IrBlockBodyBuilder,
+    elementType: IrType,
+    args: List<T>
+): IrExpression {
+    val setOf = context.referenceFunctions(FqName("kotlin.collections.setOf"))
+        .first { it.descriptor.arity == 1 && it.descriptor.valueParameters.first().isVararg }
+    val setIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_SET)
+    return buildOf(context, builder, setOf, setIrClass, elementType, args)
+}
+
+@ObsoleteDescriptorBasedAPI
+internal fun <T: IrExpression> buildListOf(
+    context: IrPluginContext,
+    builder: IrBlockBodyBuilder,
+    elementType: IrType,
+    args: List<T>
+): IrExpression {
+    val listOf = context.referenceFunctions(FqName("kotlin.collections.listOf"))
+        .first { it.descriptor.arity == 1 && it.descriptor.valueParameters.first().isVararg }
+    val listIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
+    return buildOf(context, builder, listOf, listIrClass, elementType, args)
+}
+
+
