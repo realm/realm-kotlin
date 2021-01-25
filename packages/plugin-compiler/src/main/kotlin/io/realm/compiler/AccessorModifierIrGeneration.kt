@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.ir.types.isFloat
 import org.jetbrains.kotlin.ir.types.isInt
 import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.types.isNullable
+import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.makeNotNull
@@ -70,6 +71,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.types.asSimpleType
 
 /**
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
@@ -180,62 +182,68 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     return declaration
                 }
 
-                val propertyType = declaration.backingField!!.type
-                val nullable = propertyType.isNullable()
+                val propertyTypeRaw = declaration.backingField!!.type
+                val propertyType = propertyTypeRaw.makeNotNull()
+                val nullable = propertyTypeRaw.isNullable()
                 when {
-                    propertyType.makeNotNull().isString() -> {
+                    propertyType.isString() -> {
                         logInfo("String property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("string", nullable) // collect schema information once
+                        fields[name] = Pair("string", declaration) // collect schema information once
                         modifyGetterAccessor(irClass, name, objectGetStringFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetStringFun, declaration.setter!!)
                     }
-                    propertyType.makeNotNull().isByte() -> {
+                    propertyType.isByte() -> {
                         logInfo("Byte property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("int", nullable)
                         modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToByte)
                         modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionByteToLong)
                     }
-                    propertyType.makeNotNull().isChar() -> {
+                    propertyType.isChar() -> {
                         logInfo("Char property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("int", nullable)
+                        fields[name] = Pair("int", declaration)
                         modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToChar)
                         modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionCharToLong)
                     }
-                    propertyType.makeNotNull().isShort() -> {
+                    propertyType.isShort() -> {
                         logInfo("Short property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("int", nullable)
+                        fields[name] = Pair("int", declaration)
                         modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToShort)
                         modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionShortToLong)
                     }
-                    propertyType.makeNotNull().isInt() -> {
+                    propertyType.isInt() -> {
                         logInfo("Int property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("int", nullable)
+                        fields[name] = Pair("int", declaration)
                         modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!, functionLongToInt)
                         modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!, functionIntToLong)
                     }
-                    propertyType.makeNotNull().isLong() -> {
+                    propertyType.isLong() -> {
                         logInfo("Long property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("int", nullable)
+                        fields[name] = Pair("int", declaration)
                         modifyGetterAccessor(irClass, name, objectGetIntegerFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetIntegerFun, declaration.setter!!)
                     }
-                    propertyType.makeNotNull().isBoolean() -> {
+                    propertyType.isBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("bool", nullable)
+                        fields[name] = Pair("bool", declaration)
                         modifyGetterAccessor(irClass, name, objectGetBooleanFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetBooleanFun, declaration.setter!!)
                     }
-                    propertyType.makeNotNull().isFloat() -> {
+                    propertyType.isFloat() -> {
                         logInfo("Float property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("float", nullable)
+                        fields[name] = Pair("float", declaration)
                         modifyGetterAccessor(irClass, name, objectGetFloatFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetFloatFun, declaration.setter!!)
                     }
-                    propertyType.makeNotNull().isDouble() -> {
+                    propertyType.isDouble() -> {
                         logInfo("Double property named ${declaration.name} is nullable $nullable")
-                        fields[name] = Pair("double", nullable)
+                        fields[name] = Pair("double", declaration)
                         modifyGetterAccessor(irClass, name, objectGetDoubleFun, declaration.getter!!)
                         modifySetterAccessor(irClass, name, objectSetDoubleFun, declaration.setter!!)
+                    }
+                    !propertyType.isPrimitiveType() -> {
+                        logInfo("Object property named ${declaration.name} is nullable $nullable")
+                        fields[name] = Pair("object", declaration)
+//                        declaration.symbol.descriptor)
                     }
                     else -> {
                         logInfo("Type not processed: ${declaration.dump()}")

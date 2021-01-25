@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.ValueDescriptor
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
@@ -46,16 +48,21 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
+import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
+import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
@@ -64,6 +71,7 @@ import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.types.asSimpleType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
@@ -89,7 +97,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val fields: MutableMap<String, Pair<String, Boolean>> =
+        val fields: MutableMap<String, Pair<String, Any>> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
         val function = companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
@@ -141,6 +149,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     it.name.identifier.toLowerCaseAsciiOnly()
                                         .contains(entry.value.first)
                                 } ?: error("Unknown type ${entry.value.first}")
+                                val objectType = propertyTypes.firstOrNull {
+                                    it.name.identifier == "RLM_PROPERTY_TYPE_OBJECT"
+                                } ?: error("Unknown type ${entry.value.first}")
                                 IrConstructorCallImpl(
                                     startOffset,
                                     endOffset,
@@ -163,13 +174,20 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, collectionType.defaultType, collectionTypes.first { it.name.identifier == "RLM_COLLECTION_TYPE_NONE" }.symbol)
                                     )
                                     // Link target
-                                    putValueArgument(4, irString(""))
+                                    putValueArgument(4,
+                                        if (type == objectType) {
+                                            val x= entry.value.second as IrProperty
+                                            irString(x.backingField!!.type.classifierOrFail.descriptor.name.identifier)
+//                                            irString((second.descriptor.original as PropertyDescriptor).type.name.identifier)
+                                        } else
+                                        irString("")
+                                    )
                                     // Link property name
                                     putValueArgument(5, irString(""))
                                     // Property flags
                                     putValueArgument(6,
                                         buildSetOf(pluginContext, this@blockBody, propertyFlag.defaultType,
-                                            listOf(IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyFlag.defaultType, propertyFlags.first { it.name.identifier == "RLM_PROPERTY_NORMAL" }.symbol))
+                                            listOf(IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyFlag.defaultType, propertyFlags.first { it.name.identifier == "RLM_PROPERTY_NULLABLE" }.symbol))
                                         )
                                     )
                                 }

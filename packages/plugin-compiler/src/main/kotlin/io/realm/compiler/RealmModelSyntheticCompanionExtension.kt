@@ -43,6 +43,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
         return when {
             thisDescriptor.isRealmObjectCompanion -> {
                 listOf(
+//                    TEST,
                     REALM_OBJECT_COMPANION_SCHEMA_METHOD,
                     REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
                 )
@@ -69,6 +70,7 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
                 val classDescriptor = thisDescriptor.containingDeclaration as ClassDescriptor
 
                 when (name) {
+//                    TEST -> result.add(createTest(thisDescriptor, classDescriptor))
                     REALM_OBJECT_COMPANION_SCHEMA_METHOD -> result.add(createRealmObjectCompanionSchemaGetterFunctionDescriptor(thisDescriptor, classDescriptor))
                     REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD -> result.add(createRealmObjectCompanionNewInstanceFunctionDescriptor(thisDescriptor, classDescriptor))
                 }
@@ -76,6 +78,33 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
         }
     }
 
+//    private fun createTest(
+//        companionClass: ClassDescriptor,
+//        realmObjectClass: ClassDescriptor
+//    ): SimpleFunctionDescriptor {
+////        val module = companionClass.module.
+////        val tableType = module.resolveClassByFqName(FqNames.TABLE, NoLookupLocation.FROM_BACKEND)?.defaultType
+////            ?: error("Couldn't resolve `${FqNames.TABLE}` from ${companionClass.name.identifier}")
+//
+//        return SimpleFunctionDescriptorImpl.create(
+//            companionClass,
+//            Annotations.EMPTY,
+//            TEST,
+//            CallableMemberDescriptor.Kind.SYNTHESIZED,
+//            companionClass.source
+//        ).apply {
+//            initialize(
+//                null,
+//                companionClass.thisAsReceiverParameter,
+//                emptyList(),
+//                emptyList(),
+//
+//                realmObjectClass.builtIns.anyType,
+//                Modality.OPEN,
+//                DescriptorVisibilities.PUBLIC
+//            )
+//        }
+//    }
     private fun createRealmObjectCompanionSchemaGetterFunctionDescriptor(
         companionClass: ClassDescriptor,
         realmObjectClass: ClassDescriptor

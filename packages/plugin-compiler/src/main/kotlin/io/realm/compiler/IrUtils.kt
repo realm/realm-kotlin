@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
@@ -121,8 +122,14 @@ internal fun IrPluginContext.lookupConstructorInClass(fqName: FqName, filter: (c
     }
 }
 
+//data class Property(
+//    val
+//    val name: String,
+//    val type: String,
+//    val nullable: Boolean
+//)
 object SchemaCollector {
-    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, Boolean>>>()
+    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String,Any>>>()
 }
 
 internal fun <T: IrExpression> buildOf(

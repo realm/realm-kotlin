@@ -29,6 +29,7 @@ import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
@@ -116,7 +117,7 @@ class GenerationExtensionTest {
         assertEquals("Sample", table.name)
         assertEquals("", table.primaryKey)
         assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
-        assertEquals(9, table.properties.size)
+        assertEquals(sampleModel::class.declaredMemberProperties.size, table.properties.size)
         val properties = mapOf (
             "stringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
             "byteField" to PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -127,6 +128,7 @@ class GenerationExtensionTest {
             "booleanField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "floatField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
         )
         table.properties.map { property ->
             val expectedType = properties.get(property.name) ?: error("Property not found: ${property.name}")

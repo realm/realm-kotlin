@@ -20,6 +20,7 @@ package io.realm.interop
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import kotlin.reflect.KMutableProperty1
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -52,10 +53,16 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
 
+    fun realm_object_as_link(obj: NativePointer): Link
+
     // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
     fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
     fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
+
+    inline fun <reified T, reified R> realm_set_value(realm: NativePointer?, obj: NativePointer?,
+                               property: KMutableProperty1<T, R>,
+                               value: R, isDefault: Boolean)
 
     // Typed convenience methods
     fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String

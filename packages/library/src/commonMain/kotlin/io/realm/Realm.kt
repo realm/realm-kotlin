@@ -106,13 +106,18 @@ class Realm {
     //    doing this operation in place)
     fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
-        val managedModel = realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
+        try {
+            val managedModel =
+                realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
         return managedModel.manage(
             dbPointer!!,
             type,
             RealmInterop.realm_object_create(dbPointer!!, key)
         )
+        } catch (e: Exception) {
+            error("Failed to create object of type '$objectType'")
+        }
     }
 
     fun <T : RealmModel> objects(clazz: KClass<T>): RealmResults<T> {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-package sample.input
+package test.link
+
+import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmObject
 
 @RealmObject
-class Sample {
-    var stringField: String? = "Realm"
-    var byteField: Byte? = 0xA
-    var charField: Char? = 'a'
-    var shortField: Short? = 17
-    var intField: Int? = 42
-    var longField: Long? = 256
-    var booleanField: Boolean? = true
-    var floatField: Float? = 3.14f
-    var doubleField: Double? = 1.19840122
+class Parent: RealmModel {
     var child: Child? = null
-    fun dumpSchema() : String = "${Sample.`$realm$schema`()}"
-}
-
-@RealmObject
-class Child {
-    var name: String? = "Child-default"
 }

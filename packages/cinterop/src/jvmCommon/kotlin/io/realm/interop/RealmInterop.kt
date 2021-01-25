@@ -21,6 +21,8 @@ package io.realm.interop
 import io.realm.interop.RealmInterop.cptr
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModel
+import kotlin.reflect.KMutableProperty1
 
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
@@ -132,6 +134,11 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
     }
 
+    actual fun realm_object_as_link(obj: NativePointer): Link {
+        val link: realm_link_t = realmc.realm_object_as_link(obj.cptr())
+        return Link(link.target_table, link.target)
+    }
+
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         val info = realm_class_info_t()
         val found = booleanArrayOf(false)
@@ -142,7 +149,7 @@ actual object RealmInterop {
         return info.key
     }
 
-    private fun <T> realm_set_value(o: NativePointer, key: Long, value: T, isDefault: Boolean) {
+    fun <T> realm_set_value(o: NativePointer, key: Long, value: T, isDefault: Boolean) {
         val cvalue = realm_value_t()
         when (value!!::class) {
             String::class -> {
@@ -165,6 +172,11 @@ actual object RealmInterop {
                 cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
                 cvalue.dnum = value as Double
             }
+            NativePointer::class -> {
+                cvalue.link = realmc.realm_object_as_link((value as NativePointer).cptr())
+                cvalue.type = realm_value_type_e.RLM_TYPE_LINK
+            }
+
             else -> {
                 error("Unsupported type ${value!!::class.qualifiedName}")
             }
@@ -177,6 +189,15 @@ actual object RealmInterop {
             throw IllegalStateException("Invalid/deleted object")
         }
         realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key, value, isDefault)
+    }
+
+    actual inline fun <reified T, reified R> realm_set_value(realm: NativePointer?, obj: NativePointer?,
+                                                             property: KMutableProperty1<T, R>,
+                                                             value: R, isDefault: Boolean) {
+        if (realm == null || obj == null) {
+            throw IllegalStateException("Invalid/deleted object")
+        }
+        realm_set_value(obj, propertyInfo(realm, classInfo(realm, T::class.simpleName!!), R::class.simpleName!!).key, value, isDefault)
     }
 
     actual fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T {
@@ -197,6 +218,8 @@ actual object RealmInterop {
                 cvalue.fnum
             realm_value_type_e.RLM_TYPE_DOUBLE ->
                 cvalue.dnum
+            realm_value_type_e.RLM_TYPE_LINK ->
+                cvalue.link
             else ->
                 error("Unsupported type ${cvalue.type}")
         } as T
@@ -228,7 +251,7 @@ actual object RealmInterop {
         )
     }
 
-    private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
+    fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = booleanArrayOf(false)
         val classInfo = realm_class_info_t()
         realmc.realm_find_class((realm as LongPointerWrapper).ptr, table, found, classInfo)
@@ -238,7 +261,7 @@ actual object RealmInterop {
         return classInfo
     }
 
-    private fun propertyInfo(realm: NativePointer, classInfo: realm_class_info_t, col: String): realm_property_info_t {
+    fun propertyInfo(realm: NativePointer, classInfo: realm_class_info_t, col: String): realm_property_info_t {
         val found = booleanArrayOf(false)
         val pinfo = realm_property_info_t()
         realmc.realm_find_property((realm as LongPointerWrapper).ptr, classInfo.key, col, found, pinfo)
@@ -375,6 +398,6 @@ actual object RealmInterop {
         if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target, this.link.target_table)
+        return Link(this.link.target_table, this.link.target)
     }
 }

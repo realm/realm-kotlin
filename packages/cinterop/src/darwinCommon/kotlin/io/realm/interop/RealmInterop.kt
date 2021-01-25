@@ -272,7 +272,7 @@ actual object RealmInterop {
     // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
     //  getter/setter, or through specialized methods.
     //  https://github.com/realm/realm-kotlin/issues/69
-    actual fun <T> realm_set_value(
+    actual inline fun <T> realm_set_value(
         realm: NativePointer?,
         obj: NativePointer?,
         table: String,

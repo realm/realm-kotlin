@@ -177,6 +177,8 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             val mediatorMappingProperty = addInternalMapProperty(REALM_MEDIATOR_MAPPING_PROPERTY, models)
             addRealmMediatorSchemaMethod(mediatorMappingProperty)
             addRealmMediatorNewInstanceMethod(mediatorMappingProperty)
+            // Defaults in Mediator would need fake overrides
+            // addDefaults()
         }
 
     @ObsoleteDescriptorBasedAPI
@@ -441,4 +443,19 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             }
         }
     }
+
+//    private fun IrClass.addDefaults() {
+//        addFunction(
+//            name = "x",
+//            returnType = pluginContext.irBuiltIns.anyType,
+//            modality = Modality.OPEN,
+//            visibility = DescriptorVisibilities.PUBLIC,
+//            isStatic = false,
+//            isSuspend = false,
+//            isFakeOverride = true
+//        ).apply {
+//            overriddenSymbols = listOf(mediatorXMethod.symbol)
+//        }
+//    }
+
 }
