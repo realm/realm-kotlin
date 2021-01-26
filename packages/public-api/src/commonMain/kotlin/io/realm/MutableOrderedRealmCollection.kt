@@ -1,6 +1,6 @@
 package io.realm
 
-interface OrderedRealmCollection<E> : List<E>, RealmCollection<E> {
+interface MutableOrderedRealmCollection<E> : List<E>, RealmCollection<E> {
     fun first(): E
     fun firstOrDefault(defaultValue: E?): E?
     fun last(): E

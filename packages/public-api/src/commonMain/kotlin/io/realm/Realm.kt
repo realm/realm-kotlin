@@ -32,10 +32,6 @@ class Realm: BaseRealm() {
     suspend fun <E, R> executeTransaction(frozenArg: E, function: suspend MutableRealm.(liveArg: E?) -> R): R { TODO() }
     suspend fun <R> executeTransaction(function: suspend MutableRealm.() -> R): R { TODO() }
 
-    // TODO: We need non-coroutine writes for Java support. But directly or through some extension?
-    fun <E, R> write(frozenArg: E, function: (MutableRealm, liveArg: E?) -> R): R { TODO() }
-    fun <R> write(function: (MutableRealm) -> R): R { TODO() }
-
     // Pin Realm to a specific version while a closure is running
     fun <R> pin(function: suspend Realm.(realm: Realm) -> R) { TODO() }
 

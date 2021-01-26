@@ -60,4 +60,5 @@ class MutableRealm { // TODO: This class does not extend Realm right now, unclea
     // have to be a suspend function.
     // QUESTION: Is there a better name? find(), thaw(), findWritable(), findLatest(), update(), something else?
     suspend fun <E : BaseRealmModel<E>> find(frozenObject: E): E? { TODO() }
+    fun <E : BaseRealmModel<E>> where(clazz: KClass<E>, filter: String = ""): RealmQuery<E> { TODO() }
 }

@@ -6,18 +6,20 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty1
 
 // Implement List instead of MutableList, because you cannot modify this list directly.
 class RealmResults<E> : List<E>, OrderedRealmCollection<E> {
+
+    val realm: Realm = TODO()
 
     // Further filter the result.
     fun where(filter: String = ""): RealmQuery<E> { TODO() }
 
     // Listen to changes
-    fun addChangeListener(listener: (results: RealmResults<E>, change: OrderedCollectionChange<E, RealmResults<E>>) -> Unit): Cancellable { TODO() }
+    fun addChangeListener(listener: (change: OrderedCollectionChange<E, RealmResults<E>>) -> Unit): Cancellable { TODO() }
     fun cancelAllChangeListeners() { TODO() }
-    fun observe(): Flow<RealmResults<E>> { TODO() }
-    suspend fun observeChangeSet(): Flow<OrderedCollectionChange<E, RealmResults<E>>> { TODO() }
+    fun observe(): Flow<OrderedCollectionChange<E, RealmResults<E>>> { TODO() }
 
     fun createSnapshot(): RealmResults<E> { TODO() }
 
@@ -26,10 +28,14 @@ class RealmResults<E> : List<E>, OrderedRealmCollection<E> {
     // We support 16 different types right now, and will add at least 4 more
     // with the new datatypes. Even though it would technically be more typesafe
     // it feels a little stupid to expose that many types.
-    fun setValue(property: String, value: Any?) { TODO() }
+
+    // Postpone or move to helper class
+    // fun setValue(property: String, value: Any?) { TODO() }
+
+    // Lets do this
+    fun <T> setValue(property: KMutableProperty1<E, T>, value: T?) { TODO() }
 
     // Utility methods
-    val realm: Realm = TODO()
     fun asJSON(): String { TODO() }
     override fun isManaged(): Boolean { TODO() }
     override fun isValid(): Boolean { TODO() }
@@ -56,10 +62,4 @@ class RealmResults<E> : List<E>, OrderedRealmCollection<E> {
     override fun deleteFirstFromRealm(): Boolean { TODO() }
     override fun deleteLastFromRealm(): Boolean { TODO() }
     override fun deleteAllFromRealm(): Boolean { TODO() }
-    override fun add(element: E): Boolean { TODO() }
-    override fun addAll(elements: Collection<E>): Boolean { TODO() }
-    override fun clear() { TODO() }
-    override fun remove(element: E): Boolean { TODO() }
-    override fun removeAll(elements: Collection<E>): Boolean { TODO() }
-    override fun retainAll(elements: Collection<E>): Boolean { TODO() }
 }

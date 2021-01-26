@@ -4,17 +4,10 @@ import io.realm.base.BaseRealmModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
+/**
+ * Class wrapping a query.
+ */
 class RealmQuery<E> {
-
-    // Synchronous queries? We only need these for Java support?
-    //
-    // For Kotlin I would assume the primary use case is business logic which should mostly reside
-    // inside transactions.
-    // Transactions are suspendable, so offering synchronous queries only
-    // seem to promote "bad" patterns of doing one-shot queries
-    // Suggestion: Leave this out in the initial design and see if a need arises
-    fun findAllSync(): RealmResults<E> { TODO() }
-    fun findFirstSync(): E? { TODO() }
 
     fun filter(filter: String, vararg arguments: Any?): RealmQuery<E> { TODO() }
     fun sort(field: String, sortOrder: Sort = Sort.ASCENDING): RealmQuery<E> { TODO() }
@@ -28,21 +21,16 @@ class RealmQuery<E> {
     fun sum(property: String): Flow<Number?> { TODO() }
     fun average(property: String): Flow<Double?> { TODO() }
 
-    // How to represent dates here?
+    // TODO: How to represent dates here?
     fun maxDate(property: String): Flow<Instant?> { TODO() }
     fun minDate(property: String): Flow<Instant?> { TODO() }
 
     fun addChangeListener(listener: (change: OrderedCollectionChange<E, RealmResults<E>>) -> Unit): Cancellable { TODO() }
     fun cancelAllChangeListeners() { TODO() }
 
-    // Avoid having to do `observe().first()`. Especially `query.observeFirst().first()` looks weird.
-    suspend fun findAll(): RealmResults<E> { TODO() }
-    suspend fun findFirst(): E? { TODO() }
+    // Observe queries. Keep to minimum for first draft. Specializations can be created
+    // using extension functions if needed. e.g. `observeFirst()/findAll()/findFirst()` can
+    // all be created from `observe()`.
+    fun observe(): Flow<OrderedCollectionChange<E, RealmResults<E>>> { TODO() }
 
-    // Observe queries
-    fun observe(): Flow<RealmResults<E>> { TODO() }
-    fun observeChangesets(): Flow<OrderedCollectionChange<E, RealmResults<E>>> { TODO() }
-
-    fun observeFirst(): Flow<E?> { TODO() }
-    fun observeFirstChangesets(): Flow<ObjectChange<E>> { TODO() }
 }

@@ -4,7 +4,7 @@ import io.realm.base.BaseRealmModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 
-class RealmList<E>(override val size: Int = 0): MutableList<E>, OrderedRealmCollection<E> {
+class RealmList<E>(override val size: Int = 0): MutableList<E>, MutableOrderedRealmCollection<E> {
 
     // Further filter the result.
     fun where(predicate: String = ""): RealmQuery<E> { TODO() }

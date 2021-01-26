@@ -3,8 +3,7 @@ package io.realm.example
 import io.realm.*
 import io.realm.annotations.PrimaryKey
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -62,20 +61,6 @@ class ApiExample {
                 }
             }
 
-            // Use object update method
-            realm.executeTransaction {
-                // QUESTION: While an update method looks appealing at a glance, the null check
-                //  might just make it annoying? Should we make it so the update method only
-                //  triggers if the object is still around and use implicit receiver?
-                //  This might introduce subtle bugs if unaware that object was deleted?
-                project.update {
-                    it?.apply {
-                        name = "New name"
-                    }
-                }
-            }
-
-
             realm.executeTransaction {
                 project.name = "New name" // Throw exception as frozen object cannot be modified
             }
@@ -88,7 +73,8 @@ class ApiExample {
             }
 
             realm.executeTransaction {
-                val project = find(Project::class, 1)
+                val project = find(Project::class, 1)!!
+                project.deleteFromRealm()
             }
         }
     }
@@ -96,13 +82,20 @@ class ApiExample {
     fun observingChanges() {
         val query: RealmQuery<Project> = realm.where(Project::class)
 
+        var task: Cancellable? = null
+
+        task = query.addChangeListener {
+            doSomethingWith(it)
+        }
+        task.cancel()
+
         // Using Flows
         GlobalScope.launch {
-            query.observe().collect { it: RealmResults<Project> ->
-                doSomethingWith(it)
+            query.observe().collect {
+                doSomethingWith(it.collection)
             }
 
-            query.observeChangesets().collect {
+            query.observe().collect {
                 doSomethingWith(it.collection, it.getInsertions())
             }
         }
@@ -129,14 +122,15 @@ class ApiExample {
                     .filter("tasks.@count < 5")
                     .sort("name")
                     .observe()
-                    .collect { it: RealmResults<Project> ->
-                        doSomethingWith(it)
+                    .collect { it: OrderedCollectionChange<Project, RealmResults<Project>> ->
+                        doSomethingWith(it.collection)
                     }
 
             realm.find(Project::class, 1)!!.tasks
                     .where("name BEGINSWITH 'Task'")
                     .sort("name")
-                    .observeFirst()
+                    .observe()
+                    .map { it.collection.first() }
                     .collect { task: Task? ->
                         doSomethingWith(task)
                     }
@@ -147,8 +141,15 @@ class ApiExample {
             realm.executeTransaction {
                 val project1 = find(Project::class, 1)!!
                 val project2 = find(Project::class, 2)!!
-                val task1: Task? = project1.tasks.where("name = 'My Task'").findFirst()
-                val task2: Task? = project2.tasks.where("name = 'My Task'").findFirst()
+                val task1: Task? = project1.tasks.where("name = 'My Task'")
+                        .observe()
+                        .map { it.collection.firstOrNull() }
+                        .first()
+
+                val task2: Task? = project2.tasks.where("name = 'My Task'")
+                        .observe()
+                        .map { it.collection.firstOrNull() }
+                        .first()
 
                 if (project1.created < project2.created) {
                     doSomethingWith(task1, task2)
@@ -165,7 +166,9 @@ class ApiExample {
 
         // Realm can advance between queries
         val project = realm.find(Project::class, 1)!!
-        val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAll()
+        // Updated Realm
+        val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").observe().first().collection
+        // project.tasks == tasks
 
         // Solutions
 
@@ -177,30 +180,24 @@ class ApiExample {
 
         // 3. Use realm.pin
         realm.pin {
-            val project = realm.find(Project::class, 1)!!
-            val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAll()
+            val project = find(Project::class, 1)!!
+            val tasks: RealmResults<Task> = where(Task::class, "project.id = 1").observe().first().collection
             project.tasks == tasks // true
         }
 
         // 4. Run logic inside write transaction
         realm.executeTransaction {
-            val project = realm.find(Project::class, 1)!!
-            val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAll()
+            val project = find(Project::class, 1)!!
+            val tasks: RealmResults<Task> = where(Task::class, "project.id = 1").observe().first().collection
             project.tasks == tasks // true
         }
-
-        realm.write {
-            val project = realm.where(Project::class,"id == 1").findFirstSync()!!
-            val tasks: RealmResults<Task> = realm.where(Task::class, "project.id = 1").findAllSync()
-            project.tasks == tasks // true
-        }
-
     }
 
     suspend fun badThings2_assumeThatFrozenObjectIsUpToDate() {
         val project = realm.find(Project::class, 1)!!
         realm.executeTransaction {
             if (project.created < Clock.System.now()) {
+//                find(project) != project
                 // Run some logic inside the transaction based on old state of project created from
                 // outside the transaction
             }
@@ -214,7 +211,7 @@ class ApiExample {
 
         // Correct way is fetching all objects inside the transaction
         realm.executeTransaction {
-            val project = realm.find(Project::class, 1)!!
+            val project = find(Project::class, 1)!!
             if (project.created < Clock.System.now()) {
                 // Run correct logic
             }
@@ -232,16 +229,11 @@ class ApiExample {
 
         // 1. Use find inside transaction
         realm.executeTransaction {
-            find(project)!!.name = "New name"
+            find(project)?.name = "New name"
         }
 
         // 2. Use update method inside transaction
         realm.executeTransaction {
-            project.update {
-                it?.apply {
-                    name = "New Name"
-                }
-            }
 
             // 3. Pass in argument
             realm.executeTransaction(project) { p ->
