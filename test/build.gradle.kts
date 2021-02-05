@@ -101,7 +101,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
-                implementation("io.realm.kotlin:library:${Realm.version}")
                 implementation("junit:junit:${Versions.junit}")
                 implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
                 implementation("androidx.test:runner:${Versions.androidxTest}")

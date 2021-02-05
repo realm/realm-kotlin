@@ -443,19 +443,4 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             }
         }
     }
-
-//    private fun IrClass.addDefaults() {
-//        addFunction(
-//            name = "x",
-//            returnType = pluginContext.irBuiltIns.anyType,
-//            modality = Modality.OPEN,
-//            visibility = DescriptorVisibilities.PUBLIC,
-//            isStatic = false,
-//            isSuspend = false,
-//            isFakeOverride = true
-//        ).apply {
-//            overriddenSymbols = listOf(mediatorXMethod.symbol)
-//        }
-//    }
-
 }

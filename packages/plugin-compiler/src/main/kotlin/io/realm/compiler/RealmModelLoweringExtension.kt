@@ -55,7 +55,6 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
 
             // Add body for synthetic methods
-//            generator.addTableBody(irClass)
             generator.addSchemaMethodBody(irClass)
             generator.addNewInstanceMethodBody(irClass)
         } else {
