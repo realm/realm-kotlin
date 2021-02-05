@@ -18,12 +18,14 @@ package io.realm.interop
 
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModelInternal
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.CValue
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.ULongVar
@@ -40,6 +42,7 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
@@ -47,8 +50,8 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
-import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -165,7 +168,7 @@ actual object RealmInterop {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
                         public_name = "".cstr.ptr
-                        link_target = "".cstr.ptr
+                        link_target = property.linkTarget.cstr.ptr
                         link_origin_property_name = "".cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
@@ -189,33 +192,29 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_path(config: NativePointer, path: String) {
-        throwOnError(realm_wrapper.realm_config_set_path(config.cptr(), path))
+        realm_wrapper.realm_config_set_path(config.cptr(), path)
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
-        throwOnError(
-            realm_wrapper.realm_config_set_schema_mode(
-                config.cptr(),
-                realm_schema_mode.RLM_SCHEMA_MODE_ADDITIVE
-            )
+        realm_wrapper.realm_config_set_schema_mode(
+            config.cptr(),
+            mode.nativeValue
         )
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
-        throwOnError(
-            realm_wrapper.realm_config_set_schema_version(
-                config.cptr(),
-                version.toULong()
-            )
+        realm_wrapper.realm_config_set_schema_version(
+            config.cptr(),
+            version.toULong()
         )
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
-        throwOnError(realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr()))
+        realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }
 
-    actual fun realm_schema_validate(schema: NativePointer): Boolean {
-        return throwOnError(realm_wrapper.realm_schema_validate(schema.cptr()))
+    actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
+        return throwOnError(realm_wrapper.realm_schema_validate(schema.cptr(), mode.nativeValue.toULong()))
     }
 
     actual fun realm_open(config: NativePointer): NativePointer {
@@ -267,6 +266,67 @@ actual object RealmInterop {
 
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
+    }
+
+    actual fun realm_object_as_link(obj: NativePointer): Link {
+        val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> = realm_wrapper.realm_object_as_link(obj.cptr())
+        link.useContents {
+            return Link(this.target_table.toLong(), this.target)
+        }
+    }
+
+    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): Long {
+        memScoped {
+            return propertyInfo(realm, classInfo(realm, table), col).key
+        }
+    }
+
+    actual fun <T> realm_set_value(o: NativePointer, key: Long, value: T?, isDefault: Boolean) {
+        memScoped {
+            realm_wrapper.realm_set_value_by_ref(o.cptr(), key, to_realm_value(value).ptr, isDefault)
+        }
+    }
+
+    private fun <T> MemScope.to_realm_value(value: T) : realm_value_t {
+        val cvalue: realm_value_t = alloc()
+        when(value) {
+            is RealmModelInternal -> {
+                cvalue.type = realm_value_type.RLM_TYPE_LINK
+                val nativePointer = value.`$realm$ObjectPointer` ?: error("Cannot set unmanaged object")
+                realm_wrapper.realm_object_as_link(nativePointer?.cptr()).useContents {
+                    cvalue.link.apply {
+                        target_table = this@useContents.target_table
+                        target = this@useContents.target
+                    }
+                }
+            }
+        }
+        return cvalue
+    }
+
+    actual fun <T> realm_get_value(obj: NativePointer, key: Long) : T? {
+        memScoped {
+            val value: realm_value_t = alloc()
+            realm_wrapper.realm_get_value(obj.cptr(), key, value.ptr)
+            // FIXME Where should we handle nullability. Current prototype does not allow nulls
+            //  realm_value_type.RLM_TYPE_NULL ->
+            //      return null
+            //  https://github.com/realm/realm-kotlin/issues/71
+            return from_realm_value(value)
+        }
+    }
+
+    private fun <T> from_realm_value(value: realm_value_t): T? {
+        when (value.type) {
+            realm_value_type.RLM_TYPE_STRING ->
+                return value.string.toKString() as T
+            realm_value_type.RLM_TYPE_NULL ->
+                return null
+            realm_value_type.RLM_TYPE_LINK ->
+                return value.asLink() as T
+            else ->
+                error("Expected String property got ${value.type.name}")
+        }
     }
 
     // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
@@ -625,6 +685,6 @@ actual object RealmInterop {
         if (this.type != realm_value_type.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target, this.link.target_table.toLong())
+        return Link(this.link.target_table.toLong(), this.link.target)
     }
 }

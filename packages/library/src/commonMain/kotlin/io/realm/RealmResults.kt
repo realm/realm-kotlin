@@ -45,7 +45,7 @@ class RealmResults<T : RealmModel> constructor(
     override fun get(index: Int): T {
         val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
         val model = schema.newInstance(clazz) as RealmModelInternal
-        model.link(realm, clazz, link)
+        model.link(realm, schema, clazz, link)
         return model as T
     }
 

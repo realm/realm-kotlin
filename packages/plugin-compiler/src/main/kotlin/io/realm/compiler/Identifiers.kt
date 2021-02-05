@@ -33,6 +33,7 @@ internal object Names {
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
+    val REALM_OBJECT_SCHEMA = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Schema")
 
     // RealmMediator methods
     val REALM_MEDIATOR_MAPPING_PROPERTY = Name.identifier("companionMapping")
@@ -60,6 +61,7 @@ internal object FqNames {
     val REALM_MODEL_INTERFACE = FqName("io.realm.runtimeapi.RealmModelInternal")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val NATIVE_WRAPPER = FqName("io.realm.interop.RealmInterop")
+    val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     // External visible interface of Realm objects
     val REALM_MODEL_INTERFACE_MARKER = FqName("io.realm.runtimeapi.RealmModel")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")

@@ -20,7 +20,6 @@ package io.realm.interop
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
-import kotlin.reflect.KMutableProperty1
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -35,7 +34,7 @@ expect object RealmInterop {
     fun realm_config_set_schema_version(config: NativePointer, version: Long)
     fun realm_config_set_schema(config: NativePointer, schema: NativePointer)
 
-    fun realm_schema_validate(schema: NativePointer): Boolean
+    fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
     fun realm_open(config: NativePointer): NativePointer
     fun realm_close(realm: NativePointer)
@@ -55,14 +54,15 @@ expect object RealmInterop {
 
     fun realm_object_as_link(obj: NativePointer): Link
 
+    fun realm_get_col_key(realm: NativePointer, table: String, col: String): Long
+
     // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
     //  type and key-lookups internally
-    fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
     fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
+    fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
 
-    inline fun <reified T, reified R> realm_set_value(realm: NativePointer?, obj: NativePointer?,
-                               property: KMutableProperty1<T, R>,
-                               value: R, isDefault: Boolean)
+    fun <T> realm_get_value(obj: NativePointer, key: Long) : T?
+    fun <T> realm_set_value(o: NativePointer, key: Long, value: T?, isDefault: Boolean)
 
     // Typed convenience methods
     fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String

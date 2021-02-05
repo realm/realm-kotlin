@@ -30,4 +30,8 @@ interface RealmModelInternal : RealmModel {
     var `$realm$ObjectPointer`: NativePointer?
     var `$realm$TableName`: String?
     var `$realm$IsManaged`: Boolean
+    // FIXME Should be Mediator but requires RealmModelInternal and Mediator to be in same module.
+    //  Remember to fix type for compiler generated field.
+    var `$realm$Schema`: Any?
 }
+

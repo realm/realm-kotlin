@@ -112,6 +112,7 @@ class Realm {
         val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
         return managedModel.manage(
             dbPointer!!,
+            this.realmConfiguration.schema,
             type,
             RealmInterop.realm_object_create(dbPointer!!, key)
         )

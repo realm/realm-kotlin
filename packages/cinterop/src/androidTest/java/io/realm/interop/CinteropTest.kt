@@ -130,7 +130,10 @@ class CinteropTest {
         realmc.propertyArrayArray_setitem(props, 1, properties_2)
 
         val realmSchemaNew = realmc.realm_schema_new(classes, 2, props)
-        assertTrue(realmc.realm_schema_validate(realmSchemaNew))
+        // FIXME Fix uint64_t of realm_schema_validate to avoid the need for toBigInteger. Put a
+        //  suggestion for the C-API, but maybe we should just truncate all uint64_t to long in
+        //  realm.i
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
 
         val config: Long = realmc.realm_config_new()
 
@@ -146,7 +149,7 @@ class CinteropTest {
 
         // Schema validates
         val schema = realmc.realm_get_schema(realm)
-        assertTrue(realmc.realm_schema_validate(schema))
+        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
         realmc.realm_release(schema)
 
         assertEquals(2, realmc.realm_get_num_classes(realm))
@@ -235,5 +238,118 @@ class CinteropTest {
         //  https://github.com/realm/realm-kotlin/issues/65
 
         realmc.realm_commit(realm)
+    }
+
+    @Test
+    fun parentChildRelationship() {
+        val context = InstrumentationRegistry.getInstrumentation().context
+
+        System.loadLibrary("realmc")
+        println(realmc.realm_get_library_version())
+
+        val rlmInvalidPropertyKey = realmc.getRLM_INVALID_PROPERTY_KEY()
+        val rlmInvalidClassKey = realmc.getRLM_INVALID_CLASS_KEY()
+
+        val class_1 = realm_class_info_t().apply {
+            name = "Parent"
+            primary_key = ""
+            num_properties = 1
+            num_computed_properties = 0
+            key = rlmInvalidClassKey
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+        }
+
+        val prop_1_1 = realm_property_info_t().apply {
+            name = "child"
+            public_name = ""
+            type = realm_property_type_e.RLM_PROPERTY_TYPE_OBJECT
+            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
+            link_target = "Child"
+            link_origin_property_name = ""
+            key = rlmInvalidPropertyKey
+            flags = realm_property_flags_e.RLM_PROPERTY_NULLABLE
+        }
+
+        val class_2 = realm_class_info_t().apply {
+            name = "Child"
+            primary_key = ""
+            num_properties = 1
+            num_computed_properties = 0
+            key = rlmInvalidClassKey
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+        }
+        val prop_2_1 = realm_property_info_t().apply {
+            name = "name"
+            public_name = ""
+            type = realm_property_type_e.RLM_PROPERTY_TYPE_STRING
+            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
+            link_target = ""
+            link_origin_property_name = ""
+            key = rlmInvalidPropertyKey
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+        }
+
+        val classes = realmc.new_classArray(2)
+        val props = realmc.new_propertyArrayArray(2)
+
+        realmc.classArray_setitem(classes, 0, class_1)
+        realmc.classArray_setitem(classes, 1, class_2)
+
+        val properties_1 = realmc.new_propertyArray(1).also {
+            realmc.propertyArray_setitem(it, 0, prop_1_1)
+        }
+        realmc.propertyArrayArray_setitem(props, 0, properties_1)
+
+        val properties_2 = realmc.new_propertyArray(1).also {
+            realmc.propertyArray_setitem(it, 0, prop_2_1)
+        }
+        realmc.propertyArrayArray_setitem(props, 1, properties_2)
+
+        val realmSchemaNew = realmc.realm_schema_new(classes, 2, props)
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
+
+        val config: Long = realmc.realm_config_new()
+
+        realmc.realm_config_set_path(config, context.filesDir.absolutePath + "/c_api_link.realm")
+        realmc.realm_config_set_schema(config, realmSchemaNew)
+        realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
+        realmc.realm_config_set_schema_version(config, BigInteger("1"))
+
+        val realm = realmc.realm_open(config)
+
+        realmc.realm_release(config)
+        realmc.realm_release(realmSchemaNew)
+
+        // Schema validates
+        val schema = realmc.realm_get_schema(realm)
+        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
+        realmc.realm_release(schema)
+
+        assertEquals(2, realmc.realm_get_num_classes(realm))
+
+        // Output variables
+        val found: BooleanArray = booleanArrayOf(false)
+        val parent_info = realm_class_info_t()
+
+        assertFalse(found[0])
+        realmc.realm_find_class(realm, "Parent", found, parent_info)
+        assertTrue(found[0])
+
+        val child_info = realm_class_info_t()
+        realmc.realm_find_class(realm, "Child", found, child_info)
+        assertTrue(found[0])
+
+        // Output variables
+        val child_property = realm_property_info_t()
+        realmc.realm_find_property(realm, parent_info.key, "child", found, child_property)
+        assertTrue(found[0])
+
+        // Objects
+        realmc.realm_begin_write(realm)
+        val parent1: Long = realmc.realm_object_create(realm, parent_info.key)
+        val child: Long = realmc.realm_object_create(realm, child_info.key)
+        realmc.realm_set_value(parent1, child_property.key, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_LINK; link = realmc.realm_object_as_link(child) }, false)
+
+        realmc.realm_get_value(parent1, child_property.key, realm_value_t())
     }
 }

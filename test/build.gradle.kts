@@ -49,7 +49,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation("io.realm.kotlin:cinterop:${Realm.version}")
             }
         }
     }

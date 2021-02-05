@@ -21,5 +21,5 @@ import io.realm.runtimeapi.RealmObject
 
 @RealmObject
 class Child : RealmModel {
-    var name: String = "Realm"
+    var name: String = "DEFAULT"
 }

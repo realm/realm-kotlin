@@ -25,6 +25,15 @@ struct dirent * readdir$INODE64( DIR * dir )
     return readdir( dir );
 }
 
+// Wrapper passing realm_value_t by pointer instead of by value. This hack is to overcome that
+// anonymous union cannot be passed by value by Kotlin/Native. Calling
+// `realm_wrapper.realm_set_value` using a `cValue<realm_value>` throws
+// type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
+// https://youtrack.jetbrains.com/issue/KT-43833
+static bool realm_set_value_by_ref(realm_object_t* object, realm_property_key_t col, realm_value_t* new_value, bool is_default) {
+    return realm_set_value(object, col, *new_value, is_default);
+}
+
 // These functions are a work around to avoid anonymous union not being supported in Kotlin/Native https://youtrack.jetbrains.com/issue/KT-43833
 // which will call to `realm_wrapper.realm_set_value` using a `cValue<realm_value>` throw a
 // type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
