@@ -34,4 +34,3 @@ interface RealmModelInternal : RealmModel {
     //  Remember to fix type for compiler generated field.
     var `$realm$Schema`: Any?
 }
-

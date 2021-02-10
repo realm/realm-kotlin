@@ -63,7 +63,7 @@ expect object RealmInterop {
     fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
     fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
 
-    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey) : T?
+    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T?
     fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T?, isDefault: Boolean)
 
     // Typed convenience methods

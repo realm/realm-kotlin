@@ -287,9 +287,9 @@ actual object RealmInterop {
         }
     }
 
-    private fun <T> MemScope.to_realm_value(value: T) : realm_value_t {
+    private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
         val cvalue: realm_value_t = alloc()
-        when(value) {
+        when (value) {
             is RealmModelInternal -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer = value.`$realm$ObjectPointer` ?: error("Cannot set unmanaged object")
@@ -304,7 +304,7 @@ actual object RealmInterop {
         return cvalue
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey) : T? {
+    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T? {
         memScoped {
             val value: realm_value_t = alloc()
             realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr)

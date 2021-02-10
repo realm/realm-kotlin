@@ -25,7 +25,7 @@ import kotlin.reflect.KProperty1
 object RealmObjectHelper {
 
     // Return type should be R? but causes compilation errors for native
-    inline fun <reified T, R> realm_get_value(
+    inline fun <reified T, R> getValue(
         obj: RealmModelInternal,
         property: KProperty1<T, R>
     ): Any? {
@@ -36,7 +36,7 @@ object RealmObjectHelper {
     }
 
     // Return type should be R? but causes compilation errors for native
-    inline fun <reified T, reified R: RealmModel> realm_get_object(
+    inline fun <reified T, reified R : RealmModel> getObject(
         obj: RealmModelInternal,
         property: KProperty1<T, R>
     ): Any? {
@@ -57,7 +57,7 @@ object RealmObjectHelper {
         return null
     }
 
-    inline fun <reified T, R> realm_set_value(
+    inline fun <reified T, R> setValue(
         obj: RealmModelInternal,
         property: KProperty1<T, R>,
         value: R?

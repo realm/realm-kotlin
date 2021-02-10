@@ -205,7 +205,7 @@ actual object RealmInterop {
         realm_set_value(obj, realm_get_col_key(realm, table, col), value, isDefault)
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey) : T? {
+    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T? {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)

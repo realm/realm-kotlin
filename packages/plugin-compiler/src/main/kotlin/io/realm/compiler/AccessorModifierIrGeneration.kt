@@ -178,8 +178,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         } ?: error(" Could not find function ${C_INTEROP_OBJECT_SET_DOUBLE.asString()}")
 
         realmObjectHelper = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
-        val getObject = realmObjectHelper.lookupFunction("realm_get_object")
-        val setValue = realmObjectHelper.lookupFunction("realm_set_value")
+        val getObject = realmObjectHelper.lookupFunction("getObject")
+        val setValue = realmObjectHelper.lookupFunction("setValue")
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             @Suppress("LongMethod")

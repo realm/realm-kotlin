@@ -16,11 +16,11 @@
 
 package io.realm
 
+import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
 import io.realm.internal.link
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
-import io.realm.internal.Mediator
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal

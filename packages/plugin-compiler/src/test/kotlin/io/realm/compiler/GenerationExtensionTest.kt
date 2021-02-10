@@ -118,7 +118,7 @@ class GenerationExtensionTest {
         assertEquals("", table.primaryKey)
         assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
         assertEquals(sampleModel::class.declaredMemberProperties.size, table.properties.size)
-        val properties = mapOf (
+        val properties = mapOf(
             "stringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
             "byteField" to PropertyType.RLM_PROPERTY_TYPE_INT,
             "charField" to PropertyType.RLM_PROPERTY_TYPE_INT,

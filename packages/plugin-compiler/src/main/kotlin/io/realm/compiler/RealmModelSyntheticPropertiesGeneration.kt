@@ -20,11 +20,11 @@ import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.TABLE
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
 import io.realm.compiler.Names.REALM_POINTER
 import io.realm.compiler.Names.SET
@@ -33,8 +33,6 @@ import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.ValueDescriptor
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
@@ -49,7 +47,6 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -61,9 +58,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
-import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
@@ -72,7 +67,6 @@ import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.types.asSimpleType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
@@ -97,6 +91,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     // FIXME OPTIMIZE Move all lookups to class level
     // TODO OPTIMIZE should be a one time only constructed object
     @OptIn(ObsoleteDescriptorBasedAPI::class)
+    @Suppress("LongMethod")
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
@@ -133,21 +128,31 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     typeArgumentsCount = 0,
                     valueArgumentsCount = 4
                 ).apply {
+                    var arg = 0
                     // Name
-                    putValueArgument(0, irString(irClass.name.identifier))
+                    putValueArgument(arg++, irString(irClass.name.identifier))
                     // Primary key
-                    putValueArgument(1, irString(""))
+                    putValueArgument(arg++, irString(""))
                     // Flags
                     putValueArgument(
-                        2,
-                        buildSetOf(pluginContext, this@blockBody, classFlag.defaultType, listOf(
-                            IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, classFlag.defaultType, classFlags.first { it.name == Name.identifier("RLM_CLASS_NORMAL") }.symbol)
-                        ))
+                        arg++,
+                        buildSetOf(
+                            pluginContext, this@blockBody, classFlag.defaultType,
+                            listOf(
+                                IrGetEnumValueImpl(
+                                    UNDEFINED_OFFSET,
+                                    UNDEFINED_OFFSET,
+                                    classFlag.defaultType,
+                                    classFlags.first { it.name == Name.identifier("RLM_CLASS_NORMAL") }.symbol
+                                )
+                            )
+                        )
                     )
                     // Properties
                     putValueArgument(
-                        3,
-                        buildListOf(pluginContext, this@blockBody, property.defaultType,
+                        arg++,
+                        buildListOf(
+                            pluginContext, this@blockBody, property.defaultType,
                             fields.map { entry ->
                                 val type = propertyTypes.firstOrNull {
                                     it.name.identifier.toLowerCaseAsciiOnly()
@@ -165,33 +170,54 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     typeArgumentsCount = 0,
                                     valueArgumentsCount = 7
                                 ).apply {
+                                    var arg = 0
                                     // Name
-                                    putValueArgument(0, irString(entry.key))
+                                    putValueArgument(arg++, irString(entry.key))
                                     // Public name
-                                    putValueArgument(1, irString(""))
+                                    putValueArgument(,arg++, irString(""))
                                     // Type
-                                    putValueArgument(2,
-                                            IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyType.defaultType, type.symbol)
+                                    putValueArgument(
+                                        arg++,
+                                        IrGetEnumValueImpl(
+                                            UNDEFINED_OFFSET,
+                                            UNDEFINED_OFFSET,
+                                            propertyType.defaultType,
+                                            type.symbol
+                                        )
                                     )
                                     // Collection type
-                                    putValueArgument(3,
-                                        IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, collectionType.defaultType, collectionTypes.first { it.name.identifier == "RLM_COLLECTION_TYPE_NONE" }.symbol)
+                                    putValueArgument(
+                                        arg++,
+                                        IrGetEnumValueImpl(
+                                            UNDEFINED_OFFSET,
+                                            UNDEFINED_OFFSET,
+                                            collectionType.defaultType,
+                                            collectionTypes.first { it.name.identifier == "RLM_COLLECTION_TYPE_NONE" }.symbol
+                                        )
                                     )
                                     // Link target
-                                    putValueArgument(4,
+                                    putValueArgument(
+                                        arg++,
                                         if (type == objectType) {
-                                            val x= entry.value.second as IrProperty
-                                            irString(x.backingField!!.type.classifierOrFail.descriptor.name.identifier)
-//                                            irString((second.descriptor.original as PropertyDescriptor).type.name.identifier)
+                                            irString((entry.value.second as IrProperty).backingField!!.type.classifierOrFail.descriptor.name.identifier)
                                         } else
-                                        irString("")
+                                            irString("")
                                     )
                                     // Link property name
-                                    putValueArgument(5, irString(""))
+                                    putValueArgument(arg++, irString(""))
                                     // Property flags
-                                    putValueArgument(6,
-                                        buildSetOf(pluginContext, this@blockBody, propertyFlag.defaultType,
-                                            listOf(IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyFlag.defaultType, propertyFlags.first { it.name.identifier == "RLM_PROPERTY_NULLABLE" }.symbol))
+                                    putValueArgument(
+                                        arg++,
+                                        buildSetOf(
+                                            pluginContext, this@blockBody, propertyFlag.defaultType,
+                                            listOf(
+                                                IrGetEnumValueImpl(
+                                                    UNDEFINED_OFFSET,
+                                                    UNDEFINED_OFFSET,
+                                                    propertyFlag.defaultType,
+                                                    propertyFlags.first { it.name.identifier == "RLM_PROPERTY_NULLABLE" }.symbol
+                                                )
+                                            )
                                         )
                                     )
                                 }
