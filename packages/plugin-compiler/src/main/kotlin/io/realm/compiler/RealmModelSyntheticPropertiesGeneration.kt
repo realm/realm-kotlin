@@ -174,7 +174,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // Name
                                     putValueArgument(arg++, irString(entry.key))
                                     // Public name
-                                    putValueArgument(,arg++, irString(""))
+                                    putValueArgument(arg++, irString(""))
                                     // Type
                                     putValueArgument(
                                         arg++,
