@@ -16,12 +16,14 @@
 
 package io.realm
 
+import io.realm.internal.RealmObjectHelper
 import io.realm.runtimeapi.RealmModule
 import test.link.Child
 import test.link.Parent
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -70,5 +72,48 @@ class LinkTests {
         realm.commitTransaction()
 
         assertNull(realm.objects(Parent::class)[0].child)
+    }
+
+    @Test
+    fun copy_unmanaged() {
+        val s = "Hello"
+        val child = Child().apply { name = s }
+        val parent = Parent().apply { this.child = child }
+
+        val clone = RealmObjectHelper.copy(parent, Parent())
+        assertEquals(s, clone.child?.name)
+    }
+
+    @Test
+    fun copy_unmanagedToManaged() {
+        realm.beginTransaction()
+        val parent = realm.create(Parent::class)
+
+        val unmanaged = Child()
+        unmanaged.name = "NEWNAME"
+        assertEquals("NEWNAME", unmanaged.name)
+
+        assertNull(parent.child)
+        parent.child = unmanaged
+        assertNotNull(parent.child)
+        val managed = parent.child!!
+
+        // Verify that properties have been migrated
+        assertEquals("NEWNAME", parent.child!!.name)
+
+        // Verify that changes to original object does not affect managed clone
+        unmanaged.name = "ASDF"
+        assertEquals("ASDF", unmanaged.name)
+        assertEquals("NEWNAME", parent.child!!.name)
+
+        // Verify that we can update the clone
+        managed.name = "FD"
+        assertEquals("FD", parent.child!!.name)
+        realm.commitTransaction()
+
+        // Verify that we cannot update the managed clone outside a transaction (it is infact managed)
+        assertFailsWith<RuntimeException> {
+            managed.name = "FD"
+        }
     }
 }

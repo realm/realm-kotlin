@@ -179,7 +179,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         realmObjectHelper = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
         val getObject = realmObjectHelper.lookupFunction("getObject")
-        val setValue = realmObjectHelper.lookupFunction("setValue")
+        val setObject = realmObjectHelper.lookupFunction("setObject")
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             @Suppress("LongMethod")
@@ -252,7 +252,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("object", declaration)
-                        modifyAccessor(irClass, declaration, getObject, setValue)
+                        modifyAccessor(irClass, declaration, getObject, setObject)
                     }
                     else -> {
                         logInfo("Type not processed: ${declaration.dump()}")
