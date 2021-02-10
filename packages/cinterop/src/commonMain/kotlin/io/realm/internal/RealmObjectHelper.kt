@@ -20,29 +20,34 @@ import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
-import kotlin.reflect.KProperty1
 
 object RealmObjectHelper {
+    // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
+    // generated code
+    // - Generic return type should be R but causes compilation errors for native
+    //  e: java.lang.IllegalStateException: Not found Idx for public io.realm.internal/RealmObjectHelper|null[0]/
+    // - Passing KProperty1<T,R> with inlined reified type parameters to enable fetching type and
+    //   property names directly from T/property triggers runtime crash for primitive properties on
+    //   Kotlin native. Seems to be an issue with boxing/unboxing
 
-    // Return type should be R? but causes compilation errors for native
-    inline fun <reified T, R> realm_get_value(
-        obj: RealmModelInternal,
-        property: KProperty1<T, R>
-    ): Any? {
+    // Consider inlining
+    @Suppress("unused") // Called from generated code
+    fun <R> realm_get_value( obj: RealmModelInternal, col: String): Any? {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm, T::class.simpleName!!, property.name)
+        val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
         return RealmInterop.realm_get_value(o, key)
     }
 
     // Return type should be R? but causes compilation errors for native
-    inline fun <reified T, reified R: RealmModel> realm_get_object(
+    @Suppress("unused") // Called from generated code
+    inline fun <reified R: RealmModel> realm_get_object(
         obj: RealmModelInternal,
-        property: KProperty1<T, R>
+        col: String,
     ): Any? {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm, T::class.simpleName!!, property.name)
+        val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
         val link = RealmInterop.realm_get_value<Link>(o, key)
         if (link != null) {
             val value =
@@ -57,14 +62,12 @@ object RealmObjectHelper {
         return null
     }
 
-    inline fun <reified T, R> realm_set_value(
-        obj: RealmModelInternal,
-        property: KProperty1<T, R>,
-        value: R?
-    ) {
+    // Consider inlining
+    @Suppress("unused") // Called from generated code
+    fun <R> realm_set_value( obj: RealmModelInternal, col: String, value: R ) {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm, T::class.simpleName!!, property.name)
+        val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
         RealmInterop.realm_set_value(o, key, value, false)
     }
 }

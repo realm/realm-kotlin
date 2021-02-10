@@ -16,6 +16,11 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.CLASS_FLAG
+import io.realm.compiler.FqNames.COLLECTION_TYPE
+import io.realm.compiler.FqNames.PROPERTY
+import io.realm.compiler.FqNames.PROPERTY_FLAG
+import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
@@ -25,6 +30,8 @@ import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
+import io.realm.compiler.Names.PROPERTY_FLAG_NORMAL
+import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
 import io.realm.compiler.Names.REALM_POINTER
 import io.realm.compiler.Names.SET
@@ -33,8 +40,6 @@ import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.ValueDescriptor
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
@@ -49,7 +54,6 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -61,9 +65,8 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
-import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
@@ -72,7 +75,6 @@ import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.types.asSimpleType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
@@ -81,6 +83,18 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         .symbol.createType(true, emptyList())
     private val realmObjectCompanionInterface = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
     private val table = pluginContext.lookupClassOrThrow(TABLE)
+
+    private val tableConstructor = table.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
+    private val classFlag: IrClass = pluginContext.lookupClassOrThrow(CLASS_FLAG)
+    private val classFlags = classFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+    private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY)
+    private val propertyConstructor = propertyClass.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
+    private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
+    private val propertyTypes = propertyType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+    private val collectionType: IrClass = pluginContext.lookupClassOrThrow(COLLECTION_TYPE)
+    private val collectionTypes = collectionType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+    private val propertyFlag: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_FLAG)
+    private val propertyFlags = propertyFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
@@ -94,34 +108,17 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
-    // FIXME OPTIMIZE Move all lookups to class level
     // TODO OPTIMIZE should be a one time only constructed object
     @OptIn(ObsoleteDescriptorBasedAPI::class)
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val fields: MutableMap<String, Pair<String, Any>> =
+        val fields: MutableMap<String, Pair<String, IrProperty>> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
         val function = companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
-
-        val tableConstructor =
-            table.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
-
-        val classFlag: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.ClassFlag"))
-        val classFlags = classFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
-
-        val property = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.Property"))
-        val propertyConstructor = property.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
-        val propertyFlag: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.PropertyFlag"))
-        val propertyFlags = propertyFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
-        val propertyType: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.PropertyType"))
-        val propertyTypes = propertyType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
-        val collectionType: IrClass = pluginContext.lookupClassOrThrow(FqName("io.realm.interop.CollectionType"))
-        val collectionTypes = collectionType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
-
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(
                 IrConstructorCallImpl(
@@ -140,26 +137,37 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     // Flags
                     putValueArgument(
                         2,
-                        buildSetOf(pluginContext, this@blockBody, classFlag.defaultType, listOf(
-                            IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, classFlag.defaultType, classFlags.first { it.name == Name.identifier("RLM_CLASS_NORMAL") }.symbol)
-                        ))
+                        buildSetOf(
+                            pluginContext, this@blockBody, classFlag.defaultType, listOf(
+                                IrGetEnumValueImpl(
+                                    UNDEFINED_OFFSET,
+                                    UNDEFINED_OFFSET,
+                                    classFlag.defaultType,
+                                    classFlags.first { it.name == Name.identifier("RLM_CLASS_NORMAL") }.symbol
+                                )
+                            )
+                        )
                     )
                     // Properties
                     putValueArgument(
                         3,
-                        buildListOf(pluginContext, this@blockBody, property.defaultType,
+                        buildListOf(pluginContext, this@blockBody, propertyClass.defaultType,
                             fields.map { entry ->
+                                val value = entry.value
                                 val type = propertyTypes.firstOrNull {
                                     it.name.identifier.toLowerCaseAsciiOnly()
-                                        .contains(entry.value.first)
-                                } ?: error("Unknown type ${entry.value.first}")
+                                        .contains(value.first)
+                                } ?: error("Unknown type ${value.first}")
                                 val objectType = propertyTypes.firstOrNull {
                                     it.name.identifier == "RLM_PROPERTY_TYPE_OBJECT"
-                                } ?: error("Unknown type ${entry.value.first}")
+                                } ?: error("Unknown type ${value.first}")
+                                val property = value.second
+                                val backingField = property.backingField ?: error("Property without backing field or type")
+                                val nullable = backingField.type.isNullable()
                                 IrConstructorCallImpl(
                                     startOffset,
                                     endOffset,
-                                    type = property.defaultType,
+                                    type = propertyClass.defaultType,
                                     symbol = propertyConstructor.symbol,
                                     constructorTypeArgumentsCount = 0,
                                     typeArgumentsCount = 0,
@@ -170,28 +178,45 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // Public name
                                     putValueArgument(1, irString(""))
                                     // Type
-                                    putValueArgument(2,
-                                            IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyType.defaultType, type.symbol)
+                                    putValueArgument(
+                                        2,
+                                        IrGetEnumValueImpl(
+                                            UNDEFINED_OFFSET,
+                                            UNDEFINED_OFFSET,
+                                            propertyType.defaultType,
+                                            type.symbol
+                                        )
                                     )
                                     // Collection type
-                                    putValueArgument(3,
-                                        IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, collectionType.defaultType, collectionTypes.first { it.name.identifier == "RLM_COLLECTION_TYPE_NONE" }.symbol)
+                                    putValueArgument(
+                                        3,
+                                        IrGetEnumValueImpl(
+                                            UNDEFINED_OFFSET,
+                                            UNDEFINED_OFFSET,
+                                            collectionType.defaultType,
+                                            collectionTypes.first { it.name.identifier == "RLM_COLLECTION_TYPE_NONE" }.symbol
+                                        )
                                     )
                                     // Link target
-                                    putValueArgument(4,
+                                    putValueArgument(
+                                        4,
                                         if (type == objectType) {
-                                            val x= entry.value.second as IrProperty
-                                            irString(x.backingField!!.type.classifierOrFail.descriptor.name.identifier)
-//                                            irString((second.descriptor.original as PropertyDescriptor).type.name.identifier)
+                                            irString(backingField.type.classifierOrFail.descriptor.name.identifier)
                                         } else
-                                        irString("")
+                                            irString("")
                                     )
                                     // Link property name
                                     putValueArgument(5, irString(""))
                                     // Property flags
-                                    putValueArgument(6,
-                                        buildSetOf(pluginContext, this@blockBody, propertyFlag.defaultType,
-                                            listOf(IrGetEnumValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, propertyFlag.defaultType, propertyFlags.first { it.name.identifier == "RLM_PROPERTY_NULLABLE" }.symbol))
+                                    putValueArgument(
+                                        6,
+                                        buildSetOf(
+                                            pluginContext, this@blockBody, propertyFlag.defaultType,
+                                            if (nullable) {
+                                                propertyFlags(listOf(PROPERTY_FLAG_NULLABLE))
+                                            } else {
+                                                propertyFlags(listOf(PROPERTY_FLAG_NORMAL))
+                                            }
                                         )
                                     )
                                 }
@@ -199,12 +224,21 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         )
                     )
                 }
-
             )
         }
         function.overriddenSymbols =
             listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }.symbol)
     }
+
+    private fun propertyFlags(flags: List<Name>) =
+        flags.map { flag ->
+            IrGetEnumValueImpl(
+                UNDEFINED_OFFSET,
+                UNDEFINED_OFFSET,
+                propertyFlag.defaultType,
+                propertyFlags.first { flag == it.name }.symbol
+            )
+        }
 
     // Generate body for the synthetic new instance method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     fun addNewInstanceMethodBody(irClass: IrClass) {
@@ -317,21 +351,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             at(startOffset, endOffset)
             +irSetField(irGet(setter.dispatchReceiverParameter!!), property.backingField!!, irGet(valueParameter))
         }
-    }
-
-    private fun schemaString(name: String, fields: MutableMap<String, Pair<String, Boolean>>): String {
-        val builder = StringBuilder("{\"name\": \"${name}\", \"properties\": [")
-
-        val itField = fields.iterator()
-        while (itField.hasNext()) {
-            val field = itField.next()
-            builder.append("{\"${field.key}\": {\"type\": \"${field.value.first}\", \"nullable\": \"${field.value.second}\"}}")
-            if (itField.hasNext()) {
-                builder.append(",")
-            }
-        }
-        builder.append("]}")
-        return builder.toString()
     }
 
     private fun irNull(startOffset: Int, endOffset: Int): IrExpressionBody =

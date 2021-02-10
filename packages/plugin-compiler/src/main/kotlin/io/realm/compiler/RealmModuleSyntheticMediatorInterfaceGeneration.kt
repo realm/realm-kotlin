@@ -142,15 +142,15 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                 logError("Unsupported platform ${pluginContext.platform}")
             }
         }
-        mapPutFunction = hashMapIrClass.lookupFunction("put")
-        mapGetFunction = hashMapIrClass.lookupFunction("get")
+        mapPutFunction = hashMapIrClass.lookupFunction(Name.identifier("put"))
+        mapGetFunction = hashMapIrClass.lookupFunction(Name.identifier("get"))
         mapValuesProperty = hashMapIrClass.properties.first {
             it.name == Name.identifier("values")
         }.symbol
 
-        hasNextFunction = iteratorIrClass.lookupFunction("hasNext")
-        nextFunction = iteratorIrClass.lookupFunction("next")
-        listAddFunction = arrayListIrClassSymbol.owner.lookupFunction("add")
+        hasNextFunction = iteratorIrClass.lookupFunction(Name.identifier("hasNext"))
+        nextFunction = iteratorIrClass.lookupFunction(Name.identifier("next"))
+        listAddFunction = arrayListIrClassSymbol.owner.lookupFunction(Name.identifier("add"))
 
         // FIXME OPTIMIZE - Should be kotlin.collections.Map, no need to include implementation
         //  details in type
@@ -162,10 +162,10 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
         collectionIteratorType = iteratorIrClass.typeWith(arguments = listOf(realmObjectCompanionIrClass.symbol.defaultType))
     }
 
-    private val mediatorNewInstanceMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_NEW_INSTANCE_METHOD.asString())
-    private val mediatorSchemaMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_SCHEMA_METHOD.asString())
-    private val realmObjectCompanionNewInstanceFunction: IrSimpleFunction = realmObjectCompanionIrClass.lookupFunction(REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD.asString())
-    private val realmObjectCompanionRealmSchemaFunction: IrSimpleFunction = realmObjectCompanionIrClass.lookupFunction(REALM_OBJECT_COMPANION_SCHEMA_METHOD.asString())
+    private val mediatorNewInstanceMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_NEW_INSTANCE_METHOD)
+    private val mediatorSchemaMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_SCHEMA_METHOD)
+    private val realmObjectCompanionNewInstanceFunction: IrSimpleFunction = realmObjectCompanionIrClass.lookupFunction(REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD)
+    private val realmObjectCompanionRealmSchemaFunction: IrSimpleFunction = realmObjectCompanionIrClass.lookupFunction(REALM_OBJECT_COMPANION_SCHEMA_METHOD)
 
     @Suppress("ClassNaming")
     private object REALM_MEDIATOR_ORIGIN : IrDeclarationOriginImpl("MEDIATOR")
@@ -177,8 +177,6 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             val mediatorMappingProperty = addInternalMapProperty(REALM_MEDIATOR_MAPPING_PROPERTY, models)
             addRealmMediatorSchemaMethod(mediatorMappingProperty)
             addRealmMediatorNewInstanceMethod(mediatorMappingProperty)
-            // Defaults in Mediator would need fake overrides
-            // addDefaults()
         }
 
     @ObsoleteDescriptorBasedAPI

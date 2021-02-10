@@ -19,19 +19,12 @@ package io.realm
 
 import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
-import test.A
-import test.B
-import test.C
-import test.Entities
 import test.Sample
-import test.Subset
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
 
 class SampleTests {
 
@@ -138,7 +131,6 @@ class SampleTests {
 
         assertEquals(0, realm.objects(Sample::class).size)
     }
-
 
     @Test
     fun primitiveTypes() {
