@@ -21,6 +21,7 @@ import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_POINTER
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
@@ -75,7 +76,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private var getValue: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
     private var setValue: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
     private var getObject: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
-
+    private val setObject = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
+    
     private var functionLongToChar: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
     private var functionCharToLong: IrSimpleFunction =
@@ -194,7 +196,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("object", declaration)
-                        modifyAccessor(declaration, getObject, setValue)
+                        modifyAccessor(declaration, getObject, setObject)
                     }
                     else -> {
                         logInfo("Type not processed: ${declaration.dump()}")
