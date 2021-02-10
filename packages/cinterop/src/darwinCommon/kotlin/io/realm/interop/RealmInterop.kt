@@ -275,15 +275,15 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): Long {
+    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
         memScoped {
-            return propertyInfo(realm, classInfo(realm, table), col).key
+            return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
         }
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: Long, value: T?, isDefault: Boolean) {
+    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T?, isDefault: Boolean) {
         memScoped {
-            realm_wrapper.realm_set_value_by_ref(o.cptr(), key, to_realm_value(value).ptr, isDefault)
+            realm_wrapper.realm_set_value_by_ref(o.cptr(), key.key, to_realm_value(value).ptr, isDefault)
         }
     }
 
@@ -304,10 +304,10 @@ actual object RealmInterop {
         return cvalue
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: Long) : T? {
+    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey) : T? {
         memScoped {
             val value: realm_value_t = alloc()
-            realm_wrapper.realm_get_value(obj.cptr(), key, value.ptr)
+            realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr)
             // FIXME Where should we handle nullability. Current prototype does not allow nulls
             //  realm_value_type.RLM_TYPE_NULL ->
             //      return null
