@@ -25,4 +25,3 @@ class Nullability : RealmModel {
 
     var stringNonNullable: String = ""
 }
-

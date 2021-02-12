@@ -217,8 +217,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         buildSetOf(
                                             pluginContext, this@blockBody, propertyFlag.defaultType,
                                             if (nullable) {
-                                                propertyFlags(listOf(
-                                                PROPERTY_FLAG_NULLABLE))
+                                                propertyFlags(listOf(PROPERTY_FLAG_NULLABLE))
                                             } else {
                                                 propertyFlags(listOf(PROPERTY_FLAG_NORMAL))
                                             }

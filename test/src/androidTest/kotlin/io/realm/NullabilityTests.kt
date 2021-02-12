@@ -70,5 +70,4 @@ class NullabilityTests {
         assertNull(nullabilityAfter.stringNullable)
         assertNotNull(nullabilityAfter.stringNonNullable)
     }
-
 }
