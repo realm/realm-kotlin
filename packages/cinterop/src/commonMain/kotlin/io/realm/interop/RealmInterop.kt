@@ -21,6 +21,8 @@ package io.realm.interop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
+inline class ColumnKey(val key: Long)
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
@@ -54,13 +56,10 @@ expect object RealmInterop {
 
     fun realm_object_as_link(obj: NativePointer): Link
 
-    fun realm_get_col_key(realm: NativePointer, table: String, col: String): Long
+    fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey
 
-    // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
-    //  type and key-lookups internally
-
-    fun <T> realm_get_value(obj: NativePointer, key: Long) : T
-    fun <T> realm_set_value(o: NativePointer, key: Long, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T
+    fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean)
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer

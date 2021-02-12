@@ -25,13 +25,13 @@ import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.TABLE
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.PROPERTY_FLAG_NORMAL
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
 import io.realm.compiler.Names.REALM_POINTER
 import io.realm.compiler.Names.SET
@@ -73,7 +73,6 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.primaryConstructor
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
@@ -110,6 +109,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     // TODO OPTIMIZE should be a one time only constructed object
     @OptIn(ObsoleteDescriptorBasedAPI::class)
+    @Suppress("LongMethod")
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
@@ -130,15 +130,17 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     typeArgumentsCount = 0,
                     valueArgumentsCount = 4
                 ).apply {
+                    var arg = 0
                     // Name
-                    putValueArgument(0, irString(irClass.name.identifier))
+                    putValueArgument(arg++, irString(irClass.name.identifier))
                     // Primary key
-                    putValueArgument(1, irString(""))
+                    putValueArgument(arg++, irString(""))
                     // Flags
                     putValueArgument(
-                        2,
+                        arg++,
                         buildSetOf(
-                            pluginContext, this@blockBody, classFlag.defaultType, listOf(
+                            pluginContext, this@blockBody, classFlag.defaultType,
+                            listOf(
                                 IrGetEnumValueImpl(
                                     UNDEFINED_OFFSET,
                                     UNDEFINED_OFFSET,
@@ -150,8 +152,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     )
                     // Properties
                     putValueArgument(
-                        3,
-                        buildListOf(pluginContext, this@blockBody, propertyClass.defaultType,
+                        arg++,
+                        buildListOf(
+                            pluginContext, this@blockBody, propertyClass.defaultType,
                             fields.map { entry ->
                                 val value = entry.value
                                 val type = propertyTypes.firstOrNull {
@@ -173,13 +176,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     typeArgumentsCount = 0,
                                     valueArgumentsCount = 7
                                 ).apply {
+                                    var arg = 0
                                     // Name
-                                    putValueArgument(0, irString(entry.key))
+                                    putValueArgument(arg++, irString(entry.key))
                                     // Public name
-                                    putValueArgument(1, irString(""))
+                                    putValueArgument(arg++, irString(""))
                                     // Type
                                     putValueArgument(
-                                        2,
+                                        arg++,
                                         IrGetEnumValueImpl(
                                             UNDEFINED_OFFSET,
                                             UNDEFINED_OFFSET,
@@ -189,7 +193,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                     // Collection type
                                     putValueArgument(
-                                        3,
+                                        arg++,
                                         IrGetEnumValueImpl(
                                             UNDEFINED_OFFSET,
                                             UNDEFINED_OFFSET,
@@ -199,21 +203,22 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                     // Link target
                                     putValueArgument(
-                                        4,
+                                        arg++,
                                         if (type == objectType) {
                                             irString(backingField.type.classifierOrFail.descriptor.name.identifier)
                                         } else
                                             irString("")
                                     )
                                     // Link property name
-                                    putValueArgument(5, irString(""))
+                                    putValueArgument(arg++, irString(""))
                                     // Property flags
                                     putValueArgument(
-                                        6,
+                                        arg++,
                                         buildSetOf(
                                             pluginContext, this@blockBody, propertyFlag.defaultType,
                                             if (nullable) {
-                                                propertyFlags(listOf(PROPERTY_FLAG_NULLABLE))
+                                                propertyFlags(listOf(
+                                                PROPERTY_FLAG_NULLABLE))
                                             } else {
                                                 propertyFlags(listOf(PROPERTY_FLAG_NORMAL))
                                             }

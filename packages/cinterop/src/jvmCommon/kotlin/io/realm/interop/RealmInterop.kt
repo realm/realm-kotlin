@@ -147,14 +147,14 @@ actual object RealmInterop {
         return Link(link.target_table, link.target)
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): Long {
-        return propertyInfo(realm, classInfo(realm, table), col).key
+    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
+        return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: Long) : T {
+    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
-        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key , cvalue)
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
         return from_realm_value(cvalue)
     }
 
@@ -179,9 +179,9 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: Long, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
         val cvalue = to_realm_value(value)
-        realmc.realm_set_value((o as LongPointerWrapper).ptr, key, cvalue, isDefault)
+        realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
     }
 
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and

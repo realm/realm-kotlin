@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmModel> RealmModelInternal.manage(realm: NativePointer, schema: Mediator,  type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmModel> RealmModelInternal.manage(realm: NativePointer, schema: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Pointer` = realm
     this.`$realm$TableName` = type.simpleName

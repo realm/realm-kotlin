@@ -13,11 +13,11 @@ import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_MUTABLE_COLLECTION
 import io.realm.compiler.FqNames.KOTLIN_COLLECTION_LIST
 import io.realm.compiler.FqNames.REALM_MEDIATOR_INTERFACE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_MEDIATOR_MAPPING_PROPERTY
 import io.realm.compiler.Names.REALM_MEDIATOR_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_MEDIATOR_SCHEMA_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder

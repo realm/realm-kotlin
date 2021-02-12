@@ -16,11 +16,7 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.FqNames.NATIVE_WRAPPER
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
-import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_OBJECT
-import io.realm.compiler.Names.C_INTEROP_OBJECT_GET_VALUE
-import io.realm.compiler.Names.C_INTEROP_OBJECT_SET_VALUE
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT

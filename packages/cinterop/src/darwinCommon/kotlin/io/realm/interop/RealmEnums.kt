@@ -18,12 +18,10 @@ package io.realm.interop
 
 import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_schema_mode_e
-import realm_wrapper.realm_schema_validation_mode
-import realm_wrapper.realm_schema_validation_mode_e
 
 // Interfaces to hold C API enum from cinterop
 interface NativeEnum<T : Enum<T>> {
-    val nativeValue : Enum<T>
+    val nativeValue: Enum<T>
 }
 // Interfaces to hold C API enumerated constant from cinterop
 interface NativeEnumerated {
@@ -71,7 +69,7 @@ actual enum class PropertyFlag(override val nativeValue: UInt) : NativeEnumerate
     RLM_PROPERTY_INDEXED(realm_wrapper.RLM_PROPERTY_INDEXED),
 }
 
-actual enum class SchemaValidationMode(override val nativeValue: UInt): NativeEnumerated {
+actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeEnumerated {
     RLM_SCHEMA_VALIDATION_BASIC(realm_wrapper.RLM_SCHEMA_VALIDATION_BASIC),
     RLM_SCHEMA_VALIDATION_SYNC(realm_wrapper.RLM_SCHEMA_VALIDATION_SYNC),
     RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_wrapper.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),

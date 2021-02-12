@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.codegen.arity
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
@@ -30,25 +29,19 @@ import org.jetbrains.kotlin.ir.builders.declarations.IrPropertyBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrVarargElement
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
-import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.typeWith
-import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.hasAnnotation
-import org.jetbrains.kotlin.ir.util.irCall
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -128,17 +121,12 @@ internal fun IrPluginContext.lookupConstructorInClass(fqName: FqName, filter: (c
     }
 }
 
-//data class Property(
-//    val
-//    val name: String,
-//    val type: String,
-//    val nullable: Boolean
-//)
 object SchemaCollector {
-    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String,IrProperty>>>()
+    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, IrProperty>>>()
 }
 
-internal fun <T: IrExpression> buildOf(
+@Suppress("LongParameterList")
+internal fun <T : IrExpression> buildOf(
     context: IrPluginContext,
     builder: IrBlockBodyBuilder,
     function: IrSimpleFunctionSymbol,
@@ -169,7 +157,7 @@ internal fun <T: IrExpression> buildOf(
 }
 
 @ObsoleteDescriptorBasedAPI
-internal fun <T: IrExpression> buildSetOf(
+internal fun <T : IrExpression> buildSetOf(
     context: IrPluginContext,
     builder: IrBlockBodyBuilder,
     elementType: IrType,
@@ -182,7 +170,7 @@ internal fun <T: IrExpression> buildSetOf(
 }
 
 @ObsoleteDescriptorBasedAPI
-internal fun <T: IrExpression> buildListOf(
+internal fun <T : IrExpression> buildListOf(
     context: IrPluginContext,
     builder: IrBlockBodyBuilder,
     elementType: IrType,
@@ -193,5 +181,3 @@ internal fun <T: IrExpression> buildListOf(
     val listIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
     return buildOf(context, builder, listOf, listIrClass, elementType, args)
 }
-
-

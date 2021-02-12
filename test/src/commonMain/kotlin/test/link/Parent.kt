@@ -20,6 +20,6 @@ import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmObject
 
 @RealmObject
-class Parent: RealmModel {
+class Parent : RealmModel {
     var child: Child? = null
 }

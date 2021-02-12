@@ -45,7 +45,6 @@ class SampleTests {
         assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
     }
 
-
     @Test
     fun testRealmModelInternalAndMarkerAreImplemented() {
         val p = Sample()

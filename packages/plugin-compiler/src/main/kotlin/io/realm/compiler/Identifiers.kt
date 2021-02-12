@@ -40,9 +40,9 @@ internal object Names {
     val REALM_MEDIATOR_SCHEMA_METHOD = Name.identifier("schema")
 
     // C-interop methods
-    val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("realm_get_value")
-    val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("realm_set_value")
-    val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("realm_get_object")
+    val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
+    val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
+    val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
 
     // Schema related names
     val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
