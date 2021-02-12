@@ -23,13 +23,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectGetString (realm: io.realm.runtimeapi.NativePointer?, obj: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.String declared in io.realm.interop.RealmInterop' type=kotlin.String origin=GET_PROPERTY
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
-                      obj: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.String?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="stringField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -46,13 +43,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetString (realm: io.realm.runtimeapi.NativePointer?, obj: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.String): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringField>' type=sample.input.Sample origin=null
-                      obj: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.String?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="stringField"
                       value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-stringField>' type=kotlin.String? origin=null
                   BRANCH
@@ -75,13 +69,10 @@ MODULE_FRAGMENT name:<main>
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteField>' type=sample.input.Sample origin=null
                     then: CALL 'public open fun toByte (): kotlin.Byte declared in kotlin.Long' type=kotlin.Byte origin=null
-                      $this: CALL 'public final fun objectGetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Long declared in io.realm.interop.RealmInterop' type=kotlin.Long origin=GET_PROPERTY
-                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                        realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteField>' type=sample.input.Sample origin=null
-                        o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteField>' type=sample.input.Sample origin=null
-                        table: CONST String type=kotlin.String value="Sample"
+                      $this: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                        <R>: kotlin.Byte?
+                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                        obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteField>' type=sample.input.Sample origin=null
                         col: CONST String type=kotlin.String value="byteField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -98,13 +89,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Long): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Byte?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="byteField"
                       value: CALL 'public open fun toLong (): kotlin.Long declared in kotlin.Byte' type=kotlin.Long origin=null
                         $this: GET_VAR '<set-?>: kotlin.Byte? declared in sample.input.Sample.<set-byteField>' type=kotlin.Byte? origin=null
@@ -128,13 +116,10 @@ MODULE_FRAGMENT name:<main>
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-charField>' type=sample.input.Sample origin=null
                     then: CALL 'public open fun toChar (): kotlin.Char declared in kotlin.Long' type=kotlin.Char origin=null
-                      $this: CALL 'public final fun objectGetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Long declared in io.realm.interop.RealmInterop' type=kotlin.Long origin=GET_PROPERTY
-                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                        realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-charField>' type=sample.input.Sample origin=null
-                        o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-charField>' type=sample.input.Sample origin=null
-                        table: CONST String type=kotlin.String value="Sample"
+                      $this: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                        <R>: kotlin.Char?
+                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                        obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-charField>' type=sample.input.Sample origin=null
                         col: CONST String type=kotlin.String value="charField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -151,13 +136,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Long): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Char?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="charField"
                       value: CALL 'public final fun toLong (): kotlin.Long declared in kotlin.Char' type=kotlin.Long origin=null
                         $this: GET_VAR '<set-?>: kotlin.Char? declared in sample.input.Sample.<set-charField>' type=kotlin.Char? origin=null
@@ -181,13 +163,10 @@ MODULE_FRAGMENT name:<main>
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-shortField>' type=sample.input.Sample origin=null
                     then: CALL 'public open fun toShort (): kotlin.Short declared in kotlin.Long' type=kotlin.Short origin=null
-                      $this: CALL 'public final fun objectGetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Long declared in io.realm.interop.RealmInterop' type=kotlin.Long origin=GET_PROPERTY
-                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                        realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-shortField>' type=sample.input.Sample origin=null
-                        o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-shortField>' type=sample.input.Sample origin=null
-                        table: CONST String type=kotlin.String value="Sample"
+                      $this: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                        <R>: kotlin.Short?
+                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                        obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-shortField>' type=sample.input.Sample origin=null
                         col: CONST String type=kotlin.String value="shortField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -204,13 +183,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Long): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Short?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="shortField"
                       value: CALL 'public open fun toLong (): kotlin.Long declared in kotlin.Short' type=kotlin.Long origin=null
                         $this: GET_VAR '<set-?>: kotlin.Short? declared in sample.input.Sample.<set-shortField>' type=kotlin.Short? origin=null
@@ -234,13 +210,10 @@ MODULE_FRAGMENT name:<main>
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-intField>' type=sample.input.Sample origin=null
                     then: CALL 'public open fun toInt (): kotlin.Int declared in kotlin.Long' type=kotlin.Int origin=null
-                      $this: CALL 'public final fun objectGetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Long declared in io.realm.interop.RealmInterop' type=kotlin.Long origin=GET_PROPERTY
-                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                        realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-intField>' type=sample.input.Sample origin=null
-                        o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                          $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-intField>' type=sample.input.Sample origin=null
-                        table: CONST String type=kotlin.String value="Sample"
+                      $this: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                        <R>: kotlin.Int?
+                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                        obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-intField>' type=sample.input.Sample origin=null
                         col: CONST String type=kotlin.String value="intField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -257,13 +230,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Long): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Int?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="intField"
                       value: CALL 'public open fun toLong (): kotlin.Long declared in kotlin.Int' type=kotlin.Long origin=null
                         $this: GET_VAR '<set-?>: kotlin.Int? declared in sample.input.Sample.<set-intField>' type=kotlin.Int? origin=null
@@ -286,13 +256,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-longField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectGetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Long declared in io.realm.interop.RealmInterop' type=kotlin.Long origin=GET_PROPERTY
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-longField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-longField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.Long?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-longField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="longField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -309,13 +276,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetInteger (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Long): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Long?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="longField"
                       value: GET_VAR '<set-?>: kotlin.Long? declared in sample.input.Sample.<set-longField>' type=kotlin.Long? origin=null
                   BRANCH
@@ -337,13 +301,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-booleanField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectGetBoolean (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Boolean declared in io.realm.interop.RealmInterop' type=kotlin.Boolean origin=GET_PROPERTY
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-booleanField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-booleanField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.Boolean?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-booleanField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="booleanField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -360,13 +321,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetBoolean (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Boolean): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Boolean?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="booleanField"
                       value: GET_VAR '<set-?>: kotlin.Boolean? declared in sample.input.Sample.<set-booleanField>' type=kotlin.Boolean? origin=null
                   BRANCH
@@ -388,13 +346,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-floatField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectGetFloat (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Float declared in io.realm.interop.RealmInterop' type=kotlin.Float origin=GET_PROPERTY
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-floatField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-floatField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.Float?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-floatField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="floatField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -411,13 +366,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetFloat (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Float): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Float?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="floatField"
                       value: GET_VAR '<set-?>: kotlin.Float? declared in sample.input.Sample.<set-floatField>' type=kotlin.Float? origin=null
                   BRANCH
@@ -439,13 +391,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-doubleField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectGetDouble (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String): kotlin.Double declared in io.realm.interop.RealmInterop' type=kotlin.Double origin=GET_PROPERTY
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-doubleField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-doubleField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.Double?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-doubleField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="doubleField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -462,13 +411,10 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleField>' type=sample.input.Sample origin=null
-                    then: CALL 'public final fun objectSetDouble (realm: io.realm.runtimeapi.NativePointer?, o: io.realm.runtimeapi.NativePointer?, table: kotlin.String, col: kotlin.String, value: kotlin.Double): kotlin.Unit declared in io.realm.interop.RealmInterop' type=kotlin.Unit origin=null
-                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmInterop modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.interop.RealmInterop
-                      realm: CALL 'public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleField>' type=sample.input.Sample origin=null
-                      o: CALL 'public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Sample' type=io.realm.runtimeapi.NativePointer? origin=GET_PROPERTY
-                        $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleField>' type=sample.input.Sample origin=null
-                      table: CONST String type=kotlin.String value="Sample"
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Double?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleField>' type=sample.input.Sample origin=null
                       col: CONST String type=kotlin.String value="doubleField"
                       value: GET_VAR '<set-?>: kotlin.Double? declared in sample.input.Sample.<set-doubleField>' type=kotlin.Double? origin=null
                   BRANCH
@@ -476,6 +422,51 @@ MODULE_FRAGMENT name:<main>
                     then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:doubleField type:kotlin.Double? visibility:private' type=kotlin.Unit origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleField>' type=sample.input.Sample origin=null
                       value: GET_VAR '<set-?>: kotlin.Double? declared in sample.input.Sample.<set-doubleField>' type=kotlin.Double? origin=null
+      PROPERTY name:child visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:child type:sample.input.Child? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-child> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:sample.input.Child?
+          correspondingProperty: PROPERTY name:child visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-child> (): sample.input.Child? declared in sample.input.Sample'
+                WHEN type=sample.input.Child? origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-child>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun getObject <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: sample.input.Child?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-child>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="child"
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:child type:sample.input.Child? visibility:private' type=sample.input.Child? origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-child>' type=sample.input.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-child> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:sample.input.Child?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:child visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:sample.input.Child?
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-child> (<set-?>: sample.input.Child?): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-child>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: sample.input.Child?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-child>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="child"
+                      value: GET_VAR '<set-?>: sample.input.Child? declared in sample.input.Sample.<set-child>' type=sample.input.Child? origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:child type:sample.input.Child? visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-child>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: sample.input.Child? declared in sample.input.Sample.<set-child>' type=sample.input.Child? origin=null
       FUN name:dumpSchema visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
         $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
         BLOCK_BODY
@@ -528,7 +519,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="byteField"
                       publicName: CONST String type=kotlin.String value=""
@@ -539,7 +530,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="charField"
                       publicName: CONST String type=kotlin.String value=""
@@ -550,7 +541,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="shortField"
                       publicName: CONST String type=kotlin.String value=""
@@ -561,7 +552,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="intField"
                       publicName: CONST String type=kotlin.String value=""
@@ -572,7 +563,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="longField"
                       publicName: CONST String type=kotlin.String value=""
@@ -583,7 +574,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="booleanField"
                       publicName: CONST String type=kotlin.String value=""
@@ -594,7 +585,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="floatField"
                       publicName: CONST String type=kotlin.String value=""
@@ -605,7 +596,7 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="doubleField"
                       publicName: CONST String type=kotlin.String value=""
@@ -616,7 +607,18 @@ MODULE_FRAGMENT name:<main>
                       flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
                         <T>: io.realm.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
-                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NORMAL' type=io.realm.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="child"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value="Child"
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.Any
           overridden:
             public abstract fun $realm$newInstance (): kotlin.Any declared in io.realm.internal.RealmObjectCompanion
@@ -729,3 +731,260 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-$realm$IsManaged>' type=sample.input.Sample origin=null
               value: GET_VAR '<set-?>: kotlin.Boolean declared in sample.input.Sample.<set-$realm$IsManaged>' type=kotlin.Boolean origin=null
+      PROPERTY name:$realm$Schema visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Schema type:kotlin.Any visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Schema> visibility:public modality:OPEN <> ($this:sample.input.Sample) returnType:kotlin.Any
+          correspondingProperty: PROPERTY name:$realm$Schema visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Schema> (): kotlin.Any? declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Schema> (): kotlin.Any declared in sample.input.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Schema type:kotlin.Any visibility:private' type=kotlin.Any origin=null
+                receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-$realm$Schema>' type=sample.input.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Schema> visibility:public modality:OPEN <> ($this:sample.input.Sample, <set-?>:kotlin.Any) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Schema visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Schema> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Schema type:kotlin.Any visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-$realm$Schema>' type=sample.input.Sample origin=null
+              value: GET_VAR '<set-?>: kotlin.Any declared in sample.input.Sample.<set-$realm$Schema>' type=kotlin.Any origin=null
+    CLASS CLASS name:Child modality:OPEN visibility:public superTypes:[io.realm.runtimeapi.RealmModel; io.realm.runtimeapi.RealmModelInternal]
+      annotations:
+        RealmObject
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+      CONSTRUCTOR visibility:public <> () returnType:sample.input.Child [primary]
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+          INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:Child modality:OPEN visibility:public superTypes:[io.realm.runtimeapi.RealmModel; io.realm.runtimeapi.RealmModelInternal]'
+      PROPERTY name:name visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private
+          EXPRESSION_BODY
+            CONST String type=kotlin.String value="Child-default"
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-name> visibility:public modality:FINAL <> ($this:sample.input.Child) returnType:kotlin.String?
+          correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Child
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String? declared in sample.input.Child'
+                WHEN type=kotlin.String? origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Child' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-name>' type=sample.input.Child origin=null
+                    then: CALL 'public final fun getValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.String?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-name>' type=sample.input.Child origin=null
+                      col: CONST String type=kotlin.String value="name"
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.String? origin=null
+                      receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-name>' type=sample.input.Child origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-name> visibility:public modality:FINAL <> ($this:sample.input.Child, <set-?>:kotlin.String?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Child
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-name> (<set-?>: kotlin.String?): kotlin.Unit declared in sample.input.Child'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Child' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-name>' type=sample.input.Child origin=null
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.runtimeapi.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.String?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-name>' type=sample.input.Child origin=null
+                      col: CONST String type=kotlin.String value="name"
+                      value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Child.<set-name>' type=kotlin.String? origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-name>' type=sample.input.Child origin=null
+                      value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Child.<set-name>' type=kotlin.String? origin=null
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
+        $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
+        CONSTRUCTOR visibility:private <> () returnType:sample.input.Child.Companion [primary]
+          BLOCK_BODY
+            DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
+        FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+          overridden:
+            public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+          VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+          overridden:
+            public open fun hashCode (): kotlin.Int declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+          overridden:
+            public open fun toString (): kotlin.String declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        FUN name:$realm$schema visibility:public modality:OPEN <> ($this:sample.input.Child.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun $realm$schema (): io.realm.interop.Table declared in io.realm.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Child.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
+                name: CONST String type=kotlin.String value="Child"
+                primaryKey: CONST String type=kotlin.String value=""
+                flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.ClassFlag> origin=null
+                  <T>: io.realm.interop.ClassFlag
+                  elements: VARARG type=kotlin.Array<io.realm.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.interop.ClassFlag>
+                    GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_CLASS_NORMAL' type=io.realm.interop.ClassFlag
+                properties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.interop.Property> origin=null
+                  <T>: io.realm.interop.Property
+                  elements: VARARG type=kotlin.Array<io.realm.interop.Property> varargElementType=kotlin.collections.List<io.realm.interop.Property>
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="name"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
+        FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Child.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun $realm$newInstance (): kotlin.Any declared in io.realm.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in sample.input.Child.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Child' type=sample.input.Child origin=null
+      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.runtimeapi.RealmModel
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+      FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.runtimeapi.RealmModel
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in io.realm.runtimeapi.RealmModel
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.runtimeapi.NativePointer? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Pointer> visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:io.realm.runtimeapi.NativePointer?
+          correspondingProperty: PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Pointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Child'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=io.realm.runtimeapi.NativePointer? origin=null
+                receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-$realm$Pointer>' type=sample.input.Child origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Pointer> visibility:public modality:OPEN <> ($this:sample.input.Child, <set-?>:io.realm.runtimeapi.NativePointer?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Pointer> (<set-?>: io.realm.runtimeapi.NativePointer?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.runtimeapi.NativePointer?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-$realm$Pointer>' type=sample.input.Child origin=null
+              value: GET_VAR '<set-?>: io.realm.runtimeapi.NativePointer? declared in sample.input.Child.<set-$realm$Pointer>' type=io.realm.runtimeapi.NativePointer? origin=null
+      PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.runtimeapi.NativePointer? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:io.realm.runtimeapi.NativePointer?
+          correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$ObjectPointer> (): io.realm.runtimeapi.NativePointer? declared in sample.input.Child'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=io.realm.runtimeapi.NativePointer? origin=null
+                receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-$realm$ObjectPointer>' type=sample.input.Child origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:sample.input.Child, <set-?>:io.realm.runtimeapi.NativePointer?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.runtimeapi.NativePointer?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.runtimeapi.NativePointer?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.runtimeapi.NativePointer? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-$realm$ObjectPointer>' type=sample.input.Child origin=null
+              value: GET_VAR '<set-?>: io.realm.runtimeapi.NativePointer? declared in sample.input.Child.<set-$realm$ObjectPointer>' type=io.realm.runtimeapi.NativePointer? origin=null
+      PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$TableName> visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:kotlin.String?
+          correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$TableName> (): kotlin.String? declared in sample.input.Child'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private' type=kotlin.String? origin=null
+                receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-$realm$TableName>' type=sample.input.Child origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$TableName> visibility:public modality:OPEN <> ($this:sample.input.Child, <set-?>:kotlin.String?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-$realm$TableName>' type=sample.input.Child origin=null
+              value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Child.<set-$realm$TableName>' type=kotlin.String? origin=null
+      PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private
+          EXPRESSION_BODY
+            CONST Boolean type=kotlin.Boolean value=false
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$IsManaged> visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:kotlin.Boolean
+          correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Child'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private' type=kotlin.Boolean origin=null
+                receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-$realm$IsManaged>' type=sample.input.Child origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$IsManaged> visibility:public modality:OPEN <> ($this:sample.input.Child, <set-?>:kotlin.Boolean) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-$realm$IsManaged>' type=sample.input.Child origin=null
+              value: GET_VAR '<set-?>: kotlin.Boolean declared in sample.input.Child.<set-$realm$IsManaged>' type=kotlin.Boolean origin=null
+      PROPERTY name:$realm$Schema visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Schema type:kotlin.Any visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Schema> visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:kotlin.Any
+          correspondingProperty: PROPERTY name:$realm$Schema visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Schema> (): kotlin.Any? declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Schema> (): kotlin.Any declared in sample.input.Child'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Schema type:kotlin.Any visibility:private' type=kotlin.Any origin=null
+                receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-$realm$Schema>' type=sample.input.Child origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Schema> visibility:public modality:OPEN <> ($this:sample.input.Child, <set-?>:kotlin.Any) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Schema visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Schema> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.runtimeapi.RealmModelInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Schema type:kotlin.Any visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-$realm$Schema>' type=sample.input.Child origin=null
+              value: GET_VAR '<set-?>: kotlin.Any declared in sample.input.Child.<set-$realm$Schema>' type=kotlin.Any origin=null
