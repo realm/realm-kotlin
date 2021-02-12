@@ -23,6 +23,7 @@ import io.realm.interop.PropertyFlag
 import io.realm.interop.PropertyType
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
+import io.realm.interop.SchemaValidationMode
 import io.realm.interop.Table
 import io.realm.interop.set
 import io.realm.interop.toKString
@@ -104,7 +105,7 @@ class CinteropTest {
             val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
 
             assertNoError()
-            assertTrue(realm_schema_validate(realmSchemaNew))
+            assertTrue(realm_schema_validate(realmSchemaNew, SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC.nativeValue.toULong()))
 
             val config = realm_config_new()
             realm_config_set_path(config, "c_api_test.realm")

@@ -58,30 +58,8 @@ expect object RealmInterop {
 
     fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey
 
-    // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
-    //  type and key-lookups internally
-    fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
-    fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
-
-    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T?
-    fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T?, isDefault: Boolean)
-
-    // Typed convenience methods
-    fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String
-    fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String)
-
-    // covers Char, Byte, Short, Int and Long
-    fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long
-    fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long)
-
-    fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float
-    fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float)
-
-    fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double
-    fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double)
-
-    fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean
-    fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean)
+    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T
+    fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean)
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer

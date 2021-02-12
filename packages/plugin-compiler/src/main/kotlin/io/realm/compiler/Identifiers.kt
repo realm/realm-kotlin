@@ -23,7 +23,6 @@ internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
     val DEFAULT_COMPANION = Name.identifier("Companion")
-//    val TEST: Name = Name.identifier("test")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
@@ -41,16 +40,13 @@ internal object Names {
     val REALM_MEDIATOR_SCHEMA_METHOD = Name.identifier("schema")
 
     // C-interop methods
-    val C_INTEROP_OBJECT_GET_STRING = Name.identifier("objectGetString")
-    val C_INTEROP_OBJECT_SET_STRING = Name.identifier("objectSetString")
-    val C_INTEROP_OBJECT_GET_INTEGER = Name.identifier("objectGetInteger")
-    val C_INTEROP_OBJECT_SET_INTEGER = Name.identifier("objectSetInteger")
-    val C_INTEROP_OBJECT_GET_BOOLEAN = Name.identifier("objectGetBoolean")
-    val C_INTEROP_OBJECT_SET_BOOLEAN = Name.identifier("objectSetBoolean")
-    val C_INTEROP_OBJECT_GET_FLOAT = Name.identifier("objectGetFloat")
-    val C_INTEROP_OBJECT_SET_FLOAT = Name.identifier("objectSetFloat")
-    val C_INTEROP_OBJECT_GET_DOUBLE = Name.identifier("objectGetDouble")
-    val C_INTEROP_OBJECT_SET_DOUBLE = Name.identifier("objectSetDouble")
+    val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
+    val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
+    val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
+
+    // Schema related names
+    val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
+    val PROPERTY_FLAG_NORMAL = Name.identifier("RLM_PROPERTY_NORMAL")
 }
 
 internal object FqNames {
@@ -60,7 +56,6 @@ internal object FqNames {
     val REALM_MODULE_ANNOTATION = FqName("io.realm.runtimeapi.RealmModule")
     val REALM_MODEL_INTERFACE = FqName("io.realm.runtimeapi.RealmModelInternal")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
-    val NATIVE_WRAPPER = FqName("io.realm.interop.RealmInterop")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     // External visible interface of Realm objects
     val REALM_MODEL_INTERFACE_MARKER = FqName("io.realm.runtimeapi.RealmModel")
@@ -78,5 +73,11 @@ internal object FqNames {
     val JAVA_UTIL_ITERATOR = FqName("java.util.Iterator")
     val KOTLIN_COLLECTIONS_MUTABLE_COLLECTION = FqName("kotlin.collections.MutableCollection")
     val JAVA_UTIL_COLLECTION = FqName("java.util.Collection")
+    // Schema related types
     val TABLE = FqName("io.realm.interop.Table")
+    val CLASS_FLAG = FqName("io.realm.interop.ClassFlag")
+    val PROPERTY = FqName("io.realm.interop.Property")
+    val PROPERTY_TYPE = FqName("io.realm.interop.PropertyType")
+    val COLLECTION_TYPE = FqName("io.realm.interop.CollectionType")
+    val PROPERTY_FLAG = FqName("io.realm.interop.PropertyFlag")
 }

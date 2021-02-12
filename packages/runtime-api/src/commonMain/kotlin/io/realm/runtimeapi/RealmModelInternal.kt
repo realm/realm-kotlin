@@ -26,6 +26,7 @@ annotation class RealmObject
  */
 @Suppress("VariableNaming")
 interface RealmModelInternal : RealmModel {
+    // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
     var `$realm$Pointer`: NativePointer?
     var `$realm$ObjectPointer`: NativePointer?
     var `$realm$TableName`: String?

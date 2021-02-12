@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
@@ -93,9 +94,14 @@ internal fun IrPropertyBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.endOffset = endOffset
 }
 
-internal fun IrClass.lookupFunction(name: String): IrSimpleFunction {
-    return functions.firstOrNull { it.name.asString() == name }
-        ?: throw AssertionError("Function $name was not found")
+internal fun IrClass.lookupFunction(name: Name): IrSimpleFunction {
+    return functions.firstOrNull { it.name == name }
+        ?: throw AssertionError("Function '$name' not found in class '${this.name}'")
+}
+
+internal fun IrClass.lookupProperty(name: Name): IrProperty {
+    return properties.firstOrNull { it.name == name }
+        ?: throw AssertionError("Property '$name' not found in class '${this.name}'")
 }
 
 internal fun IrPluginContext.lookupFunctionInClass(fqName: FqName, function: String): IrSimpleFunction {
@@ -116,7 +122,7 @@ internal fun IrPluginContext.lookupConstructorInClass(fqName: FqName, filter: (c
 }
 
 object SchemaCollector {
-    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, Any>>>()
+    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, IrProperty>>>()
 }
 
 @Suppress("LongParameterList")
