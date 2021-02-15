@@ -24,35 +24,36 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
 import io.realm.runtimeapi.RealmModule
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-// TODO add close and delete Realm after each test or implement the temp directory Rule
+
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
 
     @RealmModule(Sample::class)
     class MySchema
 
-    lateinit var realm: Realm
+    lateinit var tmpDir: String
 
+    @ExperimentalPathApi
     @Before
     fun setup() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        realm = Realm.open(configuration)
-        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
-        //  https://github.com/realm/realm-kotlin/issues/95
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
-        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+        tmpDir = Utils.createTempDir()
+    }
+
+    @After
+    fun tearDown() {
+        Utils.deleteTempDir(tmpDir)
     }
 
     // Smoke test of compiling with library
@@ -66,8 +67,9 @@ class InstrumentedTests {
     // https://youtrack.jetbrains.com/issue/KT-34535
     @Test
     fun createAndUpdate() {
-        val s = "Hello, World!"
+        val realm = openRealmFromTmpDir()
 
+        val s = "Hello, World!"
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         assertEquals("", sample.stringField)
@@ -78,6 +80,8 @@ class InstrumentedTests {
 
     @Test
     fun query() {
+        val realm = openRealmFromTmpDir()
+
         val s = "Hello, World!"
 
         realm.beginTransaction()
@@ -98,6 +102,8 @@ class InstrumentedTests {
 
     @Test
     fun query_parseErrorThrows() {
+        val realm = openRealmFromTmpDir()
+
         val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
         // Will first fail when accessing the actual elements as the query is lazily evaluated
         // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationException as
@@ -110,6 +116,8 @@ class InstrumentedTests {
 
     @Test
     fun query_delete() {
+        val realm = openRealmFromTmpDir()
+
         realm.beginTransaction()
         realm.create(Sample::class).run { stringField = "Hello, World!" }
         realm.create(Sample::class).run { stringField = "Hello, Realm!" }
@@ -127,8 +135,7 @@ class InstrumentedTests {
 
     @Test
     fun delete() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        val realm = Realm.open(configuration)
+        val realm = openRealmFromTmpDir()
 
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
@@ -144,10 +151,9 @@ class InstrumentedTests {
 
     @Test
     fun garbageCollectorShouldFreeNativeResources() {
-        val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep garbageCollectorShouldFreeNativeResources.realm | awk '{print \$1}'")
+        val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 
-        var configuration: RealmConfiguration? = RealmConfiguration.Builder(schema = MySchema(), name = "garbageCollectorShouldFreeNativeResources").build()
-        var realm: Realm? = Realm.open(configuration!!)
+        var realm: Realm? = openRealmFromTmpDir()
 
         // Building a 1MB String
         val oneMBstring = StringBuilder("").apply {
@@ -175,7 +181,6 @@ class InstrumentedTests {
         assertTrue(mappedMemorySize >= 99 * oneMB, "Committing the 100 objects should result in memory mapping ~ 99 MB. Current amount is ${bytesToHumanReadable(mappedMemorySize)}")
 
         realm = null
-        configuration = null
         triggerGC()
 
         mappedMemorySize = numberOfMemoryMappedBytes(command)
@@ -191,10 +196,9 @@ class InstrumentedTests {
     // make sure that calling realm.close() will force close the Realm and release native memory
     @Test
     fun closeShouldFreeMemory() {
-        val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep closeShouldFreeMemory.realm | awk '{print \$1}'")
+        val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 
-        val configuration: RealmConfiguration = RealmConfiguration.Builder(schema = MySchema(), name = "closeShouldFreeMemory").build()
-        val realm: Realm = Realm.open(configuration)
+        val realm = openRealmFromTmpDir()
 
         // Building a 1MB String
         val oneMBstring = StringBuilder("").apply {
@@ -290,5 +294,10 @@ class InstrumentedTests {
             return allocGarbage(garbageSize / 10 * 9)
         }
         return garbage
+    }
+
+    private fun openRealmFromTmpDir() : Realm {
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        return Realm.open(configuration)
     }
 }

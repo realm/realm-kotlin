@@ -22,6 +22,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import test.Sample
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -56,6 +57,7 @@ class NotificationTests {
         realm.objects(Sample::class).delete()
         realm.commitTransaction()
         assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+        realm.close()
     }
 
     @Test

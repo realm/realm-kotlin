@@ -20,7 +20,13 @@ package io.realm
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
+import io.realm.Utils.createTempDir
+import io.realm.Utils.deleteTempDir
+import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
+import kotlinx.cinterop.COpaquePointerVar
+import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
@@ -29,8 +35,13 @@ import platform.posix.NULL
 import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.toLong
 import test.Sample
 import kotlin.native.internal.GC
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -40,49 +51,47 @@ class InstrumentedTests {
     @RealmModule(Sample::class)
     class MySchema
 
-    lateinit var realm: Realm
+    lateinit var tmpDir: String
 
     @BeforeTest
     fun setup() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        realm = Realm.open(configuration)
-        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
-        //  https://github.com/realm/realm-kotlin/issues/95
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
-        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+        tmpDir = createTempDir()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        deleteTempDir(tmpDir)
     }
 
     // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
     //  or moved. Local implementation of pointer wrapper to support test. Using the internal one would
     //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
     //  test is needed at all at this level
-//    class CPointerWrapper(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer
-//    @Test
-//    fun testRealmModelInternalPropertiesGenerated() {
-//        val p = Sample()
-//
-//        @Suppress("CAST_NEVER_SUCCEEDS")
-//        val realmModel: RealmModelInternal = p as? RealmModelInternal
-//                ?: error("Supertype RealmModelInternal was not added to Sample class")
-//
-//        memScoped {
-//            val ptr1: COpaquePointerVar = alloc()
-//            val ptr2: COpaquePointerVar = alloc()
-//
-//            // Accessing getters/setters
-//            realmModel.`$realm$IsManaged` = true
-//            realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
-//            realmModel.`$realm$Pointer` = CPointerWrapper(ptr2.ptr)
-//            realmModel.`$realm$TableName` = "Sample"
-//
-//            assertEquals(true, realmModel.`$realm$IsManaged`)
-//            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
-//            assertEquals(ptr2.rawPtr.toLong(), (realmModel.`$realm$Pointer` as CPointerWrapper).ptr.toLong())
-//            assertEquals("Sample", realmModel.`$realm$TableName`)
-//        }
-//    }
+    class CPointerWrapper(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer
+    @Test
+    fun testRealmModelInternalPropertiesGenerated() {
+        val p = Sample()
+
+        @Suppress("CAST_NEVER_SUCCEEDS")
+        val realmModel: RealmModelInternal = p as? RealmModelInternal
+                ?: error("Supertype RealmModelInternal was not added to Sample class")
+
+        memScoped {
+            val ptr1: COpaquePointerVar = alloc()
+            val ptr2: COpaquePointerVar = alloc()
+
+            // Accessing getters/setters
+            realmModel.`$realm$IsManaged` = true
+            realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
+            realmModel.`$realm$Pointer` = CPointerWrapper(ptr2.ptr)
+            realmModel.`$realm$TableName` = "Sample"
+
+            assertEquals(true, realmModel.`$realm$IsManaged`)
+            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
+            assertEquals(ptr2.rawPtr.toLong(), (realmModel.`$realm$Pointer` as CPointerWrapper).ptr.toLong())
+            assertEquals("Sample", realmModel.`$realm$TableName`)
+        }
+    }
 
     // TODO try to understand why the cleaner is invoked while we still have reference to the object
     // just after the object is created it becomes elligble for GC which closes it, hence trying to set a string will throw
@@ -93,8 +102,7 @@ class InstrumentedTests {
         val referenceHolder = mutableListOf<Sample>()
         val amountOfMemoryMappedInProcessCMD = "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
         {
-            val configuration: RealmConfiguration = RealmConfiguration.Builder(schema = MySchema(), name = "testGC").build()
-            val realm: Realm = Realm.open(configuration)
+            val realm = openRealmFromTmpDir()
             // TODO use Realm.delete once this is implemented
             realm.beginTransaction()
             realm.objects(Sample::class).delete()
@@ -123,8 +131,7 @@ class InstrumentedTests {
         referenceHolder.clear()
         GC.collect()
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process references
-        // 12K are the default.Realm open by the test setup
-        assertEquals("12K", runSystemCommand(amountOfMemoryMappedInProcessCMD), "Freeing the references should close the Realm so no memory mapped allocation should be present")
+        assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "Freeing the references should close the Realm so no memory mapped allocation should be present")
     }
 
     @Test
@@ -132,12 +139,7 @@ class InstrumentedTests {
         val referenceHolder = mutableListOf<Sample>()
         val amountOfMemoryMappedInProcessCMD = "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
         {
-            val configuration: RealmConfiguration = RealmConfiguration.Builder(schema = MySchema(), name = "testGC").build()
-            val realm: Realm = Realm.open(configuration)
-            // TODO use Realm.delete once this is implemented
-            realm.beginTransaction()
-            realm.objects(Sample::class).delete()
-            realm.commitTransaction()
+            val realm = openRealmFromTmpDir()
 
             // allocating a 1 MB string
             val oneMBstring = StringBuilder("").apply {
@@ -160,7 +162,12 @@ class InstrumentedTests {
 
         GC.collect()
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
-        assertEquals("12K", runSystemCommand(amountOfMemoryMappedInProcessCMD), "we should not have any mmap allocations")
+        assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "we should not have any mmap allocations")
+    }
+
+    private fun openRealmFromTmpDir() : Realm {
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        return Realm.open(configuration)
     }
 
     private fun runSystemCommand(cmd: String): String {

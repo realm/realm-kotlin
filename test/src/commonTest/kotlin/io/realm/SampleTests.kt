@@ -27,6 +27,7 @@ import test.C
 import test.Entities
 import test.Sample
 import test.Subset
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -52,6 +53,11 @@ class SampleTests {
         realm.objects(Sample::class).delete()
         realm.commitTransaction()
         assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+    }
+
+    @AfterTest
+    fun tearDown() {
+        realm.close()
     }
 
     @Test
@@ -255,25 +261,5 @@ class SampleTests {
 
         objects = realm.objects(Sample::class).query("doubleField == $0", 1.19851106)
         assertEquals(1, objects.size)
-    }
-
-    @Test
-    fun testGC() {
-        {
-            realm.beginTransaction()
-            val sample = realm.create(Sample::class).apply {
-                stringField = "Realm Kotlin"
-                byteField = 0xb
-                charField = 'b'
-                shortField = 1
-                intField = 2
-                longField = 1024
-                booleanField = false
-                floatField = 1.99f
-                doubleField = 1.19851106
-            }
-            realm.commitTransaction()
-        }()
-//        Utils.runGC()
     }
 }
