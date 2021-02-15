@@ -28,17 +28,17 @@ import io.realm.runtimeapi.RealmModule
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.toLong
 import platform.posix.FILE
 import platform.posix.NULL
 import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toLong
 import test.Sample
 import kotlin.native.internal.GC
 import kotlin.test.AfterTest
@@ -74,7 +74,7 @@ class InstrumentedTests {
 
         @Suppress("CAST_NEVER_SUCCEEDS")
         val realmModel: RealmModelInternal = p as? RealmModelInternal
-                ?: error("Supertype RealmModelInternal was not added to Sample class")
+            ?: error("Supertype RealmModelInternal was not added to Sample class")
 
         memScoped {
             val ptr1: COpaquePointerVar = alloc()
@@ -165,7 +165,7 @@ class InstrumentedTests {
         assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "we should not have any mmap allocations")
     }
 
-    private fun openRealmFromTmpDir() : Realm {
+    private fun openRealmFromTmpDir(): Realm {
         val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
         return Realm.open(configuration)
     }

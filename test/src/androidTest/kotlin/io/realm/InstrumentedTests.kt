@@ -261,6 +261,7 @@ class InstrumentedTests {
     }
 
     // Empiric approach to trigger GC
+    @Suppress("ExplicitGarbageCollectionCall")
     private fun triggerGC() {
         for (i in 1..30) {
             allocGarbage(0)
@@ -296,7 +297,7 @@ class InstrumentedTests {
         return garbage
     }
 
-    private fun openRealmFromTmpDir() : Realm {
+    private fun openRealmFromTmpDir(): Realm {
         val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
         return Realm.open(configuration)
     }
