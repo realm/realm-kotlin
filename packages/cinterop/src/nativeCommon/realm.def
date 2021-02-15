@@ -16,9 +16,9 @@ linkerOpts = -lz -framework Foundation -framework CoreFoundation -framework Secu
 // FIXME These symbols seems to be undefined, so for now just adding them here
 #include <dirent.h>
 #include <fnmatch.h>
-DIR * opendir$INODE64( char * dirName )
+DIR * opendir$INODE64( char * dirNamee )
 {
-    return opendir( dirName );
+    return opendir( dirNamee );
 }
 struct dirent * readdir$INODE64( DIR * dir )
 {

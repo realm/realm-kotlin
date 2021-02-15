@@ -142,7 +142,6 @@ struct realm_size_t {
 %ignore "realm_config_set_sync_config";
 %ignore "realm_config_set_force_sync_history";
 %ignore "realm_config_set_audit_factory";
-%ignore "realm_is_closed";
 %ignore "realm_is_writable";
 %ignore "_realm_get_schema_native";
 %ignore "realm_find_primary_key_property";

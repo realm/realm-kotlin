@@ -26,6 +26,16 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+// FIXME API-CLEANUP Local implementation of pointer wrapper to support test. Using the internal
+//  one would require jni-swig-stub to be api dependency from cinterop/library. Don't know if
+//  the test is needed at all at this level
+//  https://github.com/realm/realm-kotlin/issues/56
+class LongPointerWrapper(val ptr: Long) : io.realm.runtimeapi.NativePointer {
+    override fun hashCode(): Int {
+        return ptr.toInt()
+    }
+}
+
 @RunWith(AndroidJUnit4::class)
 class CinteropTest {
 

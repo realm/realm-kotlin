@@ -31,7 +31,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-class RealmConfiguration private constructor(
+class RealmConfiguration constructor(
     val path: String?, // Full path if we don't want to use the default location
     val name: String?, // Optional Realm name (default is 'default')
     val schema: Mediator, // TODO create a schema type, to fail at compile time?
@@ -39,10 +39,9 @@ class RealmConfiguration private constructor(
     val tables: List<Table> = listOf()
 ) {
 
-    internal val nativeConfig: NativePointer
+    internal val nativeConfig: NativePointer = RealmInterop.realm_config_new()
 
     init {
-        nativeConfig = RealmInterop.realm_config_new()
         RealmInterop.realm_config_set_path(nativeConfig, path!!)
         RealmInterop.realm_config_set_schema_mode(nativeConfig, SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC)
         RealmInterop.realm_config_set_schema_version(nativeConfig, version)

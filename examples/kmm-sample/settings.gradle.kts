@@ -1,6 +1,6 @@
 // If you want to run against the local source repository just include the source projects by
 // reincluding the below
-// includeBuild("../../packages")
+ includeBuild("../../packages")
 
 // Use local sources for CI builds
 if (System.getenv("JENKINS_HOME") != null) {
