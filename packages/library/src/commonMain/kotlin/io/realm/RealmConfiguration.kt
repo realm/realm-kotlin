@@ -31,7 +31,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-class RealmConfiguration constructor(
+class RealmConfiguration private constructor(
     val path: String?, // Full path if we don't want to use the default location
     val name: String?, // Optional Realm name (default is 'default')
     val schema: Mediator, // TODO create a schema type, to fail at compile time?
@@ -50,7 +50,7 @@ class RealmConfiguration constructor(
     }
 
     data class Builder(
-        var path: String? = null,
+        var path: String? = null, // Full path for Realm (directory + name)
         var name: String = "default", // Optional Realm name (default is 'default')
         var schema: Any? = null,
         var classes: List<RealmCompanion> = listOf()

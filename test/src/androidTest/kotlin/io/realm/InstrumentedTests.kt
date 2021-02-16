@@ -272,11 +272,11 @@ class InstrumentedTests {
         SystemClock.sleep(5000) // 5 seconds to give the GC some time to process
     }
 
-    private fun bytesToHumanReadable(mapedMemorySize: Long): String {
-        return Formatter.formatFileSize(InstrumentationRegistry.getInstrumentation().targetContext, mapedMemorySize)
+    private fun bytesToHumanReadable(mappedMemorySize: Long): String {
+        return Formatter.formatFileSize(InstrumentationRegistry.getInstrumentation().targetContext, mappedMemorySize)
     }
 
-    // Allocs as much garbage as we can. Pass maxSize = 0 to use it.
+    // Allocs as much garbage as we can. Pass maxSize = 0 to use all available memory in the process.
     private fun allocGarbage(garbageSize: Int): ByteArray {
         var garbageSize = garbageSize
         if (garbageSize == 0) {

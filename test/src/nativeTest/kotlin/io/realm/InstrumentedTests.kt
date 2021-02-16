@@ -93,10 +93,7 @@ class InstrumentedTests {
         }
     }
 
-    // TODO try to understand why the cleaner is invoked while we still have reference to the object
-    // just after the object is created it becomes elligble for GC which closes it, hence trying to set a string will throw
-    // VMMAP can not be invoked from iOS so run this test only macos
-    // TODO filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
+    // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
     fun garbageCollectorShouldFreeNativeResources() {
         val referenceHolder = mutableListOf<Sample>()
@@ -134,6 +131,7 @@ class InstrumentedTests {
         assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "Freeing the references should close the Realm so no memory mapped allocation should be present")
     }
 
+    // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
     fun closeShouldFreeMemory() {
         val referenceHolder = mutableListOf<Sample>()
