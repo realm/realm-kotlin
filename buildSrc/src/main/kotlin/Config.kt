@@ -61,7 +61,7 @@ object Versions {
     const val dokka = "1.4.20" // https://github.com/Kotlin/dokka
     const val junit = "4.12"
     const val jvmTarget = "1.8"
-    const val kotlin = "1.4.30-M1"
+    const val kotlin = "1.4.30"
     const val kotlinCompileTesting = "1.2.6" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "9.4.1" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.39.0" // https://github.com/pinterest/ktlint
