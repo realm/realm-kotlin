@@ -20,20 +20,33 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+// Direct tests of the 'swig' low level C-API wrapper for JVM platforms.
+// These test are not thought as being exhaustive, but is more to provide a playground for
+// experiments and maybe more relevant for reproduction of C-API issues.
 @RunWith(AndroidJUnit4::class)
 class CinteropTest {
+
+    @BeforeTest
+    fun setup() {
+        System.loadLibrary("realmc")
+    }
+
+    @Test
+    fun version() {
+        assertEquals("10.4.0", realmc.realm_get_library_version())
+    }
 
     @Test
     fun cinterop_swig() {
         val context = InstrumentationRegistry.getInstrumentation().context
 
         System.loadLibrary("realmc")
-        println(realmc.realm_get_library_version())
 
         val rlmInvalidPropertyKey = realmc.getRLM_INVALID_PROPERTY_KEY()
         val rlmInvalidClassKey = realmc.getRLM_INVALID_CLASS_KEY()
