@@ -38,6 +38,9 @@ internal class NativeObjectReference(
 
     private val ptr: Long = referent.ptr
 
+    private var prev: NativeObjectReference? = null
+    private var next: NativeObjectReference? = null
+
     companion object {
         private val referencePool = ReferencePool()
     }
@@ -87,7 +90,4 @@ internal class NativeObjectReference(
             }
         }
     }
-
-    private var prev: NativeObjectReference? = null
-    private var next: NativeObjectReference? = null
 }

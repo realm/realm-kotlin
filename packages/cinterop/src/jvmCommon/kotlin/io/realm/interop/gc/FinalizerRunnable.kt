@@ -20,22 +20,23 @@ import io.realm.interop.LongPointerWrapper
 import java.lang.ref.ReferenceQueue
 
 // Running in the FinalizingDaemon thread to free native objects.
-internal class FinalizerRunnable(private val referenceQueue: ReferenceQueue<LongPointerWrapper>) : Runnable {
+internal class FinalizerRunnable(private val referenceQueue: ReferenceQueue<LongPointerWrapper>) :
+    Runnable {
     override fun run() {
-        while (true) {
-            try {
-                val reference: NativeObjectReference = referenceQueue.remove() as NativeObjectReference
+        try {
+            while (true) {
+                val reference: NativeObjectReference =
+                    referenceQueue.remove() as NativeObjectReference
                 reference.cleanup()
-            } catch (e: InterruptedException) {
-                // Restores the interrupted status.
-                Thread.currentThread().interrupt()
-                // FIXME implement platform Logger and log the below with fatal level
-                println(
-                    "The FinalizerRunnable thread has been interrupted." +
-                        " Native resources cannot be freed anymore"
-                )
-                break
             }
+        } catch (e: InterruptedException) {
+            // Restores the interrupted status.
+            Thread.currentThread().interrupt()
+            // FIXME implement platform Logger and log the below with fatal level
+            println(
+                "The FinalizerRunnable thread has been interrupted." +
+                    " Native resources cannot be freed anymore"
+            )
         }
     }
 }

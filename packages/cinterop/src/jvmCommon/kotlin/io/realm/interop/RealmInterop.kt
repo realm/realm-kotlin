@@ -214,7 +214,8 @@ actual object RealmInterop {
                         callback.onChange(LongPointerWrapper(pointer))
                     }
                 }
-            )
+            ),
+            managed = false
         )
     }
 
@@ -227,7 +228,8 @@ actual object RealmInterop {
                         callback.onChange(LongPointerWrapper(pointer))
                     }
                 }
-            )
+            ),
+            managed = false
         )
     }
 

@@ -576,7 +576,8 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
                 // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
                 null
-            )
+            ),
+            managed = false
         )
     }
 
@@ -599,7 +600,8 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
                 // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
                 null
-            )
+            ),
+            managed = false
         )
     }
 

@@ -54,9 +54,8 @@ kotlin {
     }
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
-        kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.freeCompilerArgs =
-            listOf(*kotlinOptions.freeCompilerArgs.toTypedArray(), "-Xopt-in=kotlin.RequiresOptIn")
+        kotlinOptions.jvmTarget = Versions.jvmTarget
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
 }
 
