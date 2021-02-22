@@ -20,7 +20,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.math.BigInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -130,17 +129,14 @@ class CinteropTest {
         realmc.propertyArrayArray_setitem(props, 1, properties_2)
 
         val realmSchemaNew = realmc.realm_schema_new(classes, 2, props)
-        // FIXME Fix uint64_t of realm_schema_validate to avoid the need for toBigInteger. Put a
-        //  suggestion for the C-API, but maybe we should just truncate all uint64_t to long in
-        //  realm.i
-        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
 
         val config: Long = realmc.realm_config_new()
 
         realmc.realm_config_set_path(config, context.filesDir.absolutePath + "/c_api_test.realm")
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
-        realmc.realm_config_set_schema_version(config, BigInteger("1"))
+        realmc.realm_config_set_schema_version(config, 1)
 
         val realm = realmc.realm_open(config)
 
@@ -149,7 +145,7 @@ class CinteropTest {
 
         // Schema validates
         val schema = realmc.realm_get_schema(realm)
-        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
+        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
         realmc.realm_release(schema)
 
         assertEquals(2, realmc.realm_get_num_classes(realm))
@@ -306,14 +302,14 @@ class CinteropTest {
         realmc.propertyArrayArray_setitem(props, 1, properties_2)
 
         val realmSchemaNew = realmc.realm_schema_new(classes, 2, props)
-        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
 
         val config: Long = realmc.realm_config_new()
 
         realmc.realm_config_set_path(config, context.filesDir.absolutePath + "/c_api_link.realm")
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
-        realmc.realm_config_set_schema_version(config, BigInteger("1"))
+        realmc.realm_config_set_schema_version(config, 1)
 
         val realm = realmc.realm_open(config)
 
@@ -322,7 +318,7 @@ class CinteropTest {
 
         // Schema validates
         val schema = realmc.realm_get_schema(realm)
-        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toBigInteger()))
+        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
         realmc.realm_release(schema)
 
         assertEquals(2, realmc.realm_get_num_classes(realm))

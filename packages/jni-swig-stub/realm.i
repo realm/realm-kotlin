@@ -15,6 +15,9 @@
 %include "stdint.i"
 %include "arrays_java.i"
 
+// We do not want to use BigInteger for uintt64_t as we are not expecting overflows
+%apply int64_t {uint64_t};
+
 // Manual imports in java module class
 %pragma(java) moduleimports=%{
 %}

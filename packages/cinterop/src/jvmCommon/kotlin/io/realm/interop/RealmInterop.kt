@@ -87,7 +87,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
-        realmc.realm_config_set_schema_version((config as LongPointerWrapper).ptr, version.toBigInteger())
+        realmc.realm_config_set_schema_version((config as LongPointerWrapper).ptr, version)
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
@@ -104,7 +104,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
-        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeValue.toBigInteger())
+        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeValue.toLong())
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
