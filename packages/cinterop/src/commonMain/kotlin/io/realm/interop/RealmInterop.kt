@@ -42,7 +42,9 @@ expect object RealmInterop {
     fun realm_get_schema(realm: NativePointer): NativePointer
     fun realm_get_num_classes(realm: NativePointer): Long
 
-    fun realm_release(o: NativePointer)
+    fun realm_release(p: NativePointer)
+
+    fun realm_is_closed(realm: NativePointer): Boolean
 
     fun realm_begin_write(realm: NativePointer)
     fun realm_commit(realm: NativePointer)

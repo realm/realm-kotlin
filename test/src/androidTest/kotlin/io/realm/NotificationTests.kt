@@ -56,6 +56,7 @@ class NotificationTests {
         realm.objects(Sample::class).delete()
         realm.commitTransaction()
         assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+        realm.close()
     }
 
     @Test

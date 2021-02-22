@@ -7,7 +7,8 @@ buildscript {
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
-        classpath("com.android.tools.build:gradle:${Versions.Android.buildTools}")
+        classpath(
+            "com.android.tools.build:gradle:${Versions.Android.buildTools}")
     }
 }
 group = "io.realm.example"

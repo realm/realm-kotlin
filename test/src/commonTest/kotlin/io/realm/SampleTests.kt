@@ -27,6 +27,7 @@ import test.C
 import test.Entities
 import test.Sample
 import test.Subset
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -52,6 +53,11 @@ class SampleTests {
         realm.objects(Sample::class).delete()
         realm.commitTransaction()
         assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+    }
+
+    @AfterTest
+    fun tearDown() {
+        realm.close()
     }
 
     @Test

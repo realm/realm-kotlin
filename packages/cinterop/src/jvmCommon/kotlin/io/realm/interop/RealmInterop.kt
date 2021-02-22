@@ -18,7 +18,6 @@ package io.realm.interop
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
-import io.realm.interop.RealmInterop.cptr
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
@@ -116,8 +115,12 @@ actual object RealmInterop {
         return realmc.realm_get_num_classes((realm as LongPointerWrapper).ptr)
     }
 
-    actual fun realm_release(o: NativePointer) {
-        realmc.realm_release((o as LongPointerWrapper).ptr)
+    actual fun realm_release(p: NativePointer) {
+        realmc.realm_release((p as LongPointerWrapper).ptr)
+    }
+
+    actual fun realm_is_closed(realm: NativePointer): Boolean {
+        return realmc.realm_is_closed((realm as LongPointerWrapper).ptr)
     }
 
     actual fun realm_begin_write(realm: NativePointer) {
@@ -211,7 +214,8 @@ actual object RealmInterop {
                         callback.onChange(LongPointerWrapper(pointer))
                     }
                 }
-            )
+            ),
+            managed = false
         )
     }
 
@@ -224,7 +228,8 @@ actual object RealmInterop {
                         callback.onChange(LongPointerWrapper(pointer))
                     }
                 }
-            )
+            ),
+            managed = false
         )
     }
 
