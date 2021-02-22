@@ -108,7 +108,7 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
-        val sampleModel = kClazz.newInstance()!!
+        val sampleModel = kClazz.getDeclaredConstructor().newInstance()!!
         val companionObject = sampleModel::class.companionObjectInstance
 
         assertTrue(companionObject is RealmObjectCompanion)
@@ -130,8 +130,9 @@ class GenerationExtensionTest {
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
         )
+        assertEquals(properties.size, table.properties.size)
         table.properties.map { property ->
-            val expectedType = properties.get(property.name) ?: error("Property not found: ${property.name}")
+            val expectedType = properties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
 

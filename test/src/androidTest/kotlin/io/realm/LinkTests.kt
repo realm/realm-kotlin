@@ -36,6 +36,7 @@ class LinkTests {
     fun setup() {
         val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
         realm = Realm.open(configuration)
+        // TODO Reuse infrastructure for defining temporary dirs from https://github.com/realm/realm-kotlin/pull/132
         // FIXME Cleaning up realm to overcome lack of support for deleting actual files
         //  https://github.com/realm/realm-kotlin/issues/95
         realm.beginTransaction()

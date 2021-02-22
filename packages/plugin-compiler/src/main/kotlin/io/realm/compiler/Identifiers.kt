@@ -45,8 +45,11 @@ internal object Names {
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
 
     // Schema related names
+    val CLASS_FLAG_NORMAL = Name.identifier("RLM_CLASS_NORMAL")
     val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
     val PROPERTY_FLAG_NORMAL = Name.identifier("RLM_PROPERTY_NORMAL")
+    val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
+    val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
 }
 
 internal object FqNames {

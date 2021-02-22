@@ -25,11 +25,14 @@ import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.TABLE
+import io.realm.compiler.Names.CLASS_FLAG_NORMAL
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
+import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_FLAG_NORMAL
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
+import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
@@ -145,7 +148,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     UNDEFINED_OFFSET,
                                     UNDEFINED_OFFSET,
                                     classFlag.defaultType,
-                                    classFlags.first { it.name == Name.identifier("RLM_CLASS_NORMAL") }.symbol
+                                    classFlags.first { it.name == CLASS_FLAG_NORMAL }.symbol
                                 )
                             )
                         )
@@ -161,9 +164,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     it.name.identifier.toLowerCaseAsciiOnly()
                                         .contains(value.first)
                                 } ?: error("Unknown type ${value.first}")
-                                val objectType = propertyTypes.firstOrNull {
-                                    it.name.identifier == "RLM_PROPERTY_TYPE_OBJECT"
-                                } ?: error("Unknown type ${value.first}")
+                                val objectType = propertyTypes.firstOrNull { it.name == PROPERTY_TYPE_OBJECT } ?: error("Unknown type ${value.first}")
                                 val property = value.second
                                 val backingField = property.backingField ?: error("Property without backing field or type")
                                 val nullable = backingField.type.isNullable()
@@ -198,7 +199,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                             UNDEFINED_OFFSET,
                                             UNDEFINED_OFFSET,
                                             collectionType.defaultType,
-                                            collectionTypes.first { it.name.identifier == "RLM_COLLECTION_TYPE_NONE" }.symbol
+                                            collectionTypes.first { it.name == PROPERTY_COLLECTION_TYPE_NONE }.symbol
                                         )
                                     )
                                     // Link target

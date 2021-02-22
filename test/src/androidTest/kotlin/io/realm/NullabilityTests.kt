@@ -35,6 +35,7 @@ class NullabilityTests {
     fun setup() {
         val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
         realm = Realm.open(configuration)
+        // TODO Reuse infrastructure for defining temporary dirs from https://github.com/realm/realm-kotlin/pull/132
         // FIXME Cleaning up realm to overcome lack of support for deleting actual files
         //  https://github.com/realm/realm-kotlin/issues/95
         realm.beginTransaction()
@@ -48,8 +49,9 @@ class NullabilityTests {
         realm.beginTransaction()
         val nullability = realm.create(Nullability::class)
         assertNull(nullability.stringNullable)
-        // What is the default semantics for this? Can we fix it before default values
-        assertNull(nullability.stringNullable)
+        // TODO We cannot verify this before implementing support for default values
+        //  https://github.com/realm/realm-kotlin/issues/106
+        // assertNonNull(nullability.stringNonNullable)
 
         nullability.stringNullable = "Realm"
         assertNotNull(nullability.stringNullable)

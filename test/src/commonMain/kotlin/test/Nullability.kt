@@ -21,7 +21,6 @@ import io.realm.runtimeapi.RealmObject
 
 @RealmObject
 class Nullability : RealmModel {
-    var stringNullable: String? = ""
-
+    var stringNullable: String? = null
     var stringNonNullable: String = ""
 }
