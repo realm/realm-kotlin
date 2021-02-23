@@ -21,6 +21,9 @@ import io.realm.runtimeapi.RealmObject
 
 @RealmObject
 class Nullability : RealmModel {
+    // TODO Need to test for all types, but requires more though on how to structure tests to ensure
+    //  that we break all tests when introducing new types, etc.
+    //  https://github.com/realm/realm-kotlin/issues/133
     var stringNullable: String? = null
     var stringNonNullable: String = ""
 }

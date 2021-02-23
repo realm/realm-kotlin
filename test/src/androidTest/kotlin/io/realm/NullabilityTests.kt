@@ -44,7 +44,6 @@ class NullabilityTests {
         Utils.deleteTempDir(tmpDir)
     }
 
-
     @Test
     fun nullability() {
         realm.beginTransaction()
@@ -65,6 +64,7 @@ class NullabilityTests {
         // io.realm.internal.RealmObjectHelper.realm_set_value(nullability as RealmModelInternal, Nullability::stringNonNullable, null)
         // but that would require
         // implementation("io.realm.kotlin:cinterop:${Realm.version}")
+        //  https://github.com/realm/realm-kotlin/issues/134
 
         nullability.stringNonNullable = "Realm"
         realm.commitTransaction()

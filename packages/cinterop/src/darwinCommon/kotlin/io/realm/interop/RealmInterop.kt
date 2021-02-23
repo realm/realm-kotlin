@@ -53,7 +53,6 @@ import realm_wrapper.realm_get_last_error
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
-import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type

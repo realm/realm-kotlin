@@ -20,8 +20,8 @@ package io.realm
 import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
 import test.Sample
-import kotlin.test.BeforeTest
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

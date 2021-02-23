@@ -118,6 +118,9 @@ class Realm {
                 RealmInterop.realm_object_create(dbPointer!!, key)
             )
         } catch (e: RuntimeException) {
+            // FIXME Throw proper exception
+            //  https://github.com/realm/realm-kotlin/issues/70
+            @Suppress("TooGenericExceptionThrown")
             throw RuntimeException("Failed to create object of type '$objectType'", e)
         }
     }
