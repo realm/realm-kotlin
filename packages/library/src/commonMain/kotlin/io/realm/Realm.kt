@@ -118,7 +118,7 @@ class Realm {
                 RealmInterop.realm_object_create(dbPointer!!, key)
             )
         } catch (e: RuntimeException) {
-            error("Failed to create object of type '$objectType'")
+            throw RuntimeException("Failed to create object of type '$objectType'", e)
         }
     }
 

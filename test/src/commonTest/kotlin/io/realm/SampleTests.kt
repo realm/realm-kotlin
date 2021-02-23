@@ -32,24 +32,20 @@ class SampleTests {
     @RealmModule(Sample::class)
     class MySchema
 
+    lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        tmpDir = Utils.createTempDir()
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
-        // TODO Reuse infrastructure for defining temporary dirs from https://github.com/realm/realm-kotlin/pull/132
-        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
-        //  https://github.com/realm/realm-kotlin/issues/95
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
-        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
     }
 
     @AfterTest
     fun tearDown() {
         realm.close()
+        Utils.deleteTempDir(tmpDir)
     }
 
     @Test
@@ -74,9 +70,6 @@ class SampleTests {
 
     @Test
     fun delete() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        val realm = Realm.open(configuration)
-
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         Realm.delete(sample)

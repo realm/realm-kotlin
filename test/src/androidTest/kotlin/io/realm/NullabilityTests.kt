@@ -18,9 +18,9 @@ package io.realm
 
 import io.realm.runtimeapi.RealmModule
 import test.Nullability
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -29,20 +29,21 @@ class NullabilityTests {
     @RealmModule(Nullability::class)
     class MySchema
 
+    lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        tmpDir = Utils.createTempDir()
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
-        // TODO Reuse infrastructure for defining temporary dirs from https://github.com/realm/realm-kotlin/pull/132
-        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
-        //  https://github.com/realm/realm-kotlin/issues/95
-        realm.beginTransaction()
-        realm.objects(Nullability::class).delete()
-        realm.commitTransaction()
-        assertEquals(0, realm.objects(Nullability::class).size, "Realm is not empty")
     }
+
+    @AfterTest
+    fun tearDown() {
+        Utils.deleteTempDir(tmpDir)
+    }
+
 
     @Test
     fun nullability() {
