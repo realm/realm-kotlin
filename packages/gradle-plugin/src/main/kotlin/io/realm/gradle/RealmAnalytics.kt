@@ -101,6 +101,8 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
         val minSDK = projectAndroidExtension?.defaultConfig?.minSdkVersion?.apiString
         val targetSDK = projectAndroidExtension?.defaultConfig?.targetSdkVersion?.apiString
 
+        // FIXME Improve metrics with details about targets, etc.
+        //  https://github.com/realm/realm-kotlin/issues/127
         return """{
                    "event": "$EVENT_NAME",
                    "properties": {
@@ -109,6 +111,7 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
                       "Anonymized MAC Address": "$userId",
                       "Anonymized Bundle ID": "$appId",
                       "Binding": "kotlin",
+                      "Language": "kotlin",
                       "Realm Version": "${RealmCompilerSubplugin.version}",
                       "Host OS Type": "$osType",
                       "Host OS Version": "$osVersion",

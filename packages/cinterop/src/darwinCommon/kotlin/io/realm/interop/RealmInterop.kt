@@ -52,9 +52,13 @@ import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
+import realm_wrapper.realm_release
+import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
+import kotlin.native.concurrent.freeze
+import kotlin.native.internal.createCleaner
 
 private fun throwOnError() {
     memScoped {
@@ -78,8 +82,16 @@ private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointe
 }
 
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
-class CPointerWrapper(ptr: CPointer<out CPointed>?) : NativePointer {
+
+class CPointerWrapper(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer {
     val ptr: CPointer<out CPointed>? = throwOnError(ptr)
+
+    @OptIn(ExperimentalStdlibApi::class)
+    val cleaner = if (managed) {
+        createCleaner(ptr.freeze()) {
+            realm_release(it)
+        }
+    } else null
 }
 
 // Convenience type cast
@@ -233,8 +245,12 @@ actual object RealmInterop {
         return realm_wrapper.realm_get_num_classes(realm.cptr()).toLong()
     }
 
-    actual fun realm_release(o: NativePointer) {
-        realm_wrapper.realm_release((o as CPointerWrapper).ptr)
+    actual fun realm_release(p: NativePointer) {
+        realm_wrapper.realm_release((p as CPointerWrapper).ptr)
+    }
+
+    actual fun realm_is_closed(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_closed(realm.cptr())
     }
 
     actual fun realm_begin_write(realm: NativePointer) {
@@ -457,7 +473,8 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
                 // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
                 null
-            )
+            ),
+            managed = false
         )
     }
 
@@ -480,7 +497,8 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
                 // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
                 null
-            )
+            ),
+            managed = false
         )
     }
 

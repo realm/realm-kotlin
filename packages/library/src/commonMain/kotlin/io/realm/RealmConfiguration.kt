@@ -30,10 +30,9 @@ class RealmConfiguration private constructor(
     val tables: List<Table> = listOf()
 ) {
 
-    internal val nativeConfig: NativePointer
+    internal val nativeConfig: NativePointer = RealmInterop.realm_config_new()
 
     init {
-        nativeConfig = RealmInterop.realm_config_new()
         RealmInterop.realm_config_set_path(nativeConfig, path!!)
         RealmInterop.realm_config_set_schema_mode(nativeConfig, SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC)
         RealmInterop.realm_config_set_schema_version(nativeConfig, version)
@@ -42,7 +41,7 @@ class RealmConfiguration private constructor(
     }
 
     data class Builder(
-        var path: String? = null,
+        var path: String? = null, // Full path for Realm (directory + name)
         var name: String = "default", // Optional Realm name (default is 'default')
         var schema: Any? = null,
     ) {

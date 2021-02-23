@@ -52,6 +52,11 @@ kotlin {
             }
         }
     }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
+        kotlinOptions.jvmTarget = Versions.jvmTarget
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    }
 }
 
 // Android configuration

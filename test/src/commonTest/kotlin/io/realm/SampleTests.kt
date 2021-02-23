@@ -21,6 +21,7 @@ import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
 import test.Sample
 import kotlin.test.BeforeTest
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -44,6 +45,11 @@ class SampleTests {
         realm.objects(Sample::class).delete()
         realm.commitTransaction()
         assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+    }
+
+    @AfterTest
+    fun tearDown() {
+        realm.close()
     }
 
     @Test
