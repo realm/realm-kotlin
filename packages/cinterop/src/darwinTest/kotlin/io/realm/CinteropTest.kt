@@ -23,6 +23,7 @@ import io.realm.interop.PropertyFlag
 import io.realm.interop.PropertyType
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
+import io.realm.interop.SchemaValidationMode
 import io.realm.interop.Table
 import io.realm.interop.set
 import io.realm.interop.toKString
@@ -55,6 +56,7 @@ import realm_wrapper.realm_config_set_schema_version
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_class
 import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_get_library_version
 import realm_wrapper.realm_get_num_classes
 import realm_wrapper.realm_get_schema
 import realm_wrapper.realm_open
@@ -72,13 +74,18 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+// Direct tests of the 'cinterop' low level C-API wrapper for Darwin platforms.
+// These test are not thought as being exhaustive, but is more to provide a playground for
+// experiments and maybe more relevant for reproduction of C-API issues.
 class CinteropTest {
 
     @Test
+    fun version() {
+        assertEquals("10.4.0", realm_get_library_version()!!.toKString())
+    }
+
+    @Test
     fun cinterop_cinterop() {
-
-        println(realm_wrapper.realm_get_library_version()!!.toKString())
-
         memScoped {
             val prop_1_1 = alloc<realm_property_info_t>().apply {
                 // All strings need to be initialized
@@ -104,7 +111,7 @@ class CinteropTest {
             val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
 
             assertNoError()
-            assertTrue(realm_schema_validate(realmSchemaNew))
+            assertTrue(realm_schema_validate(realmSchemaNew, SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC.nativeValue.toULong()))
 
             val config = realm_config_new()
             realm_config_set_path(config, "c_api_test.realm")

@@ -18,15 +18,18 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.runtimeapi.Mediator
+import io.realm.internal.Mediator
+import io.realm.internal.RealmObjectCompanion
+import io.realm.interop.ClassFlag
+import io.realm.interop.PropertyType
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
@@ -105,22 +108,34 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
-        val sampleModel = kClazz.newInstance()!!
+        val sampleModel = kClazz.getDeclaredConstructor().newInstance()!!
         val companionObject = sampleModel::class.companionObjectInstance
 
-        assertTrue(companionObject is RealmCompanion)
+        assertTrue(companionObject is RealmObjectCompanion)
 
-        val expected = "{\"name\": \"Sample\", \"properties\": [" +
-            "{\"stringField\": {\"type\": \"string\", \"nullable\": \"true\"}}," +
-            "{\"byteField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
-            "{\"charField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
-            "{\"shortField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
-            "{\"intField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
-            "{\"longField\": {\"type\": \"int\", \"nullable\": \"true\"}}," +
-            "{\"booleanField\": {\"type\": \"boolean\", \"nullable\": \"true\"}}," +
-            "{\"floatField\": {\"type\": \"float\", \"nullable\": \"true\"}}," +
-            "{\"doubleField\": {\"type\": \"double\", \"nullable\": \"true\"}}]}"
-        assertEquals(expected, companionObject.`$realm$schema`())
+        val table = companionObject.`$realm$schema`()
+        assertEquals("Sample", table.name)
+        assertEquals("", table.primaryKey)
+        assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
+        assertEquals(sampleModel::class.declaredMemberProperties.size, table.properties.size)
+        val properties = mapOf(
+            "stringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "byteField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "charField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "shortField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "intField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "longField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "booleanField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "floatField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+        )
+        assertEquals(properties.size, table.properties.size)
+        table.properties.map { property ->
+            val expectedType = properties[property.name] ?: error("Property not found: ${property.name}")
+            assertEquals(expectedType, property.type)
+        }
+
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)
         assertEquals(kClazz, newInstance.javaClass)
@@ -176,13 +191,19 @@ class GenerationExtensionTest {
         assertNotNull(schema)
         assertEquals(3, schema.size)
 
+        val kClassA = result.classLoader.loadClass("modules.input.A")
+        assertNotNull(kClassA)
+        val a = entitiesModule.newInstance(kClassA.kotlin)
+        assertNotNull(a)
+
         val kClassB = result.classLoader.loadClass("modules.input.B")
         assertNotNull(kClassB)
         assertNotNull(entitiesModule.newInstance(kClassB.kotlin))
 
         val kClassC = result.classLoader.loadClass("modules.input.C")
         assertNotNull(kClassC)
-        assertNotNull(entitiesModule.newInstance(kClassC.kotlin))
+        val c = entitiesModule.newInstance(kClassC.kotlin)
+        assertNotNull(c)
 
         assertNotEquals(kClassB, kClassC)
 
@@ -193,7 +214,12 @@ class GenerationExtensionTest {
         val subsetSchema: List<Any> = subsetModule.schema()
         assertNotNull(subsetSchema)
         assertEquals(2, subsetSchema.size)
-
+        assertEquals(
+            listOf(a, c)
+                .map { (it::class.companionObjectInstance as RealmObjectCompanion).`$realm$schema`() }
+                .toSet(),
+            subsetSchema.toSet()
+        )
         inputs.assertGeneratedIR()
     }
 

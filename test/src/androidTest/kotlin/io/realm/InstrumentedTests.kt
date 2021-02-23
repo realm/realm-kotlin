@@ -37,11 +37,14 @@ class InstrumentedTests {
     class MySchema
 
     lateinit var tmpDir: String
+    lateinit var realm: Realm
 
     @ExperimentalPathApi
     @Before
     fun setup() {
         tmpDir = Utils.createTempDir()
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        realm = Realm.open(configuration)
     }
 
     @After
@@ -60,8 +63,6 @@ class InstrumentedTests {
     // https://youtrack.jetbrains.com/issue/KT-34535
     @Test
     fun createAndUpdate() {
-        val realm = openRealmFromTmpDir()
-
         val s = "Hello, World!"
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
@@ -73,8 +74,6 @@ class InstrumentedTests {
 
     @Test
     fun query() {
-        val realm = openRealmFromTmpDir()
-
         val s = "Hello, World!"
 
         realm.beginTransaction()
@@ -95,8 +94,6 @@ class InstrumentedTests {
 
     @Test
     fun query_parseErrorThrows() {
-        val realm = openRealmFromTmpDir()
-
         val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
         // Will first fail when accessing the actual elements as the query is lazily evaluated
         // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationException as
@@ -109,8 +106,6 @@ class InstrumentedTests {
 
     @Test
     fun query_delete() {
-        val realm = openRealmFromTmpDir()
-
         realm.beginTransaction()
         realm.create(Sample::class).run { stringField = "Hello, World!" }
         realm.create(Sample::class).run { stringField = "Hello, Realm!" }
@@ -128,8 +123,6 @@ class InstrumentedTests {
 
     @Test
     fun delete() {
-        val realm = openRealmFromTmpDir()
-
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         Realm.delete(sample)
@@ -140,10 +133,5 @@ class InstrumentedTests {
             sample.stringField = "sadf"
         }
         realm.commitTransaction()
-    }
-
-    private fun openRealmFromTmpDir(): Realm {
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
-        return Realm.open(configuration)
     }
 }

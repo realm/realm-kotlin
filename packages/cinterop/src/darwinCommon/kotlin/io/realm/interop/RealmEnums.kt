@@ -16,9 +16,14 @@
 
 package io.realm.interop
 
+import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_schema_mode_e
 
-// Interface to hold C API enumerated constant reference by cinterop constant
+// Interfaces to hold C API enum from cinterop
+interface NativeEnum<T : Enum<T>> {
+    val nativeValue: Enum<T>
+}
+// Interfaces to hold C API enumerated constant from cinterop
 interface NativeEnumerated {
     val nativeValue: UInt
 }
@@ -26,13 +31,14 @@ interface NativeEnumerated {
 // FIXME API-SCHEMA On JVM actuals cannot be combined in same file. Consider replicating that split here too,
 //  but await final placement.
 
-actual enum class SchemaMode(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_SCHEMA_MODE_AUTOMATIC(realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC.value),
-    RLM_SCHEMA_MODE_IMMUTABLE(realm_schema_mode_e.RLM_SCHEMA_MODE_IMMUTABLE.value),
-    RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE(realm_schema_mode_e.RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE.value),
-    RLM_SCHEMA_MODE_RESET_FILE(realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE.value),
-    RLM_SCHEMA_MODE_ADDITIVE(realm_schema_mode_e.RLM_SCHEMA_MODE_ADDITIVE.value),
-    RLM_SCHEMA_MODE_MANUAL(realm_schema_mode_e.RLM_SCHEMA_MODE_MANUAL.value),
+actual enum class SchemaMode(override val nativeValue: realm_schema_mode) : NativeEnum<realm_schema_mode> {
+    RLM_SCHEMA_MODE_AUTOMATIC(realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC),
+    RLM_SCHEMA_MODE_IMMUTABLE(realm_schema_mode_e.RLM_SCHEMA_MODE_IMMUTABLE),
+    RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE(realm_schema_mode_e.RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE),
+    RLM_SCHEMA_MODE_RESET_FILE(realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE),
+    RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED(realm_schema_mode_e.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED),
+    RLM_SCHEMA_MODE_ADDITIVE_EXPLICIT(realm_schema_mode_e.RLM_SCHEMA_MODE_ADDITIVE_EXPLICIT),
+    RLM_SCHEMA_MODE_MANUAL(realm_schema_mode_e.RLM_SCHEMA_MODE_MANUAL),
 }
 
 actual enum class ClassFlag(override val nativeValue: UInt) : NativeEnumerated {
@@ -61,4 +67,10 @@ actual enum class PropertyFlag(override val nativeValue: UInt) : NativeEnumerate
     RLM_PROPERTY_NULLABLE(realm_wrapper.RLM_PROPERTY_NULLABLE),
     RLM_PROPERTY_PRIMARY_KEY(realm_wrapper.RLM_PROPERTY_PRIMARY_KEY),
     RLM_PROPERTY_INDEXED(realm_wrapper.RLM_PROPERTY_INDEXED),
+}
+
+actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeEnumerated {
+    RLM_SCHEMA_VALIDATION_BASIC(realm_wrapper.RLM_SCHEMA_VALIDATION_BASIC),
+    RLM_SCHEMA_VALIDATION_SYNC(realm_wrapper.RLM_SCHEMA_VALIDATION_SYNC),
+    RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_wrapper.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),
 }

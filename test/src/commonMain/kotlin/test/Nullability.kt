@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package io.realm.runtimeapi
+package test
 
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-interface RealmCompanion {
-    // FIXME MEDIATOR Should be properly types i.e. io.realm.interop.Table, which require it to be in the cinterop module
-    fun `$realm$schema`(): String // TODO change to use cinterop Table class instead or a marker interface that Table will be implementing
-    fun `$realm$newInstance`(): Any
+import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
+
+@RealmObject
+class Nullability : RealmModel {
+    // TODO Need to test for all types, but requires more though on how to structure tests to ensure
+    //  that we break all tests when introducing new types, etc.
+    //  https://github.com/realm/realm-kotlin/issues/133
+    var stringNullable: String? = null
+    var stringNonNullable: String = ""
 }

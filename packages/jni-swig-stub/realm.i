@@ -15,6 +15,9 @@
 %include "stdint.i"
 %include "arrays_java.i"
 
+// We do not want to use BigInteger for uintt64_t as we are not expecting overflows
+%apply int64_t {uint64_t};
+
 // Manual imports in java module class
 %pragma(java) moduleimports=%{
 %}
@@ -135,17 +138,11 @@ struct realm_size_t {
 %ignore "realm_get_values";
 %ignore "realm_set_values";
 // Not yet available in library
-%ignore "realm_get_async_error";
-%ignore "realm_get_last_error_as_async_error";
-%ignore "realm_config_set_encryption_key";
-%ignore "realm_config_set_disable_format_upgrade";
 %ignore "realm_config_set_sync_config";
-%ignore "realm_config_set_force_sync_history";
+%ignore "realm_update_schema_advanced";
 %ignore "realm_config_set_audit_factory";
-%ignore "realm_is_writable";
 %ignore "_realm_get_schema_native";
 %ignore "realm_find_primary_key_property";
-%ignore "realm_object_get_table";
 %ignore "_realm_list_from_native_copy";
 %ignore "_realm_list_from_native_move";
 %ignore "realm_list_assign";

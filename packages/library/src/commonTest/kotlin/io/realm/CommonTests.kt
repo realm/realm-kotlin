@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.model.Person
+import io.realm.model.Schema
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,7 +33,7 @@ class CommonTests {
     fun createObject() {
         val configuration = RealmConfiguration.Builder()
             .name("createObject")
-            .factory(TestUtils.factory())
+            .schema(Schema())
             .build()
 
         val realm = Realm.open(configuration)
@@ -51,7 +52,7 @@ class CommonTests {
     fun queryObjects() {
         val configuration = RealmConfiguration.Builder()
             .name("queryObjects17")
-            .factory(TestUtils.factory())
+            .schema(Schema())
             .build()
 
         val realm = Realm.open(configuration)
@@ -67,7 +68,7 @@ class CommonTests {
         managedPerson2.age = 17
         realm.commitTransaction()
 
-        val objects: RealmResults<Person> = realm.objects<Person>(Person::class, "name beginswith \"Foo\" SORT(name DESCENDING)")
+        val objects: RealmResults<Person> = realm.objects<Person>(Person::class).query("name beginswith \"Foo\" SORT(name DESCENDING)")
 
         // FIXME We are never deleting objects so the count will keep increasing
         //  https://github.com/realm/realm-kotlin/issues/67

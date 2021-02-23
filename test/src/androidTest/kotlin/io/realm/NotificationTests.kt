@@ -22,6 +22,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import test.Sample
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,19 +45,18 @@ class NotificationTests {
     @RealmModule(Sample::class)
     class MySchema
 
+    lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
 
     @BeforeTest
     fun setup() {
-        configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        val realm = Realm.open(configuration)
-        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
-        //  https://github.com/realm/realm-kotlin/issues/95
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
-        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
-        realm.close()
+        tmpDir = Utils.createTempDir()
+        configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Utils.deleteTempDir(tmpDir)
     }
 
     @Test
