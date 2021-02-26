@@ -2,8 +2,6 @@
 MODULE_FRAGMENT name:<main>
   FILE fqName:modules.input fileName:input/Entities.kt
     CLASS CLASS name:A modality:OPEN visibility:public superTypes:[io.realm.runtimeapi.RealmModel; io.realm.runtimeapi.RealmModelInternal]
-      annotations:
-        RealmObject
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:modules.input.A
       CONSTRUCTOR visibility:public <> () returnType:modules.input.A [primary]
         BLOCK_BODY
@@ -180,8 +178,6 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: modules.input.A declared in modules.input.A.<set-$realm$Schema>' type=modules.input.A origin=null
               value: GET_VAR '<set-?>: kotlin.Any declared in modules.input.A.<set-$realm$Schema>' type=kotlin.Any origin=null
     CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.runtimeapi.RealmModel; io.realm.runtimeapi.RealmModelInternal]
-      annotations:
-        RealmObject
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:modules.input.B
       CONSTRUCTOR visibility:public <> () returnType:modules.input.B [primary]
         BLOCK_BODY
@@ -358,8 +354,6 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: modules.input.B declared in modules.input.B.<set-$realm$Schema>' type=modules.input.B origin=null
               value: GET_VAR '<set-?>: kotlin.Any declared in modules.input.B.<set-$realm$Schema>' type=kotlin.Any origin=null
     CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.runtimeapi.RealmModel; io.realm.runtimeapi.RealmModelInternal]
-      annotations:
-        RealmObject
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:modules.input.C
       CONSTRUCTOR visibility:public <> () returnType:modules.input.C [primary]
         BLOCK_BODY
