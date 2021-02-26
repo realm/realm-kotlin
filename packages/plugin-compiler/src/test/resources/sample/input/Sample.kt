@@ -15,10 +15,9 @@
  */
 
 package sample.input
-import io.realm.runtimeapi.RealmObject
+import io.realm.runtimeapi.RealmModel
 
-@RealmObject
-class Sample {
+class Sample : RealmModel {
     var stringField: String? = "Realm"
     var byteField: Byte? = 0xA
     var charField: Char? = 'a'
@@ -32,7 +31,6 @@ class Sample {
     fun dumpSchema() : String = "${Sample.`$realm$schema`()}"
 }
 
-@RealmObject
-class Child {
+class Child : RealmModel {
     var name: String? = "Child-default"
 }

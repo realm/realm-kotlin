@@ -22,7 +22,7 @@ import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
 import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
+import io.realm.compiler.FqNames.REALM_MODEL_INTERNAL_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.TABLE
 import io.realm.compiler.Names.CLASS_FLAG_NORMAL
@@ -80,7 +80,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
-    private val realmModelInternal = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERFACE)
+    private val realmModelInternal = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERNAL_INTERFACE)
     private val nullableNativePointerInterface = pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
         .symbol.createType(true, emptyList())
     private val realmObjectCompanionInterface = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)

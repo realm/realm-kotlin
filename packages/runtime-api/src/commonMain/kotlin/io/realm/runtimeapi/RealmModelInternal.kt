@@ -16,8 +16,6 @@
 
 package io.realm.runtimeapi
 
-annotation class RealmObject
-
 /**
  * This interface is added by the compiler plugin to all [RealmObject] annotated classes, it contains
  * internal properties of the model.

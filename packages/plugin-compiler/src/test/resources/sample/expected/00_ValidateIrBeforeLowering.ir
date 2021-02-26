@@ -2,8 +2,6 @@
 MODULE_FRAGMENT name:<main>
   FILE fqName:sample.input fileName:input/Sample.kt
     CLASS CLASS name:Sample modality:OPEN visibility:public superTypes:[io.realm.runtimeapi.RealmModel; io.realm.runtimeapi.RealmModelInternal]
-      annotations:
-        RealmObject
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample
       CONSTRUCTOR visibility:public <> () returnType:sample.input.Sample [primary]
         BLOCK_BODY
@@ -755,8 +753,6 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-$realm$Schema>' type=sample.input.Sample origin=null
               value: GET_VAR '<set-?>: kotlin.Any declared in sample.input.Sample.<set-$realm$Schema>' type=kotlin.Any origin=null
     CLASS CLASS name:Child modality:OPEN visibility:public superTypes:[io.realm.runtimeapi.RealmModel; io.realm.runtimeapi.RealmModelInternal]
-      annotations:
-        RealmObject
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
       CONSTRUCTOR visibility:public <> () returnType:sample.input.Child [primary]
         BLOCK_BODY
