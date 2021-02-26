@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
@@ -73,10 +74,7 @@ val ClassDescriptor.isRealmObjectCompanion
     get() = isCompanionObject && (containingDeclaration as ClassDescriptor).hasRealmModelInterface
 
 val ClassDescriptor.hasRealmModelInterface
-    get() = getSuperInterfaces().isNotEmpty()
-
-val IrClass.isRealmModelAnnotated
-    get() = annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)
+    get() = getSuperInterfaces().firstOrNull { it.fqNameSafe == FqNames.REALM_MODEL_INTERFACE } != null
 
 val IrClass.isRealmModuleAnnotated
     get() = annotations.hasAnnotation(FqNames.REALM_MODULE_ANNOTATION)
