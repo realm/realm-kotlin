@@ -16,11 +16,11 @@
 
 package io.realm
 
+import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
 import io.realm.internal.link
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
-import io.realm.runtimeapi.Mediator
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
@@ -45,7 +45,7 @@ class RealmResults<T : RealmModel> constructor(
     override fun get(index: Int): T {
         val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
         val model = schema.newInstance(clazz) as RealmModelInternal
-        model.link(realm, clazz, link)
+        model.link(realm, schema, clazz, link)
         return model as T
     }
 

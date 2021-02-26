@@ -13,11 +13,11 @@ import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_MUTABLE_COLLECTION
 import io.realm.compiler.FqNames.KOTLIN_COLLECTION_LIST
 import io.realm.compiler.FqNames.REALM_MEDIATOR_INTERFACE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.Names.COMPANION_NEW_INSTANCE_METHOD
-import io.realm.compiler.Names.COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_MEDIATOR_MAPPING_PROPERTY
 import io.realm.compiler.Names.REALM_MEDIATOR_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_MEDIATOR_SCHEMA_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -39,8 +39,7 @@ import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSet
-import org.jetbrains.kotlin.ir.builders.irTemporaryVar
-import org.jetbrains.kotlin.ir.builders.irTemporaryVarDeclaration
+import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOriginImpl
@@ -88,7 +87,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
     private lateinit var arrayListCtor: IrConstructorSymbol
     private lateinit var iteratorIrClass: IrClass
 
-    private val realmCompanionIrClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
+    private val realmObjectCompanionIrClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
     private val listIrClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTION_LIST)
     private val mediatorIrClass = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE)
 
@@ -104,16 +103,13 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
 
     init {
         when {
+            // FIXME Optimize - We should rework building the companion map by calling `mapOf` which
+            //  generated the platform abstracted map for us.
             pluginContext.platform.isNative() -> {
-                hashMapIrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_HASHMAP)
                 hashMapIrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_HASHMAP)
                 mapIteratorFunction = pluginContext.lookupFunctionInClass(KOTLIN_COLLECTIONS_ABSTRACT_COLLECTION, "iterator")
                 arrayListIrClassSymbol = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_ARRAY_LIST).symbol
 
-                arrayListCtor = pluginContext.lookupConstructorInClass(KOTLIN_COLLECTIONS_ARRAY_LIST) {
-                    it.owner.valueParameters.size == 1 &&
-                        it.owner.valueParameters[0].type.isInt()
-                }
                 arrayListCtor = pluginContext.lookupConstructorInClass(KOTLIN_COLLECTIONS_ARRAY_LIST) {
                     it.owner.valueParameters.size == 1 &&
                         it.owner.valueParameters[0].type.isInt()
@@ -124,7 +120,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                     it.owner.valueParameters.size == 1 &&
                         it.owner.valueParameters[0].type.isInt()
                 }
-                collectionType = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MUTABLE_COLLECTION).typeWith(arguments = listOf(realmCompanionIrClass.symbol.defaultType))
+                collectionType = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MUTABLE_COLLECTION).typeWith(arguments = listOf(realmObjectCompanionIrClass.symbol.defaultType))
             }
             pluginContext.platform.isJvm() -> {
                 hashMapIrClass = pluginContext.lookupClassOrThrow(JAVA_UTIL_HASHMAP)
@@ -139,34 +135,36 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                     it.owner.valueParameters.size == 1 &&
                         (it.owner.valueParameters[0].type as IrTypeBase).kotlinType!!.isInt()
                 }
-                collectionType = pluginContext.lookupClassOrThrow(JAVA_UTIL_COLLECTION).typeWith(arguments = listOf(realmCompanionIrClass.symbol.defaultType))
+                collectionType = pluginContext.lookupClassOrThrow(JAVA_UTIL_COLLECTION).typeWith(arguments = listOf(realmObjectCompanionIrClass.symbol.defaultType))
             }
             else -> {
                 logError("Unsupported platform ${pluginContext.platform}")
             }
         }
-        mapPutFunction = hashMapIrClass.lookupFunction("put")
-        mapGetFunction = hashMapIrClass.lookupFunction("get")
+        mapPutFunction = hashMapIrClass.lookupFunction(Name.identifier("put"))
+        mapGetFunction = hashMapIrClass.lookupFunction(Name.identifier("get"))
         mapValuesProperty = hashMapIrClass.properties.first {
             it.name == Name.identifier("values")
         }.symbol
 
-        hasNextFunction = iteratorIrClass.lookupFunction("hasNext")
-        nextFunction = iteratorIrClass.lookupFunction("next")
-        listAddFunction = arrayListIrClassSymbol.owner.lookupFunction("add")
+        hasNextFunction = iteratorIrClass.lookupFunction(Name.identifier("hasNext"))
+        nextFunction = iteratorIrClass.lookupFunction(Name.identifier("next"))
+        listAddFunction = arrayListIrClassSymbol.owner.lookupFunction(Name.identifier("add"))
 
+        // FIXME OPTIMIZE - Should be kotlin.collections.Map, no need to include implementation
+        //  details in type
         companionMapType = hashMapIrClass.symbol.typeWith(
             pluginContext.irBuiltIns.kClassClass.starProjectedType,
-            realmCompanionIrClass.symbol.defaultType
+            realmObjectCompanionIrClass.symbol.defaultType
         )
 
-        collectionIteratorType = iteratorIrClass.typeWith(arguments = listOf(realmCompanionIrClass.symbol.defaultType))
+        collectionIteratorType = iteratorIrClass.typeWith(arguments = listOf(realmObjectCompanionIrClass.symbol.defaultType))
     }
 
-    private val mediatorNewInstanceMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_NEW_INSTANCE_METHOD.asString())
-    private val mediatorSchemaMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_SCHEMA_METHOD.asString())
-    private val realmCompanionNewInstanceFunction: IrSimpleFunction = realmCompanionIrClass.lookupFunction(COMPANION_NEW_INSTANCE_METHOD.asString())
-    private val realmCompanionRealmSchemaFunction: IrSimpleFunction = realmCompanionIrClass.lookupFunction(COMPANION_SCHEMA_METHOD.asString())
+    private val mediatorNewInstanceMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_NEW_INSTANCE_METHOD)
+    private val mediatorSchemaMethod: IrSimpleFunction = mediatorIrClass.lookupFunction(REALM_MEDIATOR_SCHEMA_METHOD)
+    private val realmObjectCompanionNewInstanceFunction: IrSimpleFunction = realmObjectCompanionIrClass.lookupFunction(REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD)
+    private val realmObjectCompanionRealmSchemaFunction: IrSimpleFunction = realmObjectCompanionIrClass.lookupFunction(REALM_OBJECT_COMPANION_SCHEMA_METHOD)
 
     @Suppress("ClassNaming")
     private object REALM_MEDIATOR_ORIGIN : IrDeclarationOriginImpl("MEDIATOR")
@@ -213,10 +211,10 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                 )
                     .apply {
                         // <class: K>: kotlin.reflect.KClass<*>
-                        // <class: V>: io.realm.runtimeapi.RealmCompanion
+                        // <class: V>: io.realm.internal.RealmObjectCompanion
                         // p0: CONST Int type=kotlin.Int value=2
                         putTypeArgument(0, pluginContext.irBuiltIns.kClassClass.starProjectedType)
-                        putTypeArgument(1, realmCompanionIrClass.defaultType)
+                        putTypeArgument(1, realmObjectCompanionIrClass.defaultType)
                         putValueArgument(0, IrConstImpl.int(startOffset, endOffset, pluginContext.irBuiltIns.intType, numberOfModelInSchema))
                     }
             )
@@ -304,12 +302,12 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             overriddenSymbols = listOf(mediatorNewInstanceMethod.symbol)
             val clazzParameter = addValueParameter(name = "clazz", type = pluginContext.irBuiltIns.kClassClass.starProjectedType)
             body = pluginContext.blockBody(symbol) {
-                val realmCompanionType = realmCompanionIrClass.defaultType
-                val elementVar = irTemporaryVar(
+                val realmObjectCompanionType = realmObjectCompanionIrClass.defaultType
+                val elementVar = irTemporary(
                     nameHint = "companion",
                     value = IrCallImpl(
                         mapGetFunction.startOffset, mapGetFunction.endOffset,
-                        type = realmCompanionType,
+                        type = realmObjectCompanionType,
                         symbol = mapGetFunction.symbol,
                         typeArgumentsCount = 0,
                         valueArgumentsCount = 1
@@ -322,7 +320,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                         }
                 )
                 +irReturn(
-                    irCall(realmCompanionNewInstanceFunction).apply {
+                    irCall(realmObjectCompanionNewInstanceFunction).apply {
                         dispatchReceiver = irGet(elementVar)
                     }
                 )
@@ -368,7 +366,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                         )
                     }
                 )
-                val listVar = irTemporaryVar(nameHint = "list", value = initializeListWithSize.expression)
+                val listVar = irTemporary(nameHint = "list", value = initializeListWithSize.expression)
                 val callIterator = IrExpressionBodyImpl(
                     startOffset, endOffset,
                     IrCallImpl(
@@ -393,9 +391,9 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                             }
                     }
                 )
-                val mutableIteratorVar = irTemporaryVar(nameHint = "iterator", value = callIterator.expression)
+                val mutableIteratorVar = irTemporary(nameHint = "iterator", value = callIterator.expression)
 
-                val elementVar = irTemporaryVarDeclaration(realmCompanionIrClass.defaultType.makeNullable(), nameHint = "element", isMutable = true)
+                val elementVar = irTemporary(irType = realmObjectCompanionIrClass.defaultType.makeNullable(), nameHint = "element", isMutable = true)
 
                 +IrWhileLoopImpl(
                     startOffset, endOffset,
@@ -412,7 +410,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                             elementVar.symbol,
                             IrCallImpl(
                                 startOffset, endOffset,
-                                type = realmCompanionIrClass.defaultType,
+                                type = realmObjectCompanionIrClass.defaultType,
                                 symbol = nextFunction.symbol,
                                 typeArgumentsCount = 0,
                                 valueArgumentsCount = 0
@@ -430,7 +428,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                                 dispatchReceiver = irGet(listVar)
                                 putValueArgument(
                                     0,
-                                    irCall(realmCompanionRealmSchemaFunction).apply {
+                                    irCall(realmObjectCompanionRealmSchemaFunction).apply {
                                         dispatchReceiver = irGet(elementVar)
                                     }
                                 )

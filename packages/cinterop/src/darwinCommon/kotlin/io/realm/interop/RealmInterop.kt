@@ -18,12 +18,14 @@ package io.realm.interop
 
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModelInternal
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.CValue
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.ULongVar
@@ -40,6 +42,7 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
@@ -47,11 +50,14 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
-import realm_wrapper.realm_schema_mode
+import realm_wrapper.realm_release
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
+import kotlin.native.concurrent.freeze
+import kotlin.native.internal.createCleaner
 
 private fun throwOnError() {
     memScoped {
@@ -75,8 +81,16 @@ private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointe
 }
 
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
-class CPointerWrapper(ptr: CPointer<out CPointed>?) : NativePointer {
+
+class CPointerWrapper(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer {
     val ptr: CPointer<out CPointed>? = throwOnError(ptr)
+
+    @OptIn(ExperimentalStdlibApi::class)
+    val cleaner = if (managed) {
+        createCleaner(ptr.freeze()) {
+            realm_release(it)
+        }
+    } else null
 }
 
 // Convenience type cast
@@ -165,7 +179,7 @@ actual object RealmInterop {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
                         public_name = "".cstr.ptr
-                        link_target = "".cstr.ptr
+                        link_target = property.linkTarget.cstr.ptr
                         link_origin_property_name = "".cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
@@ -189,33 +203,29 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_path(config: NativePointer, path: String) {
-        throwOnError(realm_wrapper.realm_config_set_path(config.cptr(), path))
+        realm_wrapper.realm_config_set_path(config.cptr(), path)
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
-        throwOnError(
-            realm_wrapper.realm_config_set_schema_mode(
-                config.cptr(),
-                realm_schema_mode.RLM_SCHEMA_MODE_ADDITIVE
-            )
+        realm_wrapper.realm_config_set_schema_mode(
+            config.cptr(),
+            mode.nativeValue
         )
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
-        throwOnError(
-            realm_wrapper.realm_config_set_schema_version(
-                config.cptr(),
-                version.toULong()
-            )
+        realm_wrapper.realm_config_set_schema_version(
+            config.cptr(),
+            version.toULong()
         )
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
-        throwOnError(realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr()))
+        realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }
 
-    actual fun realm_schema_validate(schema: NativePointer): Boolean {
-        return throwOnError(realm_wrapper.realm_schema_validate(schema.cptr()))
+    actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
+        return throwOnError(realm_wrapper.realm_schema_validate(schema.cptr(), mode.nativeValue.toULong()))
     }
 
     actual fun realm_open(config: NativePointer): NativePointer {
@@ -234,8 +244,12 @@ actual object RealmInterop {
         return realm_wrapper.realm_get_num_classes(realm.cptr()).toLong()
     }
 
-    actual fun realm_release(o: NativePointer) {
-        realm_wrapper.realm_release((o as CPointerWrapper).ptr)
+    actual fun realm_release(p: NativePointer) {
+        realm_wrapper.realm_release((p as CPointerWrapper).ptr)
+    }
+
+    actual fun realm_is_closed(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_closed(realm.cptr())
     }
 
     actual fun realm_begin_write(realm: NativePointer) {
@@ -269,83 +283,100 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
     }
 
-    // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
-    //  getter/setter, or through specialized methods.
-    //  https://github.com/realm/realm-kotlin/issues/69
-    actual fun <T> realm_set_value(
-        realm: NativePointer?,
-        obj: NativePointer?,
-        table: String,
-        col: String,
-        value: T,
-        isDefault: Boolean
-    ) {
-        TODO("Unsupported until https://youtrack.jetbrains.com/issue/KT-43833 is fixed")
-        // Anonymous union are not supported in Kotlin/Native https://youtrack.jetbrains.com/issue/KT-43833
-        // which will call to `realm_wrapper.realm_set_value` using a `cValue<realm_value>` throw a
-        // type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
-    }
-
-    // FIXME API-INTERNAL How should we support the various types. Through generic dispatching
-    //  getter/setter, or through specialized methods.
-    //  https://github.com/realm/realm-kotlin/issues/69
-    actual fun <T> realm_get_value(
-        realm: NativePointer?,
-        obj: NativePointer?,
-        table: String,
-        col: String,
-        type: PropertyType
-    ): T {
-        TODO("Not yet implemented") // https://github.com/realm/realm-kotlin/issues/69
-    }
-
-    // Invoked from compiler plugin generated code
-    actual fun objectGetString(
-        realm: NativePointer?,
-        obj: NativePointer?,
-        table: String,
-        col: String
-    ): String {
-        if (realm == null || obj == null) {
-            throw IllegalStateException("Invalid/deleted object")
+    actual fun realm_object_as_link(obj: NativePointer): Link {
+        val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> = realm_wrapper.realm_object_as_link(obj.cptr())
+        link.useContents {
+            return Link(this.target_table.toLong(), this.target)
         }
+    }
+
+    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
         memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(obj.cptr(), propertyInfo.key, value.ptr)
-            when (value.type) {
-                realm_value_type.RLM_TYPE_STRING ->
-                    return value.string.toKString()
-                // FIXME Where should we handle nullability. Current prototype does not allow nulls
-                //  realm_value_type.RLM_TYPE_NULL ->
-                //      return null
-                //  https://github.com/realm/realm-kotlin/issues/71
-                else ->
-                    error("Expected String property got ${value.type.name}")
+            return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
+        }
+    }
+
+    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
+        memScoped {
+            val value: realm_value_t = alloc()
+            realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr)
+            return from_realm_value(value)
+        }
+    }
+
+    private fun <T> from_realm_value(value: realm_value_t): T {
+        return when (value.type) {
+            realm_value_type.RLM_TYPE_NULL ->
+                null as T
+            realm_value_type.RLM_TYPE_INT ->
+                value.integer
+            realm_value_type.RLM_TYPE_BOOL ->
+                value.boolean
+            realm_value_type.RLM_TYPE_STRING ->
+                value.string.toKString()
+            realm_value_type.RLM_TYPE_FLOAT ->
+                value.fnum
+            realm_value_type.RLM_TYPE_DOUBLE ->
+                value.dnum
+            realm_value_type.RLM_TYPE_LINK ->
+                value.asLink()
+            else ->
+                TODO("Unsupported type for from_realm_value ${value.type.name}")
+        } as T
+    }
+
+    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
+        memScoped {
+            realm_wrapper.realm_set_value_by_ref(o.cptr(), key.key, to_realm_value(value).ptr, isDefault)
+        }
+    }
+
+    private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
+        val cvalue: realm_value_t = alloc()
+        when (value) {
+            null -> {
+                cvalue.type = realm_value_type.RLM_TYPE_NULL
+            }
+            is Long -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value as Long
+            }
+            is Boolean -> {
+                cvalue.type = realm_value_type.RLM_TYPE_BOOL
+                cvalue.boolean = value as Boolean
+            }
+            is String -> {
+                cvalue.type = realm_value_type.RLM_TYPE_STRING
+                cvalue.string.set(this, value as String)
+            }
+            is Float -> {
+                cvalue.type = realm_value_type.RLM_TYPE_FLOAT
+                cvalue.fnum = value as Float
+            }
+            is Double -> {
+                cvalue.type = realm_value_type.RLM_TYPE_DOUBLE
+                cvalue.dnum = value as Double
+            }
+            is RealmModelInternal -> {
+                cvalue.type = realm_value_type.RLM_TYPE_LINK
+                val nativePointer = value.`$realm$ObjectPointer` ?: error("Cannot set unmanaged object")
+                realm_wrapper.realm_object_as_link(nativePointer?.cptr()).useContents {
+                    cvalue.link.apply {
+                        target_table = this@useContents.target_table
+                        target = this@useContents.target
+                    }
+                }
+            }
+            //    RLM_TYPE_BINARY,
+            //    RLM_TYPE_TIMESTAMP,
+            //    RLM_TYPE_DECIMAL128,
+            //    RLM_TYPE_OBJECT_ID,
+            //    RLM_TYPE_UUID,
+            else -> {
+                TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
             }
         }
-    }
-
-    // Invoked from compiler plugin generated code
-    actual fun objectSetString(
-        realm: NativePointer?,
-        obj: NativePointer?,
-        table: String,
-        col: String,
-        value: String
-    ) {
-        if (realm == null || obj == null) {
-            throw IllegalStateException("Invalid/deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_string(
-                obj.cptr(),
-                propertyInfo.key,
-                value.toRString(memScope),
-                false
-            )
-        }
+        return cvalue
     }
 
     actual fun realm_query_parse(
@@ -418,126 +449,6 @@ actual object RealmInterop {
         throwOnError(realm_wrapper.realm_results_delete_all(results.cptr()))
     }
 
-    actual fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Invalid/deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
-            when (value.type) {
-                realm_value_type.RLM_TYPE_INT ->
-                    return value.integer
-                // FIXME Where should we handle nullability. Current prototype does not allow nulls
-                // realm_value_type.RLM_TYPE_NULL ->
-                //     return null
-                else ->
-                    error("Expected Int property got ${value.type.name}")
-            }
-        }
-    }
-
-    actual fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long) {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_int64(o.cptr(), propertyInfo.key, value, false)
-        }
-    }
-
-    actual fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Invalid/deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
-            when (value.type) {
-                realm_value_type.RLM_TYPE_BOOL ->
-                    return value.boolean
-                // FIXME Where should we handle nullability. Current prototype does not allow nulls
-                // realm_value_type.RLM_TYPE_NULL ->
-                //     return null
-                else ->
-                    error("Expected Boolean property got ${value.type.name}")
-            }
-        }
-    }
-
-    actual fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean) {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_boolean(o.cptr(), propertyInfo.key, value, false)
-        }
-    }
-
-    actual fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Invalid/deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
-            when (value.type) {
-                realm_value_type.RLM_TYPE_FLOAT ->
-                    return value.fnum
-                // FIXME Where should we handle nullability. Current prototype does not allow nulls
-                // realm_value_type.RLM_TYPE_NULL ->
-                //     return null
-                else ->
-                    error("Expected Float property got ${value.type.name}")
-            }
-        }
-    }
-
-    actual fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float) {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_float(o.cptr(), propertyInfo.key, value, false)
-        }
-    }
-
-    actual fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Invalid/deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            val value = alloc<realm_value_t>()
-            realm_wrapper.realm_get_value(o.cptr(), propertyInfo.key, value.ptr)
-            when (value.type) {
-                realm_value_type.RLM_TYPE_DOUBLE ->
-                    return value.dnum
-                // FIXME Where should we handle nullability. Current prototype does not allow nulls
-                // realm_value_type.RLM_TYPE_NULL ->
-                //     return null
-                else ->
-                    error("Expected Double property got ${value.type.name}")
-            }
-        }
-    }
-
-    actual fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double) {
-        if (realm == null || o == null) {
-            throw IllegalStateException("Cannot update deleted object")
-        }
-        memScoped {
-            val propertyInfo = propertyInfo(realm, classInfo(realm, table), col)
-            realm_wrapper.realm_set_value_double(o.cptr(), propertyInfo.key, value, false)
-        }
-    }
-
     actual fun realm_object_delete(obj: NativePointer) {
         throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
     }
@@ -561,7 +472,8 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
                 // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
                 null
-            )
+            ),
+            managed = false
         )
     }
 
@@ -584,7 +496,8 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
                 // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
                 null
-            )
+            ),
+            managed = false
         )
     }
 
@@ -625,6 +538,6 @@ actual object RealmInterop {
         if (this.type != realm_value_type.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target, this.link.target_table.toLong())
+        return Link(this.link.target_table.toLong(), this.link.target)
     }
 }

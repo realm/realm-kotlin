@@ -26,8 +26,12 @@ annotation class RealmObject
  */
 @Suppress("VariableNaming")
 interface RealmModelInternal : RealmModel {
+    // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
     var `$realm$Pointer`: NativePointer?
     var `$realm$ObjectPointer`: NativePointer?
     var `$realm$TableName`: String?
     var `$realm$IsManaged`: Boolean
+    // FIXME Should be Mediator but requires RealmModelInternal and Mediator to be in same module.
+    //  Remember to fix type for compiler generated field.
+    var `$realm$Schema`: Any?
 }

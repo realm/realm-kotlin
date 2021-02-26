@@ -104,15 +104,25 @@ class Realm {
     //    were we take an already created un-managed instance and return a new manageable one
     //    (note since parameter are immutable in Kotlin, we need to create a new instance instead of
     //    doing this operation in place)
+    @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
     fun <T : RealmModel> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
-        val managedModel = realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
-        val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
-        return managedModel.manage(
-            dbPointer!!,
-            type,
-            RealmInterop.realm_object_create(dbPointer!!, key)
-        )
+        try {
+            val managedModel =
+                realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
+            val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
+            return managedModel.manage(
+                dbPointer!!,
+                this.realmConfiguration.schema,
+                type,
+                RealmInterop.realm_object_create(dbPointer!!, key)
+            )
+        } catch (e: RuntimeException) {
+            // FIXME Throw proper exception
+            //  https://github.com/realm/realm-kotlin/issues/70
+            @Suppress("TooGenericExceptionThrown")
+            throw RuntimeException("Failed to create object of type '$objectType'", e)
+        }
     }
 
     fun <T : RealmModel> objects(clazz: KClass<T>): RealmResults<T> {

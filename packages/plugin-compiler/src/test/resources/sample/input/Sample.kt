@@ -28,5 +28,11 @@ class Sample {
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
+    var child: Child? = null
     fun dumpSchema() : String = "${Sample.`$realm$schema`()}"
+}
+
+@RealmObject
+class Child {
+    var name: String? = "Child-default"
 }

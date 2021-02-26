@@ -20,7 +20,7 @@ package io.realm.interop
 //  called in Realm object's companion schema mechanism depending on how we relate this to the
 //  actual schema/runtime realm_property_info_t.
 @Suppress("LongParameterList")
-class Property(
+data class Property(
     val name: String,
     val publicName: String = "",
     val type: PropertyType,

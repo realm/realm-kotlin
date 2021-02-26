@@ -17,59 +17,35 @@
 
 package io.realm
 
-import io.realm.runtimeapi.Mediator
-import io.realm.runtimeapi.RealmCompanion
 import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
-import test.A
-import test.B
-import test.C
-import test.Entities
 import test.Sample
-import test.Subset
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
 
 class SampleTests {
 
     @RealmModule(Sample::class)
     class MySchema
 
+    lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        tmpDir = Utils.createTempDir()
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
-        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
-        //  https://github.com/realm/realm-kotlin/issues/95
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
-        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
     }
 
-    @Test
-    fun testSyntheticSchemaMethodIsGenerated() {
-        val expected = "{\"name\": \"Sample\", \"properties\": [" +
-            "{\"stringField\": {\"type\": \"string\", \"nullable\": \"false\"}}," +
-            "{\"byteField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-            "{\"charField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-            "{\"shortField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-            "{\"intField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-            "{\"longField\": {\"type\": \"int\", \"nullable\": \"false\"}}," +
-            "{\"booleanField\": {\"type\": \"boolean\", \"nullable\": \"false\"}}," +
-            "{\"floatField\": {\"type\": \"float\", \"nullable\": \"false\"}}," +
-            "{\"doubleField\": {\"type\": \"double\", \"nullable\": \"false\"}}]}"
-        assertEquals(expected, Sample.`$realm$schema`())
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        val actual: RealmCompanion = Sample.Companion as RealmCompanion
-        assertEquals(expected, actual.`$realm$schema`())
+    @AfterTest
+    fun tearDown() {
+        realm.close()
+        Utils.deleteTempDir(tmpDir)
     }
 
     @Test
@@ -94,9 +70,6 @@ class SampleTests {
 
     @Test
     fun delete() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        val realm = Realm.open(configuration)
-
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         Realm.delete(sample)
@@ -156,47 +129,6 @@ class SampleTests {
         realm.commitTransaction()
 
         assertEquals(0, realm.objects(Sample::class).size)
-    }
-
-    @Test
-    fun testMediatorIsGeneratedForRealmModuleClasses() {
-        val entities = Entities()
-        var mediator = entities as? Mediator
-            ?: error("Supertype Mediator was not added to Entities module")
-        var schema = mediator.schema()
-        assertEquals(4, schema.size) // all classes: Sample, A, B and C
-
-        val instanceA = mediator.newInstance(A::class)
-        val instanceB = mediator.newInstance(B::class)
-        val instanceC = mediator.newInstance(C::class)
-        val instanceSample = mediator.newInstance(Sample::class)
-
-        assertTrue(instanceA is A)
-        assertTrue(instanceB is B)
-        assertTrue(instanceC is C)
-        assertTrue(instanceSample is Sample)
-
-        val subsetModule = Subset()
-        mediator = subsetModule as? Mediator
-            ?: error("Supertype Mediator was not added to Subset module")
-        schema = mediator.schema()
-
-        assertEquals(2, schema.size) // classes: A and C only
-
-        val subsetInstanceA = mediator.newInstance(A::class)
-        val subsetInstanceC = mediator.newInstance(C::class)
-        // FIXME NH
-        // 'IrTypeOperatorCallImpl with IMPLICIT_NOTNULL' IR instruction is not supported on K/N, it throws
-        // (Java.lang.IllegalStateException: Not found Idx) consider fixing this to enable returning a
-        // Null instance instead of throwing an NPE when making the below call. (test with recent version of Kotlin)
-//        val subsetInstanceB = mediator.newInstance(B::class) // not part of the schema
-//        assertNull(subsetInstanceB)
-
-        assertTrue(subsetInstanceA is A)
-        assertTrue(subsetInstanceC is C)
-
-        assertNotEquals(subsetInstanceA, instanceA)
-        assertNotEquals(subsetInstanceC, instanceC)
     }
 
     @Test

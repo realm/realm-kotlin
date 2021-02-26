@@ -17,8 +17,12 @@
 package io.realm.model
 
 import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmModule
 
 open class Person(open var name: String) : RealmModel {
     constructor() : this("")
     open var age: Int = 0
 }
+
+@RealmModule
+class Schema

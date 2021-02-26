@@ -18,9 +18,9 @@ package io.realm.interop
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
-import io.realm.interop.RealmInterop.cptr
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
+import io.realm.runtimeapi.RealmModelInternal
 
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
@@ -87,7 +87,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
-        realmc.realm_config_set_schema_version((config as LongPointerWrapper).ptr, version.toBigInteger())
+        realmc.realm_config_set_schema_version((config as LongPointerWrapper).ptr, version)
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
@@ -103,8 +103,8 @@ actual object RealmInterop {
         realmc.realm_close((realm as LongPointerWrapper).ptr)
     }
 
-    actual fun realm_schema_validate(schema: NativePointer): Boolean {
-        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr)
+    actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
+        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeValue.toLong())
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
@@ -116,8 +116,12 @@ actual object RealmInterop {
         return realmc.realm_get_num_classes((realm as LongPointerWrapper).ptr)
     }
 
-    actual fun realm_release(o: NativePointer) {
-        realmc.realm_release((o as LongPointerWrapper).ptr)
+    actual fun realm_release(p: NativePointer) {
+        realmc.realm_release((p as LongPointerWrapper).ptr)
+    }
+
+    actual fun realm_is_closed(realm: NativePointer): Boolean {
+        return realmc.realm_is_closed((realm as LongPointerWrapper).ptr)
     }
 
     actual fun realm_begin_write(realm: NativePointer) {
@@ -142,64 +146,96 @@ actual object RealmInterop {
         return info.key
     }
 
-    private fun <T> realm_set_value(o: NativePointer, key: Long, value: T, isDefault: Boolean) {
-        val cvalue = realm_value_t()
-        when (value!!::class) {
-            String::class -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_STRING
-                cvalue.string = value as String
-            }
-            Long::class -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_INT
-                cvalue.integer = value as Long
-            }
-            Boolean::class -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_BOOL
-                cvalue._boolean = value as Boolean
-            }
-            Float::class -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_FLOAT
-                cvalue.fnum = value as Float
-            }
-            Double::class -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
-                cvalue.dnum = value as Double
-            }
-            else -> {
-                error("Unsupported type ${value!!::class.qualifiedName}")
-            }
-        }
-        realmc.realm_set_value((o as LongPointerWrapper).ptr, key, cvalue, isDefault)
+    actual fun realm_object_as_link(obj: NativePointer): Link {
+        val link: realm_link_t = realmc.realm_object_as_link(obj.cptr())
+        return Link(link.target_table, link.target)
     }
 
-    actual fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean) {
-        if (realm == null || obj == null) {
-            throw IllegalStateException("Invalid/deleted object")
-        }
-        realm_set_value(obj, propertyInfo(realm, classInfo(realm, table), col).key, value, isDefault)
+    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
+        return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
     }
 
-    actual fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T {
-        if (realm == null || obj == null) {
-            throw IllegalStateException("Invalid/deleted object")
-        }
-        val pinfo = propertyInfo(realm, classInfo(realm, table), col)
+    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
+        // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
-        realmc.realm_get_value((obj as LongPointerWrapper).ptr, pinfo.key, cvalue)
-        return when (cvalue.type) {
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
+        return from_realm_value(cvalue)
+    }
+
+    private fun <T> from_realm_value(value: realm_value_t): T {
+        return when (value.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
-                cvalue.string
+                value.string
             realm_value_type_e.RLM_TYPE_INT ->
-                cvalue.integer
+                value.integer
             realm_value_type_e.RLM_TYPE_BOOL ->
-                cvalue._boolean
+                value._boolean
             realm_value_type_e.RLM_TYPE_FLOAT ->
-                cvalue.fnum
+                value.fnum
             realm_value_type_e.RLM_TYPE_DOUBLE ->
-                cvalue.dnum
+                value.dnum
+            realm_value_type_e.RLM_TYPE_LINK ->
+                value.asLink()
+            realm_value_type_e.RLM_TYPE_NULL ->
+                null
             else ->
-                error("Unsupported type ${cvalue.type}")
+                TODO("Unsupported type for from_realm_value ${value.type}")
         } as T
+    }
+
+    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
+        val cvalue = to_realm_value(value)
+        realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
+    }
+
+    // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
+    //  updating before actually calling
+    private fun <T> to_realm_value(value: T): realm_value_t {
+        val cvalue = realm_value_t()
+        if (value == null) {
+            cvalue.type = realm_value_type_e.RLM_TYPE_NULL
+        } else {
+            when (value) {
+                is String -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_STRING
+                    cvalue.string = value
+                }
+                is Char -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
+                is Int -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
+                is Long -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value
+                }
+                is Boolean -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_BOOL
+                    cvalue._boolean = value
+                }
+                is Float -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_FLOAT
+                    cvalue.fnum = value
+                }
+                is Double -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
+                    cvalue.dnum = value
+                }
+                is RealmModelInternal -> {
+                    val nativePointer = (value as RealmModelInternal).`$realm$ObjectPointer`
+                        ?: error("Cannot add unmanaged object")
+                    cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
+                    cvalue.type = realm_value_type_e.RLM_TYPE_LINK
+                }
+                else -> {
+                    TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
+                }
+            }
+        }
+        return cvalue
     }
 
     actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
@@ -211,7 +247,8 @@ actual object RealmInterop {
                         callback.onChange(LongPointerWrapper(pointer))
                     }
                 }
-            )
+            ),
+            managed = false
         )
     }
 
@@ -224,7 +261,8 @@ actual object RealmInterop {
                         callback.onChange(LongPointerWrapper(pointer))
                     }
                 }
-            )
+            ),
+            managed = false
         )
     }
 
@@ -248,20 +286,12 @@ actual object RealmInterop {
         return pinfo
     }
 
-    // Typed convenience methods
-    actual fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String {
-        return realm_get_value<String>(realm, obj, table, col, PropertyType.RLM_PROPERTY_TYPE_STRING)
-    }
-    actual fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String) {
-        realm_set_value(realm, obj, table, col, value, false)
-    }
-
     actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
         val count = args.size
         val classKey = classInfo(realm, table).key
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
-            realmc.valueArray_setitem(cArgs, i, value(arg))
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
         }
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
     }
@@ -301,38 +331,6 @@ actual object RealmInterop {
         realmc.realm_results_delete_all(results.cptr())
     }
 
-    actual fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long {
-        return realm_get_value<Long>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_INT)
-    }
-
-    actual fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long) {
-        realm_set_value(realm, o, table, col, value, false)
-    }
-
-    actual fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean {
-        return realm_get_value<Boolean>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_BOOL)
-    }
-
-    actual fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean) {
-        realm_set_value(realm, o, table, col, value, false)
-    }
-
-    actual fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float {
-        return realm_get_value<Float>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_FLOAT)
-    }
-
-    actual fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float) {
-        realm_set_value(realm, o, table, col, value, false)
-    }
-
-    actual fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double {
-        return realm_get_value<Double>(realm, o, table, col, PropertyType.RLM_PROPERTY_TYPE_DOUBLE)
-    }
-
-    actual fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double) {
-        realm_set_value(realm, o, table, col, value, false)
-    }
-
     actual fun realm_object_delete(obj: NativePointer) {
         realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
     }
@@ -341,40 +339,10 @@ actual object RealmInterop {
         return (this as LongPointerWrapper).ptr
     }
 
-    private fun value(o: Any): realm_value_t {
-        val value: realm_value_t = realm_value_t()
-        when (o) {
-            is String -> {
-                value.type = realm_value_type_e.RLM_TYPE_STRING
-                value.string = o
-            }
-            is Byte, is Short, is Int, is Long -> {
-                value.type = realm_value_type_e.RLM_TYPE_INT
-                value.integer = (o as Number).toLong()
-            }
-            is Char -> {
-                value.type = realm_value_type_e.RLM_TYPE_INT
-                value.integer = o.toLong()
-            }
-            is Float -> {
-                value.type = realm_value_type_e.RLM_TYPE_FLOAT
-                value.fnum = o
-            }
-            is Double -> {
-                value.type = realm_value_type_e.RLM_TYPE_DOUBLE
-                value.dnum = o
-            }
-            else -> {
-                TODO("Value conversion not yet implemented for : ${o::class.simpleName}")
-            }
-        }
-        return value
-    }
-
     private fun realm_value_t.asLink(): Link {
         if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target, this.link.target_table)
+        return Link(this.link.target_table, this.link.target)
     }
 }

@@ -21,6 +21,8 @@ package io.realm.interop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
 
+inline class ColumnKey(val key: Long)
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
@@ -34,7 +36,7 @@ expect object RealmInterop {
     fun realm_config_set_schema_version(config: NativePointer, version: Long)
     fun realm_config_set_schema(config: NativePointer, schema: NativePointer)
 
-    fun realm_schema_validate(schema: NativePointer): Boolean
+    fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
     fun realm_open(config: NativePointer): NativePointer
     fun realm_close(realm: NativePointer)
@@ -42,7 +44,9 @@ expect object RealmInterop {
     fun realm_get_schema(realm: NativePointer): NativePointer
     fun realm_get_num_classes(realm: NativePointer): Long
 
-    fun realm_release(o: NativePointer)
+    fun realm_release(p: NativePointer)
+
+    fun realm_is_closed(realm: NativePointer): Boolean
 
     fun realm_begin_write(realm: NativePointer)
     fun realm_commit(realm: NativePointer)
@@ -52,27 +56,12 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
 
-    // FIXME API-INTERNAL Optimize with direct paths instead of generic type parameter. Currently wrapping
-    //  type and key-lookups internally
-    fun <T> realm_set_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: T, isDefault: Boolean)
-    fun <T> realm_get_value(realm: NativePointer?, obj: NativePointer?, table: String, col: String, type: PropertyType): T
+    fun realm_object_as_link(obj: NativePointer): Link
 
-    // Typed convenience methods
-    fun objectGetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String): String
-    fun objectSetString(realm: NativePointer?, obj: NativePointer?, table: String, col: String, value: String)
+    fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey
 
-    // covers Char, Byte, Short, Int and Long
-    fun objectGetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String): Long
-    fun objectSetInteger(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Long)
-
-    fun objectGetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String): Float
-    fun objectSetFloat(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Float)
-
-    fun objectGetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String): Double
-    fun objectSetDouble(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Double)
-
-    fun objectGetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String): Boolean
-    fun objectSetBoolean(realm: NativePointer?, o: NativePointer?, table: String, col: String, value: Boolean)
+    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T
+    fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean)
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer

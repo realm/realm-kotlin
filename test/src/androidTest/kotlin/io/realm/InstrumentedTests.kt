@@ -19,12 +19,13 @@ package io.realm
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.internal.RealmInitializer
-import io.realm.runtimeapi.RealmModelInternal
 import io.realm.runtimeapi.RealmModule
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -35,18 +36,20 @@ class InstrumentedTests {
     @RealmModule(Sample::class)
     class MySchema
 
+    lateinit var tmpDir: String
     lateinit var realm: Realm
 
+    @ExperimentalPathApi
     @Before
     fun setup() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
+        tmpDir = Utils.createTempDir()
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
-        // FIXME Cleaning up realm to overcome lack of support for deleting actual files
-        //  https://github.com/realm/realm-kotlin/issues/95
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
-        assertEquals(0, realm.objects(Sample::class).size, "Realm is not empty")
+    }
+
+    @After
+    fun tearDown() {
+        Utils.deleteTempDir(tmpDir)
     }
 
     // Smoke test of compiling with library
@@ -61,7 +64,6 @@ class InstrumentedTests {
     @Test
     fun createAndUpdate() {
         val s = "Hello, World!"
-
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         assertEquals("", sample.stringField)
@@ -121,9 +123,6 @@ class InstrumentedTests {
 
     @Test
     fun delete() {
-        val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-        val realm = Realm.open(configuration)
-
         realm.beginTransaction()
         val sample = realm.create(Sample::class)
         Realm.delete(sample)
@@ -134,27 +133,5 @@ class InstrumentedTests {
             sample.stringField = "sadf"
         }
         realm.commitTransaction()
-    }
-
-    // FIXME API-CLEANUP Local implementation of pointer wrapper to support test. Using the internal
-    //  one would require jni-swig-stub to be api dependency from cinterop/library. Don't know if
-    //  the test is needed at all at this level
-    //  https://github.com/realm/realm-kotlin/issues/56
-    class LongPointerWrapper(val ptr: Long) : io.realm.runtimeapi.NativePointer
-    @Test
-    fun testRealmModelInternalPropertiesGenerated() {
-        val p = Sample()
-        val realmModel: RealmModelInternal = p as? RealmModelInternal ?: error("Supertype RealmModelInternal was not added to Sample class")
-
-        // Accessing getters/setters
-        realmModel.`$realm$IsManaged` = true
-        realmModel.`$realm$ObjectPointer` = LongPointerWrapper(0xCAFEBABE)
-        realmModel.`$realm$Pointer` = LongPointerWrapper(0XCAFED00D)
-        realmModel.`$realm$TableName` = "Sample"
-
-        assertEquals(true, realmModel.`$realm$IsManaged`)
-        assertEquals(0xCAFEBABE, (realmModel.`$realm$ObjectPointer` as LongPointerWrapper).ptr)
-        assertEquals(0XCAFED00D, (realmModel.`$realm$Pointer` as LongPointerWrapper).ptr)
-        assertEquals("Sample", realmModel.`$realm$TableName`)
     }
 }
