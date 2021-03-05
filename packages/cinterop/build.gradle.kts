@@ -65,7 +65,7 @@ android {
     defaultConfig {
         ndk {
             // FIXME MPP-BUILD Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-            abiFilters("x86_64")
+            abiFilters("x86_64", "arm64-v8a")
         }
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
@@ -82,12 +82,28 @@ android {
     }
 }
 
-val nativeLibraryIncludes = mutableListOf(
+val nativeLibraryIncludesMacos64 = mutableListOf(
     "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
     "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/librealm-dbg.a",
     "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/parser/librealm-parser-dbg.a",
     "-include-binary", "$rootDir/../external/core/build-macos_x64/src/realm/object-store/librealm-object-store-dbg.a"
 )
+
+val nativeLibraryIncludesIosArm64 = mutableListOf(
+    "-include-binary", "$rootDir/../external/core/build-iphoneos-Debug/src/realm/object-store/c_api/RealmCore.build/Debug-iphoneos/RealmFFIStatic.build/Objects-normal/arm64/librealm-ffi-static-dbg.a",
+    "-include-binary", "$rootDir/../external/core/build-iphoneos-Debug/src/realm/RealmCore.build/Debug-iphoneos/Storage.build/Objects-normal/arm64/librealm-dbg.a",
+    "-include-binary", "$rootDir/../external/core/build-iphoneos-Debug/src/realm/parser/RealmCore.build/Debug-iphoneos/QueryParser.build/Objects-normal/arm64/librealm-parser-dbg.a",
+    "-include-binary", "$rootDir/../external/core/build-iphoneos-Debug/src/realm/object-store/RealmCore.build/Debug-iphoneos/ObjectStore.build/Objects-normal/arm64/librealm-object-store-dbg.a"
+)
+
+// using universal fat Mach-O to cover both osx-arm64 (M1) and osx-x64 simulators
+val nativeLibraryIncludesIosSimulatorUniversal = mutableListOf(
+    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-ffi-static-dbg.a",
+    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-dbg.a",
+    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-parser-dbg.a",
+    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-object-store-dbg.a"
+)
+
 kotlin {
     jvm {
         compilations.all {
@@ -106,7 +122,7 @@ kotlin {
     //  file).
     // FIXME MPP-BUILD Relative paths in def-file resolves differently dependent of task entry point.
     //  https://youtrack.jetbrains.com/issue/KT-43439
-    iosX64("ios") {
+    ios {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
@@ -120,7 +136,7 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += nativeLibraryIncludes
+            kotlinOptions.freeCompilerArgs += if (this.konanTarget.architecture.name == "ARM64") nativeLibraryIncludesIosArm64 else nativeLibraryIncludesIosSimulatorUniversal
         }
     }
     macosX64("macos") {
@@ -137,7 +153,7 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += nativeLibraryIncludes
+            kotlinOptions.freeCompilerArgs += nativeLibraryIncludesMacos64
         }
     }
 
@@ -297,8 +313,54 @@ tasks.create("capi_macos_x64") {
     outputs.file(project.file("../../external/core/build-macos_x64/src/realm/object-store/c_api/librealm-ffi-static-dbg.a"))
 }
 
-tasks.named("cinteropRealm_wrapperIos") {
-    dependsOn(tasks.named("capi_macos_x64"))
+tasks.create("capi_ios_Arm64") {
+    doLast {
+        exec {
+            workingDir(project.file("../../external/core"))
+            commandLine("tools/cross_compile.sh", "-t", "Debug", "-o", "iphoneos", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
+            environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
+        }
+    }
+}
+
+//TODO add output files for incremental build/caching
+tasks.create("capi_simulator_universal") {
+    doLast {
+        exec {
+            workingDir(project.file("../../external/core"))
+            commandLine("mkdir", "-p", "build-simulator_universal")
+        }
+        exec {
+            workingDir(project.file("../../external/core/build-simulator_universal"))
+            commandLine("cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
+                "-DCMAKE_INSTALL_PREFIX=.",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DREALM_NO_TESTS=1",
+                "-DREALM_ENABLE_SYNC=0",
+                "-DREALM_NO_TESTS=ON",
+                "-G",
+                "Xcode",
+                "..")
+        }
+        exec {
+            workingDir(project.file("../../external/core/build-simulator_universal"))
+            commandLine("xcodebuild",
+                "-sdk",
+                "iphonesimulator",
+                "-configuration",
+                "Debug",
+                "-target",
+                "install", "ONLY_ACTIVE_ARCH=NO")
+        }
+    }
+}
+
+tasks.named("cinteropRealm_wrapperIosX64") {
+    dependsOn(tasks.named("capi_simulator_universal"))
+}
+
+tasks.named("cinteropRealm_wrapperIosArm64") {
+    dependsOn(tasks.named("capi_ios_Arm64"))
 }
 
 tasks.named("cinteropRealm_wrapperMacos") {

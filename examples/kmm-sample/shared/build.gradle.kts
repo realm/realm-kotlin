@@ -55,7 +55,7 @@ kotlin {
     android()
     // TODO Realm is not available for non-X64 hosts yet
     //  https://github.com/realm/realm-kotlin/issues/72
-    iosX64("ios") {
+    ios() {
         binaries {
             framework {
                 baseName = "shared"
@@ -118,8 +118,7 @@ val packForXcode by tasks.creating(Sync::class) {
     // TODO MPP-BUILD Defining ios target as iosX64 somehow hides the ioxX64 target. Can be removed when full
     //  ios builds are in place
     //  https://github.com/realm/realm-kotlin/issues/72
-    // val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
-    val targetName = "ios"
+    val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
     val framework = kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)
     framework.compilation.kotlinOptions.freeCompilerArgs += listOf("-Xverbose-phases=Linker")
     inputs.property("mode", mode)

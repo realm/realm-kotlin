@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 set(CAPI "${CMAKE_SOURCE_DIR}/../../../../external/core/")
-set(CAPI_BUILD "${CAPI}/build-android-x86_64-Debug")
+set(CAPI_BUILD "${CAPI}/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
 set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 
 # Cannot seem to find the libraries with find_library, maybe Android build overrides some internals
