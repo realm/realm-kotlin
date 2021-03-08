@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.4.1)
-
 set(CAPI "${CMAKE_SOURCE_DIR}/../../../../external/core/")
-set(CAPI_BUILD "${CAPI}/build-android-x86_64-Debug")
+set(CAPI_BUILD "${CAPI}/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
 set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 
 # Cannot seem to find the libraries with find_library, maybe Android build overrides some internals
@@ -46,4 +45,10 @@ get_target_property(openssl_include_DIR OpenSSL::Crypto INTERFACE_INCLUDE_DIRECT
 get_target_property(crypto_LIB OpenSSL::Crypto IMPORTED_LOCATION)
 get_target_property(ssl_LIB OpenSSL::SSL IMPORTED_LOCATION)
 
-target_link_libraries(realmc log android realm-ffi-static-dbg realm-object-store-dbg stdc++ realm-parser-dbg realm-dbg OpenSSL::SSL OpenSSL::Crypto z)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(DEBUG_SUFFIX "-dbg")
+else()
+    set(DEBUG_SUFFIX "")
+endif()
+
+target_link_libraries(realmc log android realm-ffi-static${DEBUG_SUFFIX} realm-object-store${DEBUG_SUFFIX} stdc++ realm-parser${DEBUG_SUFFIX} realm${DEBUG_SUFFIX} OpenSSL::SSL OpenSSL::Crypto z)
