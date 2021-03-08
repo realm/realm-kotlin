@@ -28,6 +28,7 @@ import io.realm.runtimeapi.RealmModelInternal
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
@@ -135,6 +136,11 @@ class GenerationExtensionTest {
             val expectedType = properties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
+
+        val fields: List<KProperty1<*, *>> = (sampleModel::class.companionObjectInstance as RealmObjectCompanion).fields
+        assertEquals(properties.size, fields.size)
+
+        sampleModel::class.members.find { it is KMutableProperty }
 
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)

@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -112,8 +113,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             override fun visitProperty(declaration: IrProperty): IrStatement {
                 val name = declaration.name.asString()
 
-                // Don't redefine accessors for internal synthetic properties
-                if (declaration.backingField == null || name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX)) {
+                // Don't redefine accessors for internal synthetic properties or process declarations of subclasses
+                if (declaration.backingField == null || name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX) || declaration.parentAsClass != irClass) {
                     return declaration
                 }
 

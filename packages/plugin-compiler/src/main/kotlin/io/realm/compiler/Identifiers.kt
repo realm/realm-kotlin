@@ -73,9 +73,11 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_ARRAY_LIST = FqName("kotlin.collections.ArrayList")
     val JAVA_UTIL_ARRAY_LIST = FqName("java.util.ArrayList")
     val KOTLIN_COLLECTIONS_ITERATOR = FqName("kotlin.collections.Iterator")
+    val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
     val JAVA_UTIL_ITERATOR = FqName("java.util.Iterator")
     val KOTLIN_COLLECTIONS_MUTABLE_COLLECTION = FqName("kotlin.collections.MutableCollection")
     val JAVA_UTIL_COLLECTION = FqName("java.util.Collection")
+    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KProperty1")
     // Schema related types
     val TABLE = FqName("io.realm.interop.Table")
     val CLASS_FLAG = FqName("io.realm.interop.ClassFlag")

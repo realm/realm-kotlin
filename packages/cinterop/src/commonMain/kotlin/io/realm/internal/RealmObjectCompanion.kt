@@ -17,9 +17,11 @@
 package io.realm.internal
 
 import io.realm.interop.Table
+import kotlin.reflect.KProperty1
 
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
 interface RealmObjectCompanion {
+    val fields: List<KProperty1<*, *>>
     fun `$realm$schema`(): Table
     fun `$realm$newInstance`(): Any
 }
