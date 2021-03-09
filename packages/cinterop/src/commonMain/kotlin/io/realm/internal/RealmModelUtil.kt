@@ -19,8 +19,8 @@ package io.realm.internal
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmObject
 import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.RealmObject
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
