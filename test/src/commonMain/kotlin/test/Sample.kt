@@ -17,11 +17,9 @@
 
 package test
 
-import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmObject
 
-@RealmObject
-class Sample : RealmModel {
+class Sample : RealmObject {
     var stringField: String = "Realm"
     var byteField: Byte = 0xA
     var charField: Char = 'a'

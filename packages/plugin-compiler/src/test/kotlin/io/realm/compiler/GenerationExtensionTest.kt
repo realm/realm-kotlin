@@ -23,8 +23,8 @@ import io.realm.internal.RealmObjectCompanion
 import io.realm.interop.ClassFlag
 import io.realm.interop.PropertyType
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.RealmObject
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty
@@ -82,7 +82,7 @@ class GenerationExtensionTest {
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
         val sampleModel = kClazz.newInstance()!!
 
-        assertTrue(sampleModel is RealmModel)
+        assertTrue(sampleModel is RealmObject)
         assertTrue(sampleModel is RealmModelInternal)
 
         // Accessing getters/setters
