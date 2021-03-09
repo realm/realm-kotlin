@@ -1,7 +1,7 @@
 package test
 
-import io.realm.runtimeapi.RealmObject
 import io.realm.runtimeapi.RealmModule
+import io.realm.runtimeapi.RealmObject
 
 class A : RealmObject
 

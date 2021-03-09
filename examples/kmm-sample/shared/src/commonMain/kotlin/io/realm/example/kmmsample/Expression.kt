@@ -18,8 +18,8 @@
 
 package io.realm.example.kmmsample
 
-import io.realm.runtimeapi.RealmObject
 import io.realm.runtimeapi.RealmModule
+import io.realm.runtimeapi.RealmObject
 
 class Expression : RealmObject {
     var expressionString: String = ""
