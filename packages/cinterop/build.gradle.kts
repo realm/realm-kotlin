@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import org.jetbrains.kotlin.konan.target.KonanTarget
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
@@ -88,6 +90,7 @@ val nativeLibraryIncludesMacosUniversal = listOf(
     "-include-binary", "$rootDir/../external/core/capi_macos_universal/src/realm/parser/librealm-parser-dbg.a",
     "-include-binary", "$rootDir/../external/core/capi_macos_universal/src/realm/object-store/librealm-object-store-dbg.a"
 )
+// TODO remove the debug suffix (-dbg) when switching to use release
 val nativeLibraryIncludesIosArm64 = listOf(
     "-include-binary", "$rootDir/../external/core/build-capi_ios_Arm64/lib/librealm-ffi-static-dbg.a",
     "-include-binary", "$rootDir/../external/core/build-capi_ios_Arm64/lib/librealm-dbg.a",
@@ -133,7 +136,7 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += if (this.konanTarget.architecture.name == "ARM64") nativeLibraryIncludesIosArm64 else nativeLibraryIncludesIosSimulatorUniversal
+            kotlinOptions.freeCompilerArgs += if (this.konanTarget == KonanTarget.IOS_ARM64) nativeLibraryIncludesIosArm64 else nativeLibraryIncludesIosSimulatorUniversal
         }
     }
 
