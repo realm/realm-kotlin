@@ -16,13 +16,13 @@
 
 package io.realm
 
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 
 // FIXME QUERY-API
 //  - Realms, Results and Lists are queryable, but might not be needed as an interface
 //    dependent on how the final API is going to look like.
 //  - Query could alternatively be separated into builder to await constructing new results until
 //    actually executing the query
-interface Queryable<T : RealmModel> {
+interface Queryable<T : RealmObject> {
     fun query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>
 }

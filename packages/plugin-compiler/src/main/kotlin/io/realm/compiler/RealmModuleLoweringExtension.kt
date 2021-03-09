@@ -31,7 +31,7 @@ class RealmModuleLoweringExtension : IrGenerationExtension {
     }
 }
 
-private class RealmModuleLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
+private class RealmModuleLowering(pluginContext: IrPluginContext) : ClassLoweringPass {
     val realmMediatorClass: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE).symbol
     val generator = RealmModuleSyntheticMediatorInterfaceGeneration(pluginContext)
 

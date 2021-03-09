@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2020 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package link.input
+package io.realm.runtimeapi
 
-import io.realm.runtimeapi.RealmObject
-
-@RealmObject
-class Parent {
-    val child: Child? = null
-}
-
-@RealmObject
-class Child {
-
-}
+/**
+ * Marker interface to define a model (managed by Realm).
+ */
+interface RealmObject
