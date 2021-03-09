@@ -1,12 +1,12 @@
 package modules.input
 import io.realm.runtimeapi.RealmModule
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 
-class A : RealmModel
+class A : RealmObject
 
-class B : RealmModel
+class B : RealmObject
 
-class C : RealmModel
+class C : RealmObject
 
 @RealmModule
 class Entities

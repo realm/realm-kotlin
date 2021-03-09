@@ -16,10 +16,10 @@
 
 package io.realm.model
 
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 import io.realm.runtimeapi.RealmModule
 
-open class Person(open var name: String) : RealmModel {
+open class Person(open var name: String) : RealmObject {
     constructor() : this("")
     open var age: Int = 0
 }

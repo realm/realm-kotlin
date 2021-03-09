@@ -21,7 +21,7 @@ import io.realm.internal.manage
 import io.realm.internal.unmanage
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
@@ -46,7 +46,7 @@ class Realm {
         // FIXME API-MUTABLE-REALM This should actually only be possible on a mutable realm, i.e. inside
         //  a transaction
         // FIXME EVALUATE Should this be on RealmModel instead?
-        fun <T : RealmModel> delete(obj: T) {
+        fun <T : RealmObject> delete(obj: T) {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
                 ?: throw IllegalArgumentException("Cannot delete unmanaged object")
@@ -70,7 +70,7 @@ class Realm {
          *   and will leak the [callback] and potentially the internals related to the registration.
          */
         // @CheckReturnValue Not available for Kotlin?
-        fun <T : RealmModel> observe(obj: T, callback: Callback): Cancellable {
+        fun <T : RealmObject> observe(obj: T, callback: Callback): Cancellable {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let {
                 val internalCallback = object : io.realm.interop.Callback {
@@ -105,7 +105,7 @@ class Realm {
     //    (note since parameter are immutable in Kotlin, we need to create a new instance instead of
     //    doing this operation in place)
     @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-    fun <T : RealmModel> create(type: KClass<T>): T {
+    fun <T : RealmObject> create(type: KClass<T>): T {
         val objectType = type.simpleName ?: error("Cannot get class name")
         try {
             val managedModel =
@@ -125,7 +125,7 @@ class Realm {
         }
     }
 
-    fun <T : RealmModel> objects(clazz: KClass<T>): RealmResults<T> {
+    fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         return RealmResults(
             dbPointer!!,
             @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt

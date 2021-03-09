@@ -17,13 +17,13 @@
 package io.realm.runtimeapi
 
 /**
- * This interface is added by the compiler plugin to all [RealmObject] annotated classes, it contains
+ * This interface is added by the compiler plugin to all [RealmObject] classes, it contains
  * internal properties of the model.
  *
- * This interface is not meant to be used externally (consider using [RealmModel] instead)
+ * This interface is not meant to be used externally (consider using [RealmObject] instead)
  */
 @Suppress("VariableNaming")
-interface RealmModelInternal : RealmModel {
+interface RealmModelInternal : RealmObject {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
     var `$realm$Pointer`: NativePointer?
     var `$realm$ObjectPointer`: NativePointer?

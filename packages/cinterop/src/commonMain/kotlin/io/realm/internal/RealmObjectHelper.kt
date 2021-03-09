@@ -18,7 +18,7 @@ package io.realm.internal
 
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 import io.realm.runtimeapi.RealmModelInternal
 
 object RealmObjectHelper {
@@ -41,7 +41,7 @@ object RealmObjectHelper {
 
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmModel> getObject(
+    inline fun <reified R : RealmObject> getObject(
         obj: RealmModelInternal,
         col: String,
     ): Any? {

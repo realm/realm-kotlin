@@ -16,8 +16,8 @@
 
 package test.link
 
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 
-class Child : RealmModel {
+class Child : RealmObject {
     var name: String = "DEFAULT"
 }

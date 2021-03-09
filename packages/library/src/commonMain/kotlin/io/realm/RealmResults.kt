@@ -22,7 +22,7 @@ import io.realm.internal.link
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 //  - Lazy API makes it harded to debug
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
-class RealmResults<T : RealmModel> constructor(
+class RealmResults<T : RealmObject> constructor(
     private val realm: NativePointer,
     private val queryPointer: () -> NativePointer,
     private val clazz: KClass<T>,
