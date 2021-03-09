@@ -288,7 +288,7 @@ val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(releaseBuild = false)
 }
 
-fun Task.build_C_API_Android (releaseBuild: Boolean = false) {
+fun Task.build_C_API_Android(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     doLast {
         // x86_64
@@ -308,7 +308,7 @@ fun Task.build_C_API_Android (releaseBuild: Boolean = false) {
 }
 
 // There is no Interop tasks per build type yet AFAIK , but we can choose to switch between debug and release here
-fun Task.build_C_API_Macos_Universal (releaseBuild: Boolean = false) {
+fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
@@ -326,13 +326,13 @@ fun Task.build_C_API_Macos_Universal (releaseBuild: Boolean = false) {
             commandLine("cmake", "--build", ".", "-j8")
         }
     }
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static${buildTypeSuffix}.a"))
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/librealm${buildTypeSuffix}.a"))
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static${buildTypeSuffix}.a"))
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/librealm-object-store${buildTypeSuffix}.a"))
+    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/librealm-object-store$buildTypeSuffix.a"))
 }
 
-fun Task.build_C_API_Simulator_Universal (releaseBuild: Boolean = false) {
+fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
@@ -343,7 +343,8 @@ fun Task.build_C_API_Simulator_Universal (releaseBuild: Boolean = false) {
         }
         exec {
             workingDir(project.file("../../external/core/build-simulator_universal"))
-            commandLine("cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
+            commandLine(
+                "cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
@@ -351,26 +352,29 @@ fun Task.build_C_API_Simulator_Universal (releaseBuild: Boolean = false) {
                 "-DREALM_NO_TESTS=ON",
                 "-G",
                 "Xcode",
-                "..")
+                ".."
+            )
         }
         exec {
             workingDir(project.file("../../external/core/build-simulator_universal"))
-            commandLine("xcodebuild",
+            commandLine(
+                "xcodebuild",
                 "-sdk",
                 "iphonesimulator",
                 "-configuration",
                 "Debug",
                 "-target",
-                "install", "ONLY_ACTIVE_ARCH=NO")
+                "install", "ONLY_ACTIVE_ARCH=NO"
+            )
         }
     }
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-ffi-static${buildTypeSuffix}.a"))
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm${buildTypeSuffix}.a"))
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-parser${buildTypeSuffix}.a"))
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-object-store${buildTypeSuffix}.a"))
+    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-parser$buildTypeSuffix.a"))
+    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-object-store$buildTypeSuffix.a"))
 }
 
-fun Task.build_C_API_iOS_Arm64 (releaseBuild: Boolean = false) {
+fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
@@ -381,7 +385,8 @@ fun Task.build_C_API_iOS_Arm64 (releaseBuild: Boolean = false) {
         }
         exec {
             workingDir(project.file("../../external/core/build-capi_ios_Arm64"))
-            commandLine("cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
+            commandLine(
+                "cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
@@ -389,11 +394,13 @@ fun Task.build_C_API_iOS_Arm64 (releaseBuild: Boolean = false) {
                 "-DREALM_NO_TESTS=ON",
                 "-G",
                 "Xcode",
-                "..")
+                ".."
+            )
         }
         exec {
             workingDir(project.file("../../external/core/build-capi_ios_Arm64"))
-            commandLine("xcodebuild",
+            commandLine(
+                "xcodebuild",
                 "-sdk",
                 "iphoneos",
                 "-configuration",
@@ -402,7 +409,8 @@ fun Task.build_C_API_iOS_Arm64 (releaseBuild: Boolean = false) {
                 "install",
                 "-arch",
                 "arm64",
-                "ONLY_ACTIVE_ARCH=NO")
+                "ONLY_ACTIVE_ARCH=NO"
+            )
         }
     }
     outputs.file(project.file("../../external/core/build-capi_ios_Arm64/lib/librealm-ffi-static$buildTypeSuffix.a"))

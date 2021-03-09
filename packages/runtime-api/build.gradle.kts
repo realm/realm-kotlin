@@ -104,7 +104,6 @@ kotlin {
         getByName("macosMain") {
         }
     }
-
 }
 
 realmPublish {
