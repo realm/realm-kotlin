@@ -140,8 +140,6 @@ class GenerationExtensionTest {
         val fields: List<KProperty1<*, *>> = (sampleModel::class.companionObjectInstance as RealmObjectCompanion).fields
         assertEquals(properties.size, fields.size)
 
-        sampleModel::class.members.find { it is KMutableProperty }
-
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)
         assertEquals(kClazz, newInstance.javaClass)

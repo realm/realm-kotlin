@@ -161,7 +161,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     type,
                                     property.symbol,
                                     0,
-                                    property.backingField?.symbol,
+                                    null,
                                     property.getter?.symbol,
                                     property.setter?.symbol
                                 )

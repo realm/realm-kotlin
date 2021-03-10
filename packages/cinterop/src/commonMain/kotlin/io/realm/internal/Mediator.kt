@@ -23,5 +23,7 @@ import kotlin.reflect.KClass
 interface Mediator { // avoid reflection, implemented and defined by compiler plugin for each `@RealmModule`
     val companionMapping: Map<KClass<*>, RealmObjectCompanion>
     fun newInstance(clazz: KClass<*>): Any
+    // This is constant so could just be computed directly in IR or at least just be a default method like
+    // fun schema(): List<Table> { return companionMapping.values.map { it.`$realm$schema`() } }
     fun schema(): List<Table>
 }

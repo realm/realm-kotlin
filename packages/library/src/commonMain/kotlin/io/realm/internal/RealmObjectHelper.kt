@@ -20,8 +20,9 @@ import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
+import io.realm.util.copyToRealm
+import io.realm.util.create
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -73,28 +74,15 @@ object RealmObjectHelper {
         RealmInterop.realm_set_value(o, key, value, false)
     }
 
-    @Suppress("unused")
+    @Suppress("unused") // Called from generated code
     inline fun <reified R: RealmModelInternal> setObject(
         obj: RealmModelInternal,
         col: String,
         value: R?
     ) {
         val newValue = if (!(value?.`$realm$IsManaged` ?: true)) {
-            val managedModel = (obj.`$realm$Schema` as Mediator).newInstance(R::class) as RealmModelInternal
-            val realm = obj?.`$realm$Pointer`!!
-            val key = RealmInterop.realm_find_class(realm, R::class.simpleName!!)
-            val objectPointer = RealmInterop.realm_object_create(realm, key)
-            managedModel.manage( realm, obj.`$realm$Schema` as Mediator, R::class, objectPointer)
-            copy(value!!, managedModel)
+            copyToRealm(obj.`$realm$Schema` as Mediator, obj.`$realm$Pointer`!!, value!!)
         } else value
         setValue(obj, col, newValue)
-    }
-
-    fun <T: RealmModel> copy(t1: T, t2: T): T {
-        val members: List<KMutableProperty1<T, Any?>> = t1::class.members.filter { it is KMutableProperty1<*, *> } as List<KMutableProperty1<T, Any?>>
-        for (member: KMutableProperty1<T, Any?> in members) {
-            member.get(t1)?.let { member.set(t2, it) }
-        }
-        return t2
     }
 }

@@ -16,7 +16,6 @@
 
 package io.realm
 
-import io.realm.internal.RealmObjectHelper
 import io.realm.runtimeapi.RealmModule
 import test.link.Child
 import test.link.Parent
@@ -76,13 +75,19 @@ class LinkTests {
         assertNull(realm.objects(Parent::class)[0].child)
     }
 
+    // FIXME Test should go somewhere else, but
     @Test
     fun copy_unmanaged() {
         val s = "Hello"
         val child = Child().apply { name = s }
         val parent = Parent().apply { this.child = child }
 
-        val clone = RealmObjectHelper.copy(parent, Parent())
+        realm.beginTransaction()
+        val clone = realm.copyToRealm(parent)
+        realm.commitTransaction()
+
+        assertNotNull(clone)
+        assertNotNull(clone.child)
         assertEquals(s, clone.child?.name)
     }
 
@@ -98,7 +103,8 @@ class LinkTests {
         assertNull(parent.child)
         parent.child = unmanaged
         assertNotNull(parent.child)
-        val managed = parent.child!!
+        val managedChild = parent.child
+        assertNotNull(managedChild)
 
         // Verify that properties have been migrated
         assertEquals("NEWNAME", parent.child!!.name)
@@ -109,13 +115,13 @@ class LinkTests {
         assertEquals("NEWNAME", parent.child!!.name)
 
         // Verify that we can update the clone
-        managed.name = "FD"
+        managedChild.name = "FD"
         assertEquals("FD", parent.child!!.name)
         realm.commitTransaction()
 
         // Verify that we cannot update the managed clone outside a transaction (it is infact managed)
         assertFailsWith<RuntimeException> {
-            managed.name = "FD"
+            managedChild.name = "FD"
         }
     }
 }

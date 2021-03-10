@@ -37,6 +37,7 @@ dependencies {
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
     testImplementation(project(":runtime-api"))
     testImplementation(project(":cinterop"))
+    testImplementation(project(":library"))
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
