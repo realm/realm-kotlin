@@ -74,6 +74,11 @@ pipeline {
                 test("connectedAndroidTest")
             }
         }
+        stage('Tests Android Sample App') {
+            steps {
+                runMonkey()
+            }
+        }
         stage('Publish to OJO') {
             when { expression { shouldReleaseSnapshot(version) } }
             steps {
@@ -226,7 +231,18 @@ def test(task) {
             step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
         }
     }
+}
 
+def runMonkey() {
+    node(osx_kotlin) {
+        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+            sh """
+                cd examples/kmm-sample
+                ./gradlew uninstallAll installDebug --info --stacktrace --no-daemon
+                ./gradlew monkey --info --stacktrace --no-daemon
+            """
+        }
+    }
 }
 
 def getArchive() {
