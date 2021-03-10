@@ -76,7 +76,9 @@ pipeline {
         }
         stage('Tests Android Sample App') {
             steps {
-                runMonkey()
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    runMonkey()
+                }
             }
         }
         stage('Publish to OJO') {
@@ -239,7 +241,7 @@ def runMonkey() {
             sh """
                 cd examples/kmm-sample
                 ./gradlew uninstallAll installDebug --info --stacktrace --no-daemon
-                ./gradlew monkey --info --stacktrace --no-daemon
+                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
     }

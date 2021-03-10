@@ -74,8 +74,3 @@ android {
         }
     }
 }
-
-tasks.register("monkey", type = Exec::class) {
-    val runMonkey = listOf("adb", "shell", "monkey", "-p", "io.realm.example.kmmsample.androidApp", "-v", "500", "--kill-process-after-error")
-    commandLine(runMonkey)
-}
