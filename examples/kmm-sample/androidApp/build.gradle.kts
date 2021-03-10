@@ -76,6 +76,6 @@ android {
 }
 
 tasks.register("monkey", type = Exec::class) {
-    val clearDataCommand = listOf("adb", "shell", "monkey", "-p", "io.realm.example.kmmsample.androidApp", "-v", "500", "--kill-process-after-error")
-    commandLine(clearDataCommand)
+    val runMonkey = listOf("adb", "shell", "monkey", "-p", "io.realm.example.kmmsample.androidApp", "-v", "500", "--kill-process-after-error")
+    commandLine(runMonkey)
 }
