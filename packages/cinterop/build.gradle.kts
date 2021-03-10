@@ -277,7 +277,7 @@ val capiAndroidRelease by tasks.registering {
 }
 // Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for macOS
 val capiMacosUniversal by tasks.registering {
-    build_C_API_Macos_Universal(releaseBuild = false) // TODO switch to Release build (with assertion enabled) once we reach Beta stability?
+    build_C_API_Macos_Universal(releaseBuild = false) // TODO https://github.com/realm/realm-kotlin/issues/142 switch to Release build (with assertion enabled) once we reach Beta stability?
 }
 // Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for iphone simulator
 val capiSimulatorUniversal by tasks.registering {
@@ -364,7 +364,8 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
                 "-configuration",
                 "Debug",
                 "-target",
-                "install", "ONLY_ACTIVE_ARCH=NO"
+                "install", "ONLY_ACTIVE_ARCH=NO",
+                "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
             )
         }
     }
@@ -409,7 +410,8 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
                 "install",
                 "-arch",
                 "arm64",
-                "ONLY_ACTIVE_ARCH=NO"
+                "ONLY_ACTIVE_ARCH=NO",
+                "-UseModernBuildSystem=NO"
             )
         }
     }
