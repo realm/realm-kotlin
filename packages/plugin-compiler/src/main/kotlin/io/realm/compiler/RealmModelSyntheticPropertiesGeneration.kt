@@ -130,6 +130,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val listOf = pluginContext.referenceFunctions(KOTLIN_COLLECTIONS_LISTOF)
             .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
         companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
             Name.identifier("fields"),
             listIrClass.typeWith(type)
         )
@@ -331,61 +333,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
         }
         function.overriddenSymbols = listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }.symbol)
-    }
-
-
-    private fun IrClass.addValueProperty(
-        propertyName: Name,
-        propertyType: IrType,
-        initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody
-    ) {
-        // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
-        val property = addProperty {
-            at(this@addProperty.startOffset, this@addProperty.endOffset)
-            name = propertyName
-            visibility = DescriptorVisibilities.PUBLIC
-            modality = Modality.OPEN
-            isVar = true
-        }
-        // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
-        property.backingField = pluginContext.irFactory.buildField {
-            at(this@addValueProperty.startOffset, this@addValueProperty.endOffset)
-            origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
-            name = property.name
-            visibility = DescriptorVisibilities.PRIVATE
-            modality = property.modality
-            type = propertyType
-        }.apply {
-            initializer = initExpression(startOffset, endOffset)
-        }
-        property.backingField?.parent = this
-        property.backingField?.correspondingPropertySymbol = property.symbol
-
-        val getter = property.addGetter {
-            at(this@addValueProperty.startOffset, this@addValueProperty.endOffset)
-            visibility = DescriptorVisibilities.PUBLIC
-            modality = Modality.OPEN
-            returnType = propertyType
-            origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
-        }
-        // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
-        getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
-        // overridden:
-        //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInternal
-        val propertyAccessorGetter = realmObjectCompanionInterface.getPropertyGetter(propertyName.asString())
-            ?: error("${propertyName.asString()} function getter symbol is not available")
-        getter.overriddenSymbols = listOf(propertyAccessorGetter)
-
-        // BLOCK_BODY
-        // RETURN type=kotlin.Nothing from='public final fun <get-objectPointer> (): kotlin.Long? declared in dev.nhachicha.Foo.$RealmHandler'
-        // GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private' type=kotlin.Long? origin=null
-        // receiver: GET_VAR '<this>: dev.nhachicha.Foo.$RealmHandler declared in dev.nhachicha.Foo.$RealmHandler.<get-objectPointer>' type=dev.nhachicha.Foo.$RealmHandler origin=null
-        getter.body = pluginContext.blockBody(getter.symbol) {
-            at(startOffset, endOffset)
-            +irReturn(
-                irGetField(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
-            )
-        }
     }
 
     private fun IrClass.addVariableProperty(propertyName: Name, propertyType: IrType, initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody) {

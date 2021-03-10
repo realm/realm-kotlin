@@ -21,6 +21,7 @@ import kotlin.reflect.KClass
 
 // FIXME https://github.com/realm/realm-kotlin/issues/90 support default schema creation.
 interface Mediator { // avoid reflection, implemented and defined by compiler plugin for each `@RealmModule`
+    val companionMapping: Map<KClass<*>, RealmObjectCompanion>
     fun newInstance(clazz: KClass<*>): Any
     fun schema(): List<Table>
 }

@@ -193,6 +193,10 @@ class GenerationExtensionTest {
         val entitiesModule = kClazz.newInstance()!!
 
         assertTrue(entitiesModule is Mediator)
+
+        val companionMapping = entitiesModule.companionMapping
+        assertEquals(3, companionMapping.size)
+
         val schema: List<Any> = entitiesModule.schema()
         assertNotNull(schema)
         assertEquals(3, schema.size)
