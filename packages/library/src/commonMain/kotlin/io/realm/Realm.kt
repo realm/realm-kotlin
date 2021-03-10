@@ -22,7 +22,7 @@ import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
-import io.realm.util.copyToRealm
+import io.realm.internal.copyToRealm
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
@@ -106,7 +106,7 @@ class Realm {
     //    doing this operation in place)
     @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
     fun <T : RealmModel> create(type: KClass<T>): T {
-        return io.realm.util.create(realmConfiguration.schema, dbPointer!!, type)
+        return io.realm.internal.create(realmConfiguration.schema, dbPointer!!, type)
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmModel> create(): T { return create(T::class) }

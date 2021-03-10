@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.util
+package io.realm.internal
 
 import io.realm.internal.Mediator
 import io.realm.internal.manage
