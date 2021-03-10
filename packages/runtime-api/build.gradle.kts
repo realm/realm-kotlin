@@ -30,33 +30,6 @@ detekt {
     input = files(file("src/androidMain/kotlin"), file("src/commonMain/kotlin"))
 }
 
-// Common Kotlin configuration
-kotlin {
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation(kotlin("stdlib-common"))
-            }
-        }
-    }
-
-    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
-    configure(listOf(targets["metadata"], jvm())) {
-        mavenPublication {
-            val targetPublication = this@mavenPublication
-            tasks.withType<AbstractPublishToMaven>()
-                .matching { it.publication == targetPublication }
-                .all { onlyIf { findProperty("isMainHost") == "true" } }
-        }
-    }
-}
-
-// JVM
-kotlin {
-    jvm()
-}
-
 // Android configuration
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
@@ -89,10 +62,26 @@ android {
 }
 
 kotlin {
+    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
+    // FIXME: We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    configure(listOf(targets["metadata"], jvm())) {
+        mavenPublication {
+            val targetPublication = this@mavenPublication
+            tasks.withType<AbstractPublishToMaven>()
+                .matching { it.publication == targetPublication }
+                .all { onlyIf { findProperty("isMainHost") == "true" } }
+        }
+    }
+
     android("android") {
         publishLibraryVariants("release", "debug")
     }
     sourceSets {
+        commonMain {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+            }
+        }
         getByName("androidMain") {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
@@ -100,27 +89,16 @@ kotlin {
             }
         }
     }
-}
-
-// IOS Configurastion
-kotlin {
+    jvm()
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
     // For Windows, should be changed to e.g. mingwX64
-    iosX64("ios")
+    ios()
     sourceSets {
         getByName("iosMain") {
         }
     }
-}
-
-// Macos configuration
-kotlin {
-    // For ARM, should be changed to iosArm32 or iosArm64
-    // For Linux, should be changed to e.g. linuxX64
-    // For MacOS, should be changed to e.g. macosX64
-    // For Windows, should be changed to e.g. mingwX64
     macosX64("macos")
     sourceSets {
         getByName("macosMain") {

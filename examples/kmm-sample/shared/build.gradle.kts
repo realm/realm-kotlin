@@ -55,7 +55,7 @@ kotlin {
     android()
     // TODO Realm is not available for non-X64 hosts yet
     //  https://github.com/realm/realm-kotlin/issues/72
-    iosX64("ios") {
+    ios {
         binaries {
             framework {
                 baseName = "shared"
@@ -97,7 +97,7 @@ android {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1
-        versionName = Realm.version.toString()
+        versionName = Realm.version
     }
     buildTypes {
         getByName("release") {
@@ -115,11 +115,7 @@ val packForXcode by tasks.creating(Sync::class) {
     group = "build"
     val mode = System.getenv("CONFIGURATION") ?: "DEBUG"
     val sdkName = System.getenv("SDK_NAME") ?: "iphonesimulator"
-    // TODO MPP-BUILD Defining ios target as iosX64 somehow hides the ioxX64 target. Can be removed when full
-    //  ios builds are in place
-    //  https://github.com/realm/realm-kotlin/issues/72
-    // val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
-    val targetName = "ios"
+    val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
     val framework = kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)
     inputs.property("mode", mode)
     dependsOn(framework.linkTask)
