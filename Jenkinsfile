@@ -76,7 +76,7 @@ pipeline {
         }
         stage('Tests Android Sample App') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     runMonkey()
                 }
             }
