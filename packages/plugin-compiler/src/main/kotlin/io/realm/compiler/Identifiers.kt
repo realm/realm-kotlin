@@ -76,7 +76,7 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
     val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_COLLECTIONS_MUTABLE_COLLECTION = FqName("kotlin.collections.MutableCollection")
-    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KProperty1")
+    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
     // Schema related types
     val TABLE = FqName("io.realm.interop.Table")
     val CLASS_FLAG = FqName("io.realm.interop.ClassFlag")

@@ -20,8 +20,8 @@ import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
-import io.realm.util.copyToRealm
-import io.realm.util.create
+import io.realm.internal.copyToRealm
+import io.realm.internal.create
 import kotlin.reflect.KMutableProperty1
 
 object RealmObjectHelper {
