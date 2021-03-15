@@ -31,4 +31,5 @@ class Sample : RealmModel {
     var booleanField: Boolean = true
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
+    var child: Sample? = null
 }
