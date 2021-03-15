@@ -61,7 +61,11 @@ fun <T : RealmModel> copyToRealm(schema: Mediator, realm: NativePointer, o: T, c
                 o
             }
         }
-        get?.let { member.set(target, it) }
+        get?.let {
+            // TODO OPTIMIZE Should we do a separate setter that allows the isDefault flag for sync
+            //  optimizations
+            member.set(target, it)
+        }
     }
     return target
 }
