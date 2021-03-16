@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package io.realm.interop;
+package io.realm.interop
 
 /**
  * Internal callback used from JNI to notify RealmResults or RealmObject changes.
