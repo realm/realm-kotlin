@@ -299,7 +299,7 @@ actual object RealmInterop {
     actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
         memScoped {
             val value: realm_value_t = alloc()
-            realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr)
+            throwOnError(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
             return from_realm_value(value)
         }
     }
@@ -327,7 +327,7 @@ actual object RealmInterop {
 
     actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
         memScoped {
-            realm_wrapper.realm_set_value_by_ref(o.cptr(), key.key, to_realm_value(value).ptr, isDefault)
+            throwOnError(realm_wrapper.realm_set_value_by_ref(o.cptr(), key.key, to_realm_value(value).ptr, isDefault))
         }
     }
 
