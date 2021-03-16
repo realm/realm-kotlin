@@ -239,6 +239,8 @@ def runMonkey() {
     try {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             sh """
+                cd examples/kmm-sample
+                ./gradlew uninstallAll installDebug --info --stacktrace --no-daemon
                 $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
