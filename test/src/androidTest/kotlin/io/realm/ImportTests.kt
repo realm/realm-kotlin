@@ -102,11 +102,14 @@ class ImportTests {
         realm.commitTransaction()
 
         assertNotNull(clone)
+        assertEquals(2, realm.objects(Sample::class).count())
         val child = clone.child
         assertNotNull(child)
         assertNotNull(child.stringField)
         assertEquals(v1, child.stringField)
         assertEquals(child.stringField, child.child?.stringField)
+        val child2 = child.child!!
+        assertEquals(child2.stringField, child2.child?.stringField)
     }
 
     @Test

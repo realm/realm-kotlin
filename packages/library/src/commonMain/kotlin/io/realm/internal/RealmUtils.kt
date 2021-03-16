@@ -50,6 +50,7 @@ fun <T : RealmModel> copyToRealm(schema: Mediator, realm: NativePointer, o: T, c
 
     val target = create(schema, realm, o::class)
     cache[o as RealmModelInternal] = target as RealmModelInternal
+    // TODO OPTIMIZE We could set all properties at once with on C-API call
     for (member: KMutableProperty1<T, Any?> in members) {
         val get = member.get(o).let { o ->
             if (o is RealmModelInternal && !o.`$realm$IsManaged`) {
