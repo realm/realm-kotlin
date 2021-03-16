@@ -17,12 +17,12 @@
 package io.realm
 
 import io.realm.internal.NotificationToken
+import io.realm.internal.copyToRealm
 import io.realm.internal.unmanage
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
-import io.realm.internal.copyToRealm
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)

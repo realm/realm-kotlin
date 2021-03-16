@@ -62,14 +62,13 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.types.typeUtil.isInt
 
-
 class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext: IrPluginContext) {
 
     private val mapType = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MAP)
     private val mapValuesProperty = mapType.properties.first { it.name == Name.identifier("values") }.symbol
     private var mapIteratorFunction: IrSimpleFunction = pluginContext.lookupFunctionInClass(KOTLIN_COLLECTIONS_ABSTRACT_COLLECTION, "iterator")
     private val mapGetFunction: IrSimpleFunction =
-        pluginContext.lookupFunctionInClass( KOTLIN_COLLECTIONS_MAP, "get")
+        pluginContext.lookupFunctionInClass(KOTLIN_COLLECTIONS_MAP, "get")
 
     private val listIrClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTION_LIST)
     private var iteratorIrClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_ITERATOR)
@@ -104,16 +103,14 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                 arrayListIrClassSymbol = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_ARRAY_LIST).symbol
                 arrayListCtor =
                     pluginContext.lookupConstructorInClass(KOTLIN_COLLECTIONS_ARRAY_LIST) {
-                        it.owner.valueParameters.size == 1 &&
-                                it.owner.valueParameters[0].type.isInt()
+                        it.owner.valueParameters.size == 1 && it.owner.valueParameters[0].type.isInt()
                     }
             }
             pluginContext.platform.isJvm() -> {
                 arrayListIrClassSymbol =
                     pluginContext.lookupClassOrThrow(JAVA_UTIL_ARRAY_LIST).symbol
                 arrayListCtor = pluginContext.lookupConstructorInClass(JAVA_UTIL_ARRAY_LIST) {
-                    it.owner.valueParameters.size == 1 &&
-                            (it.owner.valueParameters[0].type as IrTypeBase).kotlinType!!.isInt()
+                    it.owner.valueParameters.size == 1 && (it.owner.valueParameters[0].type as IrTypeBase).kotlinType!!.isInt()
                 }
             }
             else -> {
@@ -131,6 +128,7 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
     @Suppress("ClassNaming")
     private object REALM_MEDIATOR_ORIGIN : IrDeclarationOriginImpl("MEDIATOR")
 
+    @Suppress("LongMethod")
     @ObsoleteDescriptorBasedAPI
     fun addInterfaceMethodImplementation(irClass: IrClass, models: List<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>): IrClass =
         // TODO move the implementation into the default Mediator interface, only the HashMap initializer block is specific per RealmModule
@@ -152,7 +150,8 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                     ).apply {
                         putTypeArgument(0, companionMapKeyType)
                         putTypeArgument(1, companionMapValueType)
-                        putValueArgument(0,
+                        putValueArgument(
+                            0,
                             IrVarargImpl(
                                 startOffset,
                                 endOffset,
@@ -170,7 +169,8 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                                         putTypeArgument(0, companionMapKeyType)
                                         putTypeArgument(1, companionMapValueType)
                                         putValueArgument(
-                                            0, IrClassReferenceImpl(
+                                            0,
+                                            IrClassReferenceImpl(
                                                 startOffset, endOffset,
                                                 pluginContext.irBuiltIns.kClassClass.starProjectedType,
                                                 irC,
@@ -186,7 +186,6 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                                                 symbol
                                             )
                                         )
-
                                     }
                                 }
                             )

@@ -20,9 +20,6 @@ import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.Link
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
-import io.realm.internal.copyToRealm
-import io.realm.internal.create
-import kotlin.reflect.KMutableProperty1
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -75,7 +72,7 @@ object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline fun <reified R: RealmModelInternal> setObject(
+    inline fun <reified R : RealmModelInternal> setObject(
         obj: RealmModelInternal,
         col: String,
         value: R?

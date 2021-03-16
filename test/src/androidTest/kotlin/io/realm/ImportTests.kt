@@ -58,7 +58,7 @@ class ImportTests {
 
         val managed = realm.objects(Sample::class)[0]
         for (value in TestRealmFieldTypes.values()) {
-            when(value) {
+            when (value) {
                 TestRealmFieldTypes.BYTE -> assertEquals(0xa, managed.byteField)
                 TestRealmFieldTypes.CHAR -> assertEquals('a', managed.charField)
                 TestRealmFieldTypes.SHORT -> assertEquals(17, managed.shortField)

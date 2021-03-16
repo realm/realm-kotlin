@@ -62,7 +62,6 @@ import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
@@ -77,7 +76,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private var setValue: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
     private var getObject: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
     private val setObject = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
-    
+
     private var functionLongToChar: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
     private var functionCharToLong: IrSimpleFunction =

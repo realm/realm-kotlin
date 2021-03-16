@@ -18,7 +18,6 @@ package io.realm.internal
 
 import io.realm.interop.Table
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
 
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
 interface RealmObjectCompanion {

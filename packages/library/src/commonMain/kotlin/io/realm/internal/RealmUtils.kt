@@ -16,15 +16,12 @@
 
 package io.realm.internal
 
-import io.realm.internal.Mediator
-import io.realm.internal.manage
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
 import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
-
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
 fun <T : RealmModel> create(schema: Mediator, realm: NativePointer, type: KClass<T>): T {

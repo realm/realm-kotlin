@@ -201,7 +201,7 @@ fun IrClass.addValueProperty(
     propertyName: Name,
     propertyType: IrType,
     initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody
-) : IrProperty {
+): IrProperty {
     // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
     val property = addProperty {
         at(this@addProperty.startOffset, this@addProperty.endOffset)
