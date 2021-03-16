@@ -240,11 +240,11 @@ actual object RealmInterop {
 
     actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
         return LongPointerWrapper(
-            realmc.realm_object_add_notification_callbackJNI(
+            realmc.register_object_notification_cb(
                 obj.cptr(),
-                object : io.realm.interop.NotificationCallback() {
+                object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer))
+                        callback.onChange(LongPointerWrapper(pointer, managed = false))
                     }
                 }
             ),
@@ -254,11 +254,11 @@ actual object RealmInterop {
 
     actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
         return LongPointerWrapper(
-            realmc.realm_results_add_notification_callbackJNI(
+            realmc.register_results_notification_cb(
                 results.cptr(),
-                object : io.realm.interop.NotificationCallback() {
+                object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer))
+                        callback.onChange(LongPointerWrapper(pointer, managed = false))
                     }
                 }
             ),

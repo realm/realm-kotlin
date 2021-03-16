@@ -33,11 +33,11 @@ class ExpressionRepository {
 
     fun addExpression(expression: String): Expression {
         realm.beginTransaction()
-        val expression = realm.create(Expression::class).apply {
+        val persistedExpression = realm.create(Expression::class).apply {
             expressionString = expression
         }
         realm.commitTransaction()
-        return expression
+        return persistedExpression
     }
 
     fun expressions(): List<Expression> {
