@@ -207,42 +207,42 @@ struct realm_size_t {
 
 %include "realm.h"
 
-// How to
-// - delete all listeners
-%typemap(directorin, descriptor="J") const void* "*(const void **)&$input = $1;"
-
 %inline %{
-realm_notification_token_t*  register_results_notification_cb(realm_results_t* results, jobject callback) {
-        using namespace realm::jni_util;
-    auto jenv = realm::jni_util::get_env();
+realm_notification_token_t *
+register_results_notification_cb(realm_results_t *results, jobject callback) {
+    using namespace realm::jni_util;
+    auto jenv = get_env();
     static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
-        return realm_results_add_notification_callback(
-                results,
-                // Use the callback as user data
-                static_cast<jobject>(get_env()->NewGlobalRef(callback)),
+    return realm_results_add_notification_callback(
+            results,
+            // Use the callback as user data
+            static_cast<jobject>(get_env()->NewGlobalRef(callback)),
         [](void *userdata) {
             get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
         },
         // change callback
-        [](void* userdata, const realm_collection_changes_t* changes) {
-            auto jenv = realm::jni_util::get_env(true);
+        [](void *userdata, const realm_collection_changes_t *changes) {
+            auto jenv = get_env(true);
             if (jenv->ExceptionCheck()) {
                 jenv->ExceptionDescribe();
+                throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
             }
             jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                on_change_method,
-                                reinterpret_cast<jlong>(changes));
+                                 on_change_method,
+                                 reinterpret_cast<jlong>(changes));
         },
         // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
-        []( void* userdata, const realm_async_error_t* async_error) { },
+        []( void *userdata,
+        const realm_async_error_t *async_error) {},
         // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
         NULL
-        );
-    }
+    );
+}
 
-realm_notification_token_t* register_object_notification_cb(realm_object_t* object, jobject callback) {
+realm_notification_token_t *
+register_object_notification_cb(realm_object_t *object, jobject callback) {
     using namespace realm::jni_util;
     auto jenv = get_env();
     static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
@@ -252,26 +252,28 @@ realm_notification_token_t* register_object_notification_cb(realm_object_t* obje
             object,
             // Use the callback as user data
             static_cast<jobject>(get_env()->NewGlobalRef(callback)),
-    [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    },
-    // change callback
-    [](void* userdata, const const realm_object_changes_t* changes) {
-        // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
-        //  like the C-API error callback below
-        auto jenv = get_env(true);
-        if (jenv->ExceptionCheck()) {
-            jenv->ExceptionDescribe();
-            throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-        }
-        jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                             on_change_method,
-                             reinterpret_cast<jlong>(changes));
-    },
-    // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
-    []( void* userdata, const realm_async_error_t* async_error) { },
-    // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
-    NULL
+        [](void *userdata) {
+            get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+        },
+        // change callback
+        [](void *userdata, const const realm_object_changes_t *changes) {
+            // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
+            //  like the C-API error callback below
+            auto jenv = get_env(true);
+            if (jenv->ExceptionCheck()) {
+                jenv->ExceptionDescribe();
+                throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+            }
+            jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                                 on_change_method,
+                                 reinterpret_cast<jlong>(changes));
+        },
+        // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
+        []( void *userdata,
+        const realm_async_error_t *async_error) {},
+        // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+        NULL
     );
 }
+
 %}
