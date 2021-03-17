@@ -19,10 +19,9 @@ package io.realm
 import io.realm.internal.NotificationToken
 import io.realm.internal.manage
 import io.realm.internal.unmanage
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModelInternal
-import io.realm.runtimeapi.RealmObject
+import io.realm.interop.RealmModelInternal
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)

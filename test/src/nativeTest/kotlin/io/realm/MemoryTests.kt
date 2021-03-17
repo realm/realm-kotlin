@@ -19,7 +19,6 @@ package io.realm
 
 import io.realm.Utils.createTempDir
 import io.realm.Utils.deleteTempDir
-import io.realm.runtimeapi.RealmModule
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString

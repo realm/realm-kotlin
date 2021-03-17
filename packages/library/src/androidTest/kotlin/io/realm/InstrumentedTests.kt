@@ -26,7 +26,6 @@ import io.realm.interop.PropertyType
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.interop.Table
-import io.realm.runtimeapi.NativePointer
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals

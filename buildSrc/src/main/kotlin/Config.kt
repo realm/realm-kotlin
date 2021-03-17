@@ -26,7 +26,6 @@ object Realm {
     const val compilerPluginIdNative = "plugin-compiler-shaded"
     const val cInteropId = "cinterop"
     const val jniSwigStubsId = "jni-swig-stub"
-    const val runtimeApiId = "runtime-api"
     const val gradlePluginId = "gradle-plugin"
 
     object License {

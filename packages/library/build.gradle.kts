@@ -37,7 +37,6 @@ kotlin {
                 implementation(kotlin("reflect"))
                 // If runtimeapi is merged with cinterop then we will be exposing both to the users
                 // Runtime holds annotations, etc. that has to be exposed to users
-                api(project(":runtime-api"))
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
             }

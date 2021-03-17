@@ -16,7 +16,7 @@
 
 package test
 
-import io.realm.runtimeapi.RealmObject
+import io.realm.RealmObject
 
 class Nullability : RealmObject {
     // TODO Need to test for all types, but requires more though on how to structure tests to ensure

@@ -1,4 +1,4 @@
-package io.realm.runtimeapi
+package io.realm.interop
 
 // Could potentially work without an open realm - sort of non-live object-ish
 // FIXME Do we need a type variable here?

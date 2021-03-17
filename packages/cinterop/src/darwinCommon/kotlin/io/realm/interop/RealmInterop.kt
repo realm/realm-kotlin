@@ -16,9 +16,6 @@
 
 package io.realm.interop
 
-import io.realm.runtimeapi.Link
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModelInternal
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer

@@ -24,7 +24,6 @@ val mavenPublicationName = "jniSwigStubs"
 java {
     withSourcesJar()
     dependencies {
-        api(project(":runtime-api"))
     }
 }
 

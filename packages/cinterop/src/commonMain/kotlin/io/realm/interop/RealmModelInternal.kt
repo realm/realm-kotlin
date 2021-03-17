@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package io.realm.runtimeapi
+package io.realm.interop
+
+import io.realm.interop.NativePointer
+
 
 /**
  * This interface is added by the compiler plugin to all [RealmObject] classes, it contains
@@ -23,7 +26,8 @@ package io.realm.runtimeapi
  * This interface is not meant to be used externally (consider using [RealmObject] instead)
  */
 @Suppress("VariableNaming")
-interface RealmModelInternal : RealmObject {
+// FIXME Should we rename to RealmInteropObject
+interface RealmModelInternal {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
     var `$realm$Pointer`: NativePointer?
     var `$realm$ObjectPointer`: NativePointer?

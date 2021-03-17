@@ -35,7 +35,8 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
-    testImplementation(project(":runtime-api"))
+    testImplementation(project(":library"))
+    // Have to be mentioned explicitly as it is not an api dependency of library
     testImplementation(project(":cinterop"))
 }
 

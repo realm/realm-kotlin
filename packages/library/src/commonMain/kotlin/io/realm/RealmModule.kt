@@ -1,4 +1,4 @@
-package io.realm.runtimeapi
+package io.realm
 
 import kotlin.reflect.KClass
 

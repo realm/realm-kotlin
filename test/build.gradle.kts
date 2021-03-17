@@ -49,6 +49,10 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
+                // We currently have some tests that verified injection of interfaces, etc. Our
+                // current compiler plugin tests only runs on JVM, so makes sense to keep them for
+                // now, but ideally they should go to the compiler plugin tests.
+                implementation("io.realm.kotlin:cinterop:${Realm.version}")
             }
         }
     }

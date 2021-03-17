@@ -16,8 +16,6 @@
 
 package io.realm
 
-import io.realm.runtimeapi.RealmObject
-
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83

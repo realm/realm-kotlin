@@ -20,6 +20,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.nio.file.Files
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.absolutePathString
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -39,13 +42,12 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("10.4.0", realmc.realm_get_library_version())
+        assertEquals("10.5.2", realmc.realm_get_library_version())
     }
 
+    @ExperimentalPathApi
     @Test
     fun cinterop_swig() {
-        val context = InstrumentationRegistry.getInstrumentation().context
-
         System.loadLibrary("realmc")
 
         val rlmInvalidPropertyKey = realmc.getRLM_INVALID_PROPERTY_KEY()
@@ -146,7 +148,8 @@ class CinteropTest {
 
         val config: Long = realmc.realm_config_new()
 
-        realmc.realm_config_set_path(config, context.filesDir.absolutePath + "/c_api_test.realm")
+        val path = Files.createTempDirectory("android_tests").absolutePathString()
+        realmc.realm_config_set_path(config, path + "/c_api_test.realm")
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config, 1)

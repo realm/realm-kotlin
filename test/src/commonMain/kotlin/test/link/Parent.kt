@@ -16,7 +16,7 @@
 
 package test.link
 
-import io.realm.runtimeapi.RealmObject
+import io.realm.RealmObject
 
 class Parent : RealmObject {
     var child: Child? = null

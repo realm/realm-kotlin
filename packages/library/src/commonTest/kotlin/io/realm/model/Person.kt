@@ -16,8 +16,8 @@
 
 package io.realm.model
 
-import io.realm.runtimeapi.RealmModule
-import io.realm.runtimeapi.RealmObject
+import io.realm.RealmModule
+import io.realm.RealmObject
 
 open class Person(open var name: String) : RealmObject {
     constructor() : this("")
