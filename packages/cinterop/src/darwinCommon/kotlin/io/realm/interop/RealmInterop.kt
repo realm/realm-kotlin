@@ -465,7 +465,7 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
-                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                         ?: error("Notification callback data should never be null")
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
@@ -489,7 +489,7 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
-                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change))
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                         ?: error("Notification callback data should never be null")
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
