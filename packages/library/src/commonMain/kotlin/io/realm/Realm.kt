@@ -98,20 +98,14 @@ class Realm {
         TODO()
     }
 
-    //    reflection is not supported in K/N so we can't offer method like
-    //    inline fun <reified T : RealmModel> create() : T
-    //    to create a dynamically managed model. we're limited thus to persist methods
-    //    were we take an already created un-managed instance and return a new manageable one
-    //    (note since parameter are immutable in Kotlin, we need to create a new instance instead of
-    //    doing this operation in place)
     fun <T : RealmObject> create(type: KClass<T>): T {
         return io.realm.internal.create(realmConfiguration.schema, dbPointer!!, type)
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
 
-    fun <T : RealmObject> copyToRealm(o: T): T {
-        return copyToRealm(realmConfiguration.schema, dbPointer!!, o)
+    fun <T : RealmObject> copyToRealm(instance: T): T {
+        return copyToRealm(realmConfiguration.schema, dbPointer!!, instance)
     }
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {

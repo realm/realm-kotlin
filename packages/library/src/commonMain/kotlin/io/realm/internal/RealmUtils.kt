@@ -48,22 +48,22 @@ fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClas
     }
 }
 
-fun <T : RealmObject> copyToRealm(schema: Mediator, realm: NativePointer, o: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
-    val realmObjectCompanion = schema.companionMapping[o::class] ?: error("Class is not part of the schema for this realm")
-    val members: List<KMutableProperty1<T, Any?>> = realmObjectCompanion.fields as List<KMutableProperty1<T, Any?>>
+fun <T : RealmObject> copyToRealm(schema: Mediator, realm: NativePointer, instance: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
+    val realmObjectCompanion = schema.companionMapping[instance::class] ?: error("Class $instance not part of the schema for this realm")
+    val members: List<KMutableProperty1<T, Any?>> = realmObjectCompanion.`$realm$fields` as List<KMutableProperty1<T, Any?>>
 
-    val target = create(schema, realm, o::class)
-    cache[o as RealmModelInternal] = target as RealmModelInternal
+    val target = create(schema, realm, instance::class)
+    cache[instance as RealmModelInternal] = target as RealmModelInternal
     // TODO OPTIMIZE We could set all properties at once with on C-API call
     for (member: KMutableProperty1<T, Any?> in members) {
-        val get = member.get(o).let { o ->
-            if (o is RealmModelInternal && !o.`$realm$IsManaged`) {
-                cache.getOrPut(o) { copyToRealm(schema, realm, o, cache) }
+        val targetValue = member.get(instance).let { sourceObject ->
+            if (sourceObject is RealmModelInternal && !sourceObject.`$realm$IsManaged`) {
+                cache.getOrPut(sourceObject) { copyToRealm(schema, realm, sourceObject, cache) }
             } else {
-                o
+                sourceObject
             }
         }
-        get?.let {
+        targetValue?.let {
             // TODO OPTIMIZE Should we do a separate setter that allows the isDefault flag for sync
             //  optimizations
             member.set(target, it)

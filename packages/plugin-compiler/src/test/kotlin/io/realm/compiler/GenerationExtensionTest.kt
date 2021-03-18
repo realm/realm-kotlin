@@ -137,7 +137,7 @@ class GenerationExtensionTest {
             assertEquals(expectedType, property.type)
         }
 
-        val fields: List<KProperty1<*, *>> = (sampleModel::class.companionObjectInstance as RealmObjectCompanion).fields
+        val fields: List<KProperty1<*, *>> = (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
         assertEquals(properties.size, fields.size)
 
         val newInstance = companionObject.`$realm$newInstance`()

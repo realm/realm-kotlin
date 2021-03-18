@@ -34,6 +34,7 @@ import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_FLAG_NORMAL
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
@@ -146,7 +147,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
-            Name.identifier("fields"),
+            REALM_OBJECT_COMPANION_FIELDS_MEMBER,
             listIrClass.typeWith(type)
         ) { startOffset, endOffset ->
             IrExpressionBodyImpl(

@@ -72,18 +72,18 @@ private fun throwOnError() {
     }
 }
 
-private fun throwOnError(boolean: Boolean): Boolean {
+private fun checkedBooleanResult(boolean: Boolean): Boolean {
     if (!boolean) throwOnError(); return boolean
 }
 
-private fun throwOnError(pointer: CPointer<out CPointed>?): CPointer<out CPointed>? {
+private fun checkedPointerResult(pointer: CPointer<out CPointed>?): CPointer<out CPointed>? {
     if (pointer == null) throwOnError(); return pointer
 }
 
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
 
 class CPointerWrapper(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer {
-    val ptr: CPointer<out CPointed>? = throwOnError(ptr)
+    val ptr: CPointer<out CPointed>? = checkedPointerResult(ptr)
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
@@ -225,7 +225,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
-        return throwOnError(realm_wrapper.realm_schema_validate(schema.cptr(), mode.nativeValue.toULong()))
+        return checkedBooleanResult(realm_wrapper.realm_schema_validate(schema.cptr(), mode.nativeValue.toULong()))
     }
 
     actual fun realm_open(config: NativePointer): NativePointer {
@@ -233,7 +233,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_close(realm: NativePointer) {
-        throwOnError(realm_wrapper.realm_close(realm.cptr()))
+        checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
@@ -253,18 +253,18 @@ actual object RealmInterop {
     }
 
     actual fun realm_begin_write(realm: NativePointer) {
-        throwOnError(realm_wrapper.realm_begin_write(realm.cptr()))
+        checkedBooleanResult(realm_wrapper.realm_begin_write(realm.cptr()))
     }
 
     actual fun realm_commit(realm: NativePointer) {
-        throwOnError(realm_wrapper.realm_commit(realm.cptr()))
+        checkedBooleanResult(realm_wrapper.realm_commit(realm.cptr()))
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         memScoped {
             val found = alloc<BooleanVar>()
             val classInfo = alloc<realm_class_info_t>()
-            throwOnError(
+            checkedBooleanResult(
                 realm_wrapper.realm_find_class(
                     realm.cptr(),
                     name,
@@ -299,7 +299,7 @@ actual object RealmInterop {
     actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
         memScoped {
             val value: realm_value_t = alloc()
-            throwOnError(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
+            checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
             return from_realm_value(value)
         }
     }
@@ -327,7 +327,7 @@ actual object RealmInterop {
 
     actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
         memScoped {
-            throwOnError(realm_wrapper.realm_set_value_by_ref(o.cptr(), key.key, to_realm_value(value).ptr, isDefault))
+            checkedBooleanResult(realm_wrapper.realm_set_value_by_ref(o.cptr(), key.key, to_realm_value(value).ptr, isDefault))
         }
     }
 
@@ -409,7 +409,7 @@ actual object RealmInterop {
         memScoped {
             val found = alloc<BooleanVar>()
             val value = alloc<realm_value_t>()
-            throwOnError(realm_wrapper.realm_query_find_first(realm.cptr(), value.ptr, found.ptr))
+            checkedBooleanResult(realm_wrapper.realm_query_find_first(realm.cptr(), value.ptr, found.ptr))
             if (!found.value) {
                 return null
             }
@@ -427,7 +427,7 @@ actual object RealmInterop {
     actual fun realm_results_count(results: NativePointer): Long {
         memScoped {
             val count = alloc<ULongVar>()
-            throwOnError(realm_wrapper.realm_results_count(results.cptr(), count.ptr))
+            checkedBooleanResult(realm_wrapper.realm_results_count(results.cptr(), count.ptr))
             return count.value.toLong()
         }
     }
@@ -435,22 +435,22 @@ actual object RealmInterop {
     actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
         memScoped {
             val value = alloc<realm_value_t>()
-            throwOnError(realm_wrapper.realm_results_get(results.cptr(), index.toULong(), value.ptr))
+            checkedBooleanResult(realm_wrapper.realm_results_get(results.cptr(), index.toULong(), value.ptr))
             return value.asLink()
         }
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
-        val ptr = throwOnError(realm_wrapper.realm_get_object(realm.cptr(), link.tableKey.toUInt(), link.objKey))
+        val ptr = checkedPointerResult(realm_wrapper.realm_get_object(realm.cptr(), link.tableKey.toUInt(), link.objKey))
         return CPointerWrapper(ptr)
     }
 
     actual fun realm_results_delete_all(results: NativePointer) {
-        throwOnError(realm_wrapper.realm_results_delete_all(results.cptr()))
+        checkedBooleanResult(realm_wrapper.realm_results_delete_all(results.cptr()))
     }
 
     actual fun realm_object_delete(obj: NativePointer) {
-        throwOnError(realm_wrapper.realm_object_delete(obj.cptr()))
+        checkedBooleanResult(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
     actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
@@ -504,7 +504,7 @@ actual object RealmInterop {
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()
-        throwOnError(
+        checkedBooleanResult(
             realm_wrapper.realm_find_class(
                 realm.cptr(),
                 table,
@@ -522,7 +522,7 @@ actual object RealmInterop {
     ): realm_property_info_t {
         val found = alloc<BooleanVar>()
         val propertyInfo = alloc<realm_property_info_t>()
-        throwOnError(
+        checkedBooleanResult(
             realm_find_property(
                 realm.cptr(),
                 classInfo.key,

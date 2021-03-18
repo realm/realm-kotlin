@@ -23,6 +23,7 @@ internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
     val DEFAULT_COMPANION = Name.identifier("Companion")
+    val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 

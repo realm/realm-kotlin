@@ -210,7 +210,7 @@ fun IrClass.addValueProperty(
         at(this@addProperty.startOffset, this@addProperty.endOffset)
         name = propertyName
         visibility = DescriptorVisibilities.PUBLIC
-        modality = Modality.OPEN
+        modality = Modality.FINAL
         isVar = true
     }
     // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
@@ -230,7 +230,7 @@ fun IrClass.addValueProperty(
     val getter = property.addGetter {
         at(this@addValueProperty.startOffset, this@addValueProperty.endOffset)
         visibility = DescriptorVisibilities.PUBLIC
-        modality = Modality.OPEN
+        modality = Modality.FINAL
         returnType = propertyType
         origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
     }

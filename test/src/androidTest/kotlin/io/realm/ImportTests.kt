@@ -40,7 +40,8 @@ class ImportTests {
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        val configuration =
+            RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
 
@@ -68,6 +69,7 @@ class ImportTests {
                 TestRealmFieldTypes.FLOAT -> assertEquals(3.14f, managed.floatField)
                 TestRealmFieldTypes.DOUBLE -> assertEquals(1.19840122, managed.doubleField)
                 TestRealmFieldTypes.LINK -> assertEquals(null, managed.child)
+                else -> error("Untested type: $value")
             }
         }
     }
@@ -107,7 +109,11 @@ class ImportTests {
         assertNotNull(child)
         assertNotNull(child.stringField)
         assertEquals(v1, child.stringField)
+        // Verifying the self/cyclic reference by validating that the child (self reference) has
+        // the same stringField value as the object. This will be safest verified when we have
+        // support for primary keys (https://github.com/realm/realm-kotlin/issues/122)
         assertEquals(child.stringField, child.child?.stringField)
+        // Just another level down to see that we are going in cycles.
         val child2 = child.child!!
         assertEquals(child2.stringField, child2.child?.stringField)
     }
@@ -160,9 +166,34 @@ class ImportTests {
         assertEquals(v3, parent.child!!.name)
         realm.commitTransaction()
 
-        // Verify that we cannot update the managed clone outside a transaction (it is infact managed)
+        // Verify that we cannot update the managed clone outside a transaction (it is in fact managed)
         assertFailsWith<RuntimeException> {
             managedChild.name = v3
         }
+    }
+
+    @Test
+    fun importMixedManagedAndUnmanagedHierarchy() {
+        val v1 = "Managed"
+        val v2 = "Initially unmanaged object"
+
+        realm.beginTransaction()
+        val managed = realm.create<Sample>().apply { stringField = v1 }
+        realm.commitTransaction()
+
+        assertEquals(1, realm.objects(Sample::class).count())
+
+        val unmanaged = Sample().apply {
+            stringField = v2
+            child = managed
+        }
+
+        realm.beginTransaction()
+        val importedRoot = realm.copyToRealm(unmanaged)
+        realm.commitTransaction()
+        
+        assertEquals(2, realm.objects(Sample::class).count())
+        assertEquals(v2, importedRoot.stringField)
+        assertEquals(v1, importedRoot.child?.stringField)
     }
 }
