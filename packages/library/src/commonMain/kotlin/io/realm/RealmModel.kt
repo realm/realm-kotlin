@@ -16,16 +16,16 @@
 
 package io.realm
 
-import io.realm.runtimeapi.RealmModel
+import io.realm.runtimeapi.RealmObject
 
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83
 
-fun RealmModel.delete() {
+fun RealmObject.delete() {
     Realm.delete(this)
 }
 
-fun RealmModel.observe(objectChangeListener: Callback): Cancellable {
+fun RealmObject.observe(objectChangeListener: Callback): Cancellable {
     return Realm.observe(this, objectChangeListener)
 }

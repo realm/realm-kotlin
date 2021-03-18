@@ -17,8 +17,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
-import io.realm.compiler.FqNames.REALM_OBJECT_ANNOTATION
+import io.realm.compiler.FqNames.REALM_MODEL_INTERNAL_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -29,7 +28,6 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.companionObject
-import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.parentAsClass
 
 class RealmModelLoweringExtension : IrGenerationExtension {
@@ -43,9 +41,9 @@ class RealmModelLoweringExtension : IrGenerationExtension {
 
 private class RealmModelLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
     override fun lower(irClass: IrClass) {
-        if (irClass.isRealmModelAnnotated) {
+        if (irClass.hasRealmModelInterface) {
             // add super type RealmModelInternal
-            val realmModelClass: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERFACE).symbol
+            val realmModelClass: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERNAL_INTERFACE).symbol
             irClass.superTypes += realmModelClass.defaultType
 
             // Generate RealmModelInternal properties overrides
@@ -61,7 +59,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             generator.addSchemaMethodBody(irClass)
             generator.addNewInstanceMethodBody(irClass)
         } else {
-            if (irClass.isCompanion && irClass.parentAsClass.annotations.hasAnnotation(REALM_OBJECT_ANNOTATION)) {
+            if (irClass.isCompanion && irClass.parentAsClass.hasRealmModelInterface) {
                 val realmModelCompanion: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION).symbol
                 irClass.superTypes += realmModelCompanion.defaultType
             }

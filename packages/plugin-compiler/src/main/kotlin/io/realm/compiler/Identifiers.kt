@@ -55,14 +55,13 @@ internal object Names {
 
 internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
-    val REALM_OBJECT_ANNOTATION = FqName("io.realm.runtimeapi.RealmObject")
     val REALM_NATIVE_POINTER = FqName("io.realm.runtimeapi.NativePointer")
     val REALM_MODULE_ANNOTATION = FqName("io.realm.runtimeapi.RealmModule")
-    val REALM_MODEL_INTERFACE = FqName("io.realm.runtimeapi.RealmModelInternal")
+    val REALM_MODEL_INTERNAL_INTERFACE = FqName("io.realm.runtimeapi.RealmModelInternal")
+    val REALM_MODEL_INTERFACE = FqName("io.realm.runtimeapi.RealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     // External visible interface of Realm objects
-    val REALM_MODEL_INTERFACE_MARKER = FqName("io.realm.runtimeapi.RealmModel")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
     val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")

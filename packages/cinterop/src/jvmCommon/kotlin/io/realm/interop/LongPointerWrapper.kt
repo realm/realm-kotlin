@@ -18,6 +18,7 @@ package io.realm.interop
 
 import io.realm.interop.gc.NativeContext
 import io.realm.runtimeapi.NativePointer
+import java.lang.Long.toHexString
 
 // JVM/Android specific pointer wrapper
 // FIXME Should ideally be moved to jni-swig-stub as we would be able to use Swig to wrap/unwrap
@@ -31,5 +32,9 @@ class LongPointerWrapper(val ptr: Long, managed: Boolean = true) : NativePointer
         if (managed) {
             NativeContext.addReference(this)
         }
+    }
+
+    override fun toString(): String {
+        return toHexString(ptr)
     }
 }

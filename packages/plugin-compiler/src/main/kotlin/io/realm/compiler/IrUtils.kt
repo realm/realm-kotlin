@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
@@ -59,6 +60,8 @@ import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
 // Remove this extension when this will be re-introduced? see https://kotlinlang.slack.com/archives/C7L3JB43G/p1600888883006300
@@ -81,16 +84,16 @@ fun IrPluginContext.blockBody(
     DeclarationIrBuilder(this, symbol).irBlockBody { block() }
 
 val ClassDescriptor.isRealmObjectCompanion
-    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isRealmObject
+    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).hasRealmModelInterface
 
-val ClassDescriptor.isRealmObject
-    get() = annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)
-
-val IrClass.isRealmModelAnnotated
-    get() = annotations.hasAnnotation(FqNames.REALM_OBJECT_ANNOTATION)
+val ClassDescriptor.hasRealmModelInterface
+    get() = getSuperInterfaces().firstOrNull { it.fqNameSafe == FqNames.REALM_MODEL_INTERFACE } != null
 
 val IrClass.isRealmModuleAnnotated
     get() = annotations.hasAnnotation(FqNames.REALM_MODULE_ANNOTATION)
+
+val IrClass.hasRealmModelInterface
+    get() = superTypes.firstOrNull { it.classFqName?.equals(FqNames.REALM_MODEL_INTERFACE) ?: false } != null
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset

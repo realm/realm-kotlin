@@ -18,17 +18,21 @@ package io.realm.internal
 
 import io.realm.interop.RealmInterop
 import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModel
 import io.realm.runtimeapi.RealmModelInternal
+import io.realm.runtimeapi.RealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmModel> create(schema: Mediator, realm: NativePointer, type: KClass<T>): T {
+fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClass<T>): T {
+    // FIXME Does not work with obfuscation. We should probably supply the static meta data through
+    //  the companion (accessible through schema) or might even have a cached version of the key in
+    //  some runtime container of an open realm.
+    //  https://github.com/realm/realm-kotlin/issues/85
+    //  https://github.com/realm/realm-kotlin/issues/105
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
-        val managedModel =
-            schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
+        val managedModel = schema.newInstance(type)
         val key = RealmInterop.realm_find_class(realm, objectType)
         return managedModel.manage(
             realm,
@@ -44,7 +48,7 @@ fun <T : RealmModel> create(schema: Mediator, realm: NativePointer, type: KClass
     }
 }
 
-fun <T : RealmModel> copyToRealm(schema: Mediator, realm: NativePointer, o: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
+fun <T : RealmObject> copyToRealm(schema: Mediator, realm: NativePointer, o: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
     val realmObjectCompanion = schema.companionMapping[o::class] ?: error("Class is not part of the schema for this realm")
     val members: List<KMutableProperty1<T, Any?>> = realmObjectCompanion.fields as List<KMutableProperty1<T, Any?>>
 

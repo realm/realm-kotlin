@@ -74,6 +74,13 @@ pipeline {
                 test("connectedAndroidTest")
             }
         }
+        stage('Tests Android Sample App') {
+            steps {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    runMonkey()
+                }
+            }
+        }
         stage('Publish to OJO') {
             when { expression { shouldReleaseSnapshot(version) } }
             steps {
@@ -226,7 +233,23 @@ def test(task) {
             step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
         }
     }
+}
 
+def runMonkey() {
+    node(osx_kotlin) {
+        try {
+            withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+                sh """
+                    cd examples/kmm-sample
+                    ./gradlew uninstallAll installDebug --info --stacktrace --no-daemon
+                    $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
+                """
+            }
+        } catch (err) {
+            currentBuild.result = 'FAILURE'
+            currentBuild.stageResult = 'FAILURE'
+        }
+    }
 }
 
 def getArchive() {

@@ -63,6 +63,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        registration?.cancel()
+        registration.cancel()
     }
 }
