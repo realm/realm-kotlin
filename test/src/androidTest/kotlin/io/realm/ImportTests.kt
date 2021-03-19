@@ -198,7 +198,7 @@ class ImportTests {
         realm.beginTransaction()
         val importedRoot = realm.copyToRealm(unmanaged)
         realm.commitTransaction()
-        
+
         assertEquals(2, realm.objects(Sample::class).count())
         assertEquals(v2, importedRoot.stringField)
         assertEquals(v1, importedRoot.child?.stringField)
