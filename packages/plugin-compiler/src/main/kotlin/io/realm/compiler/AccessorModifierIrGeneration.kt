@@ -75,7 +75,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private var getValue: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
     private var setValue: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
     private var getObject: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
-    private val setObject = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
+    private val setObject: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
 
     private var functionLongToChar: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
