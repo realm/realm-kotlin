@@ -49,6 +49,9 @@ fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClas
 }
 
 fun <T : RealmObject> copyToRealm(schema: Mediator, realm: NativePointer, instance: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
+    // Copying already managed instance is an no-op
+    if ((instance as RealmModelInternal).`$realm$IsManaged`) return instance
+
     val realmObjectCompanion = schema.companionMapping[instance::class] ?: error("Class $instance not part of the schema for this realm")
     val members: List<KMutableProperty1<T, Any?>> = realmObjectCompanion.`$realm$fields` as List<KMutableProperty1<T, Any?>>
 

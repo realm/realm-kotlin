@@ -58,6 +58,13 @@ class ImportTests {
         realm.commitTransaction()
 
         val managed = realm.objects(Sample::class)[0]
+
+        // TODO Find a way to ensure that our Sample covers all types. This isn't doable right now
+        //  without polluting test project configuration with cinterop dependency. Some of the
+        //  internals moves around in https://github.com/realm/realm-kotlin/pull/148, so maybe
+        //  possible by just peeking into the Sample.`$realm$fields` with
+        //  @Suppress("invisible_reference", "invisible_member") but maybe worth to move such test
+        //  requiring internals into a separate module.
         for (value in TestRealmFieldTypes.values()) {
             when (value) {
                 TestRealmFieldTypes.BYTE -> assertEquals(0xa, managed.byteField)
@@ -195,5 +202,20 @@ class ImportTests {
         assertEquals(2, realm.objects(Sample::class).count())
         assertEquals(v2, importedRoot.stringField)
         assertEquals(v1, importedRoot.child?.stringField)
+    }
+
+    @Test
+    fun importAlreadyManagedIsNoop() {
+        val v1 = "Managed"
+
+        realm.beginTransaction()
+        var sample = Sample()
+        sample = realm.copyToRealm(sample)
+        sample = realm.copyToRealm(sample)
+        sample = realm.copyToRealm(sample)
+        sample = realm.copyToRealm(sample)
+        realm.commitTransaction()
+
+        assertEquals(1, realm.objects(Sample::class).count())
     }
 }
