@@ -356,6 +356,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }.symbol)
     }
 
+    @Suppress("LongMethod")
     private fun IrClass.addVariableProperty(
         propertyName: Name,
         propertyType: IrType,
