@@ -59,6 +59,21 @@ class SampleTests {
     }
 
     @Test
+    fun updateOutsideTransactionThrows() {
+        val s = "Hello, World!"
+
+        realm.beginTransaction()
+        val sample = realm.create(Sample::class)
+        sample.stringField = s
+        assertEquals(s, sample.stringField)
+        realm.commitTransaction()
+
+        assertFailsWith<RuntimeException> {
+            sample.stringField = "ASDF"
+        }
+    }
+
+    @Test
     fun delete() {
         realm.beginTransaction()
         val sample = realm.create(Sample::class)

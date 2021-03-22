@@ -18,6 +18,7 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_FLAG
 import io.realm.compiler.FqNames.COLLECTION_TYPE
+import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
 import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
 import io.realm.compiler.FqNames.PROPERTY_TYPE
@@ -33,6 +34,7 @@ import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_FLAG_NORMAL
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
@@ -61,53 +63,130 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
+import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
+import org.jetbrains.kotlin.ir.util.isVararg
+import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInternal = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERNAL_INTERFACE)
-    private val nullableNativePointerInterface = pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
-        .symbol.createType(true, emptyList())
-    private val realmObjectCompanionInterface = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
+    private val nullableNativePointerInterface =
+        pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
+            .symbol.createType(true, emptyList())
+    private val realmObjectCompanionInterface =
+        pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
     private val table = pluginContext.lookupClassOrThrow(TABLE)
 
-    private val tableConstructor = table.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
+    private val tableConstructor =
+        table.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
     private val classFlag: IrClass = pluginContext.lookupClassOrThrow(CLASS_FLAG)
-    private val classFlags = classFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+    private val classFlags =
+        classFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
     private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY)
-    private val propertyConstructor = propertyClass.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
+    private val propertyConstructor =
+        propertyClass.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
     private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
-    private val propertyTypes = propertyType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+    private val propertyTypes =
+        propertyType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
     private val collectionType: IrClass = pluginContext.lookupClassOrThrow(COLLECTION_TYPE)
-    private val collectionTypes = collectionType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+    private val collectionTypes =
+        collectionType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
     private val propertyFlag: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_FLAG)
-    private val propertyFlags = propertyFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+    private val propertyFlags =
+        propertyFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+
+    private val listIrClass: IrClass =
+        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
+    private val kProperty1Class: IrClass =
+        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addProperty(REALM_POINTER, nullableNativePointerInterface, ::irNull)
-            addProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
-            addProperty(OBJECT_TABLE_NAME, pluginContext.irBuiltIns.stringType.makeNullable(), ::irNull)
-            addProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
+            addVariableProperty(REALM_POINTER, nullableNativePointerInterface, ::irNull)
+            addVariableProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
+            addVariableProperty(
+                OBJECT_TABLE_NAME,
+                pluginContext.irBuiltIns.stringType.makeNullable(),
+                ::irNull
+            )
+            addVariableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
             // Should be of type Mediator, but requires RealmModelInternal and Mediator to be in
             // same module
-            addProperty(REALM_OBJECT_SCHEMA, pluginContext.irBuiltIns.anyType, ::irNull)
+            addVariableProperty(REALM_OBJECT_SCHEMA, pluginContext.irBuiltIns.anyType, ::irNull)
         }
+
+    fun addCompanionFieldsProperty(
+        companion: IrClass,
+        properties: MutableMap<String, Pair<String, IrProperty>>?,
+    ) {
+        val type = kProperty1Class.typeWith(
+            companion.parentAsClass.defaultType,
+            pluginContext.irBuiltIns.anyNType.makeNullable()
+        )
+        val listOf = pluginContext.referenceFunctions(KOTLIN_COLLECTIONS_LISTOF)
+            .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_FIELDS_MEMBER,
+            listIrClass.typeWith(type)
+        ) { startOffset, endOffset ->
+            IrExpressionBodyImpl(
+                IrCallImpl(
+                    startOffset, endOffset,
+                    listIrClass.typeWith(type),
+                    listOf,
+                    1,
+                    1,
+                    null,
+                    null
+                ).apply {
+                    putTypeArgument(0, type)
+                    putValueArgument(
+                        0,
+                        IrVarargImpl(
+                            startOffset,
+                            endOffset,
+                            pluginContext.irBuiltIns.arrayClass.typeWith(type),
+                            type,
+                            properties!!.entries.map {
+                                val property = it.value.second
+                                IrPropertyReferenceImpl(
+                                    startOffset,
+                                    endOffset,
+                                    type,
+                                    property.symbol,
+                                    0,
+                                    null,
+                                    property.getter?.symbol,
+                                    property.setter?.symbol
+                                )
+                            }
+                        )
+                    )
+                }
+            )
+        }
+    }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     // TODO OPTIMIZE should be a one time only constructed object
@@ -120,7 +199,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val fields: MutableMap<String, Pair<String, IrProperty>> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        val function = companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
+        val function =
+            companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(
@@ -164,9 +244,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     it.name.identifier.toLowerCaseAsciiOnly()
                                         .contains(value.first)
                                 } ?: error("Unknown type ${value.first}")
-                                val objectType = propertyTypes.firstOrNull { it.name == PROPERTY_TYPE_OBJECT } ?: error("Unknown type ${value.first}")
+                                val objectType =
+                                    propertyTypes.firstOrNull { it.name == PROPERTY_TYPE_OBJECT }
+                                        ?: error("Unknown type ${value.first}")
                                 val property = value.second
-                                val backingField = property.backingField ?: error("Property without backing field or type")
+                                val backingField = property.backingField
+                                    ?: error("Property without backing field or type")
                                 val nullable = backingField.type.isNullable()
                                 IrConstructorCallImpl(
                                     startOffset,
@@ -250,7 +333,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val function = companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
+        val function =
+            companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
             val defaultCtor = irClass.primaryConstructor
@@ -268,13 +352,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 )
             )
         }
-        function.overriddenSymbols = listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }.symbol)
+        function.overriddenSymbols =
+            listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }.symbol)
     }
 
-    private fun IrClass.addProperty(propertyName: Name, propertyType: IrType, initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody) {
+    @Suppress("LongMethod")
+    private fun IrClass.addVariableProperty(
+        propertyName: Name,
+        propertyType: IrType,
+        initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody
+    ) {
         // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val property = addProperty {
-            at(this@addProperty.startOffset, this@addProperty.endOffset)
+            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
             name = propertyName
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
@@ -282,7 +372,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
         property.backingField = pluginContext.irFactory.buildField {
-            at(this@addProperty.startOffset, this@addProperty.endOffset)
+            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
             origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
             name = property.name
             visibility = DescriptorVisibilities.PRIVATE
@@ -299,7 +389,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT _PROPERTY_ACCESSOR name:<get-objectPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Foo.$RealmHandler) returnType:kotlin.Long?
         // correspondingProperty: PROPERTY name:objectPointer visibility:public modality:OPEN [var]
         val getter = property.addGetter {
-            at(this@addProperty.startOffset, this@addProperty.endOffset)
+            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = propertyType
@@ -327,7 +417,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Child, <set-?>:kotlin.Long?) returnType:kotlin.Unit
         //  correspondingProperty: PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val setter = property.addSetter {
-            at(this@addProperty.startOffset, this@addProperty.endOffset)
+            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = pluginContext.irBuiltIns.unitType
@@ -354,13 +444,25 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         setter.body = DeclarationIrBuilder(pluginContext, setter.symbol).irBlockBody {
             at(startOffset, endOffset)
-            +irSetField(irGet(setter.dispatchReceiverParameter!!), property.backingField!!, irGet(valueParameter))
+            +irSetField(
+                irGet(setter.dispatchReceiverParameter!!),
+                property.backingField!!,
+                irGet(valueParameter)
+            )
         }
     }
 
     private fun irNull(startOffset: Int, endOffset: Int): IrExpressionBody =
-        IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType))
+        IrExpressionBodyImpl(
+            startOffset,
+            endOffset,
+            IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
+        )
 
     private fun irFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
-        IrExpressionBodyImpl(startOffset, endOffset, IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType))
+        IrExpressionBodyImpl(
+            startOffset,
+            endOffset,
+            IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType)
+        )
 }

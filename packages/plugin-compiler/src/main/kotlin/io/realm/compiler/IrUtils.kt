@@ -17,23 +17,35 @@
 package io.realm.compiler
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.codegen.arity
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
+import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrPropertyBuilder
+import org.jetbrains.kotlin.ir.builders.declarations.addGetter
+import org.jetbrains.kotlin.ir.builders.declarations.addProperty
+import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
+import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
+import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -42,6 +54,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
@@ -183,4 +196,61 @@ internal fun <T : IrExpression> buildListOf(
         .first { it.descriptor.arity == 1 && it.descriptor.valueParameters.first().isVararg }
     val listIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
     return buildOf(context, builder, listOf, listIrClass, elementType, args)
+}
+
+fun IrClass.addValueProperty(
+    pluginContext: IrPluginContext,
+    superClass: IrClass,
+    propertyName: Name,
+    propertyType: IrType,
+    initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody
+): IrProperty {
+    // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
+    val property = addProperty {
+        at(this@addProperty.startOffset, this@addProperty.endOffset)
+        name = propertyName
+        visibility = DescriptorVisibilities.PUBLIC
+        modality = Modality.FINAL
+        isVar = true
+    }
+    // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
+    property.backingField = pluginContext.irFactory.buildField {
+        at(this@addValueProperty.startOffset, this@addValueProperty.endOffset)
+        origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
+        name = property.name
+        visibility = DescriptorVisibilities.PRIVATE
+        modality = property.modality
+        type = propertyType
+    }.apply {
+        initializer = initExpression(startOffset, endOffset)
+    }
+    property.backingField?.parent = this
+    property.backingField?.correspondingPropertySymbol = property.symbol
+
+    val getter = property.addGetter {
+        at(this@addValueProperty.startOffset, this@addValueProperty.endOffset)
+        visibility = DescriptorVisibilities.PUBLIC
+        modality = Modality.FINAL
+        returnType = propertyType
+        origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
+    }
+    // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
+    getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
+    // overridden:
+    //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInternal
+    val propertyAccessorGetter = superClass.getPropertyGetter(propertyName.asString())
+        ?: error("${propertyName.asString()} function getter symbol is not available")
+    getter.overriddenSymbols = listOf(propertyAccessorGetter)
+
+    // BLOCK_BODY
+    // RETURN type=kotlin.Nothing from='public final fun <get-objectPointer> (): kotlin.Long? declared in dev.nhachicha.Foo.$RealmHandler'
+    // GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private' type=kotlin.Long? origin=null
+    // receiver: GET_VAR '<this>: dev.nhachicha.Foo.$RealmHandler declared in dev.nhachicha.Foo.$RealmHandler.<get-objectPointer>' type=dev.nhachicha.Foo.$RealmHandler origin=null
+    getter.body = pluginContext.blockBody(getter.symbol) {
+        at(startOffset, endOffset)
+        +irReturn(
+            irGetField(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
+        )
+    }
+    return property
 }

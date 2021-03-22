@@ -17,7 +17,7 @@
 package io.realm
 
 import io.realm.internal.NotificationToken
-import io.realm.internal.manage
+import io.realm.internal.copyToRealm
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -97,31 +97,24 @@ class Realm {
         TODO()
     }
 
-    //    reflection is not supported in K/N so we can't offer method like
-    //    inline fun <reified T : RealmModel> create() : T
-    //    to create a dynamically managed model. we're limited thus to persist methods
-    //    were we take an already created un-managed instance and return a new manageable one
-    //    (note since parameter are immutable in Kotlin, we need to create a new instance instead of
-    //    doing this operation in place)
-    @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
     fun <T : RealmObject> create(type: KClass<T>): T {
-        val objectType = type.simpleName ?: error("Cannot get class name")
-        try {
-            val managedModel =
-                realmConfiguration.schema.newInstance(type) as RealmModelInternal // TODO make newInstance return RealmModelInternal
-            val key = RealmInterop.realm_find_class(dbPointer!!, objectType)
-            return managedModel.manage(
-                dbPointer!!,
-                this.realmConfiguration.schema,
-                type,
-                RealmInterop.realm_object_create(dbPointer!!, key)
-            )
-        } catch (e: RuntimeException) {
-            // FIXME Throw proper exception
-            //  https://github.com/realm/realm-kotlin/issues/70
-            @Suppress("TooGenericExceptionThrown")
-            throw RuntimeException("Failed to create object of type '$objectType'", e)
-        }
+        return io.realm.internal.create(realmConfiguration.schema, dbPointer!!, type)
+    }
+    // Convenience inline method for the above to skip KClass argument
+    inline fun <reified T : RealmObject> create(): T { return create(T::class) }
+
+    /**
+     * Creates a copy of an object in the Realm.
+     *
+     * This will create a copy of an object and all it's children. Any already managed objects will
+     * not be copied, including the root `instance`. So invoking this with an already managed
+     * object is a no-operation.
+     *
+     * @param instance The object to create a copy from.
+     * @return The managed version of the `instance`.
+     */
+    fun <T : RealmObject> copyToRealm(instance: T): T {
+        return copyToRealm(realmConfiguration.schema, dbPointer!!, instance)
     }
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {

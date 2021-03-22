@@ -70,4 +70,16 @@ object RealmObjectHelper {
         val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
         RealmInterop.realm_set_value(o, key, value, false)
     }
+
+    @Suppress("unused") // Called from generated code
+    inline fun <reified R : RealmModelInternal> setObject(
+        obj: RealmModelInternal,
+        col: String,
+        value: R?
+    ) {
+        val newValue = if (!(value?.`$realm$IsManaged` ?: true)) {
+            copyToRealm(obj.`$realm$Schema` as Mediator, obj.`$realm$Pointer`!!, value!!)
+        } else value
+        setValue(obj, col, newValue)
+    }
 }

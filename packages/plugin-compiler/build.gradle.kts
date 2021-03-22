@@ -38,6 +38,7 @@ dependencies {
     testImplementation(project(":library"))
     // Have to be mentioned explicitly as it is not an api dependency of library
     testImplementation(project(":cinterop"))
+    testImplementation(project(":library"))
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
