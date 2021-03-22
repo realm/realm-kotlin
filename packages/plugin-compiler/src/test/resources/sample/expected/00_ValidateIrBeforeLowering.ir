@@ -471,13 +471,13 @@ MODULE_FRAGMENT name:<main>
           RETURN type=kotlin.Nothing from='public final fun dumpSchema (): kotlin.String declared in sample.input.Sample'
             STRING_CONCATENATION type=kotlin.String
               CALL 'public open fun $realm$schema (): kotlin.Any declared in sample.input.Sample.Companion' type=kotlin.Any origin=null
-                $this: GET_OBJECT 'CLASS OBJECT name:Companion modality:OPEN visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=sample.input.Sample.Companion
-      CLASS OBJECT name:Companion modality:OPEN visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
+                $this: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=sample.input.Sample.Companion
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
         CONSTRUCTOR visibility:private <> () returnType:sample.input.Sample.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:OPEN visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -624,8 +624,8 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in sample.input.Sample.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Sample' type=sample.input.Sample origin=null
-        PROPERTY name:fields visibility:public modality:OPEN [var]
-          FIELD PROPERTY_BACKING_FIELD name:fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> visibility:private
+        PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
               CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> origin=null
                 <T>: kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>
@@ -640,15 +640,15 @@ MODULE_FRAGMENT name:<main>
                   PROPERTY_REFERENCE 'public final floatField: kotlin.Float? [var]' field=null getter='public final fun <get-floatField> (): kotlin.Float? declared in sample.input.Sample' setter='public final fun <set-floatField> (<set-?>: kotlin.Float?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final doubleField: kotlin.Double? [var]' field=null getter='public final fun <get-doubleField> (): kotlin.Double? declared in sample.input.Sample' setter='public final fun <set-doubleField> (<set-?>: kotlin.Double?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final child: sample.input.Child? [var]' field=null getter='public final fun <get-child> (): sample.input.Child? declared in sample.input.Sample' setter='public final fun <set-child> (<set-?>: sample.input.Child?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-fields> visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>>
-            correspondingProperty: PROPERTY name:fields visibility:public modality:OPEN [var]
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$fields> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public open fun <get-fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> declared in sample.input.Sample.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> origin=null
-                  receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-fields>' type=sample.input.Sample.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> declared in sample.input.Sample.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-$realm$fields>' type=sample.input.Sample.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.runtimeapi.RealmObject
@@ -828,12 +828,12 @@ MODULE_FRAGMENT name:<main>
                     then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
                       receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-name>' type=sample.input.Child origin=null
                       value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Child.<set-name>' type=kotlin.String? origin=null
-      CLASS OBJECT name:Companion modality:OPEN visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
         CONSTRUCTOR visibility:private <> () returnType:sample.input.Child.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:OPEN visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -881,22 +881,22 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in sample.input.Child.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Child' type=sample.input.Child origin=null
-        PROPERTY name:fields visibility:public modality:OPEN [var]
-          FIELD PROPERTY_BACKING_FIELD name:fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> visibility:private
+        PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
               CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> origin=null
                 <T>: kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>
                 elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> varargElementType=kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>
                   PROPERTY_REFERENCE 'public final name: kotlin.String? [var]' field=null getter='public final fun <get-name> (): kotlin.String? declared in sample.input.Child' setter='public final fun <set-name> (<set-?>: kotlin.String?): kotlin.Unit declared in sample.input.Child' type=kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> origin=null
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-fields> visibility:public modality:OPEN <> ($this:sample.input.Child.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>>
-            correspondingProperty: PROPERTY name:fields visibility:public modality:OPEN [var]
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$fields> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public open fun <get-fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> declared in sample.input.Child.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> origin=null
-                  receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-fields>' type=sample.input.Child.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> declared in sample.input.Child.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-$realm$fields>' type=sample.input.Child.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.runtimeapi.RealmObject
