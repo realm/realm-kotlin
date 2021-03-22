@@ -104,6 +104,16 @@ class Realm {
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
 
+    /**
+     * Creates a copy of an object in the Realm.
+     *
+     * This will create a copy of an object and all it's children. Any already managed objects will
+     * not be copied, including the root `instance`. So invoking this with an already managed
+     * object is a no-operation.
+     *
+     * @param instance The object to create a copy from.
+     * @return The managed version of the `instance`.
+     */
     fun <T : RealmObject> copyToRealm(instance: T): T {
         return copyToRealm(realmConfiguration.schema, dbPointer!!, instance)
     }
