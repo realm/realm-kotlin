@@ -23,6 +23,7 @@ internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
     val DEFAULT_COMPANION = Name.identifier("Companion")
+    val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
@@ -43,6 +44,7 @@ internal object Names {
     val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
     val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
+    val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
 
     // Schema related names
     val CLASS_FLAG_NORMAL = Name.identifier("RLM_CLASS_NORMAL")
@@ -64,17 +66,17 @@ internal object FqNames {
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
     val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")
-    val KOTLIN_COLLECTIONS_HASHMAP = FqName("kotlin.collections.HashMap")
-    val JAVA_UTIL_HASHMAP = FqName("java.util.HashMap")
+    val KOTLIN_PAIR = FqName("kotlin.Pair")
+    val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.Map")
     val KOTLIN_COLLECTIONS_ABSTRACT_COLLECTION = FqName("kotlin.collections.AbstractCollection")
-    val JAVA_UTIL_ABSTRACT_COLLECTION = FqName("java.util.AbstractCollection")
     val KOTLIN_COLLECTIONS_LIST = FqName("kotlin.collections.List")
     val KOTLIN_COLLECTIONS_ARRAY_LIST = FqName("kotlin.collections.ArrayList")
     val JAVA_UTIL_ARRAY_LIST = FqName("java.util.ArrayList")
     val KOTLIN_COLLECTIONS_ITERATOR = FqName("kotlin.collections.Iterator")
-    val JAVA_UTIL_ITERATOR = FqName("java.util.Iterator")
+    val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
+    val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_COLLECTIONS_MUTABLE_COLLECTION = FqName("kotlin.collections.MutableCollection")
-    val JAVA_UTIL_COLLECTION = FqName("java.util.Collection")
+    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
     // Schema related types
     val TABLE = FqName("io.realm.interop.Table")
     val CLASS_FLAG = FqName("io.realm.interop.ClassFlag")

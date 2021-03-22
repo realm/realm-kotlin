@@ -28,6 +28,7 @@ import io.realm.runtimeapi.RealmObject
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
@@ -136,6 +137,9 @@ class GenerationExtensionTest {
             assertEquals(expectedType, property.type)
         }
 
+        val fields: List<KProperty1<*, *>> = (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
+        assertEquals(properties.size, fields.size)
+
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)
         assertEquals(kClazz, newInstance.javaClass)
@@ -187,6 +191,10 @@ class GenerationExtensionTest {
         val entitiesModule = kClazz.newInstance()!!
 
         assertTrue(entitiesModule is Mediator)
+
+        val companionMapping = entitiesModule.companionMapping
+        assertEquals(3, companionMapping.size)
+
         val schema: List<Any> = entitiesModule.schema()
         assertNotNull(schema)
         assertEquals(3, schema.size)

@@ -21,6 +21,7 @@ import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_POINTER
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
@@ -60,7 +61,7 @@ import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.dump
-import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
@@ -74,6 +75,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private var getValue: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
     private var setValue: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
     private var getObject: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
+    private val setObject: IrSimpleFunction = realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
 
     private var functionLongToChar: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
@@ -112,8 +114,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             override fun visitProperty(declaration: IrProperty): IrStatement {
                 val name = declaration.name.asString()
 
-                // Don't redefine accessors for internal synthetic properties
-                if (declaration.backingField == null || name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX)) {
+                // Don't redefine accessors for internal synthetic properties or process declarations of subclasses
+                if (declaration.backingField == null || name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX) || declaration.parentAsClass != irClass) {
                     return declaration
                 }
 
@@ -193,7 +195,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
                         fields[name] = Pair("object", declaration)
-                        modifyAccessor(declaration, getObject, setValue)
+                        modifyAccessor(declaration, getObject, setObject)
                     }
                     else -> {
                         logInfo("Type not processed: ${declaration.dump()}")

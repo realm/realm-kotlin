@@ -17,10 +17,14 @@
 package io.realm.internal
 
 import io.realm.interop.Table
+import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
 // FIXME https://github.com/realm/realm-kotlin/issues/90 support default schema creation.
 interface Mediator { // avoid reflection, implemented and defined by compiler plugin for each `@RealmModule`
-    fun newInstance(clazz: KClass<*>): Any
+    val companionMapping: Map<KClass<*>, RealmObjectCompanion>
+    fun newInstance(clazz: KClass<*>): RealmModelInternal
+    // This is constant so could just be computed directly in IR or at least just be a default method like
+    // fun schema(): List<Table> { return companionMapping.values.map { it.`$realm$schema`() } }
     fun schema(): List<Table>
 }

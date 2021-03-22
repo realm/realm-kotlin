@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.parentAsClass
 
 class RealmModelLoweringExtension : IrGenerationExtension {
@@ -52,7 +53,9 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
 
-            // Add body for synthetic methods
+            // Add body for synthetic companion methods
+            val companion = irClass.companionObject() ?: error("RealmObject without companion")
+            generator.addCompanionFieldsProperty(companion, SchemaCollector.properties[irClass])
             generator.addSchemaMethodBody(irClass)
             generator.addNewInstanceMethodBody(irClass)
         } else {

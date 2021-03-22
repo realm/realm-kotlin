@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.util
 
-import io.realm.interop.Table
-import kotlin.reflect.KMutableProperty1
-
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>
-    fun `$realm$schema`(): Table
-    fun `$realm$newInstance`(): Any
+// Are there any time where our APIs would benefit from this, or is it only tests that needs to
+// cover all of the various primitive types
+enum class TestRealmFieldTypes {
+    BYTE,
+    CHAR,
+    SHORT,
+    INT,
+    LONG,
+    BOOLEAN,
+    FLOAT,
+    DOUBLE,
+    LINK,
 }
