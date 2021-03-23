@@ -23,8 +23,6 @@ val mavenPublicationName = "jniSwigStubs"
 
 java {
     withSourcesJar()
-    dependencies {
-    }
 }
 
 configure<JavaPluginConvention> {
