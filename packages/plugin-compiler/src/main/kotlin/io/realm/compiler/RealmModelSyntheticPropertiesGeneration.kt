@@ -23,8 +23,8 @@ import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
 import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
+import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
 import io.realm.compiler.FqNames.TABLE
 import io.realm.compiler.Names.CLASS_FLAG_NORMAL
 import io.realm.compiler.Names.OBJECT_IS_MANAGED

@@ -17,8 +17,8 @@
 package io.realm.internal
 
 import io.realm.RealmObject
-import io.realm.interop.RealmInterop
 import io.realm.interop.Link
+import io.realm.interop.RealmInterop
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from

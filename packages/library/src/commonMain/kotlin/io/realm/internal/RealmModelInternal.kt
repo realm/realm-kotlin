@@ -25,4 +25,4 @@ import io.realm.RealmObject
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
-interface RealmModelInternal: RealmObject, io.realm.interop.RealmModelInternal
+interface RealmModelInternal : RealmObject, io.realm.interop.RealmModelInternal

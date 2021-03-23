@@ -17,8 +17,8 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension

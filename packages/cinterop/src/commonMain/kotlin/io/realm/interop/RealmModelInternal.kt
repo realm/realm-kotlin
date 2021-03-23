@@ -16,9 +16,6 @@
 
 package io.realm.interop
 
-import io.realm.interop.NativePointer
-
-
 /**
  * This interface is added by the compiler plugin to all [RealmObject] classes, it contains
  * internal properties of the model.
