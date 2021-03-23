@@ -17,7 +17,8 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.FqNames.REALM_MODEL_INTERNAL_INTERFACE
+import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
+import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -43,8 +44,10 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
     override fun lower(irClass: IrClass) {
         if (irClass.hasRealmModelInterface) {
             // add super type RealmModelInternal
-            val realmModelClass: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_INTERNAL_INTERFACE).symbol
-            irClass.superTypes += realmModelClass.defaultType
+            val realmObjectInteropInterface: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTEROP_INTERFACE).symbol
+            val realmObjectInternalInterface: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE).symbol
+            irClass.superTypes += realmObjectInteropInterface.defaultType
+            irClass.superTypes += realmObjectInternalInterface.defaultType
 
             // Generate RealmModelInternal properties overrides
             val generator = RealmModelSyntheticPropertiesGeneration(pluginContext)

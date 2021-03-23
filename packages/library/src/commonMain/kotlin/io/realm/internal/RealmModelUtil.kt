@@ -20,7 +20,6 @@ import io.realm.RealmObject
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.RealmModelInternal
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL

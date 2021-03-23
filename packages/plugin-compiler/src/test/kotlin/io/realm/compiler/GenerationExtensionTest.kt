@@ -21,8 +21,8 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.interop.ClassFlag
 import io.realm.interop.PropertyType
 import io.realm.interop.NativePointer
-import io.realm.interop.RealmModelInternal
 import io.realm.internal.Mediator
+import io.realm.internal.RealmModelInternal
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectCompanion
 import org.junit.Test

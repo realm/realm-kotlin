@@ -18,7 +18,7 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
-import io.realm.interop.RealmModelInternal
+import io.realm.internal.RealmModelInternal
 import io.realm.internal.link
 import io.realm.interop.RealmInterop
 import io.realm.interop.Link

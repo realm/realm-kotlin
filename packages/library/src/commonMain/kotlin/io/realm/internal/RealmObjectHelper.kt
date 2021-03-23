@@ -19,7 +19,6 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.interop.RealmInterop
 import io.realm.interop.Link
-import io.realm.interop.RealmModelInternal
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -68,6 +67,11 @@ object RealmObjectHelper {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
+        // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
+        //  implementations in the various platform RealmInterops here to eliminate
+        //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
+        //  only. This relates to the overall concern of having a generic path for getter/setter
+        //  instead of generating a typed path for each type.
         RealmInterop.realm_set_value(o, key, value, false)
     }
 
