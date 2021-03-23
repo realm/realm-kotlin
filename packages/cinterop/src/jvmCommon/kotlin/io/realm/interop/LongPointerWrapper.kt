@@ -17,7 +17,6 @@
 package io.realm.interop
 
 import io.realm.interop.gc.NativeContext
-import io.realm.runtimeapi.NativePointer
 import java.lang.Long.toHexString
 
 // JVM/Android specific pointer wrapper

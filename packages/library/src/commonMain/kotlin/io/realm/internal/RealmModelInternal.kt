@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.realm.model
+package io.realm.internal
 
-import io.realm.RealmModule
 import io.realm.RealmObject
 
-open class Person(open var name: String) : RealmObject {
-    constructor() : this("")
-    open var age: Int = 0
-}
-
-@RealmModule
-class Schema
+/**
+ * Internal interface for Realm objects.
+ *
+ * The interface is added by the compiler plugin to all [RealmObject] classes to have an interface
+ * exposing our internal API and compiler plugin additions without leaking it to the public
+ * [RealmObject].
+ */
+interface RealmModelInternal : RealmObject, io.realm.interop.RealmModelInternal

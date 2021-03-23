@@ -18,13 +18,13 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.RealmObject
 import io.realm.internal.Mediator
+import io.realm.internal.RealmModelInternal
 import io.realm.internal.RealmObjectCompanion
 import io.realm.interop.ClassFlag
+import io.realm.interop.NativePointer
 import io.realm.interop.PropertyType
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModelInternal
-import io.realm.runtimeapi.RealmObject
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty

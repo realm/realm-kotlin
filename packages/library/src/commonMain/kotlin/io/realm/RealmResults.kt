@@ -18,12 +18,11 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
+import io.realm.internal.RealmModelInternal
 import io.realm.internal.link
+import io.realm.interop.Link
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.runtimeapi.Link
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModelInternal
-import io.realm.runtimeapi.RealmObject
 import kotlin.reflect.KClass
 
 // FIXME API-QUERY Final query design is tracked in https://github.com/realm/realm-kotlin/issues/84

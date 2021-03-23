@@ -18,8 +18,6 @@ package io.realm.interop
 
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
-import io.realm.runtimeapi.Link
-import io.realm.runtimeapi.NativePointer
 
 inline class ColumnKey(val key: Long)
 

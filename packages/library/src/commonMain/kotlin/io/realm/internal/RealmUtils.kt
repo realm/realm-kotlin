@@ -16,10 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.RealmObject
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModelInternal
-import io.realm.runtimeapi.RealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 

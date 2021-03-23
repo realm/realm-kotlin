@@ -17,8 +17,8 @@
 package io.realm.internal
 
 import io.realm.Cancellable
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.runtimeapi.NativePointer
 
 class NotificationToken<T>(t: T, private val token: NativePointer) : Cancellable {
 

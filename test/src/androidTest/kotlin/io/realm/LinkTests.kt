@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm
 
-import io.realm.runtimeapi.RealmModule
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest

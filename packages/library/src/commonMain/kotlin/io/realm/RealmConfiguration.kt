@@ -17,10 +17,10 @@
 package io.realm
 
 import io.realm.internal.Mediator
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.interop.Table
-import io.realm.runtimeapi.NativePointer
 
 class RealmConfiguration private constructor(
     val path: String?, // Full path if we don't want to use the default location

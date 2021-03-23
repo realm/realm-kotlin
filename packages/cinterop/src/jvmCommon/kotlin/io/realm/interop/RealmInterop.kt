@@ -15,12 +15,9 @@
  */
 
 package io.realm.interop
+
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
-
-import io.realm.runtimeapi.Link
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModelInternal
 
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }

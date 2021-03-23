@@ -20,8 +20,8 @@ package io.realm
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
-import io.realm.runtimeapi.NativePointer
-import io.realm.runtimeapi.RealmModelInternal
+import io.realm.interop.NativePointer
+import io.realm.interop.RealmModelInternal
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer

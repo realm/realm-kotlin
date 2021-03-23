@@ -17,8 +17,6 @@
 
 package io.realm
 
-import io.realm.runtimeapi.RealmModelInternal
-import io.realm.runtimeapi.RealmModule
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -46,14 +44,6 @@ class SampleTests {
     fun tearDown() {
         realm.close()
         Utils.deleteTempDir(tmpDir)
-    }
-
-    @Test
-    fun testRealmModelInternalAndMarkerAreImplemented() {
-        val p = Sample()
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        p as? RealmModelInternal
-            ?: error("Supertype RealmModelInternal was not added to Sample class")
     }
 
     @Test

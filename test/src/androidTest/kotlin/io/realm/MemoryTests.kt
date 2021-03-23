@@ -22,7 +22,6 @@ import android.os.SystemClock
 import android.text.format.Formatter
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import io.realm.runtimeapi.RealmModule
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

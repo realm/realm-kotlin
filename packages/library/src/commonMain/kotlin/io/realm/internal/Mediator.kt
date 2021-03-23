@@ -17,7 +17,6 @@
 package io.realm.internal
 
 import io.realm.interop.Table
-import io.realm.runtimeapi.RealmModelInternal
 import kotlin.reflect.KClass
 
 // FIXME https://github.com/realm/realm-kotlin/issues/90 support default schema creation.

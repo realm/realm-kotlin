@@ -1,6 +1,6 @@
 package modules.input
-import io.realm.runtimeapi.RealmModule
-import io.realm.runtimeapi.RealmObject
+import io.realm.RealmModule
+import io.realm.RealmObject
 
 class A : RealmObject
 

@@ -16,7 +16,6 @@
 
 package io.realm
 
-import io.realm.runtimeapi.RealmModule
 import test.Nullability
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

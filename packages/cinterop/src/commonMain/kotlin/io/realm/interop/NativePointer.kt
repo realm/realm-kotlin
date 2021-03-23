@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.runtimeapi
+package io.realm.interop
 
-/**
- * Marker interface to define a model (managed by Realm).
- */
-interface RealmObject
+// Marker interface for native pointer wrappers
+interface NativePointer

@@ -17,7 +17,7 @@
 
 package test
 
-import io.realm.runtimeapi.RealmObject
+import io.realm.RealmObject
 
 class Sample : RealmObject {
     var stringField: String = "Realm"

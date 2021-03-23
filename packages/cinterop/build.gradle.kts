@@ -162,7 +162,6 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                api(project(":runtime-api"))
             }
         }
 

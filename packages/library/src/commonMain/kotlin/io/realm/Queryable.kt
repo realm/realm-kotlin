@@ -16,8 +16,6 @@
 
 package io.realm
 
-import io.realm.runtimeapi.RealmObject
-
 // FIXME QUERY-API
 //  - Realms, Results and Lists are queryable, but might not be needed as an interface
 //    dependent on how the final API is going to look like.
