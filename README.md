@@ -54,6 +54,8 @@ val objects: RealmResults<Person> =
 ```
 
 Next: head to the full KMM [example](./examples/kmm-sample).  
+
+NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
  
 # Developer Preview
 
