@@ -36,9 +36,6 @@ import kotlin.test.assertEquals
 
 class MemoryTests {
 
-    @RealmModule(Sample::class)
-    class MySchema
-
     lateinit var tmpDir: String
 
     @BeforeTest
@@ -122,7 +119,7 @@ class MemoryTests {
     }
 
     private fun openRealmFromTmpDir(): Realm {
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = listOf(Sample::class))
         return Realm.open(configuration)
     }
 

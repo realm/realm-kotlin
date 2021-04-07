@@ -27,16 +27,13 @@ import kotlin.test.assertFalse
 
 class SampleTests {
 
-    @RealmModule(Sample::class)
-    class MySchema
-
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = listOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
