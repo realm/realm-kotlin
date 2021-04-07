@@ -23,4 +23,3 @@ import io.realm.RealmObject
 class Expression : RealmObject {
     var expressionString: String = ""
 }
-
