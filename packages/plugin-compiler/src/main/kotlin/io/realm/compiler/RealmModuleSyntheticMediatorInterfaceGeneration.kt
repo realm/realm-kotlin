@@ -138,7 +138,6 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
             ) { startOffset, endOffset ->
                 val mapOf = pluginContext.referenceFunctions(FqNames.KOTLIN_COLLECTIONS_MAPOF)
                     .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
-                IrExpressionBodyImpl(
                     IrCallImpl(
                         startOffset, endOffset,
                         companionMapType,
@@ -191,7 +190,6 @@ class RealmModuleSyntheticMediatorInterfaceGeneration(private val pluginContext:
                             )
                         )
                     }
-                )
             }
             addRealmMediatorSchemaMethod(mediatorMappingProperty)
             addRealmMediatorNewInstanceMethod(mediatorMappingProperty)

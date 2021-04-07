@@ -103,6 +103,10 @@ class Realm {
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
 
+    fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
+        return io.realm.internal.create(realmConfiguration.schema, dbPointer!!, type, primaryKey)
+    }
+
     /**
      * Creates a copy of an object in the Realm.
      *

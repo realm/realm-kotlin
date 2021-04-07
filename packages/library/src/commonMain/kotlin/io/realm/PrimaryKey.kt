@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm
 
-import io.realm.interop.Table
-import kotlin.reflect.KMutableProperty1
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FIELD)
+annotation class PrimaryKey()
 
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>
-    val `$realm$primaryKey`: KMutableProperty1<*, *>
-    fun `$realm$schema`(): Table
-    fun `$realm$newInstance`(): Any
-}
+

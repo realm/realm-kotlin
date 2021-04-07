@@ -18,7 +18,7 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_FLAG
 import io.realm.compiler.FqNames.COLLECTION_TYPE
-import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
+import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
 import io.realm.compiler.FqNames.PROPERTY_TYPE
@@ -31,11 +31,14 @@ import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
+import io.realm.compiler.Names.PROPERTY_FLAG_INDEXED
 import io.realm.compiler.Names.PROPERTY_FLAG_NORMAL
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
+import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
 import io.realm.compiler.Names.REALM_POINTER
@@ -63,13 +66,11 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
@@ -81,7 +82,6 @@ import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
-import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.Name
@@ -134,58 +134,64 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             addVariableProperty(REALM_OBJECT_SCHEMA, pluginContext.irBuiltIns.anyType, ::irNull)
         }
 
-    fun addCompanionFieldsProperty(
+    fun addCompanionFields(
         companion: IrClass,
         properties: MutableMap<String, Pair<String, IrProperty>>?,
     ) {
-        val type = kProperty1Class.typeWith(
+        val kPropertyType = kProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
-        val listOf = pluginContext.referenceFunctions(KOTLIN_COLLECTIONS_LISTOF)
-            .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_FIELDS_MEMBER,
-            listIrClass.typeWith(type)
+            listIrClass.typeWith(kPropertyType)
         ) { startOffset, endOffset ->
-            IrExpressionBodyImpl(
-                IrCallImpl(
-                    startOffset, endOffset,
-                    listIrClass.typeWith(type),
-                    listOf,
-                    1,
-                    1,
+            buildListOf(pluginContext, startOffset, endOffset, kPropertyType, properties!!.entries.map {
+                val property = it.value.second
+                IrPropertyReferenceImpl(
+                    startOffset,
+                    endOffset,
+                    kPropertyType,
+                    property.symbol,
+                    0,
                     null,
-                    null
-                ).apply {
-                    putTypeArgument(0, type)
-                    putValueArgument(
-                        0,
-                        IrVarargImpl(
-                            startOffset,
-                            endOffset,
-                            pluginContext.irBuiltIns.arrayClass.typeWith(type),
-                            type,
-                            properties!!.entries.map {
-                                val property = it.value.second
-                                IrPropertyReferenceImpl(
-                                    startOffset,
-                                    endOffset,
-                                    type,
-                                    property.symbol,
-                                    0,
-                                    null,
-                                    property.getter?.symbol,
-                                    property.setter?.symbol
-                                )
-                            }
-                        )
-                    )
-                }
-            )
+                    property.getter?.symbol,
+                    property.setter?.symbol
+                )
+            })
         }
+
+        val primaryKeyFields = properties!!.filter { it.value.second.backingField!!.hasAnnotation( PRIMARY_KEY_ANNOTATION) }
+
+        val primaryKey: IrProperty? = when(primaryKeyFields.size)  {
+            0 -> null
+            1 -> primaryKeyFields.entries.first().value.second
+            else -> error("RealmObject can only have one primary key")
+        }
+
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER,
+            kPropertyType
+        ) { startOffset, endOffset ->
+            primaryKey?.let {
+                IrPropertyReferenceImpl(
+                    startOffset,
+                    endOffset,
+                    kPropertyType,
+                    primaryKey.symbol,
+                    0,
+                    null,
+                    primaryKey.getter?.symbol,
+                    primaryKey.setter?.symbol
+                )
+            } ?:
+            IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
+        }
+
     }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
@@ -198,6 +204,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val fields: MutableMap<String, Pair<String, IrProperty>> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
+
+        val primaryKeyFields = fields.filter { it.value.second.backingField!!.hasAnnotation( PRIMARY_KEY_ANNOTATION) }
+
+        val primaryKey = when(primaryKeyFields.size)  {
+            0 -> ""
+            1 -> primaryKeyFields.entries.first().key
+            else -> error("RealmObject can only have one primary key")
+        }
 
         val function =
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
@@ -217,12 +231,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     // Name
                     putValueArgument(arg++, irString(irClass.name.identifier))
                     // Primary key
-                    putValueArgument(arg++, irString(""))
+                    putValueArgument(arg++, irString(primaryKey))
                     // Flags
                     putValueArgument(
                         arg++,
                         buildSetOf(
-                            pluginContext, this@blockBody, classFlag.defaultType,
+                            pluginContext, startOffset, endOffset, classFlag.defaultType,
                             listOf(
                                 IrGetEnumValueImpl(
                                     UNDEFINED_OFFSET,
@@ -237,7 +251,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     putValueArgument(
                         arg++,
                         buildListOf(
-                            pluginContext, this@blockBody, propertyClass.defaultType,
+                            pluginContext, startOffset, endOffset, propertyClass.defaultType,
                             fields.map { entry ->
                                 val value = entry.value
                                 val type = propertyTypes.firstOrNull {
@@ -251,6 +265,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 val backingField = property.backingField
                                     ?: error("Property without backing field or type")
                                 val nullable = backingField.type.isNullable()
+                                val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
+                                val propertyFlags = mutableListOf<Name>(PROPERTY_FLAG_NORMAL)
+                                if (nullable) {
+                                    propertyFlags.add(PROPERTY_FLAG_NULLABLE)
+                                }
+                                if (primaryKey) {
+                                    propertyFlags.add(PROPERTY_FLAG_PRIMARY_KEY)
+                                    propertyFlags.add(PROPERTY_FLAG_INDEXED)
+                                }
                                 IrConstructorCallImpl(
                                     startOffset,
                                     endOffset,
@@ -299,12 +322,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(
                                         arg++,
                                         buildSetOf(
-                                            pluginContext, this@blockBody, propertyFlag.defaultType,
-                                            if (nullable) {
-                                                propertyFlags(listOf(PROPERTY_FLAG_NULLABLE))
-                                            } else {
-                                                propertyFlags(listOf(PROPERTY_FLAG_NORMAL))
-                                            }
+                                            pluginContext, startOffset, endOffset, propertyFlag.defaultType,
+                                            propertyFlags(propertyFlags)
                                         )
                                     )
                                 }

@@ -16,6 +16,7 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -35,17 +36,19 @@ import org.jetbrains.kotlin.ir.builders.declarations.addProperty
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
-import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
+import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -56,6 +59,7 @@ import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -89,11 +93,17 @@ val ClassDescriptor.isRealmObjectCompanion
 val ClassDescriptor.hasRealmModelInterface
     get() = getSuperInterfaces().firstOrNull { it.fqNameSafe == FqNames.REALM_MODEL_INTERFACE } != null
 
-val IrClass.isRealmModuleAnnotated
+fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
+    return annotations.hasAnnotation(annotation)
+}
+
+val IrMutableAnnotationContainer.isRealmModuleAnnotated
     get() = annotations.hasAnnotation(FqNames.REALM_MODULE_ANNOTATION)
 
 val IrClass.hasRealmModelInterface
-    get() = superTypes.firstOrNull { it.classFqName?.equals(FqNames.REALM_MODEL_INTERFACE) ?: false } != null
+    get() = superTypes.firstOrNull {
+        it.classFqName?.equals(FqNames.REALM_MODEL_INTERFACE) ?: false
+    } != null
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset
@@ -120,7 +130,10 @@ internal fun IrClass.lookupProperty(name: Name): IrProperty {
         ?: throw AssertionError("Property '$name' not found in class '${this.name}'")
 }
 
-internal fun IrPluginContext.lookupFunctionInClass(fqName: FqName, function: String): IrSimpleFunction {
+internal fun IrPluginContext.lookupFunctionInClass(
+    fqName: FqName,
+    function: String
+): IrSimpleFunction {
     return lookupClassOrThrow(fqName).functions.first {
         it.name == Name.identifier(function)
     }
@@ -131,7 +144,10 @@ internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
         ?: error("Cannot find ${name.asString()} on platform $platform.")
 }
 
-internal fun IrPluginContext.lookupConstructorInClass(fqName: FqName, filter: (ctor: IrConstructorSymbol) -> Boolean): IrConstructorSymbol {
+internal fun IrPluginContext.lookupConstructorInClass(
+    fqName: FqName,
+    filter: (ctor: IrConstructorSymbol) -> Boolean
+): IrConstructorSymbol {
     return referenceConstructors(fqName).first {
         filter(it)
     }
@@ -144,18 +160,21 @@ object SchemaCollector {
 @Suppress("LongParameterList")
 internal fun <T : IrExpression> buildOf(
     context: IrPluginContext,
-    builder: IrBlockBodyBuilder,
+    startOffset: Int,
+    endOffset: Int,
     function: IrSimpleFunctionSymbol,
     containerType: IrClass,
     elementType: IrType,
     args: List<T>
 ): IrExpression {
-    return with(builder) {
-        irCall(
+    return IrCallImpl(
+            startOffset, endOffset,
+            containerType.typeWith(elementType),
             function,
-            typeArgumentsCount = 1,
-            valueArgumentsCount = 1,
-            type = containerType.typeWith(elementType)
+            1,
+            1,
+            null,
+            null
         ).apply {
             putTypeArgument(0, elementType)
             putValueArgument(
@@ -168,34 +187,40 @@ internal fun <T : IrExpression> buildOf(
                     args.toList()
                 )
             )
+
         }
-    }
 }
 
-@ObsoleteDescriptorBasedAPI
 internal fun <T : IrExpression> buildSetOf(
     context: IrPluginContext,
-    builder: IrBlockBodyBuilder,
+    startOffset: Int,
+    endOffset: Int,
     elementType: IrType,
     args: List<T>
 ): IrExpression {
     val setOf = context.referenceFunctions(FqName("kotlin.collections.setOf"))
-        .first { it.descriptor.arity == 1 && it.descriptor.valueParameters.first().isVararg }
+        .first {
+            val parameters = it.owner.valueParameters
+            parameters.size == 1 && parameters.first().isVararg
+        }
     val setIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_SET)
-    return buildOf(context, builder, setOf, setIrClass, elementType, args)
+    return buildOf(context, startOffset, endOffset, setOf, setIrClass, elementType, args)
 }
 
-@ObsoleteDescriptorBasedAPI
 internal fun <T : IrExpression> buildListOf(
     context: IrPluginContext,
-    builder: IrBlockBodyBuilder,
+    startOffset: Int,
+    endOffset: Int,
     elementType: IrType,
     args: List<T>
 ): IrExpression {
-    val listOf = context.referenceFunctions(FqName("kotlin.collections.listOf"))
-        .first { it.descriptor.arity == 1 && it.descriptor.valueParameters.first().isVararg }
+    val listOf = context.referenceFunctions(KOTLIN_COLLECTIONS_LISTOF)
+        .first {
+            val parameters = it.owner.valueParameters
+            parameters.size == 1 && parameters.first().isVararg
+        }
     val listIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
-    return buildOf(context, builder, listOf, listIrClass, elementType, args)
+    return buildOf(context, startOffset, endOffset, listOf, listIrClass, elementType, args)
 }
 
 fun IrClass.addValueProperty(
@@ -203,7 +228,7 @@ fun IrClass.addValueProperty(
     superClass: IrClass,
     propertyName: Name,
     propertyType: IrType,
-    initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody
+    initExpression: (startOffset: Int, endOffset: Int) -> IrExpression
 ): IrProperty {
     // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
     val property = addProperty {
@@ -222,7 +247,7 @@ fun IrClass.addValueProperty(
         modality = property.modality
         type = propertyType
     }.apply {
-        initializer = initExpression(startOffset, endOffset)
+        initializer = IrExpressionBodyImpl(initExpression(startOffset, endOffset))
     }
     property.backingField?.parent = this
     property.backingField?.correspondingPropertySymbol = property.symbol

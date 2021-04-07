@@ -148,6 +148,11 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
+actual class RealmValue {
+    actual val value: Any?
+        get() = TODO("Not yet implemented")
+
+}
 actual object RealmInterop {
 
     actual fun realm_get_library_version(): String {
@@ -278,6 +283,9 @@ actual object RealmInterop {
 
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
+    }
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: RealmValue): NativePointer {
+        TODO()
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {

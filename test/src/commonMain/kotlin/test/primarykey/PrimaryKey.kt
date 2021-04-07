@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package test.primarykey
 
-import io.realm.interop.Table
-import kotlin.reflect.KMutableProperty1
+import io.realm.PrimaryKey
+import io.realm.RealmObject
+import kotlin.random.Random
+import kotlin.random.nextULong
 
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>
-    val `$realm$primaryKey`: KMutableProperty1<*, *>
-    fun `$realm$schema`(): Table
-    fun `$realm$newInstance`(): Any
+class NoPrimaryKey: RealmObject {
+    var nonPrimaryKey: String = Random.nextULong().toString()
+}
+
+class PrimaryKeyString: RealmObject {
+    @PrimaryKey
+    var primaryKey: String = Random.nextULong().toString()
+}
+
+class PrimaryKeyStringNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: String? = Random.nextULong().toString()
 }
