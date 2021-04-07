@@ -18,12 +18,9 @@
 
 package io.realm.example.kmmsample
 
-import io.realm.RealmModule
 import io.realm.RealmObject
 
 class Expression : RealmObject {
     var expressionString: String = ""
 }
 
-@RealmModule(Expression::class)
-class Entities
