@@ -88,6 +88,7 @@ You can also run tests from the commandline:
 
 ```
 cd test
+./gradlew connectedAndroidTest
 ./gradlew macosTest
 ```
 
