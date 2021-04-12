@@ -32,7 +32,7 @@ class LinkTests {
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = listOf(Parent::class, Child::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class))
         realm = Realm.open(configuration)
     }
 

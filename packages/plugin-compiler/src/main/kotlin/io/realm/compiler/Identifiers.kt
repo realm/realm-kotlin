@@ -58,6 +58,7 @@ internal object FqNames {
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
+    val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
     val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")

@@ -47,7 +47,7 @@ class NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = listOf(Sample::class))
+        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
     }
 
     @AfterTest

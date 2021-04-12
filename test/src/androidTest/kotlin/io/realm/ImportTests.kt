@@ -37,7 +37,7 @@ class ImportTests {
     fun setup() {
         tmpDir = Utils.createTempDir()
         val configuration =
-            RealmConfiguration(path = "$tmpDir/default.realm", schema = listOf(Parent::class, Child::class, Sample::class))
+            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class, Sample::class))
         realm = Realm.open(configuration)
     }
 

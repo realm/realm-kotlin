@@ -27,7 +27,7 @@ import kotlin.reflect.KClass
 class RealmConfiguration(
     val path: String? = null, // Full path if we don't want to use the default location
     val name: String = "default", // Optional Realm name (default is 'default')
-    val schema: List<KClass<out RealmObject>> // classes literal (T::class) //TODO rename ot model?
+    schema: Set<KClass<out RealmObject>> // classes literal (T::class)
 ) {
     internal var mapOfKClassWithCompanion: Map<KClass<*>, RealmObjectCompanion> = emptyMap()
     internal val nativeConfig: NativePointer = RealmInterop.realm_config_new()
@@ -35,10 +35,30 @@ class RealmConfiguration(
 
     // called by the compiler plugin, with a populated companion map
     internal constructor (path: String?, name: String = "default", companionMap: Map<KClass<*>, RealmObjectCompanion>) :
-        this(path, name, emptyList()) {
+        this(path, name, emptySet()) {
             mapOfKClassWithCompanion = companionMap
             init()
         }
+
+    class Builder(
+        var path: String? = null, // Full path for Realm (directory + name)
+        var name: String = "default", // Optional Realm name (default is 'default')
+        vararg var schema: KClass<out RealmObject>
+    ) {
+        fun path(path: String) = apply { this.path = path }
+        fun name(name: String) = apply { this.name = name }
+        fun schema(vararg classes: KClass<out RealmObject>) = apply { this.schema = classes }
+
+        fun build(): RealmConfiguration { // TODO transform argument to contain a map
+            @Suppress("SpreadOperator")
+            return RealmConfiguration(path, name, setOf(*schema))
+        }
+
+        // Called from compiler plugin
+        internal fun build(companionMap: Map<KClass<*>, RealmObjectCompanion>): RealmConfiguration {
+            return RealmConfiguration(path, name, companionMap)
+        }
+    }
 
     private fun init() {
         val internalPath = if (path == null || path.isEmpty()) {

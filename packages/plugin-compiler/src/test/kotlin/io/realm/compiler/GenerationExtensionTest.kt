@@ -104,13 +104,14 @@ class GenerationExtensionTest {
         class C : RealmObject
         class B : RealmObject
         
-        val classes = listOf(A::class, B::class, C::class)
+        val classes = setOf(A::class, B::class, C::class)
         val configuration =
             RealmConfiguration(schema = classes)
                 """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Schema argument must be a list of class literal (T::class)"))
 
         result = compileFromSource(
             source = SourceFile.kotlin(
@@ -122,13 +123,14 @@ class GenerationExtensionTest {
         class A : RealmObject
         class B : RealmObject
         
-        val classes = listOf(A::class, B::class, C::class)
+        val arr = arrayOf(A::class, B::class)
         val configuration =
-            RealmConfiguration(schema = arrayOf(A::class, B::class).toList())
+            RealmConfiguration(schema = arr.toSet())
                 """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Schema argument must be a list of class literal (T::class)"))
     }
 
     @Test

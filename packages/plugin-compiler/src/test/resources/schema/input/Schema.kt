@@ -23,5 +23,8 @@ class A : RealmObject
 class C : RealmObject
 class B : RealmObject
 
-val configuration =
-    RealmConfiguration(name = "default", path = "default.realm", schema = listOf(A::class, B::class, C::class))
+val conf1 = RealmConfiguration.Builder()
+    .schema(A::class, B::class, C::class)
+    .path("/some/path").build()
+
+val conf2 = RealmConfiguration(schema = setOf(A::class, C::class))

@@ -30,7 +30,7 @@ class CommonTests {
 
     @Test
     fun createObject() {
-        val configuration = RealmConfiguration(name = "createObject", schema = listOf(Person::class))
+        val configuration = RealmConfiguration(name = "createObject", schema = setOf(Person::class))
         val realm = Realm.open(configuration)
 
         realm.beginTransaction()
@@ -45,7 +45,7 @@ class CommonTests {
 
     @Test
     fun queryObjects() {
-        val configuration = RealmConfiguration(name = "queryObjects", schema = listOf(Person::class))
+        val configuration = RealmConfiguration(name = "queryObjects", schema = setOf(Person::class))
         val realm = Realm.open(configuration)
 
         realm.beginTransaction()

@@ -33,7 +33,7 @@ class SampleTests {
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = listOf(Sample::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
