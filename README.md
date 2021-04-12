@@ -72,6 +72,7 @@ The public API of the SDK has not been finalized. Design discussions will happen
 ## Prerequisits
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
+- XCode 12 on Mac.
 
 ## Commands to build
 

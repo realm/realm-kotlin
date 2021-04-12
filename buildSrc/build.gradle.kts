@@ -53,6 +53,7 @@ buildscript {
 // they are not allowed to set the version. It can only be set from here.
 dependencies {
     implementation("org.jlleitschuh.gradle:ktlint-gradle:${Versions.ktlintPlugin}")
+    implementation("io.codearte.gradle.nexus:gradle-nexus-staging-plugin:${Versions.nexusStagingPlugin}")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
     implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}") // TODO LATER Don't know why this has to be here. See if we can remove this

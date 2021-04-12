@@ -30,6 +30,7 @@ currentBranch = env.BRANCH_NAME
 publishBuild = false
 // Version of Realm Kotlin being tested. This values is defined in `buildSrc/src/main/kotlin/Config.kt`.
 version = null
+isReleaseBranch = releaseBranches.contains(currentBranch)
 
 // Mac CI dedicated machine
 osx_kotlin = 'osx_kotlin'
@@ -81,10 +82,16 @@ pipeline {
                 }
             }
         }
-        stage('Publish to OJO') {
-            when { expression { shouldReleaseSnapshot(version) } }
+        stage('Publish SNAPSHOT to Maven Central') {
+            when { expression { shouldPublishSnapshot(version) } }
             steps {
-                runPublishToOjo()
+                runUploadToMavenCentral()
+            }
+        }
+        stage('Publish Release to Maven Central') {
+            when { expression { publishBuild } }
+            steps {
+                runPublishReleaseOnMavenCentral()
             }
         }
     }
@@ -141,13 +148,22 @@ def runScm() {
 
 def runBuild() {
     node(osx_kotlin) {
-        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            getArchive()
-            startEmulatorInBgIfNeeded()
-            sh '''
-                  cd packages
-                  chmod +x gradlew && ./gradlew clean assemble --info --stacktrace --no-daemon
-                '''
+        withCredentials([
+            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
+            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
+        ]) {
+            withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+                getArchive()
+                startEmulatorInBgIfNeeded()
+                def signingFlags = ""
+                if (isReleaseBranch) {
+                signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${SIGN_KEY}\" -PsignPassword=${SIGN_KEY_PASSWORD}"
+                }
+                sh """
+                      cd packages
+                      chmod +x gradlew && ./gradlew clean assemble ${signingFlags} --info --stacktrace --no-daemon
+                   """
+            }
         }
     }
 }
@@ -194,18 +210,36 @@ def runStaticAnalysis() {
     }
 }
 
-def runPublishToOjo() {
+def runUploadToMavenCentral() {
     node(osx_kotlin) {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
-                // For some reason calling the "ojoUpload" root task does not seem to propagate properties correctly
-                // to the Publisher Plugin. This only seems to be a problem on the CI Build machine. For now, call 
-                // artifactoryPublish directly.
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven_central', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
                 sh """
                 cd packages
-                ./gradlew --no-daemon -DbintrayUser=${env.BINTRAY_USER} -DbintrayKey=${env.BINTRAY_KEY} publishAllPublicationsToOjoRepository
+                ./gradlew publishAllPublicationsToMavenCentralRepository -DossrhUsername=${env.MAVEN_CENTRAL_USER} -DossrhPassword=${env.MAVEN_CENTRAL_PASSWORD} --no-daemon
                 """
             }
+        }
+    }
+}
+
+def  runPublishReleaseOnMavenCentral() {
+    node(osx_kotlin) {
+        withCredentials([
+                [$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL_CI'],
+                [$class: 'StringBinding', credentialsId: 'slack-webhook-releases-channel', variable: 'SLACK_URL_RELEASE'],
+                [$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER'],
+                [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'DOCS_S3_ACCESS_KEY', credentialsId: 'mongodb-realm-docs-s3', secretKeyVariable: 'DOCS_S3_SECRET_KEY'],
+                [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'REALM_S3_ACCESS_KEY', credentialsId: 'realm-s3', secretKeyVariable: 'REALM_S3_SECRET_KEY']
+        ]) {
+          sh """
+            set +x
+            sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
+            '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
+            '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
+            '$SLACK_URL_RELEASE' \
+            '$SLACK_URL_CI'
+          """
         }
     }
 }
@@ -291,7 +325,7 @@ def startEmulatorInBgIfNeeded() {
     }
 }
 
-boolean shouldReleaseSnapshot(version) {
+boolean shouldPublishSnapshot(version) {
     if (!releaseBranches.contains(currentBranch)) {
         return false
     }
