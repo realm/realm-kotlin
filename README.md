@@ -79,11 +79,17 @@ The public API of the SDK has not been finalized. Design discussions will happen
 
 ```
 git submodule update --init --recursive
-cd test
+cd packages
 ./gradlew assemble
 ```
 In Android Studio open the `test` project, which will open also the `realm-library` and the compiler projects
 
+You can also run tests from the commandline:
+
+```
+cd test
+./gradlew macosTest
+```
 
 # Using Snapshots
 
