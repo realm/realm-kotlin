@@ -21,28 +21,22 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.internal.RealmInitializer
 import org.junit.After
 import org.junit.Before
-import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
-import kotlin.io.path.ExperimentalPathApi
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
-
-    @RealmModule(Sample::class)
-    class MySchema
-
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
-    @ExperimentalPathApi
     @Before
     fun setup() {
         tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 

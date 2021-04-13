@@ -25,16 +25,13 @@ import kotlin.test.assertNull
 
 class NullabilityTests {
 
-    @RealmModule(Nullability::class)
-    class MySchema
-
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Nullability::class))
         realm = Realm.open(configuration)
     }
 

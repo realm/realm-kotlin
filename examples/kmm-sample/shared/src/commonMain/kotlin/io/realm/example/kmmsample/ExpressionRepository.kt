@@ -24,10 +24,7 @@ import io.realm.RealmConfiguration
 class ExpressionRepository {
 
     val realm: Realm by lazy {
-        val configuration = RealmConfiguration.Builder()
-            .schema(Entities())
-            .build()
-
+        val configuration = RealmConfiguration(schema = setOf(Expression::class))
         Realm.open(configuration)
     }
 

@@ -19,7 +19,6 @@ package io.realm.compiler
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
-import io.realm.internal.Mediator
 import io.realm.internal.RealmModelInternal
 import io.realm.internal.RealmObjectCompanion
 import io.realm.interop.ClassFlag
@@ -32,7 +31,6 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -60,8 +58,21 @@ class GenerationExtensionTest {
                 .map { it.relativeTo(base).path to it }.toMap()
         }
 
-        private fun expectedDir() = listOf("src", "test", "resources", directory, "expected").joinToString(separator = File.separator)
-        fun outputDir() = listOf("src", "test", "resources", directory, "output").joinToString(separator = File.separator)
+        private fun expectedDir() = listOf(
+            "src",
+            "test",
+            "resources",
+            directory,
+            "expected"
+        ).joinToString(separator = File.separator)
+
+        fun outputDir() = listOf(
+            "src",
+            "test",
+            "resources",
+            directory,
+            "output"
+        ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
             stripInputPath(File("${outputDir()}/00_ValidateIrBeforeLowering.ir"), fileMap)
@@ -70,6 +81,56 @@ class GenerationExtensionTest {
                 File("${outputDir()}/00_ValidateIrBeforeLowering.ir").readText()
             )
         }
+    }
+
+    @Test
+    fun `RealmConfiguration Schema Argument Lowering`() {
+        val inputs = Files("/schema")
+        val result = compile(inputs)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        inputs.assertGeneratedIR()
+    }
+
+    @Test
+    fun `unsupported schema argument`() {
+        var result = compileFromSource(
+            source = SourceFile.kotlin(
+                "schema.kt",
+                """
+        import io.realm.RealmObject
+        import io.realm.RealmConfiguration
+                    
+        class A : RealmObject
+        class C : RealmObject
+        class B : RealmObject
+        
+        val classes = setOf(A::class, B::class, C::class)
+        val configuration =
+            RealmConfiguration(schema = classes)
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Schema argument must be a list of class literal (T::class)"))
+
+        result = compileFromSource(
+            source = SourceFile.kotlin(
+                "schema.kt",
+                """
+        import io.realm.RealmObject
+        import io.realm.RealmConfiguration
+                    
+        class A : RealmObject
+        class B : RealmObject
+        
+        val arr = arrayOf(A::class, B::class)
+        val configuration =
+            RealmConfiguration(schema = arr.toSet())
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Schema argument must be a list of class literal (T::class)"))
     }
 
     @Test
@@ -133,11 +194,13 @@ class GenerationExtensionTest {
         )
         assertEquals(properties.size, table.properties.size)
         table.properties.map { property ->
-            val expectedType = properties[property.name] ?: error("Property not found: ${property.name}")
+            val expectedType =
+                properties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
 
-        val fields: List<KProperty1<*, *>> = (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
+        val fields: List<KProperty1<*, *>> =
+            (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
         assertEquals(properties.size, fields.size)
 
         val newInstance = companionObject.`$realm$newInstance`()
@@ -166,7 +229,8 @@ class GenerationExtensionTest {
         assertEquals("Realm", nameProperty.call(sampleModel))
 
         sampleModel.`$realm$IsManaged` = true
-        sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
+        sampleModel.`$realm$ObjectPointer` =
+            LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
 
         // FIXME Bypass actual setter/getter invocation as it requires actual JNI compilation of
         //  cinterop-jvm which is not yet in place.
@@ -179,59 +243,10 @@ class GenerationExtensionTest {
         inputs.assertGeneratedIR()
     }
 
-    @Test
-    fun `should generate mediator implementation`() {
-        val inputs = Files("/modules")
-
-        val result = compile(inputs)
-
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-
-        val kClazz = result.classLoader.loadClass("modules.input.Entities")
-        val entitiesModule = kClazz.newInstance()!!
-
-        assertTrue(entitiesModule is Mediator)
-
-        val companionMapping = entitiesModule.companionMapping
-        assertEquals(3, companionMapping.size)
-
-        val schema: List<Any> = entitiesModule.schema()
-        assertNotNull(schema)
-        assertEquals(3, schema.size)
-
-        val kClassA = result.classLoader.loadClass("modules.input.A")
-        assertNotNull(kClassA)
-        val a = entitiesModule.newInstance(kClassA.kotlin)
-        assertNotNull(a)
-
-        val kClassB = result.classLoader.loadClass("modules.input.B")
-        assertNotNull(kClassB)
-        assertNotNull(entitiesModule.newInstance(kClassB.kotlin))
-
-        val kClassC = result.classLoader.loadClass("modules.input.C")
-        assertNotNull(kClassC)
-        val c = entitiesModule.newInstance(kClassC.kotlin)
-        assertNotNull(c)
-
-        assertNotEquals(kClassB, kClassC)
-
-        // subset of model included in the schema
-        val subsetKclazz = result.classLoader.loadClass("modules.input.Subset")
-        val subsetModule = subsetKclazz.newInstance()!!
-        assertTrue(subsetModule is Mediator)
-        val subsetSchema: List<Any> = subsetModule.schema()
-        assertNotNull(subsetSchema)
-        assertEquals(2, subsetSchema.size)
-        assertEquals(
-            listOf(a, c)
-                .map { (it::class.companionObjectInstance as RealmObjectCompanion).`$realm$schema`() }
-                .toSet(),
-            subsetSchema.toSet()
-        )
-        inputs.assertGeneratedIR()
-    }
-
-    private fun compile(inputs: Files, plugins: List<Registrar> = listOf(Registrar())): KotlinCompilation.Result =
+    private fun compile(
+        inputs: Files,
+        plugins: List<Registrar> = listOf(Registrar())
+    ): KotlinCompilation.Result =
         KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
@@ -243,6 +258,19 @@ class GenerationExtensionTest {
                 "-Xdump-directory=${inputs.outputDir()}",
                 "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )
+        }.compile()
+
+    private fun compileFromSource(
+        source: SourceFile,
+        plugins: List<Registrar> = listOf(Registrar())
+    ): KotlinCompilation.Result =
+        KotlinCompilation().apply {
+            sources = listOf(source)
+            useIR = true
+            messageOutputStream = System.out
+            compilerPlugins = plugins
+            inheritClassPath = true
+            kotlincArguments = listOf("-Xjvm-default=enable")
         }.compile()
 
     companion object {
