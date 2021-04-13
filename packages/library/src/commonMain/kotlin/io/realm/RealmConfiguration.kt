@@ -49,7 +49,7 @@ class RealmConfiguration(
         fun name(name: String) = apply { this.name = name }
         fun schema(vararg classes: KClass<out RealmObject>) = apply { this.schema = classes }
 
-        fun build(): RealmConfiguration { // TODO transform argument to contain a map
+        fun build(): RealmConfiguration {
             @Suppress("SpreadOperator")
             return RealmConfiguration(path, name, setOf(*schema))
         }
@@ -73,7 +73,7 @@ class RealmConfiguration(
             nativeConfig,
             SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
         )
-        RealmInterop.realm_config_set_schema_version(nativeConfig, version = 0)
+        RealmInterop.realm_config_set_schema_version(nativeConfig, version = 0) // TODO expose version when handling migration modes
         val schema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
         RealmInterop.realm_config_set_schema(nativeConfig, schema)
 
