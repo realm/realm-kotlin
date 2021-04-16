@@ -31,6 +31,7 @@ import kotlin.native.concurrent.freeze
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class BackgroundNotificationTests {
 
@@ -54,6 +55,10 @@ class BackgroundNotificationTests {
 
     @Test
     fun notificationOnBackgroundWrite() {
+        RuntimeUtils.printlntid("foreground")
+
+        val x = AtomicInt(0)
+
         val realm = Realm.open(configuration)
 
         realm.beginTransaction()
@@ -62,7 +67,10 @@ class BackgroundNotificationTests {
 
         sample.observe {
             RuntimeUtils.printlntid("changed")
-            CFRunLoopStop(CFRunLoopGetCurrent())
+            x.increment()
+            if (x.compareAndSet(2, 3)) {
+                CFRunLoopStop(CFRunLoopGetCurrent())
+            }
         }
 
         val queue = dispatch_get_global_queue(NSNumber(DISPATCH_QUEUE_PRIORITY_BACKGROUND).integerValue, 0)
@@ -77,6 +85,7 @@ class BackgroundNotificationTests {
 
         RuntimeUtils.printlntid("awaiting notification")
         CFRunLoopRun()
+        assertTrue(x.value == 3)
     }
 
     @Test

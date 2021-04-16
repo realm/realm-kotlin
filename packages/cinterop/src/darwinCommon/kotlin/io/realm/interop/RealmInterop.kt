@@ -17,7 +17,6 @@
 package io.realm.interop
 
 import kotlinx.cinterop.BooleanVar
-import kotlinx.cinterop.BooleanVarOf
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
@@ -64,8 +63,6 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
-import kotlin.native.concurrent.ThreadLocal
-import kotlin.native.concurrent.Worker
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -610,7 +607,7 @@ actual object RealmInterop {
     private fun createDispatchQueueScheduler(queue: dispatch_queue_t?): CPointer<realm_scheduler_t>? {
         printlntid("createDispatchQueueScheduler")
         val queue: dispatch_queue_t = queue ?: dispatch_queue_main_t()
-        val scheduler = DispatchQueueScheduler(queue)
+        val scheduler = DispatchQueueScheduler(tid(), queue)
 
         return realm_wrapper.realm_scheduler_new(
             //userdata: kotlinx.cinterop.CValuesRef<*>?,
@@ -624,30 +621,31 @@ actual object RealmInterop {
 
             // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
             staticCFunction<COpaquePointer?, Unit> { userdata ->
+                // Must be thread safe
                 printlntid("notify")
-                userdata!!.asStableRef<DispatchQueueScheduler>().get().notify()
+                val scheduler = userdata!!.asStableRef<DispatchQueueScheduler>().get()
+                scheduler.notify()
             },
 
             // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
             staticCFunction<COpaquePointer?, Boolean> { userdata ->
                 printlntid("is_on_thread")
-                // FIXME
-                true
+                // Must be thread safe
+                // FIXME Only works if we are guaranteed that the set_notify_callback is called
+                //  before first call to is_on_thread and that set_notify_callback has frozen the
+                //  scheduler
+                val scheduler = userdata!!.asStableRef<DispatchQueueScheduler>().get()
+                scheduler.threadId == tid()
             },
 
             // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
             staticCFunction<COpaquePointer?, COpaquePointer?, Boolean> { userdata, other ->
-                printlntid("is_same_as")
-                // FIXME
                 userdata == other
             },
 
             // can_deliver_notifications: realm_wrapper.realm_scheduler_can_deliver_notifications_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
-            staticCFunction<COpaquePointer?, Boolean> { userdata ->
-                printlntid("can deliver")
-                // FIXME
-                true
-            },
+            staticCFunction<COpaquePointer?, Boolean> { userdata -> true },
+
             // set_notify_callback: realm_wrapper.realm_scheduler_set_notify_callback_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(
             //     userdata kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */,
             //     callback_userdata kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */,
@@ -655,35 +653,44 @@ actual object RealmInterop {
             //     notify realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */) -> kotlin.Unit>>? */)
             staticCFunction { userdata, notify_callback_userdata, free_notify_callback_userdata, notify_callback ->
                 printlntid("set notify callback")
-                val get = userdata?.asStableRef<DispatchQueueScheduler>()?.get()!!
-                get.set_notify_callback(notify_callback, notify_callback_userdata)
-                // FIXME
-                get.freeze()
+                // FIXME Only works if we are guaranteed that this is only called once and always
+                //  called on the same thread that constructed the scheduler
+                val scheduler = userdata!!.asStableRef<DispatchQueueScheduler>().get()
+                scheduler.set_notify_callback(notify_callback!!, notify_callback_userdata!!)
+                scheduler.freeze()
             }
         )
     }
 
-    class DispatchQueueScheduler(val queue: NSObject?) {
-        val ref: CPointer<out CPointed>
-
-        private var callback: realm_scheduler_notify_func_t? = null
-        private var callback_userdata: CPointer<out CPointed>? = null
-
-        init {
-            ref = StableRef.create(this).asCPointer()
-        }
+    interface Scheduler {
+        var callback: realm_scheduler_notify_func_t
+        var callback_userdata: CPointer<out CPointed>
 
         fun set_notify_callback(
-            callback: realm_scheduler_notify_func_t?,
-            callback1: COpaquePointer?
+            callback: realm_scheduler_notify_func_t,
+            callback1: COpaquePointer
         ) {
             this.callback = callback
             this.callback_userdata = callback1
         }
 
-        fun notify() {
+        // Must be thread safe
+        fun notify()
+    }
+
+    class DispatchQueueScheduler(val threadId: ULong, val queue: NSObject?) : Scheduler {
+        val ref: CPointer<out CPointed>
+
+        override lateinit var callback: realm_scheduler_notify_func_t
+        override lateinit var callback_userdata: CPointer<out CPointed>
+
+        init {
+            ref = StableRef.create(this).asCPointer()
+        }
+
+        override fun notify() {
             dispatch_async(queue, {
-                callback!!.invoke(callback_userdata)
+                callback.invoke(callback_userdata)
             }.freeze())
         }
     }
