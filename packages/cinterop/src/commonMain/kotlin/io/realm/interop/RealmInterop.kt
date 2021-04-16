@@ -24,6 +24,7 @@ inline class ColumnKey(val key: Long)
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
+    fun realm_get_version_id(realm: NativePointer): Pair<ULong, ULong>?
     fun realm_get_library_version(): String
 
     fun realm_schema_new(tables: List<Table>): NativePointer
@@ -37,6 +38,7 @@ expect object RealmInterop {
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
     fun realm_open(config: NativePointer): NativePointer
+    fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_close(realm: NativePointer)
 
     fun realm_get_schema(realm: NativePointer): NativePointer
@@ -48,6 +50,7 @@ expect object RealmInterop {
 
     fun realm_begin_write(realm: NativePointer)
     fun realm_commit(realm: NativePointer)
+    fun realm_rollback(realm: NativePointer)
 
     // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
     // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions

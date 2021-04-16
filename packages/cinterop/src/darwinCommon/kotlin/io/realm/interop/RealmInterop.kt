@@ -16,43 +16,8 @@
 
 package io.realm.interop
 
-import kotlinx.cinterop.BooleanVar
-import kotlinx.cinterop.ByteVarOf
-import kotlinx.cinterop.COpaquePointer
-import kotlinx.cinterop.CPointed
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.CValue
-import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.StableRef
-import kotlinx.cinterop.ULongVar
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.asStableRef
-import kotlinx.cinterop.cValue
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.get
-import kotlinx.cinterop.getBytes
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.set
-import kotlinx.cinterop.staticCFunction
-import kotlinx.cinterop.toKString
-import kotlinx.cinterop.useContents
-import kotlinx.cinterop.value
-import realm_wrapper.realm_class_info_t
-import realm_wrapper.realm_clear_last_error
-import realm_wrapper.realm_config_t
-import realm_wrapper.realm_error_t
-import realm_wrapper.realm_find_property
-import realm_wrapper.realm_get_last_error
-import realm_wrapper.realm_link_t
-import realm_wrapper.realm_property_info_t
-import realm_wrapper.realm_release
-import realm_wrapper.realm_string_t
-import realm_wrapper.realm_value_t
-import realm_wrapper.realm_value_type
+import kotlinx.cinterop.*
+import realm_wrapper.*
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -150,6 +115,19 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
 
 actual object RealmInterop {
 
+    actual fun realm_get_version_id(realm: NativePointer): Pair<ULong, ULong>? {
+        memScoped {
+            val info = alloc<realm_version_id_t>()
+            val found = alloc<BooleanVar>()
+            realm_get_version_id(realm.cptr(), found.ptr, info.ptr)
+            return if (found.value) {
+                Pair(info.version, info.index)
+            } else {
+                null
+            }
+        }
+    }
+
     actual fun realm_get_library_version(): String {
         return realm_wrapper.realm_get_library_version()!!.toKString()
     }
@@ -229,6 +207,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
     }
 
+    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
+    }
+
     actual fun realm_close(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
     }
@@ -255,6 +237,10 @@ actual object RealmInterop {
 
     actual fun realm_commit(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_commit(realm.cptr()))
+    }
+
+    actual fun realm_rollback(realm: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_rollback(realm.cptr()))
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {

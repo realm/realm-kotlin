@@ -42,7 +42,7 @@ class RealmConfiguration private constructor(
 
     data class Builder(
         var path: String? = null, // Full path for Realm (directory + name)
-        var name: String = "default", // Optional Realm name (default is 'default')
+        var name: String = "default.realm", // Optional Realm name (default is 'default')
         var schema: Any? = null,
     ) {
         fun path(path: String) = apply { this.path = path }

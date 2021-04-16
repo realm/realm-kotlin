@@ -39,6 +39,7 @@ kotlin {
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
             }
         }
 
@@ -106,6 +107,7 @@ kotlin {
             kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
                 api(project(":cinterop"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2")
             }
         }
 

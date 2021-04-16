@@ -30,6 +30,19 @@ actual object RealmInterop {
         System.loadLibrary("realmc")
     }
 
+    actual fun realm_get_version_id(realm: NativePointer): Pair<ULong, ULong>? {
+        val version = realm_version_id_t()
+        val found = BooleanArray(1)
+        if (!realmc.realm_get_version_id(realm.cptr(), found, version)) {
+            throw RuntimeException("Error occured while fetching version")
+        }
+        return if (found[0]) {
+            Pair(version.version.toULong(), version.index.toULong())
+        } else {
+            null
+        }
+    }
+
     actual fun realm_get_library_version(): String {
         return realmc.realm_get_library_version()
     }
@@ -127,6 +140,10 @@ actual object RealmInterop {
 
     actual fun realm_commit(realm: NativePointer) {
         realmc.realm_commit((realm as LongPointerWrapper).ptr)
+    }
+
+    actual fun realm_rollback(realm: NativePointer) {
+        realmc.realm_rollback(realm.cptr())
     }
 
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
@@ -341,5 +358,9 @@ actual object RealmInterop {
             error("Value is not of type link: $this.type")
         }
         return Link(this.link.target_table, this.link.target)
+    }
+
+    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
     }
 }
