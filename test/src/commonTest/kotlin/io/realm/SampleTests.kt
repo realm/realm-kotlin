@@ -25,38 +25,40 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
+
 class SampleTests {
-//
-//    @RealmModule(Sample::class)
-//    class MySchema
-//
-//    lateinit var tmpDir: String
-//    lateinit var realm: Realm
-//
-//    @BeforeTest
-//    fun setup() {
-//        tmpDir = Utils.createTempDir()
-//        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
-//        realm = Realm(configuration)
-//    }
-//
-//    @AfterTest
-//    fun tearDown() {
-//        realm.close()
-//        Utils.deleteTempDir(tmpDir)
-//    }
-//
-//    @Test
-//    fun createAndUpdate() {
-//        val s = "Hello, World!"
-//
-//        realm.beginTransaction()
-//        val sample = realm.create(Sample::class)
-//        assertEquals("", sample.stringField)
-//        sample.stringField = s
-//        assertEquals(s, sample.stringField)
-//        realm.commitTransaction()
-//    }
+
+    @RealmModule(Sample::class)
+    class MySchema
+
+    lateinit var tmpDir: String
+    lateinit var realm: Realm
+
+    @BeforeTest
+    fun setup() {
+        tmpDir = Utils.createTempDir()
+        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        realm = Realm(configuration)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        realm.close()
+        Utils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun createAndUpdate() = runBlockingTest {
+        val s = "Hello, World!"
+
+        val sample = realm.write {
+            copyToRealm(Sample())
+        }
+
+        assertEquals("", sample.stringField)
+        sample.stringField = s
+        assertEquals(s, sample.stringField)
+    }
 //
 //    @Test
 //    fun updateOutsideTransactionThrows() {

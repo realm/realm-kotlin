@@ -27,8 +27,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 
+@ExperimentalPathApi
 actual object Utils {
-    @ExperimentalPathApi
     actual fun createTempDir(): String {
         return Files.createTempDirectory("android_tests").absolutePathString()
     }
@@ -41,5 +41,6 @@ actual object Utils {
 // See https://github.com/Kotlin/kotlinx.coroutines/issues/1996
 actual val testCoroutineContext: CoroutineContext =
     Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
 actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) =
     runBlocking(testCoroutineContext) { this.block() }

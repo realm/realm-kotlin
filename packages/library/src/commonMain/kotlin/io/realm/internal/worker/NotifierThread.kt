@@ -49,6 +49,8 @@ internal class NotifierThread(private val owner: Realm): JobThread(owner.configu
                 val realm = getOrCreateRealm(configuration)
                 val liveResults = results.thaw(realm)
                 token = liveResults.addChangeListener {
+                    // Realm should already have been updated with the latest version
+                    // So `owner` should as a minimum be at the same version as the notification Realm.
                     offer(liveResults.freeze(owner))
                 }
             }
@@ -66,6 +68,8 @@ internal class NotifierThread(private val owner: Realm): JobThread(owner.configu
                 val realm = getOrCreateRealm(configuration)
                 val liveObject: RealmObject<T> = (obj as RealmModelInternal).thaw(realm)
                 token = Realm.addChangeListener(liveObject as T) {
+                    // Realm should already have been updated with the latest version
+                    // So `owner` should as a minimum be at the same version as the notification Realm.
                     offer((liveObject as RealmModelInternal).freeze(owner) as T)
                 }
             }

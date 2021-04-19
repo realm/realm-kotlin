@@ -50,7 +50,6 @@ class RealmResults<T : RealmObject<T>> : AbstractList<T>, Queryable<T> {
         get() = RealmInterop.realm_results_count(result).toInt()
 
 
-
     private constructor() {
         // FIXME: Figure out exactly how to support in a sane way.
         val dummyPointer = object: NativePointer {  }

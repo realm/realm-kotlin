@@ -18,18 +18,11 @@ package io.realm
 
 import io.realm.util.TestRealmFieldTypes
 import kotlinx.coroutines.runBlocking
-import org.junit.Ignore
 import test.Sample
 import test.link.Child
 import test.link.Parent
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import kotlin.test.*
 
 @ExperimentalPathApi
 class ImportTests {
@@ -84,7 +77,6 @@ class ImportTests {
     }
 
     @Test
-    @Ignore("Find the proper way to freeze and transfer individual objects")
     fun importUnmanagedHierarchy() {
         val v1 = "Hello"
 

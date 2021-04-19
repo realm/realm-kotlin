@@ -61,15 +61,16 @@ fun RealmModelInternal.unmanage() {
     this.`$realm$owner` = null
 }
 
-// Create a frozen copy of this object
-fun <T : RealmObject<T>> RealmModelInternal.freeze(realm: Realm): T {
+// Create a frozen copy of this object. Expected DB pointer is used by writes where we need to freeze
+// the object before the owner Realm is updated, but the pointer it will be updated with is already know.
+fun <T : RealmObject<T>> RealmModelInternal.freeze(realm: Realm, expectedDbPointer: NativePointer? = null): T {
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Schema` as Mediator).newInstance(type)
     return managedModel.manage(
         realm,
         `$realm$Schema` as Mediator,
         type,
-        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, realm.dbPointer!!)
+        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, expectedDbPointer ?: realm.dbPointer!!)
     )
 }
 

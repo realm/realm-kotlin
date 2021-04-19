@@ -62,8 +62,9 @@ kotlin {
         kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
         // @ExperimentalPathApi is only available for JVM, so cannot use the annotation in shared
         // tests, so adding it here.
-        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=kotlin.ExperimentalUnsignedTypes"
+        kotlinOptions.freeCompilerArgs += listOf("-Xopt-in=kotlin.io.path.ExperimentalPathApi", "-Xopt-in=kotlin.ExperimentalUnsignedTypes")
     }
+
 }
 
 // Android configuration

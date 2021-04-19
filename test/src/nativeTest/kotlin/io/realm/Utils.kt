@@ -35,7 +35,8 @@ actual object Utils {
 
 // See https://github.com/Kotlin/kotlinx.coroutines/issues/1996
 actual val testCoroutineContext: CoroutineContext =
-    newSingleThreadContext("testRunner")
+    TODO()
 
-actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) =
-    runBlocking(testCoroutineContext) { this.block() }
+actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) {
+     TODO()
+}

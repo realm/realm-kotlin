@@ -30,6 +30,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
+@ExperimentalPathApi
 class InstrumentedTests {
 
     @RealmModule(Sample::class)
@@ -38,7 +39,6 @@ class InstrumentedTests {
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
-    @ExperimentalPathApi
     @Before
     fun setup() {
         tmpDir = Utils.createTempDir()

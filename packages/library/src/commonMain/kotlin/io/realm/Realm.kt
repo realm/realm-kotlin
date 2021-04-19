@@ -155,7 +155,7 @@ open class Realm(configuration: RealmConfiguration): LiveRealm(configuration) {
                 val newDbPointer = RealmInterop.realm_freeze(writerRealm.dbPointer!!)
                 val newVersion = VersionId.fromRealm(dbPointer!!)
                 if (shouldFreezeWriteReturnValue(result)) {
-                    result = freezeWriteReturnValue(result)
+                    result = freezeWriteReturnValue(result, newDbPointer)
                 }
                 Triple(newDbPointer, newVersion, result)
             }
@@ -171,12 +171,12 @@ open class Realm(configuration: RealmConfiguration): LiveRealm(configuration) {
         }
     }
 
-    private fun <R> freezeWriteReturnValue(result: R): R {
+    private fun <R> freezeWriteReturnValue(result: R, frozenDbPointer: NativePointer): R {
         return when(result) {
             is RealmResults<*> -> result.freeze(this) as R
             is RealmObject<*> -> {
                 val obj: RealmModelInternal = (result as RealmModelInternal)
-                obj.freeze<RealmObject<Any>>(this) as R
+                obj.freeze<RealmObject<Any>>(this, frozenDbPointer) as R
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }
