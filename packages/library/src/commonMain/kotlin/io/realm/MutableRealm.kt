@@ -1,13 +1,9 @@
-package io.realm.internal.worker
+package io.realm
 
-import io.realm.RealmConfiguration
-import io.realm.RealmObject
-import io.realm.RealmResults
 import io.realm.internal.RealmModelInternal
 import io.realm.internal.unmanage
-import io.realm.interop.NativePointer
+import io.realm.internal.worker.LiveRealm
 import io.realm.interop.RealmInterop
-import kotlin.jvm.Volatile
 import kotlin.reflect.KClass
 
 /**
@@ -18,16 +14,12 @@ import kotlin.reflect.KClass
  *
  * Instances of this Realm are only available inside write transactions and migrations.
  */
-class MutableRealm internal constructor(public val configuration: RealmConfiguration) {
+class MutableRealm internal constructor(configuration: RealmConfiguration): LiveRealm(configuration) {
 
-    @Volatile
-    internal var dbPointer: NativePointer?
-    public var version: PublicRealm.VersionId = PublicRealm.VersionId(0.toULong(), 0.toULong())
+    public var version: Realm.VersionId = Realm.VersionId(0.toULong(), 0.toULong())
 
     init {
-        val liveDbPointer = RealmInterop.realm_open(configuration.nativeConfig)
-        dbPointer = liveDbPointer
-        version = PublicRealm.VersionId.fromRealm(liveDbPointer)
+        version = Realm.VersionId.fromRealm(dbPointer!!)
     }
 
     /**
@@ -40,27 +32,27 @@ class MutableRealm internal constructor(public val configuration: RealmConfigura
      * @param instance The object to create a copy from.
      * @return The managed version of the `instance`.
      */
-    fun <T : RealmObject> copyToRealm(obj: T): T {
-        return io.realm.internal.copyToRealm(configuration.schema, dbPointer!!, obj)
+    fun <T : RealmObject<T>> copyToRealm(obj: T): T {
+        return io.realm.internal.copyToRealm(configuration.schema, this, obj)
     }
 
     /**
      * FIXME
      */
-    fun <T : RealmObject> copyToRealm(objects: Collection<T>): List<T> {
+    fun <T : RealmObject<T>> copyToRealm(objects: Collection<T>): List<T> {
         return objects.map { copyToRealm(it) }
     }
 
     // FIXME We should only expose `add/copyToRealm`
-    private fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(configuration.schema, dbPointer!!, type)
+    private fun <T : RealmObject<T>> create(type: KClass<T>): T {
+        return io.realm.internal.create(configuration.schema, this, type)
     }
 
     // Convenience inline method for the above to skip KClass argument
-    private inline fun <reified T : RealmObject> create(): T { return create(T::class) }
+    private inline fun <reified T : RealmObject<T>> create(): T { return create(T::class) }
 
     // FIXME EVALUATE Should this be on RealmModel instead?
-    fun <T : RealmObject> delete(obj: T) {
+    fun <T : RealmObject<T>> delete(obj: T) {
         val internalObject = obj as RealmModelInternal
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
             ?: throw IllegalArgumentException("Cannot delete unmanaged object")
@@ -73,9 +65,9 @@ class MutableRealm internal constructor(public val configuration: RealmConfigura
      * PublicRealm? There is a little bit of overlap, but not sure if it makes sense.
      * We also need to factor in how DynamicRealm and MutableDynamicRealm is going to be exposed
      */
-    fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        return RealmResults(
-            dbPointer!!,
+    fun <T : RealmObject<T>> objects(clazz: KClass<T>): RealmResults<T> {
+        return RealmResults.fromQuery(
+            this,
             @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
             { RealmInterop.realm_query_parse(dbPointer!!, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
@@ -107,7 +99,7 @@ class MutableRealm internal constructor(public val configuration: RealmConfigura
     /**
      * Closes this Realm instance
      */
-    internal fun close() {
+    override fun close() {
         RealmInterop.realm_close(dbPointer!!)
         dbPointer = null
     }

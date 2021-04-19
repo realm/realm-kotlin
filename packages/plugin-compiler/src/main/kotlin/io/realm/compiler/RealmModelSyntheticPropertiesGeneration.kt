@@ -30,6 +30,7 @@ import io.realm.compiler.Names.CLASS_FLAG_NORMAL
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
+import io.realm.compiler.Names.OWNER
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_FLAG_NORMAL
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
@@ -132,6 +133,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             // Should be of type Mediator, but requires RealmModelInternal and Mediator to be in
             // same module
             addVariableProperty(REALM_OBJECT_SCHEMA, pluginContext.irBuiltIns.anyType, ::irNull)
+            addVariableProperty(OWNER, pluginContext.irBuiltIns.anyType, ::irNull)
         }
 
     fun addCompanionFieldsProperty(

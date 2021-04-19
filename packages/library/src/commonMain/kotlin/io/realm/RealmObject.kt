@@ -16,7 +16,10 @@
 
 package io.realm
 
+import io.realm.internal.RealmModelInternal
+import kotlinx.coroutines.flow.Flow
+
 /**
  * Marker interface to define a model (managed by Realm).
  */
-interface RealmObject
+interface RealmObject<T>

@@ -19,6 +19,8 @@ package io.realm
 
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
 
 actual object Utils {
     actual fun createTempDir(): String {
@@ -30,3 +32,10 @@ actual object Utils {
         platform.Foundation.NSFileManager.defaultManager.removeItemAtURL(platform.Foundation.NSURL(fileURLWithPath = path), null)
     }
 }
+
+// See https://github.com/Kotlin/kotlinx.coroutines/issues/1996
+actual val testCoroutineContext: CoroutineContext =
+    newSingleThreadContext("testRunner")
+
+actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) =
+    runBlocking(testCoroutineContext) { this.block() }

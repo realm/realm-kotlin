@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import kotlin.reflect.KClass
+
 /**
  * This interface is added by the compiler plugin to all [RealmObject] classes, it contains
  * internal properties of the model.
@@ -25,6 +27,7 @@ package io.realm.interop
 @Suppress("VariableNaming")
 // FIXME Should we rename to RealmInteropObject
 interface RealmModelInternal {
+
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
     var `$realm$Pointer`: NativePointer?
     var `$realm$ObjectPointer`: NativePointer?
@@ -33,4 +36,6 @@ interface RealmModelInternal {
     // FIXME Should be Mediator but requires RealmModelInternal and Mediator to be in same module.
     //  Remember to fix type for compiler generated field.
     var `$realm$Schema`: Any?
+    // FIXME Should be LiveRealm
+    var `$realm$owner`: Any?
 }

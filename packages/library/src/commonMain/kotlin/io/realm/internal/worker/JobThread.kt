@@ -13,7 +13,7 @@ import kotlinx.coroutines.cancel
  */
 abstract class JobThread(val configuration: RealmConfiguration) {
 
-    private val jobThread = getTaskThread(configuration)
+    protected val jobThread = getTaskThread(configuration)
     private var started: Boolean = false
     val dispatcher = jobThread.dispatcher
 

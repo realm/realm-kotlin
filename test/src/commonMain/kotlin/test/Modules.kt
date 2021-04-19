@@ -3,11 +3,11 @@ package test
 import io.realm.RealmModule
 import io.realm.RealmObject
 
-class A : RealmObject
+class A : RealmObject<A>
 
-class B : RealmObject
+class B : RealmObject<A>
 
-class C : RealmObject
+class C : RealmObject<A>
 
 @RealmModule
 class Entities

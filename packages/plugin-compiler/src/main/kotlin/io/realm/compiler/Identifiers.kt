@@ -34,6 +34,7 @@ internal object Names {
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
     val REALM_OBJECT_SCHEMA = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Schema")
+    val OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}owner")
 
     // RealmMediator methods
     val REALM_MEDIATOR_MAPPING_PROPERTY = Name.identifier("companionMapping")

@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import io.realm.interop.RealmInterop.cptr
+
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
@@ -362,5 +364,21 @@ actual object RealmInterop {
 
     actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
+    }
+
+    actual fun realm_results_freeze(live_results: NativePointer, frozen_realm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_freeze(live_results.cptr(), frozen_realm.cptr()))
+    }
+
+    actual fun realm_results_thaw(frozen_results: NativePointer, live_realm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_freeze(frozen_results.cptr(), live_realm.cptr()))
+    }
+
+    actual fun realm_object_freeze(live_object: NativePointer, frozen_realm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_freeze(live_object.cptr(), frozen_realm.cptr()))
+    }
+
+    actual fun realm_object_thaw(frozen_object: NativePointer, live_realm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_thaw(frozen_object.cptr(), live_realm.cptr()))
     }
 }

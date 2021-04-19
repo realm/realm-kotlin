@@ -484,6 +484,14 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_results_freeze(live_results: NativePointer, frozen_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_freeze(live_results.cptr(), frozen_realm.cptr()))
+    }
+
+    actual fun realm_results_thaw(frozen_results: NativePointer, live_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_thaw(frozen_results.cptr(), live_realm.cptr()))
+    }
+
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()
@@ -523,4 +531,13 @@ actual object RealmInterop {
         }
         return Link(this.link.target_table.toLong(), this.link.target)
     }
+
+    actual fun realm_object_freeze(live_object: NativePointer, frozen_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_freeze(live_object.cptr(), frozen_realm.cptr()))
+    }
+
+    actual fun realm_object_thaw(frozen_object: NativePointer, live_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozen_object.cptr(), live_realm.cptr()))
+    }
+
 }

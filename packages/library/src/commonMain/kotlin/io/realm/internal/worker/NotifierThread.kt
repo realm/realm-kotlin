@@ -1,8 +1,15 @@
 package io.realm.internal.worker
 
-import io.realm.Realm
-import io.realm.RealmConfiguration
+import io.realm.*
+import io.realm.internal.RealmModelInternal
+import io.realm.internal.freeze
+import io.realm.internal.thaw
 import io.realm.interop.NativePointer
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Class responsible for controlling notifications for a Realm.
@@ -23,6 +30,55 @@ import io.realm.interop.NativePointer
  *    will freeze the result and send it through the callback
  */
 
-class NotifierThread(configuration: RealmConfiguration): JobThread(configuration) {
-    val realm = Realm.open(configuration) // TODO: Figure out type hierachy to support a public Realm, a MutableRealm and a NotifierRealm
+@ExperimentalCoroutinesApi
+internal class NotifierThread(private val owner: Realm): JobThread(owner.configuration) {
+    var realm: LiveRealm? = null // TODO: Figure out type hierachy to support a public Realm, a MutableRealm and a NotifierRealm
+    // TODO All notifications should be scoped by the user Realm instance. Need to figure out how to do this.
+    val jobScope = CoroutineScope(SupervisorJob() + jobThread.dispatcher)
+
+    fun realmChanged(): Flow<Pair<NativePointer, Realm.VersionId>> {
+        // FIXME: Waiting for RealmInterop to have support for global Realm changed listeners
+        return flowOf<Pair<NativePointer, Realm.VersionId>>()
+    }
+
+    // Listen to changes to a RealmResults
+    fun <T : RealmObject<T>> resultsChanged(results: RealmResults<T>): Flow<RealmResults<T>> {
+        return callbackFlow {
+            var token: Cancellable
+            withContext(jobThread.dispatcher) {
+                val realm = getOrCreateRealm(configuration)
+                val liveResults = results.thaw(realm)
+                token = liveResults.addChangeListener {
+                    offer(liveResults.freeze(owner))
+                }
+            }
+            awaitClose {
+                token.cancel()
+            }
+        }
+    }
+
+    // Listen to changes to a RealmObject
+    fun <T : RealmObject<T>> objectChanged(obj: T): Flow<T> {
+        return callbackFlow {
+            var token: Cancellable
+            withContext(jobThread.dispatcher) {
+                val realm = getOrCreateRealm(configuration)
+                val liveObject: RealmObject<T> = (obj as RealmModelInternal).thaw(realm)
+                token = Realm.addChangeListener(liveObject as T) {
+                    offer((liveObject as RealmModelInternal).freeze(owner) as T)
+                }
+            }
+            awaitClose {
+                token.cancel()
+            }
+        }
+    }
+
+    private fun getOrCreateRealm(configuration: RealmConfiguration): LiveRealm {
+        if (realm == null) {
+            realm = LiveRealm(configuration)
+        }
+        return realm!!
+    }
 }

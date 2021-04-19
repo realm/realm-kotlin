@@ -40,163 +40,163 @@ private const val SECOND = "SECOND"
 //  https://youtrack.jetbrains.com/issue/KT-34535
 @OptIn(ExperimentalTime::class)
 class NotificationTests {
-
-    @RealmModule(Sample::class)
-    class MySchema
-
-    lateinit var tmpDir: String
-    lateinit var configuration: RealmConfiguration
-
-    @BeforeTest
-    fun setup() {
-        tmpDir = Utils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
-    }
-
-    @AfterTest
-    fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
-    }
-
-    @Test
-    fun objectListener() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        assertEquals(INITIAL, sample.stringField)
-
-        sample.observe {
-            val stringField = sample.stringField
-            launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-            realm.close()
-            terminate()
-        }
-    }
-
-    @Test
-    fun objectListener_cancel() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        assertEquals(INITIAL, sample.stringField)
-
-        val token = sample.observe {
-            val stringField = sample.stringField
-            launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-
-            token.cancel()
-
-            realm.beginTransaction()
-            sample.stringField = SECOND
-            realm.commitTransaction()
-
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
-
-            realm.close()
-            terminate()
-        }
-    }
-
-    @Test
-    fun resultsListener() = RunLoopThread().run {
-        val c = Channel<List<Sample>>(1)
-
-        val realm = Realm.open(configuration)
-
-        val results = realm.objects(Sample::class)
-
-        assertEquals(0, results.size)
-
-        val token = results.observe {
-            val updatedResults = results.toList()
-            this@run.launch { c.send(updatedResults) }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(0, c.receive().size)
-            val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-            realm.commitTransaction()
-
-            val result = c.receive()
-            assertEquals(1, result.size)
-            assertEquals(sample.stringField, result[0].stringField)
-
-            token.cancel()
-
-            realm.beginTransaction()
-            realm.create(Sample::class).apply { stringField = INITIAL }
-            realm.commitTransaction()
-
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
-
-            realm.close()
-            terminate()
-        }
-    }
-
-    @Test
-    fun closeWithoutCancel() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        assertEquals(INITIAL, sample.stringField)
-
-        val token = Realm.observe(sample) {
-            val stringField = sample.stringField
-            this@run.launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-            // Verify that closing does not cause troubles even though notifications are not
-            // cancelled.
-            // NOTE Listener is not released either, so leaking the callbacks.
-            realm.close()
-            // Yield to allow any pending notifications to be triggered
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
-            terminate()
-        }
-    }
+//
+//    @RealmModule(Sample::class)
+//    class MySchema
+//
+//    lateinit var tmpDir: String
+//    lateinit var configuration: RealmConfiguration
+//
+//    @BeforeTest
+//    fun setup() {
+//        tmpDir = Utils.createTempDir()
+//        configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+//    }
+//
+//    @AfterTest
+//    fun tearDown() {
+//        Utils.deleteTempDir(tmpDir)
+//    }
+//
+//    @Test
+//    fun objectListener() = RunLoopThread().run {
+//        val c = Channel<String>(1)
+//
+//        val realm = Realm.open(configuration)
+//        realm.beginTransaction()
+//        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
+//        realm.commitTransaction()
+//
+//        assertEquals(INITIAL, sample.stringField)
+//
+//        sample.observe {
+//            val stringField = sample.stringField
+//            launch {
+//                c.send(stringField)
+//            }
+//        }
+//
+//        launch {
+//            realm.beginTransaction()
+//            assertEquals(INITIAL, c.receive())
+//            sample.stringField = FIRST
+//            realm.commitTransaction()
+//            assertEquals(FIRST, c.receive())
+//            realm.close()
+//            terminate()
+//        }
+//    }
+//
+//    @Test
+//    fun objectListener_cancel() = RunLoopThread().run {
+//        val c = Channel<String>(1)
+//
+//        val realm = Realm.open(configuration)
+//        realm.beginTransaction()
+//        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
+//        realm.commitTransaction()
+//
+//        assertEquals(INITIAL, sample.stringField)
+//
+//        val token = sample.observe {
+//            val stringField = sample.stringField
+//            launch {
+//                c.send(stringField)
+//            }
+//        }
+//
+//        launch {
+//            realm.beginTransaction()
+//            assertEquals(INITIAL, c.receive())
+//            sample.stringField = FIRST
+//            realm.commitTransaction()
+//            assertEquals(FIRST, c.receive())
+//
+//            token.cancel()
+//
+//            realm.beginTransaction()
+//            sample.stringField = SECOND
+//            realm.commitTransaction()
+//
+//            delay(1.seconds)
+//            assertTrue(c.isEmpty)
+//
+//            realm.close()
+//            terminate()
+//        }
+//    }
+//
+//    @Test
+//    fun resultsListener() = RunLoopThread().run {
+//        val c = Channel<List<Sample>>(1)
+//
+//        val realm = Realm.open(configuration)
+//
+//        val results = realm.objects(Sample::class)
+//
+//        assertEquals(0, results.size)
+//
+//        val token = results.observe {
+//            val updatedResults = results.toList()
+//            this@run.launch { c.send(updatedResults) }
+//        }
+//
+//        launch {
+//            realm.beginTransaction()
+//            assertEquals(0, c.receive().size)
+//            val sample = realm.create(Sample::class).apply { stringField = INITIAL }
+//            realm.commitTransaction()
+//
+//            val result = c.receive()
+//            assertEquals(1, result.size)
+//            assertEquals(sample.stringField, result[0].stringField)
+//
+//            token.cancel()
+//
+//            realm.beginTransaction()
+//            realm.create(Sample::class).apply { stringField = INITIAL }
+//            realm.commitTransaction()
+//
+//            delay(1.seconds)
+//            assertTrue(c.isEmpty)
+//
+//            realm.close()
+//            terminate()
+//        }
+//    }
+//
+//    @Test
+//    fun closeWithoutCancel() = RunLoopThread().run {
+//        val c = Channel<String>(1)
+//
+//        val realm = Realm.open(configuration)
+//        realm.beginTransaction()
+//        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
+//        realm.commitTransaction()
+//
+//        assertEquals(INITIAL, sample.stringField)
+//
+//        val token = Realm.observe(sample) {
+//            val stringField = sample.stringField
+//            this@run.launch {
+//                c.send(stringField)
+//            }
+//        }
+//
+//        launch {
+//            realm.beginTransaction()
+//            assertEquals(INITIAL, c.receive())
+//            sample.stringField = FIRST
+//            realm.commitTransaction()
+//            assertEquals(FIRST, c.receive())
+//            // Verify that closing does not cause troubles even though notifications are not
+//            // cancelled.
+//            // NOTE Listener is not released either, so leaking the callbacks.
+//            realm.close()
+//            // Yield to allow any pending notifications to be triggered
+//            delay(1.seconds)
+//            assertTrue(c.isEmpty)
+//            terminate()
+//        }
+//    }
 }

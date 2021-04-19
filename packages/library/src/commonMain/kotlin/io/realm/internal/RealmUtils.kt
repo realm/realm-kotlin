@@ -17,13 +17,14 @@
 package io.realm.internal
 
 import io.realm.RealmObject
+import io.realm.internal.worker.LiveRealm
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClass<T>): T {
+fun <T : RealmObject<T>> create(schema: Mediator, realm: LiveRealm, type: KClass<T>): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
     //  some runtime container of an open realm.
@@ -32,12 +33,12 @@ fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClas
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
         val managedModel = schema.newInstance(type)
-        val key = RealmInterop.realm_find_class(realm, objectType)
+        val key = RealmInterop.realm_find_class(realm.dbPointer!!, objectType)
         return managedModel.manage(
             realm,
             schema,
             type,
-            RealmInterop.realm_object_create(realm, key)
+            RealmInterop.realm_object_create(realm.dbPointer!!, key)
         )
     } catch (e: RuntimeException) {
         // FIXME Throw proper exception
@@ -47,7 +48,7 @@ fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClas
     }
 }
 
-fun <T : RealmObject> copyToRealm(schema: Mediator, realm: NativePointer, instance: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
+fun <T : RealmObject<T>> copyToRealm(schema: Mediator, realm: LiveRealm, instance: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
     // Copying already managed instance is an no-op
     if ((instance as RealmModelInternal).`$realm$IsManaged`) return instance
 
@@ -60,7 +61,7 @@ fun <T : RealmObject> copyToRealm(schema: Mediator, realm: NativePointer, instan
     for (member: KMutableProperty1<T, Any?> in members) {
         val targetValue = member.get(instance).let { sourceObject ->
             if (sourceObject is RealmModelInternal && !sourceObject.`$realm$IsManaged`) {
-                cache.getOrPut(sourceObject) { copyToRealm(schema, realm, sourceObject, cache) }
+                cache.getOrPut(sourceObject) { copyToRealm(schema, realm, sourceObject as T, cache) as RealmModelInternal }
             } else {
                 sourceObject
             }

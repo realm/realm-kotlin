@@ -25,4 +25,6 @@ import io.realm.RealmObject
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
-interface RealmModelInternal : RealmObject, io.realm.interop.RealmModelInternal
+
+// FIXME: Adding RealmObject<T> seems to slip into all parts of the API. Any way to make this simpler or accept
+interface RealmModelInternal : RealmObject<Any>, io.realm.interop.RealmModelInternal

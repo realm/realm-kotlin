@@ -1,10 +1,7 @@
 package io.realm.internal.worker
 
+import io.realm.MutableRealm
 import io.realm.RealmConfiguration
-import io.realm.interop.NativePointer
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.launch
 
 /**
  * Class responsible for writes to a Realm.
@@ -30,7 +27,7 @@ data class Error(val exception: Exception): WriteResult()
 
 // TODO: Technically we don't need a Looper Thread for a writer Realm. Any Thread will do
 //  as we don't support notifications inside writes anyway.
-class WriterThread(configuration: RealmConfiguration): JobThread(configuration) {
+internal class WriterThread(configuration: RealmConfiguration): JobThread(configuration) {
     var realm: MutableRealm? = null
 
     // Should only be called from within the JobThread itself to make sure the Realm is created
@@ -44,6 +41,7 @@ class WriterThread(configuration: RealmConfiguration): JobThread(configuration) 
 
     override fun close() {
         super.close()
+        // TODO: This is probably dangerous unless we are 100% sure no tasks on the thread is being run
         realm?.close()
     }
 }

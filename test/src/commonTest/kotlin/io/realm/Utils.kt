@@ -17,7 +17,14 @@
 
 package io.realm
 
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
+
 expect object Utils {
     fun createTempDir(): String
     fun deleteTempDir(path: String)
 }
+
+//See https://github.com/Kotlin/kotlinx.coroutines/issues/1996
+expect fun runBlockingTest(block: suspend CoroutineScope.()-> Unit)
+expect val testCoroutineContext: CoroutineContext

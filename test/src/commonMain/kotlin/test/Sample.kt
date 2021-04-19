@@ -19,7 +19,7 @@ package test
 
 import io.realm.RealmObject
 
-class Sample : RealmObject {
+class Sample : RealmObject<Sample> {
     var stringField: String = "Realm"
     var byteField: Byte = 0xA
     var charField: Char = 'a'

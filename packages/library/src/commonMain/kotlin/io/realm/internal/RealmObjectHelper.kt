@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.RealmObject
+import io.realm.internal.worker.LiveRealm
 import io.realm.interop.Link
 import io.realm.interop.RealmInterop
 
@@ -40,7 +41,7 @@ object RealmObjectHelper {
 
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmObject> getObject(
+    inline fun <reified R : RealmObject<R>> getObject(
         obj: RealmModelInternal,
         col: String,
     ): Any? {
@@ -52,7 +53,7 @@ object RealmObjectHelper {
             val value =
                 (obj.`$realm$Schema` as Mediator).newInstance(R::class) as RealmModelInternal
             return value.link(
-                obj.`$realm$Pointer`!!,
+                obj.`$realm$owner` as LiveRealm,
                 obj.`$realm$Schema` as Mediator,
                 R::class,
                 link
@@ -76,14 +77,16 @@ object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmModelInternal> setObject(
+    inline fun <reified R : RealmObject<R>> setObject(
         obj: RealmModelInternal,
         col: String,
         value: R?
     ) {
-        val newValue = if (!(value?.`$realm$IsManaged` ?: true)) {
-            copyToRealm(obj.`$realm$Schema` as Mediator, obj.`$realm$Pointer`!!, value!!)
-        } else value
+        val newValue = if (!((value as RealmModelInternal)?.`$realm$IsManaged` ?: true)) {
+             copyToRealm(obj.`$realm$Schema` as Mediator, obj.`$realm$owner` as LiveRealm, value!! as R)
+        } else {
+            value
+        }
         setValue(obj, col, newValue)
     }
 }

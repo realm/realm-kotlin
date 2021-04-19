@@ -17,8 +17,13 @@
 
 package io.realm
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.Executors
+import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 
@@ -32,3 +37,9 @@ actual object Utils {
         File(path).deleteRecursively()
     }
 }
+
+// See https://github.com/Kotlin/kotlinx.coroutines/issues/1996
+actual val testCoroutineContext: CoroutineContext =
+    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) =
+    runBlocking(testCoroutineContext) { this.block() }

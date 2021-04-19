@@ -25,50 +25,50 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class LinkTests {
-
-    @RealmModule(Parent::class, Child::class)
-    class MySchema
-
-    lateinit var tmpDir: String
-    lateinit var realm: Realm
-
-    @BeforeTest
-    fun setup() {
-        tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
-        realm = Realm.open(configuration)
-    }
-
-    @AfterTest
-    fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
-    }
-
-    @Test
-    fun basics() {
-        val name = "Realm"
-        realm.beginTransaction()
-        val parent = realm.create(Parent::class)
-        val child = realm.create(Child::class)
-        child.name = name
-
-        assertNull(parent.child)
-        parent.child = child
-        assertNotNull(parent.child)
-
-        realm.commitTransaction()
-
-        assertEquals(1, realm.objects(Parent::class).size)
-
-        val child1 = realm.objects(Parent::class)[0].child
-        assertEquals(name, child1?.name)
-
-        realm.beginTransaction()
-        assertNotNull(parent.child)
-        parent.child = null
-        assertNull(parent.child)
-        realm.commitTransaction()
-
-        assertNull(realm.objects(Parent::class)[0].child)
-    }
+//
+//    @RealmModule(Parent::class, Child::class)
+//    class MySchema
+//
+//    lateinit var tmpDir: String
+//    lateinit var realm: Realm
+//
+//    @BeforeTest
+//    fun setup() {
+//        tmpDir = Utils.createTempDir()
+//        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+//        realm = Realm.open(configuration)
+//    }
+//
+//    @AfterTest
+//    fun tearDown() {
+//        Utils.deleteTempDir(tmpDir)
+//    }
+//
+//    @Test
+//    fun basics() {
+//        val name = "Realm"
+//        realm.beginTransaction()
+//        val parent = realm.create(Parent::class)
+//        val child = realm.create(Child::class)
+//        child.name = name
+//
+//        assertNull(parent.child)
+//        parent.child = child
+//        assertNotNull(parent.child)
+//
+//        realm.commitTransaction()
+//
+//        assertEquals(1, realm.objects(Parent::class).size)
+//
+//        val child1 = realm.objects(Parent::class)[0].child
+//        assertEquals(name, child1?.name)
+//
+//        realm.beginTransaction()
+//        assertNotNull(parent.child)
+//        parent.child = null
+//        assertNull(parent.child)
+//        realm.commitTransaction()
+//
+//        assertNull(realm.objects(Parent::class)[0].child)
+//    }
 }

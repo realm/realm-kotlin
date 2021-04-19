@@ -24,52 +24,52 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class NullabilityTests {
-
-    @RealmModule(Nullability::class)
-    class MySchema
-
-    lateinit var tmpDir: String
-    lateinit var realm: Realm
-
-    @BeforeTest
-    fun setup() {
-        tmpDir = Utils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
-        realm = Realm.open(configuration)
-    }
-
-    @AfterTest
-    fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
-    }
-
-    @Test
-    fun nullability() {
-        realm.beginTransaction()
-        val nullability = realm.create(Nullability::class)
-        assertNull(nullability.stringNullable)
-        // TODO We cannot verify this before implementing support for default values
-        //  https://github.com/realm/realm-kotlin/issues/106
-        // assertNonNull(nullability.stringNonNullable)
-
-        nullability.stringNullable = "Realm"
-        assertNotNull(nullability.stringNullable)
-        nullability.stringNullable = null
-        assertNull(nullability.stringNullable)
-
-        // Should we try to verify that compiler will break on this
-        // nullability.stringNonNullable = null
-        // We could assert that the C-API fails by internals API with
-        // io.realm.internal.RealmObjectHelper.realm_set_value(nullability as RealmModelInternal, Nullability::stringNonNullable, null)
-        // but that would require
-        // implementation("io.realm.kotlin:cinterop:${Realm.version}")
-        //  https://github.com/realm/realm-kotlin/issues/134
-
-        nullability.stringNonNullable = "Realm"
-        realm.commitTransaction()
-
-        val nullabilityAfter = realm.objects(Nullability::class)[0]
-        assertNull(nullabilityAfter.stringNullable)
-        assertNotNull(nullabilityAfter.stringNonNullable)
-    }
+//
+//    @RealmModule(Nullability::class)
+//    class MySchema
+//
+//    lateinit var tmpDir: String
+//    lateinit var realm: Realm
+//
+//    @BeforeTest
+//    fun setup() {
+//        tmpDir = Utils.createTempDir()
+//        val configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+//        realm = Realm.open(configuration)
+//    }
+//
+//    @AfterTest
+//    fun tearDown() {
+//        Utils.deleteTempDir(tmpDir)
+//    }
+//
+//    @Test
+//    fun nullability() {
+//        realm.beginTransaction()
+//        val nullability = realm.create(Nullability::class)
+//        assertNull(nullability.stringNullable)
+//        // TODO We cannot verify this before implementing support for default values
+//        //  https://github.com/realm/realm-kotlin/issues/106
+//        // assertNonNull(nullability.stringNonNullable)
+//
+//        nullability.stringNullable = "Realm"
+//        assertNotNull(nullability.stringNullable)
+//        nullability.stringNullable = null
+//        assertNull(nullability.stringNullable)
+//
+//        // Should we try to verify that compiler will break on this
+//        // nullability.stringNonNullable = null
+//        // We could assert that the C-API fails by internals API with
+//        // io.realm.internal.RealmObjectHelper.realm_set_value(nullability as RealmModelInternal, Nullability::stringNonNullable, null)
+//        // but that would require
+//        // implementation("io.realm.kotlin:cinterop:${Realm.version}")
+//        //  https://github.com/realm/realm-kotlin/issues/134
+//
+//        nullability.stringNonNullable = "Realm"
+//        realm.commitTransaction()
+//
+//        val nullabilityAfter = realm.objects(Nullability::class)[0]
+//        assertNull(nullabilityAfter.stringNullable)
+//        assertNotNull(nullabilityAfter.stringNonNullable)
+//    }
 }

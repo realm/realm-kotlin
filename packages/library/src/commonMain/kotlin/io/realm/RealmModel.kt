@@ -16,14 +16,23 @@
 
 package io.realm
 
+import io.realm.internal.RealmModelInternal
+import kotlinx.coroutines.flow.Flow
+
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83
 
-fun RealmObject.delete() {
-    Realm.delete(this)
+fun <T: RealmObject<T>> RealmObject<T>.delete() {
+    Realm.delete(this as T)
 }
 
-fun RealmObject.observe(objectChangeListener: Callback): Cancellable {
-    return Realm.observe(this, objectChangeListener)
+fun <T: RealmObject<T>> RealmObject<T>.addChangeListener(objectChangeListener: Callback): Cancellable {
+    return Realm.addChangeListener(this as T, objectChangeListener)
+}
+
+fun <T: RealmObject<T>> RealmObject<T>.observe(): Flow<T> {
+    val thiz = (this as RealmModelInternal)
+    val owner = this.`$realm$owner` as Realm
+    return owner.notifierThread.objectChanged(this as T)
 }

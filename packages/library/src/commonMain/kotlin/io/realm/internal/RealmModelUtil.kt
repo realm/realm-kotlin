@@ -16,7 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.Realm
 import io.realm.RealmObject
+import io.realm.internal.worker.LiveRealm
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -24,9 +26,10 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmModelInternal.manage(realm: NativePointer, schema: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmObject<T>> RealmModelInternal.manage(realm: LiveRealm, schema: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
-    this.`$realm$Pointer` = realm
+    this.`$realm$owner` = realm
+    this.`$realm$Pointer` = realm.dbPointer
     this.`$realm$TableName` = type.simpleName
     this.`$realm$ObjectPointer` = objectPointer
     // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
@@ -36,12 +39,13 @@ fun <T : RealmObject> RealmModelInternal.manage(realm: NativePointer, schema: Me
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmModelInternal.link(realm: NativePointer, schema: Mediator, type: KClass<T>, link: Link): T {
+fun <T : RealmObject<T>> RealmModelInternal.link(realm: LiveRealm, schema: Mediator, type: KClass<T>, link: Link): T {
     this.`$realm$IsManaged` = true
-    this.`$realm$Pointer` = realm
+    this.`$realm$owner` = realm
+    this.`$realm$Pointer` = realm.dbPointer
     this.`$realm$TableName` = type.simpleName
     // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
-    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm, link)
+    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer!!, link)
     this.`$realm$Schema` = schema
     return this as T
 }
@@ -54,4 +58,32 @@ fun RealmModelInternal.unmanage() {
     this.`$realm$IsManaged` = true
     this.`$realm$ObjectPointer` = null
     this.`$realm$Pointer` = null
+    this.`$realm$owner` = null
 }
+
+// Create a frozen copy of this object
+fun <T : RealmObject<T>> RealmModelInternal.freeze(realm: Realm): T {
+    val type: KClass<T> = this::class as KClass<T>
+    val managedModel = (`$realm$Schema` as Mediator).newInstance(type)
+    return managedModel.manage(
+        realm,
+        `$realm$Schema` as Mediator,
+        type,
+        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, realm.dbPointer!!)
+    )
+}
+
+// Create a live copy of a frozen object
+fun <T : RealmObject<T>> RealmModelInternal.thaw(realm: LiveRealm): T {
+    val type: KClass<T> = this::class as KClass<T>
+    val managedModel = (`$realm$Schema` as Mediator).newInstance(type)
+    return managedModel.manage(
+        realm,
+        `$realm$Schema` as Mediator,
+        type,
+        RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, realm.dbPointer!!)
+    )
+}
+
+
+

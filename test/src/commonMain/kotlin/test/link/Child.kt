@@ -18,6 +18,6 @@ package test.link
 
 import io.realm.RealmObject
 
-class Child : RealmObject {
+class Child : RealmObject<Child> {
     var name: String = "DEFAULT"
 }
