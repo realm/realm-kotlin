@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.PrimaryKey
 import io.realm.RealmObject
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -51,7 +50,7 @@ fun <T : RealmObject> create(mediator: Mediator, realmPointer: NativePointer, ty
 }
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClass<T>, primaryKey: Any?): T {
+fun <T : RealmObject> create(mediator: Mediator, realm: NativePointer, type: KClass<T>, primaryKey: Any?): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
     //  some runtime container of an open realm.
@@ -59,11 +58,11 @@ fun <T : RealmObject> create(schema: Mediator, realm: NativePointer, type: KClas
     //  https://github.com/realm/realm-kotlin/issues/105
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
-        val managedModel = schema.newInstance(type)
+        val managedModel = mediator.createInstanceOf(type)
         val key = RealmInterop.realm_find_class(realm, objectType)
         return managedModel.manage(
             realm,
-            schema,
+            mediator,
             type,
             RealmInterop.realm_object_create_with_primary_key(realm, key, RealmValue(primaryKey))
         )
@@ -79,10 +78,11 @@ fun <T : RealmObject> copyToRealm(mediator: Mediator, realmPointer: NativePointe
     // Copying already managed instance is an no-op
     if ((instance as RealmModelInternal).`$realm$IsManaged`) return instance
 
-    val members = mediator.companionOf(instance::class).`$realm$fields` as List<KMutableProperty1<T, Any?>>
+    val companion = mediator.companionOf(instance::class)
+    val members = companion.`$realm$fields` as List<KMutableProperty1<T, Any?>>
 
-    val target = realmObjectCompanion.`$realm$primaryKey`?.let { primaryKey ->
-        create(schema, realm, instance::class, (primaryKey as KProperty1<T, Any?>).get(instance))
+    val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+        create(mediator, realmPointer, instance::class, (primaryKey as KProperty1<T, Any?>).get(instance))
     } ?: create(mediator, realmPointer, instance::class)
     cache[instance] = target as RealmModelInternal
     // TODO OPTIMIZE We could set all properties at once with on C-API call

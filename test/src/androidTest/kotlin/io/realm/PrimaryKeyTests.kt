@@ -28,9 +28,6 @@ private val primaryKey = "PRIMARY_KEY"
 
 class PrimaryKeyTests {
 
-    @RealmModule(PrimaryKeyString::class, PrimaryKeyStringNullable::class, NoPrimaryKey::class)
-    class MySchema
-
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
@@ -38,7 +35,13 @@ class PrimaryKeyTests {
     fun setup() {
         tmpDir = Utils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+            RealmConfiguration.Builder(path = "$tmpDir/default.realm")
+                .schema(
+                    PrimaryKeyString::class,
+                    PrimaryKeyStringNullable::class,
+                    NoPrimaryKey::class
+                )
+                .build()
         realm = Realm.open(configuration)
     }
 

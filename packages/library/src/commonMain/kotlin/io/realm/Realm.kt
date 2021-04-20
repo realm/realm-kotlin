@@ -104,7 +104,7 @@ class Realm {
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
 
     fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
-        return io.realm.internal.create(realmConfiguration.schema, dbPointer!!, type, primaryKey)
+        return io.realm.internal.create(realmConfiguration.mediator, dbPointer!!, type, primaryKey)
     }
 
     /**
