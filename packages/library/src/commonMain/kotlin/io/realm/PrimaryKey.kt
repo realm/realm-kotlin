@@ -18,6 +18,7 @@ package io.realm
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
+@MustBeDocumented
 annotation class PrimaryKey()
 
 

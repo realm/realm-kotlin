@@ -97,7 +97,7 @@ val allElementTypes = elementTypes(allElementClassifiers, setOf(true, false))
 val allSingularTypes = allElementTypes.map { RType(CollectionType.RLM_COLLECTION_TYPE_NONE, it) }
 val allListTypes = allElementTypes.filter { it.realmFieldType.listSupport }.map { RType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
 // TODO Set
-// TODO Dick
+// TODO Dict
 val allTypes = allSingularTypes + allListTypes
 
 val allPrimaryKeyTypes = allTypes.filter { it.isPrimaryKeySupported }
