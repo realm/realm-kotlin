@@ -126,6 +126,8 @@ class Realm {
             realmConfiguration.mediator
         )
     }
+    // Convenience inline method for the above to skip KClass argument
+    inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
