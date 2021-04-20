@@ -1,57 +1,157 @@
-![Realm](logo.png)
+![Realm](./images/logo.png)
 
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
-# Quick Startup Video
+# Quick Startup
 
-[![](http://img.youtube.com/vi/m7lkLu2TE8c/0.jpg)](http://www.youtube.com/watch?v=m7lkLu2TE8c "Realm Kotlin Multiplatform Quick Start")
+## Prerequisite
 
-### Define your model
+Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) project. 
+
+## Setup
+
+- Add the following Gradle configuration in the *shared* module
+`shared/build.gradle.kts`
+```Gradle
+buildscript {
+    repositories {
+        maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+    }
+    dependencies {
+        classpath("io.realm.kotlin:gradle-plugin:0.0.1-SNAPSHOT")
+    }
+}
+apply(plugin = "realm-kotlin")
+```
+
+Specify also the dependency in the common source set
+*See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.*
+
+```Gradle
+repositories {
+    maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+}
+
+kotlin {
+  sourceSets {
+      val commonMain by getting {
+          dependencies {
+              implementation("io.realm.kotlin:library:0.0.1-SNAPSHOT")
+          }
+      }
+}
+```
+
+![Gradle Configuration](./images/Gradle_Conf.png)
+
+- If you're using a version of Kotlin less than 1.5, enable the usage of the new IR backend for the Android project as follow
+`androidApp/build.gradle.kts`
+```Gradle
+android {
+  kotlinOptions {
+    useIR = true
+    jvmTarget = "1.8"
+  }
+}
+```
+// screenshot to emphasis
+
+## Define model
+
+Start writing your shared database logic in the shared module by defining first your model
 
 ```Kotlin
-@RealmObject
-class Person : RealmModel {
+class Person : RealmObject {
+    var name: String = "Foo"
+    var dog: Dog? = null
+}
+
+class Dog : RealmObject {
     var name: String = ""
     var age: Int = 0
 }
 ```
-Other primitive types are supported: `Char`, `Byte`, `Short`, `Long`, `Boolean`, `Float`, `Double`
 
-### Define your schema and open a Realm
+## Open Database
+
+Define a _RealmConfiguration_ with the database schema, then open the Realm using it.
+
 ```Kotlin
-@RealmModule(Person::class)
-class MySchema
-
-val configuration = RealmConfiguration.Builder(schema = MySchema()).build()
-var realm: Realm = Realm.open(configuration)
+val configuration = RealmConfiguration(schema = setOf(Person::class, Dog::class))
 ```
 
-### Write Transaction 
 ```Kotlin
-realm.beginTransaction()
-// create a new persisted instance
-val person = realm.create(Person::class).apply {
-        name = "Foo"
-        age = 42
+val realm = Realm.open(configuration)
+```
+
+
+## Write
+
+Persist some data by instantiating the data objects and copying it into the open Realm instance
+
+```Kotlin
+// plain old kotlin object
+val person = Person().apply {
+    name = "Carlo"
+    dog = Dog().apply { name = "Fido"; age = 16 }
 }
+
+// persist it in a transaction
+realm.beginTransaction()
+val managedPerson = realm.copyToRealm(person)
+realm.commitTransaction()
+
+// alternatively we can use
+realm.beginTransaction()
+realm.create<Person>().apply {
+            name = "Bar"
+            dog = Dog().apply { name = "Filo"; age = 11 }
+        }
 realm.commitTransaction()
 ```
 
-### Query
-- Querying all objects of a certain type.
+## Query
+
+The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries)
 
 ```Kotlin
-val objects: RealmResults<Person> = realm.objects(Person::class)
+// All Persons
+val all = realm.objects<Person>()
+
+// Person named 'Carlo'
+val filteredByName = realm.objects<Person>().query("name = $0", "Carlo")
+
+// Person having a dog aged more than 7 with a name starting with 'Fi'
+val filteredByDog = realm.objects<Person>().query("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi")
 ```
-- Querying using a predicate.
+
+## Update
 
 ```Kotlin
-val objects: RealmResults<Person> =
-            realm.objects(Person::class).query("name == $0", "Foo")
+// Find the first Person without a dog
+realm.objects<Person>().query("dog == NULL LIMIT(1)")
+    .firstOrNull()
+    ?.also { personWithoutDog ->
+        // Add a dog in a transaction
+        realm.beginTransaction()
+        personWithoutDog.dog = Dog().apply { name = "Laika";  age = 3 }
+        realm.commitTransaction()
+    }
 ```
+
+## Delete
+
+Use the result of a query to delete from the database
+```Kotlin
+// delete all Dogs
+realm.beginTransaction()
+realm.objects<Dog>().delete()
+realm.commitTransaction()
+```
+
 
 Next: head to the full KMM [example](./examples/kmm-sample).  
 
@@ -69,13 +169,13 @@ The public API of the SDK has not been finalized. Design discussions will happen
 * [API Design Overview](https://docs.google.com/document/d/1RSPNO95wZAAojYlFwshSpLiuEu9ZqXptO58RDoPHKNc/edit)
 
 
-# How to build:
+# How to build locally:
 
-## Prerequisits
+## Prerequisites
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
 
-## Commands to build
+## Commands to build from source
 
 ```
 git submodule update --init --recursive
