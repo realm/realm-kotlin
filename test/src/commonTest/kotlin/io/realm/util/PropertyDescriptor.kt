@@ -36,12 +36,13 @@ enum class RealmFieldType(
     val primaryKeySupport: Boolean,
     val indexSupport: Boolean,
 ) {
+    // FIXME Get the support level right
     INT(PropertyType.RLM_PROPERTY_TYPE_INT, true, false, false, false, true, true),
     BOOL(PropertyType.RLM_PROPERTY_TYPE_BOOL, true, false, false, false, false, true),
-    STRING(PropertyType.RLM_PROPERTY_TYPE_STRING, false, false, false, false, true, true),
-    OBJECT(PropertyType.RLM_PROPERTY_TYPE_OBJECT, false, false, false, false, false, false),
-    FLOAT(PropertyType.RLM_PROPERTY_TYPE_FLOAT, false, false, false, false, false, false),
-    DOUBLE(PropertyType.RLM_PROPERTY_TYPE_DOUBLE, false, false, false, false, false, false);
+    STRING(PropertyType.RLM_PROPERTY_TYPE_STRING, true, false, false, false, true, true),
+    OBJECT(PropertyType.RLM_PROPERTY_TYPE_OBJECT, true, false, false, false, false, false),
+    FLOAT(PropertyType.RLM_PROPERTY_TYPE_FLOAT, true, false, false, false, false, false),
+    DOUBLE(PropertyType.RLM_PROPERTY_TYPE_DOUBLE, true, false, false, false, false, false);
 }
 
 // Kotlin classifier to Core field type mappings
