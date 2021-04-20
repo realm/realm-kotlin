@@ -1,4 +1,4 @@
-![Realm](images/logo.png)
+![Realm](./images/logo.png)
 
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
@@ -40,7 +40,7 @@ kotlin {
       }
 }
 ```
-![Gradle Configuration](images/Gradle_Conf.png)
+![Gradle Configuration](./images/Gradle_Conf.png)
 
 - If you're using a version of Kotlin less than 1.5, enable the usage of the new IR backend for the Android project as follow
 `androidApp/build.gradle.kts`
@@ -57,7 +57,6 @@ android {
 ## Define model
 
 Start writing your shared database logic in the shared module by defining first your model
-// screenshot
 
 ```Kotlin
 class Person : RealmObject {
