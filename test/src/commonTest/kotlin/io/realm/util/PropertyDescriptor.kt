@@ -26,6 +26,7 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
+// Core field types with their support level
 enum class RealmFieldType(
     val type: PropertyType,
     val listSupport: Boolean,
@@ -43,6 +44,7 @@ enum class RealmFieldType(
     DOUBLE(PropertyType.RLM_PROPERTY_TYPE_DOUBLE, false, false, false, false, false, false);
 }
 
+// Kotlin classifier to Core field type mappings
 val classifiers: Map<KClassifier, RealmFieldType> = mapOf(
     Byte::class to RealmFieldType.INT,
     Char::class to RealmFieldType.INT,
@@ -56,7 +58,6 @@ val classifiers: Map<KClassifier, RealmFieldType> = mapOf(
     RealmObject::class to RealmFieldType.OBJECT
 )
 
-
 // Basically just a clone of KType but with the ability to create them from input parameters at
 // runtime as KClassifier.createType is not available for Kotlin Native.
 data class RElementType(val classifier: KClassifier, val nullable: Boolean) {
@@ -68,17 +69,7 @@ data class RElementType(val classifier: KClassifier, val nullable: Boolean) {
     }
 }
 
-
-@OptIn(ExperimentalStdlibApi::class)
-private fun normalize(classifier: KClassifier): KClassifier {
-    return if ((classifier as KClass<*>).supertypes.contains(typeOf<RealmObject>())) {
-        RealmObject::class
-    } else {
-        classifier
-    }
-}
-
-// Utility method to generate cartesian product of classifiers and nullabily values
+// Utility method to generate cartesian product of classifiers and nullability values
 fun elementTypes(
     classifiers: Set<KClassifier>,
     nullabilities: Set<Boolean>
@@ -92,6 +83,7 @@ fun elementTypes(
     )
 }
 
+//
 val allElementClassifiers: Set<KClassifier> = classifiers.keys
 val allElementTypes = elementTypes(allElementClassifiers, setOf(true, false))
 val allSingularTypes = allElementTypes.map { RType(CollectionType.RLM_COLLECTION_TYPE_NONE, it) }
@@ -99,16 +91,13 @@ val allListTypes = allElementTypes.filter { it.realmFieldType.listSupport }.map 
 // TODO Set
 // TODO Dict
 val allTypes = allSingularTypes + allListTypes
-
 val allPrimaryKeyTypes = allTypes.filter { it.isPrimaryKeySupported }
 
-// TODO Functions to return all
-
+// Realm field type
 data class RType(
     val collectionType: CollectionType,
     val elementType: RElementType
 ) {
-
     val isPrimaryKeySupported: Boolean =
         collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
 
@@ -156,4 +145,13 @@ private fun elementType(type: KType) = when (collectionType(type)) {
         type.arguments[0].type!!
     CollectionType.RLM_COLLECTION_TYPE_DICTIONARY ->
         type.arguments[1].type!!
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+private fun normalize(classifier: KClassifier): KClassifier {
+    return if ((classifier as KClass<*>).supertypes.contains(typeOf<RealmObject>())) {
+        RealmObject::class
+    } else {
+        classifier
+    }
 }
