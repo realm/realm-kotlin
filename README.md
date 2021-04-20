@@ -27,7 +27,8 @@ buildscript {
 apply(plugin = "realm-kotlin")
 ```
 
-Specify also the dependency in the common source set
+Specify also the dependency in the common source set.
+
 *See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.*
 
 ```Gradle
@@ -57,7 +58,6 @@ android {
   }
 }
 ```
-// screenshot to emphasis
 
 ## Define model
 
