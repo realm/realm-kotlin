@@ -17,12 +17,64 @@
 package test.primarykey
 
 import io.realm.PrimaryKey
+import io.realm.Realm
 import io.realm.RealmObject
 import kotlin.random.Random
+import kotlin.random.nextUBytes
 import kotlin.random.nextULong
 
 class NoPrimaryKey: RealmObject {
     var nonPrimaryKey: String = Random.nextULong().toString()
+}
+
+
+class PrimaryKeyByte: RealmObject {
+    @PrimaryKey
+    var primaryKey: Byte = Random.nextULong().toByte()
+}
+
+class PrimaryKeyByteNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: Byte? = Random.nextULong().toByte()
+}
+
+class PrimaryKeyChar: RealmObject {
+    @PrimaryKey
+    var primaryKey: Char = Random.nextULong().toByte().toChar()
+}
+
+class PrimaryKeyCharNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: Char? = Random.nextULong().toByte().toChar()
+}
+
+class PrimaryKeyShort: RealmObject {
+    @PrimaryKey
+    var primaryKey: Short = Random.nextULong().toShort()
+}
+
+class PrimaryKeyShortNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: Short? = Random.nextULong().toShort()
+}
+class PrimaryKeyInt: RealmObject {
+    @PrimaryKey
+    var primaryKey: Int = Random.nextInt()
+}
+
+class PrimaryKeyIntNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: Int? = Random.nextInt()
+}
+
+class PrimaryKeyLong: RealmObject {
+    @PrimaryKey
+    var primaryKey: Long = Random.nextLong()
+}
+
+class PrimaryKeyLongNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: Long? = Random.nextLong()
 }
 
 class PrimaryKeyString: RealmObject {

@@ -210,7 +210,15 @@ actual object RealmInterop {
                     cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                     cvalue.string = value
                 }
+                is Byte -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
                 is Char -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
+                is Short -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_INT
                     cvalue.integer = value.toLong()
                 }

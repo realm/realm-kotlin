@@ -16,25 +16,44 @@
 
 package io.realm
 
+import io.realm.util.allPrimaryKeyTypes
+import io.realm.util.rType
+import org.junit.Assert.assertArrayEquals
 import test.primarykey.NoPrimaryKey
+import test.primarykey.PrimaryKeyByte
+import test.primarykey.PrimaryKeyByteNullable
+import test.primarykey.PrimaryKeyChar
+import test.primarykey.PrimaryKeyCharNullable
+import test.primarykey.PrimaryKeyInt
+import test.primarykey.PrimaryKeyIntNullable
+import test.primarykey.PrimaryKeyLong
+import test.primarykey.PrimaryKeyLongNullable
+import test.primarykey.PrimaryKeyShort
+import test.primarykey.PrimaryKeyShortNullable
 import test.primarykey.PrimaryKeyString
 import test.primarykey.PrimaryKeyStringNullable
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
-private val primaryKey = "PRIMARY_KEY"
+private val PRIMARY_KEY = "PRIMARY_KEY"
 
 class PrimaryKeyTests {
 
-    lateinit var tmpDir: String
-    lateinit var realm: Realm
+    private lateinit var tmpDir: String
+    private lateinit var configuration: RealmConfiguration
+    private lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        val configuration =
+        configuration =
             RealmConfiguration.Builder(path = "$tmpDir/default.realm")
                 .schema(
                     PrimaryKeyString::class,
@@ -54,9 +73,10 @@ class PrimaryKeyTests {
     @Test
     fun string() {
         realm.beginTransaction()
-        realm.create(PrimaryKeyString::class, primaryKey)
+        realm.create(PrimaryKeyString::class, PRIMARY_KEY)
         realm.commitTransaction()
         // Query
+        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
 
     @Test
@@ -77,10 +97,10 @@ class PrimaryKeyTests {
     @Test
     fun duplicatePrimaryKeyThrows() {
         realm.beginTransaction()
-        val create = realm.create(PrimaryKeyString::class, primaryKey)
+        val create = realm.create(PrimaryKeyString::class, PRIMARY_KEY)
         assertFailsWith<RuntimeException> {
             // C-API semantics is currently to return any existing object if already present
-            val create1 = realm.create(PrimaryKeyString::class, primaryKey)
+            val create1 = realm.create(PrimaryKeyString::class, PRIMARY_KEY)
         }
         create.primaryKey = "Y"
         println(create.primaryKey)
@@ -91,7 +111,7 @@ class PrimaryKeyTests {
     fun primaryKeyForNonPrimaryKeyObjectThrows() {
         realm.beginTransaction()
         assertFailsWith<RuntimeException> {
-            realm.create(NoPrimaryKey::class, primaryKey)
+            realm.create(NoPrimaryKey::class, PRIMARY_KEY)
         }
     }
 
@@ -110,4 +130,103 @@ class PrimaryKeyTests {
         realm.copyToRealm(o)
         realm.commitTransaction()
     }
+
+    @Test
+    fun importUnmanagedWithDuplicatePrimaryKeyThrows() {
+        val o = PrimaryKeyString()
+        realm.beginTransaction()
+        val copyToRealm = realm.copyToRealm(o)
+        x(copyToRealm)
+        assertFailsWith<RuntimeException> {
+            realm.copyToRealm(o)
+        }
+        realm.commitTransaction()
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    fun <T: RealmObject> x(t: T) {
+        val typeOf: KType = typeOf<PrimaryKeyString>()
+        (typeOf as io.realm.internal.RealmObjectCompanion).`$realm$schema`()
+    }
+
+    @Test
+    @OptIn(ExperimentalStdlibApi::class)
+    fun verifyPrimaryKeyTypeSupport() {
+        val expectedTypes = setOf(
+            typeOf<Byte>(),
+            typeOf<Byte?>(),
+            typeOf<Char>(),
+            typeOf<Char?>(),
+            typeOf<Short>(),
+            typeOf<Short?>(),
+            typeOf<Int>(),
+            typeOf<Int?>(),
+            typeOf<Long>(),
+            typeOf<Long?>(),
+            typeOf<String>(),
+            typeOf<String?>(),
+        ).map { it.rType() }.toMutableSet()
+
+        assertTrue(expectedTypes.containsAll(allPrimaryKeyTypes))
+        expectedTypes.removeAll(allPrimaryKeyTypes)
+        assertTrue(expectedTypes.isEmpty(), "$expectedTypes")
+    }
+
+    // - Test all types that supports primary keys can in fact be used
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun testAllTypes() {
+        val types = allPrimaryKeyTypes.toMutableSet()
+
+        // TODO Maybe we would only need to iterate underlying Realm types?
+        val classes: Array<KClass<out RealmObject>> = arrayOf(
+            PrimaryKeyByte::class,
+            PrimaryKeyByteNullable::class,
+            PrimaryKeyChar::class,
+            PrimaryKeyCharNullable::class,
+            PrimaryKeyShort::class,
+            PrimaryKeyShortNullable::class,
+            PrimaryKeyInt::class,
+            PrimaryKeyIntNullable::class,
+            PrimaryKeyLong::class,
+            PrimaryKeyLongNullable::class,
+            PrimaryKeyString::class,
+            PrimaryKeyStringNullable::class,
+        )
+
+        val configuration = RealmConfiguration.Builder("$tmpDir/default.realm")
+            .schema(
+                PrimaryKeyByte::class,
+                PrimaryKeyByteNullable::class,
+                PrimaryKeyChar::class,
+                PrimaryKeyCharNullable::class,
+                PrimaryKeyShort::class,
+                PrimaryKeyShortNullable::class,
+                PrimaryKeyInt::class,
+                PrimaryKeyIntNullable::class,
+                PrimaryKeyLong::class,
+                PrimaryKeyLongNullable::class,
+                PrimaryKeyString::class,
+                PrimaryKeyStringNullable::class,
+            )
+            .build()
+
+        val mediator =  configuration.mediator
+
+        val realm = Realm.open(configuration)
+
+        realm.beginTransaction()
+        for (c in classes) {
+            // We could expose this through the test model definitions instead if that is better to avoid the internals
+            val realmObjectCompanion = mediator.companionOf(c)
+            realm.copyToRealm(realmObjectCompanion.`$realm$newInstance`() as RealmObject)
+            val type = realmObjectCompanion.`$realm$primaryKey`.rType()
+            assertTrue(types.remove(type), type.toString())
+        }
+        assertArrayEquals("Untested primary keys: $types", types.toTypedArray(), emptyArray())
+    }
+
+    // TODO Test all types that cannot be supported raises compilation error. Probably fits better in
+    //  compiler plugin test
+
 }
