@@ -69,14 +69,14 @@ class Realm {
          *   and will leak the [callback] and potentially the internals related to the registration.
          */
         // @CheckReturnValue Not available for Kotlin?
-        fun <T : RealmObject> observe(obj: T, callback: Callback): Cancellable {
+        fun <T : RealmObject> observe(obj: T, callback: Callback<T>): Cancellable {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let {
                 val internalCallback = object : io.realm.interop.Callback {
                     override fun onChange(objectChanges: NativePointer) {
                         // FIXME Need to expose change details to the user
                         //  https://github.com/realm/realm-kotlin/issues/115
-                        callback.onChange()
+                        callback.onChange(obj)
                     }
                 }
                 val token = RealmInterop.realm_object_add_notification_callback(it, internalCallback)
