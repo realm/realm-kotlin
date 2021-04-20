@@ -16,7 +16,6 @@
 
 package io.realm
 
-import io.realm.internal.NotificationToken
 import io.realm.internal.RealmModelInternal
 import io.realm.internal.copyToRealm
 import io.realm.internal.unmanage
