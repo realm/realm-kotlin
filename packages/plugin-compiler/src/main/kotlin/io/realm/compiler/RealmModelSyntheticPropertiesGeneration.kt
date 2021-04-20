@@ -27,6 +27,7 @@ import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
 import io.realm.compiler.FqNames.TABLE
 import io.realm.compiler.Names.CLASS_FLAG_NORMAL
+import io.realm.compiler.Names.MEDIATOR
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
@@ -40,7 +41,6 @@ import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
-import io.realm.compiler.Names.REALM_OBJECT_SCHEMA
 import io.realm.compiler.Names.REALM_POINTER
 import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -100,19 +100,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         table.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
     private val classFlag: IrClass = pluginContext.lookupClassOrThrow(CLASS_FLAG)
     private val classFlags =
-        classFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+        classFlag.declarations.filterIsInstance<IrEnumEntry>()
     private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY)
     private val propertyConstructor =
         propertyClass.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
     private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
     private val propertyTypes =
-        propertyType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+        propertyType.declarations.filterIsInstance<IrEnumEntry>()
     private val collectionType: IrClass = pluginContext.lookupClassOrThrow(COLLECTION_TYPE)
     private val collectionTypes =
-        collectionType.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+        collectionType.declarations.filterIsInstance<IrEnumEntry>()
     private val propertyFlag: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_FLAG)
     private val propertyFlags =
-        propertyFlag.declarations.filter { it is IrEnumEntry } as List<IrEnumEntry>
+        propertyFlag.declarations.filterIsInstance<IrEnumEntry>()
 
     private val listIrClass: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
@@ -129,9 +129,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 ::irNull
             )
             addVariableProperty(OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
-            // Should be of type Mediator, but requires RealmModelInternal and Mediator to be in
-            // same module
-            addVariableProperty(REALM_OBJECT_SCHEMA, pluginContext.irBuiltIns.anyType, ::irNull)
+            addVariableProperty(MEDIATOR, pluginContext.irBuiltIns.anyType, ::irNull)
         }
 
     fun addCompanionFields(

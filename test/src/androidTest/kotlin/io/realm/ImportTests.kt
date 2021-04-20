@@ -30,9 +30,6 @@ import kotlin.test.assertNull
 
 class ImportTests {
 
-    @RealmModule(Parent::class, Child::class, Sample::class)
-    class MySchema
-
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
@@ -40,7 +37,7 @@ class ImportTests {
     fun setup() {
         tmpDir = Utils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class, Sample::class))
         realm = Realm.open(configuration)
     }
 

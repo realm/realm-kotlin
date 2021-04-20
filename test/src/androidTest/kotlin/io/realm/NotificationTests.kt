@@ -41,16 +41,13 @@ private const val SECOND = "SECOND"
 @OptIn(ExperimentalTime::class)
 class NotificationTests {
 
-    @RealmModule(Sample::class)
-    class MySchema
-
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
 
     @BeforeTest
     fun setup() {
         tmpDir = Utils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = MySchema(), path = "$tmpDir/default.realm").build()
+        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
     }
 
     @AfterTest

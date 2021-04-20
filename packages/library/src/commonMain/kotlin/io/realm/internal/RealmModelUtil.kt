@@ -24,25 +24,25 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmModelInternal.manage(realm: NativePointer, schema: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmObject> RealmModelInternal.manage(realmPointer: NativePointer, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
-    this.`$realm$Pointer` = realm
+    this.`$realm$Pointer` = realmPointer
     this.`$realm$TableName` = type.simpleName
     this.`$realm$ObjectPointer` = objectPointer
     // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
     // this.link = RealmInterop.realm_object_as_link()
-    this.`$realm$Schema` = schema
+    this.`$realm$Mediator` = mediator
     return this as T
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmModelInternal.link(realm: NativePointer, schema: Mediator, type: KClass<T>, link: Link): T {
+fun <T : RealmObject> RealmModelInternal.link(realm: NativePointer, mediator: Mediator, type: KClass<T>, link: Link): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Pointer` = realm
     this.`$realm$TableName` = type.simpleName
     // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
     this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm, link)
-    this.`$realm$Schema` = schema
+    this.`$realm$Mediator` = mediator
     return this as T
 }
 

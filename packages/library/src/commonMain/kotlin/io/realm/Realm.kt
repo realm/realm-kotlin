@@ -98,7 +98,7 @@ class Realm {
     }
 
     fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(realmConfiguration.schema, dbPointer!!, type)
+        return io.realm.internal.create(realmConfiguration.mediator, dbPointer!!, type)
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
@@ -118,7 +118,7 @@ class Realm {
      * @return The managed version of the `instance`.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
-        return copyToRealm(realmConfiguration.schema, dbPointer!!, instance)
+        return copyToRealm(realmConfiguration.mediator, dbPointer!!, instance)
     }
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
@@ -127,7 +127,7 @@ class Realm {
             @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
             { RealmInterop.realm_query_parse(dbPointer!!, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
-            realmConfiguration.schema
+            realmConfiguration.mediator
         )
     }
 

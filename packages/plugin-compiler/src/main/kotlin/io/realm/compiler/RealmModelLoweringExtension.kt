@@ -35,8 +35,6 @@ class RealmModelLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         RealmModelLowering(pluginContext).lower(moduleFragment)
         moduleFragment.checkDeclarationParents()
-
-        logInfo("Collected schema is: ${SchemaCollector.properties}")
     }
 }
 

@@ -27,12 +27,19 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 
 @AutoService(ComponentRegistrar::class)
 class Registrar : ComponentRegistrar {
-    override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
-        messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
+    override fun registerProjectComponents(
+        project: MockProject,
+        configuration: CompilerConfiguration
+    ) {
+        messageCollector =
+            configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
         SchemaCollector.properties.clear()
 
-        SyntheticResolveExtension.registerExtension(project, RealmModelSyntheticCompanionExtension())
+        SyntheticResolveExtension.registerExtension(
+            project,
+            RealmModelSyntheticCompanionExtension()
+        )
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
-        IrGenerationExtension.registerExtension(project, RealmModuleLoweringExtension())
+        IrGenerationExtension.registerExtension(project, RealmSchemaLoweringExtension())
     }
 }
