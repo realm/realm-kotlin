@@ -51,38 +51,6 @@ class Realm {
                 ?: throw IllegalArgumentException("Cannot delete unmanaged object")
             internalObject.unmanage()
         }
-
-        /**
-         * Observe change.
-         *
-         * Triggers calls to [callback] when there are changes to [obj].
-         *
-         * To receive asynchronous callbacks this must be called:
-         * - Android: on a thread with a looper
-         * - iOS/macOS: on the main thread (as we currently do not support opening Realms with
-         *   different schedulers similarly to
-         *   https://github.com/realm/realm-cocoa/blob/master/Realm/RLMRealm.mm#L424)
-         *
-         * Notes:
-         * - Calls are triggered synchronously on a [beginTransaction] when the version is advanced.
-         * - Ignoring the return value will eliminate the possibility to cancel the registration
-         *   and will leak the [callback] and potentially the internals related to the registration.
-         */
-        // @CheckReturnValue Not available for Kotlin?
-        fun <T : RealmObject> observe(obj: T, callback: Callback<T>): Cancellable {
-            val internalObject = obj as RealmModelInternal
-            internalObject.`$realm$ObjectPointer`?.let {
-                val internalCallback = object : io.realm.interop.Callback {
-                    override fun onChange(objectChanges: NativePointer) {
-                        // FIXME Need to expose change details to the user
-                        //  https://github.com/realm/realm-kotlin/issues/115
-                        callback.onChange(obj)
-                    }
-                }
-                val token = RealmInterop.realm_object_add_notification_callback(it, internalCallback)
-                return NotificationToken(internalCallback, token)
-            } ?: throw IllegalArgumentException("Cannot register listeners on unmanaged object")
-        }
     }
 
     fun beginTransaction() {

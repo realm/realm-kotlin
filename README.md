@@ -5,7 +5,11 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
-# Quick Startup (using KMM project)
+# Quick Startup
+
+## Prerequisite
+
+Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) project. 
 
 ## Setup
 
@@ -40,6 +44,7 @@ kotlin {
       }
 }
 ```
+
 ![Gradle Configuration](./images/Gradle_Conf.png)
 
 - If you're using a version of Kotlin less than 1.5, enable the usage of the new IR backend for the Android project as follow
@@ -85,7 +90,7 @@ val realm = Realm.open(configuration)
 
 ## Write
 
-Using the Realm instance opened previously persist some data
+Persist some data by instantiating the data objects and copying it into the open Realm instance
 
 ```Kotlin
 // plain old kotlin object
@@ -110,9 +115,10 @@ realm.commitTransaction()
 
 ## Query
 
-The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate)
+The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries)
+
 ```Kotlin
-// All Person
+// All Persons
 val all = realm.objects<Person>()
 
 // Person named 'Carlo'
@@ -123,14 +129,15 @@ val filteredByDog = realm.objects<Person>().query("dog.age > $0 AND dog.name BEG
 ```
 
 ## Update
+
 ```Kotlin
 // Find the first Person without a dog
 realm.objects<Person>().query("dog == NULL LIMIT(1)")
     .firstOrNull()
-    ?.also {
+    ?.also { personWithoutDog ->
         // Add a dog in a transaction
         realm.beginTransaction()
-        it.dog = realm.create<Dog>().apply { name = "Laika";  age = 3 }
+        personWithoutDog.dog = Dog().apply { name = "Laika";  age = 3 }
         realm.commitTransaction()
     }
 ```
