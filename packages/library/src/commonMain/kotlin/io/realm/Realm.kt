@@ -93,8 +93,16 @@ class Realm {
         RealmInterop.realm_commit(dbPointer!!)
     }
 
-    fun cancelTransaction() {
-        TODO()
+    // TODO Add @throws when Realm exception hierarchy is settled
+    //  https://github.com/realm/realm-kotlin/issues/70
+    /**
+     * Roll back the current write transaction.
+     *
+     * @throws RuntimeException if there is currently no write transaction.
+     */
+    // TODO Add test for this
+    fun rollbackTransaction() {
+        RealmInterop.realm_rollback(dbPointer!!)
     }
 
     fun <T : RealmObject> create(type: KClass<T>): T {

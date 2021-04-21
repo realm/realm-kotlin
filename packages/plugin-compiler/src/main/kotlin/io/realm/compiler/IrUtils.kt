@@ -168,27 +168,27 @@ internal fun <T : IrExpression> buildOf(
     args: List<T>
 ): IrExpression {
     return IrCallImpl(
-            startOffset, endOffset,
-            containerType.typeWith(elementType),
-            function,
-            1,
-            1,
-            null,
-            null
-        ).apply {
-            putTypeArgument(0, elementType)
-            putValueArgument(
-                0,
-                IrVarargImpl(
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
-                    context.irBuiltIns.arrayClass.typeWith(elementType),
-                    type,
-                    args.toList()
-                )
+        startOffset = startOffset, endOffset = endOffset,
+        type = containerType.typeWith(elementType),
+        symbol = function,
+        typeArgumentsCount = 1,
+        valueArgumentsCount = 1,
+        origin = null,
+        superQualifierSymbol = null
+    ).apply {
+        putTypeArgument(index = 0, type = elementType)
+        putValueArgument(
+            index = 0,
+            valueArgument = IrVarargImpl(
+                UNDEFINED_OFFSET,
+                UNDEFINED_OFFSET,
+                context.irBuiltIns.arrayClass.typeWith(elementType),
+                type,
+                args.toList()
             )
+        )
 
-        }
+    }
 }
 
 internal fun <T : IrExpression> buildSetOf(

@@ -262,6 +262,10 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_commit(realm.cptr()))
     }
 
+    actual fun realm_rollback(realm: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_rollback(realm.cptr()))
+    }
+
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         memScoped {
             val found = alloc<BooleanVar>()

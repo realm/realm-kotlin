@@ -247,7 +247,8 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun `verify primary key supportness`() {
+    fun `primary key supportness`() {
+        // TODO Consider placing these in PropertyDescriptor.kt for reuse
         val defaults = mapOf<KClassifier, Any>(
             Boolean::class to true,
             Byte::class to "1",
@@ -293,6 +294,33 @@ class GenerationExtensionTest {
                 assertTrue(result.messages.contains("but must be of type"))
             }
         }
+    }
+
+    @Test
+    fun `multiple primary keys fails`() {
+        var result = compileFromSource(
+            source = SourceFile.kotlin(
+                "schema.kt",
+                """
+                        import io.realm.RealmObject
+                        import io.realm.RealmConfiguration
+                        import io.realm.PrimaryKey
+                                    
+                        class A : RealmObject {
+                            @PrimaryKey
+                            var primaryKey1: String? = null
+                            
+                            @PrimaryKey
+                            var primaryKey2: String? = null
+                        }
+                        
+                        val configuration =
+                            RealmConfiguration(schema = setOf(A::class))
+                    """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("RealmObject can only have one primary key"))
     }
 
     private fun compile(

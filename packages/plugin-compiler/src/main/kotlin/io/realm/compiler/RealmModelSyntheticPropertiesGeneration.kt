@@ -167,7 +167,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val primaryKey: IrProperty? = when(primaryKeyFields.size)  {
             0 -> null
             1 -> primaryKeyFields.entries.first().value.second
-            else -> error("RealmObject can only have one primary key")
+            else -> {
+                logError("RealmObject can only have one primary key")
+                null
+            }
         }
 
         companion.addValueProperty(
@@ -206,10 +209,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val primaryKeyFields = fields.filter { it.value.second.backingField!!.hasAnnotation( PRIMARY_KEY_ANNOTATION) }
 
-        val primaryKey = when(primaryKeyFields.size)  {
+        val primaryKey: String = when(primaryKeyFields.size)  {
             0 -> ""
             1 -> primaryKeyFields.entries.first().key
-            else -> error("RealmObject can only have one primary key")
+            else -> {
+                logError("RealmObject can only have one primary key")
+                ""
+            }
         }
 
         val function =
@@ -274,10 +280,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     propertyFlags.add(PROPERTY_FLAG_INDEXED)
                                 }
                                 val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
-                                    setOf(byteType, charType, shortType, intType, longType, stringType).map { it.classifierOrFail }
+                                    setOf(
+                                        byteType,
+                                        charType,
+                                        shortType,
+                                        intType,
+                                        longType,
+                                        stringType
+                                    ).map { it.classifierOrFail }
                                 }
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
-                                    messageCollector.report(CompilerMessageSeverity.ERROR, "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it .owner.symbol.descriptor.name}}", null)
+                                    logError(
+                                        "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                    )
                                 }
 
                                 IrConstructorCallImpl(
@@ -298,20 +313,20 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(
                                         arg++,
                                         IrGetEnumValueImpl(
-                                            UNDEFINED_OFFSET,
-                                            UNDEFINED_OFFSET,
-                                            propertyType.defaultType,
-                                            type.symbol
+                                            startOffset = UNDEFINED_OFFSET,
+                                            endOffset = UNDEFINED_OFFSET,
+                                            type = propertyType.defaultType,
+                                            symbol = type.symbol
                                         )
                                     )
                                     // Collection type
                                     putValueArgument(
                                         arg++,
                                         IrGetEnumValueImpl(
-                                            UNDEFINED_OFFSET,
-                                            UNDEFINED_OFFSET,
-                                            collectionType.defaultType,
-                                            collectionTypes.first { it.name == PROPERTY_COLLECTION_TYPE_NONE }.symbol
+                                            startOffset = UNDEFINED_OFFSET,
+                                            endOffset = UNDEFINED_OFFSET,
+                                            type = collectionType.defaultType,
+                                            symbol = collectionTypes.first { it.name == PROPERTY_COLLECTION_TYPE_NONE }.symbol
                                         )
                                     )
                                     // Link target
@@ -328,7 +343,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(
                                         arg++,
                                         buildSetOf(
-                                            pluginContext, startOffset, endOffset, propertyFlag.defaultType,
+                                            pluginContext,
+                                            startOffset,
+                                            endOffset,
+                                            propertyFlag.defaultType,
                                             propertyFlags(propertyFlags)
                                         )
                                     )
@@ -346,10 +364,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private fun propertyFlags(flags: List<Name>) =
         flags.map { flag ->
             IrGetEnumValueImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                propertyFlag.defaultType,
-                propertyFlags.first { flag == it.name }.symbol
+                startOffset = UNDEFINED_OFFSET,
+                endOffset = UNDEFINED_OFFSET,
+                type = propertyFlag.defaultType,
+                symbol = propertyFlags.first { flag == it.name }.symbol
             )
         }
 
