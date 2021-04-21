@@ -95,39 +95,4 @@ class NotificationTests {
             terminate()
         }
     }
-
-    @Test
-    fun closeWithoutCancel() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        assertEquals(INITIAL, sample.stringField)
-
-        val token = Realm.observe(sample) {
-            val stringField = sample.stringField
-            this@run.launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-            // Verify that closing does not cause troubles even though notifications are not
-            // cancelled.
-            // NOTE Listener is not released either, so leaking the callbacks.
-            realm.close()
-            // Yield to allow any pending notifications to be triggered
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
-            terminate()
-        }
-    }
 }
