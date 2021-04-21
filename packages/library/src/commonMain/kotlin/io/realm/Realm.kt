@@ -22,14 +22,21 @@ import io.realm.internal.copyToRealm
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.log.RealmLog
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
 class Realm {
     private var dbPointer: NativePointer? = null // TODO API-INTERNAL nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
     private lateinit var realmConfiguration: RealmConfiguration
+    internal val log: RealmLog
 
     companion object {
+        /**
+         * Default name for Realm files unless overridden by [RealmConfiguration.Builder.name].
+         */
+        public const val DEFAULT_FILE_NAME = "default.realm"
+
         fun open(realmConfiguration: RealmConfiguration): Realm {
             // TODO API-INTERNAL
             //  IN Android use lazy property delegation init to load the shared library use the
@@ -37,6 +44,7 @@ class Realm {
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
 
             val realm = Realm()
+            realm.log.info("Opening Realm: ${realmConfiguration.path}")
             realm.realmConfiguration = realmConfiguration
             realm.dbPointer = RealmInterop.realm_open(realmConfiguration.nativeConfig)
             return realm
@@ -83,6 +91,10 @@ class Realm {
                 return NotificationToken(internalCallback, token)
             } ?: throw IllegalArgumentException("Cannot register listeners on unmanaged object")
         }
+    }
+
+    init {
+        log = RealmLog(configuration = realmConfiguration.log)
     }
 
     fun beginTransaction() {
@@ -136,5 +148,6 @@ class Realm {
             RealmInterop.realm_close(it)
         }
         dbPointer = null
+        log.info("Realm closed: ${realmConfiguration.path}")
     }
 }

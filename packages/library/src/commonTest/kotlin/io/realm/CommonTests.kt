@@ -22,7 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 // Common tests will run on iOS device (./gradlew iosTest) or Android device (connectedAndroidTest)
-// additional platfomr specifc test will also be included
+// additional platform specifc test will also be included
 // FIXME API-CLEANUP Reenable test. Test should be place in the correct module
 //  https://github.com/realm/realm-kotlin/issues/56
 @Ignore

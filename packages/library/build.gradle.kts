@@ -125,7 +125,7 @@ kotlin {
 
 kotlin {
     sourceSets {
-        create("nativeCommon") {
+        create("darwinCommon") {
             dependsOn(getByName("commonMain"))
         }
     }
@@ -140,7 +140,7 @@ kotlin {
     ios()
     sourceSets {
         getByName("iosMain") {
-            dependsOn(getByName("nativeCommon"))
+            dependsOn(getByName("darwinCommon"))
         }
         getByName("iosTest") {
         }
@@ -156,7 +156,7 @@ kotlin {
     macosX64("macos") {}
     sourceSets {
         getByName("macosMain") {
-            dependsOn(getByName("nativeCommon"))
+            dependsOn(getByName("darwinCommon"))
         }
         getByName("macosTest") {
         }
