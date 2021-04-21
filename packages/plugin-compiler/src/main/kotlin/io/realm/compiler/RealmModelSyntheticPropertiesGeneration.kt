@@ -46,6 +46,7 @@ import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -272,6 +273,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     propertyFlags.add(PROPERTY_FLAG_PRIMARY_KEY)
                                     propertyFlags.add(PROPERTY_FLAG_INDEXED)
                                 }
+                                val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
+                                    setOf(byteType, charType, shortType, intType, longType, stringType).map { it.classifierOrFail }
+                                }
+                                if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
+                                    messageCollector.report(CompilerMessageSeverity.ERROR, "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it .owner.symbol.descriptor.name}}", null)
+                                }
+
                                 IrConstructorCallImpl(
                                     startOffset,
                                     endOffset,

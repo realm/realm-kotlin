@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.util
+package io.realm.internal
 
 import io.realm.PrimaryKey
 import io.realm.RealmObject
@@ -29,6 +29,8 @@ import kotlin.reflect.typeOf
 // Core field types with their support level
 enum class RealmFieldType(
     val type: PropertyType,
+    val nullable: Boolean,
+    val nonNullable: Boolean,
     val listSupport: Boolean,
     val setSupport: Boolean,
     val mapSupport: Boolean,
@@ -37,12 +39,12 @@ enum class RealmFieldType(
     val indexSupport: Boolean,
 ) {
     // FIXME Get the support level right
-    INT(PropertyType.RLM_PROPERTY_TYPE_INT, true, false, false, false, true, true),
-    BOOL(PropertyType.RLM_PROPERTY_TYPE_BOOL, true, false, false, false, false, true),
-    STRING(PropertyType.RLM_PROPERTY_TYPE_STRING, true, false, false, false, true, true),
-    OBJECT(PropertyType.RLM_PROPERTY_TYPE_OBJECT, true, false, false, false, false, false),
-    FLOAT(PropertyType.RLM_PROPERTY_TYPE_FLOAT, true, false, false, false, false, false),
-    DOUBLE(PropertyType.RLM_PROPERTY_TYPE_DOUBLE, true, false, false, false, false, false);
+    INT(PropertyType.RLM_PROPERTY_TYPE_INT, true,  true, true, false, false, false, true, true),
+    BOOL(PropertyType.RLM_PROPERTY_TYPE_BOOL, true, true, true, false, false, false, false, true),
+    STRING(PropertyType.RLM_PROPERTY_TYPE_STRING, true, true, true, false, false, false, true, true),
+    OBJECT(PropertyType.RLM_PROPERTY_TYPE_OBJECT, true, false, true, false, false, false, false, false),
+    FLOAT(PropertyType.RLM_PROPERTY_TYPE_FLOAT, true, true, true, false, false, false, false, false),
+    DOUBLE(PropertyType.RLM_PROPERTY_TYPE_DOUBLE, true, true, true, false, false, false, false, false);
 }
 
 // Kotlin classifier to Core field type mappings
@@ -72,13 +74,19 @@ data class RElementType(val classifier: KClassifier, val nullable: Boolean) {
 
 // Utility method to generate cartesian product of classifiers and nullability values
 fun elementTypes(
-    classifiers: Set<KClassifier>,
-    nullabilities: Set<Boolean>
-): Set<RElementType> {
+    classifiers: Collection<KClassifier>,
+): MutableSet<RElementType> {
     return classifiers.fold(
-        mutableSetOf(),
-        { acc: MutableSet<RElementType>, classifier: KClassifier ->
-            acc.addAll(nullabilities.map { RElementType(normalize(classifier), it) })
+        mutableSetOf<RElementType>(),
+        { acc, classifier ->
+            val classifier1 = normalize(classifier)
+            val realmFieldType = io.realm.internal.classifiers[classifier]!!
+            if (realmFieldType.nullable) {
+                acc.add(RElementType(classifier1, true))
+            }
+            if (realmFieldType.nonNullable) {
+                acc.add(RElementType(classifier1, false))
+            }
             acc
         }
     )
@@ -86,7 +94,7 @@ fun elementTypes(
 
 //
 val allElementClassifiers: Set<KClassifier> = classifiers.keys
-val allElementTypes = elementTypes(allElementClassifiers, setOf(true, false))
+val allElementTypes = elementTypes(allElementClassifiers)
 val allSingularTypes = allElementTypes.map { RType(CollectionType.RLM_COLLECTION_TYPE_NONE, it) }
 val allListTypes = allElementTypes.filter { it.realmFieldType.listSupport }.map { RType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
 // TODO Set
@@ -101,6 +109,17 @@ data class RType(
 ) {
     val isPrimaryKeySupported: Boolean =
         collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
+
+    fun toKotlinLiteral(): String {
+        val elementType = this.elementType
+        val element = (elementType.classifier as KClass<*>).simpleName + (if (elementType.nullable) "?" else "")
+        return when (collectionType) {
+            CollectionType.RLM_COLLECTION_TYPE_NONE -> element
+            CollectionType.RLM_COLLECTION_TYPE_LIST -> "List<$element>"
+            CollectionType.RLM_COLLECTION_TYPE_SET -> TODO()
+            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> TODO()
+        }
+    }
 
     override fun toString(): String {
         return "RType(collectionType=$collectionType, elementType=$elementType)"

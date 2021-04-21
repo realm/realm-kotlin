@@ -21,14 +21,16 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.RealmModelInternal
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.allTypes
 import io.realm.interop.ClassFlag
+import io.realm.interop.CollectionType
 import io.realm.interop.NativePointer
 import io.realm.interop.PropertyType
 import org.junit.Test
 import java.io.File
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
@@ -242,6 +244,55 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
 
         inputs.assertGeneratedIR()
+    }
+
+    @Test
+    fun `verify primary key supportness`() {
+        val defaults = mapOf<KClassifier, Any>(
+            Boolean::class to true,
+            Byte::class to "1",
+            Char::class to "\'c\'",
+            Short::class to "1",
+            Int::class to "1",
+            Long::class to "1",
+            Float::class to "1.4f",
+            Double::class to "1.4",
+            String::class to "\"Realm\"",
+        )
+        for (type in allTypes) {
+            if (type.collectionType != CollectionType.RLM_COLLECTION_TYPE_NONE) {
+                continue
+            }
+
+            val elementType = type.elementType
+            val default = if (!elementType.nullable) defaults[elementType.classifier] ?: error("unmapped default") else null
+
+            val kotlinLiteral = type.toKotlinLiteral()
+            var result = compileFromSource(
+                source = SourceFile.kotlin(
+                    "schema.kt",
+                    """
+                        import io.realm.RealmObject
+                        import io.realm.RealmConfiguration
+                        import io.realm.PrimaryKey
+                                    
+                        class A : RealmObject {
+                            @PrimaryKey
+                            var primaryKey: $kotlinLiteral = ${default.toString()}
+                        }
+                        
+                        val configuration =
+                            RealmConfiguration(schema = setOf(A::class))
+                    """.trimIndent()
+                )
+            )
+            if (type.isPrimaryKeySupported) {
+                assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, type.toString())
+            } else {
+                assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, type.toString())
+                assertTrue(result.messages.contains("but must be of type"))
+            }
+        }
     }
 
     private fun compile(
