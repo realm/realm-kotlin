@@ -86,4 +86,3 @@ expect object RealmInterop {
     fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer
     fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer
 }
-

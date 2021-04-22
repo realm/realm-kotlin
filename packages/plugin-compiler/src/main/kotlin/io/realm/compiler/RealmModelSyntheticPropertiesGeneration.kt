@@ -46,7 +46,6 @@ import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -133,6 +132,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             addVariableProperty(MEDIATOR, pluginContext.irBuiltIns.anyType, ::irNull)
         }
 
+    @Suppress("LongMethod")
     fun addCompanionFields(
         companion: IrClass,
         properties: MutableMap<String, Pair<String, IrProperty>>?,
@@ -147,24 +147,30 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             REALM_OBJECT_COMPANION_FIELDS_MEMBER,
             listIrClass.typeWith(kPropertyType)
         ) { startOffset, endOffset ->
-            buildListOf(pluginContext, startOffset, endOffset, kPropertyType, properties!!.entries.map {
-                val property = it.value.second
-                IrPropertyReferenceImpl(
-                    startOffset,
-                    endOffset,
-                    kPropertyType,
-                    property.symbol,
-                    0,
-                    null,
-                    property.getter?.symbol,
-                    property.setter?.symbol
-                )
-            })
+            buildListOf(
+                context = pluginContext,
+                startOffset = startOffset,
+                endOffset = endOffset,
+                elementType = kPropertyType,
+                args = properties!!.entries.map {
+                    val property = it.value.second
+                    IrPropertyReferenceImpl(
+                        startOffset = startOffset,
+                        endOffset = endOffset,
+                        type = kPropertyType,
+                        symbol = property.symbol,
+                        typeArgumentsCount = 0,
+                        field = null,
+                        getter = property.getter?.symbol,
+                        setter = property.setter?.symbol
+                    )
+                }
+            )
         }
 
-        val primaryKeyFields = properties!!.filter { it.value.second.backingField!!.hasAnnotation( PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields = properties!!.filter { it.value.second.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
-        val primaryKey: IrProperty? = when(primaryKeyFields.size)  {
+        val primaryKey: IrProperty? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().value.second
             else -> {
@@ -181,25 +187,23 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         ) { startOffset, endOffset ->
             primaryKey?.let {
                 IrPropertyReferenceImpl(
-                    startOffset,
-                    endOffset,
-                    kPropertyType,
-                    primaryKey.symbol,
-                    0,
-                    null,
-                    primaryKey.getter?.symbol,
-                    primaryKey.setter?.symbol
+                    startOffset = startOffset,
+                    endOffset = endOffset,
+                    type = kPropertyType,
+                    symbol = primaryKey.symbol,
+                    typeArgumentsCount = 0,
+                    field = null,
+                    getter = primaryKey.getter?.symbol,
+                    setter = primaryKey.setter?.symbol
                 )
-            } ?:
-            IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
+            } ?: IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
         }
-
     }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     // TODO OPTIMIZE should be a one time only constructed object
     @OptIn(ObsoleteDescriptorBasedAPI::class)
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "ComplexMethod")
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
@@ -207,9 +211,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val fields: MutableMap<String, Pair<String, IrProperty>> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        val primaryKeyFields = fields.filter { it.value.second.backingField!!.hasAnnotation( PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields = fields.filter { it.value.second.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
-        val primaryKey: String = when(primaryKeyFields.size)  {
+        val primaryKey: String = when (primaryKeyFields.size) {
             0 -> ""
             1 -> primaryKeyFields.entries.first().key
             else -> {
@@ -244,10 +248,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             pluginContext, startOffset, endOffset, classFlag.defaultType,
                             listOf(
                                 IrGetEnumValueImpl(
-                                    UNDEFINED_OFFSET,
-                                    UNDEFINED_OFFSET,
-                                    classFlag.defaultType,
-                                    classFlags.first { it.name == CLASS_FLAG_NORMAL }.symbol
+                                    startOffset = UNDEFINED_OFFSET,
+                                    endOffset = UNDEFINED_OFFSET,
+                                    type = classFlag.defaultType,
+                                    symbol = classFlags.first { it.name == CLASS_FLAG_NORMAL }.symbol
                                 )
                             )
                         )

@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.PrimaryKey
 import io.realm.RealmObject
 import io.realm.interop.CollectionType
 import io.realm.interop.PropertyType
@@ -24,9 +23,9 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 // Core field types with their support level
+@Suppress("LongParameterList")
 enum class RealmFieldType(
     val type: PropertyType,
     val nullable: Boolean,
@@ -39,7 +38,7 @@ enum class RealmFieldType(
     val indexSupport: Boolean,
 ) {
     // FIXME Get the support level right
-    INT(PropertyType.RLM_PROPERTY_TYPE_INT, true,  true, true, false, false, false, true, true),
+    INT(PropertyType.RLM_PROPERTY_TYPE_INT, true, true, true, false, false, false, true, true),
     BOOL(PropertyType.RLM_PROPERTY_TYPE_BOOL, true, true, true, false, false, false, false, true),
     STRING(PropertyType.RLM_PROPERTY_TYPE_STRING, true, true, true, false, false, false, true, true),
     OBJECT(PropertyType.RLM_PROPERTY_TYPE_OBJECT, true, false, true, false, false, false, false, false),

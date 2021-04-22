@@ -279,7 +279,7 @@ class GenerationExtensionTest {
                                     
                         class A : RealmObject {
                             @PrimaryKey
-                            var primaryKey: $kotlinLiteral = ${default.toString()}
+                            var primaryKey: $kotlinLiteral = $default
                         }
                         
                         val configuration =

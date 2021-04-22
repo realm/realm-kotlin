@@ -41,7 +41,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private val PRIMARY_KEY = "PRIMARY_KEY"
+private const val PRIMARY_KEY = "PRIMARY_KEY"
 
 class PrimaryKeyTests {
 
@@ -126,8 +126,6 @@ class PrimaryKeyTests {
         assertEquals(1, objects.size)
         assertNull(objects[0].primaryKey)
     }
-
-
 
     @Test
     fun primaryKeyForNonPrimaryKeyObjectThrows() {
@@ -237,7 +235,7 @@ class PrimaryKeyTests {
             )
             .build()
 
-        val mediator =  configuration.mediator
+        val mediator = configuration.mediator
 
         val realm = Realm.open(configuration)
 
@@ -254,5 +252,4 @@ class PrimaryKeyTests {
 
     // TODO Test all types that cannot be supported raises compilation error. Probably fits better in
     //  compiler plugin test
-
 }
