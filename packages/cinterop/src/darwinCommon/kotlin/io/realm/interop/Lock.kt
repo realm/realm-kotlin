@@ -8,12 +8,12 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.free
 import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
-import realm_wrapper.ktor_mutex_t
 import realm_wrapper.ktor_mutex_create
-import realm_wrapper.ktor_mutex_lock
-import realm_wrapper.ktor_mutex_unlock
 import realm_wrapper.ktor_mutex_destroy
-import kotlin.native.concurrent.*
+import realm_wrapper.ktor_mutex_lock
+import realm_wrapper.ktor_mutex_t
+import realm_wrapper.ktor_mutex_unlock
+import kotlin.native.concurrent.freeze
 
 /**
  * Source: https://github.com/ktorio/ktor/blob/main/ktor-utils/posix/src/io/ktor/util/LockNative.kt

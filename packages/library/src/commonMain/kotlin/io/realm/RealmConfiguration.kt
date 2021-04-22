@@ -30,28 +30,28 @@ import kotlin.reflect.KClass
  * Configuration for log events created by a Realm instance.
  */
 data class LogConfiguration(
-        /**
-         * The [LogLevel] for which all log events of equal or higher priority will be reported.
-         */
-        val level: LogLevel,
-        /**
-         * If `true`, the system logger is removed. Log events will only be reported if a [LogConfiguration.customLoggers]
-         * is configured.
-         */
-        val removeSystemLogger: Boolean,
-        /**
-         * Any custom loggers to install. They will receive all log events with a priority equal to or higher than
-         * the value defined in [LogConfiguration.level].
-         */
-        val customLoggers: List<RealmLogger>)
-
+    /**
+     * The [LogLevel] for which all log events of equal or higher priority will be reported.
+     */
+    val level: LogLevel,
+    /**
+     * If `true`, the system logger is removed. Log events will only be reported if a [LogConfiguration.customLoggers]
+     * is configured.
+     */
+    val removeSystemLogger: Boolean,
+    /**
+     * Any custom loggers to install. They will receive all log events with a priority equal to or higher than
+     * the value defined in [LogConfiguration.level].
+     */
+    val customLoggers: List<RealmLogger>
+)
 
 public class RealmConfiguration private constructor(
-        companionMap: Map<KClass<*>, RealmObjectCompanion>,
-        path: String?,
-        name: String,
-        schema: Set<KClass<out RealmObject>>,
-        logConfig: LogConfiguration
+    companionMap: Map<KClass<*>, RealmObjectCompanion>,
+    path: String?,
+    name: String,
+    schema: Set<KClass<out RealmObject>>,
+    logConfig: LogConfiguration
 ) {
 
     // Public properties making up the RealmConfiguration
@@ -88,23 +88,24 @@ public class RealmConfiguration private constructor(
      *             placed in the default location for the platform. On Android this is in `getFilesDir()`
      * @param schema set of classes that make up the schema for the Realm. Identified by their class literal `T::class`.
      */
-    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>> = setOf())
-            : this(
+    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>> = setOf()) :
+        this(
             mapOf(),
             path,
             name,
             schema,
-            LogConfiguration(LogLevel.WARN, false, listOf())) {
-    }
+            LogConfiguration(LogLevel.WARN, false, listOf())
+        ) {
+        }
 
     /**
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
      * using the [RealmConfiguration] constructor.
      */
     class Builder(
-            var path: String? = null, // Full path for Realm (directory + name)
-            var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
-            vararg var schema: KClass<out RealmObject>
+        var path: String? = null, // Full path for Realm (directory + name)
+        var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
+        vararg var schema: KClass<out RealmObject>
     ) {
 
         private var logLevel: LogLevel = LogLevel.WARN
@@ -142,19 +143,21 @@ public class RealmConfiguration private constructor(
 
         // Called from the compiler plugin
         internal fun build(companionMap: Map<KClass<*>, RealmObjectCompanion>): RealmConfiguration {
-            return RealmConfiguration(companionMap,
-                    path,
-                    name,
-                    setOf(*schema),
-                    LogConfiguration(logLevel, removeSystemLogger, customLoggers))
+            return RealmConfiguration(
+                companionMap,
+                path,
+                name,
+                setOf(*schema),
+                LogConfiguration(logLevel, removeSystemLogger, customLoggers)
+            )
         }
     }
 
     private fun init() {
         RealmInterop.realm_config_set_path(nativeConfig, path)
         RealmInterop.realm_config_set_schema_mode(
-                nativeConfig,
-                SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
+            nativeConfig,
+            SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
         )
         RealmInterop.realm_config_set_schema_version(nativeConfig, version = 0) // TODO expose version when handling migration modes
         val schema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
@@ -162,12 +165,12 @@ public class RealmConfiguration private constructor(
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<*>): RealmModelInternal = (
-                    mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
-                            ?: error("$clazz not part of this configuration schema")
-                    ) as RealmModelInternal
+                mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
+                    ?: error("$clazz not part of this configuration schema")
+                ) as RealmModelInternal
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion = mapOfKClassWithCompanion[clazz]
-                    ?: error("$clazz not part of this configuration schema")
+                ?: error("$clazz not part of this configuration schema")
         }
     }
 }

@@ -12,7 +12,7 @@ import java.io.StringWriter
  * Credit to https://github.com/JakeWharton/timber/blob/master/timber/src/main/java/timber/log/Timber.kt
  * for message creation and formatting
  */
-internal class LogCatLogger(override val tag: String = "REALM"): RealmLogger {
+internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
     companion object {
         private const val MAX_TAG_LENGTH = 23 // This limit was removed in API 24
         private const val MAX_LOG_LENGTH = 4000
@@ -70,9 +70,9 @@ internal class LogCatLogger(override val tag: String = "REALM"): RealmLogger {
         return message
     }
 
-   private fun formatMessage(message: String, args: Array<out Any?>): String {
-       return message.format(*args)
-   }
+    private fun formatMessage(message: String, args: Array<out Any?>): String {
+        return message.format(*args)
+    }
 
     private fun getStackTraceString(t: Throwable): String {
         // Don't replace this with Log.getStackTraceString() - it hides
@@ -83,5 +83,4 @@ internal class LogCatLogger(override val tag: String = "REALM"): RealmLogger {
         pw.flush()
         return sw.toString()
     }
-
 }

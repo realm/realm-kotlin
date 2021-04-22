@@ -1,6 +1,5 @@
 package io.realm.internal
 
-
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import java.io.PrintWriter
@@ -9,7 +8,7 @@ import java.io.StringWriter
 /**
  * Logger implementation outputting to stdout.
  */
-internal class StdOutLogger(override val tag: String = "REALM"): RealmLogger {
+internal class StdOutLogger(override val tag: String = "REALM") : RealmLogger {
 
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val logMessage: String = prepareLogMessage(throwable, message, *args)
@@ -45,5 +44,4 @@ internal class StdOutLogger(override val tag: String = "REALM"): RealmLogger {
         pw.flush()
         return sw.toString()
     }
-
 }

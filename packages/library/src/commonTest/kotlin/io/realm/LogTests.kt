@@ -1,10 +1,8 @@
 import io.realm.LogConfiguration
-import io.realm.RealmConfiguration
 import io.realm.TestLogger
 import io.realm.Utils
 import io.realm.log.LogLevel
 import io.realm.log.RealmLog
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -66,7 +64,7 @@ class LogTests {
     fun smallLogEntry() {
         val message = "Testing the RealmLog implementation"
         LogLevel.values().forEach {
-            when(it) {
+            when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
                 LogLevel.DEBUG -> log.debug(message)
@@ -85,7 +83,7 @@ class LogTests {
         val message = "Testing the RealmLog implementation: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
         LogLevel.values().forEach {
-            when(it) {
+            when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
                 LogLevel.DEBUG -> log.debug(message, *args)
@@ -103,7 +101,7 @@ class LogTests {
     fun longLogEntry() {
         val message = Utils.createRandomString(8000)
         LogLevel.values().forEach {
-            when(it) {
+            when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
                 LogLevel.DEBUG -> log.debug(message)
@@ -122,7 +120,7 @@ class LogTests {
         val message = "${Utils.createRandomString(8000)}: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
         LogLevel.values().forEach {
-            when(it) {
+            when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
                 LogLevel.DEBUG -> log.debug(message, *args)
@@ -140,7 +138,7 @@ class LogTests {
     fun logException() {
         val error = IllegalArgumentException("BOOM")
         LogLevel.values().forEach {
-            when(it) {
+            when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error)
                 LogLevel.DEBUG -> log.debug(error)
@@ -160,7 +158,7 @@ class LogTests {
         val message = "Details: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
         LogLevel.values().forEach {
-            when(it) {
+            when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error, message, *args)
                 LogLevel.DEBUG -> log.debug(error, message, *args)

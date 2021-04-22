@@ -16,21 +16,7 @@
 package io.realm
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import io.realm.internal.RealmInitializer
-import io.realm.interop.ClassFlag
-import io.realm.interop.CollectionType
-import io.realm.interop.Property
-import io.realm.interop.PropertyFlag
-import io.realm.interop.PropertyType
-import io.realm.interop.RealmInterop
-import io.realm.interop.SchemaMode
-import io.realm.interop.Table
-import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {

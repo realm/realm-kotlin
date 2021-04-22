@@ -77,8 +77,8 @@ class RealmConfigurationTests {
     @Test
     fun logLevel() {
         val config: RealmConfiguration = RealmConfiguration.Builder()
-                .logLevel(LogLevel.NONE)
-                .build()
+            .logLevel(LogLevel.NONE)
+            .build()
         assertEquals(LogLevel.NONE, config.log.level)
     }
 
@@ -92,8 +92,8 @@ class RealmConfigurationTests {
     fun customLoggers() {
         val logger = TestLogger()
         val config: RealmConfiguration = RealmConfiguration.Builder()
-                .customLoggers(listOf(logger))
-                .build()
+            .customLoggers(listOf(logger))
+            .build()
         assertEquals(1, config.log.customLoggers.size)
         assertEquals(logger, config.log.customLoggers.first())
     }
@@ -107,8 +107,8 @@ class RealmConfigurationTests {
     @Test
     fun removeSystemLogger() {
         val config: RealmConfiguration = RealmConfiguration.Builder()
-                .removeSystemLogger()
-                .build()
+            .removeSystemLogger()
+            .build()
         assertTrue(config.log.removeSystemLogger)
     }
 }
