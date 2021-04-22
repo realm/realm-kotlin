@@ -26,11 +26,11 @@ public actual class Lock {
         ktor_mutex_create(mutex.ptr).checkResult { "Failed to create mutex." }
     }
 
-    public actual fun lock() {
+    public actual fun acquire() {
         ktor_mutex_lock(mutex.ptr).checkResult { "Failed to lock mutex." }
     }
 
-    public actual fun unlock() {
+    public actual fun release() {
         ktor_mutex_unlock(mutex.ptr).checkResult { "Failed to unlock mutex." }
     }
 

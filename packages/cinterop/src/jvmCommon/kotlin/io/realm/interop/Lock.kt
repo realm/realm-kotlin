@@ -8,11 +8,11 @@ import java.util.concurrent.locks.ReentrantLock
 public actual class Lock {
     private val lock = ReentrantLock()
 
-    public actual fun lock() {
+    public actual fun acquire() {
         lock.lock()
     }
 
-    public actual fun unlock() {
+    public actual fun release() {
         lock.unlock()
     }
 
