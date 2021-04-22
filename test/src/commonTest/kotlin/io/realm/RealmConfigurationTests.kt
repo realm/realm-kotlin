@@ -1,6 +1,7 @@
 package io.realm
 
 import io.realm.log.LogLevel
+import io.realm.util.TestLogger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -30,7 +31,7 @@ class RealmConfigurationTests {
 
     @Test
     fun pathOverrideName() {
-        val realmPath = "HowToGetPlatformPath/custom.realm"
+        val realmPath = "<HowToGetPlatformPath>/custom.realm"
         val realmName = "my.realm"
 
         val config = RealmConfiguration(path = realmPath, name = realmName)

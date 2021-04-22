@@ -17,18 +17,16 @@
 
 package io.realm
 
-import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.absolutePathString
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.toKString
 
-actual object Utils {
-    @ExperimentalPathApi
+actual object PlatformUtils {
     actual fun createTempDir(): String {
-        return Files.createTempDirectory("android_tests").absolutePathString()
+        val mask = "${platform.Foundation.NSTemporaryDirectory()}realm_test_.XXXXXX"
+        return platform.posix.mkdtemp(mask.cstr)!!.toKString()
     }
 
     actual fun deleteTempDir(path: String) {
-        File(path).deleteRecursively()
+        platform.Foundation.NSFileManager.defaultManager.removeItemAtURL(platform.Foundation.NSURL(fileURLWithPath = path), null)
     }
 }

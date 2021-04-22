@@ -1,4 +1,4 @@
-package io.realm
+package io.realm.util
 
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger

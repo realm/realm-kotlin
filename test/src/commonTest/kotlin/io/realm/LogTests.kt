@@ -1,8 +1,8 @@
 import io.realm.LogConfiguration
-import io.realm.TestLogger
 import io.realm.Utils
 import io.realm.log.LogLevel
 import io.realm.log.RealmLog
+import io.realm.util.TestLogger
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

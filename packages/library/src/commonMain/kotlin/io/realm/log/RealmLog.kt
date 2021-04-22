@@ -6,7 +6,8 @@ import io.realm.internal.TypeFactory
 /**
  * Logger class used by Realm components. One logger is created for each Realm instance.
  */
-internal class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
+// FIXME: Should be internal, but makes testing from the test module impossible
+public class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
 
     @Suppress("JoinDeclarationAndAssignment")
     private val logLevel: LogLevel
