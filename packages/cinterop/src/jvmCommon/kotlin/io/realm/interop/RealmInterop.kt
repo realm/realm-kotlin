@@ -22,14 +22,6 @@ package io.realm.interop
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
 
-actual class RealmValue private constructor(val _v: Any?, val _n: realm_value_t?)  {
-    actual constructor(v: Any?) : this(v, null)
-    internal constructor(n: realm_value_t) : this(null, n)
-
-    actual val value: Any? by lazy(LazyThreadSafetyMode.PUBLICATION) { _v ?: RealmInterop.from_realm_value(_n) }
-    internal val n: realm_value_t by lazy(LazyThreadSafetyMode.PUBLICATION) { _n ?: RealmInterop.to_realm_value(_v) }
-}
-
 actual object RealmInterop {
 
     // TODO API-CLEANUP Maybe pull library loading into separate method
@@ -144,10 +136,9 @@ actual object RealmInterop {
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
     }
-    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: RealmValue): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, primaryKey.n))
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, to_realm_value(primaryKey)))
     }
-
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         val info = realm_class_info_t()

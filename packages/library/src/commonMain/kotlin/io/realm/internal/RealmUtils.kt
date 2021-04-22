@@ -19,7 +19,6 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.RealmValue
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -64,7 +63,7 @@ fun <T : RealmObject> create(mediator: Mediator, realm: NativePointer, type: KCl
             realm,
             mediator,
             type,
-            RealmInterop.realm_object_create_with_primary_key(realm, key, RealmValue(primaryKey))
+            RealmInterop.realm_object_create_with_primary_key(realm, key, primaryKey)
         )
     } catch (e: RuntimeException) {
         // FIXME Throw proper exception

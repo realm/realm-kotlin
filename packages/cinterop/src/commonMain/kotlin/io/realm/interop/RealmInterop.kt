@@ -21,10 +21,6 @@ package io.realm.interop
 
 inline class ColumnKey(val key: Long)
 
-expect class RealmValue(v: Any?) {
-    val value: Any?
-}
-
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
@@ -58,7 +54,7 @@ expect object RealmInterop {
     // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
-    fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: RealmValue): NativePointer
+    fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer
 
     fun realm_object_as_link(obj: NativePointer): Link
 

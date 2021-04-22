@@ -148,11 +148,6 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
-actual class RealmValue {
-    actual val value: Any?
-        get() = TODO("Not yet implemented")
-
-}
 actual object RealmInterop {
 
     actual fun realm_get_library_version(): String {
@@ -288,8 +283,10 @@ actual object RealmInterop {
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
     }
-    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: RealmValue): NativePointer {
-        TODO()
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_object_create_with_primary_key_by_ref(realm.cptr(), key.toUInt(), to_realm_value(primaryKey).ptr))
+        }
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -345,6 +342,22 @@ actual object RealmInterop {
         when (value) {
             null -> {
                 cvalue.type = realm_value_type.RLM_TYPE_NULL
+            }
+            is Byte -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Char -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Short -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Int -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
             }
             is Long -> {
                 cvalue.type = realm_value_type.RLM_TYPE_INT

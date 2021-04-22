@@ -16,9 +16,8 @@
 
 package io.realm
 
-import io.realm.util.allPrimaryKeyTypes
-import io.realm.util.rType
-import org.junit.Assert.assertArrayEquals
+import io.realm.internal.allPrimaryKeyTypes
+import io.realm.internal.rType
 import test.primarykey.NoPrimaryKey
 import test.primarykey.PrimaryKeyByte
 import test.primarykey.PrimaryKeyByteNullable
@@ -32,14 +31,14 @@ import test.primarykey.PrimaryKeyShort
 import test.primarykey.PrimaryKeyShortNullable
 import test.primarykey.PrimaryKeyString
 import test.primarykey.PrimaryKeyStringNullable
-import kotlin.reflect.KClass
-import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private val PRIMARY_KEY = "PRIMARY_KEY"
@@ -69,13 +68,12 @@ class PrimaryKeyTests {
         Utils.deleteTempDir(tmpDir)
     }
 
-
     @Test
     fun string() {
         realm.beginTransaction()
         realm.create(PrimaryKeyString::class, PRIMARY_KEY)
         realm.commitTransaction()
-        // Query
+
         assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
 
@@ -84,6 +82,8 @@ class PrimaryKeyTests {
         realm.beginTransaction()
         realm.create(PrimaryKeyStringNullable::class, null)
         realm.commitTransaction()
+
+        assertNull(realm.objects(PrimaryKeyStringNullable::class)[0].primaryKey)
     }
 
     @Test
@@ -92,9 +92,13 @@ class PrimaryKeyTests {
         assertFailsWith<RuntimeException> {
             realm.create(PrimaryKeyString::class)
         }
+        realm.rollbackTransaction()
+
+        assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
     }
 
     @Test
+    @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicatePrimaryKeyThrows() {
         realm.beginTransaction()
         val create = realm.create(PrimaryKeyString::class, PRIMARY_KEY)
@@ -102,9 +106,27 @@ class PrimaryKeyTests {
             // C-API semantics is currently to return any existing object if already present
             val create1 = realm.create(PrimaryKeyString::class, PRIMARY_KEY)
         }
-        create.primaryKey = "Y"
-        println(create.primaryKey)
+        realm.rollbackTransaction()
+
+        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
+
+    @Test
+    @Ignore // https://github.com/realm/realm-core/issues/4595
+    fun duplicateNullPrimaryKeyThrows() {
+        realm.beginTransaction()
+        val create = realm.create(PrimaryKeyString::class, null)
+        assertFailsWith<RuntimeException> {
+            // C-API semantics is currently to return any existing object if already present
+            val create1 = realm.create(PrimaryKeyString::class, null)
+        }
+        realm.rollbackTransaction()
+
+        val objects = realm.objects(PrimaryKeyStringNullable::class)
+        assertEquals(1, objects.size)
+        assertNull(objects[0].primaryKey)
+    }
+
 
 
     @Test
@@ -113,6 +135,9 @@ class PrimaryKeyTests {
         assertFailsWith<RuntimeException> {
             realm.create(NoPrimaryKey::class, PRIMARY_KEY)
         }
+        realm.rollbackTransaction()
+
+        assertTrue(realm.objects(NoPrimaryKey::class).isEmpty())
     }
 
     @Test
@@ -121,32 +146,34 @@ class PrimaryKeyTests {
         assertFailsWith<RuntimeException> {
             realm.create(PrimaryKeyString::class, 14)
         }
+        realm.rollbackTransaction()
+
+        assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
     }
 
     @Test
     fun importUnmanagedWithPrimaryKey() {
-        val o = PrimaryKeyString()
+        val o = PrimaryKeyString().apply { primaryKey = PRIMARY_KEY }
         realm.beginTransaction()
         realm.copyToRealm(o)
         realm.commitTransaction()
+
+        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
 
     @Test
+    @Ignore // https://github.com/realm/realm-core/issues/4595
     fun importUnmanagedWithDuplicatePrimaryKeyThrows() {
         val o = PrimaryKeyString()
         realm.beginTransaction()
-        val copyToRealm = realm.copyToRealm(o)
-        x(copyToRealm)
+        realm.copyToRealm(o)
         assertFailsWith<RuntimeException> {
             realm.copyToRealm(o)
         }
         realm.commitTransaction()
-    }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    fun <T: RealmObject> x(t: T) {
-        val typeOf: KType = typeOf<PrimaryKeyString>()
-        (typeOf as io.realm.internal.RealmObjectCompanion).`$realm$schema`()
+        val objects = realm.objects(PrimaryKeyString::class)
+        assertEquals(1, objects.size)
     }
 
     @Test
@@ -172,14 +199,13 @@ class PrimaryKeyTests {
         assertTrue(expectedTypes.isEmpty(), "$expectedTypes")
     }
 
-    // - Test all types that supports primary keys can in fact be used
     @Test
     @Suppress("invisible_reference", "invisible_member")
-    fun testAllTypes() {
+    fun testPrimaryKeyForAllSupportedTypes() {
         val types = allPrimaryKeyTypes.toMutableSet()
 
         // TODO Maybe we would only need to iterate underlying Realm types?
-        val classes: Array<KClass<out RealmObject>> = arrayOf(
+        val classes = arrayOf(
             PrimaryKeyByte::class,
             PrimaryKeyByteNullable::class,
             PrimaryKeyChar::class,
@@ -220,10 +246,10 @@ class PrimaryKeyTests {
             // We could expose this through the test model definitions instead if that is better to avoid the internals
             val realmObjectCompanion = mediator.companionOf(c)
             realm.copyToRealm(realmObjectCompanion.`$realm$newInstance`() as RealmObject)
-            val type = realmObjectCompanion.`$realm$primaryKey`.rType()
+            val type = realmObjectCompanion.`$realm$primaryKey`!!.rType()
             assertTrue(types.remove(type), type.toString())
         }
-        assertArrayEquals("Untested primary keys: $types", types.toTypedArray(), emptyArray())
+        assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
     }
 
     // TODO Test all types that cannot be supported raises compilation error. Probably fits better in

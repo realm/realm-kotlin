@@ -79,13 +79,12 @@ fun elementTypes(
     return classifiers.fold(
         mutableSetOf<RElementType>(),
         { acc, classifier ->
-            val classifier1 = normalize(classifier)
-            val realmFieldType = io.realm.internal.classifiers[classifier]!!
+            val realmFieldType = io.realm.internal.classifiers[classifier] ?: error("Unmapped classifier $classifier")
             if (realmFieldType.nullable) {
-                acc.add(RElementType(classifier1, true))
+                acc.add(RElementType(classifier, true))
             }
             if (realmFieldType.nonNullable) {
-                acc.add(RElementType(classifier1, false))
+                acc.add(RElementType(classifier, false))
             }
             acc
         }
@@ -130,7 +129,7 @@ fun KType.rType(): RType {
     val elementType = elementType(this)
     return RType(
         collectionType(this),
-        RElementType(normalize(elementType.classifier!!), elementType.isMarkedNullable)
+        RElementType(elementType.classifier!!, elementType.isMarkedNullable)
     )
 }
 
@@ -142,8 +141,10 @@ class RealmFieldDescriptor(val property: KMutableProperty1<*, *>) {
     val rType by lazy { property.rType() }
 
     val isElementNullable: Boolean = rType.elementType.nullable
-    val isPrimariKey: Boolean =
-        rType.isPrimaryKeySupported && property.annotations.isNotEmpty() && property.annotations[0] is PrimaryKey
+
+    // TODO Annotations are not available at runtime on Kotlin native
+    // val isPrimariKey: Boolean =
+    //    rType.isPrimaryKeySupported && property.annotations.isNotEmpty() && property.annotations[0] is PrimaryKey
 
     // TODO Public/internal name. We cannot pull the public name for when obfuscated
 }
@@ -165,13 +166,4 @@ private fun elementType(type: KType) = when (collectionType(type)) {
         type.arguments[0].type!!
     CollectionType.RLM_COLLECTION_TYPE_DICTIONARY ->
         type.arguments[1].type!!
-}
-
-@OptIn(ExperimentalStdlibApi::class)
-private fun normalize(classifier: KClassifier): KClassifier {
-    return if ((classifier as KClass<*>).supertypes.contains(typeOf<RealmObject>())) {
-        RealmObject::class
-    } else {
-        classifier
-    }
 }

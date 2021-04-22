@@ -302,21 +302,21 @@ class GenerationExtensionTest {
             source = SourceFile.kotlin(
                 "schema.kt",
                 """
-                        import io.realm.RealmObject
-                        import io.realm.RealmConfiguration
-                        import io.realm.PrimaryKey
-                                    
-                        class A : RealmObject {
-                            @PrimaryKey
-                            var primaryKey1: String? = null
-                            
-                            @PrimaryKey
-                            var primaryKey2: String? = null
-                        }
+                    import io.realm.RealmObject
+                    import io.realm.RealmConfiguration
+                    import io.realm.PrimaryKey
+                                
+                    class A : RealmObject {
+                        @PrimaryKey
+                        var primaryKey1: String? = null
                         
-                        val configuration =
-                            RealmConfiguration(schema = setOf(A::class))
-                    """.trimIndent()
+                        @PrimaryKey
+                        var primaryKey2: String? = null
+                    }
+                    
+                    val configuration =
+                        RealmConfiguration(schema = setOf(A::class))
+                """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
