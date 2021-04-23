@@ -33,11 +33,12 @@ internal class StdOutLogger(override val tag: String = "REALM") : RealmLogger {
         return message
     }
 
-    private fun formatMessage(message: String, args: Array<out Any?>): String {
-        return message.format(*args)
+    private fun formatMessage(message: String, vararg args: Any?): String {
+        return message.format(args)
     }
 
     private fun getStackTraceString(t: Throwable): String {
+        @Suppress("MagicNumber")
         val sw = StringWriter(256)
         val pw = PrintWriter(sw, false)
         t.printStackTrace(pw)

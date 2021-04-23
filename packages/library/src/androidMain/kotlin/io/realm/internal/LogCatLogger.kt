@@ -52,7 +52,7 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
         }
     }
 
-    private fun prepareLogMessage(throwable: Throwable?, message: String?, args: Array<out Any?>): String {
+    private fun prepareLogMessage(throwable: Throwable?, message: String?, vararg args: Any?): String {
         var message = message
         if (message.isNullOrEmpty()) {
             if (throwable == null) {
@@ -70,13 +70,14 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
         return message
     }
 
-    private fun formatMessage(message: String, args: Array<out Any?>): String {
-        return message.format(*args)
+    private fun formatMessage(message: String, vararg args: Any?): String {
+        return message.format(args)
     }
 
     private fun getStackTraceString(t: Throwable): String {
         // Don't replace this with Log.getStackTraceString() - it hides
         // UnknownHostException, which is not what we want.
+        @Suppress("MagicNumber")
         val sw = StringWriter(256)
         val pw = PrintWriter(sw, false)
         t.printStackTrace(pw)

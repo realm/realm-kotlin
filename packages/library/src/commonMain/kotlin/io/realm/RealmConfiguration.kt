@@ -72,7 +72,7 @@ public class RealmConfiguration private constructor(
             //  https://github.com/realm/realm-kotlin/issues/75
             "$directory/$name"
         } else path
-        this.name = name // FIXME: Should read name from end of path
+        this.name = name // FIXME Should read name from end of path
         this.schema = schema
         this.mapOfKClassWithCompanion = companionMap
         this.log = logConfig
