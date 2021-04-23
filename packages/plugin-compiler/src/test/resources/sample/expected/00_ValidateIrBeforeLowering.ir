@@ -545,7 +545,7 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Sample.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
                 name: CONST String type=kotlin.String value="Sample"
                 primaryKey: CONST String type=kotlin.String value="id"
                 flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.ClassFlag> origin=null
@@ -926,9 +926,9 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Child.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
                 name: CONST String type=kotlin.String value="Child"
-                primaryKey: CONST String type=kotlin.String value=""
+                primaryKey: CONST Null type=kotlin.Nothing? value=null
                 flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.ClassFlag> origin=null
                   <T>: io.realm.interop.ClassFlag
                   elements: VARARG type=kotlin.Array<io.realm.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.interop.ClassFlag>

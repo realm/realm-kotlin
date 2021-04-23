@@ -164,7 +164,7 @@ actual object RealmInterop {
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
-                    primary_key = clazz.primaryKey.cstr.ptr
+                    primary_key = (clazz.primaryKey ?: "").cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags =

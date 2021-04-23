@@ -44,7 +44,7 @@ actual object RealmInterop {
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
-                primary_key = clazz.primaryKey
+                primary_key = clazz.primaryKey ?: ""
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = INVALID_CLASS_KEY

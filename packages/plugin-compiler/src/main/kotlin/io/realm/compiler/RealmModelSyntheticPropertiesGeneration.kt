@@ -213,12 +213,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val primaryKeyFields = fields.filter { it.value.second.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
-        val primaryKey: String = when (primaryKeyFields.size) {
-            0 -> ""
+        val primaryKey: String? = when (primaryKeyFields.size) {
+            0 -> null
             1 -> primaryKeyFields.entries.first().key
             else -> {
                 logError("RealmObject can only have one primary key")
-                ""
+                null
             }
         }
 
@@ -240,7 +240,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     // Name
                     putValueArgument(arg++, irString(irClass.name.identifier))
                     // Primary key
-                    putValueArgument(arg++, irString(primaryKey))
+                    putValueArgument(
+                        arg++,
+                        if (primaryKey != null) irString(primaryKey) else {
+                            IrConstImpl.constNull(
+                                startOffset,
+                                endOffset,
+                                pluginContext.irBuiltIns.nothingNType
+                            )
+                        }
+                    )
                     // Flags
                     putValueArgument(
                         arg++,
