@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrVararg
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
@@ -166,18 +165,18 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             // be available as children
             schemaArgument.acceptChildrenVoid(object :
                     IrElementVisitorVoid {
-                override fun visitElement(element: IrElement) {
-                    element.acceptChildrenVoid(this)
-                }
+                    override fun visitElement(element: IrElement) {
+                        element.acceptChildrenVoid(this)
+                    }
 
-                override fun visitClassReference(expression: IrClassReference) {
-                    addEntryToCompanionMap(
+                    override fun visitClassReference(expression: IrClassReference) {
+                        addEntryToCompanionMap(
                             expression,
                             pluginContext,
                             specifiedModels
-                    )
-                }
-            })
+                        )
+                    }
+                })
         }
         is IrGetValueImpl -> {
             // the list of CLASS_REFERENCE were probably created in a tmp variable because of
@@ -185,23 +184,23 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             // the CLASS_REFERENCE via the content of the tmp variable
             if (schemaArgument.symbol.owner.origin == IrDeclarationOrigin.IR_TEMPORARY_VARIABLE) {
                 schemaArgument.symbol.owner.parent.acceptChildren(
-                        object :
-                                IrElementVisitor<Unit, Name> {
-                            override fun visitElement(
-                                    element: IrElement,
-                                    data: Name
-                            ) {
-                                element.acceptChildren(this, data)
-                            }
+                    object :
+                        IrElementVisitor<Unit, Name> {
+                        override fun visitElement(
+                            element: IrElement,
+                            data: Name
+                        ) {
+                            element.acceptChildren(this, data)
+                        }
 
-                            override fun visitVariable(
-                                    declaration: IrVariable,
-                                    data: Name
-                            ) {
-                                if (declaration.name == data) {
-                                    // get class references
-                                    declaration.acceptChildrenVoid(object :
-                                            IrElementVisitorVoid {
+                        override fun visitVariable(
+                            declaration: IrVariable,
+                            data: Name
+                        ) {
+                            if (declaration.name == data) {
+                                // get class references
+                                declaration.acceptChildrenVoid(object :
+                                        IrElementVisitorVoid {
 
                                         override fun visitElement(element: IrElement) {
                                             element.acceptChildrenVoid(this)
@@ -209,18 +208,18 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
 
                                         override fun visitClassReference(expression: IrClassReference) {
                                             addEntryToCompanionMap(
-                                                    expression,
-                                                    pluginContext,
-                                                    specifiedModels
+                                                expression,
+                                                pluginContext,
+                                                specifiedModels
                                             )
                                         }
                                     })
-                                } else {
-                                    super.visitVariable(declaration, data)
-                                }
+                            } else {
+                                super.visitVariable(declaration, data)
                             }
-                        },
-                        data = schemaArgument.symbol.owner.name
+                        }
+                    },
+                    data = schemaArgument.symbol.owner.name
                 )
             }
         }
@@ -229,7 +228,6 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
         }
     }
 }
-
 
 private fun IrConstructorCallImpl.buildCompanionMap(
     specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>,
@@ -253,9 +251,11 @@ private fun populateCompanion(
     pluginContext: IrPluginContext
 ): IrCallImpl {
     if (specifiedModels.isEmpty()) {
-        logError("No schema was provided. It must be defined as a set of class literals (MyType::class) either through " +
+        logError(
+            "No schema was provided. It must be defined as a set of class literals (MyType::class) either through " +
                 "RealmConfiguration(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...).build(), " +
-                "or RealmConfiguration.Builder().schema(...).build().")
+                "or RealmConfiguration.Builder().schema(...).build()."
+        )
     }
 
     val mapOf =

@@ -83,7 +83,6 @@ class GenerationExtensionTest {
         }
     }
 
-
     @Test
     fun `RealmConfiguration Schema Argument Lowering`() {
         val inputs = Files("/schema")
