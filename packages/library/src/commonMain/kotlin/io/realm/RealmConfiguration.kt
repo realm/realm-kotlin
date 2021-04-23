@@ -87,8 +87,8 @@ public class RealmConfiguration private constructor(
      *             placed in the default location for the platform. On Android this is in `getFilesDir()`
      * @param schema set of classes that make up the schema for the Realm. Identified by their class literal `T::class`.
      */
-    // This constructor is never used, but any calls to it are being rewired by the Realm Compiler Plugin to call the
-    // other secondary instructor with all schema classes mapped to their RealmCompanion.
+    // This constructor is never used at runtime, all calls to it are being rewired by the Realm Compiler Plugin to call
+    // the other secondary instructor with all schema classes mapped to their RealmCompanion.
     public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>) :
         this(path, name, mapOf())
 

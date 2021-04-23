@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
+import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
@@ -74,11 +75,15 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                     if (REALM_CONFIGURATION == expression.symbol.owner.returnType.classFqName &&
                         !expression.symbol.owner.isPrimary
                     ) {
-                        // substitute the public constructor call with the internal one, which will contain
-                        // also the populated companion map
-                        val internalConstructor =
+                        // There exist 3 constructors in RealmConfiguration
+                        // 1) Primary private constructor accepting all builder fields.
+                        // 2) Public secondary constructor accepting a schema as a Set.
+                        // 3) Internal secondary constructor accept the map of <KClass, RealmCompanion>.
+                        // In this step we are finding calls to constructor(2) and transform it into calls
+                        // to constructor(3).
+                        val internalConstructor: IrConstructorSymbol =
                             pluginContext.lookupConstructorInClass(REALM_CONFIGURATION) {
-                                !it.owner.isPrimary
+                                !it.owner.isPrimary && (it.owner.valueParameters[2].type.classFqName?.toString().equals("kotlin.collections.Map"))
                             }
                         return IrConstructorCallImpl(
                             expression.startOffset, expression.endOffset,
@@ -88,11 +93,11 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             constructorTypeArgumentsCount = 0,
                             valueArgumentsCount = 3,
                         ).apply {
-                            // copy positional argument from the original constructor call
+                            // copy path/name arguments from the original constructor call
                             putValueArgument(0, expression.getValueArgument(0))
                             putValueArgument(1, expression.getValueArgument(1))
 
-                            // Transform the third argument (listOf<T::Class>) into a companion map
+                            // Transform the third argument (setOf<T::Class>) into a companion map
                             val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
                             val specifiedModels = mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
                             findSchemaClassLiterals(schemaArgument, pluginContext, specifiedModels)

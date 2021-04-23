@@ -26,9 +26,16 @@ import io.realm.log.RealmLog
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
-class Realm {
+class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) {
+
+    // Public properties
+    /**
+     * Configuration used to configure this Realm instance.
+     */
+    val configuration: RealmConfiguration
+
+    // Private/Internal properties
     private var dbPointer: NativePointer? = null // TODO API-INTERNAL nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
-    private lateinit var realmConfiguration: RealmConfiguration
     internal val log: RealmLog
 
     companion object {
@@ -43,10 +50,8 @@ class Realm {
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
 
-            val realm = Realm()
-            realm.log.info("Opening Realm: ${realmConfiguration.path}")
-            realm.realmConfiguration = realmConfiguration
-            realm.dbPointer = RealmInterop.realm_open(realmConfiguration.nativeConfig)
+            val realm = Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
+            realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
 
@@ -94,7 +99,9 @@ class Realm {
     }
 
     init {
-        log = RealmLog(configuration = realmConfiguration.log)
+        this.dbPointer = dbPointer
+        this.configuration = configuration
+        this.log = RealmLog(configuration = configuration.log)
     }
 
     fun beginTransaction() {
@@ -110,7 +117,7 @@ class Realm {
     }
 
     fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(realmConfiguration.mediator, dbPointer!!, type)
+        return io.realm.internal.create(configuration.mediator, dbPointer!!, type)
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
@@ -126,7 +133,7 @@ class Realm {
      * @return The managed version of the `instance`.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
-        return copyToRealm(realmConfiguration.mediator, dbPointer!!, instance)
+        return copyToRealm(configuration.mediator, dbPointer!!, instance)
     }
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
@@ -135,7 +142,7 @@ class Realm {
             @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
             { RealmInterop.realm_query_parse(dbPointer!!, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
-            realmConfiguration.mediator
+            configuration.mediator
         )
     }
 
@@ -148,6 +155,6 @@ class Realm {
             RealmInterop.realm_close(it)
         }
         dbPointer = null
-        log.info("Realm closed: ${realmConfiguration.path}")
+        log.info("Realm closed: ${configuration.path}")
     }
 }
