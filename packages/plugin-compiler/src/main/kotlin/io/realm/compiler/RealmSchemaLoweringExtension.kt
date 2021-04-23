@@ -259,17 +259,17 @@ private fun populateCompanion(
     }
 
     val mapOf = pluginContext.referenceFunctions(FqNames.KOTLIN_COLLECTIONS_MAPOF)
-            .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
+        .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
     val realmObjectCompanionIrClass: IrClass = pluginContext.lookupClassOrThrow(FqNames.REALM_MODEL_COMPANION)
     val mapType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_MAP)
     val companionMapKeyType = pluginContext.irBuiltIns.kClassClass.starProjectedType
     val companionMapValueType = realmObjectCompanionIrClass.defaultType
     val companionMapType: IrSimpleType = mapType.typeWith(companionMapKeyType, companionMapValueType)
     val companionMapEntryType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_PAIR)
-            .typeWith(companionMapKeyType, companionMapValueType)
+        .typeWith(companionMapKeyType, companionMapValueType)
     val pairCtor = pluginContext.lookupConstructorInClass(FqNames.KOTLIN_PAIR) {
-            it.owner.valueParameters.size == 2
-        }
+        it.owner.valueParameters.size == 2
+    }
     val populatedCompanionMap = IrCallImpl(
         startOffset, endOffset,
         companionMapType,
