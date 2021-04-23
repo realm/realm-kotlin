@@ -21,7 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.RealmModelInternal
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.allTypes
+import io.realm.internal.allFieldTypes
 import io.realm.interop.ClassFlag
 import io.realm.interop.CollectionType
 import io.realm.interop.NativePointer
@@ -260,7 +260,9 @@ class GenerationExtensionTest {
             Double::class to "1.4",
             String::class to "\"Realm\"",
         )
-        for (type in allTypes) {
+        for (type in allFieldTypes) {
+            // TODO Consider adding verification of compiler errors when marking collection
+            //  types as primary keys
             if (type.collectionType != CollectionType.RLM_COLLECTION_TYPE_NONE) {
                 continue
             }

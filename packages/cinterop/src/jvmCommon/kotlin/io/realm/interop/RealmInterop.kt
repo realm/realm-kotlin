@@ -166,7 +166,7 @@ actual object RealmInterop {
         return from_realm_value(cvalue)
     }
 
-    internal fun <T> from_realm_value(value: realm_value_t?): T {
+    private fun <T> from_realm_value(value: realm_value_t?): T {
         return when (value?.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
                 value.string
@@ -195,7 +195,7 @@ actual object RealmInterop {
 
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
-    internal fun <T> to_realm_value(value: T): realm_value_t {
+    private fun <T> to_realm_value(value: T): realm_value_t {
         val cvalue = realm_value_t()
         if (value == null) {
             cvalue.type = realm_value_type_e.RLM_TYPE_NULL

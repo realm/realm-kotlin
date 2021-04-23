@@ -26,43 +26,39 @@ import kotlin.reflect.KType
 
 // Core field types with their support level
 @Suppress("LongParameterList")
-enum class RealmFieldType(
+enum class CoreFieldType(
     val type: PropertyType,
     val nullable: Boolean,
     val nonNullable: Boolean,
     val listSupport: Boolean,
-    val setSupport: Boolean,
-    val mapSupport: Boolean,
-    val mixedSupport: Boolean,
     val primaryKeySupport: Boolean,
-    val indexSupport: Boolean,
 ) {
-    // FIXME Get the support level right
-    INT(PropertyType.RLM_PROPERTY_TYPE_INT, true, true, true, false, false, false, true, true),
-    BOOL(PropertyType.RLM_PROPERTY_TYPE_BOOL, true, true, true, false, false, false, false, true),
-    STRING(PropertyType.RLM_PROPERTY_TYPE_STRING, true, true, true, false, false, false, true, true),
-    OBJECT(PropertyType.RLM_PROPERTY_TYPE_OBJECT, true, false, true, false, false, false, false, false),
-    FLOAT(PropertyType.RLM_PROPERTY_TYPE_FLOAT, true, true, true, false, false, false, false, false),
-    DOUBLE(PropertyType.RLM_PROPERTY_TYPE_DOUBLE, true, true, true, false, false, false, false, false);
+    INT(PropertyType.RLM_PROPERTY_TYPE_INT, true, true, true, true),
+    BOOL(PropertyType.RLM_PROPERTY_TYPE_BOOL, true, true, true, false),
+    STRING(PropertyType.RLM_PROPERTY_TYPE_STRING, true, true, true, true),
+    OBJECT(PropertyType.RLM_PROPERTY_TYPE_OBJECT, true, false, true, false),
+    FLOAT(PropertyType.RLM_PROPERTY_TYPE_FLOAT, true, true, true, false),
+    DOUBLE(PropertyType.RLM_PROPERTY_TYPE_DOUBLE, true, true, true, false);
 }
 
 // Kotlin classifier to Core field type mappings
-val classifiers: Map<KClassifier, RealmFieldType> = mapOf(
-    Byte::class to RealmFieldType.INT,
-    Char::class to RealmFieldType.INT,
-    Short::class to RealmFieldType.INT,
-    Int::class to RealmFieldType.INT,
-    Long::class to RealmFieldType.INT,
-    Boolean::class to RealmFieldType.BOOL,
-    Float::class to RealmFieldType.FLOAT,
-    Double::class to RealmFieldType.DOUBLE,
-    String::class to RealmFieldType.STRING,
-    RealmObject::class to RealmFieldType.OBJECT
+val classifiers: Map<KClassifier, CoreFieldType> = mapOf(
+    Byte::class to CoreFieldType.INT,
+    Char::class to CoreFieldType.INT,
+    Short::class to CoreFieldType.INT,
+    Int::class to CoreFieldType.INT,
+    Long::class to CoreFieldType.INT,
+    Boolean::class to CoreFieldType.BOOL,
+    Float::class to CoreFieldType.FLOAT,
+    Double::class to CoreFieldType.DOUBLE,
+    String::class to CoreFieldType.STRING,
+    RealmObject::class to CoreFieldType.OBJECT
 )
 
+// Element type is the type of the element of either a singular field or the container element type.
 // Basically just a clone of KType but with the ability to create them from input parameters at
 // runtime as KClassifier.createType is not available for Kotlin Native.
-data class RElementType(val classifier: KClassifier, val nullable: Boolean) {
+data class ElementType(val classifier: KClassifier, val nullable: Boolean) {
 
     val realmFieldType = classifiers[classifier] ?: throw TODO("$classifier")
 
@@ -71,43 +67,46 @@ data class RElementType(val classifier: KClassifier, val nullable: Boolean) {
     }
 }
 
-// Utility method to generate cartesian product of classifiers and nullability values
+// Utility method to generate cartesian product of classifiers and nullability values according to
+// the support level of the underlying core field type specified in CoreFieldType.
 fun elementTypes(
     classifiers: Collection<KClassifier>,
-): MutableSet<RElementType> {
+): MutableSet<ElementType> {
     return classifiers.fold(
-        mutableSetOf<RElementType>(),
+        mutableSetOf<ElementType>(),
         { acc, classifier ->
             val realmFieldType = io.realm.internal.classifiers[classifier] ?: error("Unmapped classifier $classifier")
             if (realmFieldType.nullable) {
-                acc.add(RElementType(classifier, true))
+                acc.add(ElementType(classifier, true))
             }
             if (realmFieldType.nonNullable) {
-                acc.add(RElementType(classifier, false))
+                acc.add(ElementType(classifier, false))
             }
             acc
         }
     )
 }
 
-//
-val allElementClassifiers: Set<KClassifier> = classifiers.keys
-val allElementTypes = elementTypes(allElementClassifiers)
-val allSingularTypes = allElementTypes.map { RType(CollectionType.RLM_COLLECTION_TYPE_NONE, it) }
-val allListTypes = allElementTypes.filter { it.realmFieldType.listSupport }.map { RType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
+// Convenience variables holding collections of the various supported
+val elementClassifiers: Set<KClassifier> = classifiers.keys
+val elementTypes = elementTypes(elementClassifiers)
+// Convenience variables holding collection of various groups of Realm field types
+val allSingularFieldTypes = elementTypes.map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_NONE, it) }
+val allListFieldTypes = elementTypes.filter { it.realmFieldType.listSupport }.map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
 // TODO Set
 // TODO Dict
-val allTypes = allSingularTypes + allListTypes
-val allPrimaryKeyTypes = allTypes.filter { it.isPrimaryKeySupported }
+val allFieldTypes = allSingularFieldTypes + allListFieldTypes
+val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
-// Realm field type
-data class RType(
+// Realm field type represents the type of a given user specified field in the RealmObject
+data class RealmFieldType(
     val collectionType: CollectionType,
-    val elementType: RElementType
+    val elementType: ElementType
 ) {
     val isPrimaryKeySupported: Boolean =
         collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
 
+    // Utility method to generate Kotlin code for the specific field
     fun toKotlinLiteral(): String {
         val elementType = this.elementType
         val element = (elementType.classifier as KClass<*>).simpleName + (if (elementType.nullable) "?" else "")
@@ -124,18 +123,21 @@ data class RType(
     }
 }
 
-fun KType.rType(): RType {
+// Convenience methods to easily derive Realm field information from Kotlin types.
+fun KType.rType(): RealmFieldType {
     val elementType = elementType(this)
-    return RType(
+    return RealmFieldType(
         collectionType(this),
-        RElementType(elementType.classifier!!, elementType.isMarkedNullable)
+        ElementType(elementType.classifier!!, elementType.isMarkedNullable)
     )
 }
-
-fun KMutableProperty1<*, *>.rType(): RType {
+fun KMutableProperty1<*, *>.rType(): RealmFieldType {
     return this.returnType.rType()
 }
 
+// Convenience class to easily derive information about a Realm field directly from the property.
+// It is unclear if we can derive sufficient information without access to annotations at runtime,
+// but alternatively we can maybe query information from the schema and key cache infrastructure.
 class RealmFieldDescriptor(val property: KMutableProperty1<*, *>) {
     val rType by lazy { property.rType() }
 

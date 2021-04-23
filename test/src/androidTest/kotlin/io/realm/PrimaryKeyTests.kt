@@ -16,7 +16,7 @@
 
 package io.realm
 
-import io.realm.internal.allPrimaryKeyTypes
+import io.realm.internal.allPrimaryKeyFieldTypes
 import io.realm.internal.rType
 import test.primarykey.NoPrimaryKey
 import test.primarykey.PrimaryKeyByte
@@ -192,15 +192,15 @@ class PrimaryKeyTests {
             typeOf<String?>(),
         ).map { it.rType() }.toMutableSet()
 
-        assertTrue(expectedTypes.containsAll(allPrimaryKeyTypes))
-        expectedTypes.removeAll(allPrimaryKeyTypes)
+        assertTrue(expectedTypes.containsAll(allPrimaryKeyFieldTypes))
+        expectedTypes.removeAll(allPrimaryKeyFieldTypes)
         assertTrue(expectedTypes.isEmpty(), "$expectedTypes")
     }
 
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun testPrimaryKeyForAllSupportedTypes() {
-        val types = allPrimaryKeyTypes.toMutableSet()
+        val types = allPrimaryKeyFieldTypes.toMutableSet()
 
         // TODO Maybe we would only need to iterate underlying Realm types?
         val classes = arrayOf(

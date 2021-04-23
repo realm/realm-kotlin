@@ -100,7 +100,8 @@ class Realm {
      *
      * @throws RuntimeException if there is currently no write transaction.
      */
-    // TODO Add test for this
+    // TODO Add test for this, but since it is part of transaction behaviour it only makes sense
+    //  when implementing our background thread backed write method
     fun rollbackTransaction() {
         RealmInterop.realm_rollback(dbPointer!!)
     }
