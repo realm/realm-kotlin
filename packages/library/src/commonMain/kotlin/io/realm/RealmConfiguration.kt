@@ -47,7 +47,7 @@ data class LogConfiguration(
 )
 
 public class RealmConfiguration private constructor(
-    companionMap: Map<KClass<*>, RealmObjectCompanion>,
+    companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
@@ -57,12 +57,11 @@ public class RealmConfiguration private constructor(
     // Public properties making up the RealmConfiguration
     public val path: String
     public val name: String
-
     public val schema: Set<KClass<out RealmObject>>
     public val log: LogConfiguration
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
-    internal var mapOfKClassWithCompanion: Map<KClass<*>, RealmObjectCompanion> = emptyMap()
+    internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     internal val nativeConfig: NativePointer = RealmInterop.realm_config_new()
     internal lateinit var mediator: Mediator
 
@@ -88,15 +87,19 @@ public class RealmConfiguration private constructor(
      *             placed in the default location for the platform. On Android this is in `getFilesDir()`
      * @param schema set of classes that make up the schema for the Realm. Identified by their class literal `T::class`.
      */
-    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>> = setOf()) :
+    // This constructor is never used, but any calls to it are being rewired by the Realm Compiler Plugin to call the
+    // other secondary instructor with all schema classes mapped to their RealmCompanion.
+    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>) :
+        this(path, name, mapOf())
+
+    internal constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Map<KClass<out RealmObject>, RealmObjectCompanion>) :
         this(
-            mapOf(),
+            schema,
             path,
             name,
-            schema,
+            schema.keys,
             LogConfiguration(LogLevel.WARN, false, listOf())
-        ) {
-        }
+        )
 
     /**
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
@@ -105,7 +108,7 @@ public class RealmConfiguration private constructor(
     class Builder(
         var path: String? = null, // Full path for Realm (directory + name)
         var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
-        vararg var schema: KClass<out RealmObject>
+        var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
 
         private var logLevel: LogLevel = LogLevel.WARN
@@ -114,7 +117,8 @@ public class RealmConfiguration private constructor(
 
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
-        fun schema(vararg classes: KClass<out RealmObject>) = apply { this.schema = classes }
+        fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes }
+        fun schema(vararg classes: KClass<out RealmObject>) = apply { this.schema = setOf(*classes) }
 
         /**
          * Configure the [LogLevel] for which all log events of equal or higher priority will be reported.
@@ -138,16 +142,16 @@ public class RealmConfiguration private constructor(
 
         fun build(): RealmConfiguration {
             @Suppress("SpreadOperator")
-            return RealmConfiguration(path, name, setOf(*schema))
+            return RealmConfiguration(path, name, schema)
         }
 
         // Called from the compiler plugin
-        internal fun build(companionMap: Map<KClass<*>, RealmObjectCompanion>): RealmConfiguration {
+        internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
             return RealmConfiguration(
                 companionMap,
                 path,
                 name,
-                setOf(*schema),
+                schema,
                 LogConfiguration(logLevel, removeSystemLogger, customLoggers)
             )
         }

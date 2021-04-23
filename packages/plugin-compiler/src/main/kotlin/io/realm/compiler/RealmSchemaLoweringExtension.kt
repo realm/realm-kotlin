@@ -73,7 +73,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                 @Suppress("LongMethod")
                 override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
                     if (REALM_CONFIGURATION == expression.symbol.owner.returnType.classFqName &&
-                        expression.symbol.owner.isPrimary
+                        !expression.symbol.owner.isPrimary
                     ) {
                         // substitute the public constructor call with the internal one, which will contain
                         // also the populated companion map
@@ -94,78 +94,10 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             putValueArgument(1, expression.getValueArgument(1))
 
                             // Transform the third argument (listOf<T::Class>) into a companion map
-                            val schemaArgument = expression.getValueArgument(2)!!
-                            val specifiedModels =
-                                mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
-                            when (schemaArgument) {
-                                is IrCallImpl -> {
-                                    // no ARGUMENTS_REORDERING_FOR_CALL block was added by IR, CLASS_REFERENCE should be available as children
-                                    schemaArgument.acceptChildrenVoid(object :
-                                            IrElementVisitorVoid {
-                                            override fun visitElement(element: IrElement) {
-                                                element.acceptChildrenVoid(this)
-                                            }
-
-                                            override fun visitClassReference(expression: IrClassReference) {
-                                                addEntryToCompanionMap(
-                                                    expression,
-                                                    pluginContext,
-                                                    specifiedModels
-                                                )
-                                            }
-                                        })
-                                }
-                                is IrGetValueImpl -> {
-                                    // the list of CLASS_REFERENCE were probably created in a tmp variable because of ARGUMENTS_REORDERING_FOR_CALL
-                                    // we need to navigate the parent block to extract the CLASS_REFERENCE via the content of the tmp variable
-                                    if (schemaArgument.symbol.owner.origin == IrDeclarationOrigin.IR_TEMPORARY_VARIABLE) {
-                                        schemaArgument.symbol.owner.parent.acceptChildren(
-                                            object :
-                                                IrElementVisitor<Unit, Name> {
-                                                override fun visitElement(
-                                                    element: IrElement,
-                                                    data: Name
-                                                ) {
-                                                    element.acceptChildren(this, data)
-                                                }
-
-                                                override fun visitVariable(
-                                                    declaration: IrVariable,
-                                                    data: Name
-                                                ) {
-                                                    if (declaration.name == data) {
-                                                        // get class references
-                                                        declaration.acceptChildrenVoid(object :
-                                                                IrElementVisitorVoid {
-
-                                                                override fun visitElement(element: IrElement) {
-                                                                    element.acceptChildrenVoid(this)
-                                                                }
-
-                                                                override fun visitClassReference(expression: IrClassReference) {
-                                                                    addEntryToCompanionMap(
-                                                                        expression,
-                                                                        pluginContext,
-                                                                        specifiedModels
-                                                                    )
-                                                                }
-                                                            })
-                                                    } else {
-                                                        super.visitVariable(declaration, data)
-                                                    }
-                                                }
-                                            },
-                                            data = schemaArgument.symbol.owner.name
-                                        )
-                                    }
-                                }
-                                else -> {
-                                    logError("Schema argument must be a list of class literal (T::class), supplied argument format not supported: ${schemaArgument.dump()}")
-                                }
-                            }
-
-                            val populatedCompanionMap =
-                                buildCompanionMap(specifiedModels, pluginContext)
+                            val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
+                            val specifiedModels = mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
+                            findSchemaClassLiterals(schemaArgument, pluginContext, specifiedModels)
+                            val populatedCompanionMap = buildCompanionMap(specifiedModels, pluginContext)
                             putValueArgument(2, populatedCompanionMap)
                         }
                     }
@@ -177,24 +109,8 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                         expression.type.classFqName == REALM_CONFIGURATION
                     ) {
                         // collect class references
-                        val specifiedModels =
-                            mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
-
-                        expression.acceptChildrenVoid(object : IrElementVisitorVoid {
-                            override fun visitElement(element: IrElement) {
-                                element.acceptChildrenVoid(this)
-                            }
-
-                            override fun visitVararg(classes: IrVararg) {
-                                for (clazz in classes.elements) {
-                                    addEntryToCompanionMap(
-                                        clazz as IrClassReferenceImpl,
-                                        pluginContext,
-                                        specifiedModels
-                                    )
-                                }
-                            }
-                        })
+                        val specifiedModels = mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
+                        findSchemaClassLiterals(expression, pluginContext, specifiedModels)
                         if (specifiedModels.isEmpty()) {
                             logError("Schema argument must be a non-empty vararg of class literal (T::class)")
                         } else {
@@ -224,6 +140,97 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
     }
 }
 
+/**
+ * Locate the list of schema class literals. This currently support them being defined in-place as var args, or in place
+ * using some of the factory collection methods like setOf and arrayOf, but we don't follow the code if defined further
+ * away than that.
+ *
+ * E.g. all of these are valid
+ * ```
+ * RealmConfiguration(schema = setOf(MyType::class))
+ * RealmConfiguration.Builder(schema = arrayOf(MyType::class)).build()
+ * RealmConfiguration(path, name, MyType::class, MyOtherType::class)
+ * ```
+ * While these are not
+ * ```
+ * val classes = setOf(MyType::class)
+ * RealmConfiguration(schema = classes)
+ *
+ * TODO: We should lift this restriction
+ * ```
+ */
+fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPluginContext, specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>) {
+    when (schemaArgument) {
+        is IrCallImpl -> {
+            // no ARGUMENTS_REORDERING_FOR_CALL block was added by IR, CLASS_REFERENCE should
+            // be available as children
+            schemaArgument.acceptChildrenVoid(object :
+                    IrElementVisitorVoid {
+                override fun visitElement(element: IrElement) {
+                    element.acceptChildrenVoid(this)
+                }
+
+                override fun visitClassReference(expression: IrClassReference) {
+                    addEntryToCompanionMap(
+                            expression,
+                            pluginContext,
+                            specifiedModels
+                    )
+                }
+            })
+        }
+        is IrGetValueImpl -> {
+            // the list of CLASS_REFERENCE were probably created in a tmp variable because of
+            // ARGUMENTS_REORDERING_FOR_CALL we need to navigate the parent block to extract
+            // the CLASS_REFERENCE via the content of the tmp variable
+            if (schemaArgument.symbol.owner.origin == IrDeclarationOrigin.IR_TEMPORARY_VARIABLE) {
+                schemaArgument.symbol.owner.parent.acceptChildren(
+                        object :
+                                IrElementVisitor<Unit, Name> {
+                            override fun visitElement(
+                                    element: IrElement,
+                                    data: Name
+                            ) {
+                                element.acceptChildren(this, data)
+                            }
+
+                            override fun visitVariable(
+                                    declaration: IrVariable,
+                                    data: Name
+                            ) {
+                                if (declaration.name == data) {
+                                    // get class references
+                                    declaration.acceptChildrenVoid(object :
+                                            IrElementVisitorVoid {
+
+                                        override fun visitElement(element: IrElement) {
+                                            element.acceptChildrenVoid(this)
+                                        }
+
+                                        override fun visitClassReference(expression: IrClassReference) {
+                                            addEntryToCompanionMap(
+                                                    expression,
+                                                    pluginContext,
+                                                    specifiedModels
+                                            )
+                                        }
+                                    })
+                                } else {
+                                    super.visitVariable(declaration, data)
+                                }
+                            }
+                        },
+                        data = schemaArgument.symbol.owner.name
+                )
+            }
+        }
+        else -> {
+            logError("Schema argument must be a list of class literal (T::class), supplied argument format not supported: ${schemaArgument?.dump()}")
+        }
+    }
+}
+
+
 private fun IrConstructorCallImpl.buildCompanionMap(
     specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>,
     pluginContext: IrPluginContext
@@ -246,7 +253,9 @@ private fun populateCompanion(
     pluginContext: IrPluginContext
 ): IrCallImpl {
     if (specifiedModels.isEmpty()) {
-        logError("Schema argument must be a list of class literal (T::class)")
+        logError("No schema was provided. It must be defined as a set of class literals (MyType::class) either through " +
+                "RealmConfiguration(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...).build(), " +
+                "or RealmConfiguration.Builder().schema(...).build().")
     }
 
     val mapOf =
@@ -333,21 +342,9 @@ private fun addEntryToCompanionMap(
     pluginContext: IrPluginContext,
     specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>
 ) {
-    val modelType: IrType =
-        (expression.type as IrSimpleTypeImpl).arguments[0] as IrType
-    val fqname: FqName =
-        modelType.classFqName!!
-    val irClass: IrClass =
-        pluginContext.lookupClassOrThrow(
-            fqname
-        )
-    val companion =
-        irClass.companionObject()!!
-    specifiedModels.add(
-        Triple(
-            irClass.symbol,
-            modelType,
-            companion.symbol
-        )
-    )
+    val modelType: IrType = (expression.type as IrSimpleTypeImpl).arguments[0] as IrType
+    val fqname: FqName = modelType.classFqName!!
+    val irClass: IrClass = pluginContext.lookupClassOrThrow(fqname)
+    val companion = irClass.companionObject()!!
+    specifiedModels.add(Triple(irClass.symbol, modelType, companion.symbol))
 }
