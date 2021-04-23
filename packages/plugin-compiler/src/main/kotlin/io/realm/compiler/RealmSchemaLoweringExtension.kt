@@ -155,7 +155,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
  * val classes = setOf(MyType::class)
  * RealmConfiguration(schema = classes)
  *
- * TODO: We should lift this restriction
+ * TODO We should lift this restriction
  * ```
  */
 fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPluginContext, specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>) {
