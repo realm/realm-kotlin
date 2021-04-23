@@ -5,6 +5,7 @@ import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.Locale
 
 /**
  * Create a logger that outputs to Android LogCat.
@@ -20,7 +21,7 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
 
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val priority: Int = level.priority
-        val logMessage: String = prepareLogMessage(throwable, message, args)
+        val logMessage: String = prepareLogMessage(throwable, message, *args)
 
         // Short circuit if message can fit into a single line in LogCat
         if (logMessage.length < MAX_LOG_LENGTH) {
@@ -61,7 +62,7 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
             message = getStackTraceString(throwable)
         } else {
             if (args.isNotEmpty()) {
-                message = formatMessage(message, args)
+                message = formatMessage(message, *args)
             }
             if (throwable != null) {
                 message += "\n" + getStackTraceString(throwable)
@@ -71,7 +72,7 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
     }
 
     private fun formatMessage(message: String, vararg args: Any?): String {
-        return message.format(args)
+        return message.format(Locale.US, *args)
     }
 
     private fun getStackTraceString(t: Throwable): String {
