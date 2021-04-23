@@ -30,7 +30,6 @@ import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -86,7 +85,6 @@ class GenerationExtensionTest {
 
 
     @Test
-    @Ignore // FIXME: Update schema IR
     fun `RealmConfiguration Schema Argument Lowering`() {
         val inputs = Files("/schema")
         val result = compile(inputs)
