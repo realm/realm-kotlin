@@ -275,13 +275,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     ?: error("Property without backing field or type")
                                 val nullable = backingField.type.isNullable()
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                val propertyFlags = mutableListOf<Name>(PROPERTY_FLAG_NORMAL)
+                                val propertyFlags = mutableListOf<Name>()
                                 if (nullable) {
                                     propertyFlags.add(PROPERTY_FLAG_NULLABLE)
                                 }
                                 if (primaryKey) {
                                     propertyFlags.add(PROPERTY_FLAG_PRIMARY_KEY)
-                                    propertyFlags.add(PROPERTY_FLAG_INDEXED)
                                 }
                                 val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
                                     setOf(
