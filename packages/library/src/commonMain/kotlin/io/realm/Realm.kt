@@ -22,7 +22,7 @@ import io.realm.internal.copyToRealm
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.log.RealmLog
+import io.realm.internal.RealmLog
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
@@ -35,7 +35,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     val configuration: RealmConfiguration
 
     // Private/Internal properties
-    private var dbPointer: NativePointer? = null // TODO API-INTERNAL nullable to avoid "'lateinit' modifier is not allowed on properties of primitive types"
+    private var dbPointer: NativePointer? = null
     internal val log: RealmLog
 
     companion object {

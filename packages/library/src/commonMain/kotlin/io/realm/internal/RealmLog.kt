@@ -1,12 +1,13 @@
-package io.realm.log
+package io.realm.internal
 
 import io.realm.LogConfiguration
-import io.realm.internal.TypeFactory
+import io.realm.log.LogLevel
+import io.realm.log.RealmLogger
 
 /**
  * Logger class used by Realm components. One logger is created for each Realm instance.
  */
-// FIXME Should be internal, but makes testing from the test module impossible
+// FIXME Only public because of testing. Using @Suppress("invisible_members") is not enough.
 public class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
 
     @Suppress("JoinDeclarationAndAssignment")

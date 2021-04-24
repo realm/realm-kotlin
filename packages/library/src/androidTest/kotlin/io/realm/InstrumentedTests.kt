@@ -153,7 +153,7 @@ class InstrumentedTests {
 //        assertEquals(2, managedPerson.age)
 //        assertEquals("Sophia", managedPerson.name)
 //    }
-//
+
 //    @Test
 //    fun queryObjects() {
 //        val configuration = RealmConfiguration.Builder()
