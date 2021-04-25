@@ -73,10 +73,11 @@ class NotificationTests {
         }
 
         launch {
-            realm.beginTransaction()
-            assertEquals(0, c.receive().size)
-            val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-            realm.commitTransaction()
+            val size = c.receive().size
+            val sample = realm.writeBlocking {
+                assertEquals(0, size)
+                create(Sample::class).apply { stringField = INITIAL }
+            }
 
             val result = c.receive()
             assertEquals(1, result.size)
@@ -84,9 +85,9 @@ class NotificationTests {
 
             token.cancel()
 
-            realm.beginTransaction()
-            realm.create(Sample::class).apply { stringField = INITIAL }
-            realm.commitTransaction()
+            realm.writeBlocking {
+                create(Sample::class).apply { stringField = INITIAL }
+            }
 
             delay(1.seconds)
             assertTrue(c.isEmpty)

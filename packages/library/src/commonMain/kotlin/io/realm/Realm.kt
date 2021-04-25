@@ -16,26 +16,12 @@
 
 package io.realm
 
-import io.realm.internal.RealmLog
-import io.realm.internal.RealmModelInternal
-import io.realm.internal.copyToRealm
-import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
-class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) {
-
-    // Public properties
-    /**
-     * Configuration used to configure this Realm instance.
-     */
-    val configuration: RealmConfiguration
-
-    // Private/Internal properties
-    private var dbPointer: NativePointer? = null
-    internal val log: RealmLog
+class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
+    BaseRealm(configuration, dbPointer) {
 
     companion object {
         /**
@@ -48,82 +34,68 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             //  IN Android use lazy property delegation init to load the shared library use the
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
-
             val realm = Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
-
-        // FIXME API-MUTABLE-REALM This should actually only be possible on a mutable realm, i.e. inside
-        //  a transaction
-        // FIXME EVALUATE Should this be on RealmModel instead?
-        fun <T : RealmObject> delete(obj: T) {
-            val internalObject = obj as RealmModelInternal
-            internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-                ?: throw IllegalArgumentException("Cannot delete unmanaged object")
-            internalObject.unmanage()
-        }
     }
-
-    init {
-        this.dbPointer = dbPointer
-        this.configuration = configuration
-        this.log = RealmLog(configuration = configuration.log)
-    }
-
-    fun beginTransaction() {
-        RealmInterop.realm_begin_write(dbPointer!!)
-    }
-
-    fun commitTransaction() {
-        RealmInterop.realm_commit(dbPointer!!)
-    }
-
-    fun cancelTransaction() {
-        TODO()
-    }
-
-    fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(configuration.mediator, dbPointer!!, type)
-    }
-    // Convenience inline method for the above to skip KClass argument
-    inline fun <reified T : RealmObject> create(): T { return create(T::class) }
 
     /**
-     * Creates a copy of an object in the Realm.
+     * Open a Realm instance. This instance grants access to an underlying Realm file defined by
+     * the provided [RealmConfiguration].
      *
-     * This will create a copy of an object and all it's children. Any already managed objects will
-     * not be copied, including the root `instance`. So invoking this with an already managed
-     * object is a no-operation.
-     *
-     * @param instance The object to create a copy from.
-     * @return The managed version of the `instance`.
+     * FIXME Figure out how to describe the constructor better
+     * FIXME Once the implementation of this class moves to the frozen architecture
+     *  this constructor should be the primary way to open Realms (as you only need
+     *  to do it once pr. app).
      */
-    fun <T : RealmObject> copyToRealm(instance: T): T {
-        return copyToRealm(configuration.mediator, dbPointer!!, instance)
+    public constructor(configuration: RealmConfiguration) :
+        this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+
+    /**
+     * TODO Add docs when this method is implemeted
+     */
+    suspend fun <R> write(function: MutableRealm.() -> R): R {
+        TODO("Awaiting implementation of the Frozen Architecture")
     }
 
-    fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        return RealmResults(
-            dbPointer!!,
-            @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
-            { RealmInterop.realm_query_parse(dbPointer!!, clazz.simpleName!!, "TRUEPREDICATE") },
-            clazz,
-            configuration.mediator
-        )
-    }
-    // Convenience inline method for the above to skip KClass argument
-    inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
-
-    // FIXME Consider adding a delete-all along with query support
-    //  https://github.com/realm/realm-kotlin/issues/64
-    // fun <T : RealmModel> delete(clazz: KClass<T>)
-
-    fun close() {
-        dbPointer?.let {
-            RealmInterop.realm_close(it)
+    /**
+     * NOTE Avoid calling this method on the UI thread, instead use [Realm.write].
+     *
+     * Modify the underlying Realm file by creating a write transaction on the current thread. Write
+     * transactions automatically commit any changes made when the closure returns unless
+     * [MutableRealm.cancelWrite] was called.
+     *
+     * The write transaction always represent the latest version of data in the Realm file, even if the calling
+     * Realm not yet represent this.
+     *
+     * TODO Better explanation here.
+     * @return any value returned from the provided write function.
+     */
+    @Suppress("TooGenericExceptionCaught")
+    fun <R> writeBlocking(function: MutableRealm.() -> R): R {
+        // While not efficiently to open a new Realm just for a write, it makes it a lot
+        // easier to control the API surface between Realm and MutableRealm
+        val writerRealm = MutableRealm(configuration, dbPointer)
+        try {
+            writerRealm.beginTransaction()
+            val returnValue: R = function(writerRealm)
+            writerRealm.commitTransaction()
+            return returnValue
+        } catch (e: Exception) {
+            // Only cancel writes for exceptions. For errors assume that something has gone
+            // horribly wrong and the process is exiting. And canceling the write might just
+            // hide the true underlying error.
+            writerRealm.cancelWrite()
+            throw e
         }
-        dbPointer = null
-        log.info("Realm closed: ${configuration.path}")
+    }
+
+    /**
+     * Close this Realm and all underlying resources. Accessing any methods or Realm Objects after this
+     * method has been called will then an [IllegalStateException].
+     */
+    public override fun close() {
+        super.close()
     }
 }

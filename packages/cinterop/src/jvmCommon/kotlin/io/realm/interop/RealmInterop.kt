@@ -129,6 +129,10 @@ actual object RealmInterop {
         realmc.realm_commit((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_rollback(realm: NativePointer) {
+        realmc.realm_rollback((realm as LongPointerWrapper).ptr)
+    }
+
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
     }
