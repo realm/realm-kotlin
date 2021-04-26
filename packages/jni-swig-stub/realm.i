@@ -256,7 +256,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
             get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
         },
         // change callback
-        [](void *userdata, const const realm_object_changes_t *changes) {
+        [](void *userdata, const realm_object_changes_t *changes) {
             // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
             //  like the C-API error callback below
             auto jenv = get_env(true);

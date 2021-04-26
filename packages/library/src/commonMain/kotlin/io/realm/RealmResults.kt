@@ -33,7 +33,7 @@ class RealmResults<T : RealmObject> constructor(
     private val realm: NativePointer,
     private val queryPointer: () -> NativePointer,
     private val clazz: KClass<T>,
-    private val schema: Mediator
+    private val mediator: Mediator
 ) : AbstractList<T>(), Queryable<T> {
 
     private val query: NativePointer by lazy { queryPointer() }
@@ -43,8 +43,8 @@ class RealmResults<T : RealmObject> constructor(
 
     override fun get(index: Int): T {
         val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
-        val model = schema.newInstance(clazz) as RealmModelInternal
-        model.link(realm, schema, clazz, link)
+        val model = mediator.createInstanceOf(clazz) as RealmModelInternal
+        model.link(realm, mediator, clazz, link)
         return model as T
     }
 
@@ -58,7 +58,7 @@ class RealmResults<T : RealmObject> constructor(
             realm,
             { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
             clazz,
-            schema,
+            mediator,
         )
     }
 
@@ -67,14 +67,14 @@ class RealmResults<T : RealmObject> constructor(
      *
      * Follows the pattern of [Realm.observe]
      */
-    fun observe(callback: Callback): Cancellable {
+    fun observe(callback: Callback<RealmResults<T>>): Cancellable {
         val token = RealmInterop.realm_results_add_notification_callback(
             result,
             object : io.realm.interop.Callback {
                 override fun onChange(collectionChanges: NativePointer) {
                     // FIXME Need to expose change details to the user
                     //  https://github.com/realm/realm-kotlin/issues/115
-                    callback.onChange()
+                    callback.onChange(this@RealmResults)
                 }
             }
         )

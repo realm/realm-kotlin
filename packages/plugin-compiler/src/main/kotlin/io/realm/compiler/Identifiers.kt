@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.name.Name
 internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
-    val DEFAULT_COMPANION = Name.identifier("Companion")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
@@ -33,12 +32,7 @@ internal object Names {
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
-    val REALM_OBJECT_SCHEMA = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Schema")
-
-    // RealmMediator methods
-    val REALM_MEDIATOR_MAPPING_PROPERTY = Name.identifier("companionMapping")
-    val REALM_MEDIATOR_NEW_INSTANCE_METHOD = Name.identifier("newInstance")
-    val REALM_MEDIATOR_SCHEMA_METHOD = Name.identifier("schema")
+    val MEDIATOR = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Mediator")
 
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
@@ -63,20 +57,16 @@ internal object FqNames {
     val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
+    val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
+    val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
     // External visible interface of Realm objects
-    val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
     val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")
     val KOTLIN_PAIR = FqName("kotlin.Pair")
     val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.Map")
-    val KOTLIN_COLLECTIONS_ABSTRACT_COLLECTION = FqName("kotlin.collections.AbstractCollection")
     val KOTLIN_COLLECTIONS_LIST = FqName("kotlin.collections.List")
-    val KOTLIN_COLLECTIONS_ARRAY_LIST = FqName("kotlin.collections.ArrayList")
-    val JAVA_UTIL_ARRAY_LIST = FqName("java.util.ArrayList")
-    val KOTLIN_COLLECTIONS_ITERATOR = FqName("kotlin.collections.Iterator")
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
     val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
-    val KOTLIN_COLLECTIONS_MUTABLE_COLLECTION = FqName("kotlin.collections.MutableCollection")
     val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
     // Schema related types
     val TABLE = FqName("io.realm.interop.Table")

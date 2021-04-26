@@ -32,5 +32,5 @@ interface RealmModelInternal {
     var `$realm$IsManaged`: Boolean
     // FIXME Should be Mediator but requires RealmModelInternal and Mediator to be in same module.
     //  Remember to fix type for compiler generated field.
-    var `$realm$Schema`: Any?
+    var `$realm$Mediator`: Any?
 }
