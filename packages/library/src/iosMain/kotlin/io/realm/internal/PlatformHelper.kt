@@ -16,6 +16,10 @@
 package io.realm.internal
 
 import io.realm.log.RealmLogger
+import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSURL
+import platform.Foundation.NSUserDomainMask
 
 actual object PlatformHelper {
     actual fun appFilesDirectory(): String {

@@ -146,6 +146,12 @@ kotlin {
         getByName("iosMain") {
             dependsOn(getByName("darwinCommon"))
         }
+        getByName("iosX64Main") {
+            dependsOn(getByName("iosMain"))
+        }
+        getByName("iosArm64Main") {
+            dependsOn(getByName("iosMain"))
+        }
         getByName("iosTest") {
         }
     }
