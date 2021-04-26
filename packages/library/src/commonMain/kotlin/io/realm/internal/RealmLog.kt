@@ -7,8 +7,7 @@ import io.realm.log.RealmLogger
 /**
  * Logger class used by Realm components. One logger is created for each Realm instance.
  */
-// FIXME Only public because of testing. Using @Suppress("invisible_members") is not enough.
-public class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
+internal class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
 
     @Suppress("JoinDeclarationAndAssignment")
     private val logLevel: LogLevel

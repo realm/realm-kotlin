@@ -1,3 +1,4 @@
+@file:Suppress("invisible_reference", "invisible_member")
 import io.realm.LogConfiguration
 import io.realm.internal.RealmLog
 import io.realm.log.LogLevel
