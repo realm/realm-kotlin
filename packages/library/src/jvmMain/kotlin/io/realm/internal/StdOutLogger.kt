@@ -38,11 +38,14 @@ internal class StdOutLogger(override val tag: String = "REALM") : RealmLogger {
     }
 
     private fun getStackTraceString(t: Throwable): String {
-        @Suppress("MagicNumber")
-        val sw = StringWriter(256)
+        val sw = StringWriter(Companion.INITIAL_BUFFER_SIZE)
         val pw = PrintWriter(sw, false)
         t.printStackTrace(pw)
         pw.flush()
         return sw.toString()
+    }
+
+    companion object {
+        const val INITIAL_BUFFER_SIZE = 256
     }
 }

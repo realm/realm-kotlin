@@ -14,10 +14,6 @@ import java.util.Locale
  * for message creation and formatting
  */
 internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
-    companion object {
-        private const val MAX_TAG_LENGTH = 23 // This limit was removed in API 24
-        private const val MAX_LOG_LENGTH = 4000
-    }
 
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val priority: Int = level.priority
@@ -78,11 +74,17 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
     private fun getStackTraceString(t: Throwable): String {
         // Don't replace this with Log.getStackTraceString() - it hides
         // UnknownHostException, which is not what we want.
-        @Suppress("MagicNumber")
-        val sw = StringWriter(256)
+        val sw = StringWriter(INITIAL_BUFFER_SIZE)
         val pw = PrintWriter(sw, false)
         t.printStackTrace(pw)
         pw.flush()
         return sw.toString()
     }
+
+    companion object {
+        private const val MAX_TAG_LENGTH = 23 // This limit was removed in API 24
+        private const val MAX_LOG_LENGTH = 4000
+        private const val INITIAL_BUFFER_SIZE = 256
+    }
+
 }
