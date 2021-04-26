@@ -16,4 +16,3 @@
  */
 
 package io.realm
-

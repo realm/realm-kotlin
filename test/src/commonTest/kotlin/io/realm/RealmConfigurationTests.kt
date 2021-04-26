@@ -100,5 +100,4 @@ class RealmConfigurationTests {
         assertEquals(2, config.log.loggers.size)
         assertEquals(logger, config.log.loggers.last())
     }
-
 }

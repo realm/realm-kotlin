@@ -26,5 +26,4 @@ actual object PlatformHelper {
     }
 
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = StdOutLogger(tag)
-
 }

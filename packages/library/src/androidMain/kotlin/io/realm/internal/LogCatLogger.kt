@@ -101,5 +101,4 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
         private const val MAX_LOG_LENGTH = 4000
         private const val INITIAL_BUFFER_SIZE = 256
     }
-
 }
