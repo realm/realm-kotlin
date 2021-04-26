@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.util
 
 // Platform dependant helper methods
 expect object PlatformUtils {

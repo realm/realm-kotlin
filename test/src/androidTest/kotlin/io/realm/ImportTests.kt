@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.util.PlatformUtils
 import io.realm.util.TestRealmFieldTypes
 import test.Sample
 import test.link.Child

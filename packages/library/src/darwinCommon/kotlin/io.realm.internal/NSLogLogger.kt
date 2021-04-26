@@ -71,7 +71,7 @@ internal class NSLogLogger(override val tag: String = "REALM") : RealmLogger {
         return formattedMessage
     }
 
-    // FIXME `throwable.stackTraceToString()` have a memory leak. See https://youtrack.jetbrains.com/issue/KT-46291.
+    // TODO `throwable.stackTraceToString()` have a memory leak. See https://youtrack.jetbrains.com/issue/KT-46291.
     //  So use a slimmed down version until it has been fixed.
     private inline fun dumpStackTrace(throwable: Throwable): String = throwable.toString()
 }
