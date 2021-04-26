@@ -110,7 +110,7 @@ public class RealmConfiguration private constructor(
 
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
-        private var customLoggers: List<RealmLogger> = listOf()
+        private var userLoggers: List<RealmLogger> = listOf()
 
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
@@ -127,7 +127,7 @@ public class RealmConfiguration private constructor(
          */
         fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) = apply {
             this.logLevel = level
-            this.customLoggers = customLoggers
+            this.userLoggers = customLoggers
         }
 
         /**
@@ -148,17 +148,17 @@ public class RealmConfiguration private constructor(
 
         // Called from the compiler plugin
         internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
-            val loggers = mutableListOf<RealmLogger>()
+            val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
-                loggers.add(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
-            loggers.addAll(customLoggers)
+            allLoggers.addAll(userLoggers)
             return RealmConfiguration(
                 companionMap,
                 path,
                 name,
                 schema,
-                LogConfiguration(logLevel, customLoggers)
+                LogConfiguration(logLevel, allLoggers)
             )
         }
     }
