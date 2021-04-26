@@ -13,27 +13,39 @@ Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) proj
 
 ## Setup
 
-- Add the following Gradle configuration in the *shared* module
-`shared/build.gradle.kts`
+- Add the following Gradle configuration in the root project (make sure you're using Kotlin `1.4.20` or recent)
+`<root project>/build.gradle.kts`
 ```Gradle
 buildscript {
     repositories {
+        // other repo
         maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
     }
     dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")// minimum 1.4.20
+        classpath("com.android.tools.build:gradle:4.0.1")
         classpath("io.realm.kotlin:gradle-plugin:0.0.1-SNAPSHOT")
     }
 }
-apply(plugin = "realm-kotlin")
-```
 
-Specify also the dependency in the common source set.
+allprojects {
+    repositories {
+        // other repo 
+        maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+    }
+}
+```
+![Gradle Configuration](./images/RootGradle.png)
+
+- Apply the `realm-kotlin` plugin and specify the dependency in the common source set.
 
 *See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.*
 
 ```Gradle
-repositories {
-    maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+plugins {
+    kotlin("multiplatform")
+    id("com.android.library")
+    id("realm-kotlin")
 }
 
 kotlin {
@@ -45,19 +57,7 @@ kotlin {
       }
 }
 ```
-
-![Gradle Configuration](./images/Gradle_Conf.png)
-
-- If you're using a version of Kotlin less than 1.5, enable the usage of the new IR backend for the Android project as follow
-`androidApp/build.gradle.kts`
-```Gradle
-android {
-  kotlinOptions {
-    useIR = true
-    jvmTarget = "1.8"
-  }
-}
-```
+![Gradle Configuration](./images/SharedGradle.png)
 
 ## Define model
 
