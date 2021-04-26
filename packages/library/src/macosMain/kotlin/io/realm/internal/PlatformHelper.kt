@@ -9,26 +9,19 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.internal
 
-package io.realm
+import io.realm.log.RealmLogger
 
-// Platform dependant helper methods
-expect object PlatformUtils {
-    fun createTempDir(): String
-    fun deleteTempDir(path: String)
-}
-
-// Platform independent helper methods
-object Utils {
-    fun createRandomString(length: Int): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
+actual object PlatformHelper {
+    @Suppress("FunctionOnlyReturningConstant")
+    actual fun appFilesDirectory(): String {
+        return "."
     }
+
+    actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
 }

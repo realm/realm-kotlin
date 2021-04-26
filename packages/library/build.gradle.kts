@@ -95,6 +95,10 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
+    dependencies {
+        implementation("androidx.startup:startup-runtime:1.0.0")
+    }
 }
 
 kotlin {
@@ -141,6 +145,12 @@ kotlin {
     sourceSets {
         getByName("iosMain") {
             dependsOn(getByName("darwinCommon"))
+        }
+        getByName("iosX64Main") {
+            dependsOn(getByName("iosMain"))
+        }
+        getByName("iosArm64Main") {
+            dependsOn(getByName("iosMain"))
         }
         getByName("iosTest") {
         }

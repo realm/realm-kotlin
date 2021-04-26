@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.internal
 
-package io.realm
-
-import platform.Foundation.NSDocumentDirectory
-import platform.Foundation.NSFileManager
-import platform.Foundation.NSURL
-import platform.Foundation.NSUserDomainMask
+import io.realm.log.RealmLogger
 
 actual object PlatformHelper {
-    actual fun appFilesDirectory(): String {
-        return (
-            NSFileManager.defaultManager.URLsForDirectory(NSDocumentDirectory, NSUserDomainMask)
-                .first() as NSURL
-            )?.path ?: error("Could not identify default document directory")
-    }
+
+    // Returns the root directory of the platform's App data
+    actual fun appFilesDirectory(): String = RealmInitializer.filesDir.absolutePath
+
+    // Returns the default logger for the platform
+    actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
 }

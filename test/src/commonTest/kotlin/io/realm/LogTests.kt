@@ -1,8 +1,11 @@
+@file:Suppress("invisible_reference", "invisible_member")
 import io.realm.LogConfiguration
-import io.realm.Utils
+import io.realm.Realm
+import io.realm.internal.PlatformHelper
 import io.realm.internal.RealmLog
 import io.realm.log.LogLevel
 import io.realm.util.TestLogger
+import io.realm.util.Utils
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,13 +24,14 @@ class LogTests {
 
     @BeforeTest
     fun setUp() {
-        log = RealmLog(configuration = LogConfiguration(LogLevel.ALL, false, listOf()))
+        val loggers = listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+        log = RealmLog(configuration = LogConfiguration(LogLevel.ALL, loggers))
     }
 
     @Test
     fun ignoreEventsLowerThanLogLevel() {
         val customLogger = TestLogger()
-        log = RealmLog(configuration = LogConfiguration(LogLevel.WARN, true, listOf(customLogger)))
+        log = RealmLog(configuration = LogConfiguration(LogLevel.WARN, listOf(customLogger)))
         log.warn("Testing 1")
         assertEquals("Testing 1", customLogger.message)
         log.error("Testing 2")
@@ -39,7 +43,7 @@ class LogTests {
     @Test
     fun customLogger() {
         val customLogger = TestLogger()
-        log = RealmLog(configuration = LogConfiguration(LogLevel.ALL, true, listOf(customLogger)))
+        log = RealmLog(configuration = LogConfiguration(LogLevel.ALL, listOf(customLogger)))
         var message = "Testing"
 
         // Simple message

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.internal
 
-package io.realm
+import io.realm.log.RealmLogger
+import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSURL
+import platform.Foundation.NSUserDomainMask
 
 actual object PlatformHelper {
-    @Suppress("FunctionOnlyReturningConstant")
     actual fun appFilesDirectory(): String {
-        // FIXME What is the standard default location for non-Android JVM builds.
-        //  https://github.com/realm/realm-kotlin/issues/75
-        return "."
+        return (
+            NSFileManager.defaultManager.URLsForDirectory(NSDocumentDirectory, NSUserDomainMask)
+                .first() as NSURL
+            )?.path ?: error("Could not identify default document directory")
     }
+
+    actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
 }

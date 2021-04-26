@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.util.PlatformUtils
 import test.Nullability
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
