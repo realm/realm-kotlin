@@ -1,5 +1,6 @@
 package io.realm
 
+import io.realm.internal.PlatformHelper
 import io.realm.log.LogLevel
 import io.realm.util.TestLogger
 import test.Sample

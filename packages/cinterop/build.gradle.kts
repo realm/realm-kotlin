@@ -188,9 +188,6 @@ kotlin {
         val androidMain by getting {
             dependsOn(jvmCommon)
             kotlin.srcDir("src/jvmCommon/kotlin")
-            dependencies {
-                implementation("androidx.startup:startup-runtime:1.0.0")
-            }
         }
 
         val jvmMain by getting {

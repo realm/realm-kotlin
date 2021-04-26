@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.internal.Mediator
+import io.realm.internal.PlatformHelper
 import io.realm.internal.RealmModelInternal
 import io.realm.internal.RealmObjectCompanion
 import io.realm.interop.NativePointer

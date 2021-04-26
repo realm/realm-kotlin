@@ -17,7 +17,7 @@ public class RealmLog(val tag: String = "REALM", val configuration: LogConfigura
     init {
         logLevel = configuration.level
         if (!configuration.removeSystemLogger) {
-            loggers.add(TypeFactory.createDefaultSystemLogger(tag))
+            loggers.add(PlatformHelper.createDefaultSystemLogger(tag))
         }
         configuration.customLoggers.forEach { loggers.add(it) }
     }

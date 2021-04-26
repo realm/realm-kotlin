@@ -95,6 +95,10 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
+    dependencies {
+        implementation("androidx.startup:startup-runtime:1.0.0")
+    }
 }
 
 kotlin {
