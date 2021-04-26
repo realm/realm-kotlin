@@ -16,9 +16,6 @@ linkerOpts = -lz -framework Foundation -framework CoreFoundation -framework Secu
 // FIXME These symbols seems to be undefined, so for now just adding them here
 #include <dirent.h>
 #include <fnmatch.h>
-#include <pthread.h>
-#include <time.h>
-#include <stdio.h>
 
 DIR * opendir$INODE64( char * dirName )
 {
@@ -75,60 +72,3 @@ static bool realm_set_value_double(realm_object_t* object, realm_property_key_t 
     value.dnum = new_value;
     return realm_set_value(object, col, value, is_default);
 }
-
-// BEGIN KTor Lock code
-// Source: https://github.com/ktorio/ktor/blob/main/ktor-utils/posix/interop/utils.def
-
-/* Mutex */
-typedef struct ktor_mutex {
-    pthread_mutex_t mutex;
-} ktor_mutex_t;
-
-static inline int ktor_mutex_create(ktor_mutex_t *mutex) {
-    pthread_mutexattr_t attributes;
-    pthread_mutexattr_init(&attributes);
-    pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_RECURSIVE);
-    return pthread_mutex_init(&mutex->mutex, &attributes);
-}
-
-static inline int ktor_mutex_lock(ktor_mutex_t* mutex) {
-    return pthread_mutex_lock(&mutex->mutex);
-}
-
-static inline int ktor_mutex_unlock(ktor_mutex_t* mutex) {
-    return pthread_mutex_unlock(&mutex->mutex);
-}
-
-static inline int ktor_mutex_destroy(ktor_mutex_t* mutex) {
-    return pthread_mutex_destroy(&mutex->mutex);
-}
-
-/* Read-Write lock */
-typedef struct ktor_rwlock {
-    pthread_rwlock_t lock;
-} ktor_rwlock;
-
-static inline int ktor_rwlock_create(ktor_rwlock* lock) {
-    pthread_mutexattr_t attributes;
-    pthread_mutexattr_init(&attributes);
-    pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_RECURSIVE);
-    return pthread_rwlock_init(&lock->lock, &attributes);
-}
-
-static inline int ktor_rwlock_read(ktor_rwlock* lock) {
-    return pthread_rwlock_rdlock(&lock->lock);
-}
-
-static inline int ktor_rwlock_write(ktor_rwlock* lock) {
-    return pthread_rwlock_wrlock(&lock->lock);
-}
-
-static inline int ktor_rwlock_unlock(ktor_rwlock* lock) {
-    return pthread_rwlock_unlock(&lock->lock);
-}
-
-static inline int ktor_rwlock_destroy(ktor_rwlock* lock) {
-    return pthread_rwlock_destroy(&lock->lock);
-}
-
-// END KTor Lock code
