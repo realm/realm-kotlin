@@ -23,6 +23,7 @@ import kotlin.reflect.KClass
 /**
  * Base class for all Realm instances.
  */
+@Suppress("UnnecessaryAbstractClass")
 public abstract class BaseRealm internal constructor(
     /**
      * Configuration used to configure this Realm instance.
