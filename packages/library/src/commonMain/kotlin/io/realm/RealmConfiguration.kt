@@ -30,21 +30,17 @@ import kotlin.reflect.KClass
 /**
  * Configuration for log events created by a Realm instance.
  */
-data class LogConfiguration(
+public data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
      */
-    val level: LogLevel,
+    public val level: LogLevel,
+
     /**
-     * If `true`, the system logger is removed. Log events will only be reported if a [LogConfiguration.customLoggers]
-     * is configured.
-     */
-    val removeSystemLogger: Boolean,
-    /**
-     * Any custom loggers to install. They will receive all log events with a priority equal to or higher than
+     * Any loggers to install. They will receive all log events with a priority equal to or higher than
      * the value defined in [LogConfiguration.level].
      */
-    val customLoggers: List<RealmLogger>
+    public val loggers: List<RealmLogger>
 )
 
 public class RealmConfiguration private constructor(
@@ -99,7 +95,7 @@ public class RealmConfiguration private constructor(
             path,
             name,
             schema.keys,
-            LogConfiguration(LogLevel.WARN, false, listOf())
+            LogConfiguration(LogLevel.WARN, listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG)))
         )
 
     /**
@@ -122,24 +118,28 @@ public class RealmConfiguration private constructor(
         fun schema(vararg classes: KClass<out RealmObject>) = apply { this.schema = setOf(*classes) }
 
         /**
-         * Configure the [LogLevel] for which all log events of equal or higher priority will be reported.
+         * Configure how Realm will report log events.
          *
-         * @param level Minimum log level to report.
+         * @param level all events at this level or higher will be reported.
+         * @param customLoggers any custom loggers to send log events to. A default system logger is
+         * installed by default that will redirect to the common logging framework on the platform, i.e.
+         * LogCat on Android and NSLog on iOS.
          */
-        fun logLevel(level: LogLevel) = apply { this.logLevel = level }
+        fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) = apply {
+            this.logLevel = level
+            this.customLoggers = customLoggers
+        }
 
         /**
-         * Removes the default system logger from being installed. If no [RealmConfiguration.Builder.customLoggers] have
-         * been configured, not log events will be reported, regardless of the configured [RealmConfiguration.Builder.logLevel].
+         * TODO Evaluate if this should be part of the public API. For now keep it internal.
+         *
+         * Removes the default system logger from being installed. If no custom loggers have
+         * been configured, not log events will be reported, regardless of the configured
+         * log level.
+         *
+         * @see [RealmConfiguration.Builder.log]
          */
-        fun removeSystemLogger() = apply { this.removeSystemLogger = true }
-
-        /**
-         * Install custom loggers to handle log events. Only log events at equal or higher priority than [RealmConfiguration.Builder.logLevel]
-         * will be sent the the loggers. A default system logger is installed by default that will redirect to the common
-         * logging framework on the platform, i.e. LogCat on Android and NSLog on iOS.
-         */
-        fun customLoggers(loggers: List<RealmLogger>) = apply { this.customLoggers = loggers }
+        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
 
         fun build(): RealmConfiguration {
             @Suppress("SpreadOperator")
@@ -148,12 +148,17 @@ public class RealmConfiguration private constructor(
 
         // Called from the compiler plugin
         internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
+            val loggers = mutableListOf<RealmLogger>()
+            if (!removeSystemLogger) {
+                loggers.add(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+            }
+            loggers.addAll(customLoggers)
             return RealmConfiguration(
                 companionMap,
                 path,
                 name,
                 schema,
-                LogConfiguration(logLevel, removeSystemLogger, customLoggers)
+                LogConfiguration(logLevel, customLoggers)
             )
         }
     }

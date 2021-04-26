@@ -43,6 +43,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
          */
         public const val DEFAULT_FILE_NAME = "default.realm"
 
+        /**
+         * Default tag used by log entries
+         */
+        public const val DEFAULT_LOG_TAG = "REALM"
+
         fun open(realmConfiguration: RealmConfiguration): Realm {
             // TODO API-INTERNAL
             //  IN Android use lazy property delegation init to load the shared library use the

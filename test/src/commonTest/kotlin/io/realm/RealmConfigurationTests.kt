@@ -6,7 +6,6 @@ import io.realm.util.TestLogger
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class RealmConfigurationTests {
@@ -81,7 +80,7 @@ class RealmConfigurationTests {
     @Test
     fun logLevel() {
         val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .logLevel(LogLevel.NONE)
+            .log(LogLevel.NONE)
             .build()
         assertEquals(LogLevel.NONE, config.log.level)
     }
@@ -89,30 +88,17 @@ class RealmConfigurationTests {
     @Test
     fun defaultCustomLoggers() {
         val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertEquals(0, config.log.customLoggers.size)
+        assertEquals(1, config.log.loggers.size)
     }
 
     @Test
     fun customLoggers() {
         val logger = TestLogger()
         val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .customLoggers(listOf(logger))
+            .log(customLoggers = listOf(logger))
             .build()
-        assertEquals(1, config.log.customLoggers.size)
-        assertEquals(logger, config.log.customLoggers.first())
+        assertEquals(2, config.log.loggers.size)
+        assertEquals(logger, config.log.loggers.last())
     }
 
-    @Test
-    fun defaultRemoveSystemLogger() {
-        val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertFalse(config.log.removeSystemLogger)
-    }
-
-    @Test
-    fun removeSystemLogger() {
-        val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .removeSystemLogger()
-            .build()
-        assertTrue(config.log.removeSystemLogger)
-    }
 }

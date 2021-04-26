@@ -9,17 +9,8 @@ import io.realm.log.RealmLogger
  */
 internal class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
 
-    @Suppress("JoinDeclarationAndAssignment")
-    private val logLevel: LogLevel
-    private val loggers: MutableList<RealmLogger> = mutableListOf()
-
-    init {
-        logLevel = configuration.level
-        if (!configuration.removeSystemLogger) {
-            loggers.add(PlatformHelper.createDefaultSystemLogger(tag))
-        }
-        configuration.customLoggers.forEach { loggers.add(it) }
-    }
+    private val logLevel: LogLevel = configuration.level
+    private val loggers: List<RealmLogger> = configuration.loggers
 
     fun trace(throwable: Throwable?) {
         doLog(LogLevel.TRACE, throwable, null)
