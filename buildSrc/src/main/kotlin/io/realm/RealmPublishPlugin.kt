@@ -49,11 +49,12 @@ open class RealmPublishExtensions {
     }
 }
 
-fun getPropertyValue(project: Project, propertyName: String): String {
+fun getPropertyValue(project: Project, propertyName: String, defaultValue: String = ""): String {
     if (project.hasProperty(propertyName)) {
         return project.property(propertyName) as String
     }
-    return System.getenv(propertyName) ?: throw IllegalStateException("Cannot find property: $propertyName")
+    val systemValue: String? = System.getenv(propertyName)
+    return systemValue ?: defaultValue
 }
 
 fun hasProperty(project: Project, propertyName: String): Boolean {
@@ -70,17 +71,15 @@ class RealmPublishPlugin : Plugin<Project> {
 
         // Configure constants required by the publishing process
         val signBuild: Boolean = hasProperty(project,"signBuild")
-        if (signBuild) {
-            configureSignedBuild(this)
-        }
+        configureSignedBuild(signBuild, this)
     }
 
-    private fun configureSignedBuild(project: Project) {
+    private fun configureSignedBuild(signBuild: Boolean, project: Project) {
         val keyId = "1F48C9B0"
         // Apparently Gradle treats properties define through a gradle.properties file differently
         // than those defined through the commandline using `-P`. This is a problem with new
-        // line characters as found in an ascii-armoured PGP file. To ensure work around this, all newlines
-        // have been replaced with `#` and thus needs to be reverted here.
+        // line characters as found in an ascii-armoured PGP file. To ensure we can work around this,
+        // all newlines have been replaced with `#` and thus needs to be reverted here.
         val ringFile: String = getPropertyValue(project,"signSecretRingFileKotlin").replace('#', '\n')
         val password: String = getPropertyValue(project, "signPassword")
         val sonatypeStagingProfileId = "78c19333e4450f"
@@ -103,7 +102,7 @@ class RealmPublishPlugin : Plugin<Project> {
 
             // Configure signing of artifacts
             extensions.getByType<SigningExtension>().apply {
-                isRequired = true
+                isRequired = signBuild
                 useInMemoryPgpKeys(keyId, ringFile, password)
                 sign(project.extensions.getByType<PublishingExtension>().publications)
             }
