@@ -86,9 +86,9 @@ public class RealmConfiguration private constructor(
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<*>): RealmModelInternal = (
-                    mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
-                        ?: error("$clazz not part of this configuration schema")
-                    ) as RealmModelInternal
+                mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
+                    ?: error("$clazz not part of this configuration schema")
+                ) as RealmModelInternal
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion = mapOfKClassWithCompanion[clazz]
                 ?: error("$clazz not part of this configuration schema")
@@ -105,7 +105,7 @@ public class RealmConfiguration private constructor(
      */
     // This constructor is never used at runtime, all calls to it are being rewired by the Realm Compiler Plugin to call
     // the internal secondary constructor with all schema classes mapped to their RealmCompanion.
-    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>):
+    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>) :
         this(path, name, mapOf())
 
     // Called by the compiler plugin, with a populated companion map
@@ -181,5 +181,4 @@ public class RealmConfiguration private constructor(
             )
         }
     }
-
 }
