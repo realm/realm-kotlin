@@ -18,6 +18,7 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.PlatformHelper
+import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmModelInternal
 import io.realm.internal.RealmObjectCompanion
 import io.realm.interop.NativePointer
@@ -73,7 +74,25 @@ public class RealmConfiguration private constructor(
         this.schema = schema
         this.mapOfKClassWithCompanion = companionMap
         this.log = logConfig
-        init()
+
+        RealmInterop.realm_config_set_path(nativeConfig, this.path)
+        RealmInterop.realm_config_set_schema_mode(
+            nativeConfig,
+            SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
+        )
+        RealmInterop.realm_config_set_schema_version(nativeConfig, version = 0) // TODO expose version when handling migration modes
+        val schema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
+        RealmInterop.realm_config_set_schema(nativeConfig, schema)
+
+        mediator = object : Mediator {
+            override fun createInstanceOf(clazz: KClass<*>): RealmModelInternal = (
+                    mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
+                        ?: error("$clazz not part of this configuration schema")
+                    ) as RealmModelInternal
+
+            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion = mapOfKClassWithCompanion[clazz]
+                ?: error("$clazz not part of this configuration schema")
+        }
     }
 
     /**
@@ -85,10 +104,11 @@ public class RealmConfiguration private constructor(
      * @param schema set of classes that make up the schema for the Realm. Identified by their class literal `T::class`.
      */
     // This constructor is never used at runtime, all calls to it are being rewired by the Realm Compiler Plugin to call
-    // the other secondary instructor with all schema classes mapped to their RealmCompanion.
-    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>) :
+    // the internal secondary constructor with all schema classes mapped to their RealmCompanion.
+    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>):
         this(path, name, mapOf())
 
+    // Called by the compiler plugin, with a populated companion map
     internal constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Map<KClass<out RealmObject>, RealmObjectCompanion>) :
         this(
             schema,
@@ -134,7 +154,7 @@ public class RealmConfiguration private constructor(
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
-         * been configured, not log events will be reported, regardless of the configured
+         * been configured, no log events will be reported, regardless of the configured
          * log level.
          *
          * @see [RealmConfiguration.Builder.log]
@@ -142,8 +162,7 @@ public class RealmConfiguration private constructor(
         internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
 
         fun build(): RealmConfiguration {
-            @Suppress("SpreadOperator")
-            return RealmConfiguration(path, name, schema)
+            REPLACED_BY_IR()
         }
 
         // Called from the compiler plugin
@@ -163,24 +182,4 @@ public class RealmConfiguration private constructor(
         }
     }
 
-    private fun init() {
-        RealmInterop.realm_config_set_path(nativeConfig, path)
-        RealmInterop.realm_config_set_schema_mode(
-            nativeConfig,
-            SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
-        )
-        RealmInterop.realm_config_set_schema_version(nativeConfig, version = 0) // TODO expose version when handling migration modes
-        val schema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
-        RealmInterop.realm_config_set_schema(nativeConfig, schema)
-
-        mediator = object : Mediator {
-            override fun createInstanceOf(clazz: KClass<*>): RealmModelInternal = (
-                mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
-                    ?: error("$clazz not part of this configuration schema")
-                ) as RealmModelInternal
-
-            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion = mapOfKClassWithCompanion[clazz]
-                ?: error("$clazz not part of this configuration schema")
-        }
-    }
 }

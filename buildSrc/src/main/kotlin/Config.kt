@@ -53,6 +53,7 @@ object Versions {
         const val buildTools = "4.1.0"
         const val ndkVersion = "22.0.6917172"
     }
+    const val androidxStartup = "1.0.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.2" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.3.0" // https://maven.google.com/web/index.html#androidx.test:rules
     const val autoService = "1.0-rc6"
