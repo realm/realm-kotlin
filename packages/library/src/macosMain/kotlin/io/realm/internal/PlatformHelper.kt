@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.internal
 
-package schema.input
+import io.realm.log.RealmLogger
 
-import io.realm.RealmConfiguration
-import io.realm.RealmObject
+actual object PlatformHelper {
+    @Suppress("FunctionOnlyReturningConstant")
+    actual fun appFilesDirectory(): String {
+        return "."
+    }
 
-class A : RealmObject
-class C : RealmObject
-class B : RealmObject
-
-val conf1 = RealmConfiguration.Builder()
-    .schema(A::class, B::class, C::class)
-    .build()
-
-val conf2 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
-        .build()
-
-val conf3 = RealmConfiguration(schema = setOf(A::class, C::class))
+    actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
+}

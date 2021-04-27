@@ -22,6 +22,7 @@ import android.os.SystemClock
 import android.text.format.Formatter
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.realm.util.PlatformUtils
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -40,12 +41,12 @@ class MemoryTests {
     @ExperimentalPathApi
     @Before
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
     }
 
     @After
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test

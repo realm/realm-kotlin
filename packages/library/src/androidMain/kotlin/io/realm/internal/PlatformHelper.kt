@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.internal
 
-package schema.input
+import io.realm.log.RealmLogger
 
-import io.realm.RealmConfiguration
-import io.realm.RealmObject
+actual object PlatformHelper {
 
-class A : RealmObject
-class C : RealmObject
-class B : RealmObject
+    // Returns the root directory of the platform's App data
+    actual fun appFilesDirectory(): String = RealmInitializer.filesDir.absolutePath
 
-val conf1 = RealmConfiguration.Builder()
-    .schema(A::class, B::class, C::class)
-    .build()
-
-val conf2 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
-        .build()
-
-val conf3 = RealmConfiguration(schema = setOf(A::class, C::class))
+    // Returns the default logger for the platform
+    actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
+}

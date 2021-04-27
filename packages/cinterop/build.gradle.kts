@@ -45,7 +45,7 @@ val cinteropCorePath = "$rootDir/$corePath"
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
-    ndkVersion = "22.0.6917172"
+    ndkVersion = Versions.Android.ndkVersion
 
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
@@ -187,9 +187,6 @@ kotlin {
         val androidMain by getting {
             dependsOn(jvmCommon)
             kotlin.srcDir("src/jvmCommon/kotlin")
-            dependencies {
-                implementation("androidx.startup:startup-runtime:1.0.0")
-            }
         }
 
         val jvmMain by getting {

@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.util.PlatformUtils
 import io.realm.util.TestRealmFieldTypes
 import test.Sample
 import test.link.Child
@@ -35,7 +36,7 @@ class ImportTests {
 
     @BeforeTest
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class, Sample::class))
         realm = Realm.open(configuration)
@@ -43,7 +44,7 @@ class ImportTests {
 
     @AfterTest
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test

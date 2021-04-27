@@ -105,13 +105,12 @@ class GenerationExtensionTest {
         class B : RealmObject
         
         val classes = setOf(A::class, B::class, C::class)
-        val configuration =
-            RealmConfiguration(schema = classes)
+        val configuration = RealmConfiguration(schema = classes)
                 """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Schema argument must be a list of class literal (T::class)"))
+        assertTrue(result.messages.contains("No schema was provided. It must be defined as a set of class literals (MyType::class)"))
 
         result = compileFromSource(
             source = SourceFile.kotlin(
@@ -130,7 +129,7 @@ class GenerationExtensionTest {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Schema argument must be a list of class literal (T::class)"))
+        assertTrue(result.messages.contains("No schema was provided. It must be defined as a set of class literals (MyType::class)"))
     }
 
     @Test

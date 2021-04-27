@@ -9,25 +9,10 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
-package schema.input
-
-import io.realm.RealmConfiguration
-import io.realm.RealmObject
-
-class A : RealmObject
-class C : RealmObject
-class B : RealmObject
-
-val conf1 = RealmConfiguration.Builder()
-    .schema(A::class, B::class, C::class)
-    .build()
-
-val conf2 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
-        .build()
-
-val conf3 = RealmConfiguration(schema = setOf(A::class, C::class))
+package io.realm
