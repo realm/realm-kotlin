@@ -118,9 +118,9 @@ class InstrumentedTests {
     fun delete() {
         realm.writeBlocking {
             val sample = create(Sample::class)
-            MutableRealm.delete(sample)
+            delete(sample)
             assertFailsWith<IllegalArgumentException> {
-                MutableRealm.delete(sample)
+                delete(sample)
             }
             assertFailsWith<IllegalStateException> {
                 sample.stringField = "sadf"

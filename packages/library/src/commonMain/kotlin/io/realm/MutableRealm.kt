@@ -22,15 +22,16 @@ import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
 
 /**
- * This class represents the writeable state of a Realm file. The only way to modify data in this file is through
+ * This class represents the writeable state of a Realm file. The only way to modify data in a Realm is through
  * instances of this class. These are provided and managed automatically through either [Realm.write] or
  * [Realm.writeBlocking].
  */
 class MutableRealm : BaseRealm {
 
-    companion object {
-        // FIXME EVALUATE Should this be on RealmModel instead?
-        fun <T : RealmObject> delete(obj: T) {
+    // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
+    //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
+    internal companion object {
+        internal fun <T : RealmObject> delete(obj: T) {
             val internalObject = obj as RealmModelInternal
             internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
                 ?: throw IllegalArgumentException("Cannot delete unmanaged object")
@@ -85,6 +86,18 @@ class MutableRealm : BaseRealm {
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
         return io.realm.internal.copyToRealm(configuration.mediator, dbPointer, instance)
+    }
+
+    /**
+     * Deletes the object from the underlying Realm.
+     *
+     * @throws IllegalArgumentException if the object is not managed by Realm.
+     */
+    fun <T : RealmObject> delete(obj: T) {
+        val internalObject = obj as RealmModelInternal
+        internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
+            ?: throw IllegalArgumentException("An unmanaged unmanaged object cannot be deleted from the Realm.")
+        internalObject.unmanage()
     }
 
     // FIXME Consider adding a delete-all along with query support

@@ -58,15 +58,13 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
     /**
-     * TODO Add docs when this method is implemeted
+     * TODO Add docs when this method is implemented.
      */
-    suspend fun <R> write(function: MutableRealm.() -> R): R {
+    suspend fun <R> write(block: MutableRealm.() -> R): R {
         TODO("Awaiting implementation of the Frozen Architecture")
     }
 
     /**
-     * NOTE Avoid calling this method on the UI thread, instead use [Realm.write].
-     *
      * Modify the underlying Realm file by creating a write transaction on the current thread. Write
      * transactions automatically commit any changes made when the closure returns unless
      * [MutableRealm.cancelWrite] was called.
@@ -74,17 +72,17 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * The write transaction always represent the latest version of data in the Realm file, even if the calling
      * Realm not yet represent this.
      *
-     * TODO Better explanation here.
-     * @return any value returned from the provided write function.
+     * @param block function that should be run within the context of a write transaction.
+     * @return any value returned from the provided write block.
      */
     @Suppress("TooGenericExceptionCaught")
-    fun <R> writeBlocking(function: MutableRealm.() -> R): R {
+    fun <R> writeBlocking(block: MutableRealm.() -> R): R {
         // While not efficiently to open a new Realm just for a write, it makes it a lot
         // easier to control the API surface between Realm and MutableRealm
         val writerRealm = MutableRealm(configuration, dbPointer)
         try {
             writerRealm.beginTransaction()
-            val returnValue: R = function(writerRealm)
+            val returnValue: R = block(writerRealm)
             writerRealm.commitTransaction()
             return returnValue
         } catch (e: Exception) {

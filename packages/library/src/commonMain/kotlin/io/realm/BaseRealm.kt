@@ -42,9 +42,9 @@ public abstract class BaseRealm internal constructor(
     }
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+        checkClosed()
         return RealmResults(
             dbPointer,
-            @Suppress("SpreadOperator") // TODO PERFORMANCE Spread operator triggers detekt
             { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
             configuration.mediator
