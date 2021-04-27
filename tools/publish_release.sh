@@ -6,11 +6,11 @@
 #
 # 1. Check that version in version.txt matches git tag which indicate a release.
 # 2. Check that the changelog has a correct set date.
-# 3. Build Javadoc
+# 3. Build Javadoc/KDoc
 # 4. Upload all artifacts to Maven Central without releasing them.
 # 5. Verify that all artifacts have been uploaded, then release all of them at once.
 # 6. Upload native debug symobols and update latest version number on S3.
-# 7. Upload Javadoc to MongoDB Realm S3 bucket.
+# 7. Upload Javadoc/KDoc to MongoDB Realm S3 bucket.
 # 8. Notify #realm-releases and #realm-java-team-ci about the new release.
 set -e
 
@@ -102,7 +102,7 @@ verify_changelog() {
 }
 
 create_javadoc() {
-  echo "Creating JavaDoc..."
+  echo "Creating JavaDoc/KDoc..."
   cd $REALM_KOTLIN_PATH
   ./gradlew javadoc
   cd $HERE
@@ -147,8 +147,8 @@ notify_slack_channels() {
     abort_release
   fi
 
-  link_to_changelog="https://github.com/realm/realm-java/blob/$current_commit/CHANGELOG.md#$tag"
-  payload="{ \"username\": \"Realm CI\", \"icon_emoji\": \":realm_new:\", \"text\": \"<$link_to_changelog|*Realm Java $RELEASE_VERSION has been released*>\\nSee the Release Notes for more details. Note, it can take up to 10 minutes before the release is visible on Maven Central.\" }"
+  link_to_changelog="https://github.com/realm/realm-kotlin/blob/$current_commit/CHANGELOG.md#$tag"
+  payload="{ \"username\": \"Realm CI\", \"icon_emoji\": \":realm_new:\", \"text\": \"<$link_to_changelog|*Realm Kotlin $RELEASE_VERSION has been released*>\\nSee the Release Notes for more details. Note, it can take up to 10 minutes before the release is visible on Maven Central.\" }"
   echo $link_to_changelog
   echo "Pinging #realm-releases"
   curl -X POST --data-urlencode "payload=${payload}" ${SLACK_WEBHOOK_RELEASES_URL}

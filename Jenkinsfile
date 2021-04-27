@@ -157,7 +157,7 @@ def runBuild() {
                 startEmulatorInBgIfNeeded()
                 def signingFlags = ""
                 if (isReleaseBranch) {
-                    signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${SIGN_KEY}\" -PsignPassword=${SIGN_KEY_PASSWORD}"
+                    signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
                 }
                 sh """
                       cd packages
@@ -213,10 +213,10 @@ def runStaticAnalysis() {
 def runUploadToMavenCentral() {
     node(osx_kotlin) {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven_central', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
                 sh """
                 cd packages
-                ./gradlew publishAllPublicationsToMavenCentralRepository -DossrhUsername=${env.MAVEN_CENTRAL_USER} -DossrhPassword=${env.MAVEN_CENTRAL_PASSWORD} --no-daemon
+                ./gradlew publishAllPublicationsToMavenCentralRepository -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_PASSWORD --no-daemon
                 """
             }
         }

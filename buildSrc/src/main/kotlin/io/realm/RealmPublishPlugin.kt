@@ -81,7 +81,7 @@ class RealmPublishPlugin : Plugin<Project> {
         // line characters as found in an ascii-armoured PGP file. To ensure we can work around this,
         // all newlines have been replaced with `#` and thus needs to be reverted here.
         val ringFile: String = getPropertyValue(project,"signSecretRingFileKotlin").replace('#', '\n')
-        val password: String = getPropertyValue(project, "signPassword")
+        val password: String = getPropertyValue(project, "signPasswordKotlin")
         val sonatypeStagingProfileId = "78c19333e4450f"
 
         // Apply and configure plugins required to release artifacts locally and to Maven Central
