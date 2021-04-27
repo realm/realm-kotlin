@@ -38,6 +38,10 @@ repositories {
 //  Currently just adding the common darwin parts to macos-target.
 val idea = System.getProperty("idea.active") == "true"
 
+val corePath = "external/core"
+val relativeCorePath = "../$corePath"
+val cinteropCorePath = "$rootDir/$corePath"
+
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
@@ -66,8 +70,7 @@ android {
     }
     defaultConfig {
         ndk {
-            // FIXME MPP-BUILD Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-            abiFilters("x86_64", "arm64-v8a")
+            abiFilters += setOf("x86_64", "arm64-v8a")
         }
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
@@ -79,29 +82,29 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
-            setPath("src/jvmCommon/CMakeLists.txt")
+            path = project.file("src/jvmCommon/CMakeLists.txt")
         }
     }
 }
 
 val nativeLibraryIncludesMacosUniversal = listOf(
-    "-include-binary", "$rootDir/../external/core/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
-    "-include-binary", "$rootDir/../external/core/capi_macos_universal/src/realm/librealm-dbg.a",
-    "-include-binary", "$rootDir/../external/core/capi_macos_universal/src/realm/parser/librealm-parser-dbg.a",
-    "-include-binary", "$rootDir/../external/core/capi_macos_universal/src/realm/object-store/librealm-object-store-dbg.a"
+    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
+    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/librealm-dbg.a",
+    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/parser/librealm-parser-dbg.a",
+    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/object-store/librealm-object-store-dbg.a"
 )
 // TODO remove the debug suffix (-dbg) when switching to use release
 val nativeLibraryIncludesIosArm64 = listOf(
-    "-include-binary", "$rootDir/../external/core/build-capi_ios_Arm64/lib/librealm-ffi-static-dbg.a",
-    "-include-binary", "$rootDir/../external/core/build-capi_ios_Arm64/lib/librealm-dbg.a",
-    "-include-binary", "$rootDir/../external/core/build-capi_ios_Arm64/lib/librealm-parser-dbg.a",
-    "-include-binary", "$rootDir/../external/core/build-capi_ios_Arm64/lib/librealm-object-store-dbg.a"
+    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-ffi-static-dbg.a",
+    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-dbg.a",
+    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-parser-dbg.a",
+    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-object-store-dbg.a"
 )
 val nativeLibraryIncludesIosSimulatorUniversal = listOf(
-    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-ffi-static-dbg.a",
-    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-dbg.a",
-    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-parser-dbg.a",
-    "-include-binary", "$rootDir/../external/core/build-simulator_universal/lib/librealm-object-store-dbg.a"
+    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-ffi-static-dbg.a",
+    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-dbg.a",
+    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-parser-dbg.a",
+    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-object-store-dbg.a"
 )
 
 kotlin {
@@ -127,7 +130,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs(project.file("../../external/core/src/"))
+                includeDirs(project.file("$relativeCorePath/src/"))
             }
             // Relative paths in def file depends are resolved differently dependent on execution
             // location
@@ -145,7 +148,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs(project.file("../../external/core/src/"))
+                includeDirs(project.file("$relativeCorePath/src/"))
             }
             // Relative paths in def file depends are resolved differently dependent on execution
             // location
@@ -292,14 +295,14 @@ fun Task.build_C_API_Android(releaseBuild: Boolean = false) {
     doLast {
         // x86_64
         exec {
-            workingDir(project.file("../../external/core"))
+            workingDir(project.file("$relativeCorePath"))
             commandLine("tools/cross_compile.sh", "-t", buildType, "-a", "x86_64", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
         }
 
         // arm64-v8a
         exec {
-            workingDir(project.file("../../external/core"))
+            workingDir(project.file("$relativeCorePath"))
             commandLine("tools/cross_compile.sh", "-t", buildType, "-a", "arm64-v8a", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
         }
@@ -313,22 +316,22 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
 
     doLast {
         exec {
-            workingDir(project.file("../../external/core"))
+            workingDir(project.file("$relativeCorePath"))
             commandLine("mkdir", "-p", "capi_macos_universal")
         }
         exec {
-            workingDir(project.file("../../external/core/capi_macos_universal"))
             commandLine("cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/macosx.toolchain.cmake", "-DCMAKE_BUILD_TYPE=$buildType", "-DREALM_ENABLE_SYNC=0", "-DREALM_NO_TESTS=1", "-DOSX_ARM64=1", "..")
+            workingDir(project.file("$relativeCorePath/capi_macos_universal"))
         }
         exec {
-            workingDir(project.file("../../external/core/capi_macos_universal"))
+            workingDir(project.file("$relativeCorePath/capi_macos_universal"))
             commandLine("cmake", "--build", ".", "-j8")
         }
     }
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/librealm$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/capi_macos_universal/src/realm/object-store/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/object-store/librealm-object-store$buildTypeSuffix.a"))
 }
 
 fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
@@ -337,11 +340,11 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
 
     doLast {
         exec {
-            workingDir(project.file("../../external/core"))
+            workingDir(project.file("$relativeCorePath"))
             commandLine("mkdir", "-p", "build-simulator_universal")
         }
         exec {
-            workingDir(project.file("../../external/core/build-simulator_universal"))
+            workingDir(project.file("$relativeCorePath/build-simulator_universal"))
             commandLine(
                 "cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
@@ -355,7 +358,7 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
             )
         }
         exec {
-            workingDir(project.file("../../external/core/build-simulator_universal"))
+            workingDir(project.file("$relativeCorePath/build-simulator_universal"))
             commandLine(
                 "xcodebuild",
                 "-sdk",
@@ -368,10 +371,10 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
             )
         }
     }
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-parser$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/build-simulator_universal/lib/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm-parser$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm-object-store$buildTypeSuffix.a"))
 }
 
 fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
@@ -380,11 +383,11 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
 
     doLast {
         exec {
-            workingDir(project.file("../../external/core"))
+            workingDir(project.file("$relativeCorePath"))
             commandLine("mkdir", "-p", "build-capi_ios_Arm64")
         }
         exec {
-            workingDir(project.file("../../external/core/build-capi_ios_Arm64"))
+            workingDir(project.file("$relativeCorePath/build-capi_ios_Arm64"))
             commandLine(
                 "cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
@@ -398,7 +401,7 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
             )
         }
         exec {
-            workingDir(project.file("../../external/core/build-capi_ios_Arm64"))
+            workingDir(project.file("$relativeCorePath/build-capi_ios_Arm64"))
             commandLine(
                 "xcodebuild",
                 "-sdk",
@@ -414,10 +417,10 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
             )
         }
     }
-    outputs.file(project.file("../../external/core/build-capi_ios_Arm64/lib/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/build-capi_ios_Arm64/lib/librealm$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/build-capi_ios_Arm64/lib/librealm-parser$buildTypeSuffix.a"))
-    outputs.file(project.file("../../external/core/build-capi_ios_Arm64/lib/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm-parser$buildTypeSuffix.a"))
+    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm-object-store$buildTypeSuffix.a"))
 }
 
 afterEvaluate {

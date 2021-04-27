@@ -50,10 +50,10 @@ object RealmObjectHelper {
         val link = RealmInterop.realm_get_value<Link>(o, key)
         if (link != null) {
             val value =
-                (obj.`$realm$Schema` as Mediator).newInstance(R::class) as RealmModelInternal
+                (obj.`$realm$Mediator` as Mediator).createInstanceOf(R::class)
             return value.link(
                 obj.`$realm$Pointer`!!,
-                obj.`$realm$Schema` as Mediator,
+                obj.`$realm$Mediator` as Mediator,
                 R::class,
                 link
             )
@@ -81,8 +81,8 @@ object RealmObjectHelper {
         col: String,
         value: R?
     ) {
-        val newValue = if (!(value?.`$realm$IsManaged` ?: true)) {
-            copyToRealm(obj.`$realm$Schema` as Mediator, obj.`$realm$Pointer`!!, value!!)
+        val newValue = if (value?.`$realm$IsManaged` == false) {
+            copyToRealm(obj.`$realm$Mediator` as Mediator, obj.`$realm$Pointer`!!, value)
         } else value
         setValue(obj, col, newValue)
     }
