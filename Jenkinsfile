@@ -157,7 +157,7 @@ def runBuild() {
                 startEmulatorInBgIfNeeded()
                 def signingFlags = ""
                 if (isReleaseBranch) {
-                signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${SIGN_KEY}\" -PsignPassword=${SIGN_KEY_PASSWORD}"
+                    signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${SIGN_KEY}\" -PsignPassword=${SIGN_KEY_PASSWORD}"
                 }
                 sh """
                       cd packages

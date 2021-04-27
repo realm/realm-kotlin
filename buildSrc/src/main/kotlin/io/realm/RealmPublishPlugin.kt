@@ -70,6 +70,12 @@ class RealmPublishPlugin : Plugin<Project> {
 
         // Configure constants required by the publishing process
         val signBuild: Boolean = hasProperty(project,"signBuild")
+        if (signBuild) {
+            configureSignedBuild(this)
+        }
+    }
+
+    private fun configureSignedBuild(project: Project) {
         val keyId = "1F48C9B0"
         // Apparently Gradle treats properties define through a gradle.properties file differently
         // than those defined through the commandline using `-P`. This is a problem with new
@@ -80,32 +86,35 @@ class RealmPublishPlugin : Plugin<Project> {
         val sonatypeStagingProfileId = "78c19333e4450f"
 
         // Apply and configure plugins required to release artifacts locally and to Maven Central
-        plugins.apply(MavenPublishPlugin::class.java)
-        plugins.apply(SigningPlugin::class.java)
-        plugins.apply(NexusStagingPlugin::class.java)
+        with(project) {
+            plugins.apply(MavenPublishPlugin::class.java)
+            plugins.apply(SigningPlugin::class.java)
+            plugins.apply(NexusStagingPlugin::class.java)
 
-        // Create the RealmPublish plugin. It must evaluate after all other plugins as it modifies their output
-        extensions.create<RealmPublishExtensions>("realmPublish")
-        afterEvaluate {
-            project.extensions.findByType<RealmPublishExtensions>()?.run {
-                configurePom(project, pom)
-                configureRepository(project)
+            // Create the RealmPublish plugin. It must evaluate after all other plugins as it modifies their output
+            project.extensions.create<RealmPublishExtensions>("realmPublish")
+
+            afterEvaluate {
+                project.extensions.findByType<RealmPublishExtensions>()?.run {
+                    configurePom(project, pom)
+                    configureRepository(project)
+                }
             }
-        }
 
-        // Configure signing of artifacts
-        project.extensions.getByType<SigningExtension>().apply {
-            isRequired = signBuild
-            useInMemoryPgpKeys(keyId, ringFile, password)
-            sign(project.extensions.getByType<PublishingExtension>().publications)
-        }
+            // Configure signing of artifacts
+            extensions.getByType<SigningExtension>().apply {
+                isRequired = true
+                useInMemoryPgpKeys(keyId, ringFile, password)
+                sign(project.extensions.getByType<PublishingExtension>().publications)
+            }
 
-        // Configure upload to Maven Central
-        project.extensions.getByType<NexusStagingExtension>().apply {
-            this.packageGroup = "io.realm"
-            this.stagingProfileId = sonatypeStagingProfileId
-            this.username = getPropertyValue(project,"ossrhUsername")
-            this.password = getPropertyValue(project,"ossrhPassword")
+            // Configure upload to Maven Central
+            extensions.getByType<NexusStagingExtension>().apply {
+                this.packageGroup = "io.realm"
+                this.stagingProfileId = sonatypeStagingProfileId
+                this.username = getPropertyValue(project,"ossrhUsername")
+                this.password = getPropertyValue(project,"ossrhPassword")
+            }
         }
     }
 
