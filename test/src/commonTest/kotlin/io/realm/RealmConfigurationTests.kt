@@ -100,4 +100,13 @@ class RealmConfigurationTests {
         assertEquals(2, config.log.loggers.size)
         assertEquals(logger, config.log.loggers.last())
     }
+
+    @Suppress("invisible_member")
+    @Test
+    fun removeSystemLogger() {
+        val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .removeSystemLogger()
+            .build()
+        assertTrue(config.log.loggers.isEmpty())
+    }
 }

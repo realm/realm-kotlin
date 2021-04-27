@@ -16,6 +16,7 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
 import io.realm.compiler.FqNames.REALM_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_CONFIGURATION_BUILDER
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -83,7 +84,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                         // to constructor(3).
                         val internalConstructor: IrConstructorSymbol =
                             pluginContext.lookupConstructorInClass(REALM_CONFIGURATION) {
-                                !it.owner.isPrimary && (it.owner.valueParameters[2].type.classFqName?.toString().equals("kotlin.collections.Map"))
+                                !it.owner.isPrimary && (it.owner.valueParameters[2].type.classFqName == KOTLIN_COLLECTIONS_MAP)
                             }
                         return IrConstructorCallImpl(
                             expression.startOffset, expression.endOffset,
@@ -145,15 +146,16 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
 }
 
 /**
- * Locate the list of schema class literals. This currently support them being defined in-place as var args, or in place
- * using some of the factory collection methods like setOf and arrayOf, but we don't follow the code if defined further
- * away than that.
+ * Locate the list of schema class literals. This method currently support them being defined in-place as var args, or
+ * in place using some of the factory collection methods like setOf and arrayOf, but we don't follow the code if
+ * defined further away than that.
  *
  * E.g. all of these are valid
  * ```
  * RealmConfiguration(schema = setOf(MyType::class))
- * RealmConfiguration.Builder(schema = arrayOf(MyType::class)).build()
- * RealmConfiguration(path, name, MyType::class, MyOtherType::class)
+ * RealmConfiguration.Builder(schema = setOf(MyType::class)).build()
+ * RealmConfiguration.Builder().schema(setOf(MyType::class)).build()
+ * RealmConfiguration.Builder().schema(MyType::class, MyOtherType::class).build()
  * ```
  * While these are not
  * ```
@@ -229,7 +231,7 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             }
         }
         else -> {
-            logError("Schema argument must be a list of class literal (T::class), supplied argument format not supported: ${schemaArgument?.dump()}")
+            logError("Schema argument must be a set of class literals, i.e. `setOf(MyClass::type)`. Supplied argument format not supported: ${schemaArgument?.dump()}")
         }
     }
 }

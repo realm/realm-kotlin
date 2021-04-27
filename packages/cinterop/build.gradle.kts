@@ -70,8 +70,7 @@ android {
     }
     defaultConfig {
         ndk {
-            // FIXME MPP-BUILD Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-            abiFilters.addAll(setOf("x86_64", "arm64-v8a"))
+            abiFilters += setOf("x86_64", "arm64-v8a")
         }
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
@@ -83,7 +82,7 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
-            path = File("$projectDir/src/jvmCommon/CMakeLists.txt")
+            path = project.file("src/jvmCommon/CMakeLists.txt")
         }
     }
 }
