@@ -9,26 +9,25 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.util
 
-import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.absolutePathString
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
 
-actual object Utils {
-    @OptIn(ExperimentalPathApi::class)
-    actual fun createTempDir(): String {
-        return Files.createTempDirectory("android_tests").absolutePathString()
+actual class RunLoopThread : CoroutineScope {
+    actual fun run(block: RunLoopThread.() -> Unit) {
+        TODO()
     }
 
-    actual fun deleteTempDir(path: String) {
-        File(path).deleteRecursively()
+    actual fun terminate() {
+        TODO()
     }
+
+    override val coroutineContext: CoroutineContext
+        get() = TODO("Not yet implemented")
 }

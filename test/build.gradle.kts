@@ -38,10 +38,16 @@ kotlin {
         getByName("commonMain") {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
                 implementation("io.realm.kotlin:library:${Realm.version}")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                // FIXME API-SCHEMA We currently have some tests that verified injection of
+                //  interfaces, uses internal representation for property meta data, etc. Can
+                //  probably be replaced when schema information is exposed in the public API
+                // Our current compiler plugin tests only runs on JVM, so makes sense to keep them
+                // for now, but ideally they should go to the compiler plugin tests.
+                implementation("io.realm.kotlin:cinterop:${Realm.version}")
             }
         }
 
@@ -49,10 +55,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                // We currently have some tests that verified injection of interfaces, etc. Our
-                // current compiler plugin tests only runs on JVM, so makes sense to keep them for
-                // now, but ideally they should go to the compiler plugin tests.
-                implementation("io.realm.kotlin:cinterop:${Realm.version}")
             }
         }
     }
@@ -129,6 +131,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
+                implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+                implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
             }
         }
     }

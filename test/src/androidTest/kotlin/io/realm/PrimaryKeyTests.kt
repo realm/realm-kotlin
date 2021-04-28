@@ -16,8 +16,8 @@
 
 package io.realm
 
-import io.realm.internal.allPrimaryKeyFieldTypes
-import io.realm.internal.rType
+import io.realm.test.allPrimaryKeyFieldTypes
+import io.realm.test.rType
 import test.primarykey.NoPrimaryKey
 import test.primarykey.PrimaryKeyByte
 import test.primarykey.PrimaryKeyByteNullable
@@ -249,7 +249,4 @@ class PrimaryKeyTests {
         }
         assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
     }
-
-    // TODO Test all types that cannot be supported raises compilation error. Probably fits better in
-    //  compiler plugin test
 }

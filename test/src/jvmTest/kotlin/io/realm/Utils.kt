@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.util
+package io.realm
 
-// Are there any time where our APIs would benefit from this, or is it only tests that needs to
-// cover all of the various primitive types
-enum class TestRealmFieldTypes {
-    BYTE,
-    CHAR,
-    SHORT,
-    INT,
-    LONG,
-    BOOLEAN,
-    FLOAT,
-    DOUBLE,
-    LINK,
+actual object Utils {
+    actual fun createTempDir(): String {
+        TODO("Not yet implemented")
+    }
+
+    actual fun deleteTempDir(path: String) {
+        TODO()
+    }
 }
