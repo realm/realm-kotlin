@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.util
 
-actual object Utils {
-    actual fun createTempDir(): String {
-        TODO("Not yet implemented")
-    }
+import kotlinx.coroutines.CoroutineScope
 
-    actual fun deleteTempDir(path: String) {
-        TODO()
-    }
+expect class RunLoopThread : CoroutineScope {
+
+    fun run(block: RunLoopThread.() -> Unit)
+
+    fun terminate()
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.util
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile

@@ -15,6 +15,7 @@
  */
 package io.realm
 
+import io.realm.util.Utils
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest

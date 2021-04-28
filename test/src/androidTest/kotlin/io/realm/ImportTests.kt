@@ -16,7 +16,8 @@
 
 package io.realm
 
-import io.realm.test.classifiers
+import io.realm.util.TypeDescriptor.classifiers
+import io.realm.util.Utils
 import test.Sample
 import test.link.Child
 import test.link.Parent

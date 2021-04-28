@@ -18,7 +18,7 @@ package io.realm.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.CompilerTest.Companion.compileFromSource
+import io.realm.util.CompilerTest.Companion.compileFromSource
 import io.realm.interop.CollectionType
 import io.realm.util.TypeDescriptor.allFieldTypes
 import org.junit.Test

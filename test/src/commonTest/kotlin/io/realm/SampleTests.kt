@@ -17,6 +17,7 @@
 
 package io.realm
 
+import io.realm.util.Utils
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

@@ -127,13 +127,11 @@ kotlin {
 kotlin {
     jvm()
     sourceSets {
-        getByName("jvmTest") {
+        getByName("jvmMain") {
             dependencies {
-                implementation(kotlin("test"))
-                implementation(kotlin("test-junit"))
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
-                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
+                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
             }
         }
     }
@@ -141,25 +139,15 @@ kotlin {
 
 kotlin {
     iosX64("ios")
+    macosX64("macos")
     sourceSets {
-        val commonTest by getting
-        val nativeTest by creating {
-            dependsOn(commonTest)
-            kotlin.srcDir("src/nativeTest/kotlin")
+        val macosMain by getting
+        val macosTest by getting
+        getByName("iosMain") {
+            dependsOn(macosMain)
         }
         getByName("iosTest") {
-            dependsOn(nativeTest)
-        }
-    }
-}
-
-kotlin {
-    macosX64("macos") {
-    }
-    sourceSets {
-        val nativeTest by getting
-        getByName("macosTest") {
-            dependsOn(nativeTest)
+            dependsOn(macosTest)
         }
     }
 }

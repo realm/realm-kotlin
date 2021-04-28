@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.util.RunLoopThread
+import io.realm.util.Utils
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

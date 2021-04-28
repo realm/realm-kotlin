@@ -15,20 +15,9 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.util
 
-import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.absolutePathString
-
-actual object Utils {
-    @OptIn(ExperimentalPathApi::class)
-    actual fun createTempDir(): String {
-        return Files.createTempDirectory("android_tests").absolutePathString()
-    }
-
-    actual fun deleteTempDir(path: String) {
-        File(path).deleteRecursively()
-    }
+expect object Utils {
+    fun createTempDir(): String
+    fun deleteTempDir(path: String)
 }

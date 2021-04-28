@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 package io.realm.util
 
-import kotlinx.coroutines.CoroutineScope
+actual object Utils {
+    actual fun createTempDir(): String {
+        TODO("Not yet implemented")
+    }
 
-expect class RunLoopThread : CoroutineScope {
-
-    fun run(block: RunLoopThread.() -> Unit)
-
-    fun terminate()
+    actual fun deleteTempDir(path: String) {
+        TODO()
+    }
 }
