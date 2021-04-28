@@ -74,7 +74,7 @@ pipeline {
                 test("connectedAndroidTest")
             }
         }
-        state('Tests JVM (compiler only)') {
+        stage('Tests JVM (compiler only)') {
             steps {
                 test('jvmTest --tests "io.realm.test.compiler*"')
             }
