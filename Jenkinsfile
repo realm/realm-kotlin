@@ -74,6 +74,11 @@ pipeline {
                 test("connectedAndroidTest")
             }
         }
+        stage('Tests JVM (compiler only)') {
+            steps {
+                test('jvmTest --tests "io.realm.test.compiler*"')
+            }
+        }
         stage('Tests Android Sample App') {
             steps {
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {

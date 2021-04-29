@@ -16,8 +16,12 @@
 
 package sample.input
 import io.realm.RealmObject
+import io.realm.PrimaryKey
+import java.util.*
 
 class Sample : RealmObject {
+    @PrimaryKey
+    var id: Long = Random().nextLong()
     var stringField: String? = "Realm"
     var byteField: Byte? = 0xA
     var charField: Char? = 'a'

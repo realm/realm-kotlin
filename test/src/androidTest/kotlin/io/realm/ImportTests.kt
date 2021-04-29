@@ -17,7 +17,7 @@
 package io.realm
 
 import io.realm.util.PlatformUtils
-import io.realm.util.TestRealmFieldTypes
+import io.realm.util.TypeDescriptor.classifiers
 import test.Sample
 import test.link.Child
 import test.link.Parent
@@ -62,18 +62,19 @@ class ImportTests {
         //  possible by just peeking into the Sample.`$realm$fields` with
         //  @Suppress("invisible_reference", "invisible_member") but maybe worth to move such test
         //  requiring internals into a separate module.
-        for (value in TestRealmFieldTypes.values()) {
-            when (value) {
-                TestRealmFieldTypes.BYTE -> assertEquals(0xa, managed.byteField)
-                TestRealmFieldTypes.CHAR -> assertEquals('a', managed.charField)
-                TestRealmFieldTypes.SHORT -> assertEquals(17, managed.shortField)
-                TestRealmFieldTypes.INT -> assertEquals(42, managed.intField)
-                TestRealmFieldTypes.LONG -> assertEquals(256, managed.longField)
-                TestRealmFieldTypes.BOOLEAN -> assertEquals(true, managed.booleanField)
-                TestRealmFieldTypes.FLOAT -> assertEquals(3.14f, managed.floatField)
-                TestRealmFieldTypes.DOUBLE -> assertEquals(1.19840122, managed.doubleField)
-                TestRealmFieldTypes.LINK -> assertEquals(null, managed.child)
-                else -> error("Untested type: $value")
+        for (type in classifiers.keys) {
+            when (type) {
+                String::class -> assertEquals("Realm", managed.stringField)
+                Byte::class -> assertEquals(0xa, managed.byteField)
+                Char::class -> assertEquals('a', managed.charField)
+                Short::class -> assertEquals(17, managed.shortField)
+                Int::class -> assertEquals(42, managed.intField)
+                Long::class -> assertEquals(256, managed.longField)
+                Boolean::class -> assertEquals(true, managed.booleanField)
+                Float::class -> assertEquals(3.14f, managed.floatField)
+                Double::class -> assertEquals(1.19840122, managed.doubleField)
+                RealmObject::class -> assertEquals(null, managed.child)
+                else -> error("Untested type: $type")
             }
         }
     }

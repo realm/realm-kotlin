@@ -218,7 +218,7 @@ kotlin {
         val iosMain by getting {
             dependsOn(darwinCommon)
             // Only add common sources to one platform when in the IDE. See comment at 'idea'
-            // difinition for full details.
+            // definition for full details.
             if (!idea) {
                 kotlin.srcDir("src/darwinCommon/kotlin")
             }

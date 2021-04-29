@@ -16,16 +16,20 @@
 
 package io.realm.util
 
-// Are there any time where our APIs would benefit from this, or is it only tests that needs to
-// cover all of the various primitive types
-enum class TestRealmFieldTypes {
-    BYTE,
-    CHAR,
-    SHORT,
-    INT,
-    LONG,
-    BOOLEAN,
-    FLOAT,
-    DOUBLE,
-    LINK,
+import android.annotation.SuppressLint
+import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.absolutePathString
+
+actual object PlatformUtils {
+    @SuppressLint("NewApi")
+    @ExperimentalPathApi
+    actual fun createTempDir(): String {
+        return Files.createTempDirectory("android_tests").absolutePathString()
+    }
+
+    actual fun deleteTempDir(path: String) {
+        File(path).deleteRecursively()
+    }
 }

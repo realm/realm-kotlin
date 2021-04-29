@@ -44,7 +44,7 @@ actual object RealmInterop {
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
-                primary_key = clazz.primaryKey
+                primary_key = clazz.primaryKey ?: ""
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = INVALID_CLASS_KEY
@@ -129,8 +129,15 @@ actual object RealmInterop {
         realmc.realm_commit((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_rollback(realm: NativePointer) {
+        realmc.realm_rollback((realm as LongPointerWrapper).ptr)
+    }
+
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
+    }
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, to_realm_value(primaryKey)))
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
@@ -159,8 +166,8 @@ actual object RealmInterop {
         return from_realm_value(cvalue)
     }
 
-    private fun <T> from_realm_value(value: realm_value_t): T {
-        return when (value.type) {
+    private fun <T> from_realm_value(value: realm_value_t?): T {
+        return when (value?.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
                 value.string
             realm_value_type_e.RLM_TYPE_INT ->
@@ -173,7 +180,8 @@ actual object RealmInterop {
                 value.dnum
             realm_value_type_e.RLM_TYPE_LINK ->
                 value.asLink()
-            realm_value_type_e.RLM_TYPE_NULL ->
+            realm_value_type_e.RLM_TYPE_NULL,
+            null ->
                 null
             else ->
                 TODO("Unsupported type for from_realm_value ${value.type}")
@@ -197,7 +205,15 @@ actual object RealmInterop {
                     cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                     cvalue.string = value
                 }
+                is Byte -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
                 is Char -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
+                is Short -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_INT
                     cvalue.integer = value.toLong()
                 }

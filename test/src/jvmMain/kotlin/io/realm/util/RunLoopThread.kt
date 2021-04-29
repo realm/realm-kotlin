@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-package io.realm.model
+package io.realm.util
 
-import io.realm.RealmObject
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
 
-open class Person(open var name: String) : RealmObject {
-    constructor() : this("")
-    open var age: Int = 0
+actual class RunLoopThread : CoroutineScope {
+    actual fun run(block: RunLoopThread.() -> Unit) {
+        TODO()
+    }
+
+    actual fun terminate() {
+        TODO()
+    }
+
+    override val coroutineContext: CoroutineContext
+        get() = TODO("Not yet implemented")
 }

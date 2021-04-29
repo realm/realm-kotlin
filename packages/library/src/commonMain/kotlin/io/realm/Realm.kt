@@ -84,8 +84,17 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         RealmInterop.realm_commit(dbPointer!!)
     }
 
-    fun cancelTransaction() {
-        TODO()
+    // TODO Add @throws when Realm exception hierarchy is settled
+    //  https://github.com/realm/realm-kotlin/issues/70
+    /**
+     * Roll back the current write transaction.
+     *
+     * @throws RuntimeException if there is currently no write transaction.
+     */
+    // TODO Add test for this, but since it is part of transaction behaviour it only makes sense
+    //  when implementing our background thread backed write method
+    fun rollbackTransaction() {
+        RealmInterop.realm_rollback(dbPointer!!)
     }
 
     fun <T : RealmObject> create(type: KClass<T>): T {
@@ -93,6 +102,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
+
+    fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
+        return io.realm.internal.create(configuration.mediator, dbPointer!!, type, primaryKey)
+    }
 
     /**
      * Creates a copy of an object in the Realm.
