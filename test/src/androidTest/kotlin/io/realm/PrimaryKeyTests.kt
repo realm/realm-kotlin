@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.util.TypeDescriptor.rType
 import io.realm.util.Utils
@@ -52,7 +53,7 @@ class PrimaryKeyTests {
 
     @BeforeTest
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
         configuration =
             RealmConfiguration.Builder(path = "$tmpDir/default.realm")
                 .schema(
@@ -66,7 +67,7 @@ class PrimaryKeyTests {
 
     @AfterTest
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
