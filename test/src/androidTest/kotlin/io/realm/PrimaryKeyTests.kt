@@ -19,7 +19,6 @@ package io.realm
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.util.TypeDescriptor.rType
-import io.realm.util.Utils
 import test.primarykey.NoPrimaryKey
 import test.primarykey.PrimaryKeyByte
 import test.primarykey.PrimaryKeyByteNullable
