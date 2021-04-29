@@ -23,7 +23,3 @@ package io.realm
 fun RealmObject.delete() {
     Realm.delete(this)
 }
-
-fun RealmObject.observe(objectChangeListener: Callback): Cancellable {
-    return Realm.observe(this, objectChangeListener)
-}

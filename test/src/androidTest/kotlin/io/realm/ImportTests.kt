@@ -16,8 +16,8 @@
 
 package io.realm
 
+import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.classifiers
-import io.realm.util.Utils
 import test.Sample
 import test.link.Child
 import test.link.Parent
@@ -36,7 +36,7 @@ class ImportTests {
 
     @BeforeTest
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class, Sample::class))
         realm = Realm.open(configuration)
@@ -44,7 +44,7 @@ class ImportTests {
 
     @AfterTest
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test

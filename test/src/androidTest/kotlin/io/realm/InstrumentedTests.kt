@@ -19,7 +19,7 @@ package io.realm
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.internal.RealmInitializer
-import io.realm.util.Utils
+import io.realm.util.PlatformUtils
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -36,14 +36,14 @@ class InstrumentedTests {
 
     @Before
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
     @After
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     // Smoke test of compiling with library

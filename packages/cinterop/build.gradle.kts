@@ -45,7 +45,7 @@ val cinteropCorePath = "$rootDir/$corePath"
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
-    ndkVersion = "22.0.6917172"
+    ndkVersion = Versions.Android.ndkVersion
 
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
@@ -70,8 +70,7 @@ android {
     }
     defaultConfig {
         ndk {
-            // FIXME MPP-BUILD Extend supported platforms. Currently using local C API build and CMakeLists.txt only targeting x86_64
-            abiFilters("x86_64", "arm64-v8a")
+            abiFilters += setOf("x86_64", "arm64-v8a")
         }
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
@@ -83,7 +82,7 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
-            setPath("src/jvmCommon/CMakeLists.txt")
+            path = project.file("src/jvmCommon/CMakeLists.txt")
         }
     }
 }
@@ -188,9 +187,6 @@ kotlin {
         val androidMain by getting {
             dependsOn(jvmCommon)
             kotlin.srcDir("src/jvmCommon/kotlin")
-            dependencies {
-                implementation("androidx.startup:startup-runtime:1.0.0")
-            }
         }
 
         val jvmMain by getting {

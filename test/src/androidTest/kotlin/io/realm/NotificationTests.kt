@@ -16,8 +16,8 @@
 
 package io.realm
 
+import io.realm.util.PlatformUtils
 import io.realm.util.RunLoopThread
-import io.realm.util.Utils
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -47,81 +47,13 @@ class NotificationTests {
 
     @BeforeTest
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
     }
 
     @AfterTest
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
-    }
-
-    @Test
-    fun objectListener() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        assertEquals(INITIAL, sample.stringField)
-
-        sample.observe {
-            val stringField = sample.stringField
-            launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-            realm.close()
-            terminate()
-        }
-    }
-
-    @Test
-    fun objectListener_cancel() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        assertEquals(INITIAL, sample.stringField)
-
-        val token = sample.observe {
-            val stringField = sample.stringField
-            launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-
-            token.cancel()
-
-            realm.beginTransaction()
-            sample.stringField = SECOND
-            realm.commitTransaction()
-
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
-
-            realm.close()
-            terminate()
-        }
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
@@ -135,6 +67,8 @@ class NotificationTests {
         assertEquals(0, results.size)
 
         val token = results.observe {
+            assertTrue(it is RealmResults<Sample>)
+            assertEquals(results, it)
             val updatedResults = results.toList()
             this@run.launch { c.send(updatedResults) }
         }
@@ -159,41 +93,6 @@ class NotificationTests {
             assertTrue(c.isEmpty)
 
             realm.close()
-            terminate()
-        }
-    }
-
-    @Test
-    fun closeWithoutCancel() = RunLoopThread().run {
-        val c = Channel<String>(1)
-
-        val realm = Realm.open(configuration)
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class).apply { stringField = INITIAL }
-        realm.commitTransaction()
-
-        assertEquals(INITIAL, sample.stringField)
-
-        val token = Realm.observe(sample) {
-            val stringField = sample.stringField
-            this@run.launch {
-                c.send(stringField)
-            }
-        }
-
-        launch {
-            realm.beginTransaction()
-            assertEquals(INITIAL, c.receive())
-            sample.stringField = FIRST
-            realm.commitTransaction()
-            assertEquals(FIRST, c.receive())
-            // Verify that closing does not cause troubles even though notifications are not
-            // cancelled.
-            // NOTE Listener is not released either, so leaking the callbacks.
-            realm.close()
-            // Yield to allow any pending notifications to be triggered
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
             terminate()
         }
     }

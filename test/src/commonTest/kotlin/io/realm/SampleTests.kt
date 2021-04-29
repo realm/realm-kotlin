@@ -17,7 +17,7 @@
 
 package io.realm
 
-import io.realm.util.Utils
+import io.realm.util.PlatformUtils
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -33,7 +33,7 @@ class SampleTests {
 
     @BeforeTest
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
@@ -41,7 +41,7 @@ class SampleTests {
     @AfterTest
     fun tearDown() {
         realm.close()
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test

@@ -23,6 +23,16 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
+/**
+ * Add a check and error message for code that never be reached because it should have been
+ * replaced by the Compiler Plugin.
+ */
+@Suppress("FunctionNaming")
+internal inline fun REPLACED_BY_IR(
+    message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
+        "Has the `realm-kotlin` Gradle plugin been applied to the project?"
+): Nothing = throw AssertionError(message)
+
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
 fun <T : RealmObject> create(mediator: Mediator, realmPointer: NativePointer, type: KClass<T>): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
