@@ -20,19 +20,17 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.compiler.Registrar
 
-class CompilerTest {
-    companion object {
-        fun compileFromSource(
-            source: SourceFile,
-            plugins: List<Registrar> = listOf(Registrar())
-        ): KotlinCompilation.Result =
-            KotlinCompilation().apply {
-                sources = listOf(source)
-                useIR = true
-                messageOutputStream = System.out
-                compilerPlugins = plugins
-                inheritClassPath = true
-                kotlincArguments = listOf("-Xjvm-default=enable")
-            }.compile()
-    }
+object CompilerTest {
+    fun compileFromSource(
+        source: SourceFile,
+        plugins: List<Registrar> = listOf(Registrar())
+    ): KotlinCompilation.Result =
+        KotlinCompilation().apply {
+            sources = listOf(source)
+            useIR = true
+            messageOutputStream = System.out
+            compilerPlugins = plugins
+            inheritClassPath = true
+            kotlincArguments = listOf("-Xjvm-default=enable")
+        }.compile()
 }
