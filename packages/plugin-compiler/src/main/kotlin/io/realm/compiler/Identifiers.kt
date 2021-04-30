@@ -23,6 +23,7 @@ internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
+    val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
@@ -42,8 +43,10 @@ internal object Names {
 
     // Schema related names
     val CLASS_FLAG_NORMAL = Name.identifier("RLM_CLASS_NORMAL")
-    val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
     val PROPERTY_FLAG_NORMAL = Name.identifier("RLM_PROPERTY_NORMAL")
+    val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
+    val PROPERTY_FLAG_PRIMARY_KEY = Name.identifier("RLM_PROPERTY_PRIMARY_KEY")
+    val PROPERTY_FLAG_INDEXED = Name.identifier("RLM_PROPERTY_INDEXED")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
 }
@@ -75,4 +78,5 @@ internal object FqNames {
     val PROPERTY_TYPE = FqName("io.realm.interop.PropertyType")
     val COLLECTION_TYPE = FqName("io.realm.interop.CollectionType")
     val PROPERTY_FLAG = FqName("io.realm.interop.PropertyFlag")
+    val PRIMARY_KEY_ANNOTATION = FqName("io.realm.PrimaryKey")
 }

@@ -7,6 +7,54 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
           INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:Sample modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmModelInternal; io.realm.internal.RealmModelInternal]'
+      PROPERTY name:id visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:id type:kotlin.Long visibility:private
+          annotations:
+            PrimaryKey
+          EXPRESSION_BODY
+            CALL 'public open fun nextLong (): kotlin.Long declared in java.util.Random' type=kotlin.Long origin=null
+              $this: CONSTRUCTOR_CALL 'public constructor <init> () declared in java.util.Random' type=java.util.Random origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-id> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Long
+          correspondingProperty: PROPERTY name:id visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-id> (): kotlin.Long declared in sample.input.Sample'
+                WHEN type=kotlin.Long origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-id>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun getValue <R> (obj: io.realm.internal.RealmModelInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.Long
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-id>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="id"
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:id type:kotlin.Long visibility:private' type=kotlin.Long origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-id>' type=sample.input.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-id> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Long) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:id visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-id> (<set-?>: kotlin.Long): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-id>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setValue <R> (obj: io.realm.internal.RealmModelInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Long
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-id>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="id"
+                      value: GET_VAR '<set-?>: kotlin.Long declared in sample.input.Sample.<set-id>' type=kotlin.Long origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:id type:kotlin.Long visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-id>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: kotlin.Long declared in sample.input.Sample.<set-id>' type=kotlin.Long origin=null
       PROPERTY name:stringField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private
           EXPRESSION_BODY
@@ -497,9 +545,9 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Sample.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
                 name: CONST String type=kotlin.String value="Sample"
-                primaryKey: CONST String type=kotlin.String value=""
+                primaryKey: CONST String type=kotlin.String value="id"
                 flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.ClassFlag> origin=null
                   <T>: io.realm.interop.ClassFlag
                   elements: VARARG type=kotlin.Array<io.realm.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.interop.ClassFlag>
@@ -507,6 +555,17 @@ MODULE_FRAGMENT name:<main>
                 properties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.interop.Property> origin=null
                   <T>: io.realm.interop.Property
                   elements: VARARG type=kotlin.Array<io.realm.interop.Property> varargElementType=kotlin.collections.List<io.realm.interop.Property>
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="id"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_PRIMARY_KEY' type=io.realm.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
                       name: CONST String type=kotlin.String value="stringField"
                       publicName: CONST String type=kotlin.String value=""
@@ -629,7 +688,8 @@ MODULE_FRAGMENT name:<main>
             EXPRESSION_BODY
               CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> origin=null
                 <T>: kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>
-                elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> varargElementType=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>
+                elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>>
+                  PROPERTY_REFERENCE 'public final id: kotlin.Long [var]' field=null getter='public final fun <get-id> (): kotlin.Long declared in sample.input.Sample' setter='public final fun <set-id> (<set-?>: kotlin.Long): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final stringField: kotlin.String? [var]' field=null getter='public final fun <get-stringField> (): kotlin.String? declared in sample.input.Sample' setter='public final fun <set-stringField> (<set-?>: kotlin.String?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final byteField: kotlin.Byte? [var]' field=null getter='public final fun <get-byteField> (): kotlin.Byte? declared in sample.input.Sample' setter='public final fun <set-byteField> (<set-?>: kotlin.Byte?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final charField: kotlin.Char? [var]' field=null getter='public final fun <get-charField> (): kotlin.Char? declared in sample.input.Sample' setter='public final fun <set-charField> (<set-?>: kotlin.Char?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
@@ -643,12 +703,25 @@ MODULE_FRAGMENT name:<main>
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$fields> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>>
             correspondingProperty: PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> declared in sample.input.Sample.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-$realm$fields>' type=sample.input.Sample.Companion origin=null
+        PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> visibility:private
+            EXPRESSION_BODY
+              PROPERTY_REFERENCE 'public final id: kotlin.Long [var]' field=null getter='public final fun <get-id> (): kotlin.Long declared in sample.input.Sample' setter='public final fun <set-id> (<set-?>: kotlin.Long): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$primaryKey> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>
+            correspondingProperty: PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<*, *>? declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> declared in sample.input.Sample.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-$realm$primaryKey>' type=sample.input.Sample.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.RealmObject
@@ -853,9 +926,9 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Child.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
                 name: CONST String type=kotlin.String value="Child"
-                primaryKey: CONST String type=kotlin.String value=""
+                primaryKey: CONST Null type=kotlin.Nothing? value=null
                 flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.ClassFlag> origin=null
                   <T>: io.realm.interop.ClassFlag
                   elements: VARARG type=kotlin.Array<io.realm.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.interop.ClassFlag>
@@ -886,17 +959,30 @@ MODULE_FRAGMENT name:<main>
             EXPRESSION_BODY
               CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> origin=null
                 <T>: kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>
-                elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> varargElementType=kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>
+                elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>>
                   PROPERTY_REFERENCE 'public final name: kotlin.String? [var]' field=null getter='public final fun <get-name> (): kotlin.String? declared in sample.input.Child' setter='public final fun <set-name> (<set-?>: kotlin.String?): kotlin.Unit declared in sample.input.Child' type=kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> origin=null
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$fields> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>>
             correspondingProperty: PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> declared in sample.input.Child.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-$realm$fields>' type=sample.input.Child.Companion origin=null
+        PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> visibility:private
+            EXPRESSION_BODY
+              CONST Null type=kotlin.Nothing? value=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$primaryKey> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>
+            correspondingProperty: PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<*, *>? declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> declared in sample.input.Child.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-$realm$primaryKey>' type=sample.input.Child.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.RealmObject

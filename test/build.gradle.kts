@@ -38,10 +38,16 @@ kotlin {
         getByName("commonMain") {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
                 implementation("io.realm.kotlin:library:${Realm.version}")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                // FIXME API-SCHEMA We currently have some tests that verified injection of
+                //  interfaces, uses internal representation for property meta data, etc. Can
+                //  probably be replaced when schema information is exposed in the public API
+                // Our current compiler plugin tests only runs on JVM, so makes sense to keep them
+                // for now, but ideally they should go to the compiler plugin tests.
+                implementation("io.realm.kotlin:cinterop:${Realm.version}")
             }
         }
 
@@ -49,10 +55,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                // We currently have some tests that verified injection of interfaces, etc. Our
-                // current compiler plugin tests only runs on JVM, so makes sense to keep them for
-                // now, but ideally they should go to the compiler plugin tests.
-                implementation("io.realm.kotlin:cinterop:${Realm.version}")
             }
         }
     }
@@ -125,6 +127,13 @@ kotlin {
 kotlin {
     jvm()
     sourceSets {
+        getByName("jvmMain") {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+                implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
+                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+            }
+        }
         getByName("jvmTest") {
             dependencies {
                 implementation(kotlin("test"))
@@ -136,25 +145,15 @@ kotlin {
 
 kotlin {
     iosX64("ios")
+    macosX64("macos")
     sourceSets {
-        val commonTest by getting
-        val nativeTest by creating {
-            dependsOn(commonTest)
-            kotlin.srcDir("src/nativeTest/kotlin")
+        val macosMain by getting
+        val macosTest by getting
+        getByName("iosMain") {
+            dependsOn(macosMain)
         }
         getByName("iosTest") {
-            dependsOn(nativeTest)
-        }
-    }
-}
-
-kotlin {
-    macosX64("macos") {
-    }
-    sourceSets {
-        val nativeTest by getting
-        getByName("macosTest") {
-            dependsOn(nativeTest)
+            dependsOn(macosTest)
         }
     }
 }

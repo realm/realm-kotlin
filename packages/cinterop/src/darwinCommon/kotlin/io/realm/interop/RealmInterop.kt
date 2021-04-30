@@ -164,7 +164,7 @@ actual object RealmInterop {
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
-                    primary_key = clazz.primaryKey.cstr.ptr
+                    primary_key = (clazz.primaryKey ?: "").cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags =
@@ -283,6 +283,11 @@ actual object RealmInterop {
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
     }
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_object_create_with_primary_key_by_ref(realm.cptr(), key.toUInt(), to_realm_value(primaryKey).ptr))
+        }
+    }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
         val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> = realm_wrapper.realm_object_as_link(obj.cptr())
@@ -337,6 +342,22 @@ actual object RealmInterop {
         when (value) {
             null -> {
                 cvalue.type = realm_value_type.RLM_TYPE_NULL
+            }
+            is Byte -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Char -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Short -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Int -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
             }
             is Long -> {
                 cvalue.type = realm_value_type.RLM_TYPE_INT

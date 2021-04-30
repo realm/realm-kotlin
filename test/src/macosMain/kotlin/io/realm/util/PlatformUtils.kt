@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.util
 
-import io.realm.interop.Table
-import kotlin.reflect.KMutableProperty1
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.toKString
 
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): Table
-    fun `$realm$newInstance`(): Any
+actual object PlatformUtils {
+    actual fun createTempDir(): String {
+        val mask = "${platform.Foundation.NSTemporaryDirectory()}realm_test_.XXXXXX"
+        return platform.posix.mkdtemp(mask.cstr)!!.toKString()
+    }
+
+    actual fun deleteTempDir(path: String) {
+        platform.Foundation.NSFileManager.defaultManager.removeItemAtURL(platform.Foundation.NSURL(fileURLWithPath = path), null)
+    }
 }

@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.util
 
-import io.realm.interop.Table
-import kotlin.reflect.KMutableProperty1
+actual object PlatformUtils {
+    actual fun createTempDir(): String {
+        TODO("Not yet implemented")
+    }
 
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): Table
-    fun `$realm$newInstance`(): Any
+    actual fun deleteTempDir(path: String) {
+        TODO()
+    }
 }

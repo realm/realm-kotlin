@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.util
+package io.realm
 
-import kotlinx.coroutines.CoroutineScope
-
-expect class RunLoopThread : CoroutineScope {
-
-    fun run(block: RunLoopThread.() -> Unit)
-
-    fun terminate()
-}
+@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.FIELD)
+@MustBeDocumented
+annotation class PrimaryKey
