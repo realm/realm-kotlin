@@ -48,23 +48,23 @@ class SampleTests {
     fun createAndUpdate() {
         val s = "Hello, World!"
 
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class)
-        assertEquals("", sample.stringField)
-        sample.stringField = s
-        assertEquals(s, sample.stringField)
-        realm.commitTransaction()
+        realm.writeBlocking {
+            val sample = create(Sample::class)
+            assertEquals("", sample.stringField)
+            sample.stringField = s
+            assertEquals(s, sample.stringField)
+        }
     }
 
     @Test
     fun updateOutsideTransactionThrows() {
         val s = "Hello, World!"
-
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class)
-        sample.stringField = s
-        assertEquals(s, sample.stringField)
-        realm.commitTransaction()
+        val sample: Sample = realm.writeBlocking {
+            val sample = create(Sample::class)
+            sample.stringField = s
+            assertEquals(s, sample.stringField)
+            sample
+        }
 
         assertFailsWith<RuntimeException> {
             sample.stringField = "ASDF"
@@ -73,26 +73,26 @@ class SampleTests {
 
     @Test
     fun delete() {
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class)
-        Realm.delete(sample)
-        assertFailsWith<IllegalArgumentException> {
-            Realm.delete(sample)
+        realm.writeBlocking {
+            val sample = create(Sample::class)
+            delete(sample)
+            assertFailsWith<IllegalArgumentException> {
+                sample.delete()
+            }
+            assertFailsWith<IllegalStateException> {
+                sample.stringField = "sadf"
+            }
         }
-        assertFailsWith<IllegalStateException> {
-            sample.stringField = "sadf"
-        }
-        realm.commitTransaction()
     }
 
     @Test
     fun query() {
         val s = "Hello, World!"
 
-        realm.beginTransaction()
-        realm.create(Sample::class).run { stringField = s }
-        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
-        realm.commitTransaction()
+        realm.writeBlocking {
+            create(Sample::class).run { stringField = s }
+            create(Sample::class).run { stringField = "Hello, Realm!" }
+        }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
@@ -119,36 +119,36 @@ class SampleTests {
 
     @Test
     fun query_delete() {
-        realm.beginTransaction()
-        realm.create(Sample::class).run { stringField = "Hello, World!" }
-        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
-        realm.commitTransaction()
+        realm.writeBlocking {
+            create(Sample::class).run { stringField = "Hello, World!" }
+            create(Sample::class).run { stringField = "Hello, Realm!" }
+        }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
 
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
+        realm.writeBlocking {
+            objects(Sample::class).delete()
+        }
 
         assertEquals(0, realm.objects(Sample::class).size)
     }
 
     @Test
     fun primitiveTypes() {
-        realm.beginTransaction()
-        realm.create(Sample::class).apply {
-            stringField = "Realm Kotlin"
-            byteField = 0xb
-            charField = 'b'
-            shortField = 1
-            intField = 2
-            longField = 1024
-            booleanField = false
-            floatField = 1.99f
-            doubleField = 1.19851106
+        realm.writeBlocking {
+            create(Sample::class).apply {
+                stringField = "Realm Kotlin"
+                byteField = 0xb
+                charField = 'b'
+                shortField = 1
+                intField = 2
+                longField = 1024
+                booleanField = false
+                floatField = 1.99f
+                doubleField = 1.19851106
+            }
         }
-        realm.commitTransaction()
 
         var objects: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(1, objects.size)

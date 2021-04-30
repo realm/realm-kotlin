@@ -29,12 +29,9 @@ class ExpressionRepository {
     }
 
     fun addExpression(expression: String): Expression {
-        realm.beginTransaction()
-        val persistedExpression = realm.create(Expression::class).apply {
-            expressionString = expression
+        return realm.writeBlocking {
+            copyToRealm(Expression().apply { expressionString = expression })
         }
-        realm.commitTransaction()
-        return persistedExpression
     }
 
     fun expressions(): List<Expression> {

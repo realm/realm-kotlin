@@ -21,5 +21,5 @@ package io.realm
 //  https://github.com/realm/realm-kotlin/issues/83
 
 fun RealmObject.delete() {
-    Realm.delete(this)
+    MutableRealm.delete(this)
 }

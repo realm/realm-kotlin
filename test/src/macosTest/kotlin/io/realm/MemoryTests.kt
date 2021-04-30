@@ -56,9 +56,9 @@ class MemoryTests {
         {
             val realm = openRealmFromTmpDir()
             // TODO use Realm.delete once this is implemented
-            realm.beginTransaction()
-            realm.objects(Sample::class).delete()
-            realm.commitTransaction()
+            realm.writeBlocking {
+                objects(Sample::class).delete()
+            }
 
             // allocating a 1 MB string
             val oneMBstring = StringBuilder("").apply {
@@ -68,14 +68,14 @@ class MemoryTests {
                 }
             }.toString()
 
-            realm.beginTransaction()
-            // inserting ~ 100MB of data
-            for (i in 1..100) {
-                realm.create(Sample::class).apply {
-                    stringField = oneMBstring
-                }.also { referenceHolder.add(it) }
+            realm.writeBlocking {
+                // inserting ~ 100MB of data
+                for (i in 1..100) {
+                    create(Sample::class).apply {
+                        stringField = oneMBstring
+                    }.also { referenceHolder.add(it) }
+                }
             }
-            realm.commitTransaction()
         }()
         assertEquals("99.0M", runSystemCommand(amountOfMemoryMappedInProcessCMD), "We should have at least 99 MB allocated as mmap")
         // After releasing all the 'realm_object_create' reference the Realm should be closed and the
@@ -102,14 +102,14 @@ class MemoryTests {
                 }
             }.toString()
 
-            realm.beginTransaction()
-            // inserting ~ 100MB of data
-            for (i in 1..100) {
-                realm.create(Sample::class).apply {
-                    stringField = oneMBstring
-                }.also { referenceHolder.add(it) }
+            realm.writeBlocking {
+                // inserting ~ 100MB of data
+                for (i in 1..100) {
+                    create(Sample::class).apply {
+                        stringField = oneMBstring
+                    }.also { referenceHolder.add(it) }
+                }
             }
-            realm.commitTransaction()
             realm.close() // force closing will free the native memory even though we still have reference to realm_object open.
         }()
 

@@ -49,11 +49,7 @@ class ImportTests {
 
     @Test
     fun importPrimitiveDefaults() {
-        val sample = Sample()
-        realm.beginTransaction()
-        realm.copyToRealm(sample)
-        realm.commitTransaction()
-
+        realm.writeBlocking { copyToRealm(Sample()) }
         val managed = realm.objects(Sample::class)[0]
 
         // TODO Find a way to ensure that our Sample covers all types. This isn't doable right now
@@ -85,10 +81,7 @@ class ImportTests {
 
         val child = Child().apply { name = v1 }
         val parent = Parent().apply { this.child = child }
-
-        realm.beginTransaction()
-        val clone = realm.copyToRealm(parent)
-        realm.commitTransaction()
+        val clone = realm.writeBlocking { copyToRealm(parent) }
 
         assertNotNull(clone)
         assertNotNull(clone.child)
@@ -103,10 +96,7 @@ class ImportTests {
             child = this
         }
         val root = Sample().apply { child = selfReferencingSample }
-
-        realm.beginTransaction()
-        val clone = realm.copyToRealm(root)
-        realm.commitTransaction()
+        val clone = realm.writeBlocking { copyToRealm(root) }
 
         assertNotNull(clone)
         assertEquals(2, realm.objects(Sample::class).count())
@@ -130,10 +120,9 @@ class ImportTests {
 
         val child = Child().apply { name = v1 }
 
-        realm.beginTransaction()
-        val clone = realm.copyToRealm(child)
-        clone.name = v2
-        realm.commitTransaction()
+        val clone = realm.writeBlocking {
+            copyToRealm(child).apply { name = v2 }
+        }
 
         assertNotNull(clone)
         assertEquals(v2, clone.name)
@@ -145,31 +134,32 @@ class ImportTests {
         val v2 = "ASDF"
         val v3 = "FD"
 
-        realm.beginTransaction()
-        val parent = realm.create(Parent::class)
+        val managedChild = realm.writeBlocking {
+            val parent = create(Parent::class)
 
-        val unmanaged = Child()
-        unmanaged.name = v1
-        assertEquals(v1, unmanaged.name)
+            val unmanaged = Child()
+            unmanaged.name = v1
+            assertEquals(v1, unmanaged.name)
 
-        assertNull(parent.child)
-        parent.child = unmanaged
-        assertNotNull(parent.child)
-        val managedChild = parent.child
-        assertNotNull(managedChild)
+            assertNull(parent.child)
+            parent.child = unmanaged
+            assertNotNull(parent.child)
+            val managedChild = parent.child
+            assertNotNull(managedChild)
 
-        // Verify that properties have been migrated
-        assertEquals(v1, parent.child!!.name)
+            // Verify that properties have been migrated
+            assertEquals(v1, parent.child!!.name)
 
-        // Verify that changes to original object does not affect managed clone
-        unmanaged.name = v2
-        assertEquals(v2, unmanaged.name)
-        assertEquals(v1, parent.child!!.name)
+            // Verify that changes to original object does not affect managed clone
+            unmanaged.name = v2
+            assertEquals(v2, unmanaged.name)
+            assertEquals(v1, parent.child!!.name)
 
-        // Verify that we can update the clone
-        managedChild.name = v3
-        assertEquals(v3, parent.child!!.name)
-        realm.commitTransaction()
+            // Verify that we can update the clone
+            managedChild.name = v3
+            assertEquals(v3, parent.child!!.name)
+            managedChild
+        }
 
         // Verify that we cannot update the managed clone outside a transaction (it is in fact managed)
         assertFailsWith<RuntimeException> {
@@ -182,10 +172,9 @@ class ImportTests {
         val v1 = "Managed"
         val v2 = "Initially unmanaged object"
 
-        realm.beginTransaction()
-        val managed = realm.create<Sample>().apply { stringField = v1 }
-        realm.commitTransaction()
-
+        val managed = realm.writeBlocking {
+            create<Sample>().apply { stringField = v1 }
+        }
         assertEquals(1, realm.objects(Sample::class).count())
 
         val unmanaged = Sample().apply {
@@ -193,9 +182,9 @@ class ImportTests {
             child = managed
         }
 
-        realm.beginTransaction()
-        val importedRoot = realm.copyToRealm(unmanaged)
-        realm.commitTransaction()
+        val importedRoot = realm.writeBlocking {
+            copyToRealm(unmanaged)
+        }
 
         assertEquals(2, realm.objects(Sample::class).count())
         assertEquals(v2, importedRoot.stringField)
@@ -204,15 +193,10 @@ class ImportTests {
 
     @Test
     fun importAlreadyManagedIsNoop() {
-        val v1 = "Managed"
-
-        realm.beginTransaction()
-        var sample = Sample()
-        sample = realm.copyToRealm(sample)
-        sample = realm.copyToRealm(sample)
-        sample = realm.copyToRealm(sample)
-        sample = realm.copyToRealm(sample)
-        realm.commitTransaction()
+        realm.writeBlocking {
+            val sample = copyToRealm(Sample())
+            copyToRealm(sample)
+        }
 
         assertEquals(1, realm.objects(Sample::class).count())
     }

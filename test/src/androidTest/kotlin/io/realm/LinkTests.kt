@@ -45,27 +45,27 @@ class LinkTests {
     @Test
     fun basics() {
         val name = "Realm"
-        realm.beginTransaction()
-        val parent = realm.create(Parent::class)
-        val child = realm.create(Child::class)
-        child.name = name
+        val parent = realm.writeBlocking {
+            val parent = create(Parent::class)
+            val child = create(Child::class)
+            child.name = name
 
-        assertNull(parent.child)
-        parent.child = child
-        assertNotNull(parent.child)
-
-        realm.commitTransaction()
+            assertNull(parent.child)
+            parent.child = child
+            assertNotNull(parent.child)
+            parent
+        }
 
         assertEquals(1, realm.objects(Parent::class).size)
 
         val child1 = realm.objects(Parent::class)[0].child
         assertEquals(name, child1?.name)
 
-        realm.beginTransaction()
-        assertNotNull(parent.child)
-        parent.child = null
-        assertNull(parent.child)
-        realm.commitTransaction()
+        realm.writeBlocking {
+            assertNotNull(parent.child)
+            parent.child = null
+            assertNull(parent.child)
+        }
 
         assertNull(realm.objects(Parent::class)[0].child)
     }

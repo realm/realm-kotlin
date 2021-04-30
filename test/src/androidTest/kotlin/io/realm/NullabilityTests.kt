@@ -43,28 +43,28 @@ class NullabilityTests {
 
     @Test
     fun nullability() {
-        realm.beginTransaction()
-        val nullability = realm.create(Nullability::class)
-        assertNull(nullability.stringNullable)
-        // TODO We cannot verify this before implementing support for default values
-        //  https://github.com/realm/realm-kotlin/issues/106
-        // assertNonNull(nullability.stringNonNullable)
+        realm.writeBlocking {
+            val nullability = create(Nullability::class)
+            assertNull(nullability.stringNullable)
+            // TODO We cannot verify this before implementing support for default values
+            //  https://github.com/realm/realm-kotlin/issues/106
+            // assertNonNull(nullability.stringNonNullable)
 
-        nullability.stringNullable = "Realm"
-        assertNotNull(nullability.stringNullable)
-        nullability.stringNullable = null
-        assertNull(nullability.stringNullable)
+            nullability.stringNullable = "Realm"
+            assertNotNull(nullability.stringNullable)
+            nullability.stringNullable = null
+            assertNull(nullability.stringNullable)
 
-        // Should we try to verify that compiler will break on this
-        // nullability.stringNonNullable = null
-        // We could assert that the C-API fails by internals API with
-        // io.realm.internal.RealmObjectHelper.realm_set_value(nullability as RealmModelInternal, Nullability::stringNonNullable, null)
-        // but that would require
-        // implementation("io.realm.kotlin:cinterop:${Realm.version}")
-        //  https://github.com/realm/realm-kotlin/issues/134
+            // Should we try to verify that compiler will break on this
+            // nullability.stringNonNullable = null
+            // We could assert that the C-API fails by internals API with
+            // io.realm.internal.RealmObjectHelper.realm_set_value(nullability as RealmModelInternal, Nullability::stringNonNullable, null)
+            // but that would require
+            // implementation("io.realm.kotlin:cinterop:${Realm.version}")
+            //  https://github.com/realm/realm-kotlin/issues/134
 
-        nullability.stringNonNullable = "Realm"
-        realm.commitTransaction()
+            nullability.stringNonNullable = "Realm"
+        }
 
         val nullabilityAfter = realm.objects(Nullability::class)[0]
         assertNull(nullabilityAfter.stringNullable)
