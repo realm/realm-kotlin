@@ -62,7 +62,10 @@ class MutableRealm : BaseRealm {
         RealmInterop.realm_commit(dbPointer)
     }
 
-    internal fun cancelWrite() {
+    /**
+     * Cancel the write. Any changes will not be persisted to disk.
+     */
+    public fun cancelWrite() {
         RealmInterop.realm_rollback(dbPointer)
     }
 
@@ -73,6 +76,11 @@ class MutableRealm : BaseRealm {
     // Convenience inline method for the above to skip KClass argument
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     inline fun <reified T : RealmObject> create(): T { return create(T::class) }
+
+    @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
+    fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
+        return io.realm.internal.create(configuration.mediator, dbPointer, type, primaryKey)
+    }
 
     /**
      * Creates a copy of an object in the Realm.

@@ -71,29 +71,29 @@ class PrimaryKeyTests {
 
     @Test
     fun string() {
-        realm.beginTransaction()
-        realm.create(PrimaryKeyString::class, PRIMARY_KEY)
-        realm.commitTransaction()
+        realm.writeBlocking {
+            create(PrimaryKeyString::class, PRIMARY_KEY)
+        }
 
         assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
 
     @Test
     fun nullPrimaryKey() {
-        realm.beginTransaction()
-        realm.create(PrimaryKeyStringNullable::class, null)
-        realm.commitTransaction()
+        realm.writeBlocking {
+            create(PrimaryKeyStringNullable::class, null)
+        }
 
         assertNull(realm.objects(PrimaryKeyStringNullable::class)[0].primaryKey)
     }
 
     @Test
     fun missingPrimaryKeyThrows() {
-        realm.beginTransaction()
-        assertFailsWith<RuntimeException> {
-            realm.create(PrimaryKeyString::class)
+        realm.writeBlocking {
+            assertFailsWith<RuntimeException> {
+                create(PrimaryKeyString::class)
+            }
         }
-        realm.rollbackTransaction()
 
         assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
     }
@@ -101,13 +101,14 @@ class PrimaryKeyTests {
     @Test
     @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicatePrimaryKeyThrows() {
-        realm.beginTransaction()
-        val create = realm.create(PrimaryKeyString::class, PRIMARY_KEY)
-        assertFailsWith<RuntimeException> {
-            // C-API semantics is currently to return any existing object if already present
-            val create1 = realm.create(PrimaryKeyString::class, PRIMARY_KEY)
+        realm.writeBlocking {
+            create(PrimaryKeyString::class, PRIMARY_KEY)
+            assertFailsWith<RuntimeException> {
+                // C-API semantics is currently to return any existing object if already present
+                create(PrimaryKeyString::class, PRIMARY_KEY)
+            }
+            cancelWrite()
         }
-        realm.rollbackTransaction()
 
         assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
@@ -115,13 +116,14 @@ class PrimaryKeyTests {
     @Test
     @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicateNullPrimaryKeyThrows() {
-        realm.beginTransaction()
-        val create = realm.create(PrimaryKeyString::class, null)
-        assertFailsWith<RuntimeException> {
-            // C-API semantics is currently to return any existing object if already present
-            val create1 = realm.create(PrimaryKeyString::class, null)
+        realm.writeBlocking {
+            create(PrimaryKeyString::class, null)
+            assertFailsWith<RuntimeException> {
+                // C-API semantics is currently to return any existing object if already present
+                create(PrimaryKeyString::class, null)
+            }
+            cancelWrite()
         }
-        realm.rollbackTransaction()
 
         val objects = realm.objects(PrimaryKeyStringNullable::class)
         assertEquals(1, objects.size)
@@ -130,32 +132,31 @@ class PrimaryKeyTests {
 
     @Test
     fun primaryKeyForNonPrimaryKeyObjectThrows() {
-        realm.beginTransaction()
-        assertFailsWith<RuntimeException> {
-            realm.create(NoPrimaryKey::class, PRIMARY_KEY)
+        realm.writeBlocking {
+            assertFailsWith<RuntimeException> {
+                create(NoPrimaryKey::class, PRIMARY_KEY)
+            }
         }
-        realm.rollbackTransaction()
 
         assertTrue(realm.objects(NoPrimaryKey::class).isEmpty())
     }
 
     @Test
     fun primaryKeyWithWrongTypeThrows() {
-        realm.beginTransaction()
-        assertFailsWith<RuntimeException> {
-            realm.create(PrimaryKeyString::class, 14)
+        realm.writeBlocking {
+            assertFailsWith<RuntimeException> {
+                create(PrimaryKeyString::class, 14)
+            }
         }
-        realm.rollbackTransaction()
-
         assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
     }
 
     @Test
     fun importUnmanagedWithPrimaryKey() {
         val o = PrimaryKeyString().apply { primaryKey = PRIMARY_KEY }
-        realm.beginTransaction()
-        realm.copyToRealm(o)
-        realm.commitTransaction()
+        realm.writeBlocking {
+            copyToRealm(o)
+        }
 
         assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
@@ -164,12 +165,12 @@ class PrimaryKeyTests {
     @Ignore // https://github.com/realm/realm-core/issues/4595
     fun importUnmanagedWithDuplicatePrimaryKeyThrows() {
         val o = PrimaryKeyString()
-        realm.beginTransaction()
-        realm.copyToRealm(o)
-        assertFailsWith<RuntimeException> {
-            realm.copyToRealm(o)
+        realm.writeBlocking {
+            copyToRealm(o)
+            assertFailsWith<RuntimeException> {
+                copyToRealm(o)
+            }
         }
-        realm.commitTransaction()
 
         val objects = realm.objects(PrimaryKeyString::class)
         assertEquals(1, objects.size)
@@ -240,14 +241,15 @@ class PrimaryKeyTests {
 
         val realm = Realm.open(configuration)
 
-        realm.beginTransaction()
-        for (c in classes) {
-            // We could expose this through the test model definitions instead if that is better to avoid the internals
-            val realmObjectCompanion = mediator.companionOf(c)
-            realm.copyToRealm(realmObjectCompanion.`$realm$newInstance`() as RealmObject)
-            val type = realmObjectCompanion.`$realm$primaryKey`!!.rType()
-            assertTrue(types.remove(type), type.toString())
+        realm.writeBlocking {
+            for (c in classes) {
+                // We could expose this through the test model definitions instead if that is better to avoid the internals
+                val realmObjectCompanion = mediator.companionOf(c)
+                copyToRealm(realmObjectCompanion.`$realm$newInstance`() as RealmObject)
+                val type = realmObjectCompanion.`$realm$primaryKey`!!.rType()
+                assertTrue(types.remove(type), type.toString())
+            }
+            assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
         }
-        assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
     }
 }
