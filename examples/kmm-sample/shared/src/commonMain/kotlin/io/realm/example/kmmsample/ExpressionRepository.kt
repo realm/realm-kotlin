@@ -30,7 +30,7 @@ class ExpressionRepository {
 
     fun addExpression(expression: String): Expression {
         return realm.writeBlocking {
-            copyToRealm(Expression(expression))
+            copyToRealm(Expression().apply { expressionString = expression })
         }
     }
 
