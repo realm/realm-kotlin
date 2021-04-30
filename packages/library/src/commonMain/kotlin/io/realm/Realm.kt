@@ -17,7 +17,6 @@ package io.realm
 
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
