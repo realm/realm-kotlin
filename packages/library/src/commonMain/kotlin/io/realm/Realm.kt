@@ -13,30 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm
 
-import io.realm.internal.RealmLog
-import io.realm.internal.RealmModelInternal
-import io.realm.internal.copyToRealm
-import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
-class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) {
-
-    // Public properties
-    /**
-     * Configuration used to configure this Realm instance.
-     */
-    val configuration: RealmConfiguration
-
-    // Private/Internal properties
-    private var dbPointer: NativePointer? = null
-    internal val log: RealmLog
 
     companion object {
         /**

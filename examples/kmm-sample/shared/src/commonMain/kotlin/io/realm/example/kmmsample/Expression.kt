@@ -20,6 +20,6 @@ package io.realm.example.kmmsample
 
 import io.realm.RealmObject
 
-class Expression : RealmObject {
-    var expressionString: String = ""
+class Expression(expression: String) : RealmObject {
+    var expressionString: String = expression
 }
