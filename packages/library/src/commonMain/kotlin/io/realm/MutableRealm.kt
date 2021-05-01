@@ -28,6 +28,9 @@ import kotlin.reflect.KClass
  */
 class MutableRealm : BaseRealm {
 
+    // Track wether or not the write should be persisted
+    internal var commitWrite: Boolean = true
+
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
     internal companion object {
@@ -56,6 +59,7 @@ class MutableRealm : BaseRealm {
 
     internal fun beginTransaction() {
         RealmInterop.realm_begin_write(dbPointer)
+        commitWrite = true
     }
 
     internal fun commitTransaction() {
@@ -67,6 +71,7 @@ class MutableRealm : BaseRealm {
      */
     public fun cancelWrite() {
         RealmInterop.realm_rollback(dbPointer)
+        commitWrite = false
     }
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))

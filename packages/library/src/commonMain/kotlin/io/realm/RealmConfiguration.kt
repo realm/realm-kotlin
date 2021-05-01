@@ -49,14 +49,17 @@ public class RealmConfiguration private constructor(
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
-    logConfig: LogConfiguration
+    logConfig: LogConfiguration,
+    maxNumberOfActiveVersions: Long
 ) {
 
     // Public properties making up the RealmConfiguration
+    // TODO Add KDoc for all of these
     public val path: String
     public val name: String
     public val schema: Set<KClass<out RealmObject>>
     public val log: LogConfiguration
+    public val maxNumberOfActiveVersions: Long
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -74,6 +77,7 @@ public class RealmConfiguration private constructor(
         this.schema = schema
         this.mapOfKClassWithCompanion = companionMap
         this.log = logConfig
+        this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
         RealmInterop.realm_config_set_schema_mode(
@@ -83,6 +87,7 @@ public class RealmConfiguration private constructor(
         RealmInterop.realm_config_set_schema_version(nativeConfig, version = 0) // TODO expose version when handling migration modes
         val schema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
         RealmInterop.realm_config_set_schema(nativeConfig, schema)
+        RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<*>): RealmModelInternal = (
@@ -115,7 +120,8 @@ public class RealmConfiguration private constructor(
             path,
             name,
             schema.keys,
-            LogConfiguration(LogLevel.WARN, listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG)))
+            LogConfiguration(LogLevel.WARN, listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))),
+            Long.MAX_VALUE
         )
 
     /**
@@ -131,11 +137,33 @@ public class RealmConfiguration private constructor(
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
         private var userLoggers: List<RealmLogger> = listOf()
+        private var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
 
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
         fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes }
         fun schema(vararg classes: KClass<out RealmObject>) = apply { this.schema = setOf(*classes) }
+
+        /**
+         * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
+         * attempting to write more data.
+         *
+         * Realm is capable of concurrently handling many different versions of Realm objects, this can e.g. happen if
+         * a flow is slow to process data from the database while a fast writer is putting data into the Realm.
+         *
+         * Under normal circumstances this is not a problem, but if the number of active versions grow too large, it
+         * will have a negative effect on the file size on disk. Setting this parameters can therefore be used to
+         * prevent uses of Realm that can result in very large file sizes.
+         *
+         * @param number the maximum number of active versions before an exception is thrown.
+         * @see [FAQ](https://realm.io/docs/java/latest/.faq-large-realm-file-size)
+         */
+        fun maxNumberOfActiveVersions(maxVersions: Long = 8) = apply {
+            if (maxVersions < 1) {
+                throw IllegalArgumentException("Only positive numbers above 0 are allowed. Yours was: $maxVersions")
+            }
+            this.maxNumberOfActiveVersions = maxVersions
+        }
 
         /**
          * Configure how Realm will report log events.
@@ -177,7 +205,8 @@ public class RealmConfiguration private constructor(
                 path,
                 name,
                 schema,
-                LogConfiguration(logLevel, allLoggers)
+                LogConfiguration(logLevel, allLoggers),
+                maxNumberOfActiveVersions
             )
         }
     }

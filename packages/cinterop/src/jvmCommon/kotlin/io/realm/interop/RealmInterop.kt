@@ -30,8 +30,51 @@ actual object RealmInterop {
         System.loadLibrary("realmc")
     }
 
+    // Check the C-API for errors. If `false` is returned, we need
+    // to call back to the API for the actual error information
+    private fun checkBooleanResult(success: Boolean) {
+        if (!success) {
+            val error = realm_error_t()
+            if (!realmc.realm_get_last_error(error)) {
+                // TODO What to do here? RealmLog is not available at this level
+                println("Failed to read last error")
+            }
+            var exception: Throwable
+            // FIXME Extract all error information and throw exceptions based on type
+            //  https://github.com/realm/realm-kotlin/issues/70
+            //  All erro
+            when(error.error) {
+                else -> exception = RuntimeException(error.message)
+            }
+            if (!realmc.realm_clear_last_error()) {
+                // TODO What to do here? RealmLog is not available at this level
+                println("Failed to clear last error")
+            }
+            throw exception
+        }
+    }
+
+    actual fun realm_get_version_id(realm: NativePointer): Pair<ULong, ULong> {
+        val version = realm_version_id_t()
+        val found = BooleanArray(1)
+        checkBooleanResult(realmc.realm_get_version_id(realm.cptr(), found, version))
+        return if (found[0]) {
+            Pair(version.version.toULong(), version.index.toULong())
+        } else {
+            throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
+        }
+    }
+
     actual fun realm_get_library_version(): String {
         return realmc.realm_get_library_version()
+    }
+
+    actual fun realm_get_num_versions(realm: NativePointer): Long {
+//        val versionsCount = Long().
+        realm_size_t
+        checkBooleanResult(realmc.realm_get_num_versions(realm.cptr()))
+//        return versionsCount.value
+        TODO()
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
@@ -91,9 +134,14 @@ actual object RealmInterop {
         realmc.realm_config_set_schema((config as LongPointerWrapper).ptr, (schema as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
+        realmc.realm_config_set_schema(config.cptr(), maxNumberOfVersions)
+    }
+
     actual fun realm_open(config: NativePointer): NativePointer {
-        // Compiler complains without useless cast
-        return LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        realm_begin_read(realmPtr)
+        return realmPtr
     }
 
     actual fun realm_close(realm: NativePointer) {
@@ -119,6 +167,10 @@ actual object RealmInterop {
 
     actual fun realm_is_closed(realm: NativePointer): Boolean {
         return realmc.realm_is_closed((realm as LongPointerWrapper).ptr)
+    }
+
+    actual fun realm_begin_read(realm: NativePointer) {
+        realmc.realm_begin_read((realm as LongPointerWrapper).ptr)
     }
 
     actual fun realm_begin_write(realm: NativePointer) {

@@ -53,6 +53,7 @@ import realm_wrapper.realm_release
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
+import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -150,6 +151,27 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
 
 actual object RealmInterop {
 
+    actual fun realm_get_version_id(realm: NativePointer): Pair<ULong, ULong> {
+        memScoped {
+            val info = alloc<realm_version_id_t>()
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_get_version_id(realm.cptr(), found.ptr, info.ptr))
+            return if (found.value) {
+                Pair(info.version, info.index)
+            } else {
+                throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
+            }
+        }
+    }
+
+    actual fun realm_get_num_versions(realm: NativePointer): Long {
+        memScoped {
+            val versionsCount = alloc<ULongVar>()
+            checkedBooleanResult(realm_wrapper.realm_get_num_versions(realm.cptr(), versionsCount.ptr))
+            return versionsCount.value.toLong()
+        }
+    }
+
     actual fun realm_get_library_version(): String {
         return realm_wrapper.realm_get_library_version()!!.toKString()
     }
@@ -217,6 +239,10 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
+        realm_wrapper.realm_config_set_schema_version(config.cptr(), maxNumberOfVersions.toULong())
+    }
+
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
         realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }
@@ -226,7 +252,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
+        val realmPtr = CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
+        realm_begin_read(realmPtr)
+        return realmPtr;
     }
 
     actual fun realm_close(realm: NativePointer) {
@@ -247,6 +275,10 @@ actual object RealmInterop {
 
     actual fun realm_is_closed(realm: NativePointer): Boolean {
         return realm_wrapper.realm_is_closed(realm.cptr())
+    }
+
+    actual fun realm_begin_read(realm: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_begin_read(realm.cptr()))
     }
 
     actual fun realm_begin_write(realm: NativePointer) {

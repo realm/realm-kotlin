@@ -24,7 +24,10 @@ inline class ColumnKey(val key: Long)
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
+    @ExperimentalUnsignedTypes
+    fun realm_get_version_id(realm: NativePointer): Pair<ULong, ULong>
     fun realm_get_library_version(): String
+    fun realm_get_num_versions(realm: NativePointer): Long
 
     fun realm_schema_new(tables: List<Table>): NativePointer
 
@@ -33,6 +36,7 @@ expect object RealmInterop {
     fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode)
     fun realm_config_set_schema_version(config: NativePointer, version: Long)
     fun realm_config_set_schema(config: NativePointer, schema: NativePointer)
+    fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long)
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
@@ -46,6 +50,7 @@ expect object RealmInterop {
 
     fun realm_is_closed(realm: NativePointer): Boolean
 
+    fun realm_begin_read(realm: NativePointer)
     fun realm_begin_write(realm: NativePointer)
     fun realm_commit(realm: NativePointer)
     fun realm_rollback(realm: NativePointer)
