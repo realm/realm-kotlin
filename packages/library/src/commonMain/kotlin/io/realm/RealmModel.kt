@@ -16,10 +16,21 @@
 
 package io.realm
 
+import io.realm.internal.RealmModelInternal
+import io.realm.interop.RealmInterop
+
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83
 
 fun RealmObject.delete() {
     MutableRealm.delete(this)
+}
+
+fun RealmObject.version(): VersionId {
+    val internalObject = this as RealmModelInternal
+    internalObject.`$realm$Pointer`?.let {
+        val (version, index) = RealmInterop.realm_get_version_id(it)
+        return VersionId(version, index)
+    } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
 }

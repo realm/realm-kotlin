@@ -36,6 +36,13 @@ class RealmResults<T : RealmObject> constructor(
     private val mediator: Mediator
 ) : AbstractList<T>(), Queryable<T> {
 
+    public var version: VersionId = VersionId(0u, 0u)
+        get() {
+            // TODO Check if Realm is closed
+            val (version, index) = RealmInterop.realm_get_version_id(realm)
+            return VersionId(version, index)
+        }
+
     private val query: NativePointer by lazy { queryPointer() }
     private val result: NativePointer by lazy { RealmInterop.realm_query_find_all(query) }
     override val size: Int

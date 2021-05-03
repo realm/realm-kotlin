@@ -153,6 +153,10 @@ struct realm_size_t {
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found };
 
+// uint64_t output parameter
+// FIXME How to convert uint64_t to Long or ULong?
+// %apply bool* OUTPUT { bool* out_found };
+
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"
 %javaconst(1);

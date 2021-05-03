@@ -71,10 +71,9 @@ actual object RealmInterop {
 
     actual fun realm_get_num_versions(realm: NativePointer): Long {
 //        val versionsCount = Long().
-        realm_size_t
-        checkBooleanResult(realmc.realm_get_num_versions(realm.cptr()))
-//        return versionsCount.value
-        TODO()
+        val result = SWIGTYPE_p_unsigned_long_long()
+        checkBooleanResult(realmc.realm_get_num_versions(realm.cptr(), result))
+        return result.v
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
