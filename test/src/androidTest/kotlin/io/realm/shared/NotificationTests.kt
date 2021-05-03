@@ -15,6 +15,9 @@
  */
 package io.realm.shared
 
+import io.realm.Realm
+import io.realm.RealmConfiguration
+import io.realm.RealmResults
 import io.realm.util.PlatformUtils
 import io.realm.util.RunLoopThread
 import kotlinx.coroutines.channels.Channel

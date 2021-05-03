@@ -1,1 +1,1 @@
-test/src/androidTest/kotlin/io/realm/shared/NotificationTests.kt
+../../../../../androidTest/kotlin/io/realm/shared/NotificationTests.kt

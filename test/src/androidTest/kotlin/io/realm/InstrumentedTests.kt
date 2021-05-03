@@ -22,11 +22,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
 import io.realm.interop.ClassFlag
 import io.realm.interop.CollectionType
+import io.realm.interop.NativePointer
 import io.realm.interop.Property
 import io.realm.interop.PropertyFlag
 import io.realm.interop.PropertyType
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
+import io.realm.interop.SchemaValidationMode
 import io.realm.interop.Table
 import io.realm.util.PlatformUtils
 import org.junit.After
@@ -202,7 +204,7 @@ class InstrumentedTests {
 
         val schema = RealmInterop.realm_schema_new(classes)
         RealmInterop.realm_config_set_schema(config, schema)
-        assertTrue(RealmInterop.realm_schema_validate(schema))
+        assertTrue(RealmInterop.realm_schema_validate(schema, SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC))
 
         RealmInterop.realm_config_set_schema(config, schema)
 
@@ -218,11 +220,12 @@ class InstrumentedTests {
         RealmInterop.realm_begin_write(realm)
 
         val foo = RealmInterop.realm_object_create(realm, key_foo)
+        val key_foo_prop = RealmInterop.realm_get_col_key(realm, "foo", "str")
 
-        assertEquals("", RealmInterop.realm_get_value(realm, foo, "foo", "str", PropertyType.RLM_PROPERTY_TYPE_STRING))
+        assertEquals("", RealmInterop.realm_get_value<String>(foo, key_foo_prop))
 
-        RealmInterop.realm_set_value(realm, foo, "foo", "str", "Hello, World!", false)
-        assertEquals("Hello, World!", RealmInterop.realm_get_value(realm, foo, "foo", "str", PropertyType.RLM_PROPERTY_TYPE_STRING))
+        RealmInterop.realm_set_value(foo, key_foo_prop, "Hello, World!", false)
+        assertEquals("Hello, World!", RealmInterop.realm_get_value(foo, key_foo_prop))
 
         RealmInterop.realm_commit(realm)
 

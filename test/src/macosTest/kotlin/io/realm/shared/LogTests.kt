@@ -1,1 +1,1 @@
-test/src/androidTest/kotlin/io/realm/shared/LogTests.kt
+../../../../../androidTest/kotlin/io/realm/shared/LogTests.kt

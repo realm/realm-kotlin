@@ -292,7 +292,8 @@ are using the following work-around:
 2) When adding a new test file to `androidTest` we need to re-create the symlinks for macOS. This can be done, using the following command on Mac:
 
 ```
-ln -sf test/src/androidTest/kotlin/io/realm/shared/* test/src/macosTest/kotlin/io/realm/shared
+cd test/src/macosTest/kotlin/io/realm/shared
+ln -sf ../../../../../androidTest/kotlin/io/realm/shared/* ./
 ``` 
 
 3) Both the real test file and the symlink must be committed to Git.

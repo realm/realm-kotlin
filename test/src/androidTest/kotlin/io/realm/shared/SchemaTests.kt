@@ -16,6 +16,8 @@
  */
 package io.realm.shared
 
+import io.realm.RealmConfiguration
+import io.realm.RealmObject
 import io.realm.interop.Table
 import test.Sample
 import test.link.Child

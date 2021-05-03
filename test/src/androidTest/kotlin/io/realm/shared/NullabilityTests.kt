@@ -15,6 +15,8 @@
  */
 package io.realm.shared
 
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.util.PlatformUtils
 import test.Nullability
 import kotlin.test.AfterTest

@@ -1,5 +1,7 @@
 package io.realm.shared
 
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.internal.PlatformHelper
 import io.realm.log.LogLevel
 import io.realm.util.TestLogger

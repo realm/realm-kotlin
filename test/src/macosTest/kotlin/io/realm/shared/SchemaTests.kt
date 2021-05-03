@@ -1,1 +1,1 @@
-test/src/androidTest/kotlin/io/realm/shared/SchemaTests.kt
+../../../../../androidTest/kotlin/io/realm/shared/SchemaTests.kt
