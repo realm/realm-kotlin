@@ -1,1 +1,0 @@
-../../../../androidTest/kotlin/io/realm/LinkTests.kt

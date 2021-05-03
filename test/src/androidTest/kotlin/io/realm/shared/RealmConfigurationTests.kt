@@ -1,4 +1,4 @@
-package io.realm
+package io.realm.shared
 
 import io.realm.internal.PlatformHelper
 import io.realm.log.LogLevel
