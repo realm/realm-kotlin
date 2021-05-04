@@ -34,80 +34,80 @@ version = null
 // Mac CI dedicated machine
 osx_kotlin = 'osx_kotlin'
 
-// The Gradle cache is re-used between stages, in order to avoid builds interleave,
-// and potentially corrupt each others cache, we grab a global lock for the entire 
-// build.
-lock("${env.NODE_NAME}-kotlin") {
-    pipeline {
-        agent none
-        environment {
-              ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
-              NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
-              ANDROID_NDK="${NDK_HOME}"
-              ANDROID_NDK_HOME="${NDK_HOME}"
-              REALM_DISABLE_ANALYTICS=true
+pipeline {
+    agent none
+    // The Gradle cache is re-used between stages, in order to avoid builds interleave,
+    // and potentially corrupt each others cache, we grab a global lock for the entire 
+    // build.
+    options {
+        lock resource: 'kotlin_build_lock'
+    }
+    environment {
+          ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
+          NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
+          ANDROID_NDK="${NDK_HOME}"
+          ANDROID_NDK_HOME="${NDK_HOME}"
+          REALM_DISABLE_ANALYTICS=true
+    }
+    stages {
+        stage('SCM') {
+            steps {
+                runScm()
+            }
         }
-
-        stages {
-            stage('SCM') {
-                steps {
-                    runScm()
-                }
+        stage('Build') {
+            steps {
+                runBuild()
             }
-            stage('Build') {
-                steps {
-                    runBuild()
-                }
+        }
+        stage('Static Analysis') {
+            steps {
+                runStaticAnalysis()
             }
-            stage('Static Analysis') {
-                steps {
-                    runStaticAnalysis()
-                }
+        }
+        stage('Tests Compiler Plugin') {
+            steps {
+                runCompilerPluginTest()
             }
-            stage('Tests Compiler Plugin') {
-                steps {
-                    runCompilerPluginTest()
-                }
+        }
+        stage('Tests Macos') {
+            steps {
+                test("macosTest")
             }
-            stage('Tests Macos') {
-                steps {
-                    test("macosTest")
-                }
+        }
+        stage('Tests Android') {
+            steps {
+                test("connectedAndroidTest")
             }
-            stage('Tests Android') {
-                steps {
-                    test("connectedAndroidTest")
-                }
+        }
+        stage('Tests JVM (compiler only)') {
+            steps {
+                test('jvmTest --tests "io.realm.test.compiler*"')
             }
-            stage('Tests JVM (compiler only)') {
-                steps {
-                    test('jvmTest --tests "io.realm.test.compiler*"')
-                }
-            }
-            stage('Tests Android Sample App') {
-                steps {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        runMonkey()
-                    }
-                }
-            }
-            stage('Publish to OJO') {
-                when { expression { shouldReleaseSnapshot(version) } }
-                steps {
-                    runPublishToOjo()
+        }
+        stage('Tests Android Sample App') {
+            steps {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    runMonkey()
                 }
             }
         }
-        post {
-            failure {
-                notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
+        stage('Publish to OJO') {
+            when { expression { shouldReleaseSnapshot(version) } }
+            steps {
+                runPublishToOjo()
             }
-            unstable {
-                notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
-            }
-            fixed {
-                notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
-            }
+        }
+    }
+    post {
+        failure {
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
+        }
+        unstable {
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
+        }
+        fixed {
+            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
         }
     }
 }
