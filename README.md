@@ -275,7 +275,7 @@ Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ
 
 ## Writing Tests
 
-Currently all unit tests shoul be place in the `test/` project instead of `packages/library`. The reason for this is that we need to apply the Realm Compiler Plugin to the tests and this introduces a circular dependency if the tests are in `library`.
+Currently all unit tests should be place in the `test/` project instead of `packages/library`. The reason for this is that we need to apply the Realm Compiler Plugin to the tests and this introduces a circular dependency if the tests are in `library`.
 
 Inside `tests/` there are 3 locations the files can be placed in:
 
@@ -283,7 +283,7 @@ Inside `tests/` there are 3 locations the files can be placed in:
 * `test/src/androidTest`
 * `test/src/macosTest`
 
-Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest/macosTest`. However IntelliJ does not yet allow you run you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
+Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you run you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
 are using the following work-around:
 
 1) All "common" tests should be placed in the `test/src/androidtest/kotlin/io/realm/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commontTest`.
