@@ -17,8 +17,6 @@
 package io.realm
 
 import io.realm.internal.RealmModelInternal
-import io.realm.internal.unmanage
-import io.realm.interop.RealmInterop
 
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with

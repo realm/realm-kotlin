@@ -15,7 +15,6 @@
  */
 package io.realm.shared
 
-import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
