@@ -104,6 +104,6 @@ class RealmTests {
         ).maxNumberOfActiveVersions(1).build()
         realm = Realm.open(config)
         // FIXME Should be IllegalStateException
-        assertFailsWith<RuntimeException> {  realm.writeBlocking {  } }
+        assertFailsWith<RuntimeException> { realm.writeBlocking { } }
     }
 }
