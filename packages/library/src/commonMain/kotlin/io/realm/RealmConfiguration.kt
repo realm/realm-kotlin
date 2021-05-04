@@ -19,8 +19,8 @@ package io.realm
 import io.realm.internal.Mediator
 import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
-import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.RealmObjectInternal
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode

@@ -19,8 +19,8 @@ package io.realm.compiler
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
-import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.RealmObjectInternal
 import io.realm.interop.ClassFlag
 import io.realm.interop.NativePointer
 import io.realm.interop.PropertyType
