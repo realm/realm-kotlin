@@ -34,20 +34,20 @@ version = null
 // Mac CI dedicated machine
 osx_kotlin = 'osx_kotlin'
 
-pipeline {
-    agent none
-    environment {
-          ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
-          NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
-          ANDROID_NDK="${NDK_HOME}"
-          ANDROID_NDK_HOME="${NDK_HOME}"
-          REALM_DISABLE_ANALYTICS=true
-    }
+// The Gradle cache is re-used between stages, in order to avoid builds interleave,
+// and potentially corrupt each others cache, we grab a global lock for the entire 
+// build.
+lock("${env.NODE_NAME}-kotlin") {
+    pipeline {
+        agent none
+        environment {
+              ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
+              NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
+              ANDROID_NDK="${NDK_HOME}"
+              ANDROID_NDK_HOME="${NDK_HOME}"
+              REALM_DISABLE_ANALYTICS=true
+        }
 
-    // The Gradle cache is re-used between stages, in order to avoid builds interleave,
-    // and potentially corrupt each others cache, we grab a global lock for the entire 
-    // build.
-    lock("${env.NODE_NAME}-kotlin") {
         stages {
             stage('SCM') {
                 steps {
@@ -98,16 +98,16 @@ pipeline {
                 }
             }
         }
-    }
-    post {
-        failure {
-            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
-        }
-        unstable {
-            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
-        }
-        fixed {
-            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
+        post {
+            failure {
+                notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
+            }
+            unstable {
+                notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
+            }
+            fixed {
+                notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
+            }
         }
     }
 }
