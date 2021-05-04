@@ -25,7 +25,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.util.PlatformUtils
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
@@ -50,7 +49,6 @@ class MemoryTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-    @Ignore
     @Test
     fun garbageCollectorShouldFreeNativeResources() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
