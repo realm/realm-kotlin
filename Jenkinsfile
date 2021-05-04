@@ -36,6 +36,12 @@ osx_kotlin = 'osx_kotlin'
 
 pipeline {
     agent none
+    // The Gradle cache is re-used between stages, in order to avoid builds interleave,
+    // and potentially corrupt each others cache, we grab a global lock for the entire 
+    // build.
+    options {
+        lock resource: 'kotlin_build_lock'
+    }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
           NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
