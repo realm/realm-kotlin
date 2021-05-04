@@ -15,9 +15,11 @@
  */
 package io.realm.shared
 
+import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.isManaged
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.classifiers
 import test.Sample
@@ -30,6 +32,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ImportTests {
 
@@ -164,8 +167,9 @@ class ImportTests {
         }
 
         // Verify that we cannot update the managed clone outside a transaction (it is in fact managed)
+        assertTrue(managedChild.isManaged())
         assertFailsWith<RuntimeException> {
-            managedChild.name = v3
+            managedChild.name = "bar"
         }
     }
 
