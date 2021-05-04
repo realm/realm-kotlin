@@ -19,6 +19,7 @@ package io.realm
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
 import io.realm.internal.RealmModelInternal
+import io.realm.internal.checkRealmClosed
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -30,15 +31,16 @@ import kotlin.reflect.KClass
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 class RealmResults<T : RealmObject> constructor(
+    private val realmConfiguration: RealmConfiguration,
     private val realm: NativePointer,
     private val queryPointer: () -> NativePointer,
     private val clazz: KClass<T>,
     private val mediator: Mediator
 ) : AbstractList<T>(), Queryable<T> {
 
-    public var version: VersionId = VersionId(0u, 0u)
+    public var version: VersionId = VersionId(0, 0)
         get() {
-            // TODO Check if Realm is closed
+            checkRealmClosed(realm, realmConfiguration)
             val (version, index) = RealmInterop.realm_get_version_id(realm)
             return VersionId(version, index)
         }
@@ -62,6 +64,7 @@ class RealmResults<T : RealmObject> constructor(
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return RealmResults(
+            realmConfiguration,
             realm,
             { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
             clazz,

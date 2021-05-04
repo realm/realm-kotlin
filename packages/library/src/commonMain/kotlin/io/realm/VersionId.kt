@@ -21,14 +21,20 @@ package io.realm
  *
  * The version of a Realm will change whenever a write is committed.
  */
-// FIXME What should we call this. VersionId is a very internal name, but is `Version` to broad? Currently in
-//  Realm Java, `Realm.getVersion()` returns the schema version. Should we have both `Realm.version` and
-//  `RealmSchema.version()`?
-@ExperimentalUnsignedTypes
-public data class VersionId constructor(public val version: ULong, public val index: ULong): Comparable<VersionId> {
-    // TODO: Figure out exactly how to do comparison. In Realm Java we just
-    //  used version, but I assume index can also play a part somehow?
+public data class VersionId constructor(public val version: Long, public val index: Long) : Comparable<VersionId> {
+
+    init {
+        // Realm Core exposes these numbers as uint64_t, but it would be REALLY surprising if this ever
+        // overflowed in Kotlin. Instead of adding more complex logic to this or depend on experimental
+        // ULong, just throw an exception. We can probably move to ULong support before ever hitting this
+        // case.
+        if (version < 0 || index < 0) {
+            throw IllegalArgumentException("(version, index) must both be numbers >= 0. It was: ($version, $index)")
+        }
+    }
+
     override fun compareTo(other: VersionId): Int {
+        // index is only used internally by Core and isn't used when ordering versions.
         return when {
             version > other.version -> 1
             version < other.version -> -1

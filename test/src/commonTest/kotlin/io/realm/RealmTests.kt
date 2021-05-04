@@ -18,6 +18,7 @@ package io.realm
 import io.realm.util.PlatformUtils
 import test.link.Child
 import test.link.Parent
+import java.lang.RuntimeException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -29,7 +30,7 @@ class RealmTests {
 
     companion object {
         // Initial version of any new typed Realm (due to schema being written)
-        private val INITIAL_VERSION = VersionId(2u, 1u)
+        private val INITIAL_VERSION = VersionId(2, 1)
     }
 
     private lateinit var tmpDir: String
@@ -50,7 +51,6 @@ class RealmTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-
     @Test
     fun initialVersion() {
         assertEquals(INITIAL_VERSION, realm.version)
@@ -60,7 +60,7 @@ class RealmTests {
     fun versionIncreaseOnWrite() {
         assertEquals(INITIAL_VERSION, realm.version)
         realm.writeBlocking { /* Do Nothing */ }
-        assertEquals(VersionId(3u, 2u), realm.version)
+        assertEquals(VersionId(3, 2), realm.version)
     }
 
     @Test
@@ -88,18 +88,22 @@ class RealmTests {
 
     @Test
     fun numberOfActiveVersions() {
-//        assertEquals(1, realm.getNumberOfActiveVersions())
+        assertEquals(2, realm.getNumberOfActiveVersions())
         realm.writeBlocking {
             assertEquals(2, realm.getNumberOfActiveVersions())
         }
+        assertEquals(2, realm.getNumberOfActiveVersions())
     }
 
     @Test
     fun throwsIfMaxNumberOfActiveVersionsAreExceeded() {
-
-        assertEquals(1, realm.getNumberOfActiveVersions())
-        realm.writeBlocking {
-            assertEquals(2, realm.getNumberOfActiveVersions())
-        }
+        realm.close()
+        val config = RealmConfiguration.Builder(
+            path = "$tmpDir/exceed-versions.realm",
+            schema = setOf(Parent::class, Child::class)
+        ).maxNumberOfActiveVersions(1).build()
+        realm = Realm.open(config)
+        // FIXME Should be IllegalStateException
+        assertFailsWith<RuntimeException> {  realm.writeBlocking {  } }
     }
 }

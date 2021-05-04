@@ -27,10 +27,14 @@ fun RealmObject.delete() {
     MutableRealm.delete(this)
 }
 
-fun RealmObject.version(): VersionId {
-    val internalObject = this as RealmModelInternal
-    internalObject.`$realm$Pointer`?.let {
-        val (version, index) = RealmInterop.realm_get_version_id(it)
-        return VersionId(version, index)
-    } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
-}
+var RealmObject.version: VersionId
+    get() {
+        val internalObject = this as RealmModelInternal
+        internalObject.`$realm$Pointer`?.let {
+            val (version, index) = RealmInterop.realm_get_version_id(it)
+            return VersionId(version, index)
+        } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
+    }
+    private set(_) {
+        throw UnsupportedOperationException("Setter is required by the Kotlin Compiler, but should not be called directly")
+    }

@@ -21,6 +21,7 @@ import io.realm.util.TestLogger
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class RealmConfigurationTests {
@@ -137,5 +138,12 @@ class RealmConfigurationTests {
             .maxNumberOfActiveVersions(42)
             .build()
         assertEquals(42, config.maxNumberOfActiveVersions)
+    }
+
+    @Test
+    fun maxNumberOfActiveVersionsThrowsIfZeroOrNegative() {
+        val builder = RealmConfiguration.Builder(schema = setOf(Sample::class))
+        assertFailsWith<IllegalArgumentException> { builder.maxNumberOfActiveVersions(0) }
+        assertFailsWith<IllegalArgumentException> { builder.maxNumberOfActiveVersions(-1) }
     }
 }

@@ -22,6 +22,12 @@ package io.realm.interop
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
 
+/**
+ * JVM/Android interop implementation.
+ *
+ * NOTE: All methods that return a boolean to indicate an exception are being checked automatically in JNI.
+ * So there is no need to verify the return value in the JVM interop layer.
+ */
 actual object RealmInterop {
 
     // TODO API-CLEANUP Maybe pull library loading into separate method
@@ -30,36 +36,12 @@ actual object RealmInterop {
         System.loadLibrary("realmc")
     }
 
-    // Check the C-API for errors. If `false` is returned, we need
-    // to call back to the API for the actual error information
-    private fun checkBooleanResult(success: Boolean) {
-        if (!success) {
-            val error = realm_error_t()
-            if (!realmc.realm_get_last_error(error)) {
-                // TODO What to do here? RealmLog is not available at this level
-                println("Failed to read last error")
-            }
-            var exception: Throwable
-            // FIXME Extract all error information and throw exceptions based on type
-            //  https://github.com/realm/realm-kotlin/issues/70
-            //  All erro
-            when(error.error) {
-                else -> exception = RuntimeException(error.message)
-            }
-            if (!realmc.realm_clear_last_error()) {
-                // TODO What to do here? RealmLog is not available at this level
-                println("Failed to clear last error")
-            }
-            throw exception
-        }
-    }
-
-    actual fun realm_get_version_id(realm: NativePointer): Pair<ULong, ULong> {
+    actual fun realm_get_version_id(realm: NativePointer): Pair<Long, Long> {
         val version = realm_version_id_t()
         val found = BooleanArray(1)
-        checkBooleanResult(realmc.realm_get_version_id(realm.cptr(), found, version))
+        realmc.realm_get_version_id(realm.cptr(), found, version)
         return if (found[0]) {
-            Pair(version.version.toULong(), version.index.toULong())
+            Pair(version.version.toLong(), version.index.toLong())
         } else {
             throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
         }
@@ -70,10 +52,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_num_versions(realm: NativePointer): Long {
-//        val versionsCount = Long().
-        val result = SWIGTYPE_p_unsigned_long_long()
-        checkBooleanResult(realmc.realm_get_num_versions(realm.cptr(), result))
-        return result.v
+        val result = LongArray(1)
+        realmc.realm_get_num_versions(realm.cptr(), result)
+        return result.first()
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
@@ -134,7 +115,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
-        realmc.realm_config_set_schema(config.cptr(), maxNumberOfVersions)
+        realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
     }
 
     actual fun realm_open(config: NativePointer): NativePointer {

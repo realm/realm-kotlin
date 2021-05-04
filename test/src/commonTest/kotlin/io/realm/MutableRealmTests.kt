@@ -77,5 +77,4 @@ class MutableRealmTests {
         realm = Realm.open(configuration)
         assertEquals(0, realm.objects(Parent::class).size)
     }
-
 }

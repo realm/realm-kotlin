@@ -35,14 +35,12 @@ public abstract class BaseRealm internal constructor(
     /**
      * The current data version of this Realm and data fetched from it.
      */
-    @ExperimentalUnsignedTypes
-    public var version: VersionId = VersionId(0u,0u)
+    public var version: VersionId = VersionId(0, 0)
         get() {
             checkClosed()
-            val (version: ULong, index: ULong) = RealmInterop.realm_get_version_id(dbPointer)
+            val (version: Long, index: Long) = RealmInterop.realm_get_version_id(dbPointer)
             return VersionId(version, index)
         }
-
 
     // Use this boolean to track closed instead of `NativePointer?` to avoid forcing
     // null checks everywhere, when it is rarely needed.
@@ -56,6 +54,7 @@ public abstract class BaseRealm internal constructor(
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         checkClosed()
         return RealmResults(
+            configuration,
             dbPointer,
             { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,

@@ -16,6 +16,8 @@
 package io.realm
 
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @ExperimentalUnsignedTypes
@@ -24,11 +26,25 @@ class VersionIdTests {
     @Suppress("ReplaceAssertBooleanWithAssertEquality")
     @Test
     fun compareVersions() {
-        // FIXME Determine how index places a role when comparing VersionID's
-        assertTrue(VersionId(0u,0u) == VersionId(0u,0u))
-        assertTrue(VersionId(1u,0u) > VersionId(0u,0u))
-        assertTrue(VersionId(1u,0u) >= VersionId(0u,0u))
-        assertTrue(VersionId(1u,0u) < VersionId(2u,0u))
-        assertTrue(VersionId(1u,0u) <= VersionId(2u,0u))
+        assertTrue(VersionId(0, 0) == VersionId(0, 0))
+        assertTrue(VersionId(1, 0) > VersionId(0, 0))
+        assertTrue(VersionId(1, 0) >= VersionId(0, 0))
+        assertTrue(VersionId(1, 0) < VersionId(2, 0))
+        assertTrue(VersionId(1, 0) <= VersionId(2, 0))
+    }
+
+    @Suppress("ReplaceAssertBooleanWithAssertEquality")
+    @Test
+    fun orderingVersionsIgnoreIndex() {
+        assertFalse(VersionId(1, 2) > VersionId(1, 1))
+        assertFalse(VersionId(1, 1) >= VersionId(2, 0))
+        assertFalse(VersionId(1, 0) < VersionId(1, 1))
+        assertFalse(VersionId(2, 0) <= VersionId(1, 1))
+    }
+
+    @Test
+    fun throwsForNegativeNumbers() {
+        assertFailsWith<IllegalArgumentException> { VersionId(-1, 0) }
+        assertFailsWith<IllegalArgumentException> { VersionId(0, -1) }
     }
 }
