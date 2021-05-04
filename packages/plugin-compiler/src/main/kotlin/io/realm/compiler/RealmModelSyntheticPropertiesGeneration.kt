@@ -88,7 +88,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 /**
  * Helper to assisting in modifying classes marked with the [RealmObject] interface according to our
  * needs:
- * - Adding the internal properties of [io.realm.interop.RealmModelInteral]
+ * - Adding the internal properties of [io.realm.interop.RealmObjectInterop]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
@@ -457,7 +457,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
         getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
         // overridden:
-        //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInternal
+        //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmObjectInternal
         val propertyAccessorGetter = realmModelInternal.getPropertyGetter(propertyName.asString())
             ?: error("${propertyName.asString()} function getter symbol is not available")
         getter.overriddenSymbols = listOf(propertyAccessorGetter)
@@ -487,7 +487,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         setter.correspondingPropertySymbol = property.symbol
 
         // overridden:
-        //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmModelInternal
+        //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmObjectInternal
         val realmPointerSetter = realmModelInternal.getPropertySetter(propertyName.asString())
             ?: error("${propertyName.asString()} function getter symbol is not available")
         setter.overriddenSymbols = listOf(realmPointerSetter)

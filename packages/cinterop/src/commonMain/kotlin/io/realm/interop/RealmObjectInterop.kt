@@ -23,14 +23,13 @@ package io.realm.interop
  * This interface is not meant to be used externally (consider using [RealmObject] instead)
  */
 @Suppress("VariableNaming")
-// FIXME Should we rename to RealmInteropObject
-interface RealmModelInternal {
+interface RealmObjectInterop {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
     var `$realm$Pointer`: NativePointer?
     var `$realm$ObjectPointer`: NativePointer?
     var `$realm$TableName`: String?
     var `$realm$IsManaged`: Boolean
-    // FIXME Should be Mediator but requires RealmModelInternal and Mediator to be in same module.
+    // FIXME Should be Mediator but requires RealmObjectInterop and Mediator to be in same module.
     //  Remember to fix type for compiler generated field.
     var `$realm$Mediator`: Any?
 }

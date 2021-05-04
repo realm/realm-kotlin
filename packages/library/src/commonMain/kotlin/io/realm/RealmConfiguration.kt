@@ -19,7 +19,7 @@ package io.realm
 import io.realm.internal.Mediator
 import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
-import io.realm.internal.RealmModelInternal
+import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmObjectCompanion
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -85,10 +85,10 @@ public class RealmConfiguration private constructor(
         RealmInterop.realm_config_set_schema(nativeConfig, schema)
 
         mediator = object : Mediator {
-            override fun createInstanceOf(clazz: KClass<*>): RealmModelInternal = (
+            override fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal = (
                 mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
                     ?: error("$clazz not part of this configuration schema")
-                ) as RealmModelInternal
+                ) as RealmObjectInternal
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion = mapOfKClassWithCompanion[clazz]
                 ?: error("$clazz not part of this configuration schema")

@@ -29,14 +29,14 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
  * Registrar for the Realm compiler plugin.
  *
  * The overall concepts of the compiler plugin is that it:
- * - Adds [RealmModelInternal] interface to all classes marked with [RealmObject] interface
+ * - Adds [RealmObjectInternal] interface to all classes marked with [RealmObject] interface
  * - Rewire accessors to the actual Realm for managed objects
  * - Adds [RealmObjectCompanion] interface to the companion object of classes marked with
  * [RealmObject] interface
  * - Modify [RealmConfiguration] constructor calls to capture the companion objects of supplied
  * schema classes.
  *
- * The [RealmModelInternal] holds internal attributes like Realm and objects native pointer, type
+ * The [RealmObjectInternal] holds internal attributes like Realm and objects native pointer, type
  * information, etc. This information is used to indicate if an object is managed or not and direct
  * the accessors to the Realm if so.
  *
@@ -59,7 +59,7 @@ class Registrar : ComponentRegistrar {
             RealmModelSyntheticCompanionExtension()
         )
 
-        // Adds RealmModelInternal properties, rewires accessors and adds static companion
+        // Adds RealmObjectInternal properties, rewires accessors and adds static companion
         // properties and methods
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
 
