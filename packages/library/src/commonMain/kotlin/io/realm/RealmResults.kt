@@ -18,7 +18,7 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
-import io.realm.internal.RealmModelInternal
+import io.realm.internal.RealmObjectInternal
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -43,7 +43,7 @@ class RealmResults<T : RealmObject> constructor(
 
     override fun get(index: Int): T {
         val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
-        val model = mediator.createInstanceOf(clazz) as RealmModelInternal
+        val model = mediator.createInstanceOf(clazz) as RealmObjectInternal
         model.link(realm, mediator, clazz, link)
         return model as T
     }

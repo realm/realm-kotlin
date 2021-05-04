@@ -83,9 +83,9 @@ fun <T : RealmObject> create(mediator: Mediator, realm: NativePointer, type: KCl
     }
 }
 
-fun <T : RealmObject> copyToRealm(mediator: Mediator, realmPointer: NativePointer, instance: T, cache: MutableMap<RealmModelInternal, RealmModelInternal> = mutableMapOf()): T {
+fun <T : RealmObject> copyToRealm(mediator: Mediator, realmPointer: NativePointer, instance: T, cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()): T {
     // Copying already managed instance is an no-op
-    if ((instance as RealmModelInternal).`$realm$IsManaged`) return instance
+    if ((instance as RealmObjectInternal).`$realm$IsManaged`) return instance
 
     val companion = mediator.companionOf(instance::class)
     val members = companion.`$realm$fields` as List<KMutableProperty1<T, Any?>>
@@ -93,11 +93,11 @@ fun <T : RealmObject> copyToRealm(mediator: Mediator, realmPointer: NativePointe
     val target = companion.`$realm$primaryKey`?.let { primaryKey ->
         create(mediator, realmPointer, instance::class, (primaryKey as KProperty1<T, Any?>).get(instance))
     } ?: create(mediator, realmPointer, instance::class)
-    cache[instance] = target as RealmModelInternal
+    cache[instance] = target as RealmObjectInternal
     // TODO OPTIMIZE We could set all properties at once with on C-API call
     for (member: KMutableProperty1<T, Any?> in members) {
         val targetValue = member.get(instance).let { sourceObject ->
-            if (sourceObject is RealmModelInternal && !sourceObject.`$realm$IsManaged`) {
+            if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
                 cache.getOrPut(sourceObject) { copyToRealm(mediator, realmPointer, sourceObject, cache) }
             } else {
                 sourceObject

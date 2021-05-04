@@ -15,7 +15,7 @@
  */
 package io.realm
 
-import io.realm.internal.RealmModelInternal
+import io.realm.internal.RealmObjectInternal
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -32,7 +32,7 @@ class MutableRealm : BaseRealm {
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
     internal companion object {
         internal fun <T : RealmObject> delete(obj: T) {
-            val internalObject = obj as RealmModelInternal
+            val internalObject = obj as RealmObjectInternal
             internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
                 ?: throw IllegalArgumentException("Cannot delete unmanaged object")
             internalObject.unmanage()
@@ -102,7 +102,7 @@ class MutableRealm : BaseRealm {
      * @throws IllegalArgumentException if the object is not managed by Realm.
      */
     fun <T : RealmObject> delete(obj: T) {
-        val internalObject = obj as RealmModelInternal
+        val internalObject = obj as RealmObjectInternal
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
             ?: throw IllegalArgumentException("An unmanaged unmanaged object cannot be deleted from the Realm.")
         internalObject.unmanage()

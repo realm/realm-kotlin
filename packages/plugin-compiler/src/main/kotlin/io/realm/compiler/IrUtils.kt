@@ -257,7 +257,7 @@ fun IrClass.addValueProperty(
     // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
     getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
     // overridden:
-    //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmModelInternal
+    //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmObjectInternal
     val propertyAccessorGetter = superClass.getPropertyGetter(propertyName.asString())
         ?: error("${propertyName.asString()} function getter symbol is not available")
     getter.overriddenSymbols = listOf(propertyAccessorGetter)

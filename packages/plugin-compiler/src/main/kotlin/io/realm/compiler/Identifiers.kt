@@ -28,7 +28,7 @@ internal object Names {
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
     val SET = Name.special("<set-?>")
-    // names must match `RealmModelInternal` properties
+    // names must match `RealmObjectInterop` properties
     val REALM_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Pointer")
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
@@ -54,8 +54,8 @@ internal object Names {
 internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
     val REALM_NATIVE_POINTER = FqName("io.realm.interop.NativePointer")
-    val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmModelInternal")
-    val REALM_OBJECT_INTEROP_INTERFACE = FqName("io.realm.interop.RealmModelInternal")
+    val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmObjectInternal")
+    val REALM_OBJECT_INTEROP_INTERFACE = FqName("io.realm.interop.RealmObjectInterop")
     val REALM_MODULE_ANNOTATION = FqName("io.realm.RealmModule")
     val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
