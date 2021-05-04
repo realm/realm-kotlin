@@ -31,6 +31,14 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 
+/**
+ * Triggers generation of companion objects and ensures that the companion object implement the
+ * [RealmObjectCompanion] interface for all classes marked with the [RealmObject] interface.
+ *
+ * TODO We most probably don't need this as the methods are already in the [RealmObjectCompanion]
+ *  interface.
+ * Also adds the [RealmObjectCompanion] methods as synthetic methods on the companion.
+ */
 class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
     override fun getSyntheticCompanionObjectNameIfNeeded(thisDescriptor: ClassDescriptor): Name? {
