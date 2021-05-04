@@ -38,3 +38,15 @@ var RealmObject.version: VersionId
     private set(_) {
         throw UnsupportedOperationException("Setter is required by the Kotlin Compiler, but should not be called directly")
     }
+
+/**
+ * Returns whether or not this object is managed by Realm.
+ *
+ * Managed objects are only valid to use while the Realm is open, but also have access to all Realm API's like
+ * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely seperate from
+ * Realm.
+ */
+fun RealmObject.isManaged(): Boolean {
+    val internalObject = this as RealmModelInternal
+    return internalObject.`$realm$IsManaged`
+}

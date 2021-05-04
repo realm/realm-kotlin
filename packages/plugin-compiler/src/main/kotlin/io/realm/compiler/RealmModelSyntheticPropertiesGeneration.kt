@@ -85,6 +85,12 @@ import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
+/**
+ * Helper to assisting in modifying classes marked with the [RealmObject] interface according to our
+ * needs:
+ * - Adding the internal properties of [io.realm.interop.RealmModelInteral]
+ * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
+ */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmModelInternal = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTEROP_INTERFACE)
     private val nullableNativePointerInterface =

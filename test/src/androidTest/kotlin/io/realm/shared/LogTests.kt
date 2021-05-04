@@ -1,4 +1,6 @@
 @file:Suppress("invisible_reference", "invisible_member")
+package io.realm.shared
+
 import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.internal.PlatformHelper

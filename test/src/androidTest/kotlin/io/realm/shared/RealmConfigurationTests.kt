@@ -1,3 +1,4 @@
+<<<<<<< HEAD:test/src/commonTest/kotlin/io/realm/RealmConfigurationTests.kt
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -14,7 +15,12 @@
  * limitations under the License.
  */
 package io.realm
+=======
+package io.realm.shared
+>>>>>>> master:test/src/androidTest/kotlin/io/realm/shared/RealmConfigurationTests.kt
 
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.internal.PlatformHelper
 import io.realm.log.LogLevel
 import io.realm.util.TestLogger
