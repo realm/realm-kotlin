@@ -269,8 +269,8 @@ actual object RealmInterop {
                     cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
                     cvalue.dnum = value
                 }
-                is RealmModelInternal -> {
-                    val nativePointer = (value as RealmModelInternal).`$realm$ObjectPointer`
+                is RealmObjectInterop -> {
+                    val nativePointer = (value as RealmObjectInterop).`$realm$ObjectPointer`
                         ?: error("Cannot add unmanaged object")
                     cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
                     cvalue.type = realm_value_type_e.RLM_TYPE_LINK

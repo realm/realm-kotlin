@@ -16,7 +16,44 @@
 
 package io.realm
 
+import io.realm.internal.RealmObjectInternal
+import io.realm.interop.RealmInterop
+
 /**
  * Marker interface to define a model (managed by Realm).
  */
 interface RealmObject
+
+// FIXME API Currently just adding these as extension methods as putting them directly into
+//  RealmModel would break compiler plugin. Reiterate along with
+//  https://github.com/realm/realm-kotlin/issues/83
+fun RealmObject.delete() {
+    MutableRealm.delete(this)
+}
+
+/**
+ * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
+ */
+var RealmObject.version: VersionId
+    get() {
+        val internalObject = this as RealmObjectInternal
+        internalObject.`$realm$Pointer`?.let {
+            val (version, index) = RealmInterop.realm_get_version_id(it)
+            return VersionId(version, index)
+        } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
+    }
+    private set(_) {
+        throw UnsupportedOperationException("Setter is required by the Kotlin Compiler, but should not be called directly")
+    }
+
+/**
+ * Returns whether or not this object is managed by Realm.
+ *
+ * Managed objects are only valid to use while the Realm is open, but also have access to all Realm API's like
+ * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely seperate from
+ * Realm.
+ */
+fun RealmObject.isManaged(): Boolean {
+    val internalObject = this as RealmObjectInternal
+    return internalObject.`$realm$IsManaged`
+}

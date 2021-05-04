@@ -21,7 +21,7 @@ package io.realm
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
 import io.realm.interop.NativePointer
-import io.realm.interop.RealmModelInternal
+import io.realm.interop.RealmObjectInterop
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -41,12 +41,12 @@ class InstrumentedTests {
     //  test is needed at all at this level
     class CPointerWrapper(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer
     @Test
-    fun testRealmModelInternalPropertiesGenerated() {
+    fun testRealmObjectInternalPropertiesGenerated() {
         val p = Sample()
 
         @Suppress("CAST_NEVER_SUCCEEDS")
-        val realmModel: RealmModelInternal = p as? RealmModelInternal
-            ?: error("Supertype RealmModelInternal was not added to Sample class")
+        val realmModel: RealmObjectInterop = p as? RealmObjectInterop
+            ?: error("Supertype RealmObjectInternal was not added to Sample class")
 
         memScoped {
             val ptr1: COpaquePointerVar = alloc()

@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmModelInternal.manage(realmPointer: NativePointer, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmObject> RealmObjectInternal.manage(realmPointer: NativePointer, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Pointer` = realmPointer
     this.`$realm$TableName` = type.simpleName
@@ -36,7 +36,7 @@ fun <T : RealmObject> RealmModelInternal.manage(realmPointer: NativePointer, med
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmModelInternal.link(realm: NativePointer, mediator: Mediator, type: KClass<T>, link: Link): T {
+fun <T : RealmObject> RealmObjectInternal.link(realm: NativePointer, mediator: Mediator, type: KClass<T>, link: Link): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Pointer` = realm
     this.`$realm$TableName` = type.simpleName
@@ -46,7 +46,7 @@ fun <T : RealmObject> RealmModelInternal.link(realm: NativePointer, mediator: Me
     return this as T
 }
 
-fun RealmModelInternal.unmanage() {
+fun RealmObjectInternal.unmanage() {
     // FIXME API-LIFECYCLE For now update the object to an inconsistent state that triggers Realm setters and
     //  getters to raise an IllegalStateException by keeping the `$realm$IsManaged` property set to
     //  true (triggers delegation to Realm-backed getter/setter) while clearing the native
