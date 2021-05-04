@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.shared
 
-package io.realm
-
+import io.realm.RealmConfiguration
+import io.realm.RealmObject
 import io.realm.interop.Table
 import test.Sample
 import test.link.Child

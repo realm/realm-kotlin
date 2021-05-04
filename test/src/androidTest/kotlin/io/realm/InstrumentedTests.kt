@@ -18,6 +18,7 @@
 package io.realm
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
 import io.realm.util.PlatformUtils
 import org.junit.After
@@ -31,6 +32,8 @@ import kotlin.test.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
+
+    val context = InstrumentationRegistry.getInstrumentation().context
     lateinit var tmpDir: String
     lateinit var realm: Realm
 

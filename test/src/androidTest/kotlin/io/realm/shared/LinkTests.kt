@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm
+package io.realm.shared
 
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.util.PlatformUtils
 import test.link.Child
 import test.link.Parent
