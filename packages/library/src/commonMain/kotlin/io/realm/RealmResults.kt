@@ -18,8 +18,8 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
-import io.realm.internal.checkRealmClosed
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.checkRealmClosed
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer

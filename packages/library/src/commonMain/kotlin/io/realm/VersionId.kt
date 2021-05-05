@@ -23,7 +23,7 @@ package io.realm
  */
 public data class VersionId public constructor(public val version: Long, public val index: Long) : Comparable<VersionId> {
 
-    internal constructor(nativeVersion: Pair<Long,Long>): this(nativeVersion.first, nativeVersion.second)
+    internal constructor(nativeVersion: Pair<Long, Long>) : this(nativeVersion.first, nativeVersion.second)
 
     init {
         // Realm Core exposes these numbers as uint64_t, but it would be REALLY surprising if this ever
