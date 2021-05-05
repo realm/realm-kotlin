@@ -38,8 +38,7 @@ public abstract class BaseRealm internal constructor(
     public var version: VersionId = VersionId(0, 0)
         get() {
             checkClosed()
-            val (version: Long, index: Long) = RealmInterop.realm_get_version_id(dbPointer)
-            return VersionId(version, index)
+            return VersionId(RealmInterop.realm_get_version_id(dbPointer))
         }
 
     // Use this boolean to track closed instead of `NativePointer?` to avoid forcing

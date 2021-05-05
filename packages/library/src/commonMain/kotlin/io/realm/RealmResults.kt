@@ -41,8 +41,7 @@ class RealmResults<T : RealmObject> constructor(
     public var version: VersionId = VersionId(0, 0)
         get() {
             checkRealmClosed(realm, realmConfiguration)
-            val (version, index) = RealmInterop.realm_get_version_id(realm)
-            return VersionId(version, index)
+            return VersionId(RealmInterop.realm_get_version_id(realm))
         }
 
     private val query: NativePointer by lazy { queryPointer() }

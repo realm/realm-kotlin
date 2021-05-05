@@ -20,7 +20,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@ExperimentalUnsignedTypes
 class VersionIdTests {
 
     @Suppress("ReplaceAssertBooleanWithAssertEquality")

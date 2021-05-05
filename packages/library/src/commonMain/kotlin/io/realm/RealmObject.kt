@@ -38,8 +38,7 @@ var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal
         internalObject.`$realm$Pointer`?.let {
-            val (version, index) = RealmInterop.realm_get_version_id(it)
-            return VersionId(version, index)
+            return VersionId(RealmInterop.realm_get_version_id(it))
         } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
     }
     private set(_) {
