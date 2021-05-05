@@ -75,6 +75,7 @@ android {
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
+                version = "3.18.1"
                 arguments("-DANDROID_STL=c++_shared")
             }
         }
@@ -82,6 +83,7 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
+            version = "3.18.1"
             path = project.file("src/jvmCommon/CMakeLists.txt")
         }
     }
