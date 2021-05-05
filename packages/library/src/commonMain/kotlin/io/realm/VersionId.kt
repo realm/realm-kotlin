@@ -21,7 +21,7 @@ package io.realm
  *
  * The version of a Realm will change whenever a write is committed.
  */
-public data class VersionId internal constructor(public val version: Long, public val index: Long) : Comparable<VersionId> {
+public data class VersionId public constructor(public val version: Long, public val index: Long) : Comparable<VersionId> {
 
     internal constructor(nativeVersion: Pair<Long,Long>): this(nativeVersion.first, nativeVersion.second)
 

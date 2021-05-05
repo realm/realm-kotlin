@@ -1,4 +1,3 @@
-@file:Suppress("invisible_member")
 /*
  * Copyright 2021 Realm Inc.
  *
