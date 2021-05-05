@@ -105,7 +105,15 @@ class RealmTests {
             schema = setOf(Parent::class, Child::class)
         ).maxNumberOfActiveVersions(1).build()
         realm = Realm.open(config)
-        // FIXME Should be IllegalStateException
-        assertFailsWith<RuntimeException> { realm.writeBlocking { } }
+        // Pin the version, so when starting a new transaction on the first Realm,
+        // we don't release older versions.
+        val otherRealm = Realm.open(config)
+
+        try {
+            // FIXME Should be IllegalStateException
+            assertFailsWith<RuntimeException> { realm.writeBlocking { } }
+        } finally {
+            otherRealm.close()
+        }
     }
 }
