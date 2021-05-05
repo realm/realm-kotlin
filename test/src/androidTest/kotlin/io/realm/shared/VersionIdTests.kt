@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member")
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -13,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm
+package io.realm.shared
 
+import io.realm.VersionId
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse

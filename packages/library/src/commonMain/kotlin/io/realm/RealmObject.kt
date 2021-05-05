@@ -27,14 +27,14 @@ interface RealmObject
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83
-fun RealmObject.delete() {
+public fun RealmObject.delete() {
     MutableRealm.delete(this)
 }
 
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
-var RealmObject.version: VersionId
+public var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal
         internalObject.`$realm$Pointer`?.let {
@@ -52,7 +52,7 @@ var RealmObject.version: VersionId
  * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely seperate from
  * Realm.
  */
-fun RealmObject.isManaged(): Boolean {
+public fun RealmObject.isManaged(): Boolean {
     val internalObject = this as RealmObjectInternal
     return internalObject.`$realm$IsManaged`
 }
