@@ -19,5 +19,6 @@ package test.link
 import io.realm.RealmObject
 
 class Parent : RealmObject {
+    var name: String = ""
     var child: Child? = null
 }
