@@ -36,12 +36,12 @@ actual object RealmInterop {
         System.loadLibrary("realmc")
     }
 
-    actual fun realm_get_version_id(realm: NativePointer): Pair<Long, Long> {
+    actual fun realm_get_version_id(realm: NativePointer): Long {
         val version = realm_version_id_t()
         val found = BooleanArray(1)
         realmc.realm_get_version_id(realm.cptr(), found, version)
         return if (found[0]) {
-            Pair(version.version.toLong(), version.index.toLong())
+            version.version
         } else {
             throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
         }

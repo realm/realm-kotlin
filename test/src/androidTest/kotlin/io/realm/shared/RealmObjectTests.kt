@@ -32,7 +32,7 @@ class RealmObjectTests {
 
     companion object {
         // Expected version after writing Parent to Realm
-        private val EXPECTED_VERSION = VersionId(3, 2)
+        private val EXPECTED_VERSION = VersionId(3)
     }
 
     private lateinit var tmpDir: String

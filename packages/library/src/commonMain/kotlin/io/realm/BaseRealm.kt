@@ -35,7 +35,7 @@ public abstract class BaseRealm internal constructor(
     /**
      * The current data version of this Realm and data fetched from it.
      */
-    public var version: VersionId = VersionId(0, 0)
+    public var version: VersionId = VersionId(0)
         get() {
             checkClosed()
             return VersionId(RealmInterop.realm_get_version_id(dbPointer))

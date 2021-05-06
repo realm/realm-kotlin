@@ -18,6 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
+import io.realm.isManaged
 import io.realm.util.PlatformUtils
 import test.link.Child
 import test.link.Parent
@@ -27,12 +28,13 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class RealmTests {
 
     companion object {
         // Initial version of any new typed Realm (due to schema being written)
-        private val INITIAL_VERSION = VersionId(2, 1)
+        private val INITIAL_VERSION = VersionId(2)
     }
 
     private lateinit var tmpDir: String
@@ -54,6 +56,13 @@ class RealmTests {
     }
 
     @Test
+    fun write() {
+        val managedChild = realm.writeBlocking { copyToRealm(Child().apply { name = "John" }) }
+        assertTrue(managedChild.isManaged())
+        assertEquals("John", managedChild.name)
+    }
+
+    @Test
     fun initialVersion() {
         assertEquals(INITIAL_VERSION, realm.version)
     }
@@ -62,7 +71,7 @@ class RealmTests {
     fun versionIncreaseOnWrite() {
         assertEquals(INITIAL_VERSION, realm.version)
         realm.writeBlocking { /* Do Nothing */ }
-        assertEquals(VersionId(3, 2), realm.version)
+        assertEquals(VersionId(3), realm.version)
     }
 
     @Test

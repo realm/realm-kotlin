@@ -151,13 +151,13 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
 
 actual object RealmInterop {
 
-    actual fun realm_get_version_id(realm: NativePointer): Pair<Long, Long> {
+    actual fun realm_get_version_id(realm: NativePointer): Long {
         memScoped {
             val info = alloc<realm_version_id_t>()
             val found = alloc<BooleanVar>()
             checkedBooleanResult(realm_wrapper.realm_get_version_id(realm.cptr(), found.ptr, info.ptr))
             return if (found.value) {
-                Pair(info.version.toLong(), info.index.toLong())
+                info.version.toLong()
             } else {
                 throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
             }

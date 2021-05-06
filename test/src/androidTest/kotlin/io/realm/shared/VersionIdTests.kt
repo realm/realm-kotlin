@@ -26,25 +26,15 @@ class VersionIdTests {
     @Suppress("ReplaceAssertBooleanWithAssertEquality")
     @Test
     fun compareVersions() {
-        assertTrue(VersionId(0, 0) == VersionId(0, 0))
-        assertTrue(VersionId(1, 0) > VersionId(0, 0))
-        assertTrue(VersionId(1, 0) >= VersionId(0, 0))
-        assertTrue(VersionId(1, 0) < VersionId(2, 0))
-        assertTrue(VersionId(1, 0) <= VersionId(2, 0))
-    }
-
-    @Suppress("ReplaceAssertBooleanWithAssertEquality")
-    @Test
-    fun orderingVersionsIgnoreIndex() {
-        assertFalse(VersionId(1, 2) > VersionId(1, 1))
-        assertFalse(VersionId(1, 1) >= VersionId(2, 0))
-        assertFalse(VersionId(1, 0) < VersionId(1, 1))
-        assertFalse(VersionId(2, 0) <= VersionId(1, 1))
+        assertTrue(VersionId(0) == VersionId(0))
+        assertTrue(VersionId(1) > VersionId(0))
+        assertTrue(VersionId(1) >= VersionId(0))
+        assertTrue(VersionId(1) < VersionId(2))
+        assertTrue(VersionId(1) <= VersionId(2))
     }
 
     @Test
     fun throwsForNegativeNumbers() {
-        assertFailsWith<IllegalArgumentException> { VersionId(-1, 0) }
-        assertFailsWith<IllegalArgumentException> { VersionId(0, -1) }
+        assertFailsWith<IllegalArgumentException> { VersionId(-1) }
     }
 }

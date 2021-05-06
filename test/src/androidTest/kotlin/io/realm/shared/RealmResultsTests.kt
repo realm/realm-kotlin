@@ -32,7 +32,7 @@ class RealmResultsTests {
 
     companion object {
         // Initial version of any new typed Realm (due to schema being written)
-        private val INITIAL_VERSION = VersionId(2, 1)
+        private val INITIAL_VERSION = VersionId(2)
     }
 
     private lateinit var tmpDir: String

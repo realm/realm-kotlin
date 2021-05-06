@@ -38,7 +38,7 @@ class RealmResults<T : RealmObject> constructor(
     private val mediator: Mediator
 ) : AbstractList<T>(), Queryable<T> {
 
-    public var version: VersionId = VersionId(0, 0)
+    public var version: VersionId = VersionId(0)
         get() {
             checkRealmClosed(realm, realmConfiguration)
             return VersionId(RealmInterop.realm_get_version_id(realm))

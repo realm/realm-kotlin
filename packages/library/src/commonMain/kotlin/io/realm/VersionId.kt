@@ -21,17 +21,15 @@ package io.realm
  *
  * The version of a Realm will change whenever a write is committed.
  */
-public data class VersionId public constructor(public val version: Long, public val index: Long) : Comparable<VersionId> {
-
-    internal constructor(nativeVersion: Pair<Long, Long>) : this(nativeVersion.first, nativeVersion.second)
+public data class VersionId public constructor(public val version: Long) : Comparable<VersionId> {
 
     init {
         // Realm Core exposes these numbers as uint64_t, but it would be REALLY surprising if this ever
         // overflowed in Kotlin. Instead of adding more complex logic to this or depend on experimental
         // ULong, just throw an exception. We can probably move to ULong support before ever hitting this
         // case.
-        if (version < 0 || index < 0) {
-            throw IllegalArgumentException("(version, index) must both be numbers >= 0. It was: ($version, $index)")
+        if (version < 0) {
+            throw IllegalArgumentException("'version' must both be numbers >= 0. It was: $version")
         }
     }
 
