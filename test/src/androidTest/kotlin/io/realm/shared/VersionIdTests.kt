@@ -18,7 +18,6 @@ package io.realm.shared
 import io.realm.VersionId
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VersionIdTests {
