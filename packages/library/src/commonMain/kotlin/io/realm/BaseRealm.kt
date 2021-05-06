@@ -32,6 +32,15 @@ public abstract class BaseRealm internal constructor(
     protected val dbPointer: NativePointer
 ) {
 
+    /**
+     * The current data version of this Realm and data fetched from it.
+     */
+    public var version: VersionId = VersionId(0)
+        get() {
+            checkClosed()
+            return VersionId(RealmInterop.realm_get_version_id(dbPointer))
+        }
+
     // Use this boolean to track closed instead of `NativePointer?` to avoid forcing
     // null checks everywhere, when it is rarely needed.
     private var isClosed: Boolean = false
@@ -44,6 +53,7 @@ public abstract class BaseRealm internal constructor(
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         checkClosed()
         return RealmResults(
+            configuration,
             dbPointer,
             { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
@@ -52,6 +62,17 @@ public abstract class BaseRealm internal constructor(
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
+
+    /**
+     * Returns the current number of active versions in the Realm file. A large number of active versions can have
+     * a negative impact on the Realm file size on disk.
+     *
+     * @see [RealmConfiguration.Builder.maxNumberOfActiveVersions]
+     */
+    public fun getNumberOfActiveVersions(): Long {
+        checkClosed()
+        return RealmInterop.realm_get_num_versions(dbPointer)
+    }
 
     /**
      * Check if this Realm has been closed or not. If the Realm has been closed, most methods

@@ -82,13 +82,20 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         try {
             writerRealm.beginTransaction()
             val returnValue: R = block(writerRealm)
-            writerRealm.commitTransaction()
+            if (writerRealm.commitWrite && !isClosed()) {
+                writerRealm.commitTransaction()
+            }
             return returnValue
         } catch (e: Exception) {
             // Only cancel writes for exceptions. For errors assume that something has gone
             // horribly wrong and the process is exiting. And canceling the write might just
             // hide the true underlying error.
-            writerRealm.cancelWrite()
+            try {
+                writerRealm.cancelWrite()
+            } catch (cancelException: Throwable) {
+                // Swallow any exception from `cancelWrite` as the primary error is more important.
+                log.error(e)
+            }
             throw e
         }
     }

@@ -22,6 +22,12 @@ package io.realm.interop
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
 
+/**
+ * JVM/Android interop implementation.
+ *
+ * NOTE: All methods that return a boolean to indicate an exception are being checked automatically in JNI.
+ * So there is no need to verify the return value in the JVM interop layer.
+ */
 actual object RealmInterop {
 
     // TODO API-CLEANUP Maybe pull library loading into separate method
@@ -30,8 +36,25 @@ actual object RealmInterop {
         System.loadLibrary("realmc")
     }
 
+    actual fun realm_get_version_id(realm: NativePointer): Long {
+        val version = realm_version_id_t()
+        val found = BooleanArray(1)
+        realmc.realm_get_version_id(realm.cptr(), found, version)
+        return if (found[0]) {
+            version.version
+        } else {
+            throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
+        }
+    }
+
     actual fun realm_get_library_version(): String {
         return realmc.realm_get_library_version()
+    }
+
+    actual fun realm_get_num_versions(realm: NativePointer): Long {
+        val result = LongArray(1)
+        realmc.realm_get_num_versions(realm.cptr(), result)
+        return result.first()
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
@@ -91,9 +114,14 @@ actual object RealmInterop {
         realmc.realm_config_set_schema((config as LongPointerWrapper).ptr, (schema as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
+        realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
+    }
+
     actual fun realm_open(config: NativePointer): NativePointer {
-        // Compiler complains without useless cast
-        return LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        realm_begin_read(realmPtr)
+        return realmPtr
     }
 
     actual fun realm_close(realm: NativePointer) {
@@ -119,6 +147,10 @@ actual object RealmInterop {
 
     actual fun realm_is_closed(realm: NativePointer): Boolean {
         return realmc.realm_is_closed((realm as LongPointerWrapper).ptr)
+    }
+
+    actual fun realm_begin_read(realm: NativePointer) {
+        realmc.realm_begin_read((realm as LongPointerWrapper).ptr)
     }
 
     actual fun realm_begin_write(realm: NativePointer) {

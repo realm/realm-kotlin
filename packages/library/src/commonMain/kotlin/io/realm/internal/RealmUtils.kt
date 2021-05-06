@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -32,6 +33,12 @@ internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
+
+internal fun checkRealmClosed(realm: NativePointer, configuration: RealmConfiguration) {
+    if (RealmInterop.realm_is_closed(realm)) {
+        throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
+    }
+}
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
 fun <T : RealmObject> create(mediator: Mediator, realmPointer: NativePointer, type: KClass<T>): T {
