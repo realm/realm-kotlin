@@ -45,7 +45,7 @@ val cinteropCorePath = "$rootDir/$corePath"
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
-    ndkVersion = "22.0.6917172"
+    ndkVersion = Versions.Android.ndkVersion
 
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
@@ -75,6 +75,7 @@ android {
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
+                version = "${Versions.cmake}"
                 arguments("-DANDROID_STL=c++_shared")
             }
         }
@@ -82,6 +83,7 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
+            version = "${Versions.cmake}"
             path = project.file("src/jvmCommon/CMakeLists.txt")
         }
     }
@@ -187,9 +189,6 @@ kotlin {
         val androidMain by getting {
             dependsOn(jvmCommon)
             kotlin.srcDir("src/jvmCommon/kotlin")
-            dependencies {
-                implementation("androidx.startup:startup-runtime:1.0.0")
-            }
         }
 
         val jvmMain by getting {
@@ -221,7 +220,7 @@ kotlin {
         val iosMain by getting {
             dependsOn(darwinCommon)
             // Only add common sources to one platform when in the IDE. See comment at 'idea'
-            // difinition for full details.
+            // definition for full details.
             if (!idea) {
                 kotlin.srcDir("src/darwinCommon/kotlin")
             }

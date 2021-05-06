@@ -18,7 +18,9 @@
 package io.realm
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
+import io.realm.util.PlatformUtils
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -30,19 +32,21 @@ import kotlin.test.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
 class InstrumentedTests {
+
+    val context = InstrumentationRegistry.getInstrumentation().context
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @Before
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
     @After
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     // Smoke test of compiling with library
@@ -57,28 +61,27 @@ class InstrumentedTests {
     @Test
     fun createAndUpdate() {
         val s = "Hello, World!"
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class)
-        assertEquals("", sample.stringField)
-        sample.stringField = s
-        assertEquals(s, sample.stringField)
-        realm.commitTransaction()
+        realm.writeBlocking {
+            val sample = create(Sample::class)
+            assertEquals("", sample.stringField)
+            sample.stringField = s
+            assertEquals(s, sample.stringField)
+        }
     }
 
     @Test
     fun query() {
         val s = "Hello, World!"
 
-        realm.beginTransaction()
-        realm.create(Sample::class).run { stringField = s }
-        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
-        realm.commitTransaction()
+        realm.writeBlocking {
+            create(Sample::class).run { stringField = s }
+            create(Sample::class).run { stringField = "Hello, Realm!" }
+        }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
 
-        val objects2: RealmResults<Sample> =
-            realm.objects(Sample::class).query("stringField == $0", s)
+        val objects2: RealmResults<Sample> = realm.objects(Sample::class).query("stringField == $0", s)
         assertEquals(1, objects2.size)
         for (sample in objects2) {
             assertEquals(s, sample.stringField)
@@ -99,32 +102,32 @@ class InstrumentedTests {
 
     @Test
     fun query_delete() {
-        realm.beginTransaction()
-        realm.create(Sample::class).run { stringField = "Hello, World!" }
-        realm.create(Sample::class).run { stringField = "Hello, Realm!" }
-        realm.commitTransaction()
+        realm.writeBlocking {
+            create(Sample::class).run { stringField = "Hello, World!" }
+            create(Sample::class).run { stringField = "Hello, Realm!" }
+        }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
 
-        realm.beginTransaction()
-        realm.objects(Sample::class).delete()
-        realm.commitTransaction()
+        realm.writeBlocking {
+            realm.objects(Sample::class).delete()
+        }
 
         assertEquals(0, realm.objects(Sample::class).size)
     }
 
     @Test
     fun delete() {
-        realm.beginTransaction()
-        val sample = realm.create(Sample::class)
-        Realm.delete(sample)
-        assertFailsWith<IllegalArgumentException> {
-            Realm.delete(sample)
+        realm.writeBlocking {
+            val sample = create(Sample::class)
+            delete(sample)
+            assertFailsWith<IllegalArgumentException> {
+                delete(sample)
+            }
+            assertFailsWith<IllegalStateException> {
+                sample.stringField = "sadf"
+            }
         }
-        assertFailsWith<IllegalStateException> {
-            sample.stringField = "sadf"
-        }
-        realm.commitTransaction()
     }
 }

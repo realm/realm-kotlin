@@ -37,6 +37,12 @@ osx_kotlin = 'osx_kotlin'
 
 pipeline {
     agent none
+    // The Gradle cache is re-used between stages, in order to avoid builds interleave,
+    // and potentially corrupt each others cache, we grab a global lock for the entire 
+    // build.
+    options {
+        lock resource: 'kotlin_build_lock'
+    }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
           NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
@@ -73,6 +79,11 @@ pipeline {
         stage('Tests Android') {
             steps {
                 test("connectedAndroidTest")
+            }
+        }
+        stage('Tests JVM (compiler only)') {
+            steps {
+                test('jvmTest --tests "io.realm.test.compiler*"')
             }
         }
         stage('Tests Android Sample App') {
@@ -275,7 +286,7 @@ def runMonkey() {
             withEnv(['PATH+USER_BIN=/usr/local/bin']) {
                 sh """
                     cd examples/kmm-sample
-                    ./gradlew uninstallAll installDebug --info --stacktrace --no-daemon
+                    ./gradlew uninstallAll installDebug --stacktrace --no-daemon
                     $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
                 """
             }

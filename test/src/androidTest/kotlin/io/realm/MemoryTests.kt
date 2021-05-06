@@ -22,6 +22,7 @@ import android.os.SystemClock
 import android.text.format.Formatter
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.realm.util.PlatformUtils
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -40,12 +41,12 @@ class MemoryTests {
     @ExperimentalPathApi
     @Before
     fun setup() {
-        tmpDir = Utils.createTempDir()
+        tmpDir = PlatformUtils.createTempDir()
     }
 
     @After
     fun tearDown() {
-        Utils.deleteTempDir(tmpDir)
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
@@ -68,13 +69,13 @@ class MemoryTests {
 
         // inserting ~ 100MB of data and keep a strong reference to all allocated objects
         val referenceHolder = mutableListOf<Sample>()
-        realm!!.beginTransaction()
-        for (i in 1..100) {
-            realm.create(Sample::class).apply {
-                stringField = oneMBstring
-            }.also { referenceHolder.add(it) }
+        realm!!.writeBlocking {
+            for (i in 1..100) {
+                create(Sample::class).apply {
+                    stringField = oneMBstring
+                }.also { referenceHolder.add(it) }
+            }
         }
-        realm.commitTransaction()
 
         mappedMemorySize = numberOfMemoryMappedBytes(command)
         assertTrue(mappedMemorySize >= 99 * oneMB && mappedMemorySize < 102 * oneMB, "Committing the 100 objects should result in memory mapping ~ 99 MB. Current amount is ${bytesToHumanReadable(mappedMemorySize)}")
@@ -113,13 +114,13 @@ class MemoryTests {
 
         // inserting ~ 100MB of data and keep a strong reference to all allocated objects
         val referenceHolder = mutableListOf<Sample>()
-        realm.beginTransaction()
-        for (i in 1..100) {
-            realm.create(Sample::class).apply {
-                stringField = oneMBstring
-            }.also { referenceHolder.add(it) }
+        realm.writeBlocking {
+            for (i in 1..100) {
+                create(Sample::class).apply {
+                    stringField = oneMBstring
+                }.also { referenceHolder.add(it) }
+            }
         }
-        realm.commitTransaction()
 
         mappedMemorySize = numberOfMemoryMappedBytes(command)
         assertTrue(mappedMemorySize >= 99 * oneMB && mappedMemorySize < 102 * oneMB, "Committing the 100 objects should result in memory mapping of ~ 99 MB. Current amount is ${bytesToHumanReadable(mappedMemorySize)}")

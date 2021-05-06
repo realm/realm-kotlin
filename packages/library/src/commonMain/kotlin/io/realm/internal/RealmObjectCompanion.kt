@@ -22,7 +22,8 @@ import kotlin.reflect.KMutableProperty1
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
 @Suppress("VariableNaming")
 interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>
+    val `$realm$fields`: List<KMutableProperty1<*, *>>?
+    val `$realm$primaryKey`: KMutableProperty1<*, *>?
     fun `$realm$schema`(): Table
     fun `$realm$newInstance`(): Any
 }

@@ -53,6 +53,7 @@ import realm_wrapper.realm_release
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
+import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -150,6 +151,27 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
 
 actual object RealmInterop {
 
+    actual fun realm_get_version_id(realm: NativePointer): Long {
+        memScoped {
+            val info = alloc<realm_version_id_t>()
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_get_version_id(realm.cptr(), found.ptr, info.ptr))
+            return if (found.value) {
+                info.version.toLong()
+            } else {
+                throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
+            }
+        }
+    }
+
+    actual fun realm_get_num_versions(realm: NativePointer): Long {
+        memScoped {
+            val versionsCount = alloc<ULongVar>()
+            checkedBooleanResult(realm_wrapper.realm_get_num_versions(realm.cptr(), versionsCount.ptr))
+            return versionsCount.value.toLong()
+        }
+    }
+
     actual fun realm_get_library_version(): String {
         return realm_wrapper.realm_get_library_version()!!.toKString()
     }
@@ -164,7 +186,7 @@ actual object RealmInterop {
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
-                    primary_key = clazz.primaryKey.cstr.ptr
+                    primary_key = (clazz.primaryKey ?: "").cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags =
@@ -217,6 +239,10 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
+        realm_wrapper.realm_config_set_schema_version(config.cptr(), maxNumberOfVersions.toULong())
+    }
+
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
         realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }
@@ -226,7 +252,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
+        val realmPtr = CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
+        realm_begin_read(realmPtr)
+        return realmPtr
     }
 
     actual fun realm_close(realm: NativePointer) {
@@ -249,12 +277,20 @@ actual object RealmInterop {
         return realm_wrapper.realm_is_closed(realm.cptr())
     }
 
+    actual fun realm_begin_read(realm: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_begin_read(realm.cptr()))
+    }
+
     actual fun realm_begin_write(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_begin_write(realm.cptr()))
     }
 
     actual fun realm_commit(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_commit(realm.cptr()))
+    }
+
+    actual fun realm_rollback(realm: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_rollback(realm.cptr()))
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
@@ -278,6 +314,11 @@ actual object RealmInterop {
 
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
+    }
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_object_create_with_primary_key_by_ref(realm.cptr(), key.toUInt(), to_realm_value(primaryKey).ptr))
+        }
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -334,6 +375,22 @@ actual object RealmInterop {
             null -> {
                 cvalue.type = realm_value_type.RLM_TYPE_NULL
             }
+            is Byte -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Char -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Short -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
+            is Int -> {
+                cvalue.type = realm_value_type.RLM_TYPE_INT
+                cvalue.integer = value.toLong()
+            }
             is Long -> {
                 cvalue.type = realm_value_type.RLM_TYPE_INT
                 cvalue.integer = value as Long
@@ -354,7 +411,7 @@ actual object RealmInterop {
                 cvalue.type = realm_value_type.RLM_TYPE_DOUBLE
                 cvalue.dnum = value as Double
             }
-            is RealmModelInternal -> {
+            is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer = value.`$realm$ObjectPointer` ?: error("Cannot set unmanaged object")
                 realm_wrapper.realm_object_as_link(nativePointer?.cptr()).useContents {

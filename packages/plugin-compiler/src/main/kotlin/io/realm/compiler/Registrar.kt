@@ -25,6 +25,24 @@ import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 
+/**
+ * Registrar for the Realm compiler plugin.
+ *
+ * The overall concepts of the compiler plugin is that it:
+ * - Adds [RealmObjectInternal] interface to all classes marked with [RealmObject] interface
+ * - Rewire accessors to the actual Realm for managed objects
+ * - Adds [RealmObjectCompanion] interface to the companion object of classes marked with
+ * [RealmObject] interface
+ * - Modify [RealmConfiguration] constructor calls to capture the companion objects of supplied
+ * schema classes.
+ *
+ * The [RealmObjectInternal] holds internal attributes like Realm and objects native pointer, type
+ * information, etc. This information is used to indicate if an object is managed or not and direct
+ * the accessors to the Realm if so.
+ *
+ * The [RealmObjectCompanion] holds static information about the schema (members, primary key, etc.)
+ * and utility methods for constructing objects, etc.
+ */
 @AutoService(ComponentRegistrar::class)
 class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(
@@ -35,11 +53,18 @@ class Registrar : ComponentRegistrar {
             configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
         SchemaCollector.properties.clear()
 
+        // Trigger generation of companion objects and addition of the RealmObjectCompanion to it
         SyntheticResolveExtension.registerExtension(
             project,
             RealmModelSyntheticCompanionExtension()
         )
+
+        // Adds RealmObjectInternal properties, rewires accessors and adds static companion
+        // properties and methods
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
+
+        // Modifies RealmConfiguration constructor calls to capture the companions objects of the
+        // supplied schema
         IrGenerationExtension.registerExtension(project, RealmSchemaLoweringExtension())
     }
 }

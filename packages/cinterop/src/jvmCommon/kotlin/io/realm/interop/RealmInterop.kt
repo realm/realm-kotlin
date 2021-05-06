@@ -22,6 +22,12 @@ package io.realm.interop
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
 
+/**
+ * JVM/Android interop implementation.
+ *
+ * NOTE: All methods that return a boolean to indicate an exception are being checked automatically in JNI.
+ * So there is no need to verify the return value in the JVM interop layer.
+ */
 actual object RealmInterop {
 
     // TODO API-CLEANUP Maybe pull library loading into separate method
@@ -30,8 +36,25 @@ actual object RealmInterop {
         System.loadLibrary("realmc")
     }
 
+    actual fun realm_get_version_id(realm: NativePointer): Long {
+        val version = realm_version_id_t()
+        val found = BooleanArray(1)
+        realmc.realm_get_version_id(realm.cptr(), found, version)
+        return if (found[0]) {
+            version.version
+        } else {
+            throw IllegalStateException("No VersionId was available. Reading the VersionId requires a valid read transaction.")
+        }
+    }
+
     actual fun realm_get_library_version(): String {
         return realmc.realm_get_library_version()
+    }
+
+    actual fun realm_get_num_versions(realm: NativePointer): Long {
+        val result = LongArray(1)
+        realmc.realm_get_num_versions(realm.cptr(), result)
+        return result.first()
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
@@ -44,7 +67,7 @@ actual object RealmInterop {
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
-                primary_key = clazz.primaryKey
+                primary_key = clazz.primaryKey ?: ""
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = INVALID_CLASS_KEY
@@ -91,9 +114,14 @@ actual object RealmInterop {
         realmc.realm_config_set_schema((config as LongPointerWrapper).ptr, (schema as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
+        realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
+    }
+
     actual fun realm_open(config: NativePointer): NativePointer {
-        // Compiler complains without useless cast
-        return LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        realm_begin_read(realmPtr)
+        return realmPtr
     }
 
     actual fun realm_close(realm: NativePointer) {
@@ -121,6 +149,10 @@ actual object RealmInterop {
         return realmc.realm_is_closed((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_begin_read(realm: NativePointer) {
+        realmc.realm_begin_read((realm as LongPointerWrapper).ptr)
+    }
+
     actual fun realm_begin_write(realm: NativePointer) {
         realmc.realm_begin_write((realm as LongPointerWrapper).ptr)
     }
@@ -129,8 +161,15 @@ actual object RealmInterop {
         realmc.realm_commit((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_rollback(realm: NativePointer) {
+        realmc.realm_rollback((realm as LongPointerWrapper).ptr)
+    }
+
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
+    }
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, to_realm_value(primaryKey)))
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
@@ -159,8 +198,8 @@ actual object RealmInterop {
         return from_realm_value(cvalue)
     }
 
-    private fun <T> from_realm_value(value: realm_value_t): T {
-        return when (value.type) {
+    private fun <T> from_realm_value(value: realm_value_t?): T {
+        return when (value?.type) {
             realm_value_type_e.RLM_TYPE_STRING ->
                 value.string
             realm_value_type_e.RLM_TYPE_INT ->
@@ -173,7 +212,8 @@ actual object RealmInterop {
                 value.dnum
             realm_value_type_e.RLM_TYPE_LINK ->
                 value.asLink()
-            realm_value_type_e.RLM_TYPE_NULL ->
+            realm_value_type_e.RLM_TYPE_NULL,
+            null ->
                 null
             else ->
                 TODO("Unsupported type for from_realm_value ${value.type}")
@@ -197,7 +237,15 @@ actual object RealmInterop {
                     cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                     cvalue.string = value
                 }
+                is Byte -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
                 is Char -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_INT
+                    cvalue.integer = value.toLong()
+                }
+                is Short -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_INT
                     cvalue.integer = value.toLong()
                 }
@@ -221,8 +269,8 @@ actual object RealmInterop {
                     cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
                     cvalue.dnum = value
                 }
-                is RealmModelInternal -> {
-                    val nativePointer = (value as RealmModelInternal).`$realm$ObjectPointer`
+                is RealmObjectInterop -> {
+                    val nativePointer = (value as RealmObjectInterop).`$realm$ObjectPointer`
                         ?: error("Cannot add unmanaged object")
                     cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
                     cvalue.type = realm_value_type_e.RLM_TYPE_LINK

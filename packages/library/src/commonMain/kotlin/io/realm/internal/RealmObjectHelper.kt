@@ -31,7 +31,7 @@ object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    fun <R> getValue(obj: RealmModelInternal, col: String): Any? {
+    fun <R> getValue(obj: RealmObjectInternal, col: String): Any? {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
@@ -41,7 +41,7 @@ object RealmObjectHelper {
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
     inline fun <reified R : RealmObject> getObject(
-        obj: RealmModelInternal,
+        obj: RealmObjectInternal,
         col: String,
     ): Any? {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
@@ -63,7 +63,7 @@ object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    fun <R> setValue(obj: RealmModelInternal, col: String, value: R) {
+    fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
@@ -76,8 +76,8 @@ object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmModelInternal> setObject(
-        obj: RealmModelInternal,
+    inline fun <reified R : RealmObjectInternal> setObject(
+        obj: RealmObjectInternal,
         col: String,
         value: R?
     ) {

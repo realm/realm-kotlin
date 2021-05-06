@@ -18,7 +18,8 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
-import io.realm.internal.RealmModelInternal
+import io.realm.internal.RealmObjectInternal
+import io.realm.internal.checkRealmClosed
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -30,11 +31,18 @@ import kotlin.reflect.KClass
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 class RealmResults<T : RealmObject> constructor(
+    private val realmConfiguration: RealmConfiguration,
     private val realm: NativePointer,
     private val queryPointer: () -> NativePointer,
     private val clazz: KClass<T>,
     private val mediator: Mediator
 ) : AbstractList<T>(), Queryable<T> {
+
+    public var version: VersionId = VersionId(0)
+        get() {
+            checkRealmClosed(realm, realmConfiguration)
+            return VersionId(RealmInterop.realm_get_version_id(realm))
+        }
 
     private val query: NativePointer by lazy { queryPointer() }
     private val result: NativePointer by lazy { RealmInterop.realm_query_find_all(query) }
@@ -43,7 +51,7 @@ class RealmResults<T : RealmObject> constructor(
 
     override fun get(index: Int): T {
         val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
-        val model = mediator.createInstanceOf(clazz) as RealmModelInternal
+        val model = mediator.createInstanceOf(clazz) as RealmObjectInternal
         model.link(realm, mediator, clazz, link)
         return model as T
     }
@@ -55,6 +63,7 @@ class RealmResults<T : RealmObject> constructor(
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return RealmResults(
+            realmConfiguration,
             realm,
             { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
             clazz,

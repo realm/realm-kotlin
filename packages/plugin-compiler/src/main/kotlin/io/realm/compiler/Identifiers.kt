@@ -23,11 +23,12 @@ internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
+    val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
     val SET = Name.special("<set-?>")
-    // names must match `RealmModelInternal` properties
+    // names must match `RealmObjectInterop` properties
     val REALM_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Pointer")
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
@@ -42,8 +43,10 @@ internal object Names {
 
     // Schema related names
     val CLASS_FLAG_NORMAL = Name.identifier("RLM_CLASS_NORMAL")
-    val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
     val PROPERTY_FLAG_NORMAL = Name.identifier("RLM_PROPERTY_NORMAL")
+    val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
+    val PROPERTY_FLAG_PRIMARY_KEY = Name.identifier("RLM_PROPERTY_PRIMARY_KEY")
+    val PROPERTY_FLAG_INDEXED = Name.identifier("RLM_PROPERTY_INDEXED")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
 }
@@ -51,8 +54,8 @@ internal object Names {
 internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
     val REALM_NATIVE_POINTER = FqName("io.realm.interop.NativePointer")
-    val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmModelInternal")
-    val REALM_OBJECT_INTEROP_INTERFACE = FqName("io.realm.interop.RealmModelInternal")
+    val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmObjectInternal")
+    val REALM_OBJECT_INTEROP_INTERFACE = FqName("io.realm.interop.RealmObjectInterop")
     val REALM_MODULE_ANNOTATION = FqName("io.realm.RealmModule")
     val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
@@ -75,4 +78,5 @@ internal object FqNames {
     val PROPERTY_TYPE = FqName("io.realm.interop.PropertyType")
     val COLLECTION_TYPE = FqName("io.realm.interop.CollectionType")
     val PROPERTY_FLAG = FqName("io.realm.interop.PropertyFlag")
+    val PRIMARY_KEY_ANNOTATION = FqName("io.realm.PrimaryKey")
 }

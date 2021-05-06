@@ -153,6 +153,9 @@ struct realm_size_t {
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found };
 
+// uint64_t output parameter for realm_get_num_versions
+%apply int64_t* OUTPUT { uint64_t* out_versions_count };
+
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"
 %javaconst(1);

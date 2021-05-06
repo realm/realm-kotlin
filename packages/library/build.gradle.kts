@@ -95,6 +95,10 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
+    dependencies {
+        implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+    }
 }
 
 kotlin {
@@ -125,7 +129,7 @@ kotlin {
 
 kotlin {
     sourceSets {
-        create("nativeCommon") {
+        create("darwinCommon") {
             dependsOn(getByName("commonMain"))
         }
     }
@@ -140,7 +144,13 @@ kotlin {
     ios()
     sourceSets {
         getByName("iosMain") {
-            dependsOn(getByName("nativeCommon"))
+            dependsOn(getByName("darwinCommon"))
+        }
+        getByName("iosX64Main") {
+            dependsOn(getByName("iosMain"))
+        }
+        getByName("iosArm64Main") {
+            dependsOn(getByName("iosMain"))
         }
         getByName("iosTest") {
         }
@@ -156,7 +166,7 @@ kotlin {
     macosX64("macos") {}
     sourceSets {
         getByName("macosMain") {
-            dependsOn(getByName("nativeCommon"))
+            dependsOn(getByName("darwinCommon"))
         }
         getByName("macosTest") {
         }

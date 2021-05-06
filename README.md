@@ -174,7 +174,7 @@ The public API of the SDK has not been finalized. Design discussions will happen
 ## Prerequisites
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
-- XCode 12 on Mac.
+- CMake 3.18.1. Can be installed through the Android SDK Manager.
 
 ## Commands to build from source
 
@@ -272,6 +272,38 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 ```
 
 Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+
+
+## Writing Tests
+
+Currently all unit tests should be place in the `test/` project instead of `packages/library`. The reason for this is that we need to apply the Realm Compiler Plugin to the tests and this introduces a circular dependency if the tests are in `library`.
+
+Inside `tests/` there are 3 locations the files can be placed in:
+
+* `test/src/commonTest`
+* `test/src/androidTest`
+* `test/src/macosTest`
+
+Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you run you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
+are using the following work-around:
+
+1) All "common" tests should be placed in the `test/src/androidtest/kotlin/io/realm/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commontTest`.
+
+
+2) When adding a new test file to `androidTest` we need to re-create the symlinks for macOS. This can be done, using the following command on Mac:
+
+```
+cd test/src/macosTest/kotlin/io/realm/shared
+ln -sf ../../../../../androidTest/kotlin/io/realm/shared/* ./
+``` 
+
+3) Both the real test file and the symlink must be committed to Git.
+
+
+4) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
+ 
+
+All platform specific tests should be placed outside the `io.realm.shared` package, the default being `io.realm`.
 
 ## Defining dependencies
 
