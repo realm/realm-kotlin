@@ -44,7 +44,7 @@ class RealmObjectTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class))
         realm = Realm.open(configuration)
-        parent = realm.writeBlocking { copyToRealm(Parent().apply { name = "John" }) }
+        parent = realm.writeBlocking { copyToRealm(Parent()) }
     }
 
     @AfterTest
