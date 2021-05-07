@@ -67,15 +67,13 @@ fun hasProperty(project: Project, propertyName: String): Boolean {
 // Plugin responsible for handling publishing to mavenLocal and Maven Central.
 class RealmPublishPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = project.run {
-        // See https://github.com/Codearte/gradle-nexus-staging-plugin/issues/47#issuecomment-491474045 for further details.
-        project.extra["gnsp.disableApplyOnlyOnRootProjectEnforcement"] = "true"
-
         // Configure constants required by the publishing process
         val signBuild: Boolean = hasProperty(project,"signBuild")
         configureSignedBuild(signBuild, this)
     }
 
     private fun configureSignedBuild(signBuild: Boolean, project: Project) {
+        // ID for the Realm Kotlin PGP key file.
         val keyId = "1F48C9B0"
         // Apparently Gradle treats properties define through a gradle.properties file differently
         // than those defined through the commandline using `-P`. This is a problem with new
@@ -96,14 +94,12 @@ class RealmPublishPlugin : Plugin<Project> {
                 plugins.apply(NexusPublishPlugin::class.java)
             }
 
-
             // Create the RealmPublish plugin. It must evaluate after all other plugins as it modifies their output
             project.extensions.create<RealmPublishExtensions>("realmPublish")
 
             afterEvaluate {
                 project.extensions.findByType<RealmPublishExtensions>()?.run {
                     configurePom(project, pom)
-//                    configureRepository(project)
                 }
             }
 
@@ -168,20 +164,4 @@ class RealmPublishPlugin : Plugin<Project> {
             }
         }
     }
-
-//    private fun configureRepository(project: Project) {
-//        project.extensions.getByType<PublishingExtension>().apply {
-//            val snapshotUri = URI("https://oss.sonatype.org/content/repositories/snapshots/")
-//            val releaseUri = URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-//            val isSnapshotRelease = project.version.toString().endsWith("-SNAPSHOT")
-//            repositories.maven {
-//                name = "MavenCentral"
-//                url = if (isSnapshotRelease) snapshotUri else releaseUri
-//                credentials {
-//                    username = getPropertyValue(project,"ossrhUsername")
-//                    password = getPropertyValue(project,"ossrhPassword")
-//                }
-//            }
-//        }
-//    }
 }

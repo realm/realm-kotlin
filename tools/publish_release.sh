@@ -111,7 +111,7 @@ create_javadoc() {
 upload_to_mavenCentral() {
   echo "Releasing on MavenCentral"
   cd $REALM_KOTLIN_PATH
-  ./gradlew publishAllPublicationsToMavenCentralRepository closeAndReleaseRepository -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY
+  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY
   cd $HERE
 }
 

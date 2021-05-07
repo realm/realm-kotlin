@@ -96,7 +96,7 @@ pipeline {
         stage('Publish SNAPSHOT to Maven Central') {
             when { expression { shouldPublishSnapshot(version) } }
             steps {
-                runUploadToMavenCentral()
+                runPublishSnapshotToMavenCentral()
             }
         }
         stage('Publish Release to Maven Central') {
@@ -221,13 +221,13 @@ def runStaticAnalysis() {
     }
 }
 
-def runUploadToMavenCentral() {
+def runPublishSnapshotToMavenCentral() {
     node(osx_kotlin) {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
                 sh """
                 cd packages
-                ./gradlew publishAllPublicationsToMavenCentralRepository -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_PASSWORD --no-daemon
+                ./gradlew publishToSonatype -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_PASSWORD --no-daemon
                 """
             }
         }
