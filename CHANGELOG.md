@@ -1,4 +1,4 @@
-## 0.1.0 (YYYY-MM-DD)
+## 0.1.0 (2021-05-07)
 
 This is the first public Alpha release of the Realm Kotlin SDK for Android and Kotlin Multiplatform.
 
