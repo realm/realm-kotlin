@@ -18,9 +18,10 @@
 package io.realm
 
 import Realm
-import io.codearte.gradle.nexus.NexusStagingExtension
-import io.codearte.gradle.nexus.NexusStagingPlugin
+import io.github.gradlenexus.publishplugin.NexusPublishExtension
+import io.github.gradlenexus.publishplugin.NexusPublishPlugin
 import org.gradle.api.Action
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
@@ -88,7 +89,13 @@ class RealmPublishPlugin : Plugin<Project> {
         with(project) {
             plugins.apply(MavenPublishPlugin::class.java)
             plugins.apply(SigningPlugin::class.java)
-            plugins.apply(NexusStagingPlugin::class.java)
+
+            // The nexus publisher plugin can only be applied to top-level projects.
+            // See https://github.com/gradle-nexus/publish-plugin/issues/81
+            if (project == project.rootProject) {
+                plugins.apply(NexusPublishPlugin::class.java)
+            }
+
 
             // Create the RealmPublish plugin. It must evaluate after all other plugins as it modifies their output
             project.extensions.create<RealmPublishExtensions>("realmPublish")
@@ -96,7 +103,7 @@ class RealmPublishPlugin : Plugin<Project> {
             afterEvaluate {
                 project.extensions.findByType<RealmPublishExtensions>()?.run {
                     configurePom(project, pom)
-                    configureRepository(project)
+//                    configureRepository(project)
                 }
             }
 
@@ -107,12 +114,20 @@ class RealmPublishPlugin : Plugin<Project> {
                 sign(project.extensions.getByType<PublishingExtension>().publications)
             }
 
-            // Configure upload to Maven Central
-            extensions.getByType<NexusStagingExtension>().apply {
-                this.packageGroup = "io.realm"
-                this.stagingProfileId = sonatypeStagingProfileId
-                this.username = getPropertyValue(project,"ossrhUsername")
-                this.password = getPropertyValue(project,"ossrhPassword")
+            // Configure upload to Maven Central.
+            // The nexus publisher plugin can only be applied to top-level projects.
+            // See https://github.com/gradle-nexus/publish-plugin/issues/81
+            if (project == project.rootProject) {
+                extensions.getByType<NexusPublishExtension>().apply {
+                    this.packageGroup.set("io.realm.kotlin")
+                    this.repositories {
+                        sonatype {
+                            this.stagingProfileId.set(sonatypeStagingProfileId)
+                            this.username.set(getPropertyValue(project,"ossrhUsername"))
+                            this.password.set(getPropertyValue(project,"ossrhPassword"))
+                        }
+                    }
+                }
             }
         }
     }
@@ -154,19 +169,19 @@ class RealmPublishPlugin : Plugin<Project> {
         }
     }
 
-    private fun configureRepository(project: Project) {
-        project.extensions.getByType<PublishingExtension>().apply {
-            val snapshotUri = URI("https://oss.sonatype.org/content/repositories/snapshots/")
-            val releaseUri = URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val isSnapshotRelease = project.version.toString().endsWith("-SNAPSHOT")
-            repositories.maven {
-                name = "MavenCentral"
-                url = if (isSnapshotRelease) snapshotUri else releaseUri
-                credentials {
-                    username = getPropertyValue(project,"ossrhUsername")
-                    password = getPropertyValue(project,"ossrhPassword")
-                }
-            }
-        }
-    }
+//    private fun configureRepository(project: Project) {
+//        project.extensions.getByType<PublishingExtension>().apply {
+//            val snapshotUri = URI("https://oss.sonatype.org/content/repositories/snapshots/")
+//            val releaseUri = URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+//            val isSnapshotRelease = project.version.toString().endsWith("-SNAPSHOT")
+//            repositories.maven {
+//                name = "MavenCentral"
+//                url = if (isSnapshotRelease) snapshotUri else releaseUri
+//                credentials {
+//                    username = getPropertyValue(project,"ossrhUsername")
+//                    password = getPropertyValue(project,"ossrhPassword")
+//                }
+//            }
+//        }
+//    }
 }

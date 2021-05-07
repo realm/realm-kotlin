@@ -73,8 +73,7 @@ object Versions {
     const val kotlinCompileTesting = "1.2.6" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "9.4.1" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.39.0" // https://github.com/pinterest/ktlint
-    // FIXME: Bump to 0.30.0
-    const val nexusStagingPlugin = "0.22.0" // https://github.com/Codearte/gradle-nexus-staging-plugin
+    const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val shadowJar =  "5.2.0"
 }
 
