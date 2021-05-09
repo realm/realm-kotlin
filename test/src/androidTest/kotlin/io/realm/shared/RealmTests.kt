@@ -20,6 +20,7 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.util.PlatformUtils
+import kotlinx.coroutines.runBlocking
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest
@@ -56,10 +57,68 @@ class RealmTests {
     }
 
     @Test
-    fun write() {
+    fun writeBlocking() {
         val managedChild = realm.writeBlocking { copyToRealm(Child().apply { name = "John" }) }
         assertTrue(managedChild.isManaged())
         assertEquals("John", managedChild.name)
+    }
+
+    @Test
+    fun write() = runBlocking {
+        val name = "Realm"
+        val child: Child = realm.write {
+            this.copyToRealm(Child()).apply { this.name = name }
+        }
+        assertEquals(name, child.name)
+        val objects = realm.objects<Child>()
+        val childFromResult = objects[0]
+        assertEquals(name, childFromResult.name)
+    }
+
+    @Test
+    fun resultIsLiveAfterWrite() = runBlocking {
+        val name = "Realm"
+
+        val objects = realm.objects<Child>()
+
+        val child: Child = realm.write {
+            this.copyToRealm(Child()).apply { this.name = name }
+        }
+        assertEquals(name, child.name)
+
+        assertEquals(1, objects.size)
+        val childFromResult = objects[0]
+        assertEquals(name, childFromResult.name)
+    }
+
+    @Test
+    fun writeBlockingAfterWrite() = runBlocking {
+        val name = "Realm"
+        val child: Child = realm.write {
+            this.copyToRealm(Child()).apply { this.name = name }
+        }
+        assertEquals(name, child.name)
+        assertEquals(1, realm.objects<Child>().size)
+
+        realm.writeBlocking {
+            this.copyToRealm(Child()).apply { this.name = name }
+        }
+        Unit
+    }
+
+    @Test
+    fun leakingLiveObject() = runBlocking {
+        val name = "Realm"
+        val updatedName = "update"
+
+        realm.write {
+            val child = this.copyToRealm(Child()).apply { this.name = name }
+        }
+        val child = realm.objects<Child>()[0]
+        realm.write {
+            val child = this.copyToRealm(Child()).apply { this.name = name }
+        }
+        assertEquals(updatedName, child?.name)
     }
 
     @Test

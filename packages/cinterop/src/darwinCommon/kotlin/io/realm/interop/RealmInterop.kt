@@ -51,6 +51,7 @@ import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_string_t
+import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
@@ -257,6 +258,14 @@ actual object RealmInterop {
         return realmPtr
     }
 
+    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
+    }
+
+    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
+    }
+
     actual fun realm_close(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
     }
@@ -319,6 +328,14 @@ actual object RealmInterop {
         memScoped {
             return CPointerWrapper(realm_wrapper.realm_object_create_with_primary_key_by_ref(realm.cptr(), key.toUInt(), to_realm_value(primaryKey).ptr))
         }
+    }
+
+    actual fun realm_object_freeze(live_object: NativePointer, frozen_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_freeze(live_object.cptr(), frozen_realm.cptr()))
+    }
+
+    actual fun realm_object_thaw(frozen_object: NativePointer, live_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozen_object.cptr(), live_realm.cptr()))
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -476,6 +493,14 @@ actual object RealmInterop {
 
     actual fun realm_query_find_all(query: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_results_freeze(live_results: NativePointer, frozen_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_freeze(live_results.cptr(), frozen_realm.cptr()))
+    }
+
+    actual fun realm_results_thaw(frozen_results: NativePointer, live_realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_thaw(frozen_results.cptr(), live_realm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

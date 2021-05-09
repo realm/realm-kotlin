@@ -39,6 +39,7 @@ kotlin {
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
             }
         }
 
@@ -98,6 +99,7 @@ android {
 
     dependencies {
         implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
     }
 }
 

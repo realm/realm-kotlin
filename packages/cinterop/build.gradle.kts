@@ -269,13 +269,6 @@ kotlin {
     }
 }
 
-// Building for Android [x86_64] & [arm64-v8a] ABIs
-val capiAndroidDebug by tasks.registering {
-    build_C_API_Android(releaseBuild = false)
-}
-val capiAndroidRelease by tasks.registering {
-    build_C_API_Android(releaseBuild = true)
-}
 // Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for macOS
 val capiMacosUniversal by tasks.registering {
     build_C_API_Macos_Universal(releaseBuild = false) // TODO https://github.com/realm/realm-kotlin/issues/142 switch to Release build (with assertion enabled) once we reach Beta stability?
@@ -287,25 +280,6 @@ val capiSimulatorUniversal by tasks.registering {
 // Building for ios device (arm64 only)
 val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(releaseBuild = false)
-}
-
-fun Task.build_C_API_Android(releaseBuild: Boolean = false) {
-    val buildType = if (releaseBuild) "Release" else "Debug"
-    doLast {
-        // x86_64
-        exec {
-            workingDir(project.file("$relativeCorePath"))
-            commandLine("tools/cross_compile.sh", "-t", buildType, "-a", "x86_64", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
-            environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
-        }
-
-        // arm64-v8a
-        exec {
-            workingDir(project.file("$relativeCorePath"))
-            commandLine("tools/cross_compile.sh", "-t", buildType, "-a", "arm64-v8a", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
-            environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
-        }
-    }
 }
 
 // There is no Interop tasks per build type yet AFAIK , but we can choose to switch between debug and release here
@@ -423,12 +397,6 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
 }
 
 afterEvaluate {
-    tasks.named("externalNativeBuildDebug") {
-        dependsOn(capiAndroidDebug)
-    }
-    tasks.named("externalNativeBuildRelease") {
-        dependsOn(capiAndroidRelease)
-    }
     // Ensure that Swig wrapper is generated before compiling the JNI layer. This task needs
     // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
     // actuals

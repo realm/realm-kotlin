@@ -15,12 +15,20 @@
  */
 package io.realm
 
+import io.realm.internal.Writer
+import io.realm.internal.util.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
+
+    private val writer: Writer = Writer(configuration, configuration.writeDispatcher())
+    private val realmPointerMutex = Mutex()
 
     companion object {
         /**
@@ -56,11 +64,47 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     public constructor(configuration: RealmConfiguration) :
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
+
     /**
-     * TODO Add docs when this method is implemented.
+     * Modify the underlying Realm file in a suspendable transaction on the default Realm
+     * dispathcer.
+     *
+     * The write transaction always represent the latest version of data in the Realm file, even if
+     * the calling Realm not yet represent this.
+     *
+     * Write transactions automatically commit any changes made when the closure returns unless
+     * [MutableRealm.cancelWrite] was called.
+     *
+     * @param block function that should be run within the context of a write transaction.
+     * @return any value returned from the provided write block as frozen/immutable objects.
      */
+    // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptinoHandler
     suspend fun <R> write(block: MutableRealm.() -> R): R {
-        TODO("Awaiting implementation of the Frozen Architecture")
+        try {
+            val (nativePointer, versionId, result) = this.writer.write(block)
+            // Update the user facing Realm before returning the result.
+            // That way, querying the Realm right after the `write` completes will return
+            // the written data. Otherwise, we would have to wait for the Notifier thread
+            // to detect it and update the user Realm.
+            updateRealmPointer(nativePointer, versionId)
+            // FIXME What if the result is of a different version than the realm (some other
+            //  write transaction finished before)
+            return result
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    protected suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
+        realmPointerMutex.withLock {
+            log.debug("${version} -> ${newVersion}")
+            if (newVersion >= version) {
+                // FIXME Currently we need this to be a live realm to be able to continue doing
+                //  writeBlocking transactions.
+                dbPointer = RealmInterop.realm_thaw(newRealm)
+                version = newVersion
+            }
+        }
     }
 
     /**
@@ -106,5 +150,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     public override fun close() {
         super.close()
+        runBlocking {
+            writer.close()
+        }
     }
 }

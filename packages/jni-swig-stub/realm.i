@@ -203,7 +203,6 @@ struct realm_size_t {
 %ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
-%ignore "realm_results_freeze";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)

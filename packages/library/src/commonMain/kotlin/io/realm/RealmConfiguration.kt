@@ -26,6 +26,7 @@ import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
@@ -52,7 +53,6 @@ public class RealmConfiguration private constructor(
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long
 ) {
-
     // Public properties making up the RealmConfiguration
     // TODO Add KDoc for all of these
     public val path: String
@@ -210,4 +210,12 @@ public class RealmConfiguration private constructor(
             )
         }
     }
+
+    // FIXME
+    //  - Where should the injection point of the dispatcher be? Could be in the configuration,
+    //  but might be beneficial to postpone until actually opening the realm. Also not sure howto
+    //  enforce that it has to be backed by a single thread.
+    //  - What is the granularity of this: One per Realm, Configuration or underlying shared realm?
+    fun writeDispatcher(): CoroutineDispatcher = io.realm.internal.defaultWriteDispatcher()
+
 }

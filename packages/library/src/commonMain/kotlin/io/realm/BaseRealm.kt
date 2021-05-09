@@ -29,7 +29,7 @@ public abstract class BaseRealm internal constructor(
      * Configuration used to configure this Realm instance.
      */
     public val configuration: RealmConfiguration,
-    protected val dbPointer: NativePointer
+    internal var dbPointer: NativePointer
 ) {
 
     /**

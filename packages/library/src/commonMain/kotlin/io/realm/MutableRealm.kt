@@ -42,12 +42,13 @@ class MutableRealm : BaseRealm {
         }
     }
 
+    // TODO Do we actually need the scoped realm (inheriting context from the parent).
     /**
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
      * done inside the MutableRealm is not immediately reflected in the `parentRealm`.
      */
-    internal constructor(parentRealm: Realm) :
-        super(parentRealm.configuration, RealmInterop.realm_open(parentRealm.configuration.nativeConfig))
+    internal constructor(configuration: RealmConfiguration) :
+        super(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
     /**
      * Create a MutableRealm which represents a standard write transaction, i.e. any modifications

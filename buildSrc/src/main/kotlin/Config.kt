@@ -51,7 +51,7 @@ object Versions {
         const val compileSdkVersion = 29
         const val buildToolsVersion = "29.0.2"
         const val buildTools = "4.1.0"
-        const val ndkVersion = "22.0.6917172"
+        const val ndkVersion = "22.1.7171670"
     }
     const val androidxStartup = "1.0.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.2" // https://maven.google.com/web/index.html#androidx.test.ext:junit
