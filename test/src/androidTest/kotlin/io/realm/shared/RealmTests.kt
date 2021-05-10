@@ -90,7 +90,6 @@ class RealmTests {
         Unit
     }
 
-
     @Test
     fun initialVersion() {
         assertEquals(INITIAL_VERSION, realm.version)
