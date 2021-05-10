@@ -151,8 +151,6 @@ def runScm() {
             publishBuild = true
         }
     }
-
-    stash includes: '**/*', name: 'source', excludes: './realm/realm-library/cpp_engine/external/realm-object-store/.dockerignore'
 }
 
 def runBuild() {
@@ -161,7 +159,6 @@ def runBuild() {
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
     ]) {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            getArchive()
             startEmulatorInBgIfNeeded()
             def signingFlags = ""
             if (isReleaseBranch) {
@@ -279,11 +276,6 @@ def runMonkey() {
         currentBuild.result = 'FAILURE'
         currentBuild.stageResult = 'FAILURE'
     }
-}
-
-def getArchive() {
-    deleteDir()
-    unstash 'source'
 }
 
 def notifySlackIfRequired(String slackMessage) {
