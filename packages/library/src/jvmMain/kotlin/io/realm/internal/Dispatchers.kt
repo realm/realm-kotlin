@@ -1,5 +1,4 @@
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 
@@ -19,6 +18,6 @@ import java.util.concurrent.Executors
  * limitations under the License.
  */
 
-actual fun defaultWriteDispatcher() : CoroutineDispatcher {
+actual fun defaultWriteDispatcher(): CoroutineDispatcher {
     return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 }

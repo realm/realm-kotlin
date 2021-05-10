@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -57,10 +56,9 @@ fun RealmObjectInternal.unmanage() {
     this.`$realm$Pointer` = null
 }
 
-
 // Create a frozen copy of this object. Expected DB pointer is used by writes where we need to freeze
 // the object before the owner Realm is updated, but the pointer it will be updated with is already know.
-fun <T: RealmObject> RealmObjectInternal.freeze(realm: NativePointer, expectedDbPointer: NativePointer? = null): T {
+fun <T : RealmObject> RealmObjectInternal.freeze(realm: NativePointer, expectedDbPointer: NativePointer? = null): T {
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     return managedModel.manage(

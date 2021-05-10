@@ -330,12 +330,12 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_object_freeze(live_object: NativePointer, frozen_realm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_freeze(live_object.cptr(), frozen_realm.cptr()))
+    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
     }
 
-    actual fun realm_object_thaw(frozen_object: NativePointer, live_realm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozen_object.cptr(), live_realm.cptr()))
+    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -495,12 +495,12 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_results_freeze(live_results: NativePointer, frozen_realm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_results_freeze(live_results.cptr(), frozen_realm.cptr()))
+    actual fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_freeze(liveResults.cptr(), frozenRealm.cptr()))
     }
 
-    actual fun realm_results_thaw(frozen_results: NativePointer, live_realm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_results_thaw(frozen_results.cptr(), live_realm.cptr()))
+    actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

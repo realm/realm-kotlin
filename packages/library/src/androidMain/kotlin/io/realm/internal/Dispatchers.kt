@@ -20,11 +20,9 @@ import android.os.Handler
 import android.os.HandlerThread
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.android.asCoroutineDispatcher
-import kotlinx.coroutines.runBlocking
 
-actual fun defaultWriteDispatcher() : CoroutineDispatcher {
+actual fun defaultWriteDispatcher(): CoroutineDispatcher {
     val thread = HandlerThread("Realm")
     thread.start()
     return Handler(thread.looper).asCoroutineDispatcher()
-    runBlocking {  }
 }

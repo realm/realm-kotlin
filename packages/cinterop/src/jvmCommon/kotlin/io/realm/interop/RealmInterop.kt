@@ -180,14 +180,13 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, to_realm_value(primaryKey)))
     }
 
-    actual fun realm_object_freeze(live_object: NativePointer, frozen_realm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_freeze(live_object.cptr(), frozen_realm.cptr()))
+    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
     }
 
-    actual fun realm_object_thaw(frozen_object: NativePointer, live_realm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_thaw(frozen_object.cptr(), live_realm.cptr()))
+    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
     }
-
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         val info = realm_class_info_t()
@@ -372,12 +371,12 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_results_freeze(live_results: NativePointer, frozen_realm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_freeze(live_results.cptr(), frozen_realm.cptr()))
+    actual fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_freeze(liveResults.cptr(), frozenRealm.cptr()))
     }
 
-    actual fun realm_results_thaw(frozen_results: NativePointer, live_realm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_freeze(frozen_results.cptr(), live_realm.cptr()))
+    actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_freeze(frozenResults.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

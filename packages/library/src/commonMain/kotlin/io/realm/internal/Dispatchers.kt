@@ -19,4 +19,4 @@ package io.realm.internal
 import kotlinx.coroutines.CoroutineDispatcher
 
 // TODO Consider adding a RealmDispatcher with API for setting name and clean up thread
-expect fun defaultWriteDispatcher() : CoroutineDispatcher
+expect fun defaultWriteDispatcher(): CoroutineDispatcher

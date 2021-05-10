@@ -37,8 +37,9 @@ import kotlinx.coroutines.withContext
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
 class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: CoroutineDispatcher) {
+    // Must only be accessed from the dispatchers thread
     private val realm: MutableRealm by lazy {
-            MutableRealm(configuration)
+        MutableRealm(configuration)
     }
 
     suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
@@ -46,6 +47,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
         return withContext(dispatcher) {
             // TODO Should we ensure that we are still active
             var result: R
+            @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
             try {
                 realm.beginTransaction()
                 result = block(realm)
@@ -60,7 +62,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
             // of the Dispatcher. The dispatcher should be single-threaded so will
             // guarantee that no other threads can modify the Realm between
             // the transaction is committed and we freeze it.
-            // TODO: Can we guarantee the Dispatcher is single-threaded? Or otherwise
+            // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
             val newDbPointer = RealmInterop.realm_freeze(realm.dbPointer)
             val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
@@ -72,7 +74,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
     }
 
     private fun <R> freezeWriteReturnValue(result: R, frozenDbPointer: NativePointer): R {
-        return when(result) {
+        return when (result) {
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 val obj: RealmObjectInternal = (result as RealmObjectInternal)
@@ -84,7 +86,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
 
     private fun <R> shouldFreezeWriteReturnValue(result: R): Boolean {
         // How to test for managed results?
-        return when(result) {
+        return when (result) {
             // is RealmResults<*> -> return result.owner != null
             is RealmObject -> return result is RealmObjectInternal
             else -> false
@@ -97,4 +99,3 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
         }
     }
 }
-
