@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.internal
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
-import java.util.concurrent.Executors
+package io.realm.internal.util
 
-public actual fun defaultWriteDispatcher(): CoroutineDispatcher {
-    return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
+
+public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    return kotlinx.coroutines.runBlocking(context, block)
 }
