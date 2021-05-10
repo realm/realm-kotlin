@@ -119,13 +119,13 @@ tasks {
     val archiveDebugSymbols by register("archiveDebugSymbols", Zip::class) {
         archiveName = "realm-kotlin-jni-libs-unstripped-${currentVersion}.zip"
         destinationDir = releaseMetaDataDir
-        from("realm-kotlin/packages/cinterop/build/intermediates/merged_native_libs/releases/out/lib") {
+        from("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/releases/out/lib") {
             include("**/*.so")
         }
         doLast {
             // Failsafe check, ensuring that we catch if the path ever changes, which it might since it is an
             // implementation detail of the Android Gradle Plugin
-            val unstrippedDir = File("${projectDir.absolutePath}/packages/cinterop/build/intermediates/merged_native_libs/releases/out/lib")
+            val unstrippedDir = File("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/releases/out/lib")
             if (!unstrippedDir.exists() || !unstrippedDir.isDirectory || unstrippedDir.listFiles().isEmpty()) {
                 throw GradleException("Could not locate unstripped binary files in: ${unstrippedDir.path}")
             }
