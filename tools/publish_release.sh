@@ -83,7 +83,7 @@ verify_release_preconditions() {
     RELEASE_VERSION=$version
     echo "Git tag and version.txt matches: $version. Continue releasing."
   else
-    echo "Version in version.txt was '$version' while the branch was tagged with '$gitTag'. Aborting release."
+    echo "Version in Config.kt was '$version' while the branch was tagged with '$gitTag'. Aborting release."
     abort_release
   fi
 }

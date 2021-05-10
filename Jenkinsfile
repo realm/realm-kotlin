@@ -33,10 +33,10 @@ version = null
 isReleaseBranch = releaseBranches.contains(currentBranch)
 
 // Mac CI dedicated machine
-osx_kotlin = 'osx_kotlin'
+node_label = 'osx_kotlin'
 
 pipeline {
-    agent none
+    agent { label node_label }
     // The Gradle cache is re-used between stages, in order to avoid builds interleave,
     // and potentially corrupt each others cache, we grab a global lock for the entire 
     // build.
@@ -120,180 +120,164 @@ pipeline {
 }
 
 def runScm() {
-    node(osx_kotlin) {
-        checkout([
-                $class           : 'GitSCM',
-                branches         : scm.branches,
-                gitTool          : 'native git',
-                extensions       : scm.extensions + [
-                        [$class: 'WipeWorkspace'],
-                        [$class: 'CleanCheckout'],
-                        [$class: 'SubmoduleOption', recursiveSubmodules: true]
-                ],
-                userRemoteConfigs: scm.userRemoteConfigs
-        ])
+    checkout([
+            $class           : 'GitSCM',
+            branches         : scm.branches,
+            gitTool          : 'native git',
+            extensions       : scm.extensions + [
+                    [$class: 'WipeWorkspace'],
+                    [$class: 'CleanCheckout'],
+                    [$class: 'SubmoduleOption', recursiveSubmodules: true]
+            ],
+            userRemoteConfigs: scm.userRemoteConfigs
+    ])
 
-        // Check type of Build. We are treating this as a release build if we are building
-        // the exact Git SHA that was tagged.
-        gitTag = readGitTag()
-        version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
-        echo "Git branch/tag: ${currentBranch}/${gitTag ?: 'none'}"
-        if (!gitTag) {
-            gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
-            echo "Building commit: ${version} - ${gitSha}"
-            setBuildName(gitSha)
-            publishBuild = false
+    // Check type of Build. We are treating this as a release build if we are building
+    // the exact Git SHA that was tagged.
+    gitTag = readGitTag()
+    version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
+    echo "Git branch/tag: ${currentBranch}/${gitTag ?: 'none'}"
+    if (!gitTag) {
+        gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
+        echo "Building commit: ${version} - ${gitSha}"
+        setBuildName(gitSha)
+        publishBuild = false
+    } else {
+        if (gitTag != "v${version}") {
+            error "Git tag '${gitTag}' does not match v${version}"
         } else {
-            if (gitTag != "v${version}") {
-                error "Git tag '${gitTag}' does not match v${version}"
-            } else {
-                echo "Building release: '${gitTag}'"
-                setBuildName("Tag ${gitTag}")
-                publishBuild = true
-            }
+            echo "Building release: '${gitTag}'"
+            setBuildName("Tag ${gitTag}")
+            publishBuild = true
         }
-
-        stash includes: '**/*', name: 'source', excludes: './realm/realm-library/cpp_engine/external/realm-object-store/.dockerignore'
     }
+
+    stash includes: '**/*', name: 'source', excludes: './realm/realm-library/cpp_engine/external/realm-object-store/.dockerignore'
 }
 
 def runBuild() {
-    node(osx_kotlin) {
-        withCredentials([
-            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
-            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
-        ]) {
-            withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-                getArchive()
-                startEmulatorInBgIfNeeded()
-                def signingFlags = ""
-                if (isReleaseBranch) {
-                    signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
-                }
-                sh """
-                      cd packages
-                      chmod +x gradlew && ./gradlew clean assemble ${signingFlags} --info --stacktrace --no-daemon
-                   """
+    withCredentials([
+        [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
+        [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
+    ]) {
+        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+            getArchive()
+            startEmulatorInBgIfNeeded()
+            def signingFlags = ""
+            if (isReleaseBranch) {
+                signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
             }
+            sh """
+                  cd packages
+                  chmod +x gradlew && ./gradlew clean assemble ${signingFlags} --info --stacktrace --no-daemon
+               """
         }
     }
 }
 
 def runStaticAnalysis() {
-    node(osx_kotlin) {
-        try {
-            sh '''
-            ./gradlew --no-daemon ktlintCheck detekt
+    try {
+        sh '''
+        ./gradlew --no-daemon ktlintCheck detekt
+        '''
+    } finally {
+        // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
+        // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
+        // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
+        sh '''
+                rm -rf /tmp/ktlint
+                rm -rf /tmp/detekt
+                mkdir /tmp/ktlint
+                mkdir /tmp/detekt
+                rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
+                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
+                rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
+                rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
+                rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
+                rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
+                rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
+                rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''
-        } finally {
-            // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
-            // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
-            // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
-            sh '''
-                    rm -rf /tmp/ktlint
-                    rm -rf /tmp/detekt
-                    mkdir /tmp/ktlint
-                    mkdir /tmp/detekt
-                    rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
-                    rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
-                    rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
-                    rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
-                    rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
-                    rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
-                    rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
-                    rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
-                    rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
-                    rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
-                    rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
-                    rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
-                '''
-            zip([
-                    'zipFile': 'ktlint.zip',
-                    'archive': true,
-                    'dir'    : '/tmp/ktlint'
-            ])
-            zip([
-                    'zipFile': 'detekt.zip',
-                    'archive': true,
-                    'dir'    : '/tmp/detekt'
-            ])
-        }
+        zip([
+                'zipFile': 'ktlint.zip',
+                'archive': true,
+                'dir'    : '/tmp/ktlint'
+        ])
+        zip([
+                'zipFile': 'detekt.zip',
+                'archive': true,
+                'dir'    : '/tmp/detekt'
+        ])
     }
 }
 
 def runPublishSnapshotToMavenCentral() {
-    node(osx_kotlin) {
-        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
-                sh """
-                cd packages
-                ./gradlew publishToSonatype -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_PASSWORD --no-daemon
-                """
-            }
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
+            sh """
+            cd packages
+            ./gradlew publishToSonatype -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_PASSWORD --no-daemon
+            """
         }
     }
 }
 
 def  runPublishReleaseOnMavenCentral() {
-    node(osx_kotlin) {
-        withCredentials([
-                [$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL_CI'],
-                [$class: 'StringBinding', credentialsId: 'slack-webhook-releases-channel', variable: 'SLACK_URL_RELEASE'],
-                [$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER'],
-                [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'DOCS_S3_ACCESS_KEY', credentialsId: 'mongodb-realm-docs-s3', secretKeyVariable: 'DOCS_S3_SECRET_KEY'],
-                [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'REALM_S3_ACCESS_KEY', credentialsId: 'realm-s3', secretKeyVariable: 'REALM_S3_SECRET_KEY']
-        ]) {
-          sh """
-            set +x
-            sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
-            '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
-            '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
-            '$SLACK_URL_RELEASE' \
-            '$SLACK_URL_CI'
-          """
-        }
+    withCredentials([
+            [$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL_CI'],
+            [$class: 'StringBinding', credentialsId: 'slack-webhook-releases-channel', variable: 'SLACK_URL_RELEASE'],
+            [$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER'],
+            [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'DOCS_S3_ACCESS_KEY', credentialsId: 'mongodb-realm-docs-s3', secretKeyVariable: 'DOCS_S3_SECRET_KEY'],
+            [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'REALM_S3_ACCESS_KEY', credentialsId: 'realm-s3', secretKeyVariable: 'REALM_S3_SECRET_KEY']
+    ]) {
+      sh """
+        set +x
+        sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
+        '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
+        '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
+        '$SLACK_URL_RELEASE' \
+        '$SLACK_URL_CI'
+      """
     }
 }
 
 def runCompilerPluginTest() {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-        node(osx_kotlin) {
-            sh """
-                cd packages
-                ./gradlew --no-daemon clean :plugin-compiler:test --info --stacktrace
-            """
-            step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
-        }
+        sh """
+            cd packages
+            ./gradlew --no-daemon clean :plugin-compiler:test --info --stacktrace
+        """
+        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
 }
 
 
 def test(task) {
-    node(osx_kotlin) {
-        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            sh """
-                cd test
-                ./gradlew $task --info --stacktrace --no-daemon
-            """
-            step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
-        }
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        sh """
+            cd test
+            ./gradlew $task --info --stacktrace --no-daemon
+        """
+        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
     }
 }
 
 def runMonkey() {
-    node(osx_kotlin) {
-        try {
-            withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-                sh """
-                    cd examples/kmm-sample
-                    ./gradlew uninstallAll installDebug --stacktrace --no-daemon
-                    $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
-                """
-            }
-        } catch (err) {
-            currentBuild.result = 'FAILURE'
-            currentBuild.stageResult = 'FAILURE'
+    try {
+        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+            sh """
+                cd examples/kmm-sample
+                ./gradlew uninstallAll installDebug --stacktrace --no-daemon
+                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
+            """
         }
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        currentBuild.stageResult = 'FAILURE'
     }
 }
 
