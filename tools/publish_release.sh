@@ -76,7 +76,7 @@ check_env() {
 verify_release_preconditions() {
   echo "Checking release branch..."
   gitTag=`git describe --tags | tr -d '[:space:]'`
-  version=`cat $REALM_KOTLIN_PATH/version.txt | tr -d '[:space:]'`
+  version=`grep version buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2`
 
   if [ "v$version" = "$gitTag" ]
   then
