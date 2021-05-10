@@ -25,7 +25,18 @@ import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
-class Writer(configuration: RealmConfiguration, val dispatcher: CoroutineDispatcher) {
+/**
+ * A _suspendable writer_ to handle all asynchronous updates to a Realm through a suspendable API.
+ *
+ * NOTE:
+ * - The _writer_ is initialized with a dispatcher that MUST only be backed by a single thread.
+ * - All operations accessing the writer's realm MUST be done in the context of the dispatcher or
+ *   it's thread.
+ *
+ * @param configuration
+ * @param dispatcher The dispatcher on which to execute all the writers operations on.
+ */
+class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: CoroutineDispatcher) {
     private val realm: MutableRealm by lazy {
             MutableRealm(configuration)
     }
@@ -62,7 +73,7 @@ class Writer(configuration: RealmConfiguration, val dispatcher: CoroutineDispatc
 
     private fun <R> freezeWriteReturnValue(result: R, frozenDbPointer: NativePointer): R {
         return when(result) {
-//            is RealmResults<*> -> result.freeze(this) as R
+            // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 val obj: RealmObjectInternal = (result as RealmObjectInternal)
                 obj.freeze<RealmObject>(realm.dbPointer, frozenDbPointer) as R
@@ -74,7 +85,7 @@ class Writer(configuration: RealmConfiguration, val dispatcher: CoroutineDispatc
     private fun <R> shouldFreezeWriteReturnValue(result: R): Boolean {
         // How to test for managed results?
         return when(result) {
-//            is RealmResults<*> -> return result.owner != null
+            // is RealmResults<*> -> return result.owner != null
             is RealmObject -> return result is RealmObjectInternal
             else -> false
         }

@@ -15,11 +15,10 @@
  */
 package io.realm
 
-import io.realm.internal.Writer
+import io.realm.internal.SuspendableWriter
 import io.realm.internal.util.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -27,7 +26,7 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    private val writer: Writer = Writer(configuration, configuration.writeDispatcher())
+    private val writer: SuspendableWriter = SuspendableWriter(configuration, configuration.writeDispatcher())
     private val realmPointerMutex = Mutex()
 
     companion object {
@@ -67,7 +66,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm
-     * dispathcer.
+     * dispatcher.
+     *
+     * NOTE: Objects and results retrieved before a write are no longer valid. This restriction
+     * will be lifted when the frozen architecture is fully in place.
      *
      * The write transaction always represent the latest version of data in the Realm file, even if
      * the calling Realm not yet represent this.
@@ -76,10 +78,15 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * [MutableRealm.cancelWrite] was called.
      *
      * @param block function that should be run within the context of a write transaction.
+     * FIXME Isn't this impossible to achieve in a way where we can guarantee that we freeze all
+     *  objects leaving the transaction? It currently works for RealmObjects, and can maybe be done
+     *  for collections and RealmResults, but what it is bundled in other containers, etc. Should
+     *  we define an interface of _returnable_ objects that follows some convention?
      * @return any value returned from the provided write block as frozen/immutable objects.
+     * @see [RealmConfiguration.writeDispatcher]
      */
     // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptinoHandler
-    suspend fun <R> write(block: MutableRealm.() -> R): R {
+    internal suspend fun <R> write(block: MutableRealm.() -> R): R {
         try {
             val (nativePointer, versionId, result) = this.writer.write(block)
             // Update the user facing Realm before returning the result.
@@ -150,7 +157,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     public override fun close() {
         super.close()
-        runBlocking {
+        // TODO There is currently nothing that tears down the dispatcher
+        runBlocking() {
             writer.close()
         }
     }

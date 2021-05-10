@@ -211,11 +211,20 @@ public class RealmConfiguration private constructor(
         }
     }
 
+    /**
+     * Write dispatcher for background writes.
+     *
+     * Current implementation differs on platforms:
+     * - *_Android_* Set's up a background looper thread and executes tasks through it's associated
+     *   handler.
+     * - *_iOS_* Initializes a run loop on the current thread (currently called when the Realm is
+     *   opened) and executes tasks on that.
+     */
     // FIXME
     //  - Where should the injection point of the dispatcher be? Could be in the configuration,
-    //  but might be beneficial to postpone until actually opening the realm. Also not sure howto
-    //  enforce that it has to be backed by a single thread.
+    //  but might be beneficial to postpone until actually opening the realm.
+    //  - Don't know how to enforce that it has to be backed by a single thread
     //  - What is the granularity of this: One per Realm, Configuration or underlying shared realm?
-    fun writeDispatcher(): CoroutineDispatcher = io.realm.internal.defaultWriteDispatcher()
+    internal fun writeDispatcher(): CoroutineDispatcher = io.realm.internal.defaultWriteDispatcher()
 
 }

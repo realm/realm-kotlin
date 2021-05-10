@@ -76,22 +76,6 @@ class RealmTests {
     }
 
     @Test
-    fun resultIsLiveAfterWrite() = runBlocking {
-        val name = "Realm"
-
-        val objects = realm.objects<Child>()
-
-        val child: Child = realm.write {
-            this.copyToRealm(Child()).apply { this.name = name }
-        }
-        assertEquals(name, child.name)
-
-        assertEquals(1, objects.size)
-        val childFromResult = objects[0]
-        assertEquals(name, childFromResult.name)
-    }
-
-    @Test
     fun writeBlockingAfterWrite() = runBlocking {
         val name = "Realm"
         val child: Child = realm.write {
@@ -106,20 +90,6 @@ class RealmTests {
         Unit
     }
 
-    @Test
-    fun leakingLiveObject() = runBlocking {
-        val name = "Realm"
-        val updatedName = "update"
-
-        realm.write {
-            val child = this.copyToRealm(Child()).apply { this.name = name }
-        }
-        val child = realm.objects<Child>()[0]
-        realm.write {
-            val child = this.copyToRealm(Child()).apply { this.name = name }
-        }
-        assertEquals(updatedName, child?.name)
-    }
 
     @Test
     fun initialVersion() {
