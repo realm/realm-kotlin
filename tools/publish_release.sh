@@ -103,8 +103,8 @@ verify_changelog() {
 
 create_javadoc() {
   echo "Creating JavaDoc/KDoc..."
-  cd $REALM_KOTLIN_PATH
-  ./gradlew javadoc
+  cd $REALM_KOTLIN_PATH/packages
+  ./gradlew dokkaHtml
   cd $HERE
 }
 
