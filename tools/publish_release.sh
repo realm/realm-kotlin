@@ -25,7 +25,7 @@ Usage: $0 verify
 EOF
 }
 
-if [ "$#" -ne 8 ] && [ "$1" != "verify" ]; then
+if [ "$#" -ne 9 ] && [ "$1" != "verify" ]; then
   usage
   exit 1
 fi
@@ -45,6 +45,7 @@ DOCS_S3_ACCESS_KEY="$5"
 DOCS_S3_SECRET_KEY="$6"
 SLACK_WEBHOOK_RELEASES_URL="$7"
 SLACK_WEBHOOK_JAVA_CI_URL="$8"
+GRADLE_BUILD_PARAMS="$9"
 
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
@@ -111,7 +112,7 @@ create_javadoc() {
 upload_to_mavenCentral() {
   echo "Releasing on MavenCentral"
   cd $REALM_KOTLIN_PATH/packages
-  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY
+  eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
   cd $HERE
 }
 

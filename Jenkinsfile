@@ -225,6 +225,8 @@ def runPublishSnapshotToMavenCentral() {
 
 def  runPublishReleaseOnMavenCentral() {
     withCredentials([
+            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
+            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
             [$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL_CI'],
             [$class: 'StringBinding', credentialsId: 'slack-webhook-releases-channel', variable: 'SLACK_URL_RELEASE'],
             [$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER'],
@@ -236,8 +238,8 @@ def  runPublishReleaseOnMavenCentral() {
         sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
         '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
         '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
-        '$SLACK_URL_RELEASE' \
-        '$SLACK_URL_CI'
+        '$SLACK_URL_RELEASE' '$SLACK_URL_CI' \
+        '-PsignBuild=true -PsignSecretRingFileKotlin="${env.SIGN_KEY}" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}'
       """
     }
 }
