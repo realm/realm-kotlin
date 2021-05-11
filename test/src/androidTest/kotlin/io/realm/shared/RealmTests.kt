@@ -63,6 +63,7 @@ class RealmTests {
         assertEquals("John", managedChild.name)
     }
 
+    @Suppress("invisible_member")
     @Test
     fun write() = runBlocking {
         val name = "Realm"
@@ -75,6 +76,7 @@ class RealmTests {
         assertEquals(name, childFromResult.name)
     }
 
+    @Suppress("invisible_member")
     @Test
     fun writeBlockingAfterWrite() = runBlocking {
         val name = "Realm"
