@@ -36,8 +36,6 @@ fun getPropertyValue(propertyName: String, throwIfNotFound: Boolean = false): St
     return value ?: ""
 }
 
-
-
 // Cache dir for build artifacts that should be stored on S3
 val releaseMetaDataDir = File("${buildDir}/outputs/s3")
 releaseMetaDataDir.mkdirs()
@@ -119,13 +117,13 @@ tasks {
     val archiveDebugSymbols by register("archiveDebugSymbols", Zip::class) {
         archiveName = "realm-kotlin-jni-libs-unstripped-${currentVersion}.zip"
         destinationDir = releaseMetaDataDir
-        from("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/releases/out/lib") {
+        from("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/release/out/lib") {
             include("**/*.so")
         }
         doLast {
             // Failsafe check, ensuring that we catch if the path ever changes, which it might since it is an
             // implementation detail of the Android Gradle Plugin
-            val unstrippedDir = File("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/releases/out/lib")
+            val unstrippedDir = File("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/release/out/lib")
             if (!unstrippedDir.exists() || !unstrippedDir.isDirectory || unstrippedDir.listFiles().isEmpty()) {
                 throw GradleException("Could not locate unstripped binary files in: ${unstrippedDir.path}")
             }
@@ -165,12 +163,13 @@ tasks {
         dependsOn.add(verifyS3Access)
         val s3AccessKey = getPropertyValue("REALM_S3_ACCESS_KEY")
         val s3SecretKey = getPropertyValue("REALM_S3_SECRET_KEY")
+        File("$buildDir/outputs/s3", "version.txt").writeText(currentVersion)
         commandLine = listOf(
                 "s3cmd",
                 "--access_key=${s3AccessKey}",
                 "--secret_key=${s3SecretKey}",
                 "put",
-                "${rootDir}/outputs/s3/version.txt",
+                "${buildDir}/outputs/s3/version.txt",
                 "s3://static.realm.io/update/kotlin")
     }
 
