@@ -111,7 +111,7 @@ tasks {
         description = "Push all Realm artifacts to Maven Central"
         group = "Publishing"
         buildFile = file("${rootDir}/packages/build.gradle.kts")
-        tasks = listOf("publishAllPublicationsToMavenCentralRepository")
+        tasks = listOf("publishToSonatype")
         copyProperties(this)
     }
 

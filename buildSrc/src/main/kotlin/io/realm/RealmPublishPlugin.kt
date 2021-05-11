@@ -73,6 +73,19 @@ class RealmPublishPlugin : Plugin<Project> {
     }
 
     private fun configureSignedBuild(signBuild: Boolean, project: Project) {
+        // The nexus publisher plugin can only be applied to top-level projects.
+        // See https://github.com/gradle-nexus/publish-plugin/issues/81
+        // Also, we should not apply the MavenPublish plugin to the root project as it will result in an
+        // realm-kotlin artifact being deployed to Maven Central.
+        val isRootProject: Boolean = (project == project.rootProject)
+        if (isRootProject) {
+            configureRootProject(project)
+        } else {
+            configureSubProject(project, signBuild)
+        }
+    }
+
+    private fun configureSubProject(project: Project, signBuild: Boolean) {
         // ID for the Realm Kotlin PGP key file.
         val keyId = "1F48C9B0"
         // Apparently Gradle treats properties define through a gradle.properties file differently
@@ -81,21 +94,14 @@ class RealmPublishPlugin : Plugin<Project> {
         // all newlines have been replaced with `#` and thus needs to be reverted here.
         val ringFile: String = getPropertyValue(project,"signSecretRingFileKotlin").replace('#', '\n')
         val password: String = getPropertyValue(project, "signPasswordKotlin")
-        val sonatypeStagingProfileId = "78c19333e4450f"
 
-        // Apply and configure plugins required to release artifacts locally and to Maven Central
         with(project) {
-            plugins.apply(MavenPublishPlugin::class.java)
             plugins.apply(SigningPlugin::class.java)
+            plugins.apply(MavenPublishPlugin::class.java)
 
-            // The nexus publisher plugin can only be applied to top-level projects.
-            // See https://github.com/gradle-nexus/publish-plugin/issues/81
-            if (project == project.rootProject) {
-                plugins.apply(NexusPublishPlugin::class.java)
-            }
-
-            // Create the RealmPublish plugin. It must evaluate after all other plugins as it modifies their output
-            project.extensions.create<RealmPublishExtensions>("realmPublish")
+            // Create the RealmPublish plugin. It must evaluate after all other plugins as it modifies their output.
+            // Only allow configuration from sub projects as the top-level project is just a placeholder
+            extensions.create<RealmPublishExtensions>("realmPublish")
 
             afterEvaluate {
                 project.extensions.findByType<RealmPublishExtensions>()?.run {
@@ -109,19 +115,25 @@ class RealmPublishPlugin : Plugin<Project> {
                 useInMemoryPgpKeys(keyId, ringFile, password)
                 sign(project.extensions.getByType<PublishingExtension>().publications)
             }
+        }
+    }
+
+    private fun configureRootProject(project: Project) {
+        val sonatypeStagingProfileId = "78c19333e4450f"
+
+        with(project) {
+            project.plugins.apply(NexusPublishPlugin::class.java)
 
             // Configure upload to Maven Central.
             // The nexus publisher plugin can only be applied to top-level projects.
             // See https://github.com/gradle-nexus/publish-plugin/issues/81
-            if (project == project.rootProject) {
-                extensions.getByType<NexusPublishExtension>().apply {
-                    this.packageGroup.set("io.realm.kotlin")
-                    this.repositories {
-                        sonatype {
-                            this.stagingProfileId.set(sonatypeStagingProfileId)
-                            this.username.set(getPropertyValue(project,"ossrhUsername"))
-                            this.password.set(getPropertyValue(project,"ossrhPassword"))
-                        }
+            extensions.getByType<NexusPublishExtension>().apply {
+                this.packageGroup.set("io.realm.kotlin")
+                this.repositories {
+                    sonatype {
+                        this.stagingProfileId.set(sonatypeStagingProfileId)
+                        this.username.set(getPropertyValue(project,"ossrhUsername"))
+                        this.password.set(getPropertyValue(project,"ossrhPassword"))
                     }
                 }
             }

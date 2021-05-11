@@ -55,6 +55,11 @@ realmPublish {
     }
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 publishing {
     publications {
         register<MavenPublication>(mavenPublicationName) {

@@ -67,6 +67,11 @@ publishing {
     }
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 // Make version information available at runtime
 val versionDirectory = "$buildDir/generated/source/version/"
 sourceSets {
