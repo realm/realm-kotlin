@@ -16,7 +16,7 @@
  */
 
 object Realm {
-    const val version = "0.0.1-SNAPSHOT"
+    const val version = "0.2.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val plugin = "realm-kotlin"
@@ -41,6 +41,12 @@ object Realm {
         const val connection = "scm:git:git://github.com/realm/realm-kotlin.git"
         const val developerConnection = "scm:git:ssh://github.com/realm/realm-kotlin.git"
         const val url = "https://github.com/realm/realm-kotlin"
+    }
+    object Developer {
+        const val name = "Realm"
+        const val email = "info@realm.io"
+        const val organization = "MongoDB"
+        const val organizationUrl = "https://www.mongodb.com"
     }
 }
 
@@ -67,6 +73,7 @@ object Versions {
     const val kotlinCompileTesting = "1.2.6" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "9.4.1" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.39.0" // https://github.com/pinterest/ktlint
+    const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val shadowJar =  "5.2.0"
 }
 

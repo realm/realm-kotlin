@@ -18,28 +18,28 @@
 package io.realm
 
 import Realm
+import io.github.gradlenexus.publishplugin.NexusPublishExtension
+import io.github.gradlenexus.publishplugin.NexusPublishPlugin
 import org.gradle.api.Action
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
-import java.net.URL
+import org.gradle.plugins.signing.SigningExtension
+import org.gradle.plugins.signing.SigningPlugin
+import java.net.URI
 
 // Custom options for POM configurations that might differ between Realm modules
 open class PomOptions {
-    open var isEnabled: Boolean = true
     open var name: String = ""
-    open var description = ""
-}
-
-// Custom options for Artifactory configurations that might differ between Realm modules
-open class ArtifactoryOptions {
-    open var isEnabled: Boolean = true
+    open var description: String = ""
 }
 
 // Configure how the Realm module is published
@@ -48,27 +48,93 @@ open class RealmPublishExtensions {
     open fun pom(action: Action<PomOptions>) {
         action.execute(pom)
     }
-
-    // The artifactory plugin does some weird things with the `artifactory` keyword, so it seems
-    // reservered somehow.
-    open var ojo: ArtifactoryOptions = ArtifactoryOptions()
-    open fun ojo(action: Action<ArtifactoryOptions>) {
-        action.execute(ojo)
-    }
 }
 
-// Plugin responsible for handling publishing to mavenLocal, OJO and Bintray.
+fun getPropertyValue(project: Project, propertyName: String, defaultValue: String = ""): String {
+    if (project.hasProperty(propertyName)) {
+        return project.property(propertyName) as String
+    }
+    val systemValue: String? = System.getenv(propertyName)
+    return systemValue ?: defaultValue
+}
+
+fun hasProperty(project: Project, propertyName: String): Boolean {
+    val systemProp: String? = System.getenv(propertyName)
+    val projectProp: Boolean = project.hasProperty(propertyName)
+    return projectProp || (systemProp != null && systemProp.isNotEmpty())
+}
+
+// Plugin responsible for handling publishing to mavenLocal and Maven Central.
 class RealmPublishPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = project.run {
-        plugins.apply(MavenPublishPlugin::class.java)
-        extensions.create<RealmPublishExtensions>("realmPublish")
-        afterEvaluate {
-            project.extensions.findByType<RealmPublishExtensions>()?.run {
-                if (pom.isEnabled) {
+        // Configure constants required by the publishing process
+        val signBuild: Boolean = hasProperty(project,"signBuild")
+        configureSignedBuild(signBuild, this)
+    }
+
+    private fun configureSignedBuild(signBuild: Boolean, project: Project) {
+        // The nexus publisher plugin can only be applied to top-level projects.
+        // See https://github.com/gradle-nexus/publish-plugin/issues/81
+        // Also, we should not apply the MavenPublish plugin to the root project as it will result in an
+        // realm-kotlin artifact being deployed to Maven Central.
+        val isRootProject: Boolean = (project == project.rootProject)
+        if (isRootProject) {
+            configureRootProject(project)
+        } else {
+            configureSubProject(project, signBuild)
+        }
+    }
+
+    private fun configureSubProject(project: Project, signBuild: Boolean) {
+        // ID for the Realm Kotlin PGP key file.
+        val keyId = "1F48C9B0"
+        // Apparently Gradle treats properties define through a gradle.properties file differently
+        // than those defined through the commandline using `-P`. This is a problem with new
+        // line characters as found in an ascii-armoured PGP file. To ensure we can work around this,
+        // all newlines have been replaced with `#` and thus needs to be reverted here.
+        val ringFile: String = getPropertyValue(project,"signSecretRingFileKotlin").replace('#', '\n')
+        val password: String = getPropertyValue(project, "signPasswordKotlin")
+
+        with(project) {
+            plugins.apply(SigningPlugin::class.java)
+            plugins.apply(MavenPublishPlugin::class.java)
+
+            // Create the RealmPublish plugin. It must evaluate after all other plugins as it modifies their output.
+            // Only allow configuration from sub projects as the top-level project is just a placeholder
+            extensions.create<RealmPublishExtensions>("realmPublish")
+
+            afterEvaluate {
+                project.extensions.findByType<RealmPublishExtensions>()?.run {
                     configurePom(project, pom)
                 }
-                if (ojo.isEnabled) {
-                    configureArtifactory(project, ojo)
+            }
+
+            // Configure signing of artifacts
+            extensions.getByType<SigningExtension>().apply {
+                isRequired = signBuild
+                useInMemoryPgpKeys(keyId, ringFile, password)
+                sign(project.extensions.getByType<PublishingExtension>().publications)
+            }
+        }
+    }
+
+    private fun configureRootProject(project: Project) {
+        val sonatypeStagingProfileId = "78c19333e4450f"
+
+        with(project) {
+            project.plugins.apply(NexusPublishPlugin::class.java)
+
+            // Configure upload to Maven Central.
+            // The nexus publisher plugin can only be applied to top-level projects.
+            // See https://github.com/gradle-nexus/publish-plugin/issues/81
+            extensions.getByType<NexusPublishExtension>().apply {
+                this.packageGroup.set("io.realm.kotlin")
+                this.repositories {
+                    sonatype {
+                        this.stagingProfileId.set(sonatypeStagingProfileId)
+                        this.username.set(getPropertyValue(project,"ossrhUsername"))
+                        this.password.set(getPropertyValue(project,"ossrhPassword"))
+                    }
                 }
             }
         }
@@ -78,16 +144,8 @@ class RealmPublishPlugin : Plugin<Project> {
         project.extensions.getByType<PublishingExtension>().apply {
             publications.withType<MavenPublication>().all {
                 pom {
-                    if (options.name.isNotEmpty()) {
-                        name.set("C Interop")
-                    }
-                    if (options.description.isNotEmpty()) {
-                        description.set(
-                                "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
-                                        "supposed to be consumed directly, but through " +
-                                        "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
-                        )
-                    }
+                    name.set(options.name)
+                    description.set(options.description)
                     url.set(Realm.projectUrl)
                     licenses {
                         license {
@@ -104,19 +162,16 @@ class RealmPublishPlugin : Plugin<Project> {
                         developerConnection.set(Realm.SCM.developerConnection)
                         url.set(Realm.SCM.url)
                     }
-                }
-            }
-        }
-    }
-
-    private fun configureArtifactory(project: Project, options: ArtifactoryOptions) {
-        project.extensions.getByType<PublishingExtension>().apply {
-            repositories.maven {
-                name = "ojo"
-                url = URL("https://oss.jfrog.org/artifactory/oss-snapshot-local").toURI()
-                credentials {
-                    username = if (System.getProperties().containsKey("bintrayUser")) System.getProperty("bintrayUser") else "noUser"
-                    password = if (System.getProperties().containsKey("bintrayKey")) System.getProperty("bintrayKey") else "noKey"
+                    developers {
+                        developers {
+                            developer {
+                                name.set(Realm.Developer.name)
+                                email.set(Realm.Developer.email)
+                                organization.set(Realm.Developer.organization)
+                                organizationUrl.set(Realm.Developer.organizationUrl)
+                            }
+                        }
+                    }
                 }
             }
         }

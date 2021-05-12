@@ -53,7 +53,6 @@ realmPublish {
         name = "Gradle Plugin"
         description = "Gradle plugin for Realm Kotlin. Realm is a mobile database: Build better apps faster."
     }
-    ojo { }
 }
 
 publishing {
@@ -66,6 +65,11 @@ publishing {
             }
         }
     }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 // Make version information available at runtime
