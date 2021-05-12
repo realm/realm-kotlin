@@ -133,8 +133,8 @@ upload_javadoc() {
 notify_slack_channels() {
   echo "Notifying Slack channels..."
 
-  # Read first . Link is the value with ".",")","(" and space removed.
-  command="grep '$RELEASE_VERSION' $REALM_KOTLIN_PATH/CHANGELOG.md | cut -c 4- | sed -e 's/[.)(]//g' | sed -e 's/ /-/g'"
+  # Read entry with release version. Link is the value with ".",")","(" and space removed.
+  command="grep '## $RELEASE_VERSION' $REALM_KOTLIN_PATH/CHANGELOG.md | cut -c 4- | sed -e 's/[.)(]//g' | sed -e 's/ /-/g'"
   tag=`eval $command`
   if [ -z "$tag" ]
   then
