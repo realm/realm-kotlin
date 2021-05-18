@@ -24,10 +24,7 @@ buildscript {
 // Find property in either System environment or Gradle properties.
 // If set in both places, Gradle properties win.
 fun getPropertyValue(propertyName: String, throwIfNotFound: Boolean = false): String {
-    var value: String? = System.getenv(propertyName)
-    if (project.hasProperty(propertyName)) {
-        value = project.properties[propertyName] as String?
-    }
+    val value: String? = (project.findProperty(propertyName) ?: System.getenv(propertyName)) as String?
     if (throwIfNotFound && (value == null || value.trim().isEmpty())) {
         throw GradleException("Could not find '$propertyName'. " +
                 "Most be provided as either environment variable or " +
