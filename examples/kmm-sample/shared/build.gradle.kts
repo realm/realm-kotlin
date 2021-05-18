@@ -25,7 +25,7 @@ plugins {
     // TODO Publish marker artifact to OJO to allow applying plugin by id
     //  https://github.com/realm/realm-kotlin/issues/100
     // Apply Realm Kotlin plugin
-    // id("realm-kotlin") version Realm.version
+    // id("io.realm.kotlin") version Realm.version
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
