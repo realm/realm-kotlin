@@ -51,7 +51,7 @@ gradlePlugin {
             id = Realm.pluginPortalId
             displayName = "Realm Kotlin Plugin"
             description = "Gradle plugin for the Realm Kotlin SDK, supporting Android and Multiplatform. " +
-                    "Realm is a mobile database: Build better apps faster."
+                "Realm is a mobile database: Build better apps faster."
             implementationClass = "io.realm.gradle.RealmPlugin"
         }
         isAutomatedPublishing = createMarkerArtifact()

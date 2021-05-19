@@ -22,7 +22,7 @@ plugins {
     id("kotlin-android-extensions")
     // Apply Realm Kotlin plugin even though we technically do not need it, to ensure that we have
     // the right kotlinOptions
-     id("io.realm.kotlin") version Realm.version
+    id("io.realm.kotlin") version Realm.version
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
