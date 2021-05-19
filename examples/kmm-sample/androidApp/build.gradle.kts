@@ -35,6 +35,8 @@ dependencies {
     implementation("com.google.android.material:material:1.2.0")
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("androidx.constraintlayout:constraintlayout:1.1.3")
+    // TODO AUTO-SETUP
+    compileOnly("io.realm.kotlin:library:${Realm.version}")
 }
 
 android {
