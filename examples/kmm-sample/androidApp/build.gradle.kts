@@ -20,44 +20,23 @@ plugins {
     id("com.android.application")
     kotlin("android")
     id("kotlin-android-extensions")
-    // TODO Publish marker artifact to OJO to allow applying plugin by id
-    //  https://github.com/realm/realm-kotlin/issues/100
     // Apply Realm Kotlin plugin even though we technically do not need it, to ensure that we have
     // the right kotlinOptions
-    // id("realm-kotlin") version Realm.version
+     id("io.realm.kotlin") version Realm.version
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
-// TODO Publish marker artifact to OJO to allow applying plugin by id instead of this
-//  https://github.com/realm/realm-kotlin/issues/100
-buildscript {
-    repositories {
-        maven(url = "http://oss.jfrog.org/artifactory/oss-snapshot-local")
-    }
-    dependencies {
-        classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
-    }
-}
-apply(plugin = "realm-kotlin")
 
 group = "io.realm.example"
 version = Realm.version
 
-repositories {
-    gradlePluginPortal()
-    google()
-    jcenter()
-    mavenCentral()
-    maven(url = "http://oss.jfrog.org/artifactory/oss-snapshot-local")
-}
 dependencies {
     implementation(project(":shared"))
     implementation("com.google.android.material:material:1.2.0")
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("androidx.constraintlayout:constraintlayout:1.1.3")
-    // TODO AUTO-SETUP
-    compileOnly("io.realm.kotlin:library:${Realm.version}")
 }
+
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     defaultConfig {
