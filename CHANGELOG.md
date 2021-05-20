@@ -1,3 +1,18 @@
+## 0.2.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* The Realm Kotlin Gradle plugin has changed name from `realm-kotlin` to `io.realm.kotlin`.
+
+### Enhancements
+* The Realm Kotlin Gradle plugin is now available on Gradle Plugin Portal and can be used with the Plugin DSL and `gradlePluginPortal()` as the buildscript repository. A minimal setup of using this approach can be found [here](https://plugins.gradle.org/plugin/io.realm.kotlin).
+
+### Fixed
+* None.
+
+### Internal
+* None.
+
+
 ## 0.1.0 (2021-05-07)
 
 This is the first public Alpha release of the Realm Kotlin SDK for Android and Kotlin Multiplatform.
