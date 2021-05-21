@@ -30,29 +30,70 @@ import kotlin.reflect.KClass
 //  - Lazy API makes it harded to debug
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
-class RealmResults<T : RealmObject> constructor(
-    private val realmConfiguration: RealmConfiguration,
-    private val realm: NativePointer,
-    private val queryPointer: () -> NativePointer,
-    private val clazz: KClass<T>,
-    private val mediator: Mediator
-) : AbstractList<T>(), Queryable<T> {
+class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
+
+    private val mode: Mode
+    private val owner: BaseRealm
+    private val realm: NativePointer // Store explicit reference to pointer because the owner Realm might replace it.
+    private val clazz: KClass<T>
+    private val schema: Mediator
+    private val query: NativePointer
+    private val result: NativePointer
+
+    private enum class Mode {
+        // FIXME: Needed to make working with @LinkingObjects easier.
+        EMPTY, // RealmResults that is always empty.
+        QUERY, // RealmResults created from a query
+        RESULTS // RealmResults wrapping a Realm Core Results.
+    }
+
+    // Create Results from query
+    private constructor(realm: BaseRealm, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator) {
+        this.mode = Mode.QUERY
+        this.owner = realm
+        this.realm = realm.dbPointer
+        this.query = query()
+        this.result = RealmInterop.realm_query_find_all(this.query)
+        this.clazz = clazz
+        this.schema = schema
+    }
+
+    // Wrap existing native Results class
+    private constructor(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator) {
+        this.mode = Mode.RESULTS
+        this.owner = realm
+        this.realm = realm.dbPointer
+        this.query = object: NativePointer {  }
+        this.result = results
+        this.clazz = clazz
+        this.schema = schema
+    }
+
+    internal companion object {
+        internal fun <T : RealmObject> fromQuery(realm: BaseRealm, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
+            return RealmResults(realm, query, clazz, schema)
+        }
+
+        internal fun <T : RealmObject> fromResults(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
+            return RealmResults(realm, results, clazz, schema)
+
+        }
+    }
 
     public var version: VersionId = VersionId(0)
         get() {
-            checkRealmClosed(realm, realmConfiguration)
+            checkRealmClosed(realm, owner.configuration)
             return VersionId(RealmInterop.realm_get_version_id(realm))
         }
 
-    private val query: NativePointer by lazy { queryPointer() }
-    private val result: NativePointer by lazy { RealmInterop.realm_query_find_all(query) }
     override val size: Int
         get() = RealmInterop.realm_results_count(result).toInt()
 
     override fun get(index: Int): T {
         val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
-        val model = mediator.createInstanceOf(clazz) as RealmObjectInternal
-        model.link(realm, mediator, clazz, link)
+        val model = schema.createInstanceOf(clazz) as RealmObjectInternal
+        model.link(realm, schema, clazz, link)
+        @Suppress("UNCHECKED_CAST")
         return model as T
     }
 
@@ -62,12 +103,11 @@ class RealmResults<T : RealmObject> constructor(
     //   'color = "tan" AND name BEGINSWITH "B" SORT(name DESC) LIMIT(5)'
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any): RealmResults<T> {
-        return RealmResults(
-            realmConfiguration,
-            realm,
+        return fromQuery(
+            owner,
             { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
             clazz,
-            mediator,
+            schema,
         )
     }
 
@@ -95,5 +135,24 @@ class RealmResults<T : RealmObject> constructor(
         //  available in C-API yet, but should probably await final query design
         //  https://github.com/realm/realm-kotlin/issues/84
         RealmInterop.realm_results_delete_all(result)
+    }
+
+    /**
+     * Returns a frozen copy of this query result. If it is already frozen, the same instance
+     * is returned.
+     */
+    internal fun freeze(realm: Realm): RealmResults<T> {
+        val frozenDbPointer = realm.dbPointer
+        val frozenResults = RealmInterop.realm_results_freeze(result, frozenDbPointer)
+        return fromResults(realm, frozenResults, clazz, schema)
+    }
+
+    /**
+     * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
+     */
+    internal fun thaw(realm: BaseRealm): RealmResults<T> {
+        val liveDbPointer = realm.dbPointer
+        val liveResultPtr = RealmInterop.realm_results_thaw(result, liveDbPointer)
+        return fromResults(realm, liveResultPtr, clazz, schema)
     }
 }
