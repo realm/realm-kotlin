@@ -1,7 +1,7 @@
 ## 0.2.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* The Realm Kotlin Gradle plugin has changed name from `realm-kotlin` to `io.realm.kotlin`.
+* The Realm Kotlin Gradle plugin has changed name from `realm-kotlin` to `io.realm.kotlin` to align with Gradle Plugin Portal requirements.
 
 ### Enhancements
 * The Realm Kotlin Gradle plugin is now available on Gradle Plugin Portal and can be used with the Plugin DSL and `gradlePluginPortal()` as the buildscript repository. A minimal setup of using this approach can be found [here](https://plugins.gradle.org/plugin/io.realm.kotlin).

@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        gradlePluginPortal()
         google()
         mavenCentral()
     }
@@ -14,7 +13,6 @@ version = Realm.version
 
 allprojects {
     repositories {
-        gradlePluginPortal()
         google()
         mavenCentral()
     }
