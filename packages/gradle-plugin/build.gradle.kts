@@ -42,7 +42,7 @@ fun createMarkerArtifact(): Boolean {
 pluginBundle {
     website = "https://github.com/realm/realm-kotlin"
     vcsUrl = "https://github.com/realm/realm-kotlin"
-    tags = listOf("MongoDB", "Realm", "Database", "Kotlin", "Mobile", "Multiplatform", "Android")
+    tags = listOf("MongoDB", "Realm", "Database", "Kotlin", "Mobile", "Multiplatform", "Android", "KMM")
 }
 
 gradlePlugin {
