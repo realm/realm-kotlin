@@ -15,5 +15,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        jcenter() // Required by detekt
     }
 }
