@@ -76,7 +76,7 @@ class RealmPublishPlugin : Plugin<Project> {
         // The nexus publisher plugin can only be applied to top-level projects.
         // See https://github.com/gradle-nexus/publish-plugin/issues/81
         // Also, we should not apply the MavenPublish plugin to the root project as it will result in an
-        // realm-kotlin artifact being deployed to Maven Central.
+        // empty `realm-kotlin` artifact being deployed to Maven Central.
         val isRootProject: Boolean = (project == project.rootProject)
         if (isRootProject) {
             configureRootProject(project)

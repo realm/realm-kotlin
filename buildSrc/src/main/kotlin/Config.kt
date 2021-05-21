@@ -19,8 +19,7 @@ object Realm {
     const val version = "0.2.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
-    const val plugin = "realm-kotlin"
-    const val pluginId = "$plugin"
+    const val pluginPortalId = "io.realm.kotlin"
     // Modules has to match ${project.group}:${project.name} to make composite build work
     const val compilerPluginId = "plugin-compiler"
     const val compilerPluginIdNative = "plugin-compiler-shaded"
@@ -67,6 +66,7 @@ object Versions {
     const val coroutines = "1.4.2"
     const val detektPlugin = "1.16.0" // https://github.com/detekt/detekt
     const val dokka = "1.4.20" // https://github.com/Kotlin/dokka
+    const val gradlePluginPublishPlugin = "0.14.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
     const val junit = "4.12"
     const val jvmTarget = "1.8"
     const val kotlin = "1.4.30"

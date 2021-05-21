@@ -11,11 +11,7 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
-        jcenter()
         mavenCentral()
-        // TODO Publish marker artifact to OJO to allow applying plugin by id
-        //  https://github.com/realm/realm-kotlin/issues/100
-        // maven(url = "http://oss.jfrog.org/artifactory/oss-snapshot-local")
     }
     resolutionStrategy {
         eachPlugin {

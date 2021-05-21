@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
-    id("realm-kotlin")
+    id("io.realm.kotlin")
     id("realm-lint")
 }
 
