@@ -21,8 +21,15 @@ import android.os.HandlerThread
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.android.asCoroutineDispatcher
 
-actual fun defaultWriteDispatcher(): CoroutineDispatcher {
-    val thread = HandlerThread("Realm")
+actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+    val thread = HandlerThread("RealmWriter[$id]")
     thread.start()
     return Handler(thread.looper).asCoroutineDispatcher()
 }
+
+actual fun defaultNotifierDispatcher(id: String): CoroutineDispatcher {
+    val thread = HandlerThread("RealmWriter[$id]")
+    thread.start()
+    return Handler(thread.looper).asCoroutineDispatcher()
+}
+

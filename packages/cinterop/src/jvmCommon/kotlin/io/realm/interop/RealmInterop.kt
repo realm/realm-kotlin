@@ -128,6 +128,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
     }
 
+    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+        return realmc.realm_is_frozen(realm.cptr())
+    }
+
     actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
     }
@@ -173,6 +177,10 @@ actual object RealmInterop {
         realmc.realm_rollback((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
+        return realmc.realm_is_writable(realm.cptr())
+    }
+
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
     }
@@ -186,6 +194,10 @@ actual object RealmInterop {
 
     actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
+    }
+
+    actual fun realm_object_is_valid(obj: NativePointer): Boolean {
+        return realmc.realm_object_is_valid(obj.cptr())
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
@@ -376,7 +388,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_freeze(frozenResults.cptr(), liveRealm.cptr()))
+        return LongPointerWrapper(realmc.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

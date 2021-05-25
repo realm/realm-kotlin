@@ -25,7 +25,11 @@ package io.realm.interop
 @Suppress("VariableNaming")
 interface RealmObjectInterop {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
-    var `$realm$Pointer`: NativePointer?
+
+    // FIXME Should be RealmId but requires RealmObjectInterop and RealmId to be in same module.
+    //  Remember to fix type for compiler generated field.
+    // Reference to the Realm instance and transaction that created the Object.
+    var `$realm$Owner`: Any?
     var `$realm$ObjectPointer`: NativePointer?
     var `$realm$TableName`: String?
     var `$realm$IsManaged`: Boolean

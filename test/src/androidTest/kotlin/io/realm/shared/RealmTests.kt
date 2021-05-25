@@ -15,11 +15,14 @@
  */
 package io.realm.shared
 
+import android.os.SystemClock
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.util.PlatformUtils
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import test.link.Child
 import test.link.Parent
@@ -90,6 +93,27 @@ class RealmTests {
             this.copyToRealm(Child()).apply { this.name = name }
         }
         Unit
+    }
+
+    // Verify that if multiple writes are queued up, the queue is cleared if
+    // the Realm is closed in between.
+    @Suppress("invisible_member")
+    @Test
+    fun writeClearQueueIfRealmIsClosed() = runBlocking {
+        launch {
+            realm.write {
+                val child = this.copyToRealm(Child()).apply { this.name = "Foo" }
+                realm.close()
+                child
+            }
+        }
+        launch {
+            realm.write {
+                this.copyToRealm(Child()).apply { this.name = "Bar" }
+            }
+        }
+        realm = Realm.open(realm.configuration)
+        assertEquals(0, realm.objects<Child>().size)
     }
 
     @Test

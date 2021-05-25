@@ -16,8 +16,12 @@
 package io.realm
 
 import io.realm.util.PlatformUtils
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import test.link.Child
 import test.link.Parent
+import java.util.concurrent.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -49,7 +53,7 @@ class MutableRealmTests {
     @Test
     fun cancelingWrite() {
         assertEquals(0, realm.objects(Parent::class).count())
-        realm.writeBlocking {
+        val result = realm.writeBlocking {
             copyToRealm(Parent())
             cancelWrite()
         }
@@ -60,7 +64,6 @@ class MutableRealmTests {
     fun cancellingWriteTwiceThrows() {
         realm.writeBlocking {
             cancelWrite()
-            // FIXME Should be IllegalStateException
             assertFailsWith<RuntimeException> {
                 cancelWrite()
             }
@@ -68,10 +71,14 @@ class MutableRealmTests {
     }
 
     @Test
-    fun closingRealmInsideWriteCancelsWrite() {
-        realm.writeBlocking {
-            copyToRealm(Parent())
-            realm.close()
+    fun closingRealmInsideWriteThrows() {
+        try {
+            realm.writeBlocking {
+                copyToRealm(Parent())
+                realm.close()
+            }
+        } catch (ex: CancellationException) {
+            assertTrue(ex.message) { ex.message!!.contains("Closing Realm while it is being used") }
         }
         assertTrue(realm.isClosed())
         realm = Realm.open(configuration)

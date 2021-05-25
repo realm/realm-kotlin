@@ -15,15 +15,16 @@
  */
 package io.realm
 
+import io.realm.internal.RealmId
 import io.realm.internal.RealmLog
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
  * Base class for all Realm instances.
  */
-@Suppress("UnnecessaryAbstractClass")
 public abstract class BaseRealm internal constructor(
     /**
      * Configuration used to configure this Realm instance.
@@ -53,7 +54,7 @@ public abstract class BaseRealm internal constructor(
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         checkClosed()
         return RealmResults.fromQuery(
-            this,
+            this.getSnapshotId(),
             { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
             configuration.mediator
@@ -90,6 +91,32 @@ public abstract class BaseRealm internal constructor(
             throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
         }
     }
+
+    /**
+     * Returns an ID identifying the Realm at this point in time.
+     */
+    internal fun getSnapshotId(): RealmId {
+        return RealmId(this, dbPointer)
+    }
+
+    internal abstract fun <T: RealmObject> addResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable
+
+    internal abstract fun <T: RealmObject> addListChangeListener(
+        list: List<T>,
+        callback: Callback<List<T>>
+    ): Cancellable
+
+    internal abstract fun <T: RealmObject> addObjectChangeListener(
+        obj: T,
+        callback: Callback<T?>
+    ): Cancellable
+
+    internal abstract fun <T: RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>>
+    internal abstract fun <T: RealmObject> observeList(list: List<T>): Flow<List<T>>
+    internal abstract fun <T: RealmObject> observeObject(obj: T): Flow<T>
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {

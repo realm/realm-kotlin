@@ -266,6 +266,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
     }
 
+    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_frozen(realm.cptr<realm_t>())
+    }
+
     actual fun realm_close(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
     }
@@ -302,6 +306,10 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_rollback(realm.cptr()))
     }
 
+    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_writable(realm.cptr())
+    }
+
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         memScoped {
             val found = alloc<BooleanVar>()
@@ -336,6 +344,10 @@ actual object RealmInterop {
 
     actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
+    }
+
+    actual fun realm_object_is_valid(obj: NativePointer): Boolean {
+        return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {

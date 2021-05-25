@@ -17,13 +17,13 @@
 package io.realm
 
 import io.realm.internal.Mediator
-import io.realm.internal.NotificationToken
+import io.realm.internal.RealmId
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.checkRealmClosed
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 // FIXME API-QUERY Final query design is tracked in https://github.com/realm/realm-kotlin/issues/84
@@ -33,12 +33,11 @@ import kotlin.reflect.KClass
 class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
 
     private val mode: Mode
-    private val owner: BaseRealm
-    private val realm: NativePointer // Store explicit reference to pointer because the owner Realm might replace it.
+    private val owner: RealmId
     private val clazz: KClass<T>
     private val schema: Mediator
     private val query: NativePointer
-    private val result: NativePointer
+    internal val resultsNativePointer: NativePointer
 
     private enum class Mode {
         // FIXME: Needed to make working with @LinkingObjects easier.
@@ -48,33 +47,31 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     }
 
     // Create Results from query
-    private constructor(realm: BaseRealm, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator) {
+    private constructor(realm: RealmId, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator) {
         this.mode = Mode.QUERY
         this.owner = realm
-        this.realm = realm.dbPointer
         this.query = query()
-        this.result = RealmInterop.realm_query_find_all(this.query)
+        this.resultsNativePointer = RealmInterop.realm_query_find_all(this.query)
         this.clazz = clazz
         this.schema = schema
     }
 
     // Wrap existing native Results class
-    private constructor(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator) {
+    private constructor(realm: RealmId, results: NativePointer, clazz: KClass<T>, schema: Mediator) {
         this.mode = Mode.RESULTS
         this.owner = realm
-        this.realm = realm.dbPointer
         this.query = object: NativePointer {  }
-        this.result = results
+        this.resultsNativePointer = results
         this.clazz = clazz
         this.schema = schema
     }
 
     internal companion object {
-        internal fun <T : RealmObject> fromQuery(realm: BaseRealm, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
+        internal fun <T : RealmObject> fromQuery(realm: RealmId, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
             return RealmResults(realm, query, clazz, schema)
         }
 
-        internal fun <T : RealmObject> fromResults(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
+        internal fun <T : RealmObject> fromResults(realm: RealmId, results: NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
             return RealmResults(realm, results, clazz, schema)
 
         }
@@ -82,17 +79,21 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
 
     public var version: VersionId = VersionId(0)
         get() {
-            checkRealmClosed(realm, owner.configuration)
-            return VersionId(RealmInterop.realm_get_version_id(realm))
+            checkClosed()
+            return VersionId(RealmInterop.realm_get_version_id(owner.dbPointer))
         }
 
     override val size: Int
-        get() = RealmInterop.realm_results_count(result).toInt()
+        get() {
+            checkClosed()
+            return RealmInterop.realm_results_count(resultsNativePointer).toInt()
+        }
 
     override fun get(index: Int): T {
-        val link: Link = RealmInterop.realm_results_get<T>(result, index.toLong())
-        val model = schema.createInstanceOf(clazz) as RealmObjectInternal
-        model.link(realm, schema, clazz, link)
+        checkClosed()
+        val link: Link = RealmInterop.realm_results_get<T>(resultsNativePointer, index.toLong())
+        val model = schema.createInstanceOf(clazz)
+        model.link(owner, schema, clazz, link)
         @Suppress("UNCHECKED_CAST")
         return model as T
     }
@@ -105,54 +106,69 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return fromQuery(
             owner,
-            { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
+            { RealmInterop.realm_query_parse(resultsNativePointer, clazz.simpleName!!, query, *args) },
             clazz,
             schema,
         )
     }
 
     /**
-     * Observe changes to a Realm result.
+     * Listen to changes to a Realm result. Updates will continue to be delivered until the Realm is closed
+     * or [Cancellable.cancel] has been called on the token returned when registering the listener.
      *
-     * Follows the pattern of [Realm.observe]
+     * Updates are being delivered on the thread defined by [RealmConfiguration.notifierDispatcher].
+     *
+     * @return a token representing the changes. Call `cancel()` on this token, to stop listening to any further changes.
      */
-    fun observe(callback: Callback<RealmResults<T>>): Cancellable {
-        val token = RealmInterop.realm_results_add_notification_callback(
-            result,
-            object : io.realm.interop.Callback {
-                override fun onChange(collectionChanges: NativePointer) {
-                    // FIXME Need to expose change details to the user
-                    //  https://github.com/realm/realm-kotlin/issues/115
-                    callback.onChange(this@RealmResults)
-                }
-            }
-        )
-        return NotificationToken(callback, token)
+    fun addChangeListener(callback: Callback<RealmResults<T>>): Cancellable {
+        checkClosed()
+        return owner.ref.addResultsChangeListener(this, callback)
+    }
+
+    /**
+     * FIXME
+     * Observe changes to the Realm results.
+     *
+     * @return a flow
+     */
+    fun observe(): Flow<RealmResults<T>> {
+        checkClosed()
+        return owner.ref.observeResults(this)
     }
 
     fun delete() {
         // TODO OPTIMIZE Are there more efficient ways to do this? realm_query_delete_all is not
         //  available in C-API yet, but should probably await final query design
         //  https://github.com/realm/realm-kotlin/issues/84
-        RealmInterop.realm_results_delete_all(result)
+        RealmInterop.realm_results_delete_all(resultsNativePointer)
     }
 
     /**
      * Returns a frozen copy of this query result. If it is already frozen, the same instance
      * is returned.
      */
-    internal fun freeze(realm: Realm): RealmResults<T> {
+    internal fun freeze(realm: RealmId): RealmResults<T> {
         val frozenDbPointer = realm.dbPointer
-        val frozenResults = RealmInterop.realm_results_freeze(result, frozenDbPointer)
+        val frozenResults = RealmInterop.realm_results_freeze(resultsNativePointer, frozenDbPointer)
         return fromResults(realm, frozenResults, clazz, schema)
     }
 
     /**
      * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
      */
-    internal fun thaw(realm: BaseRealm): RealmResults<T> {
+    internal fun thaw(realm: RealmId): RealmResults<T> {
         val liveDbPointer = realm.dbPointer
-        val liveResultPtr = RealmInterop.realm_results_thaw(result, liveDbPointer)
+        if (RealmInterop.realm_is_frozen(liveDbPointer)) {
+            throw IllegalStateException("Should be live")
+        }
+        val liveResultPtr = RealmInterop.realm_results_thaw(resultsNativePointer, liveDbPointer)
         return fromResults(realm, liveResultPtr, clazz, schema)
+    }
+
+    private inline fun checkClosed() {
+        // Empty RealmResults can neve be closed as they are not connected to any native file resources.
+        if (mode != Mode.EMPTY) {
+            owner.ref.checkClosed()
+        }
     }
 }

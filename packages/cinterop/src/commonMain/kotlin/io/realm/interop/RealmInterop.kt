@@ -42,6 +42,7 @@ expect object RealmInterop {
     fun realm_open(config: NativePointer): NativePointer
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_thaw(frozenRealm: NativePointer): NativePointer
+    fun realm_is_frozen(realm: NativePointer): Boolean
     fun realm_close(realm: NativePointer)
 
     fun realm_get_schema(realm: NativePointer): NativePointer
@@ -55,6 +56,7 @@ expect object RealmInterop {
     fun realm_begin_write(realm: NativePointer)
     fun realm_commit(realm: NativePointer)
     fun realm_rollback(realm: NativePointer)
+    fun realm_is_in_transaction(realm: NativePointer): Boolean
 
     // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
     // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
@@ -63,6 +65,7 @@ expect object RealmInterop {
     fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer
     fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer
     fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer
+    fun realm_object_is_valid(obj: NativePointer): Boolean
 
     fun realm_object_as_link(obj: NativePointer): Link
 

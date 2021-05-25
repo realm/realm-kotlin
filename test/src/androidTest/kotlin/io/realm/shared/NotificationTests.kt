@@ -15,88 +15,179 @@
  */
 package io.realm.shared
 
+import io.realm.Cancellable
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmResults
 import io.realm.util.PlatformUtils
 import io.realm.util.RunLoopThread
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 private const val INITIAL = "Hello, World!"
 private const val FIRST = "FIRST"
 private const val SECOND = "SECOND"
 
-// FIXME This file is sym-linked into the `nativeTest`-equivalent. Ideally it would just all be in
-//  `commonTest` but as it is currently not possible to trigger common tests on Android it is
-//  replicated in the various source sets. Sym-linking to `commonTest` would create overlapping
-//  definitions.
-//  https://youtrack.jetbrains.com/issue/KT-34535
+/**
+ * Verify common behavior for notifications across all supported.
+ * See [RealmTests], [RealmResultsTests], [RealmObjectTests] for notification tests only relevant to that specific type.
+ */
 @OptIn(ExperimentalTime::class)
 class NotificationTests {
 
+    enum class ClassType {
+        REALM,
+        REALM_RESULTS,
+        REALM_LIST,
+        REALM_OBJECT
+    }
+
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
+    lateinit var realm: Realm
+
+    private val testScope = CoroutineScope(CoroutineName("TestScope"))
 
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
     fun tearDown() {
+        testScope.cancel()
+        realm.close()
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
-    fun resultsListener() = RunLoopThread().run {
-        val c = Channel<List<Sample>>(1)
-
-        val realm = Realm.open(configuration)
-
-        val results = realm.objects(Sample::class)
-
-        assertEquals(0, results.size)
-
-        val token = results.observe {
-            assertTrue(it is RealmResults<Sample>)
-            assertEquals(results, it)
-            val updatedResults = results.toList()
-            this@run.launch { c.send(updatedResults) }
-        }
-
-        launch {
-            val size = c.receive().size
-            val sample = realm.writeBlocking {
-                assertEquals(0, size)
-                create(Sample::class).apply { stringField = INITIAL }
+    fun addChangeListener() {
+        ClassType.values().forEach {
+            when(it) {
+                ClassType.REALM_RESULTS -> addChangeListenerResults()
+                else -> {
+                    // FIXME: This section shouldn't be ignored
+                }
             }
-
-            val result = c.receive()
-            assertEquals(1, result.size)
-            assertEquals(sample.stringField, result[0].stringField)
-
-            token.cancel()
-
-            realm.writeBlocking {
-                create(Sample::class).apply { stringField = INITIAL }
-            }
-
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
-
-            realm.close()
-            terminate()
         }
     }
+
+    @Test
+    fun cancelTokenStopsListener() {
+        ClassType.values().forEach {
+            when(it) {
+                ClassType.REALM_RESULTS -> cancelTokenStopsListenerResults()
+                else -> {
+                    // FIXME: This section shouldn't be ignored
+                }
+            }
+        }
+    }
+
+    @Test
+    fun observe() {
+        ClassType.values().forEach {
+            when(it) {
+                ClassType.REALM -> observeRealm()
+                ClassType.REALM_RESULTS -> observeRealmResults()
+                ClassType.REALM_LIST -> observeRealmList()
+                ClassType.REALM_OBJECT -> observeRealmObject()
+                else -> throw NotImplementedError(it.toString())
+            }
+        }
+    }
+
+    @Test
+    fun cancelObserve() {
+
+    }
+
+
+
+
+    private fun observeRealmObject() {
+        // FIXME
+    }
+
+    private fun observeRealmList() {
+        // FIXME
+    }
+
+    private fun observeRealmResults() {
+        @Suppress("JoinDeclarationAndAssignment")
+        lateinit var listenerJob: Job
+        listenerJob = testScope.launch {
+            realm.objects(Sample::class).observe().collect {
+                assertEquals(1, it.size)
+                listenerJob.cancel()
+            }
+        }
+
+        runBlocking {
+            realm.write {
+                copyToRealm(Sample().apply { stringField = "Foo" })
+            }
+            listenerJob.join()
+        }
+    }
+
+    private fun observeRealm() {
+        // FIXME
+    }
+
+
+    fun addChangeListenerResults() = RunLoopThread().run {
+        realm.objects(Sample::class).addChangeListener {
+            assertEquals(1, it.size)
+            terminate()
+        }
+
+        realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+    }
+
+
+    fun cancelTokenStopsListenerResults() = RunLoopThread().run {
+
+        var val1 = 0
+        lateinit var token1: Cancellable
+        token1 = realm.objects(Sample::class).addChangeListener {
+            val1 = it.size
+            assertEquals(1, it.size)
+            token1.cancel()
+        }
+
+        var val2 = 0
+        val token2 = realm.objects(Sample::class).addChangeListener {
+            val2 = it.size
+            assertEquals(1, it.size)
+            if (val2 == 2) {
+                assertEquals(1, val1)
+                terminate()
+            }
+        }
+
+        realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+
+        realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+    }
+
+
 }

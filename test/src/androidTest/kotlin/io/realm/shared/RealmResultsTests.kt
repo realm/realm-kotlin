@@ -65,4 +65,25 @@ class RealmResultsTests {
         realm.close()
         assertFailsWith<IllegalStateException> { results.version }
     }
+
+    @Test
+    fun observe() {
+
+
+    }
+
+    @Test
+    fun observeInitialElement() {
+
+    }
+
+    @Test
+    fun observeCancelled() {
+
+    }
+
+    @Test
+    fun observeRealmClosed() {
+
+    }
 }

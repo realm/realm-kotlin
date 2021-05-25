@@ -17,12 +17,15 @@
 package io.realm.internal
 
 import io.realm.MutableRealm
-import io.realm.RealmConfiguration
+import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 
 /**
@@ -36,24 +39,33 @@ import kotlinx.coroutines.withContext
  * @param configuration
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
-class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: CoroutineDispatcher) {
+class SuspendableWriter(private val owner: Realm, val dispatcher: CoroutineDispatcher) {
+
+    // When set to true, the writer should close the Realm as soon as it can
+    private var closeRealmSignal = false
+
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealm by lazy {
-        MutableRealm(configuration)
+        MutableRealm(owner.configuration)
     }
 
-    suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
+    suspend fun <R> write(block: MutableRealm.() -> R): R {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
-        return withContext(dispatcher) {
+        return withContext((owner.realmScope + dispatcher).coroutineContext) {
             // TODO Should we ensure that we are still active
             var result: R
             @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
             try {
+                ensureActive()
                 realm.beginTransaction()
                 result = block(realm)
-                realm.commitTransaction()
+                if (isActive && realm.isInTransaction() ) {
+                    realm.commitTransaction()
+                }
             } catch (e: Exception) {
-                realm.cancelWrite()
+                if (realm.isInTransaction()) {
+                    realm.cancelWrite()
+                }
                 // Should we wrap in a specific exception type like RealmWriteException?
                 throw e
             }
@@ -64,21 +76,28 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
             // the transaction is committed and we freeze it.
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
+            ensureActive()
             val newDbPointer = RealmInterop.realm_freeze(realm.dbPointer)
             val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
             if (shouldFreezeWriteReturnValue(result)) {
-                result = freezeWriteReturnValue(result, newDbPointer)
+                result = freezeWriteReturnValue(result, RealmId(owner, newDbPointer))
             }
-            Triple(newDbPointer, newVersion, result)
+
+            // We must update the Realm from within the same context as switching context allow other coroutines
+            // to run. Specifically the Notifier, which means it might attempt to freeze data on an earlier version.
+            owner.updateRealmPointer(newDbPointer, newVersion)
+
+            result
         }
     }
 
-    private fun <R> freezeWriteReturnValue(result: R, frozenDbPointer: NativePointer): R {
+    private fun <R> freezeWriteReturnValue(result: R, frozenRealm: RealmId): R {
         return when (result) {
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 val obj: RealmObjectInternal = (result as RealmObjectInternal)
-                obj.freeze<RealmObject>(realm.dbPointer, frozenDbPointer) as R
+                @Suppress("UNCHECKED_CAST")
+                obj.freeze<RealmObject>(frozenRealm) as R
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }
@@ -93,9 +112,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
         }
     }
 
-    suspend fun close() {
-        withContext(dispatcher) {
-            realm.close()
-        }
+    fun close() {
+        closeRealmSignal = true
     }
 }

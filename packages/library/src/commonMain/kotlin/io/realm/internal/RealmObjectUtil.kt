@@ -25,9 +25,9 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmObjectInternal.manage(realmPointer: NativePointer, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmObject> RealmObjectInternal.manage(realm: RealmId, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
-    this.`$realm$Pointer` = realmPointer
+    this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
     this.`$realm$ObjectPointer` = objectPointer
     // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
@@ -38,12 +38,12 @@ fun <T : RealmObject> RealmObjectInternal.manage(realmPointer: NativePointer, me
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmObjectInternal.link(realm: NativePointer, mediator: Mediator, type: KClass<T>, link: Link): T {
+fun <T : RealmObject> RealmObjectInternal.link(realm: RealmId, mediator: Mediator, type: KClass<T>, link: Link): T {
     this.`$realm$IsManaged` = true
-    this.`$realm$Pointer` = realm
+    this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
     // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
-    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm, link)
+    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
     this.`$realm$Mediator` = mediator
     @Suppress("UNCHECKED_CAST")
     return this as T
@@ -56,7 +56,7 @@ fun RealmObjectInternal.unmanage() {
     //  pointers (triggers the native getter/setter to throw the IllegalStateException).
     this.`$realm$IsManaged` = true
     this.`$realm$ObjectPointer` = null
-    this.`$realm$Pointer` = null
+    this.`$realm$Owner` = null
 }
 
 /**
@@ -64,7 +64,7 @@ fun RealmObjectInternal.unmanage() {
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: NativePointer): T {
+internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmId): T {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
@@ -72,7 +72,7 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: NativePoi
         frozenRealm,
         `$realm$Mediator` as Mediator,
         type,
-        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, frozenRealm)
+        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, frozenRealm.dbPointer)
     )
 }
 
@@ -81,13 +81,13 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: NativePoi
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T {
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: RealmId): T {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     val dbPointer = liveRealm.dbPointer
     return managedModel.manage(
-        dbPointer,
+        liveRealm,
         `$realm$Mediator` as Mediator,
         type,
         RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)

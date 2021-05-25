@@ -23,7 +23,16 @@ import kotlinx.coroutines.Dispatchers
 /**
  * The default dispatcher for Darwin platforms is backed by a run loop on the calling thread.
  */
-actual fun defaultWriteDispatcher(): CoroutineDispatcher {
+actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+    // This triggers setting up a run loop, which is a requirement for the default dispatcher below
+    runBlocking {}
+    return Dispatchers.Default
+}
+
+/**
+ * The default dispatcher for Darwin platforms is backed by a run loop on the calling thread.
+ */
+actual fun defaultNotifierDispatcher(id: String): CoroutineDispatcher {
     // This triggers setting up a run loop, which is a requirement for the default dispatcher below
     runBlocking {}
     return Dispatchers.Default

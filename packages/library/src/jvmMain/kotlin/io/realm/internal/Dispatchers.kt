@@ -16,9 +16,15 @@
 package io.realm.internal
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 
-public actual fun defaultWriteDispatcher(): CoroutineDispatcher {
+public actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
     return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+}
+
+public actual fun defaultNotifierDispatcher(id: String): CoroutineDispatcher {
+    // FIXME Figure out how to create a generic Looper implementation on JVM
+    return Dispatchers.Main
 }

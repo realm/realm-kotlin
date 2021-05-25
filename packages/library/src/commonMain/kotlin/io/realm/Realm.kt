@@ -15,10 +15,20 @@
  */
 package io.realm
 
+import io.realm.internal.SuspendableNotifier
 import io.realm.internal.SuspendableWriter
 import io.realm.internal.util.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -26,8 +36,19 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    private val writer: SuspendableWriter = SuspendableWriter(configuration, configuration.writeDispatcher())
+    // Coroutine scope used to control the lifecycle of of Writer and Notifier jobs, so
+    // we can cancel them when the Realm is closed.
+    private val notifierDispatcher = configuration.notifierDispatcher(configuration.path)
+    internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + notifierDispatcher)
+    internal val notifier = SuspendableNotifier(this, notifierDispatcher)
+    private val writer = SuspendableWriter(this, configuration.writeDispatcher(configuration.path))
     private val realmPointerMutex = Mutex()
+    // Intermediate state from close() is called to it completes(). Use to signal Notifier/Writer dispatchers that
+    // they should stop as soon as possible.
+    internal var isShuttingDown = false
+
+    // FIXME: Replay should match other notifications. I believe they mit their starting state when you register a listener
+    private val realmFlow = MutableSharedFlow<Realm>(replay = 1)
 
     companion object {
         /**
@@ -40,13 +61,16 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
          */
         public const val DEFAULT_LOG_TAG = "REALM"
 
-        fun open(realmConfiguration: RealmConfiguration): Realm {
+        fun open(configuration: RealmConfiguration): Realm {
             // TODO API-INTERNAL
             //  IN Android use lazy property delegation init to load the shared library use the
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
-            val realm = Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
-            realm.log.info("Opened Realm: ${realmConfiguration.path}")
+            val liveDbPointer = RealmInterop.realm_open(configuration.nativeConfig)
+            val frozenDbPointer = RealmInterop.realm_freeze(liveDbPointer)
+            RealmInterop.realm_close(liveDbPointer)
+            val realm = Realm(configuration, frozenDbPointer)
+            realm.log.info("Opened Realm: ${configuration.path}")
             return realm
         }
     }
@@ -62,6 +86,15 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     public constructor(configuration: RealmConfiguration) :
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+
+    init {
+        // Update the Realm if another process or the Sync Client updates the Realm
+        val job: Job = realmScope.launch {
+            notifier.realmChanged().collect {
+                updateRealmPointer(it.first, it.second)
+            }
+        }
+    }
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm
@@ -85,33 +118,28 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * @see [RealmConfiguration.writeDispatcher]
      */
     // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptinoHandler
-    internal suspend fun <R> write(block: MutableRealm.() -> R): R {
+    public suspend fun <R> write(block: MutableRealm.() -> R): R {
         @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
-            val (nativePointer, versionId, result) = this.writer.write(block)
-            // Update the user facing Realm before returning the result.
-            // That way, querying the Realm right after the `write` completes will return
-            // the written data. Otherwise, we would have to wait for the Notifier thread
-            // to detect it and update the user Realm.
-            updateRealmPointer(nativePointer, versionId)
             // FIXME What if the result is of a different version than the realm (some other
             //  write transaction finished before)
-            return result
+            return this.writer.write(block)
         } catch (e: Exception) {
             throw e
         }
     }
 
-    private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
+    internal suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
         realmPointerMutex.withLock {
             log.debug("$version -> $newVersion")
             if (newVersion >= version) {
-                // FIXME Currently we need this to be a live realm to be able to continue doing
-                //  writeBlocking transactions.
-                dbPointer = RealmInterop.realm_thaw(newRealm)
+                dbPointer = newRealm
                 version = newVersion
             }
         }
+
+        // Notify public observers that the Realm changed
+        realmFlow.emit(this)
     }
 
     /**
@@ -125,30 +153,47 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block.
      */
-    @Suppress("TooGenericExceptionCaught")
     fun <R> writeBlocking(block: MutableRealm.() -> R): R {
-        // While not efficiently to open a new Realm just for a write, it makes it a lot
-        // easier to control the API surface between Realm and MutableRealm
-        val writerRealm = MutableRealm(configuration, dbPointer)
-        try {
-            writerRealm.beginTransaction()
-            val returnValue: R = block(writerRealm)
-            if (writerRealm.commitWrite && !isClosed()) {
-                writerRealm.commitTransaction()
-            }
-            return returnValue
-        } catch (e: Exception) {
-            // Only cancel writes for exceptions. For errors assume that something has gone
-            // horribly wrong and the process is exiting. And canceling the write might just
-            // hide the true underlying error.
-            try {
-                writerRealm.cancelWrite()
-            } catch (cancelException: Throwable) {
-                // Swallow any exception from `cancelWrite` as the primary error is more important.
-                log.error(e)
-            }
-            throw e
+        checkClosed()
+        return runBlocking {
+            write(block)
         }
+    }
+
+    /**
+     * FIXME
+     * Be notified whenever this Realm is updated.
+     */
+    public fun observe(): Flow<Realm> {
+        return realmFlow.asSharedFlow()
+    }
+
+    override fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>> {
+        return notifier.resultsChanged(results)
+    }
+
+    override fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>> {
+        return notifier.listChanged(list)
+    }
+
+    override fun <T : RealmObject> observeObject(obj: T): Flow<T> {
+        return notifier.objectChanged(obj)
+    }
+
+    override fun <T : RealmObject> addResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable {
+        return notifier.addResultsChangedListener(results, callback)
+    }
+
+    override fun <T : RealmObject> addListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+        return notifier.addRealmChangedListener()
+        TODO("Not yet implemented")
+    }
+
+    override fun <T : RealmObject> addObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+        TODO("Not yet implemented")
     }
 
     /**
@@ -156,10 +201,13 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * method has been called will then an [IllegalStateException].
      */
     public override fun close() {
+        isShuttingDown = true
         super.close()
-        // TODO There is currently nothing that tears down the dispatcher
-        runBlocking() {
-            writer.close()
-        }
+        // TODO There is currently nothing that tears down the dispatcher. Should there be?
+        realmScope.cancel("Closing Realm while it is being used: ${configuration.path}", IllegalStateException("A Realm should not be closed during a write or while listening to changes on it."))
+        // FIXME: How to check if no tasks are running?
+        writer.close()
+        notifier.close()
+        // FIXME: Closing the Realm should terminate all notifiers currently launched
     }
 }
