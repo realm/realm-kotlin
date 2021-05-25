@@ -150,8 +150,41 @@ internal fun IrPluginContext.lookupConstructorInClass(
 }
 
 object SchemaCollector {
-    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, IrProperty>>>()
+    val properties = mutableMapOf<IrClass, MutableMap<String, SchemaProperty>>()
 }
+
+//------------------------------------------------------------------------------
+
+/**
+ * This matches RealmEnums.CollectionType.
+ */
+enum class CollectionType {
+    NONE,
+    LIST,
+    SET,
+    DICTIONARY
+}
+
+/**
+ * This matches RealmEnums.PropertyType.
+ */
+enum class PropertyType {
+    RLM_PROPERTY_TYPE_INT,
+    RLM_PROPERTY_TYPE_BOOL,
+    RLM_PROPERTY_TYPE_STRING,
+    RLM_PROPERTY_TYPE_OBJECT,
+    RLM_PROPERTY_TYPE_FLOAT,
+    RLM_PROPERTY_TYPE_DOUBLE
+}
+
+data class SchemaProperty(
+    val type: String,
+    val declaration: IrProperty,
+    val collectionType: CollectionType,
+    val genericTypes: List<String>? = null
+)
+
+//------------------------------------------------------------------------------
 
 @Suppress("LongParameterList")
 internal fun <T : IrExpression> buildOf(
