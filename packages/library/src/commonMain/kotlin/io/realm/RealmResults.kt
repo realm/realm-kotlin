@@ -55,12 +55,12 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     }
 
     internal companion object {
-        internal fun <T : RealmObject> fromQuery(realm: BaseRealm, query: NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
+        internal fun <T : RealmObject> fromQuery(realm: BaseRealm, query: NativePointer, clazz: KClass<T>, schema: Mediator): RealmResults<T> {
             // realm_query_find_all doesn't fully evaluate until you interact with it.
             return RealmResults(realm, RealmInterop.realm_query_find_all(query), clazz, schema)
         }
 
-        internal fun <T : RealmObject> fromResults(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
+        internal fun <T : RealmObject> fromResults(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator): RealmResults<T> {
             return RealmResults(realm, results, clazz, schema)
         }
     }
