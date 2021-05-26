@@ -266,6 +266,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
     }
 
+    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_frozen(realm.cptr<realm_t>())
+    }
+
     actual fun realm_close(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
     }
