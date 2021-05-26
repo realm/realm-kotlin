@@ -54,7 +54,7 @@ public abstract class BaseRealm internal constructor(
         checkClosed()
         return RealmResults.fromQuery(
             this,
-            { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
+            RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
             clazz,
             configuration.mediator
         )

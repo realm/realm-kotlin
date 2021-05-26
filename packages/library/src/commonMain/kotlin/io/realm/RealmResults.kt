@@ -37,46 +37,31 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     private val realm: NativePointer // Store explicit reference to pointer because the owner Realm might replace it.
     private val clazz: KClass<T>
     private val schema: Mediator
-    private val query: NativePointer
     private val result: NativePointer
 
     private enum class Mode {
         // FIXME: Needed to make working with @LinkingObjects easier.
         EMPTY, // RealmResults that is always empty.
-        QUERY, // RealmResults created from a query
         RESULTS // RealmResults wrapping a Realm Core Results.
     }
-
-    // Create Results from query
-    private constructor(realm: BaseRealm, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator) {
-        this.mode = Mode.QUERY
-        this.owner = realm
-        this.realm = realm.dbPointer
-        this.query = query()
-        this.result = RealmInterop.realm_query_find_all(this.query)
-        this.clazz = clazz
-        this.schema = schema
-    }
-
     // Wrap existing native Results class
     private constructor(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator) {
         this.mode = Mode.RESULTS
         this.owner = realm
         this.realm = realm.dbPointer
-        this.query = object: NativePointer {  }
         this.result = results
         this.clazz = clazz
         this.schema = schema
     }
 
     internal companion object {
-        internal fun <T : RealmObject> fromQuery(realm: BaseRealm, query: () -> NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
-            return RealmResults(realm, query, clazz, schema)
+        internal fun <T : RealmObject> fromQuery(realm: BaseRealm, query: NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
+            // realm_query_find_all doesn't fully evaluate until you interact with it.
+            return RealmResults(realm, RealmInterop.realm_query_find_all(query), clazz, schema)
         }
 
         internal fun <T : RealmObject> fromResults(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator ): RealmResults<T> {
             return RealmResults(realm, results, clazz, schema)
-
         }
     }
 
@@ -105,7 +90,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return fromQuery(
             owner,
-            { RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args) },
+            RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args),
             clazz,
             schema,
         )
