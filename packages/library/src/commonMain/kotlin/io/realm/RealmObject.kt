@@ -64,7 +64,12 @@ public fun RealmObject.isManaged(): Boolean {
 public fun RealmObject.isValid(): Boolean {
     return if (isManaged()) {
         val internalObject = this as RealmObjectInternal
-        RealmInterop.realm_object_is_valid(internalObject.`$realm$Pointer`!!)
+        val ptr = internalObject.`$realm$ObjectPointer`
+        return if (ptr != null) {
+            RealmInterop.realm_object_is_valid(ptr)
+        } else {
+            false
+        }
     } else {
         // Unmanaged objects are always valid
         true
