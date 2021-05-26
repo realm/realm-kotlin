@@ -135,7 +135,7 @@ actual object RealmInterop {
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
         return realmc.realm_is_frozen(realm.cptr())
     }
-    
+
     actual fun realm_close(realm: NativePointer) {
         realmc.realm_close((realm as LongPointerWrapper).ptr)
     }
