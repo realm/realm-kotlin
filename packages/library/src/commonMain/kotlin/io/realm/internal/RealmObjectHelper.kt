@@ -16,8 +16,11 @@
 
 package io.realm.internal
 
+import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.interop.ColumnKey
 import io.realm.interop.Link
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 
 object RealmObjectHelper {
@@ -61,6 +64,16 @@ object RealmObjectHelper {
         return null
     }
 
+    fun <R> getList(obj: RealmObjectInternal, col: String): RealmList<R> {
+        val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val key: ColumnKey = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
+        val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
+
+        // TODO OPTIMIZE Consider not returning a new instance every time
+        return RealmList(listPtr)
+    }
+
     // Consider inlining
     @Suppress("unused") // Called from generated code
     fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
@@ -85,5 +98,12 @@ object RealmObjectHelper {
             copyToRealm(obj.`$realm$Mediator` as Mediator, obj.`$realm$Pointer`!!, value)
         } else value
         setValue(obj, col, newValue)
+    }
+
+    fun <R> setList(obj: RealmObjectInternal, col: String, list: RealmList<R>) {
+        getList<R>(obj, col).also {
+            it.clear()
+            it.addAll(list)
+        }
     }
 }

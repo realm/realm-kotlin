@@ -76,6 +76,8 @@ class RealmList<E> : MutableList<E>, AbstractMutableCollection<E> {
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> =
         facade.subList(fromIndex, toIndex)
+
+    override fun clear() = facade.clear()
 }
 
 /**
@@ -129,53 +131,52 @@ private class ManagedListFacade<E>(
 ) : ListFacade<E>() {
 
     override val size: Int
-        get() = TODO("Not yet implemented")
+        get() = RealmInterop.realm_list_size(listPtr).toInt()
 
-    override fun get(index: Int): E {
-        TODO("Not yet implemented")
-    }
+    override fun get(index: Int): E = RealmInterop.realm_list_get(listPtr, index.toLong())
 
     override fun indexOf(element: E): Int {
-        TODO("Not yet implemented")
+        TODO("indexOf(element: E) - Not yet implemented")
     }
 
     override fun iterator(): MutableIterator<E> {
-        TODO("Not yet implemented")
+        TODO("iterator() - Not yet implemented")
     }
 
     override fun lastIndexOf(element: E): Int {
-        TODO("Not yet implemented")
+        TODO("lastIndexOf(element: E) - Not yet implemented")
     }
 
-    override fun add(element: E): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun add(element: E): Boolean = RealmInterop.realm_list_add(listPtr, element)
+        .let { true }
 
     override fun add(index: Int, element: E) {
-        TODO("Not yet implemented")
+        TODO("add(index: Int, element: E) - Not yet implemented")
     }
 
     override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        TODO("Not yet implemented")
+        TODO("addAll(index: Int, elements: Collection<E>) - Not yet implemented")
     }
 
     override fun listIterator(): MutableListIterator<E> {
-        TODO("Not yet implemented")
+        TODO("listIterator() - Not yet implemented")
     }
 
     override fun listIterator(index: Int): MutableListIterator<E> {
-        TODO("Not yet implemented")
+        TODO("listIterator(index: Int) - Not yet implemented")
     }
 
     override fun removeAt(index: Int): E {
-        TODO("Not yet implemented")
+        TODO("removeAt(index: Int) - Not yet implemented")
     }
 
     override fun set(index: Int, element: E): E {
-        TODO("Not yet implemented")
+        TODO("set(index: Int, element: E) - Not yet implemented")
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
-        TODO("Not yet implemented")
+        TODO("subList(fromIndex: Int, toIndex: Int) - Not yet implemented")
     }
+
+    override fun clear() = RealmInterop.realm_list_clear(listPtr)
 }

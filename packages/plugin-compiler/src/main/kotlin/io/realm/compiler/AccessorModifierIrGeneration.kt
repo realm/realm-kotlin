@@ -23,6 +23,7 @@ import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_POINTER
@@ -30,23 +31,9 @@ import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
-import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
-import org.jetbrains.kotlin.ir.builders.Scope
-import org.jetbrains.kotlin.ir.builders.irBlock
-import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irGet
-import org.jetbrains.kotlin.ir.builders.irGetField
-import org.jetbrains.kotlin.ir.builders.irGetObject
-import org.jetbrains.kotlin.ir.builders.irIfThenElse
-import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.builders.irSetField
-import org.jetbrains.kotlin.ir.builders.irString
+import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrReturn
-import org.jetbrains.kotlin.ir.expressions.IrSetField
-import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
@@ -55,6 +42,13 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.KotlinType
+import kotlin.collections.List
+import kotlin.collections.first
+import kotlin.collections.getOrPut
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
 
 /**
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
@@ -74,9 +68,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
     private val setObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
-    // TODO getter
-//    private val getList: IrSimpleFunction =
-//        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
+    private val getList: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
+    private val setList: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_LIST)
 
     private var functionLongToChar: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
@@ -134,7 +129,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
-                        modifyAccessor(declaration, getValue, setValue)
+                        modifyAccessor(
+                            declaration,
+                            getValue,
+                            setValue
+                        )
                     }
                     propertyType.isByte() -> {
                         logInfo("Byte property named ${declaration.name} is nullable $nullable")
@@ -254,8 +253,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         //      return backing_field
                         //  }
 
-                        // TODO: use correct getter
-                        modifyAccessor(declaration, getValue, setValue)
+                        // TODO: setter
+                        modifyAccessor(declaration, getList)
                     }
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
@@ -342,7 +341,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     ).irBlock {
                         val receiver = property.setter!!.dispatchReceiverParameter!!
                         val cinteropCall =
-                            irCall(setFunction, origin = IrStatementOrigin.GET_PROPERTY).also {
+                            irCall(
+                                callee = setFunction,
+                                origin = IrStatementOrigin.GET_PROPERTY
+                            ).also {
                                 it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                             }.apply {
                                 putTypeArgument(0, type)

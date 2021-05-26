@@ -87,7 +87,8 @@ return $jnicall;
 
 // Reuse above type maps on other pointers too
 %apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*,
-               realm_results_t*, realm_notification_token_t*, realm_object_changes_t*};
+               realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
+               realm_list_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -145,10 +146,13 @@ struct realm_size_t {
     size_t value;
 };
 %}
+
+// TODO - add comment Claus will write
 %typemap(jni) (size_t* out_count) "long"
 %typemap(jtype) (size_t* out_count) "long"
 %typemap(jstype) (size_t* out_count) "realm_size_t"
 %typemap(javain) (size_t* out_count) "realm_size_t.getCPtr($javainput)"
+%apply size_t* out_count { size_t* out_size };
 
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found };
