@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.TransactionId
 import io.realm.interop.RealmInterop
 
 /**
@@ -37,8 +38,8 @@ public fun RealmObject.delete() {
 public var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal
-        internalObject.`$realm$Pointer`?.let {
-            return VersionId(RealmInterop.realm_get_version_id(it))
+        internalObject.`$realm$Owner`?.let {
+            return VersionId(RealmInterop.realm_get_version_id((it as TransactionId).dbPointer))
         } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
     }
     private set(_) {

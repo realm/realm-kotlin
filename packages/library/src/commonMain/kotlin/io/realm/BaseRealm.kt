@@ -16,6 +16,7 @@
 package io.realm
 
 import io.realm.internal.RealmLog
+import io.realm.internal.TransactionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
@@ -29,7 +30,7 @@ public abstract class BaseRealm internal constructor(
      * Configuration used to configure this Realm instance.
      */
     public val configuration: RealmConfiguration,
-    internal var dbPointer: NativePointer
+    dbPointer: NativePointer
 ) {
 
     /**
@@ -46,7 +47,26 @@ public abstract class BaseRealm internal constructor(
     private var isClosed: Boolean = false
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
+    /**
+     * Returns an ID identifying any Realm data at the point in time this method is called.
+     *
+     * This is done by pairing a reference to the public Realm instance alongside the current `dbPointer`.
+     * For live Realms, the `dbPointer` point to a underlying live SharedRealm that might mutate. For frozen
+     * Realms the `dbPointer` points to a frozen SharedRealm that is guaranteed to remain the same, even if
+     * the public Realm advance to a later version.
+     *
+     * The public Realm instance part of the ID can also mutate, so care must be taken if any methods on that
+     * Realm is used.
+     */
+    internal var transactionid: TransactionId = TransactionId(this, dbPointer)
+        private set
+
+    // Easy reference to the dbPointer for use internally in Realm classes
+    protected var dbPointer: NativePointer
+        private set
+
     init {
+        this.dbPointer = dbPointer
         log.info("Realm opened: ${configuration.path}")
     }
 
@@ -54,7 +74,7 @@ public abstract class BaseRealm internal constructor(
         checkClosed()
         return RealmResults(
             configuration,
-            dbPointer,
+            transactionid,
             { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
             clazz,
             configuration.mediator
@@ -62,6 +82,12 @@ public abstract class BaseRealm internal constructor(
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
+
+    protected fun advanceRealm(newDbPointer: NativePointer, newVersion: VersionId) {
+        transactionid = TransactionId(this, newDbPointer)
+        dbPointer = newDbPointer
+        version = newVersion
+    }
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have

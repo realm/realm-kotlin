@@ -26,7 +26,7 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    private val writer: SuspendableWriter = SuspendableWriter(configuration, configuration.writeDispatcher())
+    private val writer: SuspendableWriter = SuspendableWriter(this, configuration.writeDispatcher())
     private val realmPointerMutex = Mutex()
 
     companion object {
@@ -108,8 +108,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             if (newVersion >= version) {
                 // FIXME Currently we need this to be a live realm to be able to continue doing
                 //  writeBlocking transactions.
-                dbPointer = RealmInterop.realm_thaw(newRealm)
-                version = newVersion
+                advanceRealm(RealmInterop.realm_thaw(newRealm), newVersion)
             }
         }
     }

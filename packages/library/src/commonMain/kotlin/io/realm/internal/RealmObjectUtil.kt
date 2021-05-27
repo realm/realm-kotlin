@@ -24,25 +24,27 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmObjectInternal.manage(realmPointer: NativePointer, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmObject> RealmObjectInternal.manage(realm: TransactionId, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
-    this.`$realm$Pointer` = realmPointer
+    this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
     this.`$realm$ObjectPointer` = objectPointer
     // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
     // this.link = RealmInterop.realm_object_as_link()
     this.`$realm$Mediator` = mediator
+    @Suppress("UNCHECKED_CAST")
     return this as T
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmObjectInternal.link(realm: NativePointer, mediator: Mediator, type: KClass<T>, link: Link): T {
+fun <T : RealmObject> RealmObjectInternal.link(realm: TransactionId, mediator: Mediator, type: KClass<T>, link: Link): T {
     this.`$realm$IsManaged` = true
-    this.`$realm$Pointer` = realm
+    this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
     // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
-    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm, link)
+    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
     this.`$realm$Mediator` = mediator
+    @Suppress("UNCHECKED_CAST")
     return this as T
 }
 
@@ -53,18 +55,19 @@ fun RealmObjectInternal.unmanage() {
     //  pointers (triggers the native getter/setter to throw the IllegalStateException).
     this.`$realm$IsManaged` = true
     this.`$realm$ObjectPointer` = null
-    this.`$realm$Pointer` = null
+    this.`$realm$Owner` = null
 }
 
 // Create a frozen copy of this object. Expected DB pointer is used by writes where we need to freeze
 // the object before the owner Realm is updated, but the pointer it will be updated with is already know.
-fun <T : RealmObject> RealmObjectInternal.freeze(realm: NativePointer, expectedDbPointer: NativePointer? = null): T {
+fun <T : RealmObject> RealmObjectInternal.freeze(realm: TransactionId, expectedRealm: TransactionId? = null): T {
+    @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     return managedModel.manage(
         realm,
         `$realm$Mediator` as Mediator,
         type,
-        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, expectedDbPointer ?: realm)
+        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, expectedRealm?.dbPointer ?: realm.dbPointer)
     )
 }

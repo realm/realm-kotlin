@@ -19,6 +19,7 @@ package io.realm
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.TransactionId
 import io.realm.internal.checkRealmClosed
 import io.realm.internal.link
 import io.realm.interop.Link
@@ -32,7 +33,7 @@ import kotlin.reflect.KClass
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 class RealmResults<T : RealmObject> constructor(
     private val realmConfiguration: RealmConfiguration,
-    private val realm: NativePointer,
+    private val realm: TransactionId,
     private val queryPointer: () -> NativePointer,
     private val clazz: KClass<T>,
     private val mediator: Mediator
@@ -41,7 +42,7 @@ class RealmResults<T : RealmObject> constructor(
     public var version: VersionId = VersionId(0)
         get() {
             checkRealmClosed(realm, realmConfiguration)
-            return VersionId(RealmInterop.realm_get_version_id(realm))
+            return VersionId(RealmInterop.realm_get_version_id(realm.dbPointer))
         }
 
     private val query: NativePointer by lazy { queryPointer() }

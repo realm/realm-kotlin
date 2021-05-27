@@ -32,9 +32,9 @@ object RealmObjectHelper {
     // Consider inlining
     @Suppress("unused") // Called from generated code
     fun <R> getValue(obj: RealmObjectInternal, col: String): Any? {
-        val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val realm = obj.`$realm$Owner` as TransactionId? ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
+        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         return RealmInterop.realm_get_value(o, key)
     }
 
@@ -44,15 +44,15 @@ object RealmObjectHelper {
         obj: RealmObjectInternal,
         col: String,
     ): Any? {
-        val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val realm = obj.`$realm$Owner` as TransactionId? ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
+        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         val link = RealmInterop.realm_get_value<Link>(o, key)
         if (link != null) {
             val value =
                 (obj.`$realm$Mediator` as Mediator).createInstanceOf(R::class)
             return value.link(
-                obj.`$realm$Pointer`!!,
+                obj.`$realm$Owner` as TransactionId,
                 obj.`$realm$Mediator` as Mediator,
                 R::class,
                 link
@@ -64,9 +64,9 @@ object RealmObjectHelper {
     // Consider inlining
     @Suppress("unused") // Called from generated code
     fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
-        val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val realm = obj.`$realm$Owner` as TransactionId? ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
+        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
         //  implementations in the various platform RealmInterops here to eliminate
         //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
@@ -82,7 +82,7 @@ object RealmObjectHelper {
         value: R?
     ) {
         val newValue = if (value?.`$realm$IsManaged` == false) {
-            copyToRealm(obj.`$realm$Mediator` as Mediator, obj.`$realm$Pointer`!!, value)
+            copyToRealm(obj.`$realm$Mediator` as Mediator, obj.`$realm$Owner` as TransactionId, value)
         } else value
         setValue(obj, col, newValue)
     }

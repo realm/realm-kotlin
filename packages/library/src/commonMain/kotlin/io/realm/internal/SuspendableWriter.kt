@@ -17,7 +17,7 @@
 package io.realm.internal
 
 import io.realm.MutableRealm
-import io.realm.RealmConfiguration
+import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.VersionId
 import io.realm.interop.NativePointer
@@ -36,10 +36,10 @@ import kotlinx.coroutines.withContext
  * @param configuration
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
-class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: CoroutineDispatcher) {
+class SuspendableWriter(private val owner: Realm, val dispatcher: CoroutineDispatcher) {
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealm by lazy {
-        MutableRealm(configuration)
+        MutableRealm(owner.configuration)
     }
 
     suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
@@ -64,7 +64,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
             // the transaction is committed and we freeze it.
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
-            val newDbPointer = RealmInterop.realm_freeze(realm.dbPointer)
+            val newDbPointer = RealmInterop.realm_freeze(realm.transactionid.dbPointer)
             val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
             if (shouldFreezeWriteReturnValue(result)) {
                 result = freezeWriteReturnValue(result, newDbPointer)
@@ -78,7 +78,8 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 val obj: RealmObjectInternal = (result as RealmObjectInternal)
-                obj.freeze<RealmObject>(realm.dbPointer, frozenDbPointer) as R
+                @Suppress("UNCHECKED_CAST")
+                obj.freeze<RealmObject>(TransactionId(owner, realm.transactionid.dbPointer), TransactionId(owner, frozenDbPointer)) as R
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }

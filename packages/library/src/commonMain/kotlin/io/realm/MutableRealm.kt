@@ -77,7 +77,7 @@ class MutableRealm : BaseRealm {
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(configuration.mediator, dbPointer, type)
+        return io.realm.internal.create(configuration.mediator, transactionid, type)
     }
     // Convenience inline method for the above to skip KClass argument
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
@@ -85,7 +85,7 @@ class MutableRealm : BaseRealm {
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
-        return io.realm.internal.create(configuration.mediator, dbPointer, type, primaryKey)
+        return io.realm.internal.create(configuration.mediator, transactionid, type, primaryKey)
     }
 
     /**
@@ -99,7 +99,7 @@ class MutableRealm : BaseRealm {
      * @return The managed version of the `instance`.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
-        return io.realm.internal.copyToRealm(configuration.mediator, dbPointer, instance)
+        return io.realm.internal.copyToRealm(configuration.mediator, transactionid, instance)
     }
 
     /**
