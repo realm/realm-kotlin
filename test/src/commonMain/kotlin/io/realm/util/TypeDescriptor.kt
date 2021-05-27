@@ -132,8 +132,9 @@ internal object TypeDescriptor {
     // Convenience variables holding collection of various groups of Realm field types
     val allSingularFieldTypes =
         elementTypes.map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_NONE, it) }
-    val allListFieldTypes = elementTypes.filter { it.realmFieldType.listSupport }
-        .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
+    val allListFieldTypes =
+        elementTypes.filter { it.realmFieldType.listSupport }
+            .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
     // TODO Set
     // TODO Dict
     val allFieldTypes = allSingularFieldTypes + allListFieldTypes

@@ -207,7 +207,18 @@ class GenerationExtensionTest {
             "booleanListField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "floatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
-            "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT
+            "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+
+            // Nullable list types
+            "nullableStringListField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "nullableByteListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableCharListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableShortListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableIntListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableLongListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableBooleanListField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "nullableFloatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE
         )
         assertEquals(properties.size, table.properties.size)
         table.properties.map { property ->

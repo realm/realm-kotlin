@@ -285,8 +285,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
                                 val property = value.declaration
                                 val backingField = property.backingField
-                                    ?: error("Property without backing field or type")
-                                val nullable = backingField.type.isNullable()
+                                    ?: error("Property without backing field or type.")
+                                // Nullability applies to the generic type in collections
+                                val nullable = if (value.collectionType == CollectionType.NONE) {
+                                    backingField.type.isNullable()
+                                } else {
+                                    value.genericTypes?.get(0)?.nullable
+                                        ?: error("Missing generic type while processing a collection field.")
+                                }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
                                 val propertyFlags = mutableListOf<Name>()
                                 if (nullable) {
@@ -399,10 +405,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
     }
 
-    private fun getListType(generics: List<String>?): String =
-        checkNotNull(generics) { "Missing type for list." }[0].toLowerCaseAsciiOnly()
+    private fun getListType(generics: List<CoreType>?): String =
+        checkNotNull(generics) { "Missing type for list." }[0]
+            .propertyType.name.toLowerCaseAsciiOnly()
 
-    private fun propertyFlags(flags: List<Name>) =
+    private fun propertyFlags(flags: List<Name>): List<IrGetEnumValueImpl> =
         flags.map { flag ->
             IrGetEnumValueImpl(
                 startOffset = UNDEFINED_OFFSET,
