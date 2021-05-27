@@ -40,7 +40,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     private val result: NativePointer
 
     private enum class Mode {
-        // FIXME: Needed to make working with @LinkingObjects easier.
+        // FIXME Needed to make working with @LinkingObjects easier.
         EMPTY, // RealmResults that is always empty.
         RESULTS // RealmResults wrapping a Realm Core Results.
     }
