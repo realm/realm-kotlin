@@ -17,7 +17,6 @@
 package io.realm
 
 import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
 
 /**
  * TODO
