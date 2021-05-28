@@ -168,7 +168,6 @@ data class SchemaProperty(
     val type: String,
     val declaration: IrProperty,
     val collectionType: CollectionType,
-//    val genericTypes: List<String>? = null,
     val genericTypes: List<CoreType>? = null
 )
 
