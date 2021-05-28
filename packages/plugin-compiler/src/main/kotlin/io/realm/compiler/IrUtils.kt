@@ -135,7 +135,7 @@ object SchemaCollector {
     val properties = mutableMapOf<IrClass, MutableMap<String, SchemaProperty>>()
 }
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
 /**
  * This matches RealmEnums.CollectionType.
@@ -172,7 +172,7 @@ data class SchemaProperty(
     val genericTypes: List<CoreType>? = null
 )
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
 @Suppress("LongParameterList")
 internal fun <T : IrExpression> buildOf(
