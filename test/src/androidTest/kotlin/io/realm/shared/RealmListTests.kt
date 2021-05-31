@@ -229,14 +229,14 @@ internal abstract class ManagedListTester<T>(
                 assertNotNull(list)
                 assertTrue(list.isEmpty())
 
+                // TODO use addAll when ready
                 initialData.forEachIndexed { index, e ->
                     assertAdd(this, list, index, e)
                 }
 
-                list.clear()
                 val sameList = property.get(sample)
                 assertNotNull(sameList)
-                assertTrue(list.isEmpty())
+                assertFalse(list.isEmpty())
             }
         }
     }
