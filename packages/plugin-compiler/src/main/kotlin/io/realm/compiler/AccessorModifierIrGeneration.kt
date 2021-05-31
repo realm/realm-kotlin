@@ -279,7 +279,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         //  }
 
                         // TODO: setter
-                        modifyAccessor(declaration, getList)
+                        modifyAccessor(declaration, getList, collectionType = CollectionType.LIST)
                     }
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
@@ -305,10 +305,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         getFunction: IrSimpleFunction,
         setFunction: IrSimpleFunction? = null,
         fromLongToType: IrFunction? = null,
-        functionTypeToLong: IrFunction? = null
+        functionTypeToLong: IrFunction? = null,
+        collectionType: CollectionType = CollectionType.NONE
     ) {
         val backingField = property.backingField!!
-        val type = backingField.type
+        val type = when (collectionType) {
+            CollectionType.NONE -> backingField.type
+            else -> null
+        }
         val getter = property.getter
         val setter = property.setter
         getter?.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
@@ -327,7 +331,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         ).also {
                             it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                         }.apply {
-                            putTypeArgument(0, type)
+                            if (type != null) {
+                                putTypeArgument(0, type)
+                            }
                             putValueArgument(0, irGet(receiver))
                             putValueArgument(1, irString(property.name.identifier))
                         }
@@ -372,7 +378,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             ).also {
                                 it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                             }.apply {
-                                putTypeArgument(0, type)
+                                if (type != null) {
+                                    putTypeArgument(0, type)
+                                }
                                 putValueArgument(0, irGet(receiver))
                                 putValueArgument(1, irString(property.name.identifier))
                                 val argumentExpression = if (functionTypeToLong != null) {
