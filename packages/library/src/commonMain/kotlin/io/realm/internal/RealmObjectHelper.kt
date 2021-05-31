@@ -64,7 +64,7 @@ object RealmObjectHelper {
         return null
     }
 
-    fun <R> getList(obj: RealmObjectInternal, col: String): RealmList<R> {
+    fun getList(obj: RealmObjectInternal, col: String): RealmList<Any?> {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key: ColumnKey = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
@@ -101,9 +101,6 @@ object RealmObjectHelper {
     }
 
     fun <R> setList(obj: RealmObjectInternal, col: String, list: RealmList<R>) {
-        getList<R>(obj, col).also {
-            it.clear()
-            it.addAll(list)
-        }
+        TODO()
     }
 }
