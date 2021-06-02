@@ -13,18 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.realm.shared
 
-import io.realm.*
+import io.realm.MutableRealm
+import io.realm.Realm
+import io.realm.RealmConfiguration
+import io.realm.RealmList
+import io.realm.RealmObject
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
-import test.Sample
-import test.link.Child
+import test.list.RealmListContainer
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class RealmListTests {
+
+    private val descriptors = TypeDescriptor.allListFieldTypes
 
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
@@ -34,7 +45,7 @@ class RealmListTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(
             path = "$tmpDir/default.realm",
-            schema = setOf(Sample::class, Child::class)
+            schema = setOf(RealmListContainer::class)
         )
         realm = Realm.open(configuration)
     }
@@ -48,104 +59,105 @@ class RealmListTests {
     }
 
     @Test
-    fun getter() {
-        for (tester in unmanagedTesters) {
-            tester.getter()
-        }
-        for (tester in managedTesters) {
-            tester.getter()
-        }
-    }
-
-    @Test
     fun add() {
         for (tester in unmanagedTesters) {
-            tester.add()
+            tester.test()
         }
         for (tester in managedTesters) {
-            tester.add()
+            tester.test()
         }
     }
 
     // TODO consider using TypeDescriptor as "source of truth" for classifiers
+    // TODO investigate how to add properties/values directly so that it works for multiplatform
     @Suppress("UNCHECKED_CAST")
-    private fun <T> getDataSetForClassifier(classifier: KClassifier): List<T> = when (classifier) {
-        Byte::class -> BYTE_VALUES
-        Char::class -> CHAR_VALUES
-        Short::class -> SHORT_VALUES
-        Int::class -> INT_VALUES
-        Long::class -> LONG_VALUES
-        Boolean::class -> BOOLEAN_VALUES
-        Float::class -> FLOAT_VALUES
-        Double::class -> DOUBLE_VALUES
-        String::class -> STRING_VALUES
+    private fun <T> getDataSetForClassifier(
+        classifier: KClassifier,
+        nullable: Boolean = false
+    ): List<T> = when (classifier) {
+        Byte::class -> if (nullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
+        Char::class -> if (nullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
+        Short::class -> if (nullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
+        Int::class -> if (nullable) NULLABLE_INT_VALUES else INT_VALUES
+        Long::class -> if (nullable) NULLABLE_LONG_VALUES else LONG_VALUES
+        Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
+        Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
+        Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmObject::class -> OBJECT_VALUES
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> getPropertyForClassifier(
-        classifier: KClassifier
-    ): KMutableProperty1<Sample, RealmList<T>?> = when (classifier) {
-        Byte::class -> Sample::byteListField
-        Char::class -> Sample::charListField
-        Short::class -> Sample::shortListField
-        Int::class -> Sample::intListField
-        Long::class -> Sample::longListField
-        Boolean::class -> Sample::booleanListField
-        Float::class -> Sample::floatListField
-        Double::class -> Sample::doubleListField
-        String::class -> Sample::stringListField
-        RealmObject::class -> Sample::objectListField
+        classifier: KClassifier,
+        nullable: Boolean = false
+    ): KMutableProperty1<RealmListContainer, RealmList<T>> = when (classifier) {
+        Byte::class -> if (nullable) RealmListContainer::nullableByteListField else RealmListContainer::byteListField
+        Char::class -> if (nullable) RealmListContainer::nullableCharListField else RealmListContainer::charListField
+        Short::class -> if (nullable) RealmListContainer::nullableShortListField else RealmListContainer::shortListField
+        Int::class -> if (nullable) RealmListContainer::nullableIntListField else RealmListContainer::intListField
+        Long::class -> if (nullable) RealmListContainer::nullableLongListField else RealmListContainer::longListField
+        Boolean::class -> if (nullable) RealmListContainer::nullableBooleanListField else RealmListContainer::booleanListField
+        Float::class -> if (nullable) RealmListContainer::nullableFloatListField else RealmListContainer::floatListField
+        Double::class -> if (nullable) RealmListContainer::nullableDoubleListField else RealmListContainer::doubleListField
+        String::class -> if (nullable) RealmListContainer::nullableStringListField else RealmListContainer::stringListField
+        RealmObject::class -> RealmListContainer::objectListField
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
-    } as KMutableProperty1<Sample, RealmList<T>?>
+    } as KMutableProperty1<RealmListContainer, RealmList<T>>
 
-    private val unmanagedTesters: List<UnmanagedListGenericTester<Any?>> by lazy {
-        TypeDescriptor.allListFieldTypes.map { listType ->
-            listType.elementType.classifier.let { classifier ->
-                UnmanagedListGenericTester(classifier, getDataSetForClassifier(classifier))
-            }
+    private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): TypeSafetyManager<*> {
+        return if (nullable) {
+            NullableList(
+                property = getPropertyForClassifier<Any?>(classifier),
+                dataSet = getDataSetForClassifier(classifier)
+            )
+        } else {
+            NonNullableList(
+                property = getPropertyForClassifier<Any>(classifier),
+                dataSet = getDataSetForClassifier(classifier)
+            )
         }
     }
 
-    private val managedTesters: List<ManagedListTester<*>> by lazy {
-        // TODO don't use the types directly from TypeDescriptor, but have a reference to it and modify from here
-        TypeDescriptor.allListFieldTypes.map {
-            when (val classifier = it.elementType.classifier) {
-                RealmObject::class -> ManagedListRealmObjectTester(
-                    classifier = classifier,
-                    initialData = getDataSetForClassifier(classifier),
-                    realm = realm,
-                    property = getPropertyForClassifier(classifier)
+    private val unmanagedTesters: List<ListTester> by lazy {
+        descriptors.map {
+            UnmanagedListApi(
+                typeSafetyManager = getTypeSafety(
+                    it.elementType.classifier,
+                    it.elementType.nullable
                 )
-                else -> ManagedListGenericTester(
-                    classifier = classifier,
-                    initialData = getDataSetForClassifier<List<Any>>(classifier),
+            )
+        }
+    }
+
+    private val managedTesters: List<ListTester> by lazy {
+        descriptors.map {
+            val elementType = it.elementType
+            when (val classifier = elementType.classifier) {
+                RealmObject::class -> ManagedRealmObjectListApi(
                     realm = realm,
-                    property = getPropertyForClassifier(classifier)
+                    typeSafetyManager = NonNullableList(
+                        property = RealmListContainer::objectListField,
+                        dataSet = OBJECT_VALUES
+                    )
+                )
+                else -> ManagedListApi(
+                    realm = realm,
+                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
                 )
             }
         }
     }
 }
 
-/**
- * Tester for RealmLists.
- *
- * We iterate over all supported types instead of feeding the tests with parameterized tests. In
- * order to keep execution errors visible and to provide readable information as to why a particular
- * test might have failed, we use the [errorCatcher] function to capture potential assertion errors
- * and add information regarding the data type being tested.
- */
-internal abstract class ListTester<T>(
-    protected val classifier: KClassifier,
-    protected val initialData: List<T>
-) {
+// ----------------------------------------------
+// Entry point
+// ----------------------------------------------
 
-    abstract override fun toString(): String
+internal interface ListTester {
 
-    abstract fun getter()
-    abstract fun add()
+    fun test()
 
     /**
      * This method acts as an assertion error catcher in case one of the classifiers we use for
@@ -162,7 +174,7 @@ internal abstract class ListTester<T>(
      *
      * @param block lambda with the actual test logic to be run
      */
-    protected fun errorCatcher(block: () -> Unit) {
+    fun errorCatcher(block: () -> Unit) {
         // TODO consider saving all exceptions and dump them at the end
         try {
             block()
@@ -172,124 +184,152 @@ internal abstract class ListTester<T>(
     }
 }
 
-/**
- * Tester for unmanaged types.
- */
-internal class UnmanagedListGenericTester<T>(
-    classifier: KClassifier,
-    initialData: List<T>
-) : ListTester<T>(classifier, initialData) {
+// ----------------------------------------------
+// Property nullability dimension
+// ----------------------------------------------
 
-    override fun toString(): String = "Unmanaged-$classifier"
+internal interface TypeSafetyManager<T> {
+    val property: KMutableProperty1<RealmListContainer, RealmList<T>>
+    val dataSet: List<T>
 
-    override fun getter() {
-        errorCatcher {
-            val list = RealmList<T>()
-            initialData.forEachIndexed { index, e ->
-                assertEquals(index, list.size)
-                assertTrue(list.add(e))
-                assertEquals(index + 1, list.size)
-            }
+    fun getList(realm: MutableRealm? = null): RealmList<T>
+    fun getInitialDataSet(): List<T>
+}
+
+internal class NullableList<T>(
+    override val property: KMutableProperty1<RealmListContainer, RealmList<T?>>,
+    override val dataSet: List<T?>
+) : TypeSafetyManager<T?> {
+
+    override fun getList(realm: MutableRealm?): RealmList<T?> {
+        val container = RealmListContainer().let {
+            realm?.copyToRealm(it) ?: it
         }
+        return property.get(container)
+    }
+
+    override fun getInitialDataSet(): List<T?> = dataSet
+}
+
+internal class NonNullableList<T>(
+    override val property: KMutableProperty1<RealmListContainer, RealmList<T>>,
+    override val dataSet: List<T>
+) : TypeSafetyManager<T> {
+
+    override fun getList(realm: MutableRealm?): RealmList<T> {
+        val container = RealmListContainer().let {
+            realm?.copyToRealm(it) ?: it
+        }
+        return property.get(container)
+    }
+
+    override fun getInitialDataSet(): List<T> = dataSet
+}
+
+// ----------------------------------------------
+// Mode dimension
+// ----------------------------------------------
+
+internal interface UnmanagedList
+
+internal interface ManagedList {
+    val realm: Realm
+}
+
+// ----------------------------------------------
+// API dimension
+// ----------------------------------------------
+
+internal interface ListApi<T> : ListTester {
+    fun add()
+}
+
+// ----------------------------------------------
+// RealmList - managed
+// ----------------------------------------------
+
+internal class ManagedListApi<T>(
+    override val realm: Realm,
+    private val typeSafetyManager: TypeSafetyManager<T>
+) : ManagedList, ListApi<T> {
+
+    override fun test() {
+        add()
     }
 
     override fun add() {
         errorCatcher {
-            val list = RealmList<T>()
-            initialData.forEachIndexed { index, e ->
-                assertEquals(index, list.size)
-                assertTrue(list.add(e))
-                assertEquals(index + 1, list.size)
-            }
+            realm.writeBlocking {
+                val list = typeSafetyManager.getList(this)
 
-            // Uncomment this to make test fail
-//            assertEquals(2, list.size)
+                assertNotNull(list)
+                assertTrue(list.isEmpty())
+
+                typeSafetyManager.getInitialDataSet()
+                    .forEachIndexed { index, e ->
+                        assertEquals(index, list.size)
+                        assertTrue(list.add(e))
+                        assertEquals(index + 1, list.size)
+                    }
+            }
         }
     }
 }
 
-/**
- * Tester for managed types. Subclasses represent the different data types supported by RealmLists.
- */
-internal abstract class ManagedListTester<T>(
-    classifier: KClassifier,
-    initialData: List<T>,
-    private val realm: Realm,
-    private val property: KMutableProperty1<Sample, RealmList<T>?>
-) : ListTester<T>(classifier, initialData) {
+internal class ManagedRealmObjectListApi(
+    override val realm: Realm,
+    private val typeSafetyManager: TypeSafetyManager<RealmListContainer>
+) : ManagedList, ListApi<RealmListContainer> {
 
-    override fun toString(): String = "Managed-$classifier"
-
-    override fun getter() {
-        errorCatcher {
-            realm.writeBlocking {
-                val sample = copyToRealm(Sample())
-                val list = property.get(sample)
-
-                assertNotNull(list)
-                assertTrue(list.isEmpty())
-
-                // TODO use addAll when ready
-                initialData.forEachIndexed { index, e ->
-                    assertAdd(this, list, index, e)
-                }
-
-                val sameList = property.get(sample)
-                assertNotNull(sameList)
-                assertFalse(list.isEmpty())
-            }
-        }
+    override fun test() {
+        add()
     }
-
-    abstract fun assertAdd(realm: MutableRealm, list: RealmList<T>, index: Int, element: T)
 
     override fun add() {
         errorCatcher {
             realm.writeBlocking {
-                val sample = copyToRealm(Sample())
-                val list = property.get(sample)
+                val list = typeSafetyManager.getList(this)
 
                 assertNotNull(list)
                 assertTrue(list.isEmpty())
 
-                initialData.forEachIndexed { index, e ->
+                typeSafetyManager.getInitialDataSet()
+                    .forEachIndexed { index, e ->
+                        assertEquals(index, list.size)
+                        assertTrue(list.add(copyToRealm(e)))
+                        assertEquals(index + 1, list.size)
+                    }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------
+// RealmList - unmanaged
+// ----------------------------------------------
+
+internal class UnmanagedListApi<T>(
+    private val typeSafetyManager: TypeSafetyManager<T>
+) : UnmanagedList, ListApi<T> {
+
+    override fun test() {
+        add()
+    }
+
+    override fun add() {
+        errorCatcher {
+            val list = typeSafetyManager.getList()
+
+            assertNotNull(list)
+            assertTrue(list.isEmpty())
+
+            typeSafetyManager.getInitialDataSet()
+                .forEachIndexed { index, e ->
                     assertEquals(index, list.size)
-                    assertAdd(this, list, index, e)
+                    assertTrue(list.add(e))
                     assertEquals(index + 1, list.size)
                 }
-            }
         }
-    }
-}
-
-/**
- * Tester for generic, primitive types.
- */
-internal class ManagedListGenericTester<T>(
-    classifier: KClassifier,
-    initialData: List<T>,
-    realm: Realm,
-    property: KMutableProperty1<Sample, RealmList<T>?>
-) : ManagedListTester<T>(classifier, initialData, realm, property) {
-
-    override fun assertAdd(realm: MutableRealm, list: RealmList<T>, index: Int, element: T) {
-        assertTrue(list.add(element))
-    }
-}
-
-/**
- * Tester for [RealmObject]s.
- */
-internal class ManagedListRealmObjectTester<T : RealmObject>(
-    classifier: KClassifier,
-    initialData: List<T>,
-    realm: Realm,
-    property: KMutableProperty1<Sample, RealmList<T>?>
-) : ManagedListTester<T>(classifier, initialData, realm, property) {
-
-    override fun assertAdd(realm: MutableRealm, list: RealmList<T>, index: Int, element: T) {
-        // Ensure we copy the object to Realm before adding it
-        assertTrue(list.add(realm.copyToRealm(element)))
     }
 }
 
@@ -306,5 +346,17 @@ internal val BYTE_VALUES = listOf<Byte>(1, 2)
 internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
 internal val BOOLEAN_VALUES = listOf(true, false)
-internal val OBJECT_VALUES =
-    listOf(Sample().apply { stringField = "A" }, Sample().apply { stringField = "B" })
+internal val OBJECT_VALUES = listOf(
+    RealmListContainer().apply { stringField = "A" },
+    RealmListContainer().apply { stringField = "B" }
+)
+
+internal val NULLABLE_CHAR_VALUES = listOf('a', 'b', null)
+internal val NULLABLE_STRING_VALUES = listOf("ABC", "BCD", null)
+internal val NULLABLE_INT_VALUES = listOf(1, 2, null)
+internal val NULLABLE_LONG_VALUES = listOf<Long?>(1, 2, null)
+internal val NULLABLE_SHORT_VALUES = listOf<Short?>(1, 2, null)
+internal val NULLABLE_BYTE_VALUES = listOf<Byte?>(1, 2, null)
+internal val NULLABLE_FLOAT_VALUES = listOf(1F, 2F, null)
+internal val NULLABLE_DOUBLE_VALUES = listOf(1.0, 2.0, null)
+internal val NULLABLE_BOOLEAN_VALUES = listOf(true, false, null)
