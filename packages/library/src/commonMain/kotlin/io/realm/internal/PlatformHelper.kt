@@ -10,3 +10,5 @@ expect object PlatformHelper {
     // Returns the default logger for the platform
     actual fun createDefaultSystemLogger(tag: String): RealmLogger
 }
+
+expect val transactionMap: MutableMap<SuspendableWriter, Boolean>

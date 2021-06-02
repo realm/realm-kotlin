@@ -17,10 +17,15 @@
 
 package io.realm.util
 
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+
 // Platform dependant helper methods
 expect object PlatformUtils {
     fun createTempDir(): String
     fun deleteTempDir(path: String)
+    @OptIn(ExperimentalTime::class)
+    fun sleep(duration: Duration)
 }
 
 // Platform independent helper methods

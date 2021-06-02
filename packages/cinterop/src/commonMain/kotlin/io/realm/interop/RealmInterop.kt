@@ -53,6 +53,7 @@ expect object RealmInterop {
 
     fun realm_begin_read(realm: NativePointer)
     fun realm_begin_write(realm: NativePointer)
+    fun realm_is_in_transaction(realm: NativePointer): Boolean
     fun realm_commit(realm: NativePointer)
     fun realm_rollback(realm: NativePointer)
 

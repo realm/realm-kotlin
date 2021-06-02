@@ -294,6 +294,10 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_begin_write(realm.cptr()))
     }
 
+    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_writable(realm.cptr())
+    }
+
     actual fun realm_commit(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_commit(realm.cptr()))
     }

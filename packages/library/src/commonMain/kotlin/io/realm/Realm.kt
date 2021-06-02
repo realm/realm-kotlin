@@ -19,6 +19,9 @@ import io.realm.internal.SuspendableWriter
 import io.realm.internal.util.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -109,45 +112,30 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
                 // FIXME Currently we need this to be a live realm to be able to continue doing
                 //  writeBlocking transactions.
                 dbPointer = RealmInterop.realm_thaw(newRealm)
+                // We need to start a read transaction to be able to retrieve version id, etc.
+                RealmInterop.realm_begin_read(dbPointer)
                 version = newVersion
             }
         }
     }
 
     /**
-     * Modify the underlying Realm file by creating a write transaction on the current thread. Write
-     * transactions automatically commit any changes made when the closure returns unless
-     * [MutableRealm.cancelWrite] was called.
+     * Modify the underlying Realm file while blocking the calling thread until the transaction is
+     * done. Write transactions automatically commit any changes made when the closure returns
+     * unless [MutableRealm.cancelWrite] was called.
      *
      * The write transaction always represent the latest version of data in the Realm file, even if the calling
      * Realm not yet represent this.
      *
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block.
+     *
+     * @throws IllegalStateException if invoked inside an existing transaction.
      */
-    @Suppress("TooGenericExceptionCaught")
     fun <R> writeBlocking(block: MutableRealm.() -> R): R {
-        // While not efficiently to open a new Realm just for a write, it makes it a lot
-        // easier to control the API surface between Realm and MutableRealm
-        val writerRealm = MutableRealm(configuration, dbPointer)
-        try {
-            writerRealm.beginTransaction()
-            val returnValue: R = block(writerRealm)
-            if (writerRealm.commitWrite && !isClosed()) {
-                writerRealm.commitTransaction()
-            }
-            return returnValue
-        } catch (e: Exception) {
-            // Only cancel writes for exceptions. For errors assume that something has gone
-            // horribly wrong and the process is exiting. And canceling the write might just
-            // hide the true underlying error.
-            try {
-                writerRealm.cancelWrite()
-            } catch (cancelException: Throwable) {
-                // Swallow any exception from `cancelWrite` as the primary error is more important.
-                log.error(e)
-            }
-            throw e
+        writer.checkInTransaction("Cannot initiate transaction when already in a write transaction")
+        return runBlocking {
+            write(block)
         }
     }
 
@@ -156,10 +144,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * method has been called will then an [IllegalStateException].
      */
     public override fun close() {
+        writer.checkInTransaction("Cannot close in a transaction block")
         super.close()
         // TODO There is currently nothing that tears down the dispatcher
-        runBlocking() {
-            writer.close()
-        }
     }
 }

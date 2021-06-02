@@ -16,6 +16,7 @@
 package io.realm.internal
 
 import io.realm.log.RealmLogger
+import java.lang.ThreadLocal
 
 actual object PlatformHelper {
 
@@ -25,3 +26,14 @@ actual object PlatformHelper {
     // Returns the default logger for the platform
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
 }
+
+class ThreadLocal<T> constructor(initialValue: T) {
+    // FIXME withInitial only available on API 26
+    private var _value: ThreadLocal<T> = ThreadLocal.withInitial { initialValue }
+    var value: T
+        get() { return _value.get() as T }
+        set(value) { _value.set(value) }
+}
+
+actual val transactionMap: MutableMap<SuspendableWriter, Boolean> =
+    ThreadLocal<MutableMap<SuspendableWriter, Boolean>>(mutableMapOf()).value

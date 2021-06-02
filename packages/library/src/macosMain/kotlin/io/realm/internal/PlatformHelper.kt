@@ -16,6 +16,7 @@
 package io.realm.internal
 
 import io.realm.log.RealmLogger
+import kotlin.native.concurrent.ThreadLocal
 
 actual object PlatformHelper {
     @Suppress("FunctionOnlyReturningConstant")
@@ -25,3 +26,6 @@ actual object PlatformHelper {
 
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
 }
+
+@ThreadLocal
+actual val transactionMap: MutableMap<SuspendableWriter, Boolean> = HashMap()
