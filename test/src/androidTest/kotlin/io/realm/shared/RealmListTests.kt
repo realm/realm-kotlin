@@ -61,10 +61,20 @@ class RealmListTests {
     @Test
     fun add() {
         for (tester in unmanagedTesters) {
-            tester.test()
+            tester.add()
         }
         for (tester in managedTesters) {
-            tester.test()
+            tester.add()
+        }
+    }
+
+    @Test
+    fun addWithIndex() {
+        for (tester in unmanagedTesters) {
+            tester.addWithIndex()
+        }
+        for (tester in managedTesters) {
+            tester.addWithIndex()
         }
     }
 
@@ -109,20 +119,22 @@ class RealmListTests {
     private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): TypeSafetyManager<*> {
         return if (nullable) {
             NullableList(
+                classifier = classifier,
                 property = getPropertyForClassifier<Any?>(classifier),
                 dataSet = getDataSetForClassifier(classifier)
             )
         } else {
             NonNullableList(
+                classifier = classifier,
                 property = getPropertyForClassifier<Any>(classifier),
                 dataSet = getDataSetForClassifier(classifier)
             )
         }
     }
 
-    private val unmanagedTesters: List<ListTester> by lazy {
+    private val unmanagedTesters: List<ListApiTester> by lazy {
         descriptors.map {
-            UnmanagedListApi(
+            UnmanagedListTester(
                 typeSafetyManager = getTypeSafety(
                     it.elementType.classifier,
                     it.elementType.nullable
@@ -131,18 +143,19 @@ class RealmListTests {
         }
     }
 
-    private val managedTesters: List<ListTester> by lazy {
+    private val managedTesters: List<ListApiTester> by lazy {
         descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
-                RealmObject::class -> ManagedRealmObjectListApi(
+                RealmObject::class -> ManagedRealmObjectListTester(
                     realm = realm,
                     typeSafetyManager = NonNullableList(
+                        classifier = classifier,
                         property = RealmListContainer::objectListField,
                         dataSet = OBJECT_VALUES
                     )
                 )
-                else -> ManagedListApi(
+                else -> ManagedGenericListTester(
                     realm = realm,
                     typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
                 )
@@ -152,12 +165,14 @@ class RealmListTests {
 }
 
 // ----------------------------------------------
-// Entry point
+// API dimension
 // ----------------------------------------------
 
-internal interface ListTester {
+internal interface ListApiTester {
 
-    fun test()
+    override fun toString(): String
+    fun add()
+    fun addWithIndex()
 
     /**
      * This method acts as an assertion error catcher in case one of the classifiers we use for
@@ -189,17 +204,22 @@ internal interface ListTester {
 // ----------------------------------------------
 
 internal interface TypeSafetyManager<T> {
+    val classifier: KClassifier
     val property: KMutableProperty1<RealmListContainer, RealmList<T>>
     val dataSet: List<T>
 
+    override fun toString(): String     // Default implementation not allowed, it comes from "Any"
     fun getList(realm: MutableRealm? = null): RealmList<T>
     fun getInitialDataSet(): List<T>
 }
 
 internal class NullableList<T>(
+    override val classifier: KClassifier,
     override val property: KMutableProperty1<RealmListContainer, RealmList<T?>>,
     override val dataSet: List<T?>
 ) : TypeSafetyManager<T?> {
+
+    override fun toString(): String = property.name
 
     override fun getList(realm: MutableRealm?): RealmList<T?> {
         val container = RealmListContainer().let {
@@ -212,9 +232,12 @@ internal class NullableList<T>(
 }
 
 internal class NonNullableList<T>(
+    override val classifier: KClassifier,
     override val property: KMutableProperty1<RealmListContainer, RealmList<T>>,
     override val dataSet: List<T>
 ) : TypeSafetyManager<T> {
+
+    override fun toString(): String = property.name
 
     override fun getList(realm: MutableRealm?): RealmList<T> {
         val container = RealmListContainer().let {
@@ -237,25 +260,21 @@ internal interface ManagedList {
 }
 
 // ----------------------------------------------
-// API dimension
-// ----------------------------------------------
-
-internal interface ListApi<T> : ListTester {
-    fun add()
-}
-
-// ----------------------------------------------
 // RealmList - managed
 // ----------------------------------------------
 
-internal class ManagedListApi<T>(
+internal abstract class ManagedListTester<T>(
     override val realm: Realm,
     private val typeSafetyManager: TypeSafetyManager<T>
-) : ManagedList, ListApi<T> {
+) : ManagedList, ListApiTester {
 
-    override fun test() {
-        add()
-    }
+    /**
+     * We have to make sure we copy RealmObjects to the Realm before asserting anything. For generic
+     * types this is not needed.
+     */
+    abstract fun MutableRealm.copyToRealmIfNeeded(element: T): T
+
+    override fun toString(): String = "Managed-$typeSafetyManager"
 
     override fun add() {
         errorCatcher {
@@ -268,68 +287,72 @@ internal class ManagedListApi<T>(
                 typeSafetyManager.getInitialDataSet()
                     .forEachIndexed { index, e ->
                         assertEquals(index, list.size)
-                        assertTrue(list.add(e))
+                        assertTrue(list.add(copyToRealmIfNeeded(e)))
                         assertEquals(index + 1, list.size)
                     }
             }
         }
     }
+
+    override fun addWithIndex() {
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.getList(this)
+
+                assertNotNull(list)
+                assertTrue(list.isEmpty())
+
+                typeSafetyManager.getInitialDataSet()
+                    .forEachIndexed { index, e ->
+                        assertEquals(index, list.size)
+                        list.add(0, copyToRealmIfNeeded(e))
+                        assertEquals(index + 1, list.size)
+                    }
+            }
+        }
+    }
+
 }
 
-internal class ManagedRealmObjectListApi(
+internal class ManagedGenericListTester<T>(
     override val realm: Realm,
-    private val typeSafetyManager: TypeSafetyManager<RealmListContainer>
-) : ManagedList, ListApi<RealmListContainer> {
+    typeSafetyManager: TypeSafetyManager<T>
+) : ManagedListTester<T>(realm, typeSafetyManager) {
 
-    override fun test() {
-        add()
-    }
+    override fun MutableRealm.copyToRealmIfNeeded(element: T): T = element
+}
 
-    override fun add() {
-        errorCatcher {
-            realm.writeBlocking {
-                val list = typeSafetyManager.getList(this)
+internal class ManagedRealmObjectListTester(
+    override val realm: Realm,
+    typeSafetyManager: TypeSafetyManager<RealmListContainer>
+) : ManagedListTester<RealmListContainer>(realm, typeSafetyManager) {
 
-                assertNotNull(list)
-                assertTrue(list.isEmpty())
-
-                typeSafetyManager.getInitialDataSet()
-                    .forEachIndexed { index, e ->
-                        assertEquals(index, list.size)
-                        assertTrue(list.add(copyToRealm(e)))
-                        assertEquals(index + 1, list.size)
-                    }
-            }
-        }
-    }
+    override fun MutableRealm.copyToRealmIfNeeded(element: RealmListContainer): RealmListContainer =
+        copyToRealm(element)
 }
 
 // ----------------------------------------------
 // RealmList - unmanaged
 // ----------------------------------------------
 
-internal class UnmanagedListApi<T>(
+internal class UnmanagedListTester<T>(
     private val typeSafetyManager: TypeSafetyManager<T>
-) : UnmanagedList, ListApi<T> {
+) : UnmanagedList, ListApiTester {
 
-    override fun test() {
-        add()
+    override fun toString(): String {
+        return "Unmanaged-$typeSafetyManager"
     }
 
     override fun add() {
-        errorCatcher {
-            val list = typeSafetyManager.getList()
+        // No need to assert anything, just checking the facade works
+        typeSafetyManager.getList()
+            .add(typeSafetyManager.getInitialDataSet()[0])
+    }
 
-            assertNotNull(list)
-            assertTrue(list.isEmpty())
-
-            typeSafetyManager.getInitialDataSet()
-                .forEachIndexed { index, e ->
-                    assertEquals(index, list.size)
-                    assertTrue(list.add(e))
-                    assertEquals(index + 1, list.size)
-                }
-        }
+    override fun addWithIndex() {
+        // No need to assert anything, just checking the facade works
+        typeSafetyManager.getList()
+            .add(0, typeSafetyManager.getInitialDataSet()[0])
     }
 }
 
