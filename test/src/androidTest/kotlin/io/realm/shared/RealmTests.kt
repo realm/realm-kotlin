@@ -26,7 +26,6 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.yield
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest
@@ -72,7 +71,6 @@ class RealmTests {
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }
-
 
     @Test
     fun initialVersion() {
@@ -225,6 +223,22 @@ class RealmTests {
 
     @Test
     @Suppress("invisible_member")
+    fun writeBlockingWhileWritingIsSerialized() = runBlocking {
+        val mutex = Mutex(true)
+        val write = async {
+            realm.write {
+                mutex.unlock()
+                PlatformUtils.sleep(1000.milliseconds)
+            }
+        }
+        mutex.lock()
+        realm.writeBlocking {
+            assertTrue { write.isCompleted }
+        }
+    }
+
+    @Test
+    @Suppress("invisible_member")
     fun writeBlockingInsideWriteThrows() {
         runBlocking {
             realm.write {
@@ -287,8 +301,6 @@ class RealmTests {
         Unit
     }
 
-
-
     @Test
     @Suppress("invisible_member")
     fun closingRealmInsideWriteThrows() {
@@ -330,6 +342,10 @@ class RealmTests {
         realm.close()
         assertTrue(realm.isClosed())
         realm = Realm.open(configuration)
+        // This assertion doesn't hold on MacOS as all code executes on the same thread as the
+        // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
+        // the mutex is unlocked. Doing so would require the write block to be able to suspend in
+        // some way (or the writer to be backed by another thread).
         assertEquals(0, realm.objects(Parent::class).size)
     }
 
@@ -357,7 +373,10 @@ class RealmTests {
         realm.close()
         assertTrue(realm.isClosed())
         realm = Realm.open(configuration)
+        // This assertion doesn't hold on MacOS as all code executes on the same thread as the
+        // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
+        // the mutex is unlocked. Doing so would require the write block to be able to suspend in
+        // some way (or the writer to be backed by another thread).
         assertEquals(1, realm.objects(Parent::class).size)
     }
-
 }

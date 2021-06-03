@@ -37,6 +37,6 @@ actual object PlatformUtils {
 
     @OptIn(ExperimentalTime::class)
     actual fun sleep(duration: Duration) {
-        Thread.sleep(duration.toLongNanoseconds())
+        Thread.sleep(duration.toLongMilliseconds())
     }
 }

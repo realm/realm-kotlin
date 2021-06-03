@@ -37,7 +37,12 @@ import kotlinx.coroutines.withContext
  * @param configuration
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
-class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: CoroutineDispatcher) {
+class SuspendableWriter(
+    configuration: RealmConfiguration,
+    val dispatcher: CoroutineDispatcher = configuration.writeDispatcher(
+        configuration.path
+    )
+) {
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealm by lazy {
         MutableRealm(configuration)
@@ -47,7 +52,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
         transactionMap[this@SuspendableWriter] = false
     }
 
-    suspend fun <R> write(block: suspend MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
+    suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
         return withContext(dispatcher) {
             var result: R
@@ -66,7 +71,6 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
                 if (realm.isInTransaction()) {
                     realm.cancelWrite()
                 }
-                // Should we wrap in a specific exception type like RealmWriteException?
                 throw e
             } finally {
                 transactionMap[this@SuspendableWriter] = false
@@ -110,7 +114,7 @@ class SuspendableWriter(configuration: RealmConfiguration, val dispatcher: Corou
 
     // Checks if the current thread is already executing a transaction
     internal fun checkInTransaction(message: String) {
-        if (transactionMap[this@SuspendableWriter]!!) {
+        if (transactionMap[this@SuspendableWriter] ?: false) {
             throw IllegalStateException(message)
         }
     }

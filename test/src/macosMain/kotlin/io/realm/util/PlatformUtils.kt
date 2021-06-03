@@ -38,8 +38,8 @@ actual object PlatformUtils {
     actual fun sleep(duration: Duration) {
         val nanoseconds = duration.toLongNanoseconds()
         val time = cValue<timespec> {
-            tv_sec = nanoseconds/1000000000
-            tv_nsec = nanoseconds%1000000000
+            tv_sec = nanoseconds / 1000000000
+            tv_nsec = nanoseconds % 1000000000
         }
         nanosleep(time, null)
     }

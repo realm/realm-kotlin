@@ -15,8 +15,13 @@
  */
 package io.realm.internal
 
+import android.os.Handler
+import android.os.HandlerThread
 import io.realm.log.RealmLogger
-import java.lang.ThreadLocal
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.android.asCoroutineDispatcher
+import kotlin.coroutines.CoroutineContext
 
 actual object PlatformHelper {
 
@@ -27,13 +32,30 @@ actual object PlatformHelper {
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
 }
 
-class ThreadLocal<T> constructor(initialValue: T) {
-    // FIXME withInitial only available on API 26
-    private var _value: ThreadLocal<T> = ThreadLocal.withInitial { initialValue }
-    var value: T
-        get() { return _value.get() as T }
-        set(value) { _value.set(value) }
+actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+    val thread = HandlerThread("RealmWriter[$id]")
+    thread.start()
+    return Handler(thread.looper).asCoroutineDispatcher()
 }
 
-actual val transactionMap: MutableMap<SuspendableWriter, Boolean> =
-    ThreadLocal<MutableMap<SuspendableWriter, Boolean>>(mutableMapOf()).value
+// FIXME All of the below is common with Android. Should be align in separate source set but
+//  that is already tracked by https://github.com/realm/realm-kotlin/issues/175
+
+// Expose platform runBlocking through common interface
+public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    return kotlinx.coroutines.runBlocking(context, block)
+}
+
+private class JVMThreadLocal<T> constructor(val initializer: () -> T) : java.lang.ThreadLocal<T>() {
+    override fun initialValue(): T? {
+        return initializer()
+    }
+}
+
+private val jvmTransactionMap =
+    io.realm.internal.JVMThreadLocal<MutableMap<SuspendableWriter, Boolean>>({ mutableMapOf() })
+actual var transactionMap: MutableMap<SuspendableWriter, Boolean>
+    get() = jvmTransactionMap.get()!!
+    set(value) {
+        jvmTransactionMap.set(value)
+    }
