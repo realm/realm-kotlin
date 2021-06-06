@@ -34,3 +34,4 @@ expect fun defaultWriteDispatcher(id: String): CoroutineDispatcher
  * Thread local map of transactional state for the various writers.
  */
 expect var transactionMap: MutableMap<SuspendableWriter, Boolean>
+

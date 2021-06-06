@@ -39,4 +39,6 @@ actual object PlatformUtils {
     actual fun sleep(duration: Duration) {
         Thread.sleep(duration.toLongMilliseconds())
     }
+
+    actual fun threadId(): ULong = Thread.currentThread().id.toULong()
 }

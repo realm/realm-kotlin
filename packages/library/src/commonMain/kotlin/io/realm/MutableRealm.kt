@@ -19,7 +19,13 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
+
+// FIXME Moved here as the SuspendableWriter and thus this
+// Track whether or not the write should be persisted
+@ThreadLocal
+internal var commitWrite: Boolean = true
 
 /**
  * This class represents the writeable state of a Realm file. The only way to modify data in a Realm is through
@@ -28,8 +34,9 @@ import kotlin.reflect.KClass
  */
 class MutableRealm : BaseRealm {
 
-    // Track wether or not the write should be persisted
-    internal var commitWrite: Boolean = true
+    // Must be thread local for native, as MutableRealm instances are held by SuspendableWriter
+    // which is shared between threads
+//    internal var commitWrite: Boolean = true
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181

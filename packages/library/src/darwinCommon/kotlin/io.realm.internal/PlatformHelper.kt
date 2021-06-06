@@ -18,9 +18,10 @@ package io.realm.internal
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.newSingleThreadContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.native.concurrent.ThreadLocal
+import kotlin.native.concurrent.freeze
 
 // Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
@@ -31,12 +32,9 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
  * The default dispatcher for Darwin platforms is backed by a run loop on the calling thread.
  */
 actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
-    // TODO Propagate id to the underlying thread ... if it makes sense when we use the default
-    //  runloop on the current thread!?
-    // This triggers setting up a run loop, which is a requirement for the default dispatcher below
-    runBlocking {}
-    return Dispatchers.Default
+    return newSingleThreadContext(id)
 }
 
 @ThreadLocal
 actual var transactionMap: MutableMap<SuspendableWriter, Boolean> = HashMap()
+

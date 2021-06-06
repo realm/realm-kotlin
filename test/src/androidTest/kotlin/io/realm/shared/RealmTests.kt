@@ -23,6 +23,7 @@ import io.realm.util.PlatformUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -101,7 +102,7 @@ class RealmTests {
     fun versionInsideWriteIsLatest() {
         assertEquals(INITIAL_VERSION, realm.version)
         realm.writeBlocking {
-            assertEquals(INITIAL_VERSION, realm.version)
+            assertEquals(INITIAL_VERSION, version)
             cancelWrite()
         }
         assertEquals(INITIAL_VERSION, realm.version)
@@ -111,7 +112,7 @@ class RealmTests {
     fun numberOfActiveVersions() {
         assertEquals(2, realm.getNumberOfActiveVersions())
         realm.writeBlocking {
-            assertEquals(2, realm.getNumberOfActiveVersions())
+            assertEquals(2, getNumberOfActiveVersions())
         }
         assertEquals(2, realm.getNumberOfActiveVersions())
     }
@@ -225,36 +226,17 @@ class RealmTests {
     @Suppress("invisible_member")
     fun writeBlockingWhileWritingIsSerialized() = runBlocking {
         val mutex = Mutex(true)
+        val exit = Mutex(true)
         val write = async {
             realm.write {
                 mutex.unlock()
-                PlatformUtils.sleep(1000.milliseconds)
+                PlatformUtils.sleep(1.milliseconds)
+                exit.unlock()
             }
         }
         mutex.lock()
         realm.writeBlocking {
-            assertTrue { write.isCompleted }
-        }
-    }
-
-    @Test
-    @Suppress("invisible_member")
-    fun writeBlockingInsideWriteThrows() {
-        runBlocking {
-            realm.write {
-                assertFailsWith<IllegalStateException> {
-                    realm.writeBlocking { }
-                }
-            }
-        }
-    }
-
-    @Test
-    fun writeBlockIngInsideWriteBlockingThrows() {
-        realm.writeBlocking {
-            assertFailsWith<IllegalStateException> {
-                realm.writeBlocking { }
-            }
+            assertFalse { exit.isLocked }
         }
     }
 
@@ -275,16 +257,20 @@ class RealmTests {
     @Suppress("invisible_member")
     fun closeCausesOngoingWriteToThrow() = runBlocking {
         val mutex = Mutex(true)
+        val exit = Mutex(true)
         val write = async {
             assertFailsWith<IllegalStateException> {
                 realm.write {
                     mutex.unlock()
-                    PlatformUtils.sleep(1000.milliseconds)
+                    runBlocking {
+                        exit.lock()
+                    }
                 }
             }
         }
         mutex.lock()
         realm.close()
+        exit.unlock()
         assert(write.await() is IllegalStateException)
     }
 
@@ -303,36 +289,16 @@ class RealmTests {
 
     @Test
     @Suppress("invisible_member")
-    fun closingRealmInsideWriteThrows() {
-        runBlocking {
-            realm.write {
-                assertFailsWith<IllegalStateException> {
-                    realm.close()
-                }
-            }
-        }
-        assertFalse(realm.isClosed())
-    }
-
-    @Test
-    fun closingRealmInsideWriteBlockingThrows() {
-        realm.writeBlocking {
-            assertFailsWith<IllegalStateException> {
-                realm.close()
-            }
-        }
-        assertFalse(realm.isClosed())
-    }
-
-    @Test
-    @Suppress("invisible_member")
     fun coroutineCancelCausesRollback() = runBlocking {
         val mutex = Mutex(true)
         val job = async {
             realm.write {
                 copyToRealm(Parent())
                 mutex.unlock()
-                PlatformUtils.sleep(1000.milliseconds)
+                // Ensure that we keep on going until actually cancelled
+                while (isActive) {
+                    PlatformUtils.sleep(1.milliseconds)
+                }
             }
         }
         mutex.lock()
@@ -357,7 +323,10 @@ class RealmTests {
             realm.write {
                 copyToRealm(Parent())
                 mutex.unlock()
-                PlatformUtils.sleep(1000.milliseconds)
+                // Ensure that we keep on going until actually cancelled
+                while (isActive) {
+                    PlatformUtils.sleep(1.milliseconds)
+                }
             }
         }
 
