@@ -164,6 +164,8 @@ data class CoreType(
     val nullable: Boolean
 )
 
+// FIXME use PropertyType instead of "type: String", consider using a common/shared type when implementing public schema
+//  see (https://github.com/realm/realm-kotlin/issues/238)
 data class SchemaProperty(
     val type: String,
     val declaration: IrProperty,

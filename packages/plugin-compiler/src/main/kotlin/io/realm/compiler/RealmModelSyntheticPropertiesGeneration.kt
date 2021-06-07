@@ -70,6 +70,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
@@ -367,8 +368,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     val collectionTypeSymbol = when (value.collectionType) {
                                         CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
                                         CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
-                                        CollectionType.SET -> error("Sets not ready yet.")
-                                        CollectionType.DICTIONARY -> error("Dictionaries not ready yet.")
+                                        else ->
+                                            error("Unsupported collection type '${value.collectionType}' for field ${entry.key}")
                                     }
                                     putValueArgument(
                                         arg++,
@@ -385,13 +386,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(
                                         arg++,
                                         if (type == objectType) {
-                                            when (collectionTypeSymbol) {
+                                            // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                            val linkTargetType = when (collectionTypeSymbol) {
                                                 PROPERTY_COLLECTION_TYPE_NONE ->
-                                                    irString(backingField.type.classifierOrFail.descriptor.name.identifier)
+                                                    backingField.type
                                                 PROPERTY_COLLECTION_TYPE_LIST ->
-                                                    irString(backingField.symbol.descriptor.type.arguments[0].toString())
-                                                else -> error("Invalid collection type: $collectionTypeSymbol")
+                                                    (backingField.type as IrSimpleType).arguments[0] as IrSimpleType
+                                                else ->
+                                                    error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
                                             }
+                                            irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                         } else {
                                             irString("")
                                         }
