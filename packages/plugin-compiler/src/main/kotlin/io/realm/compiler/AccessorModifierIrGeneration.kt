@@ -465,64 +465,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         )
     }
 
-//    private fun getListGenericCoreType(declaration: IrProperty, name: String): CoreType {
-//        val genericClass = getGenericFromList(declaration, name)
-//
-//        // Check first if the generic is a subclass of RealmObject
-//        val descriptorType = declaration.symbol.descriptor.type
-//        val listGenericType = descriptorType.arguments[0].type
-//
-//        return if (genericClass.first == REALM_OBJECT) {
-//            // Nullable objects are not supported
-//            if (listGenericType.isNullable()) {
-//                error("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
-//            }
-//
-//            return CoreType(
-//                propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-//                nullable = false
-//            )
-//        } else {
-//            // If not a RealmObject, check whether the list itself is nullable - if so, throw error
-//            if (descriptorType.isNullable()) {
-//                error("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.")
-//            }
-//
-//            return CoreType(
-//                propertyType = getPropertyTypeFromKotlinType(listGenericType),
-//                nullable = listGenericType.isNullable()
-//            )
-//        }
-//    }
-//
-//    private fun getGenericFromList(declaration: IrProperty, name: String): Pair<String, String?> {
-//        // Check first if the generic is a subclass of RealmObject
-//        val descriptorType = declaration.symbol.descriptor.type
-//        val listGenericType = descriptorType.arguments[0].type
-//        for (superType in listGenericType.constructor.supertypes) {
-//            superType.toString().also {
-//                if (it == REALM_OBJECT) {
-//                    val realmObjectClass =
-//                        listGenericType.constructor.declarationDescriptor?.name?.identifier
-//
-//                    // Return <"RealmObject", "ActualClassThatImplementsRealmObject">
-//                    return Pair(
-//                        it,
-//                        requireNotNull(realmObjectClass) { "Missing actual RealmObjectClass." }
-//                    )
-//                }
-//            }
-//        }
-//
-//        val genericName = listGenericType.constructor.declarationDescriptor
-//            ?.name
-//            ?.identifier
-//            ?: error("Missing identifier for generic in RealmList for field '$name'")
-//
-//        // Pair.second is null because this is not a RealmObject
-//        return Pair(genericName, null)
-//    }
-
+    // TODO do the lookup only once
     private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType {
         return type.constructor.declarationDescriptor
             ?.name
