@@ -132,6 +132,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
     }
 
+    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+        return realmc.realm_is_frozen(realm.cptr())
+    }
+
     actual fun realm_close(realm: NativePointer) {
         realmc.realm_close((realm as LongPointerWrapper).ptr)
     }
@@ -380,7 +384,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_freeze(frozenResults.cptr(), liveRealm.cptr()))
+        return LongPointerWrapper(realmc.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

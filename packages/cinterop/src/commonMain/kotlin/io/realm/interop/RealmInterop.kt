@@ -42,6 +42,7 @@ expect object RealmInterop {
     fun realm_open(config: NativePointer): NativePointer
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_thaw(frozenRealm: NativePointer): NativePointer
+    fun realm_is_frozen(realm: NativePointer): Boolean
     fun realm_close(realm: NativePointer)
 
     fun realm_get_schema(realm: NativePointer): NativePointer

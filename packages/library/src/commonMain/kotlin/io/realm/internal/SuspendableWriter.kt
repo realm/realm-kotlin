@@ -97,7 +97,7 @@ class SuspendableWriter(
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 val obj: RealmObjectInternal = (result as RealmObjectInternal)
-                obj.freeze<RealmObject>(realm.dbPointer, frozenDbPointer) as R
+                obj.freeze<RealmObject>(frozenDbPointer) as R
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }
