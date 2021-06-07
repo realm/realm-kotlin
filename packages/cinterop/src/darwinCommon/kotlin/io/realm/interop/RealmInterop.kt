@@ -421,7 +421,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_list_clear(list: NativePointer) {
-        realm_wrapper.realm_list_clear(list.cptr())
+        checkedBooleanResult(realm_wrapper.realm_list_clear(list.cptr()))
     }
 
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {

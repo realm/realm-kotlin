@@ -64,6 +64,7 @@ object RealmObjectHelper {
         return null
     }
 
+    // Return type should be RealmList<R?> but causes compilation errors for native
     fun getList(obj: RealmObjectInternal, col: String): RealmList<Any?> {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
