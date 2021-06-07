@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.newSingleThreadContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.native.concurrent.ThreadLocal
-import kotlin.native.concurrent.freeze
 
 // Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
@@ -37,4 +36,3 @@ actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
 
 @ThreadLocal
 actual var transactionMap: MutableMap<SuspendableWriter, Boolean> = HashMap()
-

@@ -52,9 +52,8 @@ actual object PlatformUtils {
     actual fun threadId(): ULong {
         memScoped {
             val tidVar = alloc<ULongVar>()
-            pthread_threadid_np(null, tidVar.ptr) //.ensureUnixCallResult("pthread_threadid_np")
+            pthread_threadid_np(null, tidVar.ptr)
             return tidVar.value
         }
     }
-
 }
