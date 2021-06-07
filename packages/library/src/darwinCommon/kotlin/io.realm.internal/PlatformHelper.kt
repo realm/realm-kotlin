@@ -28,7 +28,7 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
 }
 
 /**
- * The default dispatcher for Darwin platforms is backed by a run loop on the calling thread.
+ * The default dispatcher for Darwin platforms spawns a new thread with a run loop.
  */
 actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
     return newSingleThreadContext(id)
