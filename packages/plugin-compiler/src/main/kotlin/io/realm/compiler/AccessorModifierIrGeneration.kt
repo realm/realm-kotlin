@@ -52,8 +52,10 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
 import org.jetbrains.kotlin.ir.types.isChar
@@ -70,12 +72,13 @@ import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
-import org.jetbrains.kotlin.js.descriptorUtils.nameIfStandardType
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import kotlin.collections.set
+
+private const val REALM_OBJECT = "RealmObject"
 
 /**
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
@@ -279,7 +282,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         //  }
 
                         // TODO: setter
-                        modifyAccessor(declaration, getList, collectionType = CollectionType.LIST)
+                        modifyAccessor(
+                            property = declaration,
+                            getFunction = getList,
+                            collectionType = CollectionType.LIST
+                        )
                     }
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
@@ -311,7 +318,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val backingField = property.backingField!!
         val type = when (collectionType) {
             CollectionType.NONE -> backingField.type
-            else -> null
+            CollectionType.LIST -> ((backingField.type as IrSimpleType).arguments[0] as IrTypeBase).type
+            else -> error("Collection type '$collectionType' not supported.")
         }
         val getter = property.getter
         val setter = property.setter
@@ -331,9 +339,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         ).also {
                             it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                         }.apply {
-                            if (type != null) {
-                                putTypeArgument(0, type)
-                            }
+                            putTypeArgument(0, type)
                             putValueArgument(0, irGet(receiver))
                             putValueArgument(1, irString(property.name.identifier))
                         }
@@ -459,6 +465,64 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         )
     }
 
+//    private fun getListGenericCoreType(declaration: IrProperty, name: String): CoreType {
+//        val genericClass = getGenericFromList(declaration, name)
+//
+//        // Check first if the generic is a subclass of RealmObject
+//        val descriptorType = declaration.symbol.descriptor.type
+//        val listGenericType = descriptorType.arguments[0].type
+//
+//        return if (genericClass.first == REALM_OBJECT) {
+//            // Nullable objects are not supported
+//            if (listGenericType.isNullable()) {
+//                error("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
+//            }
+//
+//            return CoreType(
+//                propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+//                nullable = false
+//            )
+//        } else {
+//            // If not a RealmObject, check whether the list itself is nullable - if so, throw error
+//            if (descriptorType.isNullable()) {
+//                error("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.")
+//            }
+//
+//            return CoreType(
+//                propertyType = getPropertyTypeFromKotlinType(listGenericType),
+//                nullable = listGenericType.isNullable()
+//            )
+//        }
+//    }
+//
+//    private fun getGenericFromList(declaration: IrProperty, name: String): Pair<String, String?> {
+//        // Check first if the generic is a subclass of RealmObject
+//        val descriptorType = declaration.symbol.descriptor.type
+//        val listGenericType = descriptorType.arguments[0].type
+//        for (superType in listGenericType.constructor.supertypes) {
+//            superType.toString().also {
+//                if (it == REALM_OBJECT) {
+//                    val realmObjectClass =
+//                        listGenericType.constructor.declarationDescriptor?.name?.identifier
+//
+//                    // Return <"RealmObject", "ActualClassThatImplementsRealmObject">
+//                    return Pair(
+//                        it,
+//                        requireNotNull(realmObjectClass) { "Missing actual RealmObjectClass." }
+//                    )
+//                }
+//            }
+//        }
+//
+//        val genericName = listGenericType.constructor.declarationDescriptor
+//            ?.name
+//            ?.identifier
+//            ?: error("Missing identifier for generic in RealmList for field '$name'")
+//
+//        // Pair.second is null because this is not a RealmObject
+//        return Pair(genericName, null)
+//    }
+
     private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType {
         return type.constructor.declarationDescriptor
             ?.name
@@ -473,7 +537,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
-                    "RealmObject" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT
+                    REALM_OBJECT -> PropertyType.RLM_PROPERTY_TYPE_OBJECT
                     else -> error("Wrong Kotlin type: '$type'")
                 }
             } ?: error("Missing identifier for type $type")

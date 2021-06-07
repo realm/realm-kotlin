@@ -30,6 +30,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -78,12 +79,22 @@ class RealmListTests {
         }
     }
 
+    @Test
+    fun addAllWithIndex() {
+        for (tester in unmanagedTesters) {
+            tester.addAllWithIndex()
+        }
+        for (tester in managedTesters) {
+            tester.addAllWithIndex()
+        }
+    }
+
     // TODO consider using TypeDescriptor as "source of truth" for classifiers
     // TODO investigate how to add properties/values directly so that it works for multiplatform
     @Suppress("UNCHECKED_CAST")
     private fun <T> getDataSetForClassifier(
         classifier: KClassifier,
-        nullable: Boolean = false
+        nullable: Boolean
     ): List<T> = when (classifier) {
         Byte::class -> if (nullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
         Char::class -> if (nullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
@@ -98,36 +109,18 @@ class RealmListTests {
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> getPropertyForClassifier(
-        classifier: KClassifier,
-        nullable: Boolean = false
-    ): KMutableProperty1<RealmListContainer, RealmList<T>> = when (classifier) {
-        Byte::class -> if (nullable) RealmListContainer::nullableByteListField else RealmListContainer::byteListField
-        Char::class -> if (nullable) RealmListContainer::nullableCharListField else RealmListContainer::charListField
-        Short::class -> if (nullable) RealmListContainer::nullableShortListField else RealmListContainer::shortListField
-        Int::class -> if (nullable) RealmListContainer::nullableIntListField else RealmListContainer::intListField
-        Long::class -> if (nullable) RealmListContainer::nullableLongListField else RealmListContainer::longListField
-        Boolean::class -> if (nullable) RealmListContainer::nullableBooleanListField else RealmListContainer::booleanListField
-        Float::class -> if (nullable) RealmListContainer::nullableFloatListField else RealmListContainer::floatListField
-        Double::class -> if (nullable) RealmListContainer::nullableDoubleListField else RealmListContainer::doubleListField
-        String::class -> if (nullable) RealmListContainer::nullableStringListField else RealmListContainer::stringListField
-        RealmObject::class -> RealmListContainer::objectListField
-        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
-    } as KMutableProperty1<RealmListContainer, RealmList<T>>
-
     private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): TypeSafetyManager<*> {
         return if (nullable) {
             NullableList(
                 classifier = classifier,
-                property = getPropertyForClassifier<Any?>(classifier),
-                dataSet = getDataSetForClassifier(classifier)
+                property = RealmListContainer.nullableProperties[classifier]!!,
+                dataSet = getDataSetForClassifier(classifier, true)
             )
         } else {
             NonNullableList(
                 classifier = classifier,
-                property = getPropertyForClassifier<Any>(classifier),
-                dataSet = getDataSetForClassifier(classifier)
+                property = RealmListContainer.nonNullableProperties[classifier]!!,
+                dataSet = getDataSetForClassifier(classifier, false)
             )
         }
     }
@@ -173,6 +166,7 @@ internal interface ListApiTester {
     override fun toString(): String
     fun add()
     fun addWithIndex()
+    fun addAllWithIndex()
 
     /**
      * This method acts as an assertion error catcher in case one of the classifiers we use for
@@ -274,6 +268,10 @@ internal abstract class ManagedListTester<T>(
      */
     abstract fun MutableRealm.copyToRealmIfNeeded(element: T): T
 
+    abstract fun MutableRealm.copyToRealmIfNeeded(elements: Collection<T>): Collection<T>
+
+    abstract fun assertEquality(expected: T, actual: T)
+
     override fun toString(): String = "Managed-$typeSafetyManager"
 
     override fun add() {
@@ -289,6 +287,7 @@ internal abstract class ManagedListTester<T>(
                         assertEquals(index, list.size)
                         assertTrue(list.add(copyToRealmIfNeeded(e)))
                         assertEquals(index + 1, list.size)
+                        assertEquality(e, list[index])
                     }
             }
         }
@@ -307,11 +306,36 @@ internal abstract class ManagedListTester<T>(
                         assertEquals(index, list.size)
                         list.add(0, copyToRealmIfNeeded(e))
                         assertEquals(index + 1, list.size)
+                        assertEquality(e, list[0])
                     }
             }
         }
     }
 
+    override fun addAllWithIndex() {
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.getList(this)
+
+                assertNotNull(list)
+                assertTrue(list.isEmpty())
+
+                // Returns false when list does not change
+                assertFalse(list.addAll(0, listOf()))
+
+                // Returns true when list changes
+                val dataSet = typeSafetyManager.getInitialDataSet()
+                assertTrue(list.addAll(0, copyToRealmIfNeeded(dataSet)))
+                assertTrue(list.addAll(0, copyToRealmIfNeeded(dataSet)))
+                assertEquals(dataSet.size * 2, list.size)
+
+                val newDataSet = dataSet.plus(dataSet)
+                for (i in 0 until list.size) {
+                    assertEquality(newDataSet[i], list[i])
+                }
+            }
+        }
+    }
 }
 
 internal class ManagedGenericListTester<T>(
@@ -320,6 +344,8 @@ internal class ManagedGenericListTester<T>(
 ) : ManagedListTester<T>(realm, typeSafetyManager) {
 
     override fun MutableRealm.copyToRealmIfNeeded(element: T): T = element
+    override fun MutableRealm.copyToRealmIfNeeded(elements: Collection<T>): Collection<T> = elements
+    override fun assertEquality(expected: T, actual: T) = assertEquals(expected, actual)
 }
 
 internal class ManagedRealmObjectListTester(
@@ -329,6 +355,13 @@ internal class ManagedRealmObjectListTester(
 
     override fun MutableRealm.copyToRealmIfNeeded(element: RealmListContainer): RealmListContainer =
         copyToRealm(element)
+
+    override fun MutableRealm.copyToRealmIfNeeded(
+        elements: Collection<RealmListContainer>
+    ): Collection<RealmListContainer> = elements.map { copyToRealm(it) }
+
+    override fun assertEquality(expected: RealmListContainer, actual: RealmListContainer) =
+        assertEquals(expected.stringField, actual.stringField)
 }
 
 // ----------------------------------------------
@@ -353,6 +386,12 @@ internal class UnmanagedListTester<T>(
         // No need to assert anything, just checking the facade works
         typeSafetyManager.getList()
             .add(0, typeSafetyManager.getInitialDataSet()[0])
+    }
+
+    override fun addAllWithIndex() {
+        // No need to assert anything, just checking the facade works
+        typeSafetyManager.getList()
+            .addAll(0, typeSafetyManager.getInitialDataSet())
     }
 }
 

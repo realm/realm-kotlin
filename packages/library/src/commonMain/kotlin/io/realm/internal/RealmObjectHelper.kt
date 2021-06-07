@@ -22,6 +22,7 @@ import io.realm.interop.ColumnKey
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.reflect.typeOf
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -64,14 +65,22 @@ object RealmObjectHelper {
         return null
     }
 
-    fun getList(obj: RealmObjectInternal, col: String): RealmList<Any?> {
+    @OptIn(ExperimentalStdlibApi::class)
+    inline fun <reified R> getList(obj: RealmObjectInternal, col: String): RealmList<Any?> {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key: ColumnKey = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
 
-        // TODO OPTIMIZE Consider not returning a new instance every time
-        return RealmList(listPtr)
+        return RealmList(
+            listPtr,
+            RealmList.OperatorMetadata(
+                clazz = R::class,
+                isRealmObject = R::class.supertypes.contains(typeOf<RealmObject>()),
+                mediator = obj.`$realm$Mediator` as Mediator,
+                realmPointer = obj.`$realm$Pointer`!!
+            )
+        )
     }
 
     // Consider inlining

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,12 @@ package test.list
 
 import io.realm.RealmList
 import io.realm.RealmObject
+import kotlin.reflect.KCallable
+import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 class RealmListContainer : RealmObject {
 
@@ -44,4 +50,40 @@ class RealmListContainer : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = RealmList()
     var nullableFloatListField: RealmList<Float?> = RealmList()
     var nullableDoubleListField: RealmList<Double?> = RealmList()
+
+    companion object {
+
+        @Suppress("UNCHECKED_CAST")
+        val nonNullableProperties: Map<KClassifier, KMutableProperty1<RealmListContainer, RealmList<Any>>> =
+            RealmListContainer::class.members
+                .filter {
+                    it is KMutableProperty1<*, *> &&
+                            it.returnType.arguments.isNotEmpty() &&
+                            !it.returnType.arguments[0].type!!.isMarkedNullable
+                }.map {
+                    getClassifier(it) to (it as KMutableProperty1<RealmListContainer, RealmList<Any>>)
+                }.toMap()
+
+        @Suppress("UNCHECKED_CAST")
+        val nullableProperties: Map<KClassifier, KMutableProperty1<RealmListContainer, RealmList<Any?>>> =
+            RealmListContainer::class.members
+                .filter {
+                    it is KMutableProperty1<*, *> &&
+                            it.returnType.arguments.isNotEmpty() &&
+                            it.returnType.arguments[0].type!!.isMarkedNullable
+                }.map {
+                    getClassifier(it) to (it as KMutableProperty1<RealmListContainer, RealmList<Any?>>)
+                }.toMap()
+
+        @OptIn(ExperimentalStdlibApi::class)
+        private fun getClassifier(callable: KCallable<*>): KClassifier {
+            val realmObjectType: KType = typeOf<RealmObject>()
+            val supertypes =
+                (callable.returnType.arguments[0].type!!.classifier!! as KClass<*>).supertypes
+            return when {
+                supertypes.contains(realmObjectType) -> RealmObject::class
+                else -> callable.returnType.arguments[0].type!!.classifier!!
+            }
+        }
+    }
 }

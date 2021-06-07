@@ -16,8 +16,12 @@
 
 package io.realm
 
+import io.realm.internal.Mediator
+import io.realm.internal.link
+import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.reflect.KClass
 
 /**
  * TODO
@@ -44,8 +48,11 @@ class RealmList<E> : MutableList<E>, AbstractMutableCollection<E> {
     /**
      * Constructs a `RealmList` in managed mode. This constructor is used internally by Realm.
      */
-    constructor(listPtr: NativePointer) : super() {
-        this.facade = ManagedListFacade(listPtr)
+    constructor(
+        listPtr: NativePointer,
+        metadata: OperatorMetadata
+    ) : super() {
+        this.facade = ManagedListFacade(listPtr, Operator(metadata))
     }
 
     override val size: Int
@@ -78,6 +85,49 @@ class RealmList<E> : MutableList<E>, AbstractMutableCollection<E> {
         facade.subList(fromIndex, toIndex)
 
     override fun clear() = facade.clear()
+
+    /**
+     * TODO
+     */
+    data class OperatorMetadata(
+        val clazz: KClass<*>,
+        val isRealmObject: Boolean,
+        val mediator: Mediator,
+        val realmPointer: NativePointer
+    )
+
+    /**
+     * TODO
+     */
+    internal inner class Operator(
+        private val metadata: OperatorMetadata
+    ) {
+
+        @Suppress("UNCHECKED_CAST")
+        fun convert(value: Any?): E {
+            if (value == null) {
+                return null as E
+            }
+            return when (metadata.clazz) {
+                Byte::class -> (value as Long).toByte()
+                Char::class -> (value as Long).toChar()
+                Short::class -> (value as Long).toShort()
+                Int::class -> (value as Long).toInt()
+                else -> with(metadata) {
+                    if (isRealmObject) {
+                        mediator.createInstanceOf(clazz).link(
+                            realmPointer,
+                            mediator,
+                            clazz as KClass<out RealmObject>,
+                            value as Link
+                        )
+                    } else {
+                        value
+                    }
+                }
+            } as E
+        }
+    }
 }
 
 /**
@@ -127,13 +177,15 @@ private class UnmanagedListFacade<E> : ListFacade<E>() {
  * TODO
  */
 private class ManagedListFacade<E>(
-    private val listPtr: NativePointer
+    private val listPtr: NativePointer,
+    private val operator: RealmList<E>.Operator
 ) : ListFacade<E>() {
 
     override val size: Int
         get() = RealmInterop.realm_list_size(listPtr).toInt()
 
-    override fun get(index: Int): E = RealmInterop.realm_list_get(listPtr, index.toLong())
+    override fun get(index: Int): E =
+        operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
 
     override fun indexOf(element: E): Int {
         TODO("indexOf(element: E) - Not yet implemented")
@@ -153,9 +205,14 @@ private class ManagedListFacade<E>(
     override fun add(index: Int, element: E) =
         RealmInterop.realm_list_add(listPtr, index.toLong(), element)
 
-    override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        TODO("addAll(index: Int, elements: Collection<E>) - Not yet implemented")
-    }
+    override fun addAll(index: Int, elements: Collection<E>): Boolean =
+        size.let { sizeBefore ->
+            // TODO could be optimized if the C API had a method for bulk inserting collections
+            for ((i, e) in elements.withIndex()) {
+                add(index + i, e)
+            }
+            sizeBefore != size
+        }
 
     override fun listIterator(): MutableListIterator<E> {
         TODO("listIterator() - Not yet implemented")
