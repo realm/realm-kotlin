@@ -167,7 +167,7 @@ data class CoreType(
 // FIXME use PropertyType instead of "type: String", consider using a common/shared type when implementing public schema
 //  see (https://github.com/realm/realm-kotlin/issues/238)
 data class SchemaProperty(
-    val type: String,
+    val propertyType: PropertyType,
     val declaration: IrProperty,
     val collectionType: CollectionType,
     val genericTypes: List<CoreType>? = null

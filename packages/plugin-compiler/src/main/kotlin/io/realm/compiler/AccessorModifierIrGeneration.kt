@@ -155,7 +155,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isString() -> {
                         logInfo("String property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "string",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_STRING,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -168,7 +168,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isByte() -> {
                         logInfo("Byte property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "int",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -183,7 +183,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isChar() -> {
                         logInfo("Char property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "int",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -198,7 +198,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isShort() -> {
                         logInfo("Short property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "int",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -213,7 +213,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isInt() -> {
                         logInfo("Int property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "int",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -228,7 +228,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isLong() -> {
                         logInfo("Long property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "int",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -237,7 +237,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isBoolean() -> {
                         logInfo("Boolean property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "bool",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_BOOL,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -246,7 +246,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isFloat() -> {
                         logInfo("Float property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "float",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -255,7 +255,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     propertyType.isDouble() -> {
                         logInfo("Double property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "double",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -263,8 +263,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isRealmList() -> {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
+                        val listGenericType = declaration.symbol.descriptor.type.arguments[0].type
                         fields[name] = SchemaProperty(
-                            type = "list",
+                            propertyType = getPropertyTypeFromKotlinType(listGenericType),
                             declaration = declaration,
                             collectionType = CollectionType.LIST,
                             genericTypes = listOf(getListGenericCoreType(declaration))
@@ -291,7 +292,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
-                            type = "object",
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
