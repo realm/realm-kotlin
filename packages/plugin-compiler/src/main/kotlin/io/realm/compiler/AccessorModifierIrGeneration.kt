@@ -459,6 +459,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         )
     }
 
+    // TODO do the lookup only once
     private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType {
         return type.nameIfStandardType
             ?.identifier
