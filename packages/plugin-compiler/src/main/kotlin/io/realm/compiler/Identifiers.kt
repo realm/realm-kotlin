@@ -40,6 +40,8 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
+    val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
+    val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
 
     // Schema related names
     val CLASS_FLAG_NORMAL = Name.identifier("RLM_CLASS_NORMAL")
@@ -49,6 +51,7 @@ internal object Names {
     val PROPERTY_FLAG_INDEXED = Name.identifier("RLM_PROPERTY_INDEXED")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
+    val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
 }
 
 internal object FqNames {
@@ -79,4 +82,6 @@ internal object FqNames {
     val COLLECTION_TYPE = FqName("io.realm.interop.CollectionType")
     val PROPERTY_FLAG = FqName("io.realm.interop.PropertyFlag")
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.PrimaryKey")
+    // Realm data types
+    val REALM_LIST = FqName("io.realm.RealmList")
 }

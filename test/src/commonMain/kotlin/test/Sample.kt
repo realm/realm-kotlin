@@ -17,6 +17,7 @@
 
 package test
 
+import io.realm.RealmList
 import io.realm.RealmObject
 
 class Sample : RealmObject {
@@ -30,4 +31,15 @@ class Sample : RealmObject {
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
     var child: Sample? = null
+
+    var stringListField: RealmList<String> = RealmList()
+    var byteListField: RealmList<Byte> = RealmList()
+    var charListField: RealmList<Char> = RealmList()
+    var shortListField: RealmList<Short> = RealmList()
+    var intListField: RealmList<Int> = RealmList()
+    var longListField: RealmList<Long> = RealmList()
+    var booleanListField: RealmList<Boolean> = RealmList()
+    var floatListField: RealmList<Float> = RealmList()
+    var doubleListField: RealmList<Double> = RealmList()
+    var objectListField: RealmList<Sample> = RealmList()
 }

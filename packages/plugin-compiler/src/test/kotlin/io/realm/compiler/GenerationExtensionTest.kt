@@ -180,7 +180,10 @@ class GenerationExtensionTest {
         assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
         assertEquals(sampleModel::class.declaredMemberProperties.size, table.properties.size)
         val properties = mapOf(
+            // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
+
+            // Primitive types
             "stringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
             "byteField" to PropertyType.RLM_PROPERTY_TYPE_INT,
             "charField" to PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -190,7 +193,21 @@ class GenerationExtensionTest {
             "booleanField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "floatField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+
+            // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+
+            // List types
+            "stringListField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "byteListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "charListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "shortListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "intListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "longListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "booleanListField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "floatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT
         )
         assertEquals(properties.size, table.properties.size)
         table.properties.map { property ->
