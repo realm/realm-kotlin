@@ -147,11 +147,14 @@ struct realm_size_t {
 };
 %}
 
-// TODO - add comment Claus will write
+// size_t output parameter
+// The below struct is used to pass size_t output parameters to Java.
 %typemap(jni) (size_t* out_count) "long"
 %typemap(jtype) (size_t* out_count) "long"
 %typemap(jstype) (size_t* out_count) "realm_size_t"
 %typemap(javain) (size_t* out_count) "realm_size_t.getCPtr($javainput)"
+// The below type maps are used to convert realm_size_t into a pointer to the same struct in JNI
+// The type maps are only applied to arguments are named exactly 'out_count'
 %apply size_t* out_count { size_t* out_size };
 
 // bool output parameter

@@ -65,6 +65,7 @@ object RealmObjectHelper {
         return null
     }
 
+    // Return type should be RealmList<R?> but causes compilation errors for native
     @OptIn(ExperimentalStdlibApi::class)
     inline fun <reified R> getList(obj: RealmObjectInternal, col: String): RealmList<Any?> {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
