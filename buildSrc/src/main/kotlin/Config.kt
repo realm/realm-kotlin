@@ -58,7 +58,6 @@ object Versions {
     const val androidxTest = "1.3.0" // https://maven.google.com/web/index.html#androidx.test:rules
     const val autoService = "1.0-rc6"
     const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
-//    const val coroutines = "1.4.2"
     const val coroutines = "1.4.2-native-mt"
     const val detektPlugin = "1.16.0" // https://github.com/detekt/detekt
     const val dokka = "1.4.20" // https://github.com/Kotlin/dokka

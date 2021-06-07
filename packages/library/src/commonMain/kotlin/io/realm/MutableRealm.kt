@@ -22,21 +22,12 @@ import io.realm.interop.RealmInterop
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
 
-// FIXME Moved here as the SuspendableWriter and thus this
-// Track whether or not the write should be persisted
-@ThreadLocal
-internal var commitWrite: Boolean = true
-
 /**
  * This class represents the writeable state of a Realm file. The only way to modify data in a Realm is through
  * instances of this class. These are provided and managed automatically through either [Realm.write] or
  * [Realm.writeBlocking].
  */
 class MutableRealm : BaseRealm {
-
-    // Must be thread local for native, as MutableRealm instances are held by SuspendableWriter
-    // which is shared between threads
-//    internal var commitWrite: Boolean = true
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
@@ -67,7 +58,6 @@ class MutableRealm : BaseRealm {
 
     internal fun beginTransaction() {
         RealmInterop.realm_begin_write(dbPointer)
-        commitWrite = true
     }
 
     internal fun commitTransaction() {
@@ -79,7 +69,6 @@ class MutableRealm : BaseRealm {
      */
     public fun cancelWrite() {
         RealmInterop.realm_rollback(dbPointer)
-        commitWrite = false
     }
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
