@@ -426,6 +426,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         }
     }
 
+    // TODO do the lookup only once
     private fun getCoreTypeFromKotlinType(type: String): String {
         // TODO nullability?
         return when (type) {
