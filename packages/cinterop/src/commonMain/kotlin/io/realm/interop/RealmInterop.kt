@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import kotlinx.coroutines.CoroutineDispatcher
+
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 
@@ -39,7 +41,7 @@ expect object RealmInterop {
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
-    fun realm_open(config: NativePointer): NativePointer
+    fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_thaw(frozenRealm: NativePointer): NativePointer
     fun realm_is_frozen(realm: NativePointer): Boolean

@@ -33,6 +33,7 @@ import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
+import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -41,6 +42,14 @@ import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import platform.posix.posix_errno
+import platform.posix.pthread_threadid_np
+import platform.posix.strerror
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_config_t
@@ -50,6 +59,8 @@ import realm_wrapper.realm_get_last_error
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
+import realm_wrapper.realm_scheduler_notify_func_t
+import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
@@ -75,7 +86,7 @@ private fun checkedBooleanResult(boolean: Boolean): Boolean {
     if (!boolean) throwOnError(); return boolean
 }
 
-private fun checkedPointerResult(pointer: CPointer<out CPointed>?): CPointer<out CPointed>? {
+private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer<T>? {
     if (pointer == null) throwOnError(); return pointer
 }
 
@@ -168,7 +179,12 @@ actual object RealmInterop {
     actual fun realm_get_num_versions(realm: NativePointer): Long {
         memScoped {
             val versionsCount = alloc<ULongVar>()
-            checkedBooleanResult(realm_wrapper.realm_get_num_versions(realm.cptr(), versionsCount.ptr))
+            checkedBooleanResult(
+                realm_wrapper.realm_get_num_versions(
+                    realm.cptr(),
+                    versionsCount.ptr
+                )
+            )
             return versionsCount.value.toLong()
         }
     }
@@ -240,7 +256,10 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
+    actual fun realm_config_set_max_number_of_active_versions(
+        config: NativePointer,
+        maxNumberOfVersions: Long
+    ) {
         realm_wrapper.realm_config_set_schema_version(config.cptr(), maxNumberOfVersions.toULong())
     }
 
@@ -249,10 +268,25 @@ actual object RealmInterop {
     }
 
     actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
-        return checkedBooleanResult(realm_wrapper.realm_schema_validate(schema.cptr(), mode.nativeValue.toULong()))
+        return checkedBooleanResult(
+            realm_wrapper.realm_schema_validate(
+                schema.cptr(),
+                mode.nativeValue.toULong()
+            )
+        )
     }
 
-    actual fun realm_open(config: NativePointer): NativePointer {
+    actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
+        printlntid("opening")
+        if (dispatcher != null) {
+            val scheduler = checkedPointerResult(createSingleThreadDispatcherScheduler(dispatcher))
+            realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)
+        } else  {
+            // If there is no notification dispatcher use the default scheduler.
+            // Re-verify if this is actually needed when notification scheduler is fully in place.
+            val scheduler = checkedPointerResult(realm_wrapper.realm_scheduler_make_default())
+            realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)
+        }
         val realmPtr = CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
         realm_begin_read(realmPtr)
         return realmPtr
@@ -332,22 +366,50 @@ actual object RealmInterop {
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
     }
-    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
+
+    actual fun realm_object_create_with_primary_key(
+        realm: NativePointer,
+        key: Long,
+        primaryKey: Any?
+    ): NativePointer {
         memScoped {
-            return CPointerWrapper(realm_wrapper.realm_object_create_with_primary_key_by_ref(realm.cptr(), key.toUInt(), to_realm_value(primaryKey).ptr))
+            return CPointerWrapper(
+                realm_wrapper.realm_object_create_with_primary_key_by_ref(
+                    realm.cptr(),
+                    key.toUInt(),
+                    to_realm_value(primaryKey).ptr
+                )
+            )
         }
     }
 
-    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
+    actual fun realm_object_freeze(
+        liveObject: NativePointer,
+        frozenRealm: NativePointer
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_object_freeze(
+                liveObject.cptr(),
+                frozenRealm.cptr()
+            )
+        )
     }
 
-    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
+    actual fun realm_object_thaw(
+        frozenObject: NativePointer,
+        liveRealm: NativePointer
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_object_thaw(
+                frozenObject.cptr(),
+                liveRealm.cptr()
+            )
+        )
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
-        val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> = realm_wrapper.realm_object_as_link(obj.cptr())
+        val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> =
+            realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
             return Link(this.target_table.toLong(), this.target)
         }
@@ -390,7 +452,14 @@ actual object RealmInterop {
 
     actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
         memScoped {
-            checkedBooleanResult(realm_wrapper.realm_set_value_by_ref(o.cptr(), key.key, to_realm_value(value).ptr, isDefault))
+            checkedBooleanResult(
+                realm_wrapper.realm_set_value_by_ref(
+                    o.cptr(),
+                    key.key,
+                    to_realm_value(value).ptr,
+                    isDefault
+                )
+            )
         }
     }
 
@@ -438,7 +507,8 @@ actual object RealmInterop {
             }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
-                val nativePointer = value.`$realm$ObjectPointer` ?: error("Cannot set unmanaged object")
+                val nativePointer =
+                    value.`$realm$ObjectPointer` ?: error("Cannot set unmanaged object")
                 realm_wrapper.realm_object_as_link(nativePointer?.cptr()).useContents {
                     cvalue.link.apply {
                         target_table = this@useContents.target_table
@@ -488,7 +558,13 @@ actual object RealmInterop {
         memScoped {
             val found = alloc<BooleanVar>()
             val value = alloc<realm_value_t>()
-            checkedBooleanResult(realm_wrapper.realm_query_find_first(realm.cptr(), value.ptr, found.ptr))
+            checkedBooleanResult(
+                realm_wrapper.realm_query_find_first(
+                    realm.cptr(),
+                    value.ptr,
+                    found.ptr
+                )
+            )
             if (!found.value) {
                 return null
             }
@@ -503,12 +579,28 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_results_freeze(liveResults.cptr(), frozenRealm.cptr()))
+    actual fun realm_results_freeze(
+        liveResults: NativePointer,
+        frozenRealm: NativePointer
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_results_freeze(
+                liveResults.cptr(),
+                frozenRealm.cptr()
+            )
+        )
     }
 
-    actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
+    actual fun realm_results_thaw(
+        frozenResults: NativePointer,
+        liveRealm: NativePointer
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_results_thaw(
+                frozenResults.cptr(),
+                liveRealm.cptr()
+            )
+        )
     }
 
     actual fun realm_results_count(results: NativePointer): Long {
@@ -522,13 +614,25 @@ actual object RealmInterop {
     actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
         memScoped {
             val value = alloc<realm_value_t>()
-            checkedBooleanResult(realm_wrapper.realm_results_get(results.cptr(), index.toULong(), value.ptr))
+            checkedBooleanResult(
+                realm_wrapper.realm_results_get(
+                    results.cptr(),
+                    index.toULong(),
+                    value.ptr
+                )
+            )
             return value.asLink()
         }
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
-        val ptr = checkedPointerResult(realm_wrapper.realm_get_object(realm.cptr(), link.tableKey.toUInt(), link.objKey))
+        val ptr = checkedPointerResult(
+            realm_wrapper.realm_get_object(
+                realm.cptr(),
+                link.tableKey.toUInt(),
+                link.objKey
+            )
+        )
         return CPointerWrapper(ptr)
     }
 
@@ -540,7 +644,10 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
-    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
+    actual fun realm_object_add_notification_callback(
+        obj: NativePointer,
+        callback: Callback
+    ): NativePointer {
         return CPointerWrapper(
             realm_wrapper.realm_object_add_notification_callback(
                 obj.cptr(),
@@ -552,7 +659,12 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
-                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(
+                        CPointerWrapper(
+                            change,
+                            managed = false
+                        )
+                    ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                         ?: error("Notification callback data should never be null")
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
@@ -564,7 +676,10 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
+    actual fun realm_results_add_notification_callback(
+        results: NativePointer,
+        callback: Callback
+    ): NativePointer {
         return CPointerWrapper(
             realm_wrapper.realm_results_add_notification_callback(
                 results.cptr(),
@@ -576,7 +691,13 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
-                    userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(change, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                    printlntid("onChange")
+                    userdata?.asStableRef<Callback>()?.get()?.onChange(
+                        CPointerWrapper(
+                            change,
+                            managed = false
+                        )
+                    ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                         ?: error("Notification callback data should never be null")
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
@@ -627,4 +748,139 @@ actual object RealmInterop {
         }
         return Link(this.link.target_table.toLong(), this.link.target)
     }
+
+    private fun createSingleThreadDispatcherScheduler(dispatcher: CoroutineDispatcher): CPointer<realm_scheduler_t>? {
+        printlntid("createSingleThreadDispatcherScheduler")
+        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher)
+
+        return realm_wrapper.realm_scheduler_new(
+            //userdata: kotlinx.cinterop.CValuesRef<*>?,
+            scheduler.ref,
+
+            // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
+            staticCFunction<COpaquePointer?, Unit> { userdata ->
+                printlntid("free")
+                userdata?.asStableRef<SingleThreadDispatcherScheduler>()?.dispose()
+            },
+
+            // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
+            staticCFunction<COpaquePointer?, Unit> { userdata ->
+                // Must be thread safe
+                val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                printlntid("$scheduler notify")
+                try {
+                    scheduler.notify()
+                } catch (e: Exception) {
+                    println("ERROR: $e")
+                }
+
+            },
+
+            // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+            staticCFunction<COpaquePointer?, Boolean> { userdata ->
+                // Must be thread safe
+                // FIXME Only works if we are guaranteed that the set_notify_callback is called
+                //  before first call to is_on_thread and that set_notify_callback has frozen the
+                //  scheduler
+                val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid() )
+                scheduler.threadId == tid()
+            },
+
+            // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+            staticCFunction<COpaquePointer?, COpaquePointer?, Boolean> { userdata, other ->
+                userdata == other
+            },
+
+            // can_deliver_notifications: realm_wrapper.realm_scheduler_can_deliver_notifications_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+            staticCFunction<COpaquePointer?, Boolean> { userdata -> true },
+
+            // set_notify_callback: realm_wrapper.realm_scheduler_set_notify_callback_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(
+            //     userdata kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */,
+            //     callback_userdata kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */,
+            //     free callback userdata realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
+            //     notify realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */) -> kotlin.Unit>>? */)
+            staticCFunction { userdata, notify_callback_userdata, free_notify_callback_userdata, notify_callback ->
+                // FIXME Only works if we are guaranteed that this is only called once and always
+                //  called on the same thread that constructed the scheduler
+                try {
+                    val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                    printlntid("set notify callback [$scheduler]: $notify_callback $notify_callback_userdata")
+                    scheduler.set_notify_callback(notify_callback!!, notify_callback_userdata!!)
+                    scheduler.freeze()
+                } catch (e: Exception) {
+                    println("ERROR: $e")
+                }
+            }
+        )
+    }
+
+
+    interface Scheduler {
+        var callback: realm_scheduler_notify_func_t
+        var callback_userdata: CPointer<out CPointed>
+
+        fun set_notify_callback(
+            callback: realm_scheduler_notify_func_t,
+            callback1: COpaquePointer
+        ) {
+            this.callback = callback
+            this.callback_userdata = callback1
+        }
+
+        // Must be thread safe
+        fun notify()
+    }
+
+    class SingleThreadDispatcherScheduler(
+        val threadId: ULong,
+        val dispatcher: CoroutineDispatcher
+    ) : Scheduler {
+        val scope: CoroutineScope = CoroutineScope(dispatcher)
+
+        val ref: CPointer<out CPointed>
+
+        override lateinit var callback: realm_scheduler_notify_func_t
+        override lateinit var callback_userdata: CPointer<out CPointed>
+
+        init {
+            ref = StableRef.create(this).asCPointer()
+        }
+
+        override fun notify() {
+            val function: suspend CoroutineScope.() -> Unit = {
+                printlntid("ON DISPATCHER")
+                callback.invoke(callback_userdata)
+            }
+            scope.launch(
+                scope.coroutineContext,
+                CoroutineStart.DEFAULT,
+                function.freeze()
+            )
+        }
+    }
+}
+
+// FIXME Consolidate into platform abstract methods
+private fun printlntid(s: String) {
+    val tid = tid()
+    println("<" + tid.toString() + "> $s")
+}
+
+private fun tid(): ULong {
+    memScoped {
+        initRuntimeIfNeeded()
+        val tidVar = alloc<ULongVar>()
+        pthread_threadid_np(null, tidVar.ptr) //.ensureUnixCallResult("pthread_threadid_np")
+        return tidVar.value
+    }
+}
+
+private fun getUnixError() = strerror(posix_errno())!!.toKString()
+private inline fun Int.ensureUnixCallResult(s: String): Int {
+    println("check return value for '$s'")
+    if (this != 0) {
+        throw Error("$s ${getUnixError()}")
+    }
+    return this
 }

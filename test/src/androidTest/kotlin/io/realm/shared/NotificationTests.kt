@@ -20,9 +20,19 @@ import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.util.PlatformUtils
 import io.realm.util.RunLoopThread
+import io.realm.util.Utils.printlntid
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
+import platform.CoreServices.DisposeAEEventHandlerUPP
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -59,7 +69,7 @@ class NotificationTests {
     }
 
     @Test
-    fun resultsListener() = RunLoopThread().run {
+    fun notificationsOnMain() = RunLoopThread().run {
         val c = Channel<List<Sample>>(1)
 
         val realm = Realm.open(configuration)
@@ -72,7 +82,9 @@ class NotificationTests {
             assertTrue(it is RealmResults<Sample>)
             assertEquals(results, it)
             val updatedResults = results.toList()
-            this@run.launch { c.send(updatedResults) }
+            this@run.launch {
+                c.send(updatedResults)
+            }
         }
 
         launch {
@@ -97,6 +109,50 @@ class NotificationTests {
 
             realm.close()
             terminate()
+        }
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun notificationOnMainFromBackgroundDispatcherUpdates() = RunLoopThread().run {
+        val dispatcher = newSingleThreadContext("notifierThread")
+
+        val realm = Realm.open(configuration)
+        realm.objects<Sample>().observe {
+            printlntid("update ${it.size}")
+            if (it.size == 1) terminate()
+        }
+
+        async(dispatcher) {
+            val realm = Realm.open(configuration)
+            realm.write {
+                copyToRealm(Sample())
+            }
+        }
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun notificationOnBackgroundDispatcherFromMainUpdates() {
+        val dispatcher = newSingleThreadContext("background")
+        val mutex = Mutex(true)
+        val exit = Mutex(true)
+        runBlocking {
+            async(dispatcher) {
+                val realm = Realm.open(configuration, dispatcher)
+                realm.objects<Sample>().observe {
+                    printlntid("update: ${it.size}")
+                    if (it.size == 1) exit.unlock()
+                }
+                mutex.unlock()
+            }
+            val realm = Realm.open(configuration)
+            mutex.lock()
+
+            realm.write {
+                copyToRealm(Sample())
+            }
+            exit.lock()
         }
     }
 }

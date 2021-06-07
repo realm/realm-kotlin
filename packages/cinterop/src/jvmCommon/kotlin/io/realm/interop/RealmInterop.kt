@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import kotlinx.coroutines.CoroutineDispatcher
+
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
@@ -118,7 +120,7 @@ actual object RealmInterop {
         realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
     }
 
-    actual fun realm_open(config: NativePointer): NativePointer {
+    actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
         realm_begin_read(realmPtr)
         return realmPtr

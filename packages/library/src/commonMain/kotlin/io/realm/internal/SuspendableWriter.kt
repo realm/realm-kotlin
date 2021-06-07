@@ -44,7 +44,7 @@ class SuspendableWriter(
     )
 ) {
     // Must only be accessed from the dispatchers thread
-    private val realm: MutableRealm by lazy {
+    private val realm : MutableRealm by lazy {
         MutableRealm(configuration)
     }
 

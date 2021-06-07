@@ -19,6 +19,7 @@ import io.realm.internal.SuspendableWriter
 import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -40,12 +41,22 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
          */
         public const val DEFAULT_LOG_TAG = "REALM"
 
-        fun open(realmConfiguration: RealmConfiguration): Realm {
+        /**
+         * Open a realm.
+         */
+        // FIXME Dispatcher that should be used to deliver notifications.
+        //  MUST:
+        //  - be backed by only one thread
+        //  - be backed by the same thread on which the realm is opened
+        fun open(realmConfiguration: RealmConfiguration, notificationDispatcher: CoroutineDispatcher? = null): Realm {
             // TODO API-INTERNAL
             //  IN Android use lazy property delegation init to load the shared library use the
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
-            val realm = Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
+            val realm = Realm(
+                realmConfiguration,
+                RealmInterop.realm_open(realmConfiguration.nativeConfig, notificationDispatcher),
+            )
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
