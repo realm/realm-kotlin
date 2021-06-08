@@ -22,13 +22,13 @@ plugins {
     id("kotlin-android-extensions")
     // Apply Realm Kotlin plugin even though we technically do not need it, to ensure that we have
     // the right kotlinOptions
-    id("io.realm.kotlin") version Realm.version
+    id("io.realm.kotlin") version "0.1.0"
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
 
 group = "io.realm.example"
-version = Realm.version
+version = "0.1.0"
 
 dependencies {
     implementation(project(":shared"))
@@ -36,7 +36,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("androidx.constraintlayout:constraintlayout:1.1.3")
     // TODO AUTO-SETUP
-    compileOnly("io.realm.kotlin:library:${Realm.version}")
+    compileOnly("io.realm.kotlin:library:${version}")
 }
 
 android {
@@ -47,7 +47,7 @@ android {
         minSdkVersion(21)
         targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1
-        versionName = Realm.version
+        versionName = "$version"
     }
     buildTypes {
         getByName("release") {
