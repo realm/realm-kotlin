@@ -20,8 +20,10 @@ import io.realm.compiler.FqNames.REALM_LIST
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_POINTER
@@ -71,6 +73,7 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.KotlinType
+import kotlin.collections.set
 
 /**
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
@@ -90,9 +93,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
     private val setObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
-    // TODO getter
-//    private val getList: IrSimpleFunction =
-//        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
+    private val getList: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
+    private val setList: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_LIST)
 
     private var functionLongToChar: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
@@ -150,7 +154,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
-                        modifyAccessor(declaration, getValue, setValue)
+                        modifyAccessor(
+                            declaration,
+                            getValue,
+                            setValue
+                        )
                     }
                     propertyType.isByte() -> {
                         logInfo("Byte property named ${declaration.name} is nullable $nullable")
@@ -270,8 +278,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         //      return backing_field
                         //  }
 
-                        // TODO: use correct getter
-                        modifyAccessor(declaration, getValue, setValue)
+                        // TODO: setter
+                        modifyAccessor(declaration, getList, collectionType = CollectionType.LIST)
                     }
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
@@ -297,10 +305,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         getFunction: IrSimpleFunction,
         setFunction: IrSimpleFunction? = null,
         fromLongToType: IrFunction? = null,
-        functionTypeToLong: IrFunction? = null
+        functionTypeToLong: IrFunction? = null,
+        collectionType: CollectionType = CollectionType.NONE
     ) {
         val backingField = property.backingField!!
-        val type = backingField.type
+        val type = when (collectionType) {
+            CollectionType.NONE -> backingField.type
+            else -> null
+        }
         val getter = property.getter
         val setter = property.setter
         getter?.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
@@ -319,7 +331,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         ).also {
                             it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                         }.apply {
-                            putTypeArgument(0, type)
+                            if (type != null) {
+                                putTypeArgument(0, type)
+                            }
                             putValueArgument(0, irGet(receiver))
                             putValueArgument(1, irString(property.name.identifier))
                         }
@@ -358,10 +372,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     ).irBlock {
                         val receiver = property.setter!!.dispatchReceiverParameter!!
                         val cinteropCall =
-                            irCall(setFunction, origin = IrStatementOrigin.GET_PROPERTY).also {
+                            irCall(
+                                callee = setFunction,
+                                origin = IrStatementOrigin.GET_PROPERTY
+                            ).also {
                                 it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                             }.apply {
-                                putTypeArgument(0, type)
+                                if (type != null) {
+                                    putTypeArgument(0, type)
+                                }
                                 putValueArgument(0, irGet(receiver))
                                 putValueArgument(1, irString(property.name.identifier))
                                 val argumentExpression = if (functionTypeToLong != null) {
