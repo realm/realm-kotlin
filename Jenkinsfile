@@ -42,6 +42,7 @@ pipeline {
     // build.
     options {
         lock resource: 'kotlin_build_lock'
+        timeout(time: 15, activity: true, unit: 'MINUTES') 
     }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
