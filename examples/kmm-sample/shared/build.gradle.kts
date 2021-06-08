@@ -23,13 +23,13 @@ plugins {
     id("com.android.library")
     id("kotlin-android-extensions")
     // Apply Realm Kotlin plugin
-    id("io.realm.kotlin") version Realm.version
+    id("io.realm.kotlin") version "0.1.0"
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
 
 group = "io.realm.example"
-version = Realm.version
+version = "0.1.0"
 
 kotlin {
     android()
@@ -46,7 +46,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // TODO AUTO-SETUP
-                implementation("io.realm.kotlin:library:${Realm.version}")
+                implementation("io.realm.kotlin:library:${version}")
             }
         }
         val commonTest by getting {
@@ -77,7 +77,7 @@ android {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1
-        versionName = Realm.version
+        versionName = "$version"
     }
     buildTypes {
         getByName("release") {
