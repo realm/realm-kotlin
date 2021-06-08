@@ -426,7 +426,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private fun getType(type: PropertyType): IrEnumEntry? {
         return propertyTypes.firstOrNull {
-            it.name.identifier.toLowerCaseAsciiOnly().contains(type.name)
+            it.name.identifier.toLowerCaseAsciiOnly().contains(type.name.toLowerCaseAsciiOnly())
         }
     }
 
