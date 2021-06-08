@@ -48,6 +48,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         //  MUST:
         //  - be backed by only one thread
         //  - be backed by the same thread on which the realm is opened
+        //  NOTE:
+        //  - The dispatcher is not taken into account on Android and notifications are only
+        //    delivered if the Realm is opened on a Looper thread as for Realm Java
         fun open(realmConfiguration: RealmConfiguration, notificationDispatcher: CoroutineDispatcher? = null): Realm {
             // TODO API-INTERNAL
             //  IN Android use lazy property delegation init to load the shared library use the

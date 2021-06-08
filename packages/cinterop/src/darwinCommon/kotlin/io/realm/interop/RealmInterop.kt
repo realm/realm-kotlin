@@ -278,6 +278,8 @@ actual object RealmInterop {
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         printlntid("opening")
+        // TODO Consider just grabbing the current dispatcher by coroutineContext[CoroutineDispatcher.Key]
+        //  but requires opting in for @ExperimentalStdlibApi
         if (dispatcher != null) {
             val scheduler = checkedPointerResult(createSingleThreadDispatcherScheduler(dispatcher))
             realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)

@@ -18,21 +18,17 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import io.realm.internal.singleThreadDispatcher
 import io.realm.util.PlatformUtils
 import io.realm.util.RunLoopThread
 import io.realm.util.Utils.printlntid
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withContext
-import platform.CoreServices.DisposeAEEventHandlerUPP
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -115,7 +111,7 @@ class NotificationTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun notificationOnMainFromBackgroundDispatcherUpdates() = RunLoopThread().run {
-        val dispatcher = newSingleThreadContext("notifierThread")
+        val dispatcher = singleThreadDispatcher("notifier")
 
         val realm = Realm.open(configuration)
         realm.objects<Sample>().observe {
@@ -134,7 +130,7 @@ class NotificationTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun notificationOnBackgroundDispatcherFromMainUpdates() {
-        val dispatcher = newSingleThreadContext("background")
+        val dispatcher = singleThreadDispatcher("background")
         val mutex = Mutex(true)
         val exit = Mutex(true)
         runBlocking {

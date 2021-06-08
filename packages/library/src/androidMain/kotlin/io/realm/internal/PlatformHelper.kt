@@ -32,7 +32,7 @@ actual object PlatformHelper {
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
 }
 
-actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     val thread = HandlerThread("RealmWriter[$id]")
     thread.start()
     return Handler(thread.looper).asCoroutineDispatcher()
