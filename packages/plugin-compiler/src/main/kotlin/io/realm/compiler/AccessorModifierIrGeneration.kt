@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
 import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.builders.irBlock
+import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
@@ -340,9 +341,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         ).also {
                             it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                         }.apply {
+                            // TODO consider abstracting parameter addition
                             putTypeArgument(0, type)
                             putValueArgument(0, irGet(receiver))
                             putValueArgument(1, irString(property.name.identifier))
+
+                            // Check if the collection type is a subclass of RealmObject
+                            // If so, a flag needs to be added as a parameter
+                            // This is due to native being unable to retrieve the related supertypes
+                            // in runtime
+                            if (collectionType != CollectionType.NONE) {
+                                val supertypes = (type as IrSimpleType).classifier.descriptor
+                                    .typeConstructor.supertypes
+                                if (supertypes.map { it.toString() }.contains("RealmObject")) {
+                                    putValueArgument(2, irBoolean(true))
+                                }
+                            }
                         }
 
                     val cinteropExpression = if (fromLongToType != null) {

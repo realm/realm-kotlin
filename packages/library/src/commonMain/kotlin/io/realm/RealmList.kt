@@ -23,6 +23,9 @@ import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
 
+/**
+ * TODO
+ */
 class RealmList<E> private constructor(
     delegate: RealmListDelegate<E>
 ) : RealmListDelegate<E> by delegate {
@@ -68,15 +71,14 @@ class RealmList<E> private constructor(
                     Char::class -> (value as Long).toChar()
                     Short::class -> (value as Long).toShort()
                     Int::class -> (value as Long).toInt()
-                    else -> if (isRealmObject) {
-                        mediator.createInstanceOf(clazz).link(
+                    else -> when {
+                        isRealmObject -> mediator.createInstanceOf(clazz).link(
                             realmPointer,
                             mediator,
                             clazz as KClass<out RealmObject>,
                             value as Link
                         )
-                    } else {
-                        value
+                        else -> value
                     }
                 } as E
             }
@@ -93,7 +95,7 @@ internal interface RealmListDelegate<E> : MutableList<E>, MutableCollection<E>
 /**
  * TODO
  */
-internal class UnmanagedListDelegate<E> : RealmListDelegate<E> {
+private class UnmanagedListDelegate<E> : RealmListDelegate<E> {
 
     private val unmanagedList = mutableListOf<E>()
 
@@ -148,7 +150,7 @@ internal class UnmanagedListDelegate<E> : RealmListDelegate<E> {
 /**
  * TODO
  */
-class ManagedListDelegate<E>(
+private class ManagedListDelegate<E>(
     private val listPtr: NativePointer,
     metadata: RealmList.OperatorMetadata
 ) : RealmListDelegate<E> {

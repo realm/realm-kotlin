@@ -67,7 +67,11 @@ object RealmObjectHelper {
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     @OptIn(ExperimentalStdlibApi::class)
-    inline fun <reified R> getList(obj: RealmObjectInternal, col: String): RealmList<Any?> {
+    inline fun <reified R> getList(
+        obj: RealmObjectInternal,
+        col: String,
+        isRealmObject: Boolean = false
+    ): RealmList<Any?> {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key: ColumnKey = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
@@ -77,7 +81,7 @@ object RealmObjectHelper {
             listPtr,
             RealmList.OperatorMetadata(
                 clazz = R::class,
-                isRealmObject = R::class.supertypes.contains(typeOf<RealmObject>()),
+                isRealmObject = isRealmObject,
                 mediator = obj.`$realm$Mediator` as Mediator,
                 realmPointer = obj.`$realm$Pointer`!!
             )

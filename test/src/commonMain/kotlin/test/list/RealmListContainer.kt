@@ -19,12 +19,7 @@ package test.list
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import kotlin.reflect.KCallable
-import kotlin.reflect.KClass
-import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 class RealmListContainer : RealmObject {
 
@@ -54,36 +49,30 @@ class RealmListContainer : RealmObject {
     companion object {
 
         @Suppress("UNCHECKED_CAST")
-        val nonNullableProperties: Map<KClassifier, KMutableProperty1<RealmListContainer, RealmList<Any>>> =
-            RealmListContainer::class.members
-                .filter {
-                    it is KMutableProperty1<*, *> &&
-                            it.returnType.arguments.isNotEmpty() &&
-                            !it.returnType.arguments[0].type!!.isMarkedNullable
-                }.map {
-                    getClassifier(it) to (it as KMutableProperty1<RealmListContainer, RealmList<Any>>)
-                }.toMap()
+        val nonNullableProperties = listOf(
+            String::class to RealmListContainer::stringListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Byte::class to RealmListContainer::byteListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Char::class to RealmListContainer::charListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Short::class to RealmListContainer::shortListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Int::class to RealmListContainer::intListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Long::class to RealmListContainer::longListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Boolean::class to RealmListContainer::booleanListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Float::class to RealmListContainer::floatListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            Double::class to RealmListContainer::doubleListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            RealmObject::class to RealmListContainer::objectListField as KMutableProperty1<RealmListContainer, RealmList<Any>>
+        ).toMap()
 
         @Suppress("UNCHECKED_CAST")
-        val nullableProperties: Map<KClassifier, KMutableProperty1<RealmListContainer, RealmList<Any?>>> =
-            RealmListContainer::class.members
-                .filter {
-                    it is KMutableProperty1<*, *> &&
-                            it.returnType.arguments.isNotEmpty() &&
-                            it.returnType.arguments[0].type!!.isMarkedNullable
-                }.map {
-                    getClassifier(it) to (it as KMutableProperty1<RealmListContainer, RealmList<Any?>>)
-                }.toMap()
-
-        @OptIn(ExperimentalStdlibApi::class)
-        private fun getClassifier(callable: KCallable<*>): KClassifier {
-            val realmObjectType: KType = typeOf<RealmObject>()
-            val supertypes =
-                (callable.returnType.arguments[0].type!!.classifier!! as KClass<*>).supertypes
-            return when {
-                supertypes.contains(realmObjectType) -> RealmObject::class
-                else -> callable.returnType.arguments[0].type!!.classifier!!
-            }
-        }
+        val nullableProperties = listOf(
+            String::class to RealmListContainer::nullableStringListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Byte::class to RealmListContainer::nullableByteListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Char::class to RealmListContainer::nullableCharListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Short::class to RealmListContainer::nullableShortListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Int::class to RealmListContainer::nullableIntListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Long::class to RealmListContainer::nullableLongListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Boolean::class to RealmListContainer::nullableBooleanListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Float::class to RealmListContainer::nullableFloatListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            Double::class to RealmListContainer::nullableDoubleListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
+        ).toMap()
     }
 }
