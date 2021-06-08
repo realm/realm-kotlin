@@ -27,8 +27,8 @@ import kotlin.reflect.KClass
  * TODO
  */
 class RealmList<E> private constructor(
-    delegate: RealmListDelegate<E>
-) : RealmListDelegate<E> by delegate {
+    delegate: MutableList<E>
+) : MutableList<E> by delegate {
 
     /**
      * Constructs a `RealmList` in unmanaged mode.
@@ -90,62 +90,9 @@ class RealmList<E> private constructor(
 /**
  * TODO
  */
-internal interface RealmListDelegate<E> : MutableList<E>, MutableCollection<E>
-
-/**
- * TODO
- */
-private class UnmanagedListDelegate<E> : RealmListDelegate<E> {
-
-    private val unmanagedList = mutableListOf<E>()
-
-    override val size: Int
-        get() = unmanagedList.size
-
-    override fun contains(element: E): Boolean = unmanagedList.contains(element)
-
-    override fun containsAll(elements: Collection<E>): Boolean =
-        unmanagedList.containsAll(elements)
-
-    override fun get(index: Int): E = unmanagedList[index]
-
-    override fun indexOf(element: E): Int = unmanagedList.indexOf(element)
-
-    override fun isEmpty(): Boolean = unmanagedList.isEmpty()
-
-    override fun iterator(): MutableIterator<E> = unmanagedList.iterator()
-
-    override fun lastIndexOf(element: E): Int = unmanagedList.lastIndexOf(element)
-
-    override fun add(element: E): Boolean = unmanagedList.add(element)
-
-    override fun add(index: Int, element: E) = unmanagedList.add(index, element)
-
-    override fun addAll(index: Int, elements: Collection<E>): Boolean =
-        unmanagedList.addAll(index, elements)
-
-    override fun addAll(elements: Collection<E>): Boolean = unmanagedList.addAll(elements)
-
-    override fun clear() = unmanagedList.clear()
-
-    override fun listIterator(): MutableListIterator<E> = unmanagedList.listIterator()
-
-    override fun listIterator(index: Int): MutableListIterator<E> =
-        unmanagedList.listIterator(index)
-
-    override fun remove(element: E): Boolean = unmanagedList.remove(element)
-
-    override fun removeAll(elements: Collection<E>): Boolean = unmanagedList.removeAll(elements)
-
-    override fun removeAt(index: Int): E = unmanagedList.removeAt(index)
-
-    override fun retainAll(elements: Collection<E>): Boolean = unmanagedList.retainAll(elements)
-
-    override fun set(index: Int, element: E): E = unmanagedList.set(index, element)
-
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> =
-        unmanagedList.subList(fromIndex, toIndex)
-}
+private class UnmanagedListDelegate<E>(
+    private val list: MutableList<E> = mutableListOf()
+) : MutableList<E> by list
 
 /**
  * TODO
@@ -153,7 +100,7 @@ private class UnmanagedListDelegate<E> : RealmListDelegate<E> {
 private class ManagedListDelegate<E>(
     private val listPtr: NativePointer,
     metadata: RealmList.OperatorMetadata
-) : RealmListDelegate<E> {
+) : MutableList<E> {
 
     private val operator = RealmList.Operator<E>(metadata)
 
@@ -168,8 +115,12 @@ private class ManagedListDelegate<E>(
         TODO("Not yet implemented")
     }
 
-    override fun get(index: Int): E =
-        operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
+    override fun get(index: Int): E {
+        if (index < 0 || index > size - 1) {
+            throw IndexOutOfBoundsException("Index: '$index', size: '$size'")
+        }
+        return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
+    }
 
     override fun indexOf(element: E): Int {
         TODO("Not yet implemented")
@@ -185,24 +136,30 @@ private class ManagedListDelegate<E>(
         TODO("Not yet implemented")
     }
 
-    override fun add(element: E): Boolean = RealmInterop.realm_list_add(listPtr, element)
-        .let { true }
+    override fun add(element: E): Boolean = add(size, element).let { true }
 
-    override fun add(index: Int, element: E) =
+    override fun add(index: Int, element: E) {
+        if (index < 0 || index > size) {
+            throw IndexOutOfBoundsException("Index: '$index', size: '$size'")
+        }
         RealmInterop.realm_list_add(listPtr, index.toLong(), element)
+    }
 
     override fun addAll(index: Int, elements: Collection<E>): Boolean =
         size.let { sizeBefore ->
-            // TODO could be optimized if the C API had a method for bulk inserting collections
+            if (index < 0 || index > sizeBefore) {
+                throw IndexOutOfBoundsException("Index was '$index' but size was '$sizeBefore'")
+            }
+
+            var modified = false
             for ((i, e) in elements.withIndex()) {
                 add(index + i, e)
+                modified = true
             }
-            sizeBefore != size
+            modified
         }
 
-    override fun addAll(elements: Collection<E>): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun addAll(elements: Collection<E>): Boolean = addAll(size, elements)
 
     override fun clear() = RealmInterop.realm_list_clear(listPtr)
 
@@ -222,8 +179,11 @@ private class ManagedListDelegate<E>(
         TODO("Not yet implemented")
     }
 
-    override fun removeAt(index: Int): E {
-        TODO("Not yet implemented")
+    override fun removeAt(index: Int): E = get(index).also {
+        if (size == 0 || index < 0 || index > size - 1) {
+            throw IndexOutOfBoundsException("Index: '$index', size: '$size'")
+        }
+        RealmInterop.realm_list_erase(listPtr, index.toLong())
     }
 
     override fun retainAll(elements: Collection<E>): Boolean {
@@ -231,231 +191,13 @@ private class ManagedListDelegate<E>(
     }
 
     override fun set(index: Int, element: E): E {
-        TODO("Not yet implemented")
+        if (size == 0 || index < 0 || index > size - 1) {
+            throw IndexOutOfBoundsException("Index: '$index', size: '$size'")
+        }
+        return operator.convert(RealmInterop.realm_list_set(listPtr, index.toLong(), element))
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
         TODO("Not yet implemented")
     }
 }
-
-// --------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------
-
-///**
-// * TODO
-// */
-//class RealmList<E> : MutableList<E>, AbstractMutableCollection<E> {
-//
-//    private var facade: ListFacade<E>
-//
-//    // -------------------------------------------------
-//    // Unmanaged
-//    // -------------------------------------------------
-//
-//    /**
-//     * Constructs a `RealmList` in unmanaged mode.
-//     */
-//    constructor() : super() {
-//        this.facade = UnmanagedListFacade()
-//    }
-//
-//    // -------------------------------------------------
-//    // Managed
-//    // -------------------------------------------------
-//
-//    /**
-//     * Constructs a `RealmList` in managed mode. This constructor is used internally by Realm.
-//     */
-//    constructor(
-//        listPtr: NativePointer,
-//        metadata: OperatorMetadata
-//    ) : super() {
-//        this.facade = ManagedListFacade(listPtr, Operator(metadata))
-//    }
-//
-//    override val size: Int
-//        get() = facade.size
-//
-//    override fun get(index: Int): E = facade[index]
-//
-//    override fun indexOf(element: E): Int = facade.indexOf(element)
-//
-//    override fun iterator(): MutableIterator<E> = facade.iterator()
-//
-//    override fun lastIndexOf(element: E): Int = facade.lastIndexOf(element)
-//
-//    override fun add(element: E): Boolean = facade.add(element)
-//
-//    override fun add(index: Int, element: E) = facade.add(index, element)
-//
-//    override fun addAll(index: Int, elements: Collection<E>): Boolean =
-//        facade.addAll(index, elements)
-//
-//    override fun listIterator(): MutableListIterator<E> = facade.listIterator()
-//
-//    override fun listIterator(index: Int): MutableListIterator<E> = facade.listIterator(index)
-//
-//    override fun removeAt(index: Int): E = facade.removeAt(index)
-//
-//    override fun set(index: Int, element: E): E = facade.set(index, element)
-//
-//    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> =
-//        facade.subList(fromIndex, toIndex)
-//
-//    override fun clear() = facade.clear()
-//
-//    /**
-//     * TODO
-//     */
-//    data class OperatorMetadata(
-//        val clazz: KClass<*>,
-//        val isRealmObject: Boolean,
-//        val mediator: Mediator,
-//        val realmPointer: NativePointer
-//    )
-//
-//    /**
-//     * TODO
-//     */
-//    internal inner class Operator(
-//        private val metadata: OperatorMetadata
-//    ) {
-//
-//        @Suppress("UNCHECKED_CAST")
-//        fun convert(value: Any?): E {
-//            if (value == null) {
-//                return null as E
-//            }
-//            return when (metadata.clazz) {
-//                Byte::class -> (value as Long).toByte()
-//                Char::class -> (value as Long).toChar()
-//                Short::class -> (value as Long).toShort()
-//                Int::class -> (value as Long).toInt()
-//                else -> with(metadata) {
-//                    if (isRealmObject) {
-//                        mediator.createInstanceOf(clazz).link(
-//                            realmPointer,
-//                            mediator,
-//                            clazz as KClass<out RealmObject>,
-//                            value as Link
-//                        )
-//                    } else {
-//                        value
-//                    }
-//                }
-//            } as E
-//        }
-//    }
-//}
-//
-///**
-// * TODO
-// */
-//private abstract class ListFacade<E> : MutableList<E>, AbstractMutableCollection<E>()
-//
-///**
-// * TODO
-// */
-//private class UnmanagedListFacade<E> : ListFacade<E>() {
-//
-//    private val unmanagedList = mutableListOf<E>()
-//
-//    override val size: Int
-//        get() = unmanagedList.size
-//
-//    override fun get(index: Int): E = unmanagedList[index]
-//
-//    override fun indexOf(element: E): Int = unmanagedList.indexOf(element)
-//
-//    override fun iterator(): MutableIterator<E> = unmanagedList.iterator()
-//
-//    override fun lastIndexOf(element: E): Int = unmanagedList.lastIndexOf(element)
-//
-//    override fun add(element: E): Boolean = unmanagedList.add(element)
-//
-//    override fun add(index: Int, element: E) = unmanagedList.add(index, element)
-//
-//    override fun addAll(index: Int, elements: Collection<E>): Boolean =
-//        unmanagedList.addAll(index, elements)
-//
-//    override fun listIterator(): MutableListIterator<E> = unmanagedList.listIterator()
-//
-//    override fun listIterator(index: Int): MutableListIterator<E> =
-//        unmanagedList.listIterator(index)
-//
-//    override fun removeAt(index: Int): E = unmanagedList.removeAt(index)
-//
-//    override fun set(index: Int, element: E): E = unmanagedList.set(index, element)
-//
-//    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> =
-//        unmanagedList.subList(fromIndex, toIndex)
-//}
-//
-///**
-// * TODO
-// */
-//private class ManagedListFacade<E>(
-//    private val listPtr: NativePointer,
-//    private val operator: RealmList<E>.Operator
-//) : ListFacade<E>() {
-//
-//    override val size: Int
-//        get() = RealmInterop.realm_list_size(listPtr).toInt()
-//
-//    override fun get(index: Int): E =
-//        operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
-//
-//    override fun indexOf(element: E): Int {
-//        TODO("indexOf(element: E) - Not yet implemented")
-//    }
-//
-//    override fun iterator(): MutableIterator<E> {
-//        TODO("iterator() - Not yet implemented")
-//    }
-//
-//    override fun lastIndexOf(element: E): Int {
-//        TODO("lastIndexOf(element: E) - Not yet implemented")
-//    }
-//
-//    override fun add(element: E): Boolean = RealmInterop.realm_list_add(listPtr, element)
-//        .let { true }
-//
-//    override fun add(index: Int, element: E) =
-//        RealmInterop.realm_list_add(listPtr, index.toLong(), element)
-//
-//    override fun addAll(index: Int, elements: Collection<E>): Boolean =
-//        size.let { sizeBefore ->
-//            // TODO could be optimized if the C API had a method for bulk inserting collections
-//            for ((i, e) in elements.withIndex()) {
-//                add(index + i, e)
-//            }
-//            sizeBefore != size
-//        }
-//
-//    override fun listIterator(): MutableListIterator<E> {
-//        TODO("listIterator() - Not yet implemented")
-//    }
-//
-//    override fun listIterator(index: Int): MutableListIterator<E> {
-//        TODO("listIterator(index: Int) - Not yet implemented")
-//    }
-//
-//    override fun removeAt(index: Int): E {
-//        TODO("removeAt(index: Int) - Not yet implemented")
-//    }
-//
-//    override fun set(index: Int, element: E): E {
-//        TODO("set(index: Int, element: E) - Not yet implemented")
-//    }
-//
-//    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
-//        TODO("subList(fromIndex: Int, toIndex: Int) - Not yet implemented")
-//    }
-//
-//    override fun clear() = RealmInterop.realm_list_clear(listPtr)
-//}

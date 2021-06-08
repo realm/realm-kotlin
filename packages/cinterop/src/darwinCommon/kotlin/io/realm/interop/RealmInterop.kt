@@ -396,18 +396,6 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_list_add(list: NativePointer, value: T) {
-        memScoped {
-            checkedBooleanResult(
-                realm_wrapper.realm_list_add_by_ref(
-                    list.cptr(),
-                    realm_list_size(list).toULong(),
-                    to_realm_value(value).ptr
-                )
-            )
-        }
-    }
-
     actual fun <T> realm_list_add(list: NativePointer, index: Long, value: T) {
         memScoped {
             checkedBooleanResult(
@@ -420,8 +408,26 @@ actual object RealmInterop {
         }
     }
 
+    actual fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T {
+        return memScoped {
+            realm_list_get<T>(list, index).also {
+                checkedBooleanResult(
+                    realm_wrapper.realm_list_set_by_ref(
+                        list.cptr(),
+                        index.toULong(),
+                        to_realm_value(value).ptr
+                    )
+                )
+            }
+        }
+    }
+
     actual fun realm_list_clear(list: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_list_clear(list.cptr()))
+    }
+
+    actual fun realm_list_erase(list: NativePointer, index: Long) {
+        checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
