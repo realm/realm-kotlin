@@ -16,8 +16,13 @@
 
 package io.realm
 
+import io.realm.internal.Mediator
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.link
+import io.realm.interop.Link
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.reflect.KClass
 
 /**
  * Marker interface to define a model (managed by Realm).
@@ -55,4 +60,16 @@ public var RealmObject.version: VersionId
 public fun RealmObject.isManaged(): Boolean {
     val internalObject = this as RealmObjectInternal
     return internalObject.`$realm$IsManaged`
+}
+
+/**
+ * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
+ */
+internal fun <T : RealmObject> Link.toRealmObject(
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realmPointer: NativePointer
+): T {
+    return mediator.createInstanceOf(clazz)
+        .link(realmPointer, mediator, clazz, this)
 }

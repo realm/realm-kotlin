@@ -61,12 +61,12 @@ class RealmListTests {
     }
 
     @Test
-    fun add() {
+    fun get() {
         for (tester in unmanagedTesters) {
-            tester.add()
+            tester.get()
         }
         for (tester in managedTesters) {
-            tester.add()
+            tester.get()
         }
     }
 
@@ -91,12 +91,22 @@ class RealmListTests {
     }
 
     @Test
-    fun addAll() {
+    fun clear() {
         for (tester in unmanagedTesters) {
-            tester.addAll()
+            tester.clear()
         }
         for (tester in managedTesters) {
-            tester.addAll()
+            tester.clear()
+        }
+    }
+
+    @Test
+    fun removeAt() {
+        for (tester in unmanagedTesters) {
+            tester.removeAt()
+        }
+        for (tester in managedTesters) {
+            tester.removeAt()
         }
     }
 
@@ -110,7 +120,6 @@ class RealmListTests {
         }
     }
 
-    // TODO consider using TypeDescriptor as "source of truth" for classifiers
     // TODO investigate how to add properties/values directly so that it works for multiplatform
     @Suppress("UNCHECKED_CAST")
     private fun <T> getDataSetForClassifier(
@@ -146,6 +155,7 @@ class RealmListTests {
         }
     }
 
+    // TODO Is it useless to test unmanaged lists? We are effectively only testing class delegation
     private val unmanagedTesters: List<ListApiTester> by lazy {
         descriptors.map {
             UnmanagedListTester(
@@ -186,13 +196,14 @@ internal interface ListApiTester {
 
     override fun toString(): String
     fun get()
-    fun add()
     fun addWithIndex()
     fun addAllWithIndex()
-    fun addAll()
     fun clear()
     fun removeAt()
     fun set()
+
+    // All the other functions are not tested since we rely on implementations from parent classes.
+    // TODO should we test them anyway?
 
     /**
      * This method acts as an assertion error catcher in case one of the classifiers we use for
@@ -219,9 +230,9 @@ internal interface ListApiTester {
     }
 }
 
-// ----------------------------------------------
-// Property nullability dimension
-// ----------------------------------------------
+// ----------------------------------------------------------
+// Type safety (nullability and dataset matching) dimension
+// ----------------------------------------------------------
 
 internal interface TypeSafetyManager<T> {
     val classifier: KClassifier
@@ -294,9 +305,17 @@ internal abstract class ManagedListTester<T>(
      */
     abstract fun MutableRealm.copyToRealmIfNeeded(element: T): T
 
+    /**
+     * We have to make sure we copy RealmObjects to the Realm before asserting anything. For generic
+     * types this is not needed.
+     */
     abstract fun MutableRealm.copyToRealmIfNeeded(elements: Collection<T>): Collection<T>
 
-    abstract fun assertEquality(expected: T, actual: T)
+    /**
+     * Asserts whether two objects are equal. This is needed to evaluate the contents of two
+     * RealmObjects.
+     */
+    abstract fun assertElementsAreEqual(expected: T, actual: T)
 
     override fun toString(): String = "Managed-$typeSafetyManager"
 
@@ -320,27 +339,8 @@ internal abstract class ManagedListTester<T>(
                 }
 
                 dataSet.forEachIndexed { index, t ->
-                    assertEquality(t, list[index])
+                    assertElementsAreEqual(t, list[index])
                 }
-            }
-        }
-    }
-
-    override fun add() {
-        errorCatcher {
-            realm.writeBlocking {
-                val list = typeSafetyManager.getList(this)
-
-                assertNotNull(list)
-                assertTrue(list.isEmpty())
-
-                typeSafetyManager.getInitialDataSet()
-                    .forEachIndexed { index, e ->
-                        assertEquals(index, list.size)
-                        assertTrue(list.add(copyToRealmIfNeeded(e)))
-                        assertEquals(index + 1, list.size)
-                        assertEquality(e, list[index])
-                    }
             }
         }
     }
@@ -358,7 +358,7 @@ internal abstract class ManagedListTester<T>(
                         assertEquals(index, list.size)
                         list.add(0, copyToRealmIfNeeded(e))
                         assertEquals(index + 1, list.size)
-                        assertEquality(e, list[0])
+                        assertElementsAreEqual(e, list[0])
                     }
 
                 // Fails when using invalid indices
@@ -375,6 +375,7 @@ internal abstract class ManagedListTester<T>(
     override fun addAllWithIndex() {
         errorCatcher {
             realm.writeBlocking {
+                mutableListOf<String>()
                 val list = typeSafetyManager.getList(this)
 
                 assertNotNull(list)
@@ -405,7 +406,7 @@ internal abstract class ManagedListTester<T>(
                 }
 
                 for (i in 0 until list.size) {
-                    assertEquality(dataSet[i], list[i])
+                    assertElementsAreEqual(dataSet[i], list[i])
                 }
 
                 // Fails when using invalid indices
@@ -414,31 +415,6 @@ internal abstract class ManagedListTester<T>(
                 }
                 assertFailsWith<IndexOutOfBoundsException> {
                     list.addAll(666, originalDataSet)
-                }
-            }
-        }
-    }
-
-    override fun addAll() {
-        errorCatcher {
-            realm.writeBlocking {
-                val list = typeSafetyManager.getList(this)
-
-                assertNotNull(list)
-                assertTrue(list.isEmpty())
-
-                // Returns false when list does not change
-                assertFalse(list.addAll(listOf()))
-
-                // Returns true when list changes
-                val dataSet = typeSafetyManager.getInitialDataSet()
-                assertTrue(list.addAll(copyToRealmIfNeeded(dataSet)))
-                assertTrue(list.addAll(copyToRealmIfNeeded(dataSet)))
-                assertEquals(dataSet.size * 2, list.size)
-
-                val newDataSet = dataSet.plus(dataSet)
-                for (i in 0 until list.size) {
-                    assertEquality(newDataSet[i], list[i])
                 }
             }
         }
@@ -485,7 +461,7 @@ internal abstract class ManagedListTester<T>(
                     list.removeAt(666)
                 }
 
-                assertEquality(originalDataSet[0], list.removeAt(0))
+                assertElementsAreEqual(originalDataSet[0], list.removeAt(0))
             }
         }
     }
@@ -504,7 +480,7 @@ internal abstract class ManagedListTester<T>(
 
                 val previousElement = list.set(0, copyToRealmIfNeeded(originalDataSet[1]))
                 assertEquals(1, list.size)
-                assertEquality(originalDataSet[0], previousElement)
+                assertElementsAreEqual(originalDataSet[0], previousElement)
 
                 // Fails when using invalid indices
                 assertFailsWith<IndexOutOfBoundsException> {
@@ -525,7 +501,7 @@ internal class ManagedGenericListTester<T>(
 
     override fun MutableRealm.copyToRealmIfNeeded(element: T): T = element
     override fun MutableRealm.copyToRealmIfNeeded(elements: Collection<T>): Collection<T> = elements
-    override fun assertEquality(expected: T, actual: T) = assertEquals(expected, actual)
+    override fun assertElementsAreEqual(expected: T, actual: T) = assertEquals(expected, actual)
 }
 
 internal class ManagedRealmObjectListTester(
@@ -540,7 +516,7 @@ internal class ManagedRealmObjectListTester(
         elements: Collection<RealmListContainer>
     ): Collection<RealmListContainer> = elements.map { copyToRealm(it) }
 
-    override fun assertEquality(expected: RealmListContainer, actual: RealmListContainer) =
+    override fun assertElementsAreEqual(expected: RealmListContainer, actual: RealmListContainer) =
         assertEquals(expected.stringField, actual.stringField)
 }
 
@@ -566,12 +542,6 @@ internal class UnmanagedListTester<T>(
             }
     }
 
-    override fun add() {
-        // No need to assert anything, just checking the delegate works
-        typeSafetyManager.getList()
-            .add(typeSafetyManager.getInitialDataSet()[0])
-    }
-
     override fun addWithIndex() {
         // No need to assert anything, just checking the delegate works
         typeSafetyManager.getList()
@@ -582,12 +552,6 @@ internal class UnmanagedListTester<T>(
         // No need to assert anything, just checking the delegate works
         typeSafetyManager.getList()
             .addAll(0, typeSafetyManager.getInitialDataSet())
-    }
-
-    override fun addAll() {
-        // No need to assert anything, just checking the delegate works
-        typeSafetyManager.getList()
-            .addAll(typeSafetyManager.getInitialDataSet())
     }
 
     override fun clear() {
