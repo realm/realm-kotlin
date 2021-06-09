@@ -91,7 +91,7 @@ class RealmList<E> private constructor(
  * TODO
  */
 private class UnmanagedListDelegate<E>(
-    private val list: MutableList<E> = mutableListOf()
+    list: MutableList<E> = mutableListOf()
 ) : MutableList<E> by list
 
 /**
@@ -145,19 +145,19 @@ private class ManagedListDelegate<E>(
         RealmInterop.realm_list_add(listPtr, index.toLong(), element)
     }
 
-    override fun addAll(index: Int, elements: Collection<E>): Boolean =
-        size.let { sizeBefore ->
-            if (index < 0 || index > sizeBefore) {
-                throw IndexOutOfBoundsException("Index was '$index' but size was '$sizeBefore'")
-            }
-
-            var modified = false
-            for ((i, e) in elements.withIndex()) {
-                add(index + i, e)
-                modified = true
-            }
-            modified
+    override fun addAll(index: Int, elements: Collection<E>): Boolean {
+        val sizeBefore = size
+        if (index < 0 || index > sizeBefore) {
+            throw IndexOutOfBoundsException("Index was '$index' but size was '$sizeBefore'")
         }
+
+        var modified = false
+        for ((i, e) in elements.withIndex()) {
+            add(index + i, e)
+            modified = true
+        }
+        return modified
+    }
 
     override fun addAll(elements: Collection<E>): Boolean = addAll(size, elements)
 
