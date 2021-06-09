@@ -15,6 +15,7 @@
  */
 package io.realm
 
+import io.realm.internal.RealmReference
 import io.realm.internal.SuspendableWriter
 import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
@@ -26,8 +27,26 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    private val writer: SuspendableWriter = SuspendableWriter(configuration)
+    private val writer: SuspendableWriter = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
+
+    /**
+     * FIXME Update docs when design is settled
+     * Returns an ID identifying any Realm data at the point in time this method is called.
+     *
+     * This is done by pairing a reference to the public Realm instance alongside the current `dbPointer`.
+     * For live Realms, the `dbPointer` point to a underlying live SharedRealm that might mutate. For frozen
+     * Realms the `dbPointer` points to a frozen SharedRealm that is guaranteed to remain the same, even if
+     * the public Realm advance to a later version.
+     *
+     * The public Realm instance part of the ID can also mutate, so care must be taken if any methods on that
+     * Realm is used.
+     */
+    val updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> = kotlinx.atomicfu.atomic<RealmReference>(
+        RealmReference(this, dbPointer)
+    )
+    override val realm: RealmReference
+        get() { return updateableRealm.value }
 
     companion object {
         /**
@@ -123,13 +142,15 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         realmPointerMutex.withLock {
             log.debug("$version -> $newVersion")
             if (newVersion >= version) {
-                // FIXME Currently we need this to be a live realm to be able to continue doing
-                //  writeBlocking transactions.
-                dbPointer = RealmInterop.realm_thaw(newRealm)
-                // We need to start a read transaction to be able to retrieve version id, etc.
+                // FIXME Currently we need to thaw the realm to be a live realm to be able to
+                //  continue doing writeBlocking transactions.
+                // FIXME Update Thawing to allow writes a no longer needed as writes are now all
+                //  done through the SuspendableWriter, but I image that current tests are expecting
+                //  objects to be live!?
+                val dbPointer = RealmInterop.realm_thaw(newRealm)
+                // FIXME The thawed realm need a read transaction to be able to retieve version, etc.
                 RealmInterop.realm_begin_read(dbPointer)
-                version = newVersion
-                advanceRealm(RealmInterop.realm_thaw(newRealm), newVersion)
+                updateableRealm.value = RealmReference(this, dbPointer)
             }
         }
     }

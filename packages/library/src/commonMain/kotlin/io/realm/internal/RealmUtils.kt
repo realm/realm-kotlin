@@ -16,9 +16,7 @@
 
 package io.realm.internal
 
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -34,14 +32,14 @@ internal inline fun REPLACED_BY_IR(
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
 
-internal fun checkRealmClosed(realm: TransactionId, configuration: RealmConfiguration) {
+internal fun checkRealmClosed(realm: RealmReference) {
     if (RealmInterop.realm_is_closed(realm.dbPointer)) {
-        throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
+        throw IllegalStateException("Realm has been closed and is no longer accessible: ${realm.owner.configuration.path}")
     }
 }
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmObject> create(mediator: Mediator, realm: TransactionId, type: KClass<T>): T {
+fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
     //  some runtime container of an open realm.
@@ -66,7 +64,7 @@ fun <T : RealmObject> create(mediator: Mediator, realm: TransactionId, type: KCl
 }
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmObject> create(mediator: Mediator, realm: TransactionId, type: KClass<T>, primaryKey: Any?): T {
+fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, primaryKey: Any?): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
     //  some runtime container of an open realm.
@@ -90,7 +88,7 @@ fun <T : RealmObject> create(mediator: Mediator, realm: TransactionId, type: KCl
     }
 }
 
-fun <T : RealmObject> copyToRealm(mediator: Mediator, realm: TransactionId, instance: T, cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()): T {
+fun <T : RealmObject> copyToRealm(mediator: Mediator, realm: RealmReference, instance: T, cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()): T {
     // Copying already managed instance is an no-op
     if ((instance as RealmObjectInternal).`$realm$IsManaged`) return instance
 

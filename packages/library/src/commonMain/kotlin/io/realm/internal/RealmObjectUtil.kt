@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmObjectInternal.manage(realm: TransactionId, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmObject> RealmObjectInternal.manage(realm: RealmReference, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
@@ -38,7 +38,7 @@ fun <T : RealmObject> RealmObjectInternal.manage(realm: TransactionId, mediator:
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmObjectInternal.link(realm: TransactionId, mediator: Mediator, type: KClass<T>, link: Link): T {
+fun <T : RealmObject> RealmObjectInternal.link(realm: RealmReference, mediator: Mediator, type: KClass<T>, link: Link): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
@@ -64,12 +64,12 @@ fun RealmObjectInternal.unmanage() {
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-fun <T : RealmObject> RealmObjectInternal.freeze(realm: TransactionId, expectedRealm: TransactionId? = null): T {
+fun <T : RealmObject> RealmObjectInternal.freeze(realm: RealmReference, expectedRealm: RealmReference? = null): T {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     return managedModel.manage(
-        frozenRealm,
+        realm,
         `$realm$Mediator` as Mediator,
         type,
         RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, expectedRealm?.dbPointer ?: realm.dbPointer)
@@ -85,9 +85,9 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
-    val dbPointer = liveRealm.dbPointer
+    val dbPointer = liveRealm.realm.dbPointer
     return managedModel.manage(
-        dbPointer,
+        liveRealm.realm,
         `$realm$Mediator` as Mediator,
         type,
         RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)

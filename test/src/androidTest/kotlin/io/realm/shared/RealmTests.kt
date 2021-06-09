@@ -19,12 +19,15 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.isManaged
+import io.realm.log.LogLevel
 import io.realm.util.PlatformUtils
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import test.link.Child
@@ -52,10 +55,12 @@ class RealmTests {
     private lateinit var realm: Realm
 
     private val configuration: RealmConfiguration by lazy {
-        RealmConfiguration(
-            path = "$tmpDir/default.realm",
-            schema = setOf(Parent::class, Child::class)
-        )
+        RealmConfiguration.Builder()
+            .path( "$tmpDir/default.realm",)
+            .schema( setOf(Parent::class, Child::class))
+            // FIXME Debugging only
+             .log(level = LogLevel.DEBUG)
+            .build()
     }
 
     @BeforeTest
@@ -347,5 +352,24 @@ class RealmTests {
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in
         // some way (or the writer to be backed by another thread).
         assertEquals(1, realm.objects(Parent::class).size)
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun writesOnFrozenRealm() {
+        val dispatcher = newSingleThreadContext("background")
+        runBlocking {
+            realm.write {
+                copyToRealm(Parent())
+            }
+        }
+        runBlocking(dispatcher) {
+            assertTrue { realm.isFrozen }
+            realm.write {
+                copyToRealm(Parent())
+            }
+        }
+        assertTrue { realm.isFrozen }
+        assertEquals(2, realm.objects<Parent>().size)
     }
 }

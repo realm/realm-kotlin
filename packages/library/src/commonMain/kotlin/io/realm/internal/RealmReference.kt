@@ -4,6 +4,7 @@ import io.realm.BaseRealm
 import io.realm.interop.NativePointer
 
 /**
+ * FIXME Update
  * A TransactionId makes it possible to track which public Realm instance an underlying C++ SharedRealm is associated
  * with (represented by the `dbPointer`). This is needed as each Results, List or Object need to know, both which
  * public Realm they belong to, but also what underlying SharedRealm they are part of. But since the public Realm
@@ -17,4 +18,20 @@ import io.realm.interop.NativePointer
  * For both versions, the public Realm reference is allowed to change independently from the underlying
  * `dbPointer`, so care should be taken when accessing any methods on the public Realm.
  */
-data class TransactionId(val ref: BaseRealm, val dbPointer: NativePointer)
+data class RealmReference(
+    val owner: BaseRealm,
+    val dbPointer: NativePointer
+    // FIXME Should we keep a debug flag to assert that we have the right liveness state
+)
+
+internal interface RealmReferrer {
+    val realm: RealmReference
+
+    // TODO Can we add default implementations of this. Remember guidelines for properties vs. functions
+    // fun version()
+    // fun isClosed
+}
+
+interface LiveRealm
+
+interface FrozenRealm

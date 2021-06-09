@@ -16,8 +16,8 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealm
 import io.realm.MutableRealm
-import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.VersionId
 import io.realm.interop.NativePointer
@@ -38,9 +38,9 @@ import kotlinx.coroutines.withContext
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
 class SuspendableWriter(
-    private val owner: Realm,
-    val dispatcher: CoroutineDispatcher = configuration.writeDispatcher(
-        configuration.path
+    private val owner: BaseRealm,
+    val dispatcher: CoroutineDispatcher = owner.configuration.writeDispatcher(
+        owner.configuration.path
     )
 ) {
     // Must only be accessed from the dispatchers thread
@@ -82,7 +82,7 @@ class SuspendableWriter(
             // the transaction is committed and we freeze it.
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
-            val newDbPointer = RealmInterop.realm_freeze(realm.transactionid.dbPointer)
+            val newDbPointer = RealmInterop.realm_freeze(realm.realm.dbPointer)
             val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
             // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {
@@ -97,10 +97,10 @@ class SuspendableWriter(
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 val obj: RealmObjectInternal = (result as RealmObjectInternal)
-                // MERGE
-                obj.freeze<RealmObject>(frozenDbPointer) as R
                 @Suppress("UNCHECKED_CAST")
-                obj.freeze<RealmObject>(TransactionId(owner, realm.transactionid.dbPointer), TransactionId(owner, frozenDbPointer)) as R
+                // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
+                //  could completely eliminate the need for the external owner in here!?
+                obj.freeze<RealmObject>(RealmReference(owner, realm.realm.dbPointer), RealmReference(owner, frozenDbPointer)) as R
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }

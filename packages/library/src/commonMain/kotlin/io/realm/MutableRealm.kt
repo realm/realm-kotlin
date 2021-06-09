@@ -16,6 +16,7 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmReference
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -28,6 +29,8 @@ import kotlin.reflect.KClass
  * [Realm.writeBlocking].
  */
 class MutableRealm : BaseRealm {
+
+    override val realm: RealmReference = RealmReference(this, dbPointer)
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
@@ -73,7 +76,7 @@ class MutableRealm : BaseRealm {
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(configuration.mediator, transactionid, type)
+        return io.realm.internal.create(configuration.mediator, realm, type)
     }
     // Convenience inline method for the above to skip KClass argument
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
@@ -81,7 +84,7 @@ class MutableRealm : BaseRealm {
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
-        return io.realm.internal.create(configuration.mediator, transactionid, type, primaryKey)
+        return io.realm.internal.create(configuration.mediator, realm, type, primaryKey)
     }
 
     /**
@@ -95,7 +98,7 @@ class MutableRealm : BaseRealm {
      * @return The managed version of the `instance`.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
-        return io.realm.internal.copyToRealm(configuration.mediator, transactionid, instance)
+        return io.realm.internal.copyToRealm(configuration.mediator, realm, instance)
     }
 
     internal fun isInTransaction(): Boolean {

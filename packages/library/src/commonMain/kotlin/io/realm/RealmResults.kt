@@ -19,7 +19,7 @@ package io.realm
 import io.realm.internal.Mediator
 import io.realm.internal.NotificationToken
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.TransactionId
+import io.realm.internal.RealmReference
 import io.realm.internal.checkRealmClosed
 import io.realm.internal.link
 import io.realm.interop.Link
@@ -34,10 +34,7 @@ import kotlin.reflect.KClass
 class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
 
     private val mode: Mode
-    private val owner: BaseRealm
-    private val realm: TransactionId,
-
-    private val realm: NativePointer // Store explicit reference to pointer because the owner Realm might replace it.
+    private val realm: RealmReference
     private val clazz: KClass<T>
     private val schema: Mediator
     private val result: NativePointer
@@ -48,29 +45,29 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
         RESULTS // RealmResults wrapping a Realm Core Results.
     }
     // Wrap existing native Results class
-    private constructor(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator) {
+    private constructor(realm: RealmReference, results: NativePointer, clazz: KClass<T>, schema: Mediator) {
         this.mode = Mode.RESULTS
-        this.owner = realm
-        this.realm = realm.dbPointer
+        this.realm = realm
         this.result = results
         this.clazz = clazz
         this.schema = schema
     }
 
     internal companion object {
-        internal fun <T : RealmObject> fromQuery(realm: BaseRealm, query: NativePointer, clazz: KClass<T>, schema: Mediator): RealmResults<T> {
+        internal fun <T : RealmObject> fromQuery(realm: RealmReference, query: NativePointer, clazz: KClass<T>, schema: Mediator): RealmResults<T> {
             // realm_query_find_all doesn't fully evaluate until you interact with it.
             return RealmResults(realm, RealmInterop.realm_query_find_all(query), clazz, schema)
         }
 
-        internal fun <T : RealmObject> fromResults(realm: BaseRealm, results: NativePointer, clazz: KClass<T>, schema: Mediator): RealmResults<T> {
+        internal fun <T : RealmObject> fromResults(realm: RealmReference, results: NativePointer, clazz: KClass<T>, schema: Mediator): RealmResults<T> {
             return RealmResults(realm, results, clazz, schema)
         }
     }
 
+    // FIXME Should we have this here ... What about abstracting it to RealmReferrer and implementing that instead
     public var version: VersionId = VersionId(0)
         get() {
-            checkRealmClosed(realm, owner.configuration)
+            checkRealmClosed(realm)
             return VersionId(RealmInterop.realm_get_version_id(realm.dbPointer))
         }
 
@@ -92,7 +89,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return fromQuery(
-            owner,
+            realm,
             RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args),
             clazz,
             schema,
@@ -105,6 +102,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
      * Follows the pattern of [Realm.observe]
      */
     fun observe(callback: Callback<RealmResults<T>>): Cancellable {
+        // TODO Delegate to owner (realm.owner) and delegate to notifier for Realm and throw for MutableRealm
         val token = RealmInterop.realm_results_add_notification_callback(
             result,
             object : io.realm.interop.Callback {
@@ -129,7 +127,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
      * Returns a frozen copy of this query result. If it is already frozen, the same instance
      * is returned.
      */
-    internal fun freeze(realm: Realm): RealmResults<T> {
+    internal fun freeze(realm: RealmReference): RealmResults<T> {
         val frozenDbPointer = realm.dbPointer
         val frozenResults = RealmInterop.realm_results_freeze(result, frozenDbPointer)
         return fromResults(realm, frozenResults, clazz, schema)
@@ -138,7 +136,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     /**
      * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
      */
-    internal fun thaw(realm: BaseRealm): RealmResults<T> {
+    internal fun thaw(realm: RealmReference): RealmResults<T> {
         val liveDbPointer = realm.dbPointer
         val liveResultPtr = RealmInterop.realm_results_thaw(result, liveDbPointer)
         return fromResults(realm, liveResultPtr, clazz, schema)

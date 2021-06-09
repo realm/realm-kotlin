@@ -16,7 +16,7 @@
 package io.realm
 
 import io.realm.internal.RealmLog
-import io.realm.internal.TransactionId
+import io.realm.internal.RealmReferrer
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
@@ -31,35 +31,24 @@ public abstract class BaseRealm internal constructor(
      */
     public val configuration: RealmConfiguration,
     dbPointer: NativePointer
-) {
+) : RealmReferrer {
 
     /**
      * The current data version of this Realm and data fetched from it.
      */
+    // TODO Could be abstracted into RealmReferrer!?
     public var version: VersionId = VersionId(0)
         get() {
             checkClosed()
-            return VersionId(RealmInterop.realm_get_version_id(dbPointer))
+            return VersionId(RealmInterop.realm_get_version_id(realm.dbPointer))
         }
 
+    // Cannot use mutable state variables, so currently relying on C-API realm_is_closed
     // Use this boolean to track closed instead of `NativePointer?` to avoid forcing
     // null checks everywhere, when it is rarely needed.
-    private var isClosed: Boolean = false
-    internal val log: RealmLog = RealmLog(configuration = configuration.log)
+    // private var isClosed: Boolean = false
 
-    /**
-     * Returns an ID identifying any Realm data at the point in time this method is called.
-     *
-     * This is done by pairing a reference to the public Realm instance alongside the current `dbPointer`.
-     * For live Realms, the `dbPointer` point to a underlying live SharedRealm that might mutate. For frozen
-     * Realms the `dbPointer` points to a frozen SharedRealm that is guaranteed to remain the same, even if
-     * the public Realm advance to a later version.
-     *
-     * The public Realm instance part of the ID can also mutate, so care must be taken if any methods on that
-     * Realm is used.
-     */
-    internal var transactionid: TransactionId = TransactionId(this, dbPointer)
-        private set
+    internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
     // Easy reference to the dbPointer for use internally in Realm classes
     protected var dbPointer: NativePointer
@@ -72,10 +61,11 @@ public abstract class BaseRealm internal constructor(
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         checkClosed()
+        // Encapsulate to ensure that we get a snapshot
+        val realmReference = this.realm
         return RealmResults.fromQuery(
-            this,
-            transactionid,
-            RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
+            realmReference,
+            RealmInterop.realm_query_parse(realmReference.dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
             clazz,
             configuration.mediator
         )
@@ -83,11 +73,6 @@ public abstract class BaseRealm internal constructor(
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
-    protected fun advanceRealm(newDbPointer: NativePointer, newVersion: VersionId) {
-        transactionid = TransactionId(this, newDbPointer)
-        dbPointer = newDbPointer
-        version = newVersion
-    }
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have
@@ -107,13 +92,13 @@ public abstract class BaseRealm internal constructor(
      * @return `true` if the Realm has been closed. `false` if not.
      */
     public fun isClosed(): Boolean {
-        return isClosed
+        return RealmInterop.realm_is_closed(realm.dbPointer)
     }
 
     // Inline this for a cleaner stack trace in case it throws.
     @Suppress("MemberVisibilityCanBePrivate")
     internal inline fun checkClosed() {
-        if (isClosed) {
+        if (isClosed()) {
             throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
         }
     }
@@ -121,8 +106,7 @@ public abstract class BaseRealm internal constructor(
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
         checkClosed()
-        RealmInterop.realm_close(dbPointer)
-        isClosed = true
+        RealmInterop.realm_close(realm.dbPointer)
         log.info("Realm closed: ${configuration.path}")
     }
 }

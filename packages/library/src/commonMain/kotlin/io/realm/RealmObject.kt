@@ -17,7 +17,7 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.TransactionId
+import io.realm.internal.RealmReference
 import io.realm.interop.RealmInterop
 
 /**
@@ -39,7 +39,7 @@ public var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal
         internalObject.`$realm$Owner`?.let {
-            return VersionId(RealmInterop.realm_get_version_id((it as TransactionId).dbPointer))
+            return VersionId(RealmInterop.realm_get_version_id((it as RealmReference).dbPointer))
         } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
     }
     private set(_) {
