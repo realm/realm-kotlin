@@ -185,13 +185,14 @@ class RealmListTests {
 internal interface ListApiTester {
 
     override fun toString(): String
-    fun add()
     fun get()
+    fun add()
     fun addWithIndex()
     fun addAllWithIndex()
     fun addAll()
-    fun set()
+    fun clear()
     fun removeAt()
+    fun set()
 
     /**
      * This method acts as an assertion error catcher in case one of the classifiers we use for
@@ -299,25 +300,6 @@ internal abstract class ManagedListTester<T>(
 
     override fun toString(): String = "Managed-$typeSafetyManager"
 
-    override fun add() {
-        errorCatcher {
-            realm.writeBlocking {
-                val list = typeSafetyManager.getList(this)
-
-                assertNotNull(list)
-                assertTrue(list.isEmpty())
-
-                typeSafetyManager.getInitialDataSet()
-                    .forEachIndexed { index, e ->
-                        assertEquals(index, list.size)
-                        assertTrue(list.add(copyToRealmIfNeeded(e)))
-                        assertEquals(index + 1, list.size)
-                        assertEquality(e, list[index])
-                    }
-            }
-        }
-    }
-
     override fun get() {
         errorCatcher {
             realm.writeBlocking {
@@ -340,6 +322,25 @@ internal abstract class ManagedListTester<T>(
                 dataSet.forEachIndexed { index, t ->
                     assertEquality(t, list[index])
                 }
+            }
+        }
+    }
+
+    override fun add() {
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.getList(this)
+
+                assertNotNull(list)
+                assertTrue(list.isEmpty())
+
+                typeSafetyManager.getInitialDataSet()
+                    .forEachIndexed { index, e ->
+                        assertEquals(index, list.size)
+                        assertTrue(list.add(copyToRealmIfNeeded(e)))
+                        assertEquals(index + 1, list.size)
+                        assertEquality(e, list[index])
+                    }
             }
         }
     }
@@ -443,29 +444,19 @@ internal abstract class ManagedListTester<T>(
         }
     }
 
-    override fun set() {
+    override fun clear() {
         errorCatcher {
             realm.writeBlocking {
                 val list = typeSafetyManager.getList(this)
 
                 assertNotNull(list)
                 assertTrue(list.isEmpty())
+                val dataSet = typeSafetyManager.getInitialDataSet()
+                assertTrue(list.addAll(copyToRealmIfNeeded(dataSet)))
 
-                // Add something so that we can call set on an index
-                val originalDataSet = typeSafetyManager.getInitialDataSet()
-                list.add(copyToRealmIfNeeded(originalDataSet[0]))
-
-                val previousElement = list.set(0, copyToRealmIfNeeded(originalDataSet[1]))
-                assertEquals(1, list.size)
-                assertEquality(originalDataSet[0], previousElement)
-
-                // Fails when using invalid indices
-                assertFailsWith<IndexOutOfBoundsException> {
-                    list[-1] = copyToRealmIfNeeded(originalDataSet[0])
-                }
-                assertFailsWith<IndexOutOfBoundsException> {
-                    list[666] = copyToRealmIfNeeded(originalDataSet[0])
-                }
+                assertEquals(dataSet.size, list.size)
+                list.clear()
+                assertTrue(list.isEmpty())
             }
         }
     }
@@ -495,6 +486,33 @@ internal abstract class ManagedListTester<T>(
                 }
 
                 assertEquality(originalDataSet[0], list.removeAt(0))
+            }
+        }
+    }
+
+    override fun set() {
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.getList(this)
+
+                assertNotNull(list)
+                assertTrue(list.isEmpty())
+
+                // Add something so that we can call set on an index
+                val originalDataSet = typeSafetyManager.getInitialDataSet()
+                list.add(copyToRealmIfNeeded(originalDataSet[0]))
+
+                val previousElement = list.set(0, copyToRealmIfNeeded(originalDataSet[1]))
+                assertEquals(1, list.size)
+                assertEquality(originalDataSet[0], previousElement)
+
+                // Fails when using invalid indices
+                assertFailsWith<IndexOutOfBoundsException> {
+                    list[-1] = copyToRealmIfNeeded(originalDataSet[0])
+                }
+                assertFailsWith<IndexOutOfBoundsException> {
+                    list[666] = copyToRealmIfNeeded(originalDataSet[0])
+                }
             }
         }
     }
@@ -538,12 +556,6 @@ internal class UnmanagedListTester<T>(
         return "Unmanaged-$typeSafetyManager"
     }
 
-    override fun add() {
-        // No need to assert anything, just checking the delegate works
-        typeSafetyManager.getList()
-            .add(typeSafetyManager.getInitialDataSet()[0])
-    }
-
     override fun get() {
         // No need to assert anything, just checking the delegate works
         typeSafetyManager.getList()
@@ -552,6 +564,12 @@ internal class UnmanagedListTester<T>(
             }.also {
                 it[0]
             }
+    }
+
+    override fun add() {
+        // No need to assert anything, just checking the delegate works
+        typeSafetyManager.getList()
+            .add(typeSafetyManager.getInitialDataSet()[0])
     }
 
     override fun addWithIndex() {
@@ -572,15 +590,13 @@ internal class UnmanagedListTester<T>(
             .addAll(typeSafetyManager.getInitialDataSet())
     }
 
-    override fun set() {
+    override fun clear() {
         // No need to assert anything, just checking the delegate works
         typeSafetyManager.getList()
             .also {
-                // Add something so that we can call set on an index
-                it.add(0, typeSafetyManager.getInitialDataSet()[0])
+                it.addAll(typeSafetyManager.getInitialDataSet())
             }.also {
-                // Actual call to set
-                it[0] = typeSafetyManager.getInitialDataSet()[0]
+                it.clear()
             }
     }
 
@@ -591,6 +607,18 @@ internal class UnmanagedListTester<T>(
                 it.add(0, typeSafetyManager.getInitialDataSet()[0])
             }.also {
                 it.removeAt(0)
+            }
+    }
+
+    override fun set() {
+        // No need to assert anything, just checking the delegate works
+        typeSafetyManager.getList()
+            .also {
+                // Add something so that we can call set on an index
+                it.add(0, typeSafetyManager.getInitialDataSet()[0])
+            }.also {
+                // Actual call to set
+                it[0] = typeSafetyManager.getInitialDataSet()[0]
             }
     }
 }
