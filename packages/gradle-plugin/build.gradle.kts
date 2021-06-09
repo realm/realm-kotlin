@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import kotlin.text.toBoolean
 
 plugins {
     kotlin("jvm")
     kotlin("kapt")
     `java-gradle-plugin`
+    id("com.gradle.plugin-publish") version Versions.gradlePluginPublishPlugin
     id("realm-publisher")
 }
 
@@ -32,19 +34,27 @@ dependencies {
 
 val mavenPublicationName = "gradlePlugin"
 
+fun createMarkerArtifact(): Boolean {
+    val value = properties.getOrDefault("generatePluginArtifactMarker", "false") as String
+    return value.toBoolean()
+}
+
+pluginBundle {
+    website = "https://github.com/realm/realm-kotlin"
+    vcsUrl = "https://github.com/realm/realm-kotlin"
+    tags = listOf("MongoDB", "Realm", "Database", "Kotlin", "Mobile", "Multiplatform", "Android", "KMM")
+}
+
 gradlePlugin {
     plugins {
         create("RealmPlugin") {
-            id = Realm.pluginId
-            displayName = "Realm compiler plugin"
+            id = Realm.pluginPortalId
+            displayName = "Realm Kotlin Plugin"
+            description = "Gradle plugin for the Realm Kotlin SDK, supporting Android and Multiplatform. " +
+                "Realm is a mobile database: Build better apps faster."
             implementationClass = "io.realm.gradle.RealmPlugin"
         }
-        // FIXME Disable publishing of marker artifact as it is currently causing authentication
-        //  issues when uploading to http://oss.jfrog.org/oss-snapshot-local.
-        //  NOTE This also disables publication of the marker artifact when publishing to local
-        //  maven repository
-        //  https://github.com/realm/realm-kotlin/issues/100
-        isAutomatedPublishing = false
+        isAutomatedPublishing = createMarkerArtifact()
     }
 }
 
@@ -53,19 +63,20 @@ realmPublish {
         name = "Gradle Plugin"
         description = "Gradle plugin for Realm Kotlin. Realm is a mobile database: Build better apps faster."
     }
-    ojo { }
 }
 
 publishing {
     publications {
         register<MavenPublication>(mavenPublicationName) {
             artifactId = Realm.gradlePluginId
-            pom {
-                artifactId = Realm.gradlePluginId
-                from(components["java"])
-            }
+            from(components["java"])
         }
     }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 // Make version information available at runtime

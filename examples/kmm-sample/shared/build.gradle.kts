@@ -22,35 +22,15 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     id("kotlin-android-extensions")
-    // TODO Publish marker artifact to OJO to allow applying plugin by id
-    //  https://github.com/realm/realm-kotlin/issues/100
     // Apply Realm Kotlin plugin
-    // id("realm-kotlin") version Realm.version
+    id("io.realm.kotlin") version "0.1.0"
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
-// TODO Publish marker artifact to OJO to allow applying plugin by id instead of this
-//  https://github.com/realm/realm-kotlin/issues/100
-buildscript {
-    repositories {
-        maven(url = "http://oss.jfrog.org/artifactory/oss-snapshot-local")
-    }
-    dependencies {
-        classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
-    }
-}
-apply(plugin = "realm-kotlin")
 
 group = "io.realm.example"
-version = Realm.version
+version = "0.1.0"
 
-repositories {
-    gradlePluginPortal()
-    google()
-    jcenter()
-    mavenCentral()
-    maven(url = "http://oss.jfrog.org/artifactory/oss-snapshot-local")
-}
 kotlin {
     android()
     // TODO Realm is not available for non-X64 hosts yet
@@ -66,7 +46,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // TODO AUTO-SETUP
-                implementation("io.realm.kotlin:library:${Realm.version}")
+                implementation("io.realm.kotlin:library:$version")
             }
         }
         val commonTest by getting {
@@ -97,7 +77,7 @@ android {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
         versionCode = 1
-        versionName = Realm.version
+        versionName = "$version"
     }
     buildTypes {
         getByName("release") {

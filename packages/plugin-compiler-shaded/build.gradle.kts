@@ -56,14 +56,20 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
-    ojo { }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 publishing {
     publications {
         register<MavenPublication>(mavenPublicationName) {
-            project.shadow.component(this)
             artifactId = Realm.compilerPluginIdNative
+            project.shadow.component(this)
+            artifact(tasks.named("sourcesJar"))
+            artifact(tasks.named("javadocJar"))
         }
     }
 }
