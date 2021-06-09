@@ -9,8 +9,11 @@
 ### Fixed
 * None.
 
+### Compatibility 
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
 ### Internal
-* None.
+* Updated to Realm Core commit: ed9fbb907e0b5e97e0e2d5b8efdc0951b2eb980c.
 
 
 ## 0.1.0 (2021-05-07)
