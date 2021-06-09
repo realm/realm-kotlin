@@ -72,10 +72,10 @@ public abstract class BaseRealm internal constructor(
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         checkClosed()
-        return RealmResults(
-            configuration,
+        return RealmResults.fromQuery(
+            this,
             transactionid,
-            { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
+            RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
             clazz,
             configuration.mediator
         )

@@ -110,13 +110,12 @@ class SampleTests {
 
     @Test
     fun query_parseErrorThrows() {
-        val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
-        // Will first fail when accessing the acutal elements as the query is lazily evaluated
+        val objects: RealmResults<Sample> = realm.objects(Sample::class)
         // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
         //  in realm-java ;)
         //  https://github.com/realm/realm-kotlin/issues/70
         assertFailsWith<RuntimeException> {
-            println(objects3)
+            objects.query("name == str")
         }
     }
 

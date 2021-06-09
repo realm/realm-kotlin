@@ -14,11 +14,25 @@
  * limitations under the License.
  */
 
-package io.realm.internal.util
+package io.realm.internal
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.newSingleThreadContext
 import kotlin.coroutines.CoroutineContext
+import kotlin.native.concurrent.ThreadLocal
 
+// Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
     return kotlinx.coroutines.runBlocking(context, block)
 }
+
+/**
+ * The default dispatcher for Darwin platforms spawns a new thread with a run loop.
+ */
+actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+    return newSingleThreadContext(id)
+}
+
+@ThreadLocal
+actual var transactionMap: MutableMap<SuspendableWriter, Boolean> = HashMap()

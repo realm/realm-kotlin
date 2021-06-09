@@ -18,6 +18,7 @@ plugins {
     id("com.android.library") apply false
     id("realm-lint")
     `java-gradle-plugin`
+    id("realm-publisher")
 }
 
 allprojects {

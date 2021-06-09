@@ -21,6 +21,8 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     @SuppressLint("NewApi")
@@ -32,4 +34,11 @@ actual object PlatformUtils {
     actual fun deleteTempDir(path: String) {
         File(path).deleteRecursively()
     }
+
+    @OptIn(ExperimentalTime::class)
+    actual fun sleep(duration: Duration) {
+        Thread.sleep(duration.toLongMilliseconds())
+    }
+
+    actual fun threadId(): ULong = Thread.currentThread().id.toULong()
 }

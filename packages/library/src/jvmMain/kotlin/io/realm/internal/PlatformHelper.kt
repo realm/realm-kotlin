@@ -16,6 +16,12 @@
 package io.realm.internal
 
 import io.realm.log.RealmLogger
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import java.lang.ThreadLocal
+import java.util.concurrent.Executors
+import kotlin.coroutines.CoroutineContext
 
 actual object PlatformHelper {
     @Suppress("FunctionOnlyReturningConstant")
@@ -27,3 +33,30 @@ actual object PlatformHelper {
 
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = StdOutLogger(tag)
 }
+
+public actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+    // TODO Propagate id to the underlying thread
+    return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+}
+
+// FIXME All of the below is common with Android. Should be align in separate source set but
+//  that is already tracked by https://github.com/realm/realm-kotlin/issues/175
+
+// Expose platform runBlocking through common interface
+public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    return kotlinx.coroutines.runBlocking(context, block)
+}
+
+private class JVMThreadLocal<T> constructor(val initializer: () -> T) : java.lang.ThreadLocal<T>() {
+    override fun initialValue(): T? {
+        return initializer()
+    }
+}
+
+private val jvmTransactionMap =
+    io.realm.internal.JVMThreadLocal<MutableMap<SuspendableWriter, Boolean>>({ mutableMapOf() })
+actual var transactionMap: MutableMap<SuspendableWriter, Boolean>
+    get() = jvmTransactionMap.get()!!
+    set(value) {
+        jvmTransactionMap.set(value)
+    }

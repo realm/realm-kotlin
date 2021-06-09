@@ -23,6 +23,7 @@ import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /**
@@ -36,26 +37,43 @@ import kotlinx.coroutines.withContext
  * @param configuration
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
-class SuspendableWriter(private val owner: Realm, val dispatcher: CoroutineDispatcher) {
+class SuspendableWriter(
+    private val owner: Realm,
+    val dispatcher: CoroutineDispatcher = configuration.writeDispatcher(
+        configuration.path
+    )
+) {
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealm by lazy {
         MutableRealm(owner.configuration)
     }
 
+    init {
+        transactionMap[this@SuspendableWriter] = false
+    }
+
     suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
         return withContext(dispatcher) {
-            // TODO Should we ensure that we are still active
             var result: R
+
             @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
             try {
                 realm.beginTransaction()
+                transactionMap[this@SuspendableWriter] = true
+                ensureActive()
                 result = block(realm)
-                realm.commitTransaction()
+                ensureActive()
+                if (realm.isInTransaction()) {
+                    realm.commitTransaction()
+                }
             } catch (e: Exception) {
-                realm.cancelWrite()
-                // Should we wrap in a specific exception type like RealmWriteException?
+                if (realm.isInTransaction()) {
+                    realm.cancelWrite()
+                }
                 throw e
+            } finally {
+                transactionMap[this@SuspendableWriter] = false
             }
 
             // Freeze the triple of <Realm, Version, Result> while in the context
@@ -66,6 +84,7 @@ class SuspendableWriter(private val owner: Realm, val dispatcher: CoroutineDispa
             //  lock this code?
             val newDbPointer = RealmInterop.realm_freeze(realm.transactionid.dbPointer)
             val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
+            // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {
                 result = freezeWriteReturnValue(result, newDbPointer)
             }
@@ -78,6 +97,8 @@ class SuspendableWriter(private val owner: Realm, val dispatcher: CoroutineDispa
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 val obj: RealmObjectInternal = (result as RealmObjectInternal)
+                // MERGE
+                obj.freeze<RealmObject>(frozenDbPointer) as R
                 @Suppress("UNCHECKED_CAST")
                 obj.freeze<RealmObject>(TransactionId(owner, realm.transactionid.dbPointer), TransactionId(owner, frozenDbPointer)) as R
             }
@@ -94,9 +115,10 @@ class SuspendableWriter(private val owner: Realm, val dispatcher: CoroutineDispa
         }
     }
 
-    suspend fun close() {
-        withContext(dispatcher) {
-            realm.close()
+    // Checks if the current thread is already executing a transaction
+    internal fun checkInTransaction(message: String) {
+        if (transactionMap[this@SuspendableWriter] ?: false) {
+            throw IllegalStateException(message)
         }
     }
 }

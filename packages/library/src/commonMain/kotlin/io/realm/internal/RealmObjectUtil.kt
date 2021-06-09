@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealm
 import io.realm.RealmObject
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -58,16 +59,37 @@ fun RealmObjectInternal.unmanage() {
     this.`$realm$Owner` = null
 }
 
-// Create a frozen copy of this object. Expected DB pointer is used by writes where we need to freeze
-// the object before the owner Realm is updated, but the pointer it will be updated with is already know.
+/**
+ * Creates a frozen copy of this object.
+ *
+ * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
+ */
 fun <T : RealmObject> RealmObjectInternal.freeze(realm: TransactionId, expectedRealm: TransactionId? = null): T {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     return managedModel.manage(
-        realm,
+        frozenRealm,
         `$realm$Mediator` as Mediator,
         type,
         RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, expectedRealm?.dbPointer ?: realm.dbPointer)
+    )
+}
+
+/**
+ * Creates a live copy of this object.
+ *
+ * @param liveRealm Reference to the Live Realm that should own the thawed object.
+ */
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T {
+    @Suppress("UNCHECKED_CAST")
+    val type: KClass<T> = this::class as KClass<T>
+    val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
+    val dbPointer = liveRealm.dbPointer
+    return managedModel.manage(
+        dbPointer,
+        `$realm$Mediator` as Mediator,
+        type,
+        RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)
     )
 }

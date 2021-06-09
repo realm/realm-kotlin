@@ -197,7 +197,6 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
-    ojo { }
 }
 
 tasks.dokkaHtml.configure {
@@ -225,7 +224,17 @@ tasks.register("dokkaJar", Jar::class) {
     from(tasks.named("dokkaHtml").get().outputs)
 }
 
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+}
+
 publishing {
+    // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
+    publications.withType<MavenPublication> {
+        // Stub javadoc.jar artifact
+        artifact(javadocJar.get())
+    }
+
     val common = publications.getByName("kotlinMultiplatform") as MavenPublication
     // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
     // completely, hence the .get() below.

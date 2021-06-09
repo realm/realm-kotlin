@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
-    id("realm-kotlin")
+    id("io.realm.kotlin")
     id("realm-lint")
 }
 
@@ -96,6 +96,11 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
 

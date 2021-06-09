@@ -16,7 +16,7 @@
 package io.realm
 
 import io.realm.internal.SuspendableWriter
-import io.realm.internal.util.runBlocking
+import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.sync.Mutex
@@ -26,7 +26,7 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    private val writer: SuspendableWriter = SuspendableWriter(this, configuration.writeDispatcher())
+    private val writer: SuspendableWriter = SuspendableWriter(configuration)
     private val realmPointerMutex = Mutex()
 
     companion object {
@@ -77,11 +77,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * [MutableRealm.cancelWrite] was called.
      *
      * @param block function that should be run within the context of a write transaction.
-     * FIXME Isn't this impossible to achieve in a way where we can guarantee that we freeze all
-     *  objects leaving the transaction? It currently works for RealmObjects, and can maybe be done
-     *  for collections and RealmResults, but what it is bundled in other containers, etc. Should
-     *  we define an interface of _returnable_ objects that follows some convention?
-     * @return any value returned from the provided write block as frozen/immutable objects.
+     * @return any value returned from the provided write block. If this is a RealmObject it is
+     * frozen before returning it.
      * @see [RealmConfiguration.writeDispatcher]
      */
     // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptinoHandler
@@ -102,51 +99,38 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         }
     }
 
-    private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
-        realmPointerMutex.withLock {
-            log.debug("$version -> $newVersion")
-            if (newVersion >= version) {
-                // FIXME Currently we need this to be a live realm to be able to continue doing
-                //  writeBlocking transactions.
-                advanceRealm(RealmInterop.realm_thaw(newRealm), newVersion)
-            }
-        }
-    }
-
     /**
-     * Modify the underlying Realm file by creating a write transaction on the current thread. Write
-     * transactions automatically commit any changes made when the closure returns unless
-     * [MutableRealm.cancelWrite] was called.
+     * Modify the underlying Realm file while blocking the calling thread until the transaction is
+     * done. Write transactions automatically commit any changes made when the closure returns
+     * unless [MutableRealm.cancelWrite] was called.
      *
      * The write transaction always represent the latest version of data in the Realm file, even if the calling
      * Realm not yet represent this.
      *
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block.
+     *
+     * @throws IllegalStateException if invoked inside an existing transaction.
      */
-    @Suppress("TooGenericExceptionCaught")
     fun <R> writeBlocking(block: MutableRealm.() -> R): R {
-        // While not efficiently to open a new Realm just for a write, it makes it a lot
-        // easier to control the API surface between Realm and MutableRealm
-        val writerRealm = MutableRealm(configuration, dbPointer)
-        try {
-            writerRealm.beginTransaction()
-            val returnValue: R = block(writerRealm)
-            if (writerRealm.commitWrite && !isClosed()) {
-                writerRealm.commitTransaction()
+        writer.checkInTransaction("Cannot initiate transaction when already in a write transaction")
+        return runBlocking {
+            write(block)
+        }
+    }
+
+    private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
+        realmPointerMutex.withLock {
+            log.debug("$version -> $newVersion")
+            if (newVersion >= version) {
+                // FIXME Currently we need this to be a live realm to be able to continue doing
+                //  writeBlocking transactions.
+                dbPointer = RealmInterop.realm_thaw(newRealm)
+                // We need to start a read transaction to be able to retrieve version id, etc.
+                RealmInterop.realm_begin_read(dbPointer)
+                version = newVersion
+                advanceRealm(RealmInterop.realm_thaw(newRealm), newVersion)
             }
-            return returnValue
-        } catch (e: Exception) {
-            // Only cancel writes for exceptions. For errors assume that something has gone
-            // horribly wrong and the process is exiting. And canceling the write might just
-            // hide the true underlying error.
-            try {
-                writerRealm.cancelWrite()
-            } catch (cancelException: Throwable) {
-                // Swallow any exception from `cancelWrite` as the primary error is more important.
-                log.error(e)
-            }
-            throw e
         }
     }
 
@@ -155,10 +139,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * method has been called will then an [IllegalStateException].
      */
     public override fun close() {
+        writer.checkInTransaction("Cannot close in a transaction block")
         super.close()
         // TODO There is currently nothing that tears down the dispatcher
-        runBlocking() {
-            writer.close()
-        }
     }
 }

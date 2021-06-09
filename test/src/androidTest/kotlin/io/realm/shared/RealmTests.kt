@@ -20,7 +20,13 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.util.PlatformUtils
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest
@@ -29,8 +35,12 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
+@OptIn(ExperimentalTime::class)
 class RealmTests {
 
     companion object {
@@ -41,10 +51,17 @@ class RealmTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
+    private val configuration: RealmConfiguration by lazy {
+        RealmConfiguration(
+            path = "$tmpDir/default.realm",
+            schema = setOf(Parent::class, Child::class)
+        )
+    }
+
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class))
+        val configuration = configuration
         realm = Realm.open(configuration)
     }
 
@@ -54,42 +71,6 @@ class RealmTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
-    }
-
-    @Test
-    fun writeBlocking() {
-        val managedChild = realm.writeBlocking { copyToRealm(Child().apply { name = "John" }) }
-        assertTrue(managedChild.isManaged())
-        assertEquals("John", managedChild.name)
-    }
-
-    @Suppress("invisible_member")
-    @Test
-    fun write() = runBlocking {
-        val name = "Realm"
-        val child: Child = realm.write {
-            this.copyToRealm(Child()).apply { this.name = name }
-        }
-        assertEquals(name, child.name)
-        val objects = realm.objects<Child>()
-        val childFromResult = objects[0]
-        assertEquals(name, childFromResult.name)
-    }
-
-    @Suppress("invisible_member")
-    @Test
-    fun writeBlockingAfterWrite() = runBlocking {
-        val name = "Realm"
-        val child: Child = realm.write {
-            this.copyToRealm(Child()).apply { this.name = name }
-        }
-        assertEquals(name, child.name)
-        assertEquals(1, realm.objects<Child>().size)
-
-        realm.writeBlocking {
-            this.copyToRealm(Child()).apply { this.name = name }
-        }
-        Unit
     }
 
     @Test
@@ -121,7 +102,7 @@ class RealmTests {
     fun versionInsideWriteIsLatest() {
         assertEquals(INITIAL_VERSION, realm.version)
         realm.writeBlocking {
-            assertEquals(INITIAL_VERSION, realm.version)
+            assertEquals(INITIAL_VERSION, version)
             cancelWrite()
         }
         assertEquals(INITIAL_VERSION, realm.version)
@@ -131,7 +112,7 @@ class RealmTests {
     fun numberOfActiveVersions() {
         assertEquals(2, realm.getNumberOfActiveVersions())
         realm.writeBlocking {
-            assertEquals(2, realm.getNumberOfActiveVersions())
+            assertEquals(2, getNumberOfActiveVersions())
         }
         assertEquals(2, realm.getNumberOfActiveVersions())
     }
@@ -155,5 +136,216 @@ class RealmTests {
         } finally {
             otherRealm.close()
         }
+    }
+
+    @Suppress("invisible_member")
+    @Test
+    fun write() = runBlocking {
+        val name = "Realm"
+        val child: Child = realm.write {
+            this.copyToRealm(Child()).apply { this.name = name }
+        }
+        assertEquals(name, child.name)
+        val objects = realm.objects<Child>()
+        val childFromResult = objects[0]
+        assertEquals(name, childFromResult.name)
+    }
+
+    @Suppress("invisible_member")
+    @Test
+    fun exceptionInWriteWillRollback() = runBlocking {
+        class CustomException : Exception()
+
+        assertFailsWith<CustomException> {
+            realm.write {
+                val name = "Realm"
+                this.copyToRealm(Child()).apply { this.name = name }
+                throw CustomException()
+            }
+        }
+        assertEquals(0, realm.objects<Child>().size)
+    }
+
+    @Test
+    fun writeBlocking() {
+        val managedChild = realm.writeBlocking { copyToRealm(Child().apply { name = "John" }) }
+        assertTrue(managedChild.isManaged())
+        assertEquals("John", managedChild.name)
+    }
+
+    @Suppress("invisible_member")
+    @Test
+    fun writeBlockingAfterWrite() = runBlocking {
+        val name = "Realm"
+        val child: Child = realm.write {
+            this.copyToRealm(Child()).apply { this.name = name }
+        }
+        assertEquals(name, child.name)
+        assertEquals(1, realm.objects<Child>().size)
+
+        realm.writeBlocking {
+            this.copyToRealm(Child()).apply { this.name = name }
+        }
+        Unit
+    }
+
+    @Suppress("invisible_member")
+    @Test
+    fun exceptionInWriteBlockingWillRollback() {
+        class CustomException : Exception()
+        assertFailsWith<CustomException> {
+            realm.writeBlocking {
+                val name = "Realm"
+                this.copyToRealm(Child()).apply { this.name = name }
+                throw CustomException()
+            }
+        }
+        assertEquals(0, realm.objects<Child>().size)
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun simultaneousWritesAreSerialized() = runBlocking {
+        val jobs: List<Job> = IntRange(0, 9).map {
+            launch {
+                realm.write {
+                    copyToRealm(Parent())
+                }
+            }
+        }
+        jobs.map { it.join() }
+
+        // Ensure that all writes are actually committed
+        realm.close()
+        assertTrue(realm.isClosed())
+        realm = Realm.open(configuration)
+        assertEquals(10, realm.objects(Parent::class).size)
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun writeBlockingWhileWritingIsSerialized() = runBlocking {
+        val mutex = Mutex(true)
+        val exit = Mutex(true)
+        val write = async {
+            realm.write {
+                mutex.unlock()
+                PlatformUtils.sleep(1.milliseconds)
+                exit.unlock()
+            }
+        }
+        mutex.lock()
+        realm.writeBlocking {
+            assertFalse { exit.isLocked }
+        }
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun close() = runBlocking {
+        realm.write {
+            copyToRealm(Parent())
+        }
+        realm.close()
+        assertTrue(realm.isClosed())
+
+        realm = Realm.open(configuration)
+        assertEquals(1, realm.objects(Parent::class).size)
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun closeCausesOngoingWriteToThrow() = runBlocking {
+        val mutex = Mutex(true)
+        val exit = Mutex(true)
+        val write = async {
+            assertFailsWith<IllegalStateException> {
+                realm.write {
+                    mutex.unlock()
+                    runBlocking {
+                        exit.lock()
+                    }
+                }
+            }
+        }
+        mutex.lock()
+        realm.close()
+        exit.unlock()
+        assert(write.await() is IllegalStateException)
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun writeAfterCloseThrows() = runBlocking {
+        realm.close()
+        assertTrue(realm.isClosed())
+        assertFailsWith<IllegalStateException> {
+            realm.write {
+                copyToRealm(Child())
+            }
+        }
+        Unit
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun coroutineCancelCausesRollback() = runBlocking {
+        val mutex = Mutex(true)
+        val job = async {
+            realm.write {
+                copyToRealm(Parent())
+                mutex.unlock()
+                // Ensure that we keep on going until actually cancelled
+                while (isActive) {
+                    PlatformUtils.sleep(1.milliseconds)
+                }
+            }
+        }
+        mutex.lock()
+        job.cancelAndJoin()
+
+        // Ensure that write is not committed
+        realm.close()
+        assertTrue(realm.isClosed())
+        realm = Realm.open(configuration)
+        // This assertion doesn't hold on MacOS as all code executes on the same thread as the
+        // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
+        // the mutex is unlocked. Doing so would require the write block to be able to suspend in
+        // some way (or the writer to be backed by another thread).
+        assertEquals(0, realm.objects(Parent::class).size)
+    }
+
+    @Test
+    @Suppress("invisible_member")
+    fun writeAfterCoroutineCancel() = runBlocking {
+        val mutex = Mutex(true)
+        val job = async {
+            realm.write {
+                copyToRealm(Parent())
+                mutex.unlock()
+                // Ensure that we keep on going until actually cancelled
+                while (isActive) {
+                    PlatformUtils.sleep(1.milliseconds)
+                }
+            }
+        }
+
+        mutex.lock()
+        job.cancelAndJoin()
+
+        // Verify that we can do other writes after cancel
+        realm.write {
+            copyToRealm(Parent())
+        }
+
+        // Ensure that only one write is actually committed
+        realm.close()
+        assertTrue(realm.isClosed())
+        realm = Realm.open(configuration)
+        // This assertion doesn't hold on MacOS as all code executes on the same thread as the
+        // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
+        // the mutex is unlocked. Doing so would require the write block to be able to suspend in
+        // some way (or the writer to be backed by another thread).
+        assertEquals(1, realm.objects(Parent::class).size)
     }
 }

@@ -23,7 +23,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 class MutableRealmTests {
 
@@ -34,7 +33,10 @@ class MutableRealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class))
+        configuration = RealmConfiguration(
+            path = "$tmpDir/default.realm",
+            schema = setOf(Parent::class, Child::class)
+        )
         realm = Realm.open(configuration)
     }
 
@@ -65,16 +67,5 @@ class MutableRealmTests {
                 cancelWrite()
             }
         }
-    }
-
-    @Test
-    fun closingRealmInsideWriteCancelsWrite() {
-        realm.writeBlocking {
-            copyToRealm(Parent())
-            realm.close()
-        }
-        assertTrue(realm.isClosed())
-        realm = Realm.open(configuration)
-        assertEquals(0, realm.objects(Parent::class).size)
     }
 }
