@@ -56,3 +56,22 @@ public fun RealmObject.isManaged(): Boolean {
     val internalObject = this as RealmObjectInternal
     return internalObject.`$realm$IsManaged`
 }
+
+/**
+ * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
+ * not been deleted. Unmanaged objects are always valid.
+ */
+public fun RealmObject.isValid(): Boolean {
+    return if (isManaged()) {
+        val internalObject = this as RealmObjectInternal
+        val ptr = internalObject.`$realm$ObjectPointer`
+        return if (ptr != null) {
+            RealmInterop.realm_object_is_valid(ptr)
+        } else {
+            false
+        }
+    } else {
+        // Unmanaged objects are always valid
+        true
+    }
+}
