@@ -46,7 +46,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // TODO AUTO-SETUP
-                implementation("io.realm.kotlin:library:${version}")
+                implementation("io.realm.kotlin:library:$version")
             }
         }
         val commonTest by getting {
