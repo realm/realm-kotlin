@@ -65,7 +65,6 @@ object RealmObjectHelper {
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
-    @OptIn(ExperimentalStdlibApi::class)
     inline fun <reified R> getList(
         obj: RealmObjectInternal,
         col: String,
