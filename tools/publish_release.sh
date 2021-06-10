@@ -49,6 +49,7 @@ GRADLE_PORTAL_KEY="$9"
 GRADLE_PORTAL_KEY="$10"
 SIGN_KEY="$11"
 SIGN_KEY_PASSWORD="$12"
+GRADLE_BUILD_PARAMS="-PsignBuild=true -PsignSecretRingFileKotlin=\"$SIGN_KEY\" -PsignPasswordKotlin=\"$SIGN_KEY_PASSWORD\""
 
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
@@ -115,10 +116,10 @@ create_javadoc() {
 publish_artifacts() {
   echo "Releasing on MavenCentral"
   cd $REALM_KOTLIN_PATH/packages
-  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY
+  eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
   echo "Releasing on Gradle Plugin Portal"
   cd gradle-plugin
-  ./gradlew publishPlugin -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET
+  eval "./gradlew publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
   cd $HERE
 }
 
