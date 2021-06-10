@@ -173,7 +173,7 @@ check_env
 #verify_changelog
 
 if [ "$1" != "verify" ]; then
-  create_javadoc
+#  create_javadoc
   publish_artifacts
   #upload_debug_symbols
   # TODO: Determine how to publish JavaDoc before enabling this
