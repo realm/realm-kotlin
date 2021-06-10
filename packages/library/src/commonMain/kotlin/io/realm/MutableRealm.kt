@@ -19,7 +19,6 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
 
 /**
