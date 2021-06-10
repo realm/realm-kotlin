@@ -115,10 +115,10 @@ create_javadoc() {
 publish_artifacts() {
   echo "Releasing on MavenCentral"
   cd $REALM_KOTLIN_PATH/packages
-  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PsignBuild=true -PsignSecretRingFileKotlin=$SIGN_KEY -PsignPasswordKotlin=$SIGN_KEY_PASSWORD -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY
+  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY
   echo "Releasing on Gradle Plugin Portal"
   cd gradle-plugin
-  ./gradlew publishPlugin -PsignBuild=true -PsignSecretRingFileKotlin=$SIGN_KEY -PsignPasswordKotlin=$SIGN_KEY_PASSWORD -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET
+  ./gradlew publishPlugin -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET
   cd $HERE
 }
 
