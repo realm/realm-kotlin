@@ -49,6 +49,7 @@ GRADLE_PORTAL_KEY="$9"
 GRADLE_PORTAL_KEY="$10"
 SIGN_KEY="$11"
 SIGN_KEY_PASSWORD="$12"
+echo $SIGN_KEY
 GRADLE_BUILD_PARAMS="-PsignBuild=true -PsignSecretRingFileKotlin=\"$SIGN_KEY\" -PsignPasswordKotlin=$SIGN_KEY_PASSWORD"
 
 abort_release() {
