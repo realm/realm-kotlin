@@ -114,7 +114,9 @@ create_javadoc() {
 publish_artifacts() {
   echo "Releasing on MavenCentral"
   cd $REALM_KOTLIN_PATH/packages
-  eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
+  cmd="./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
+  echo $cmd
+  eval $cmd
   echo "Releasing on Gradle Plugin Portal"
   cd gradle-plugin
   eval "./gradlew publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
@@ -167,14 +169,14 @@ notify_slack_channels() {
 ######################################\
 
 check_env
-verify_release_preconditions
-verify_changelog
+#verify_release_preconditions
+#verify_changelog
 
 if [ "$1" != "verify" ]; then
   create_javadoc
   publish_artifacts
-  upload_debug_symbols
+  #upload_debug_symbols
   # TODO: Determine how to publish JavaDoc before enabling this
   # upload_javadoc
-  notify_slack_channels
+  #notify_slack_channels
 fi

@@ -71,57 +71,56 @@ pipeline {
                 runScm()
             }
         }
-        stage('Build') {
-            steps {
-                runBuild()
-            }
-        }
-        stage('Static Analysis') {
-            when { expression { runTests } }
-            steps {
-                runStaticAnalysis()
-            }
-        }
-        stage('Tests Compiler Plugin') {
-            when { expression { runTests } }
-            steps {
-                runCompilerPluginTest()
-            }
-        }
-        stage('Tests Macos') {
-            when { expression { runTests } }
-            steps {
-                test("macosTest")
-            }
-        }
-        stage('Tests Android') {
-            when { expression { runTests } }
-            steps {
-                test("connectedAndroidTest")
-            }
-        }
-        stage('Tests JVM (compiler only)') {
-            when { expression { runTests } }
-            steps {
-                test('jvmTest --tests "io.realm.test.compiler*"')
-            }
-        }
-        stage('Tests Android Sample App') {
-            when { expression { runTests } }
-            steps {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    runMonkey()
-                }
-            }
-        }
-        stage('Publish SNAPSHOT to Maven Central') {
-            when { expression { shouldPublishSnapshot(version) } }
-            steps {
-                runPublishSnapshotToMavenCentral()
-            }
-        }
+        // stage('Build') {
+        //     steps {
+        //         runBuild()
+        //     }
+        // }
+        // stage('Static Analysis') {
+        //     when { expression { runTests } }
+        //     steps {
+        //         runStaticAnalysis()
+        //     }
+        // }
+        // stage('Tests Compiler Plugin') {
+        //     when { expression { runTests } }
+        //     steps {
+        //         runCompilerPluginTest()
+        //     }
+        // }
+        // stage('Tests Macos') {
+        //     when { expression { runTests } }
+        //     steps {
+        //         test("macosTest")
+        //     }
+        // }
+        // stage('Tests Android') {
+        //     when { expression { runTests } }
+        //     steps {
+        //         test("connectedAndroidTest")
+        //     }
+        // }
+        // stage('Tests JVM (compiler only)') {
+        //     when { expression { runTests } }
+        //     steps {
+        //         test('jvmTest --tests "io.realm.test.compiler*"')
+        //     }
+        // }
+        // stage('Tests Android Sample App') {
+        //     when { expression { runTests } }
+        //     steps {
+        //         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+        //             runMonkey()
+        //         }
+        //     }
+        // }
+        // stage('Publish SNAPSHOT to Maven Central') {
+        //     when { expression { shouldPublishSnapshot(version) } }
+        //     steps {
+        //         runPublishSnapshotToMavenCentral()
+        //     }
+        // }
         stage('Publish Release to Maven Central') {
-            when { expression { publishBuild } }
             steps {
                 runPublishReleaseOnMavenCentral()
             }
