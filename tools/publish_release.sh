@@ -20,12 +20,12 @@ set -e
 
 usage() {
 cat <<EOF
-Usage: $0 <maven_central_user> <maven_central_key> <realm_s3_access_key> <realm_s3_secret_key> <docs_s3_access_key> <docs_s3_secret_key> <slack-webhook-releases-url> <slack-webhook-java-ci-url> <gradle-plugin-portal-key> <gradle-plugin-portal-secret> <signing-key-id> <signing-key-password>
+Usage: $0 <maven_central_user> <maven_central_key> <realm_s3_access_key> <realm_s3_secret_key> <docs_s3_access_key> <docs_s3_secret_key> <slack-webhook-releases-url> <slack-webhook-java-ci-url> <gradle-plugin-portal-key> <gradle-plugin-portal-secret> <gradle-assemble-build-params>
 Usage: $0 verify
 EOF
 }
 
-if [ "$#" -ne 12 ] && [ "$1" != "verify" ]; then
+if [ "$#" -ne 11 ] && [ "$1" != "verify" ]; then
   usage
   exit 1
 fi
@@ -46,10 +46,8 @@ DOCS_S3_SECRET_KEY="$6"
 SLACK_WEBHOOK_RELEASES_URL="$7"
 SLACK_WEBHOOK_JAVA_CI_URL="$8"
 GRADLE_PORTAL_KEY="$9"
-GRADLE_PORTAL_KEY="$10"
-SIGN_KEY="$11"
-SIGN_KEY_PASSWORD="$12"
-GRADLE_BUILD_PARAMS="-PsignBuild=true -PsignSecretRingFileKotlin=\"$SIGN_KEY\" -PsignPasswordKotlin=\"$SIGN_KEY_PASSWORD\""
+GRADLE_PORTAL_KEY="${10}"
+GRADLE_BUILD_PARAMS="${11}"
 
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
