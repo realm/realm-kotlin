@@ -48,6 +48,7 @@ SLACK_WEBHOOK_JAVA_CI_URL="$8"
 GRADLE_PORTAL_KEY="$9"
 GRADLE_PORTAL_KEY="$10"
 GRADLE_BUILD_PARAMS="$11"
+echo "$GRADLE_BUILD_PARAMS"
 
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
