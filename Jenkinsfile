@@ -263,7 +263,7 @@ def  runPublishReleaseOnMavenCentral() {
         '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
         '$SLACK_URL_RELEASE' '$SLACK_URL_CI' \
         '$GRADLE_PORTAL_KEY' '$GRADLE_PORTAL_SECRET' \
-        '-PsignBuild=true -PsignSecretRingFileKotlin=$SIGN_KEY -PsignPasswordKotlin=$SIGN_KEY_PASSWORD'
+        '$SIGN_KEY' '$SIGN_KEY_PASSWORD'
       """
     }
 }
