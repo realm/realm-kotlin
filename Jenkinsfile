@@ -257,12 +257,13 @@ def  runPublishReleaseOnMavenCentral() {
     ]) {
       sh """
         set +x
+        PARAMS="-PsignBuild=true -PsignSecretRingFileKotlin=$SIGN_KEY -PsignPasswordKotlin=$SIGN_KEY_PASSWORD"
         sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
         '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
         '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
         '$SLACK_URL_RELEASE' '$SLACK_URL_CI' \
         '$GRADLE_PORTAL_KEY' '$GRADLE_PORTAL_SECRET' \
-        '-PsignBuild=true -PsignSecretRingFileKotlin=$SIGN_KEY -PsignPasswordKotlin=$SIGN_KEY_PASSWORD'
+        '$PARAMS'        
       """
     }
 }
