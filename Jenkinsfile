@@ -182,6 +182,9 @@ def runBuild() {
             startEmulatorInBgIfNeeded()
             def signingFlags = ""
             if (isReleaseBranch) {
+                // Any change to these also needs to be reflected in the publish_release.sh script. Due to how
+                // Jenkins treats secrets it is not possible to forward this string directly to the shellscript,
+                // so we reconstruct it inside the script.
                 signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
             }
             sh """
@@ -257,13 +260,12 @@ def  runPublishReleaseOnMavenCentral() {
     ]) {
       sh """
         set +x
-        export PARAMS="-PsignBuild=true -PsignSecretRingFileKotlin=$SIGN_KEY -PsignPasswordKotlin=$SIGN_KEY_PASSWORD"
         sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
         '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
         '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
         '$SLACK_URL_RELEASE' '$SLACK_URL_CI' \
         '$GRADLE_PORTAL_KEY' '$GRADLE_PORTAL_SECRET' \
-        '${env.PARAMS}'        
+        '$SIGNKEY' '$SIGN_KEY_PASSWORD'
       """
     }
 }
