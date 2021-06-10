@@ -260,12 +260,12 @@ def  runPublishReleaseOnMavenCentral() {
     ]) {
       sh """
         set +x
-        sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
+        sh tools/publish_release.sh '${env.SIGN_KEY}' '${env.SIGN_KEY_PASSWORD}' \
+        '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
         '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
         '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
         '$SLACK_URL_RELEASE' '$SLACK_URL_CI' \
-        '$GRADLE_PORTAL_KEY' '$GRADLE_PORTAL_SECRET' \
-        '$SIGN_KEY' '$SIGN_KEY_PASSWORD'
+        '$GRADLE_PORTAL_KEY' '$GRADLE_PORTAL_SECRET'
       """
     }
 }
