@@ -1,4 +1,4 @@
-## 0.2.0 (YYYY-MM-DD)
+## 0.2.0 (2021-06-09)
 
 ### Breaking Changes
 * The Realm Kotlin Gradle plugin has changed name from `realm-kotlin` to `io.realm.kotlin` to align with Gradle Plugin Portal requirements.
