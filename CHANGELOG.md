@@ -1,3 +1,21 @@
+## 0.3.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility 
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+
 ## 0.2.0 (2021-06-09)
 
 ### Breaking Changes
