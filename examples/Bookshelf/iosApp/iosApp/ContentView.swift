@@ -17,7 +17,7 @@ import SwiftUI
 import shared
 
 class BookshelfViewModel : ObservableObject {
-    private let sdk = BookshelfSDK()
+    private let sdk = BookshelfRepository()
     private var cancellable: LibraryCancellable?
     
     @Published var searching: Bool = false

@@ -15,11 +15,9 @@
  */
 package io.realm.sample.bookshelf.database
 
-import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmResults
 import io.realm.delete
 import io.realm.sample.bookshelf.model.Book
 import kotlinx.coroutines.channels.awaitClose
@@ -37,11 +35,9 @@ class RealmDatabase {
     }
 
     fun getAllBooksAsFlowable(): Flow<List<Book>> = callbackFlow {
-        val callback =
-            Callback<RealmResults<Book>> { result ->
-                offer(result.toList()) // FIXME RealmResults is the same (equals) causing the compose to not re-compose (maybe define a hashcode/equals based on size or Core version/counter of the list)
-            }
-        val cancellable: Cancellable = realm.objects<Book>().observe(callback)
+        val cancellable: Cancellable = realm.objects<Book>().observe { result ->
+            offer(result.toList()) // FIXME RealmResults is the same (equals) causing the compose to not re-compose (maybe define a hashcode/equals based on size or Core version/counter of the list)
+        }
 
         awaitClose {
             cancellable.cancel()
@@ -49,11 +45,9 @@ class RealmDatabase {
     }
 
     fun getAllBooksAsCallback(success: (List<Book>) -> Unit) : Cancellable {
-        val callback =
-            Callback<RealmResults<Book>> { result ->
-                success(result.toList()) // FIXME RealmResults is the same (equals) causing the compose to not re-compose (maybe define a hashcode/equals based on size or Core version/counter of the list)
-            }
-        return realm.objects<Book>().observe(callback)
+        return realm.objects<Book>().observe { result ->
+            success(result.toList()) // FIXME RealmResults is the same (equals) causing the compose to not re-compose (maybe define a hashcode/equals based on size or Core version/counter of the list)
+        }
     }
 
     // Missing insert as list

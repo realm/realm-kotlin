@@ -19,7 +19,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.realm.sample.bookshelf.BookshelfSDK
+import io.realm.sample.bookshelf.BookshelfRepository
 import io.realm.sample.bookshelf.model.Book
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class BookshelfViewModel : ViewModel() {
-    private var sdk = BookshelfSDK()
+    private var sdk = BookshelfRepository()
 
     val savedBooks: StateFlow<List<Book>> = sdk.allBooksAsFlowable()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())

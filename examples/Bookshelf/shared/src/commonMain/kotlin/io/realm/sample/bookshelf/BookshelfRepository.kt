@@ -21,7 +21,7 @@ import io.realm.sample.bookshelf.model.Book
 import io.realm.sample.bookshelf.network.OpenLibraryApi
 import kotlinx.coroutines.flow.Flow
 
-class BookshelfSDK {
+class BookshelfRepository {
     private val api = OpenLibraryApi()
     private val database = RealmDatabase()
 

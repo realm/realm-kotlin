@@ -31,7 +31,7 @@ class OpenLibraryApi {
         }
     }
     suspend fun findBook(title: String): SearchResult {
-        return httpClient.get("$BOOK_SEARCH_ENDPOINT$title")
+        return httpClient.get("$BOOK_SEARCH_ENDPOINT${title}&limit=10")
     }
 
     companion object {

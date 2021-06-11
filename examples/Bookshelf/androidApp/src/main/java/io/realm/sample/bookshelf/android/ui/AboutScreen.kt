@@ -44,13 +44,14 @@ fun aboutScreen() {
             Text(
                 modifier = Modifier.padding(4.dp),
                 text = """
-Demo app using Realm-Kotlin Multiplatform SDK
-                    
-🎨 UI: using Jetpack compose 
- ---- Shared ---
-📡 Network: using Ktor & Kotlinx.serialization
-💾 Persistence: using Realm Database
-""")
+                    Demo app using Realm-Kotlin Multiplatform SDK
+                                        
+                    🎨 UI: using Jetpack compose 
+                     ---- Shared ---
+                    📡 Network: using Ktor & Kotlinx.serialization
+                    💾 Persistence: using Realm Database
+                    """.trimIndent()
+            )
         }
     }
 }
