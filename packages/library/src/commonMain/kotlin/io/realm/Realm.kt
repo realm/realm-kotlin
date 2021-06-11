@@ -82,7 +82,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * @see [RealmConfiguration.writeDispatcher]
      */
     // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptinoHandler
-    internal suspend fun <R> write(block: MutableRealm.() -> R): R {
+    suspend fun <R> write(block: MutableRealm.() -> R): R {
         @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
             val (nativePointer, versionId, result) = this.writer.write(block)
@@ -123,11 +123,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         realmPointerMutex.withLock {
             log.debug("$version -> $newVersion")
             if (newVersion >= version) {
-                // FIXME Currently we need this to be a live realm to be able to continue doing
-                //  writeBlocking transactions.
-                dbPointer = RealmInterop.realm_thaw(newRealm)
-                // We need to start a read transaction to be able to retrieve version id, etc.
-                RealmInterop.realm_begin_read(dbPointer)
+                dbPointer = newRealm
                 version = newVersion
             }
         }
@@ -139,6 +135,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     public override fun close() {
         writer.checkInTransaction("Cannot close in a transaction block")
+        writer.close()
         super.close()
         // TODO There is currently nothing that tears down the dispatcher
     }

@@ -118,4 +118,8 @@ class SuspendableWriter(
             throw IllegalStateException(message)
         }
     }
+
+    fun close() {
+        realm.close()
+    }
 }

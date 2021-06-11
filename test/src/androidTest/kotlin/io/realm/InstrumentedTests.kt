@@ -110,7 +110,7 @@ class InstrumentedTests {
         assertEquals(2, objects1.size)
 
         realm.writeBlocking {
-            realm.objects(Sample::class).delete()
+            objects(Sample::class).delete()
         }
 
         assertEquals(0, realm.objects(Sample::class).size)

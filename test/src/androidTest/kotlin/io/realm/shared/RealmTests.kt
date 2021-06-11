@@ -20,6 +20,7 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.util.PlatformUtils
+import io.realm.version
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -37,6 +38,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -255,15 +257,17 @@ class RealmTests {
 
     @Test
     @Suppress("invisible_member")
+    // Flaky:
     fun closeCausesOngoingWriteToThrow() = runBlocking {
         val mutex = Mutex(true)
         val exit = Mutex(true)
         val write = async {
-            assertFailsWith<IllegalStateException> {
+            assertFailsWith<RuntimeException> {
                 realm.write {
                     mutex.unlock()
-                    runBlocking {
-                        exit.lock()
+                    copyToRealm(Parent())
+                    while(!isClosed()) {
+                        PlatformUtils.sleep(Duration.Companion.milliseconds(1))
                     }
                 }
             }
@@ -271,7 +275,9 @@ class RealmTests {
         mutex.lock()
         realm.close()
         exit.unlock()
-        assert(write.await() is IllegalStateException)
+        assert(write.await() is RuntimeException)
+        realm = Realm.open(configuration)
+        assertEquals(0, realm.objects<Parent>().size)
     }
 
     @Test
@@ -279,7 +285,7 @@ class RealmTests {
     fun writeAfterCloseThrows() = runBlocking {
         realm.close()
         assertTrue(realm.isClosed())
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<RuntimeException> {
             realm.write {
                 copyToRealm(Child())
             }
@@ -347,5 +353,21 @@ class RealmTests {
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in
         // some way (or the writer to be backed by another thread).
         assertEquals(1, realm.objects(Parent::class).size)
+    }
+
+    @Test
+    @Ignore // We currently do not keep track of all intermediate versions
+    fun closeClosesAllVersions() {
+        runBlocking {
+            realm.write { copyToRealm(Parent()) }
+        }
+        val parent: Parent = realm.objects<Parent>().first()
+        runBlocking {
+            realm.write { copyToRealm(Parent()) }
+        }
+        realm.close()
+        assertFailsWith<IllegalStateException> {
+            parent.version
+        }
     }
 }

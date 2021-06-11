@@ -38,6 +38,10 @@ public var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal
         internalObject.`$realm$Pointer`?.let {
+            // FIXME This check is required as realm_get_version_id does throw!? Core bug?
+            if (RealmInterop.realm_is_closed(it)) {
+                throw IllegalStateException("Cannot access properties on closed realm")
+            }
             return VersionId(RealmInterop.realm_get_version_id(it))
         } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
     }
