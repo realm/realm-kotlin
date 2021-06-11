@@ -266,7 +266,7 @@ class RealmTests {
                 realm.write {
                     mutex.unlock()
                     copyToRealm(Parent())
-                    while(!isClosed()) {
+                    while (!isClosed()) {
                         PlatformUtils.sleep(Duration.Companion.milliseconds(1))
                     }
                 }

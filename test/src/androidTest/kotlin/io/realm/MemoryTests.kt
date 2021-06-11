@@ -25,6 +25,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.util.PlatformUtils
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
@@ -34,6 +35,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
+@Ignore // Need to clean up intermediate versions
 class MemoryTests {
 
     lateinit var tmpDir: String
