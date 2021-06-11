@@ -7,6 +7,10 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
+# Examples 
+
+https://github.com/realm/realm-kotlin-samples
+
 # Quick Startup
 
 ## Prerequisite
