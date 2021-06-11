@@ -16,7 +16,6 @@
 
 package io.realm.interop
 
-import io.realm.interop.RealmInterop.to_realm_value
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
@@ -24,7 +23,6 @@ import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValue
-import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.ULongVar
@@ -43,7 +41,6 @@ import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
-import kotlinx.cinterop.zeroValue
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_config_t
@@ -51,8 +48,6 @@ import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
 import realm_wrapper.realm_link_t
-import realm_wrapper.realm_list_t
-import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_string_t
