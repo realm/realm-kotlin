@@ -495,12 +495,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
-                    else -> if (type.constructor.supertypes
-                            .map { it.toString() }
-                            .contains("RealmObject")) {
-                        PropertyType.RLM_PROPERTY_TYPE_OBJECT
-                    } else {
-                        error("Wrong Kotlin type: '$type'")
+                    else -> {
+                        if (type.constructor.supertypes.map { it.toString() }.contains("RealmObject")) {
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT
+                        } else {
+                            error("Wrong Kotlin type: '$type'")
+                        }
                     }
                 }
             } ?: error("Missing identifier for type $type")

@@ -65,7 +65,8 @@ class RealmList<E> private constructor(
     )
 
     /**
-     * Facilitates conversion between Realm Core types and Kotlin types.
+     * Facilitates conversion between Realm Core types and Kotlin types and other Realm-related
+     * checks.
      */
     internal class Operator<E>(
         private val metadata: OperatorMetadata
@@ -96,6 +97,17 @@ class RealmList<E> private constructor(
                 } as E
             }
         }
+
+        /**
+         * Checks if the Realm associated to this RealmList is still accessible, throwing an
+         * [IllegalStateException] if not.
+         */
+        // TODO consider merging with RealmUtils.checkRealmClosed
+        fun checkRealmClosed() {
+            if (RealmInterop.realm_is_closed(metadata.realmPointer)) {
+                throw IllegalStateException("Realm has been closed and is no longer accessible.")
+            }
+        }
     }
 }
 
@@ -120,14 +132,19 @@ private class ManagedListDelegate<E>(
     private val operator = RealmList.Operator<E>(metadata)
 
     override val size: Int
-        get() = RealmInterop.realm_list_size(listPtr).toInt()
+        get() {
+            operator.checkRealmClosed()
+            return RealmInterop.realm_list_size(listPtr).toInt()
+        }
 
     override fun get(index: Int): E {
+        operator.checkRealmClosed()
         rangeCheck(index)
         return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
     }
 
     override fun add(index: Int, element: E) {
+        operator.checkRealmClosed()
         rangeCheckForAdd(index)
         RealmInterop.realm_list_add(listPtr, index.toLong(), element)
     }
@@ -136,18 +153,24 @@ private class ManagedListDelegate<E>(
     //  https://youtrack.jetbrains.com/issue/KT-47211
     //  Remove this method once the native implementation has a check for valid index
     override fun addAll(index: Int, elements: Collection<E>): Boolean {
+        operator.checkRealmClosed()
         rangeCheckForAdd(index)
         return super.addAll(index, elements)
     }
 
-    override fun clear() = RealmInterop.realm_list_clear(listPtr)
+    override fun clear() {
+        operator.checkRealmClosed()
+        RealmInterop.realm_list_clear(listPtr)
+    }
 
     override fun removeAt(index: Int): E = get(index).also {
+        operator.checkRealmClosed()
         rangeCheck(index)
         RealmInterop.realm_list_erase(listPtr, index.toLong())
     }
 
     override fun set(index: Int, element: E): E {
+        operator.checkRealmClosed()
         rangeCheck(index)
         return operator.convert(RealmInterop.realm_list_set(listPtr, index.toLong(), element))
     }
