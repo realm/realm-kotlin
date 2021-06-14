@@ -73,6 +73,10 @@ kotlin {
 //    }
 }
 
+project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
+    transformJvm = false
+}
+
 // JVM
 kotlin {
     jvm()
