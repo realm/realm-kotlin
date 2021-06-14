@@ -44,7 +44,9 @@ class CoroutineTests {
             printlntid("worker")
             runBlocking {
                 printlntid("runblocking")
+                val currentTid = PlatformUtils.threadId()
                 val async: Deferred<Unit> = CoroutineScope(Dispatchers.Unconfined).async {
+                    assertEquals(currentTid, PlatformUtils.threadId())
                     printlntid("async")
                 }
                 withContext(Dispatchers.Main) {

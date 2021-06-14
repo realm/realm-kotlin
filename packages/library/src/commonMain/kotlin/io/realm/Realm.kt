@@ -67,9 +67,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * Modify the underlying Realm file in a suspendable transaction on the default Realm
      * dispatcher.
      *
-     * NOTE: Objects and results retrieved before a write are no longer valid. This restriction
-     * will be lifted when the frozen architecture is fully in place.
-     *
      * The write transaction always represent the latest version of data in the Realm file, even if
      * the calling Realm not yet represent this.
      *

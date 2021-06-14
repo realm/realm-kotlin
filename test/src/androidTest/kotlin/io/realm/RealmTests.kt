@@ -42,7 +42,6 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = configuration
         realm = Realm.open(configuration)
     }
 

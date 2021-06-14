@@ -75,6 +75,9 @@ kotlin {
 // JVM
 kotlin {
     jvm()
+    dependencies {
+        implementation("org.jetbrains.kotlinx:atomicfu-jvm:${Versions.atomicfu}")
+    }
 }
 
 // Android configuration
