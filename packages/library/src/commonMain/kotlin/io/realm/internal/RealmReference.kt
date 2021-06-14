@@ -1,7 +1,9 @@
 package io.realm.internal
 
 import io.realm.BaseRealm
+import io.realm.VersionId
 import io.realm.interop.NativePointer
+import io.realm.interop.RealmInterop
 
 /**
  * FIXME Update
@@ -22,16 +24,31 @@ data class RealmReference(
     val owner: BaseRealm,
     val dbPointer: NativePointer
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
-)
+) : RealmLifeCycle {
 
-internal interface RealmReferrer {
-    val realm: RealmReference
+    override fun closed(): Boolean {
+        return RealmInterop.realm_is_closed(dbPointer)
+    }
 
-    // TODO Can we add default implementations of this. Remember guidelines for properties vs. functions
-    // fun version()
-    // fun isClosed
+    override fun version(): VersionId {
+        checkClosed()
+        return VersionId(RealmInterop.realm_get_version_id(dbPointer))
+    }
 }
 
-interface LiveRealm
+interface RealmLifeCycle {
+    fun closed(): Boolean
+    fun version(): VersionId
+}
 
-interface FrozenRealm
+// Inline this for a cleaner stack trace in case it throws.
+@Suppress("MemberVisibilityCanBePrivate")
+inline fun RealmLifeCycle.checkClosed() {
+    if (closed()) {
+        // FIXME Is this needed outside of RealmReference? Because we don't have access to the
+        //  configuration in the interface
+        throw IllegalStateException("Realm has been closed and is no longer accessible")
+//        throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
+    }
+}
+

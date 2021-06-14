@@ -16,11 +16,9 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.RealmReference
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
 
 /**
@@ -29,8 +27,6 @@ import kotlin.reflect.KClass
  * [Realm.writeBlocking].
  */
 class MutableRealm : BaseRealm {
-
-    override val realm: RealmReference = RealmReference(this, dbPointer)
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
@@ -60,18 +56,18 @@ class MutableRealm : BaseRealm {
         super(configuration, parentRealm)
 
     internal fun beginTransaction() {
-        RealmInterop.realm_begin_write(dbPointer)
+        RealmInterop.realm_begin_write(realm.dbPointer)
     }
 
     internal fun commitTransaction() {
-        RealmInterop.realm_commit(dbPointer)
+        RealmInterop.realm_commit(realm.dbPointer)
     }
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
      */
     public fun cancelWrite() {
-        RealmInterop.realm_rollback(dbPointer)
+        RealmInterop.realm_rollback(realm.dbPointer)
     }
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
@@ -102,7 +98,7 @@ class MutableRealm : BaseRealm {
     }
 
     internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(dbPointer)
+        return RealmInterop.realm_is_in_transaction(realm.dbPointer)
     }
 
     /**

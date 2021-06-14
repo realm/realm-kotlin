@@ -21,7 +21,6 @@ import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.log.LogLevel
 import io.realm.util.PlatformUtils
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -58,8 +57,7 @@ class RealmTests {
         RealmConfiguration.Builder()
             .path( "$tmpDir/default.realm",)
             .schema( setOf(Parent::class, Child::class))
-            // FIXME Debugging only
-             .log(level = LogLevel.DEBUG)
+            .log(level = LogLevel.DEBUG)
             .build()
     }
 
@@ -364,12 +362,10 @@ class RealmTests {
             }
         }
         runBlocking(dispatcher) {
-            assertTrue { realm.isFrozen }
             realm.write {
                 copyToRealm(Parent())
             }
         }
-        assertTrue { realm.isFrozen }
         assertEquals(2, realm.objects<Parent>().size)
     }
 }

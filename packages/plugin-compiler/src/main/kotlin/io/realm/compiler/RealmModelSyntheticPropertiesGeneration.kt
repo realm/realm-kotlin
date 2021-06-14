@@ -125,7 +125,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addVariableProperty(REALM_OWNER, pluginContext.irBuiltIns.anyType, ::irNull)
+            addVariableProperty(REALM_OWNER, pluginContext.irBuiltIns.anyType.makeNullable(), ::irNull)
             addVariableProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
             addVariableProperty(
                 OBJECT_TABLE_NAME,

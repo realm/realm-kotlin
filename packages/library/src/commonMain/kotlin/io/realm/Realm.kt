@@ -42,11 +42,15 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * The public Realm instance part of the ID can also mutate, so care must be taken if any methods on that
      * Realm is used.
      */
-    val updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> = kotlinx.atomicfu.atomic<RealmReference>(
-        RealmReference(this, dbPointer)
-    )
-    override val realm: RealmReference
-        get() { return updateableRealm.value }
+    var updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> =
+        kotlinx.atomicfu.atomic<RealmReference>(RealmReference(this, dbPointer))
+    override var realm: RealmReference
+        get() {
+            return updateableRealm.value
+        }
+        set(value) {
+            updateableRealm!!.value = value
+        }
 
     companion object {
         /**
@@ -64,7 +68,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             //  IN Android use lazy property delegation init to load the shared library use the
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
-            val realm = Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
+            val realm =
+                Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
@@ -80,7 +85,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      *  to do it once pr. app).
      */
     public constructor(configuration: RealmConfiguration) :
-        this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+            this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm
@@ -150,7 +155,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
                 val dbPointer = RealmInterop.realm_thaw(newRealm)
                 // FIXME The thawed realm need a read transaction to be able to retieve version, etc.
                 RealmInterop.realm_begin_read(dbPointer)
-                updateableRealm.value = RealmReference(this, dbPointer)
+                realm = RealmReference(this, dbPointer)
             }
         }
     }
