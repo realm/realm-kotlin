@@ -18,7 +18,6 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
-import io.realm.delete
 import io.realm.isValid
 import io.realm.util.PlatformUtils
 import io.realm.version
