@@ -76,7 +76,7 @@ class RealmObjectTests {
         assertTrue(unmanagedParent.isValid())
         val obj: Parent = realm.writeBlocking { copyToRealm(unmanagedParent) }
         assertTrue(obj.isValid())
-        realm.writeBlocking { obj.delete() }
+        realm.close()
         assertFalse(obj.isValid())
     }
 }
