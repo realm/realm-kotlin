@@ -60,10 +60,11 @@ class LinkTests {
 
         assertEquals(1, realm.objects(Parent::class).size)
 
-        val child1 = realm.objects(Parent::class)[0].child
+        val child1 = realm.objects(Parent::class).first().child
         assertEquals(name, child1?.name)
 
         realm.writeBlocking {
+            val parent = objects<Parent>().first()
             assertNotNull(parent.child)
             parent.child = null
             assertNull(parent.child)

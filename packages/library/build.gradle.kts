@@ -49,6 +49,7 @@ kotlin {
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
 
@@ -70,6 +71,10 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
+}
+
+project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
+    transformJvm = false
 }
 
 // JVM

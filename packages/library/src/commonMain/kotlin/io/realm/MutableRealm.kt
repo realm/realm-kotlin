@@ -39,7 +39,6 @@ class MutableRealm : BaseRealm {
         }
     }
 
-    // TODO Do we actually need the scoped realm (inheriting context from the parent).
     /**
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
      * done inside the MutableRealm is not immediately reflected in the `parentRealm`.
@@ -61,6 +60,10 @@ class MutableRealm : BaseRealm {
 
     internal fun commitTransaction() {
         RealmInterop.realm_commit(realm.dbPointer)
+    }
+
+    internal fun isInTransaction(): Boolean {
+        return RealmInterop.realm_is_in_transaction(dbPointer)
     }
 
     /**
@@ -95,10 +98,6 @@ class MutableRealm : BaseRealm {
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
         return io.realm.internal.copyToRealm(configuration.mediator, realm, instance)
-    }
-
-    internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(realm.dbPointer)
     }
 
     /**

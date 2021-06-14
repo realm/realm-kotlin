@@ -19,7 +19,6 @@ import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
-import java.lang.ThreadLocal
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
@@ -47,16 +46,6 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     return kotlinx.coroutines.runBlocking(context, block)
 }
 
-private class JVMThreadLocal<T> constructor(val initializer: () -> T) : java.lang.ThreadLocal<T>() {
-    override fun initialValue(): T? {
-        return initializer()
-    }
+actual fun threadId(): ULong {
+    return Thread.currentThread().id.toULong()
 }
-
-private val jvmTransactionMap =
-    io.realm.internal.JVMThreadLocal<MutableMap<SuspendableWriter, Boolean>>({ mutableMapOf() })
-actual var transactionMap: MutableMap<SuspendableWriter, Boolean>
-    get() = jvmTransactionMap.get()!!
-    set(value) {
-        jvmTransactionMap.set(value)
-    }

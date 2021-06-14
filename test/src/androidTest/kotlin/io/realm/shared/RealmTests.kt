@@ -21,6 +21,7 @@ import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.log.LogLevel
 import io.realm.util.PlatformUtils
+import io.realm.version
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -39,6 +40,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -208,7 +210,7 @@ class RealmTests {
 
     @Test
     @Suppress("invisible_member")
-    fun simultaneousWritesAreSerialized() = runBlocking {
+    fun simultaneousWritesAreAllExecuted() = runBlocking {
         val jobs: List<Job> = IntRange(0, 9).map {
             launch {
                 realm.write {
@@ -228,18 +230,27 @@ class RealmTests {
     @Test
     @Suppress("invisible_member")
     fun writeBlockingWhileWritingIsSerialized() = runBlocking {
-        val mutex = Mutex(true)
-        val exit = Mutex(true)
-        val write = async {
+        val writeStarted = Mutex(true)
+        val writeEnding = Mutex(true)
+        val writeBlockingQueued = Mutex(true)
+        async {
             realm.write {
-                mutex.unlock()
-                PlatformUtils.sleep(1.milliseconds)
-                exit.unlock()
+                writeStarted.unlock()
+                while (writeBlockingQueued.isLocked) {
+                    PlatformUtils.sleep(1.milliseconds)
+                }
+                writeEnding.unlock()
             }
         }
-        mutex.lock()
-        realm.writeBlocking {
-            assertFalse { exit.isLocked }
+        writeStarted.lock()
+        runBlocking {
+            val async = async {
+                realm.writeBlocking {
+                    assertFalse { writeEnding.isLocked }
+                }
+            }
+            writeBlockingQueued.unlock()
+            async.await()
         }
     }
 
@@ -259,22 +270,23 @@ class RealmTests {
     @Test
     @Suppress("invisible_member")
     fun closeCausesOngoingWriteToThrow() = runBlocking {
-        val mutex = Mutex(true)
-        val exit = Mutex(true)
+        val writeStarted = Mutex(true)
         val write = async {
-            assertFailsWith<IllegalStateException> {
+            assertFailsWith<RuntimeException> {
                 realm.write {
-                    mutex.unlock()
-                    runBlocking {
-                        exit.lock()
-                    }
+                    writeStarted.unlock()
+                    copyToRealm(Parent())
+                    // realm.close is blocking until write block is done, so we cannot wait on
+                    // specific external events, so just sleep a bit :/
+                    PlatformUtils.sleep(Duration.Companion.milliseconds(100))
                 }
             }
         }
-        mutex.lock()
+        writeStarted.lock()
         realm.close()
-        exit.unlock()
-        assert(write.await() is IllegalStateException)
+        assert(write.await() is RuntimeException)
+        realm = Realm.open(configuration)
+        assertEquals(0, realm.objects<Parent>().size)
     }
 
     @Test
@@ -282,7 +294,7 @@ class RealmTests {
     fun writeAfterCloseThrows() = runBlocking {
         realm.close()
         assertTrue(realm.isClosed())
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<RuntimeException> {
             realm.write {
                 copyToRealm(Child())
             }
@@ -367,5 +379,21 @@ class RealmTests {
             }
         }
         assertEquals(2, realm.objects<Parent>().size)
+    }
+
+    @Test
+    @Ignore // We currently do not keep track of all intermediate versions
+    fun closeClosesAllVersions() {
+        runBlocking {
+            realm.write { copyToRealm(Parent()) }
+        }
+        val parent: Parent = realm.objects<Parent>().first()
+        runBlocking {
+            realm.write { copyToRealm(Parent()) }
+        }
+        realm.close()
+        assertFailsWith<IllegalStateException> {
+            parent.version
+        }
     }
 }
