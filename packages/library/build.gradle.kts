@@ -20,6 +20,15 @@ plugins {
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
 }
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
+    }
+}
+apply(plugin = "kotlinx-atomicfu")
 
 repositories {
     google()
@@ -100,6 +109,7 @@ android {
     dependencies {
         implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
+        implementation("org.jetbrains.kotlinx:atomicfu-jvm:${Versions.atomicfu}")
     }
 }
 

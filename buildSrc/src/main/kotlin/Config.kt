@@ -61,6 +61,8 @@ object Versions {
     const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3-beta02" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.4.0-beta02" // https://maven.google.com/web/index.html#androidx.test:rules
+    // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
+    const val atomicfu = "0.16.1" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
     const val coroutines = "1.5.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core

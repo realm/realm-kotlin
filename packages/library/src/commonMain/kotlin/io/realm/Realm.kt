@@ -134,9 +134,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * method has been called will then an [IllegalStateException].
      */
     public override fun close() {
-        // TODO Reconsider this constraint. After the realms becomes frozen it also becomes closable
-        //  from any thread, so we don't need to enter the scope of the dispatcher, hence no
-        //  potentially deadlocking runBlocking needed anymore.
+        // TODO Reconsider this constraint. We have the primitives to check is we are on the
+        //  writer thread and just close the realm in writer.close()
         writer.checkInTransaction("Cannot close in a transaction block")
         writer.close()
         super.close()

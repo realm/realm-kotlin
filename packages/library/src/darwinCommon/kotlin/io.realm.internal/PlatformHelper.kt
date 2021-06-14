@@ -16,11 +16,16 @@
 
 package io.realm.internal
 
+import kotlinx.cinterop.ULongVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.newSingleThreadContext
+import platform.posix.pthread_threadid_np
 import kotlin.coroutines.CoroutineContext
-import kotlin.native.concurrent.ThreadLocal
 
 // Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
@@ -34,5 +39,10 @@ actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
     return newSingleThreadContext(id)
 }
 
-@ThreadLocal
-actual var transactionMap: MutableMap<SuspendableWriter, Boolean> = HashMap()
+actual fun threadId(): ULong {
+    memScoped {
+        val tidVar = alloc<ULongVar>()
+        pthread_threadid_np(null, tidVar.ptr)
+        return tidVar.value
+    }
+}

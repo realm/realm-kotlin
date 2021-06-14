@@ -24,6 +24,8 @@ import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -43,13 +45,17 @@ class SuspendableWriter(
         configuration.path
     )
 ) {
+
+    private val tid: ULong
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealm by lazy {
         MutableRealm(configuration)
     }
+    private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
+    private val transactionMutex = Mutex(false)
 
     init {
-        transactionMap[this@SuspendableWriter] = false
+        tid = runBlocking(dispatcher) { threadId() }
     }
 
     suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
@@ -58,22 +64,21 @@ class SuspendableWriter(
             var result: R
 
             @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
-            try {
-                realm.beginTransaction()
-                transactionMap[this@SuspendableWriter] = true
-                ensureActive()
-                result = block(realm)
-                ensureActive()
-                if (realm.isInTransaction()) {
-                    realm.commitTransaction()
+            transactionMutex.withLock {
+                try {
+                    realm.beginTransaction()
+                    ensureActive()
+                    result = block(realm)
+                    ensureActive()
+                    if (!shouldClose.value && realm.isInTransaction()) {
+                        realm.commitTransaction()
+                    }
+                } catch (e: Exception) {
+                    if (realm.isInTransaction()) {
+                        realm.cancelWrite()
+                    }
+                    throw e
                 }
-            } catch (e: Exception) {
-                if (realm.isInTransaction()) {
-                    realm.cancelWrite()
-                }
-                throw e
-            } finally {
-                transactionMap[this@SuspendableWriter] = false
             }
 
             // Freeze the triple of <Realm, Version, Result> while in the context
@@ -114,12 +119,28 @@ class SuspendableWriter(
 
     // Checks if the current thread is already executing a transaction
     internal fun checkInTransaction(message: String) {
-        if (transactionMap[this@SuspendableWriter] ?: false) {
+        if (tid == threadId() && transactionMutex.isLocked) {
             throw IllegalStateException(message)
         }
     }
 
     fun close() {
-        realm.close()
+        // runBlocking cannot be called on the dispatcher thread as this will deadlock if called
+        // inside a transaction. This is already guarded in Realm.close calling this, but keep it
+        // for safety while evaluating if we want to allow closing the realm from inside a
+        // transaction (which should then just be implemented without runBlocking when we are
+        // already on the correct thread).
+        checkInTransaction("Cannot close in a transaction block")
+        runBlocking {
+            // TODO OPTIMIZE We are currently awaiting any running transaction to finish before
+            //  actually closing the realm, as we cannot schedule something to run on the dispatcher
+            //  and closing the realm from another thread during a transaction causes race
+            //  conditions/crashed. Maybe signal this faster by canceling the users scope of the
+            //  transaction, etc.
+            shouldClose.value = true
+            transactionMutex.withLock {
+                realm.close()
+            }
+        }
     }
 }
