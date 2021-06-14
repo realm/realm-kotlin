@@ -24,4 +24,6 @@ actual object PlatformUtils {
     actual fun deleteTempDir(path: String) {
         TODO()
     }
+
+    actual fun threadId(): ULong = Thread.currentThread().id.toULong()
 }
