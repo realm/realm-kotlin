@@ -236,7 +236,7 @@ internal interface ListApiTester {
      * This method acts as an assertion error catcher in case one of the classifiers we use for
      * testing fails, ensuring the error message can easily be identified in the log.
      *
-     * All tests should be wrapped around this function, e.g.:
+     * Assertions should be wrapped around this function, e.g.:
      * ```
      * override fun specificTest() {
      *     errorCatcher {
@@ -265,7 +265,7 @@ internal interface TypeSafetyManager<T> {
     val property: KMutableProperty1<RealmListContainer, RealmList<T>>
     val dataSet: List<T>
 
-    override fun toString(): String     // Default implementation not allowed as it comes from "Any"
+    override fun toString(): String // Default implementation not allowed as it comes from "Any"
     fun createContainerAndGetList(realm: MutableRealm? = null): RealmList<T>
     fun getInitialDataSet(): List<T>
 
@@ -411,20 +411,22 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun getFailsIfClosed(realm: Realm) {
-        val dataSet = typeSafetyManager.getInitialDataSet()
-        realm.writeBlocking {
-            typeSafetyManager.createContainerAndGetList(this)
-                .addAll(copyToRealmIfNeeded(dataSet))
-        }
+        errorCatcher {
+            val dataSet = typeSafetyManager.getInitialDataSet()
+            realm.writeBlocking {
+                typeSafetyManager.createContainerAndGetList(this)
+                    .addAll(copyToRealmIfNeeded(dataSet))
+            }
 
-        val list = realm.objects<RealmListContainer>()
-            .first()
-            .let { typeSafetyManager.getList(it) }
+            val list = realm.objects<RealmListContainer>()
+                .first()
+                .let { typeSafetyManager.getList(it) }
 
-        realm.close()
+            realm.close()
 
-        assertFailsWith<IllegalStateException> {
-            list[0]
+            assertFailsWith<IllegalStateException> {
+                list[0]
+            }
         }
     }
 
@@ -463,14 +465,16 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun addWithIndexFailsIfClosed(realm: Realm) {
-        val dataSet = typeSafetyManager.getInitialDataSet()
-        realm.writeBlocking {
-            val list = typeSafetyManager.createContainerAndGetList(this)
+        errorCatcher {
+            val dataSet = typeSafetyManager.getInitialDataSet()
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetList(this)
 
-            realm.close()
+                realm.close()
 
-            assertFailsWith<IllegalStateException> {
-                list.add(0, copyToRealmIfNeeded(dataSet[0]))
+                assertFailsWith<IllegalStateException> {
+                    list.add(0, copyToRealmIfNeeded(dataSet[0]))
+                }
             }
         }
     }
@@ -527,14 +531,16 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun addAllWithIndexFailsIfClosed(realm: Realm) {
-        val dataSet = typeSafetyManager.getInitialDataSet()
-        realm.writeBlocking {
-            val list = typeSafetyManager.createContainerAndGetList(this)
+        errorCatcher {
+            val dataSet = typeSafetyManager.getInitialDataSet()
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetList(this)
 
-            realm.close()
+                realm.close()
 
-            assertFailsWith<IllegalStateException> {
-                list.addAll(0, copyToRealmIfNeeded(dataSet))
+                assertFailsWith<IllegalStateException> {
+                    list.addAll(0, copyToRealmIfNeeded(dataSet))
+                }
             }
         }
     }
@@ -561,15 +567,17 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun clearFailsIfClosed(realm: Realm) {
-        val dataSet = typeSafetyManager.getInitialDataSet()
-        realm.writeBlocking {
-            val list = typeSafetyManager.createContainerAndGetList(this)
-            list.addAll(copyToRealmIfNeeded(dataSet))
+        errorCatcher {
+            val dataSet = typeSafetyManager.getInitialDataSet()
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetList(this)
+                list.addAll(copyToRealmIfNeeded(dataSet))
 
-            realm.close()
+                realm.close()
 
-            assertFailsWith<IllegalStateException> {
-                list.clear()
+                assertFailsWith<IllegalStateException> {
+                    list.clear()
+                }
             }
         }
     }
@@ -608,15 +616,17 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun removeAtFailsIfClosed(realm: Realm) {
-        val dataSet = typeSafetyManager.getInitialDataSet()
-        realm.writeBlocking {
-            val list = typeSafetyManager.createContainerAndGetList(this)
-            list.addAll(copyToRealmIfNeeded(dataSet))
+        errorCatcher {
+            val dataSet = typeSafetyManager.getInitialDataSet()
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetList(this)
+                list.addAll(copyToRealmIfNeeded(dataSet))
 
-            realm.close()
+                realm.close()
 
-            assertFailsWith<IllegalStateException> {
-                list.removeAt(0)
+                assertFailsWith<IllegalStateException> {
+                    list.removeAt(0)
+                }
             }
         }
     }
@@ -654,15 +664,17 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun setFailsIfClosed(realm: Realm) {
-        val dataSet = typeSafetyManager.getInitialDataSet()
-        realm.writeBlocking {
-            val list = typeSafetyManager.createContainerAndGetList(this)
-            list.addAll(copyToRealmIfNeeded(dataSet))
+        errorCatcher {
+            val dataSet = typeSafetyManager.getInitialDataSet()
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetList(this)
+                list.addAll(copyToRealmIfNeeded(dataSet))
 
-            realm.close()
+                realm.close()
 
-            assertFailsWith<IllegalStateException> {
-                list[0] = copyToRealmIfNeeded(dataSet[0])
+                assertFailsWith<IllegalStateException> {
+                    list[0] = copyToRealmIfNeeded(dataSet[0])
+                }
             }
         }
     }
@@ -718,9 +730,9 @@ internal class ManagedRealmObjectListTester(
         assertEquals(expected.stringField, actual.stringField)
 }
 
-//-----------------------------------
+// -----------------------------------
 // Data used to initialize structures
-//-----------------------------------
+// -----------------------------------
 
 internal val CHAR_VALUES = listOf('a', 'b')
 internal val STRING_VALUES = listOf("ABC", "BCD")
