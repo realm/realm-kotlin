@@ -233,7 +233,7 @@ class RealmTests {
         async {
             realm.write {
                 writeStarted.unlock()
-                while(writeBlockingQueued.isLocked) {
+                while (writeBlockingQueued.isLocked) {
                     PlatformUtils.sleep(1.milliseconds)
                 }
                 writeEnding.unlock()
