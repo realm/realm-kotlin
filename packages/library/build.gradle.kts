@@ -49,6 +49,7 @@ kotlin {
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
 
@@ -75,9 +76,6 @@ kotlin {
 // JVM
 kotlin {
     jvm()
-    dependencies {
-        implementation("org.jetbrains.kotlinx:atomicfu-jvm:${Versions.atomicfu}")
-    }
 }
 
 // Android configuration
@@ -112,7 +110,6 @@ android {
     dependencies {
         implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
-        implementation("org.jetbrains.kotlinx:atomicfu-jvm:${Versions.atomicfu}")
     }
 }
 
