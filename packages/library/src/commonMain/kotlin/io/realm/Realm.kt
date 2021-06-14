@@ -111,8 +111,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             // the written data. Otherwise, we would have to wait for the Notifier thread
             // to detect it and update the user Realm.
             updateRealmPointer(nativePointer, versionId)
-            // FIXME What if the result is of a different version than the realm (some other
-            //  write transaction finished before)
             return result
         } catch (e: Exception) {
             throw e
@@ -143,7 +141,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         realmPointerMutex.withLock {
             log.debug("Updating Realm version: $version -> $newVersion")
             if (newVersion >= version) {
-                dbPointer = newRealm
+                realm = RealmReference(this, newRealm)
                 version = newVersion
             }
         }

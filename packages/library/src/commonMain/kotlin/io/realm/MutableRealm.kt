@@ -63,7 +63,7 @@ class MutableRealm : BaseRealm {
     }
 
     internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(dbPointer)
+        return RealmInterop.realm_is_in_transaction(realm.dbPointer)
     }
 
     /**
