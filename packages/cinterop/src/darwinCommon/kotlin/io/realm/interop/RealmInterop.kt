@@ -314,10 +314,6 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_rollback(realm.cptr()))
     }
 
-    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
-        return realm_wrapper.realm_is_writable(realm.cptr())
-    }
-
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
         memScoped {
             val found = alloc<BooleanVar>()

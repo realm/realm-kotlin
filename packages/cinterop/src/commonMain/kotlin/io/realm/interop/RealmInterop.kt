@@ -57,7 +57,6 @@ expect object RealmInterop {
     fun realm_is_in_transaction(realm: NativePointer): Boolean
     fun realm_commit(realm: NativePointer)
     fun realm_rollback(realm: NativePointer)
-    fun realm_is_in_transaction(realm: NativePointer): Boolean
 
     // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
     // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
