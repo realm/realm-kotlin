@@ -283,7 +283,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         //      return backing_field
                         //  }
 
-                        // TODO: setter
                         modifyAccessor(
                             property = declaration,
                             getFunction = getList,
@@ -309,6 +308,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         })
     }
 
+    @Suppress("LongParameterList")
     private fun modifyAccessor(
         property: IrProperty,
         getFunction: IrSimpleFunction,
