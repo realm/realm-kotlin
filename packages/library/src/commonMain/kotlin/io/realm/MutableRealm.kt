@@ -39,7 +39,6 @@ class MutableRealm : BaseRealm {
         }
     }
 
-    // TODO Do we actually need the scoped realm (inheriting context from the parent).
     /**
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
      * done inside the MutableRealm is not immediately reflected in the `parentRealm`.

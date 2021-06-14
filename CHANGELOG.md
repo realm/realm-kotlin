@@ -1,3 +1,21 @@
+## 0.x.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* Frozen architecture: Not fully in place yet.
+
+### Enhancements
+* Add support for suspending writes executed on the Realm Write Dispatcher with `suspend fun <R> write(block: MutableRealm.() -> R): R` 
+
+### Fixed
+* None.
+
+### Compatibility 
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* Updated to Android NDK: 22.1.7171670
+
+
 ## 0.2.0 (YYYY-MM-DD)
 
 ### Breaking Changes

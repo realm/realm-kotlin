@@ -223,6 +223,5 @@ public class RealmConfiguration private constructor(
     // FIXME
     //  - Add injection point in the configuration
     //  - Don't know how to enforce that it has to be backed by a single thread
-    //  - What is the granularity of this: One per Realm, Configuration or underlying shared realm?
     internal fun writeDispatcher(id: String): CoroutineDispatcher = io.realm.internal.defaultWriteDispatcher(id)
 }

@@ -120,6 +120,7 @@ actual object RealmInterop {
 
     actual fun realm_open(config: NativePointer): NativePointer {
         val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
     }
@@ -129,7 +130,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
+        val realmPtr = LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
+        // Ensure that we can read version information, etc.
+        realm_begin_read(realmPtr)
+        return realmPtr
     }
 
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
