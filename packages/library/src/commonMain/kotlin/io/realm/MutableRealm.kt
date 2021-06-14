@@ -100,10 +100,6 @@ class MutableRealm : BaseRealm {
         return io.realm.internal.copyToRealm(configuration.mediator, dbPointer, instance)
     }
 
-    internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(dbPointer)
-    }
-
     /**
      * Deletes the object from the underlying Realm.
      *
