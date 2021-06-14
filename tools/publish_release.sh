@@ -46,8 +46,8 @@ DOCS_S3_SECRET_KEY="$6"
 SLACK_WEBHOOK_RELEASES_URL="$7"
 SLACK_WEBHOOK_JAVA_CI_URL="$8"
 GRADLE_PORTAL_KEY="$9"
-GRADLE_PORTAL_KEY="$10"
-GRADLE_BUILD_PARAMS="$11"
+GRADLE_PORTAL_KEY="${10}"
+GRADLE_BUILD_PARAMS="${11}"
 
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
@@ -116,8 +116,7 @@ publish_artifacts() {
   cd $REALM_KOTLIN_PATH/packages
   eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
   echo "Releasing on Gradle Plugin Portal"
-  cd gradle-plugin
-  eval "./gradlew publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
+  eval "./gradlew :gradle-plugin:publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
   cd $HERE
 }
 

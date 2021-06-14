@@ -185,11 +185,20 @@ actual object RealmInterop {
         realmc.realm_rollback((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
+        return realmc.realm_is_writable(realm.cptr())
+    }
+
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
     }
+
     actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, to_realm_value(primaryKey)))
+    }
+
+    actual fun realm_object_is_valid(obj: NativePointer): Boolean {
+        return realmc.realm_object_is_valid(obj.cptr())
     }
 
     actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {

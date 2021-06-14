@@ -4,19 +4,37 @@
 * Frozen architecture: Not fully in place yet.
 
 ### Enhancements
-* Add support for suspending writes executed on the Realm Write Dispatcher with `suspend fun <R> write(block: MutableRealm.() -> R): R` 
+* Add support for suspending writes executed on the Realm Write Dispatcher with `suspend fun <R> write(block: MutableRealm.() -> R): R`
 
 ### Fixed
 * None.
 
-### Compatibility 
+### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
 
 ### Internal
 * Updated to Android NDK: 22.1.7171670
 
 
-## 0.2.0 (YYYY-MM-DD)
+## 0.3.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+
+## 0.2.0 (2021-06-09)
 
 ### Breaking Changes
 * The Realm Kotlin Gradle plugin has changed name from `realm-kotlin` to `io.realm.kotlin` to align with Gradle Plugin Portal requirements.
