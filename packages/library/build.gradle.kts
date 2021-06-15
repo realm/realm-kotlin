@@ -73,6 +73,8 @@ kotlin {
 //    }
 }
 
+// AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
+// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
 project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
     transformJvm = false
 }

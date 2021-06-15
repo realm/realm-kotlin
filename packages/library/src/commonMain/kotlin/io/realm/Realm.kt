@@ -75,7 +75,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      *
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block. If this is a RealmObject it is
-     * frozen before returning it.
+     * frozen before being returned.
      * @see [RealmConfiguration.writeDispatcher]
      */
     suspend fun <R> write(block: MutableRealm.() -> R): R {
@@ -87,8 +87,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             // the written data. Otherwise, we would have to wait for the Notifier thread
             // to detect it and update the user Realm.
             updateRealmPointer(nativePointer, versionId)
-            // FIXME What if the result is of a different version than the realm (some other
-            //  write transaction finished before)
             return result
         } catch (e: Exception) {
             throw e

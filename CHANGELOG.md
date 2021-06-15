@@ -1,4 +1,4 @@
-## 0.x.0 (YYYY-MM-DD)
+## 0.3.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * Frozen architecture: Not fully in place yet.
@@ -10,28 +10,12 @@
 * None.
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0-native-mt
+  - 
 
 ### Internal
 * Updated to Android NDK: 22.1.7171670
-
-
-## 0.3.0 (YYYY-MM-DD)
-
-### Breaking Changes
-* None.
-
-### Enhancements
-* None.
-
-### Fixed
-* None.
-
-### Compatibility
-* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
-
-### Internal
-* None.
+* Introduced usage of `kotlinx.atomicfu`: 0.16.1
 
 
 ## 0.2.0 (2021-06-09)
