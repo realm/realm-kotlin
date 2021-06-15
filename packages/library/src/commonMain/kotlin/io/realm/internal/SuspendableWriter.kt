@@ -87,7 +87,7 @@ class SuspendableWriter(
             // the transaction is committed and we freeze it.
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
-            val newDbPointer = RealmInterop.realm_freeze(realm.realm.dbPointer)
+            val newDbPointer = RealmInterop.realm_freeze(realm.realmReference.dbPointer)
             val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
             // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {

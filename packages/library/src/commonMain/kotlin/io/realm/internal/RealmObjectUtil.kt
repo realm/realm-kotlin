@@ -90,9 +90,9 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
-    val dbPointer = liveRealm.realm.dbPointer
+    val dbPointer = liveRealm.realmReference.dbPointer
     return managedModel.manage(
-        liveRealm.realm,
+        liveRealm.realmReference,
         `$realm$Mediator` as Mediator,
         type,
         RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)

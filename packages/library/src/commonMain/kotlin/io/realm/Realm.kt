@@ -44,7 +44,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     var updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> =
         kotlinx.atomicfu.atomic<RealmReference>(RealmReference(this, dbPointer))
-    override var realm: RealmReference
+    override var realmReference: RealmReference
         get() {
             return updateableRealm.value
         }
@@ -99,7 +99,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      *
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block. If this is a RealmObject it is
-     * frozen before returning it.
+     * frozen before being returned.
      * @see [RealmConfiguration.writeDispatcher]
      */
     suspend fun <R> write(block: MutableRealm.() -> R): R {
@@ -141,7 +141,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         realmPointerMutex.withLock {
             log.debug("Updating Realm version: $version -> $newVersion")
             if (newVersion >= version) {
-                realm = RealmReference(this, newRealm)
+                realmReference = RealmReference(this, newRealm)
             }
         }
     }

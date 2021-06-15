@@ -57,8 +57,8 @@ class RealmTests {
 
     private val configuration: RealmConfiguration by lazy {
         RealmConfiguration.Builder()
-            .path( "$tmpDir/default.realm",)
-            .schema( setOf(Parent::class, Child::class))
+            .path("$tmpDir/default.realm",)
+            .schema(setOf(Parent::class, Child::class))
             .log(level = LogLevel.DEBUG)
             .build()
     }

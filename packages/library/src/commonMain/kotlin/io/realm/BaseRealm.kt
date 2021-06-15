@@ -34,14 +34,14 @@ public abstract class BaseRealm internal constructor(
     dbPointer: NativePointer
 ) {
 
-    internal open val realm: RealmReference = RealmReference(this, dbPointer)
+    internal open val realmReference: RealmReference = RealmReference(this, dbPointer)
 
     /**
      * The current data version of this Realm and data fetched from it.
      */
     // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     public var version: VersionId = VersionId(0)
-        get() { return realm.version() }
+        get() { return realmReference.version() }
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
@@ -51,7 +51,7 @@ public abstract class BaseRealm internal constructor(
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         // Use same reference through out all operations to avoid locking
-        val realmReference = this.realm
+        val realmReference = this.realmReference
         realmReference.checkClosed()
         return RealmResults.fromQuery(
             realmReference,
@@ -70,7 +70,7 @@ public abstract class BaseRealm internal constructor(
      * @see [RealmConfiguration.Builder.maxNumberOfActiveVersions]
      */
     public fun getNumberOfActiveVersions(): Long {
-        val reference = realm
+        val reference = realmReference
         reference.checkClosed()
         return RealmInterop.realm_get_num_versions(reference.dbPointer)
     }
@@ -82,12 +82,12 @@ public abstract class BaseRealm internal constructor(
      * @return `true` if the Realm has been closed. `false` if not.
      */
     public fun isClosed(): Boolean {
-        return realm.closed()
+        return realmReference.closed()
     }
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        val reference = realm
+        val reference = realmReference
         reference.checkClosed()
         RealmInterop.realm_close(reference.dbPointer)
         log.info("Realm closed: ${configuration.path}")
