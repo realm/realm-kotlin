@@ -42,4 +42,14 @@ class Sample : RealmObject {
     var floatListField: RealmList<Float> = RealmList()
     var doubleListField: RealmList<Double> = RealmList()
     var objectListField: RealmList<Sample> = RealmList()
+
+    var nullableStringListField: RealmList<String?> = RealmList()
+    var nullableByteListField: RealmList<Byte?> = RealmList()
+    var nullableCharListField: RealmList<Char?> = RealmList()
+    var nullableShortListField: RealmList<Short?> = RealmList()
+    var nullableIntListField: RealmList<Int?> = RealmList()
+    var nullableLongListField: RealmList<Long?> = RealmList()
+    var nullableBooleanListField: RealmList<Boolean?> = RealmList()
+    var nullableFloatListField: RealmList<Float?> = RealmList()
+    var nullableDoubleListField: RealmList<Double?> = RealmList()
 }

@@ -70,9 +70,11 @@ import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.js.descriptorUtils.nameIfStandardType
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isNullable
 import kotlin.collections.set
 
 /**
@@ -262,9 +264,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             type = "list",
                             declaration = declaration,
                             collectionType = CollectionType.LIST,
-                            genericTypes = listOf(
-                                getCoreTypeFromKotlinType(getListGenericType(declaration)[0])
-                            )
+                            genericTypes = listOf(getListGenericCoreType(declaration))
                         )
                         // TODO OPTIMIZE consider synthetic property generation for lists to cache
                         //  reference instead of emitting a new list every time - also for links
@@ -430,36 +430,53 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == realmListClassId
     }
 
-    private fun getListGenericType(declaration: IrProperty): List<String> {
+    private fun getListGenericCoreType(declaration: IrProperty): CoreType {
         // Check first if the generic is a subclass of RealmObject
-        val superTypes = declaration.symbol.descriptor.type.arguments[0].type.constructor.supertypes
-        for (superType: KotlinType in superTypes) {
+        val descriptorType = declaration.symbol.descriptor.type
+        val listGenericType = descriptorType.arguments[0].type
+        for (superType in listGenericType.constructor.supertypes) {
             if (superType.toString() == "RealmObject") {
-                return listOf("RealmObject")
+                // Nullable objects are not supported
+                if (listGenericType.isNullable()) {
+                    error("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
+                }
+                return CoreType(
+                    propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+                    nullable = false
+                )
             }
         }
 
-        // Otherwise just return the generic(s) present in the declaration
-        return declaration.symbol.descriptor.type.arguments.map {
-            it.toString()
+        // If not a RealmObject, check whether the list itself is nullable - if so, throw error
+        if (descriptorType.isNullable()) {
+            error("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.")
         }
+
+        // Otherwise just return the matching core type present in the declaration
+        return CoreType(
+            propertyType = getPropertyTypeFromKotlinType(listGenericType),
+            nullable = listGenericType.isNullable()
+        )
     }
 
     // TODO do the lookup only once
-    private fun getCoreTypeFromKotlinType(type: String): String {
-        // TODO nullability?
-        return when (type) {
-            "Byte" -> PropertyType.RLM_PROPERTY_TYPE_INT.name
-            "Char" -> PropertyType.RLM_PROPERTY_TYPE_INT.name
-            "Short" -> PropertyType.RLM_PROPERTY_TYPE_INT.name
-            "Int" -> PropertyType.RLM_PROPERTY_TYPE_INT.name
-            "Long" -> PropertyType.RLM_PROPERTY_TYPE_INT.name
-            "Boolean" -> PropertyType.RLM_PROPERTY_TYPE_BOOL.name
-            "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT.name
-            "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE.name
-            "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING.name
-            "RealmObject" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT.name
-            else -> error("Wrong Kotlin type: '$type'")
-        }
+    private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType {
+        return type.nameIfStandardType
+            ?.identifier
+            ?.let { identifier ->
+                when (identifier) {
+                    "Byte" -> PropertyType.RLM_PROPERTY_TYPE_INT
+                    "Char" -> PropertyType.RLM_PROPERTY_TYPE_INT
+                    "Short" -> PropertyType.RLM_PROPERTY_TYPE_INT
+                    "Int" -> PropertyType.RLM_PROPERTY_TYPE_INT
+                    "Long" -> PropertyType.RLM_PROPERTY_TYPE_INT
+                    "Boolean" -> PropertyType.RLM_PROPERTY_TYPE_BOOL
+                    "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
+                    "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
+                    "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
+                    "RealmObject" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT
+                    else -> error("Unsupported Kotlin type: '$type'")
+                }
+            } ?: error("Missing identifier for type $type")
     }
 }
