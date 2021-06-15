@@ -155,7 +155,7 @@ class RealmListTests {
     }
 
     // TODO investigate how to add properties/values directly so that it works for multiplatform
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "ComplexMethod")
     private fun <T> getDataSetForClassifier(
         classifier: KClassifier,
         nullable: Boolean
