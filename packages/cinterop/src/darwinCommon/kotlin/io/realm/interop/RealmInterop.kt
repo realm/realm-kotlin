@@ -51,6 +51,7 @@ import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_string_t
+import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
@@ -253,8 +254,24 @@ actual object RealmInterop {
 
     actual fun realm_open(config: NativePointer): NativePointer {
         val realmPtr = CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
+        // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
+    }
+
+    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
+    }
+
+    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
+        val realmPtr = CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
+        // Ensure that we can read version information, etc.
+        realm_begin_read(realmPtr)
+        return realmPtr
+    }
+
+    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_frozen(realm.cptr<realm_t>())
     }
 
     actual fun realm_close(realm: NativePointer) {
@@ -283,6 +300,10 @@ actual object RealmInterop {
 
     actual fun realm_begin_write(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_begin_write(realm.cptr()))
+    }
+
+    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_writable(realm.cptr())
     }
 
     actual fun realm_commit(realm: NativePointer) {
@@ -315,10 +336,23 @@ actual object RealmInterop {
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
     }
+
     actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
         memScoped {
             return CPointerWrapper(realm_wrapper.realm_object_create_with_primary_key_by_ref(realm.cptr(), key.toUInt(), to_realm_value(primaryKey).ptr))
         }
+    }
+
+    actual fun realm_object_is_valid(obj: NativePointer): Boolean {
+        return realm_wrapper.realm_object_is_valid(obj.cptr())
+    }
+
+    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
+    }
+
+    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -476,6 +510,14 @@ actual object RealmInterop {
 
     actual fun realm_query_find_all(query: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_freeze(liveResults.cptr(), frozenRealm.cptr()))
+    }
+
+    actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

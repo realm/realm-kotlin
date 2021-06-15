@@ -16,8 +16,19 @@
 
 package io.realm.util
 
+import kotlinx.cinterop.ULongVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.value
+import platform.posix.nanosleep
+import platform.posix.pthread_threadid_np
+import platform.posix.timespec
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     actual fun createTempDir(): String {
@@ -27,5 +38,22 @@ actual object PlatformUtils {
 
     actual fun deleteTempDir(path: String) {
         platform.Foundation.NSFileManager.defaultManager.removeItemAtURL(platform.Foundation.NSURL(fileURLWithPath = path), null)
+    }
+
+    @OptIn(ExperimentalTime::class)
+    actual fun sleep(duration: Duration) {
+        val nanoseconds = duration.toLongNanoseconds()
+        val time = cValue<timespec> {
+            tv_sec = nanoseconds / 1000000000
+            tv_nsec = nanoseconds % 1000000000
+        }
+        nanosleep(time, null)
+    }
+    actual fun threadId(): ULong {
+        memScoped {
+            val tidVar = alloc<ULongVar>()
+            pthread_threadid_np(null, tidVar.ptr)
+            return tidVar.value
+        }
     }
 }

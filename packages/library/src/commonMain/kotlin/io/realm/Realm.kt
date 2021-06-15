@@ -15,12 +15,19 @@
  */
 package io.realm
 
+import io.realm.internal.SuspendableWriter
+import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
+
+    private val writer: SuspendableWriter = SuspendableWriter(configuration)
+    private val realmPointerMutex = Mutex()
 
     companion object {
         /**
@@ -57,54 +64,84 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
     /**
-     * TODO Add docs when this method is implemented.
+     * Modify the underlying Realm file in a suspendable transaction on the default Realm Write
+     * Dispatcher.
+     *
+     * The write transaction always represent the latest version of data in the Realm file, even if
+     * the calling Realm not yet represent this.
+     *
+     * Write transactions automatically commit any changes made when the closure returns unless
+     * [MutableRealm.cancelWrite] was called.
+     *
+     * @param block function that should be run within the context of a write transaction.
+     * @return any value returned from the provided write block. If this is a RealmObject it is
+     * frozen before being returned.
+     * @see [RealmConfiguration.writeDispatcher]
      */
     suspend fun <R> write(block: MutableRealm.() -> R): R {
-        TODO("Awaiting implementation of the Frozen Architecture")
+        @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
+        try {
+            val (nativePointer, versionId, result) = this.writer.write(block)
+            // Update the user facing Realm before returning the result.
+            // That way, querying the Realm right after the `write` completes will return
+            // the written data. Otherwise, we would have to wait for the Notifier thread
+            // to detect it and update the user Realm.
+            updateRealmPointer(nativePointer, versionId)
+            return result
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     /**
-     * Modify the underlying Realm file by creating a write transaction on the current thread. Write
-     * transactions automatically commit any changes made when the closure returns unless
-     * [MutableRealm.cancelWrite] was called.
+     * Modify the underlying Realm file while blocking the calling thread until the transaction is
+     * done. Write transactions automatically commit any changes made when the closure returns
+     * unless [MutableRealm.cancelWrite] was called.
      *
      * The write transaction always represent the latest version of data in the Realm file, even if the calling
      * Realm not yet represent this.
      *
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block.
+     *
+     * @throws IllegalStateException if invoked inside an existing transaction.
      */
-    @Suppress("TooGenericExceptionCaught")
     fun <R> writeBlocking(block: MutableRealm.() -> R): R {
-        // While not efficiently to open a new Realm just for a write, it makes it a lot
-        // easier to control the API surface between Realm and MutableRealm
-        val writerRealm = MutableRealm(configuration, dbPointer)
-        try {
-            writerRealm.beginTransaction()
-            val returnValue: R = block(writerRealm)
-            if (writerRealm.commitWrite && !isClosed()) {
-                writerRealm.commitTransaction()
+        writer.checkInTransaction("Cannot initiate transaction when already in a write transaction")
+        return runBlocking {
+            write(block)
+        }
+    }
+
+    private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
+        realmPointerMutex.withLock {
+            log.debug("Updating Realm version: $version -> $newVersion")
+            if (newVersion >= version) {
+                dbPointer = newRealm
+                version = newVersion
             }
-            return returnValue
-        } catch (e: Exception) {
-            // Only cancel writes for exceptions. For errors assume that something has gone
-            // horribly wrong and the process is exiting. And canceling the write might just
-            // hide the true underlying error.
-            try {
-                writerRealm.cancelWrite()
-            } catch (cancelException: Throwable) {
-                // Swallow any exception from `cancelWrite` as the primary error is more important.
-                log.error(e)
-            }
-            throw e
         }
     }
 
     /**
      * Close this Realm and all underlying resources. Accessing any methods or Realm Objects after this
      * method has been called will then an [IllegalStateException].
+     *
+     * This will block until underlying Realms (writer and notifier) are closed, including rolling
+     * back any ongoing transactions when [close] is called. Calling this from the Realm Write
+     * Dispatcher while inside a transaction block will throw, while calling this by some means of
+     * a blocking operation on another thread (e.g. `runBlocking(Dispatcher.Default)`) inside a
+     * transaction cause a deadlock.
+     *
+     * @throws IllegalStateException if called from the Realm Write Dispatcher while inside a
+     * transaction block.
      */
     public override fun close() {
+        // TODO Reconsider this constraint. We have the primitives to check is we are on the
+        //  writer thread and just close the realm in writer.close()
+        writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
+        writer.close()
         super.close()
+        // TODO There is currently nothing that tears down the dispatcher
     }
 }

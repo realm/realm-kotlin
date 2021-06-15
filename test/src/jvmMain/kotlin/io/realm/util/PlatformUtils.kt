@@ -16,6 +16,9 @@
 
 package io.realm.util
 
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+
 actual object PlatformUtils {
     actual fun createTempDir(): String {
         TODO("Not yet implemented")
@@ -24,4 +27,11 @@ actual object PlatformUtils {
     actual fun deleteTempDir(path: String) {
         TODO()
     }
+
+    @OptIn(ExperimentalTime::class)
+    actual fun sleep(duration: Duration) {
+        Thread.sleep(duration.toLongMilliseconds())
+    }
+
+    actual fun threadId(): ULong = Thread.currentThread().id.toULong()
 }

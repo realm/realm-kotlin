@@ -40,6 +40,9 @@ expect object RealmInterop {
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
     fun realm_open(config: NativePointer): NativePointer
+    fun realm_freeze(liveRealm: NativePointer): NativePointer
+    fun realm_thaw(frozenRealm: NativePointer): NativePointer
+    fun realm_is_frozen(realm: NativePointer): Boolean
     fun realm_close(realm: NativePointer)
 
     fun realm_get_schema(realm: NativePointer): NativePointer
@@ -51,6 +54,7 @@ expect object RealmInterop {
 
     fun realm_begin_read(realm: NativePointer)
     fun realm_begin_write(realm: NativePointer)
+    fun realm_is_in_transaction(realm: NativePointer): Boolean
     fun realm_commit(realm: NativePointer)
     fun realm_rollback(realm: NativePointer)
 
@@ -59,6 +63,9 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer
+    fun realm_object_is_valid(obj: NativePointer): Boolean
+    fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer
+    fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer
 
     fun realm_object_as_link(obj: NativePointer): Link
 
@@ -73,6 +80,8 @@ expect object RealmInterop {
     fun realm_query_find_first(realm: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
 
+    fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer
+    fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer
     fun realm_results_count(results: NativePointer): Long
     // FIXME OPTIMIZE Get many
     fun <T> realm_results_get(results: NativePointer, index: Long): Link

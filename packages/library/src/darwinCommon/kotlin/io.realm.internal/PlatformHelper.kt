@@ -13,39 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.realm.internal
 
-import android.os.Handler
-import android.os.HandlerThread
-import io.realm.log.RealmLogger
+import kotlinx.cinterop.ULongVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.android.asCoroutineDispatcher
+import kotlinx.coroutines.newSingleThreadContext
+import platform.posix.pthread_threadid_np
 import kotlin.coroutines.CoroutineContext
-
-actual object PlatformHelper {
-
-    // Returns the root directory of the platform's App data
-    actual fun appFilesDirectory(): String = RealmInitializer.filesDir.absolutePath
-
-    // Returns the default logger for the platform
-    actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
-}
-
-actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
-    val thread = HandlerThread("RealmWriter[$id]")
-    thread.start()
-    return Handler(thread.looper).asCoroutineDispatcher()
-}
-
-// FIXME All of the below is common with Android. Should be align in separate source set but
-//  that is already tracked by https://github.com/realm/realm-kotlin/issues/175
 
 // Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
     return kotlinx.coroutines.runBlocking(context, block)
 }
 
+/**
+ * The default dispatcher for Darwin platforms spawns a new thread with a run loop.
+ */
+actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+    return newSingleThreadContext(id)
+}
+
 actual fun threadId(): ULong {
-    return Thread.currentThread().id.toULong()
+    memScoped {
+        val tidVar = alloc<ULongVar>()
+        pthread_threadid_np(null, tidVar.ptr)
+        return tidVar.value
+    }
 }

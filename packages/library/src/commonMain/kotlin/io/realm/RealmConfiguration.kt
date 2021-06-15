@@ -26,6 +26,7 @@ import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
@@ -52,7 +53,6 @@ public class RealmConfiguration private constructor(
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long
 ) {
-
     // Public properties making up the RealmConfiguration
     // TODO Add KDoc for all of these
     public val path: String
@@ -210,4 +210,18 @@ public class RealmConfiguration private constructor(
             )
         }
     }
+
+    /**
+     * Write dispatcher for background writes.
+     *
+     * Current implementation differs on platforms:
+     * - *_Android_* Set's up a background looper thread and executes tasks through it's associated
+     *   handler.
+     * - *_iOS_* Creates a new single threaded context with
+     * kotlinx.coroutines.newSingleThreadContext.
+     */
+    // FIXME
+    //  - Add injection point in the configuration
+    //  - Don't know how to enforce that it has to be backed by a single thread
+    internal fun writeDispatcher(id: String): CoroutineDispatcher = io.realm.internal.defaultWriteDispatcher(id)
 }

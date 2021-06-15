@@ -29,7 +29,7 @@ public abstract class BaseRealm internal constructor(
      * Configuration used to configure this Realm instance.
      */
     public val configuration: RealmConfiguration,
-    protected val dbPointer: NativePointer
+    internal var dbPointer: NativePointer
 ) {
 
     /**
@@ -41,9 +41,6 @@ public abstract class BaseRealm internal constructor(
             return VersionId(RealmInterop.realm_get_version_id(dbPointer))
         }
 
-    // Use this boolean to track closed instead of `NativePointer?` to avoid forcing
-    // null checks everywhere, when it is rarely needed.
-    private var isClosed: Boolean = false
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
     init {
@@ -52,10 +49,9 @@ public abstract class BaseRealm internal constructor(
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         checkClosed()
-        return RealmResults(
-            configuration,
-            dbPointer,
-            { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
+        return RealmResults.fromQuery(
+            this,
+            RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
             clazz,
             configuration.mediator
         )
@@ -81,13 +77,13 @@ public abstract class BaseRealm internal constructor(
      * @return `true` if the Realm has been closed. `false` if not.
      */
     public fun isClosed(): Boolean {
-        return isClosed
+        return RealmInterop.realm_is_closed(dbPointer)
     }
 
     // Inline this for a cleaner stack trace in case it throws.
     @Suppress("MemberVisibilityCanBePrivate")
     internal inline fun checkClosed() {
-        if (isClosed) {
+        if (isClosed()) {
             throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
         }
     }
@@ -96,7 +92,6 @@ public abstract class BaseRealm internal constructor(
     internal open fun close() {
         checkClosed()
         RealmInterop.realm_close(dbPointer)
-        isClosed = true
         log.info("Realm closed: ${configuration.path}")
     }
 }
