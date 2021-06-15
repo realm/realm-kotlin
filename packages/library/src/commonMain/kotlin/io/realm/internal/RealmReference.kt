@@ -26,19 +26,25 @@ data class RealmReference(
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
 ) : RealmLifeCycle {
 
-    override fun closed(): Boolean {
-        return RealmInterop.realm_is_closed(dbPointer)
-    }
-
     override fun version(): VersionId {
         checkClosed()
         return VersionId(RealmInterop.realm_get_version_id(dbPointer))
     }
+
+    override fun frozen(): Boolean {
+        checkClosed()
+        return RealmInterop.realm_is_frozen(dbPointer)
+    }
+
+    override fun closed(): Boolean {
+        return RealmInterop.realm_is_closed(dbPointer)
+    }
 }
 
 interface RealmLifeCycle {
-    fun closed(): Boolean
     fun version(): VersionId
+    fun frozen(): Boolean
+    fun closed(): Boolean
 }
 
 // Inline this for a cleaner stack trace in case it throws.

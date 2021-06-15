@@ -64,15 +64,20 @@ fun RealmObjectInternal.unmanage() {
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-fun <T : RealmObject> RealmObjectInternal.freeze(realm: RealmReference, expectedRealm: RealmReference? = null): T {
+fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
+    // FIXME How to do debug assertion
+    if (!frozenRealm.frozen()) error("Cannot freeze object on live realm")
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     return managedModel.manage(
-        realm,
+        frozenRealm!!,
         `$realm$Mediator` as Mediator,
         type,
-        RealmInterop.realm_object_freeze(`$realm$ObjectPointer`!!, expectedRealm?.dbPointer ?: realm.dbPointer)
+        RealmInterop.realm_object_freeze(
+            `$realm$ObjectPointer`!!,
+            frozenRealm.dbPointer
+        )
     )
 }
 

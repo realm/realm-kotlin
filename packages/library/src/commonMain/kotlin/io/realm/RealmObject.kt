@@ -23,6 +23,7 @@ import io.realm.interop.RealmInterop
 /**
  * Marker interface to define a model (managed by Realm).
  */
+// FIXME Consider implementing RealmLifeCycle!?
 interface RealmObject
 
 // FIXME API Currently just adding these as extension methods as putting them directly into
@@ -32,9 +33,17 @@ public fun RealmObject.delete() {
     MutableRealm.delete(this)
 }
 
+public fun RealmObject.frozen(): Boolean {
+    val internalObject = this as RealmObjectInternal
+    internalObject.`$realm$ObjectPointer`?.let {
+        return RealmInterop.realm_is_frozen(it)
+    } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
+}
+
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
+// TODO Shouldn't this be a function as it can potentially change over time and can throw?
 public var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal

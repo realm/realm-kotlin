@@ -105,7 +105,7 @@ class SuspendableWriter(
                 @Suppress("UNCHECKED_CAST")
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
-                obj.freeze<RealmObject>(RealmReference(owner, realm.realm.dbPointer), RealmReference(owner, frozenDbPointer)) as R
+                obj.freeze<RealmObject>(RealmReference(owner, frozenDbPointer)) as R
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }

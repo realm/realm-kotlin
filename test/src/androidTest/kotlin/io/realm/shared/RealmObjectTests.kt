@@ -17,7 +17,9 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmLifeCycleTests
 import io.realm.VersionId
+import io.realm.frozen
 import io.realm.isValid
 import io.realm.util.PlatformUtils
 import io.realm.version
@@ -25,13 +27,14 @@ import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class RealmObjectTests {
+class RealmObjectTests : RealmLifeCycleTests {
 
     companion object {
         // Expected version after writing Parent to Realm
@@ -59,12 +62,19 @@ class RealmObjectTests {
     }
 
     @Test
-    fun version() {
+    override fun version() {
         assertEquals(EXPECTED_VERSION, parent.version)
     }
 
+    override fun version_throwsOnUnmanagedObject() {
+        val unmanagedParent = Parent()
+        assertFailsWith<IllegalArgumentException> {
+            unmanagedParent.version
+        }
+    }
+
     @Test
-    fun versionThrowsIfRealmIsClosed() {
+    override fun version_throwsIfRealmIsClosed() {
         realm.close()
         assertFailsWith<IllegalStateException> { parent.version }
     }
@@ -77,5 +87,33 @@ class RealmObjectTests {
         assertTrue(obj.isValid())
         realm.close()
         assertFalse(obj.isValid())
+    }
+
+    @Test
+    override fun frozen() {
+        assertTrue { parent.frozen() }
+        realm.writeBlocking {
+            val parent = copyToRealm(Parent())
+            assertFalse { parent.frozen() }
+        }
+    }
+
+    @Test
+    override fun frozen_throwsOnUnmanagedObject() {
+        val unmanagedParent = Parent()
+        assertFailsWith<IllegalArgumentException> {
+            unmanagedParent.frozen()
+        }
+    }
+
+    override fun frozen_throwsIfRealmIsClosed() {
+        realm.close()
+        parent.frozen()
+    }
+
+    // FIXME RealmObject doesn't actually implement RealmLifeCycle yet
+    @Ignore
+    override fun closed() {
+        TODO("Not yet implemented")
     }
 }
