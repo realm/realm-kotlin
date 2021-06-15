@@ -475,7 +475,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "RealmObject" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT
-                    else -> error("Wrong Kotlin type: '$type'")
+                    else -> error("Unsupported Kotlin type: '$type'")
                 }
             } ?: error("Missing identifier for type $type")
     }
