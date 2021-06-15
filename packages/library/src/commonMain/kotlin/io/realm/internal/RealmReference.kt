@@ -51,4 +51,3 @@ inline fun RealmLifeCycle.checkClosed() {
 //        throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
     }
 }
-

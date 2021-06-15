@@ -85,7 +85,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      *  to do it once pr. app).
      */
     public constructor(configuration: RealmConfiguration) :
-            this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+        this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write
@@ -142,7 +142,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             log.debug("Updating Realm version: $version -> $newVersion")
             if (newVersion >= version) {
                 realm = RealmReference(this, newRealm)
-                version = newVersion
             }
         }
     }

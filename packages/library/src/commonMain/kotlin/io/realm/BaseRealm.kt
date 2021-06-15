@@ -15,7 +15,6 @@
  */
 package io.realm
 
-import io.realm.internal.RealmLifeCycle
 import io.realm.internal.RealmLog
 import io.realm.internal.RealmReference
 import io.realm.internal.checkClosed
@@ -40,12 +39,11 @@ public abstract class BaseRealm internal constructor(
     /**
      * The current data version of this Realm and data fetched from it.
      */
-    // TODO Could be abstracted into RealmReferrer!?
+    // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     public var version: VersionId = VersionId(0)
         get() { return realm.version() }
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
-
 
     init {
         log.info("Realm opened: ${configuration.path}")
