@@ -499,7 +499,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         if (type.constructor.supertypes.map { it.toString() }.contains("RealmObject")) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
-                            error("Wrong Kotlin type: '$type'")
+                            error("Unsupported Kotlin type: '$type'")
                         }
                     }
                 }
