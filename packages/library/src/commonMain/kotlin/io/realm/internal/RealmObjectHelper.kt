@@ -101,7 +101,7 @@ object RealmObjectHelper {
         setValue(obj, col, newValue)
     }
 
-    fun <R> setList(obj: RealmObjectInternal, col: String, list: RealmList<R>) {
+    fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
         TODO()
     }
 }

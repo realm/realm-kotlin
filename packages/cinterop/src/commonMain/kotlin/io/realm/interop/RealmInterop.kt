@@ -72,6 +72,7 @@ expect object RealmInterop {
     fun realm_list_size(list: NativePointer): Long
     fun <T> realm_list_get(list: NativePointer, index: Long): T
     fun <T> realm_list_add(list: NativePointer, value: T)
+    fun <T> realm_list_add(list: NativePointer, index: Long, value: T)
     fun realm_list_clear(list: NativePointer)
 
     // query

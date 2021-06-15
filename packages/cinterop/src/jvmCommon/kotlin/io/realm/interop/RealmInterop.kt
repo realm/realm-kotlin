@@ -246,6 +246,11 @@ actual object RealmInterop {
         realmc.realm_list_insert(list.cptr(), realm_list_size(list), cvalue)
     }
 
+    actual fun <T> realm_list_add(list: NativePointer, index: Long, value: T) {
+        val cvalue = to_realm_value(value)
+        realmc.realm_list_insert(list.cptr(), index, cvalue)
+    }
+
     actual fun realm_list_clear(list: NativePointer) {
         realmc.realm_list_clear(list.cptr())
     }

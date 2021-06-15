@@ -150,9 +150,8 @@ private class ManagedListFacade<E>(
     override fun add(element: E): Boolean = RealmInterop.realm_list_add(listPtr, element)
         .let { true }
 
-    override fun add(index: Int, element: E) {
-        TODO("add(index: Int, element: E) - Not yet implemented")
-    }
+    override fun add(index: Int, element: E) =
+        RealmInterop.realm_list_add(listPtr, index.toLong(), element)
 
     override fun addAll(index: Int, elements: Collection<E>): Boolean {
         TODO("addAll(index: Int, elements: Collection<E>) - Not yet implemented")

@@ -384,7 +384,9 @@ actual object RealmInterop {
     actual fun <T> realm_list_get(list: NativePointer, index: Long): T {
         memScoped {
             val cvalue = alloc<realm_value_t>()
-            checkedBooleanResult(realm_wrapper.realm_list_get(list.cptr(), index.toULong(), cvalue.ptr))
+            checkedBooleanResult(
+                realm_wrapper.realm_list_get(list.cptr(), index.toULong(), cvalue.ptr)
+            )
             return from_realm_value(cvalue)
         }
     }
@@ -395,6 +397,18 @@ actual object RealmInterop {
                 realm_wrapper.realm_list_add_by_ref(
                     list.cptr(),
                     realm_list_size(list).toULong(),
+                    to_realm_value(value).ptr
+                )
+            )
+        }
+    }
+
+    actual fun <T> realm_list_add(list: NativePointer, index: Long, value: T) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_list_add_by_ref(
+                    list.cptr(),
+                    index.toULong(),
                     to_realm_value(value).ptr
                 )
             )

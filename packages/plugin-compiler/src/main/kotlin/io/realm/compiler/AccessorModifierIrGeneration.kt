@@ -461,10 +461,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     // TODO do the lookup only once
     private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType {
-        return type.nameIfStandardType
-            ?.identifier
+        return type.constructor.declarationDescriptor
+            ?.name
             ?.let { identifier ->
-                when (identifier) {
+                when (identifier.toString()) {
                     "Byte" -> PropertyType.RLM_PROPERTY_TYPE_INT
                     "Char" -> PropertyType.RLM_PROPERTY_TYPE_INT
                     "Short" -> PropertyType.RLM_PROPERTY_TYPE_INT
