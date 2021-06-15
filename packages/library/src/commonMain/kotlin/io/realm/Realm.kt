@@ -16,10 +16,12 @@
 package io.realm
 
 import io.realm.internal.SuspendableWriter
+import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :

@@ -33,7 +33,6 @@ import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
-import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -46,7 +45,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.strerror
@@ -283,7 +281,7 @@ actual object RealmInterop {
         if (dispatcher != null) {
             val scheduler = checkedPointerResult(createSingleThreadDispatcherScheduler(dispatcher))
             realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)
-        } else  {
+        } else {
             // If there is no notification dispatcher use the default scheduler.
             // Re-verify if this is actually needed when notification scheduler is fully in place.
             val scheduler = checkedPointerResult(realm_wrapper.realm_scheduler_make_default())
@@ -304,18 +302,6 @@ actual object RealmInterop {
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
-    }
-
-    actual fun realm_is_frozen(realm: NativePointer): Boolean {
-        return realm_wrapper.realm_is_frozen(realm.cptr<realm_t>())
-    }
-
-    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
-    }
-
-    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
     }
 
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
@@ -399,30 +385,6 @@ actual object RealmInterop {
                 )
             )
         }
-    }
-
-    actual fun realm_object_freeze(
-        liveObject: NativePointer,
-        frozenRealm: NativePointer
-    ): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_object_freeze(
-                liveObject.cptr(),
-                frozenRealm.cptr()
-            )
-        )
-    }
-
-    actual fun realm_object_thaw(
-        frozenObject: NativePointer,
-        liveRealm: NativePointer
-    ): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_object_thaw(
-                frozenObject.cptr(),
-                liveRealm.cptr()
-            )
-        )
     }
 
     actual fun realm_object_is_valid(obj: NativePointer): Boolean {
@@ -784,7 +746,7 @@ actual object RealmInterop {
         val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher)
 
         return realm_wrapper.realm_scheduler_new(
-            //userdata: kotlinx.cinterop.CValuesRef<*>?,
+            // userdata: kotlinx.cinterop.CValuesRef<*>?,
             scheduler.ref,
 
             // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
@@ -803,7 +765,6 @@ actual object RealmInterop {
                 } catch (e: Exception) {
                     println("ERROR: $e")
                 }
-
             },
 
             // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
@@ -813,7 +774,7 @@ actual object RealmInterop {
                 //  before first call to is_on_thread and that set_notify_callback has frozen the
                 //  scheduler
                 val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid() )
+                printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
                 scheduler.threadId == tid()
             },
 
@@ -844,7 +805,6 @@ actual object RealmInterop {
             }
         )
     }
-
 
     interface Scheduler {
         var callback: realm_scheduler_notify_func_t
@@ -901,7 +861,7 @@ private fun tid(): ULong {
     memScoped {
         initRuntimeIfNeeded()
         val tidVar = alloc<ULongVar>()
-        pthread_threadid_np(null, tidVar.ptr) //.ensureUnixCallResult("pthread_threadid_np")
+        pthread_threadid_np(null, tidVar.ptr) // .ensureUnixCallResult("pthread_threadid_np")
         return tidVar.value
     }
 }

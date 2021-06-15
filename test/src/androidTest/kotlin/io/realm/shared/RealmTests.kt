@@ -20,13 +20,6 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.util.PlatformUtils
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
 import io.realm.version
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -45,8 +38,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds

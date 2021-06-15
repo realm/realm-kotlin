@@ -33,6 +33,7 @@ import platform.darwin.DISPATCH_QUEUE_PRIORITY_BACKGROUND
 import platform.darwin.dispatch_get_global_queue
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -78,7 +79,8 @@ class CoroutineTests {
     // - Freezing block and lambda yields InvalidMutabilityException as block is tranformed into
     //   continuation that is supposed to be modified on both threads
     @Test
-    fun dispatchQueueScheduler () {
+    @Ignore
+    fun dispatchQueueScheduler() {
         val queue = dispatch_get_global_queue(NSNumber(DISPATCH_QUEUE_PRIORITY_BACKGROUND).integerValue, 0)
         val dispatcher = NsQueueDispatcher(queue)
         CoroutineScope(dispatcher).async {
@@ -86,5 +88,4 @@ class CoroutineTests {
         }
         CFRunLoopRun()
     }
-
 }
