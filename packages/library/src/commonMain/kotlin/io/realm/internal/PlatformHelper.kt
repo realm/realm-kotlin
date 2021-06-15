@@ -31,6 +31,6 @@ expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
 
 /**
- * Thread local map of transactional state for the various writers.
+ * Return the current thread id.
  */
-expect var transactionMap: MutableMap<SuspendableWriter, Boolean>
+expect fun threadId(): ULong

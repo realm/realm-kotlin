@@ -20,6 +20,15 @@ plugins {
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
 }
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
+    }
+}
+apply(plugin = "kotlinx-atomicfu")
 
 repositories {
     google()
@@ -40,6 +49,7 @@ kotlin {
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
 
@@ -61,6 +71,12 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
+}
+
+// AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
+// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
+project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
+    transformJvm = false
 }
 
 // JVM
@@ -197,7 +213,6 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
-    ojo { }
 }
 
 tasks.dokkaHtml.configure {
@@ -225,7 +240,17 @@ tasks.register("dokkaJar", Jar::class) {
     from(tasks.named("dokkaHtml").get().outputs)
 }
 
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+}
+
 publishing {
+    // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
+    publications.withType<MavenPublication> {
+        // Stub javadoc.jar artifact
+        artifact(javadocJar.get())
+    }
+
     val common = publications.getByName("kotlinMultiplatform") as MavenPublication
     // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
     // completely, hence the .get() below.

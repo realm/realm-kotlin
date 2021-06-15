@@ -16,12 +16,10 @@
 package io.realm
 
 import io.realm.internal.SuspendableWriter
-import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
@@ -78,11 +76,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
     /**
-     * Modify the underlying Realm file in a suspendable transaction on the default Realm
-     * dispatcher.
-     *
-     * NOTE: Objects and results retrieved before a write are no longer valid. This restriction
-     * will be lifted when the frozen architecture is fully in place.
+     * Modify the underlying Realm file in a suspendable transaction on the default Realm Write
+     * Dispatcher.
      *
      * The write transaction always represent the latest version of data in the Realm file, even if
      * the calling Realm not yet represent this.
@@ -92,11 +87,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      *
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block. If this is a RealmObject it is
-     * frozen before returning it.
+     * frozen before being returned.
      * @see [RealmConfiguration.writeDispatcher]
      */
-    // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptinoHandler
-    internal suspend fun <R> write(block: MutableRealm.() -> R): R {
+    suspend fun <R> write(block: MutableRealm.() -> R): R {
         @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
             val (nativePointer, versionId, result) = this.writer.write(block)
@@ -105,8 +99,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             // the written data. Otherwise, we would have to wait for the Notifier thread
             // to detect it and update the user Realm.
             updateRealmPointer(nativePointer, versionId)
-            // FIXME What if the result is of a different version than the realm (some other
-            //  write transaction finished before)
             return result
         } catch (e: Exception) {
             throw e
@@ -135,13 +127,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
 
     private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
         realmPointerMutex.withLock {
-            log.debug("$version -> $newVersion")
+            log.debug("Updating Realm version: $version -> $newVersion")
             if (newVersion >= version) {
-                // FIXME Currently we need this to be a live realm to be able to continue doing
-                //  writeBlocking transactions.
-                dbPointer = RealmInterop.realm_thaw(newRealm)
-                // We need to start a read transaction to be able to retrieve version id, etc.
-                RealmInterop.realm_begin_read(dbPointer)
+                dbPointer = newRealm
                 version = newVersion
             }
         }
@@ -150,9 +138,21 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     /**
      * Close this Realm and all underlying resources. Accessing any methods or Realm Objects after this
      * method has been called will then an [IllegalStateException].
+     *
+     * This will block until underlying Realms (writer and notifier) are closed, including rolling
+     * back any ongoing transactions when [close] is called. Calling this from the Realm Write
+     * Dispatcher while inside a transaction block will throw, while calling this by some means of
+     * a blocking operation on another thread (e.g. `runBlocking(Dispatcher.Default)`) inside a
+     * transaction cause a deadlock.
+     *
+     * @throws IllegalStateException if called from the Realm Write Dispatcher while inside a
+     * transaction block.
      */
     public override fun close() {
-        writer.checkInTransaction("Cannot close in a transaction block")
+        // TODO Reconsider this constraint. We have the primitives to check is we are on the
+        //  writer thread and just close the realm in writer.close()
+        writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
+        writer.close()
         super.close()
         // TODO There is currently nothing that tears down the dispatcher
     }

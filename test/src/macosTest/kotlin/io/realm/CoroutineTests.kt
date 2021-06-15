@@ -35,7 +35,6 @@ import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.fail
 
 /**
  * Various coroutine tests to track if basic dispatching, etc. works.
@@ -56,7 +55,9 @@ class CoroutineTests {
             printlntid("worker")
             runBlocking {
                 printlntid("runblocking")
+                val currentTid = PlatformUtils.threadId()
                 val async: Deferred<Unit> = CoroutineScope(Dispatchers.Unconfined).async {
+                    assertEquals(currentTid, PlatformUtils.threadId())
                     printlntid("async")
                 }
                 withContext(Dispatchers.Main) {

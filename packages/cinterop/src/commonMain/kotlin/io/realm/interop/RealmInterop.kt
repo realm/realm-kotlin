@@ -41,6 +41,7 @@ expect object RealmInterop {
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
+    // Add comment about dispatcher for Android
     fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_thaw(frozenRealm: NativePointer): NativePointer
@@ -65,6 +66,7 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): Long
     fun realm_object_create(realm: NativePointer, key: Long): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer
+    fun realm_object_is_valid(obj: NativePointer): Boolean
     fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer
     fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer
 

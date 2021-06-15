@@ -42,7 +42,6 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = configuration
         realm = Realm.open(configuration)
     }
 
@@ -79,7 +78,6 @@ class RealmTests {
 
     // Not applicable for Native as we cannot access Realm inside write closure without freezing it
     @Test
-    @Suppress("invisible_member")
     fun closingRealmInsideWriteThrows() {
         runBlocking {
             realm.write {

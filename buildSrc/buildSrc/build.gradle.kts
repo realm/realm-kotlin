@@ -4,7 +4,7 @@
 plugins {
     `kotlin-dsl`
 }
-repositories.jcenter()
+repositories.mavenCentral()
 sourceSets.main {
     java {
         setSrcDirs(setOf(projectDir.parentFile.resolve("src/main/kotlin")))

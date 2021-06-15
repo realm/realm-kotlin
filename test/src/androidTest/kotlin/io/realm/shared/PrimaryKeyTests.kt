@@ -204,7 +204,6 @@ class PrimaryKeyTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun testPrimaryKeyForAllSupportedTypes() {
-        val types = allPrimaryKeyFieldTypes.toMutableSet()
 
         // TODO Maybe we would only need to iterate underlying Realm types?
         val classes = arrayOf(
@@ -244,6 +243,7 @@ class PrimaryKeyTests {
         val realm = Realm.open(configuration)
 
         realm.writeBlocking {
+            val types = allPrimaryKeyFieldTypes.toMutableSet()
             for (c in classes) {
                 // We could expose this through the test model definitions instead if that is better to avoid the internals
                 val realmObjectCompanion = mediator.companionOf(c)

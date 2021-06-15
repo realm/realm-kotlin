@@ -38,6 +38,10 @@ public var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal
         internalObject.`$realm$Pointer`?.let {
+            // FIXME This check is required as realm_get_version_id does throw!? Core bug?
+            if (RealmInterop.realm_is_closed(it)) {
+                throw IllegalStateException("Cannot access properties on closed realm")
+            }
             return VersionId(RealmInterop.realm_get_version_id(it))
         } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
     }
@@ -55,4 +59,23 @@ public var RealmObject.version: VersionId
 public fun RealmObject.isManaged(): Boolean {
     val internalObject = this as RealmObjectInternal
     return internalObject.`$realm$IsManaged`
+}
+
+/**
+ * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
+ * not been deleted. Unmanaged objects are always valid.
+ */
+public fun RealmObject.isValid(): Boolean {
+    return if (isManaged()) {
+        val internalObject = this as RealmObjectInternal
+        val ptr = internalObject.`$realm$ObjectPointer`
+        return if (ptr != null) {
+            RealmInterop.realm_object_is_valid(ptr)
+        } else {
+            false
+        }
+    } else {
+        // Unmanaged objects are always valid
+        true
+    }
 }

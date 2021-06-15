@@ -1,7 +1,5 @@
 buildscript {
     repositories {
-        gradlePluginPortal()
-        jcenter()
         google()
         mavenCentral()
     }
@@ -11,22 +9,12 @@ buildscript {
     }
 }
 group = "io.realm.example"
-version = Realm.version
+version = "0.1.0"
 
-// Applying this here causes Gradle to hang, so applying in individual modules
-// subprojects {
-//    buildscript {
-//        repositories {
-//            maven(url = "http://oss.jfrog.org/artifactory/oss-snapshot-local")
-//        }
-//        dependencies {
-//            classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
-//        }
-//    }
-//    repositories {
-//        maven(url = "http://oss.jfrog.org/artifactory/oss-snapshot-local")
-//    }
-// }
-repositories {
-    mavenCentral()
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // Required by detekt
+    }
 }

@@ -122,6 +122,7 @@ actual object RealmInterop {
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
     }
@@ -131,7 +132,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
+        val realmPtr = LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
+        // Ensure that we can read version information, etc.
+        realm_begin_read(realmPtr)
+        return realmPtr
     }
 
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
@@ -186,8 +190,13 @@ actual object RealmInterop {
     actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
     }
+
     actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, to_realm_value(primaryKey)))
+    }
+
+    actual fun realm_object_is_valid(obj: NativePointer): Boolean {
+        return realmc.realm_object_is_valid(obj.cptr())
     }
 
     actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {

@@ -31,9 +31,11 @@ import test.Sample
 import kotlin.native.internal.GC
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@Ignore // Need to clean up intermediate versions
 class MemoryTests {
 
     lateinit var tmpDir: String
@@ -50,6 +52,7 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
+    @Ignore // referenceHolder is currently shared across threads
     fun garbageCollectorShouldFreeNativeResources() {
         val referenceHolder = mutableListOf<Sample>()
         val amountOfMemoryMappedInProcessCMD = "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
@@ -88,6 +91,7 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
+    @Ignore // referenceHolder is currently shared across threads
     fun closeShouldFreeMemory() {
         val referenceHolder = mutableListOf<Sample>()
         val amountOfMemoryMappedInProcessCMD = "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";

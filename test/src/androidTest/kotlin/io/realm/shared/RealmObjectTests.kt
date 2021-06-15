@@ -18,6 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
+import io.realm.isValid
 import io.realm.util.PlatformUtils
 import io.realm.version
 import test.link.Child
@@ -27,6 +28,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class RealmObjectTests {
 
@@ -64,5 +67,15 @@ class RealmObjectTests {
     fun versionThrowsIfRealmIsClosed() {
         realm.close()
         assertFailsWith<IllegalStateException> { parent.version }
+    }
+
+    @Test
+    fun isValid() {
+        val unmanagedParent = Parent()
+        assertTrue(unmanagedParent.isValid())
+        val obj: Parent = realm.writeBlocking { copyToRealm(unmanagedParent) }
+        assertTrue(obj.isValid())
+        realm.close()
+        assertFalse(obj.isValid())
     }
 }

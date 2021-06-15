@@ -75,7 +75,6 @@ android {
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
-                version = "${Versions.cmake}"
                 arguments("-DANDROID_STL=c++_shared")
             }
         }
@@ -428,5 +427,4 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
-    ojo { }
 }

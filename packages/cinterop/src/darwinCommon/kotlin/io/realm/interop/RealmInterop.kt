@@ -290,8 +290,24 @@ actual object RealmInterop {
             realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)
         }
         val realmPtr = CPointerWrapper(realm_wrapper.realm_open(config.cptr<realm_config_t>()))
+        // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
+    }
+
+    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
+    }
+
+    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
+        val realmPtr = CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
+        // Ensure that we can read version information, etc.
+        realm_begin_read(realmPtr)
+        return realmPtr
+    }
+
+    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_frozen(realm.cptr<realm_t>())
     }
 
     actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
@@ -407,6 +423,18 @@ actual object RealmInterop {
                 liveRealm.cptr()
             )
         )
+    }
+
+    actual fun realm_object_is_valid(obj: NativePointer): Boolean {
+        return realm_wrapper.realm_object_is_valid(obj.cptr())
+    }
+
+    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
+    }
+
+    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {

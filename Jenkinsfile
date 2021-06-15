@@ -30,17 +30,33 @@ currentBranch = env.BRANCH_NAME
 publishBuild = false
 // Version of Realm Kotlin being tested. This values is defined in `buildSrc/src/main/kotlin/Config.kt`.
 version = null
+// Wether or not to run test steps
+runTests = true
+isReleaseBranch = releaseBranches.contains(currentBranch)
 
 // Mac CI dedicated machine
-osx_kotlin = 'osx_kotlin'
+node_label = 'osx_kotlin'
+
+// When having multiple executors available, Jenkins might append @2/@3/etc. to workspace folders in order
+// to allow multiple parallel builds on the same branch. Unfortunately this breaks Ninja and thus us
+// building native code. To work around this, we force the workspace to mirror the git path.
+// This has two side-effects: 1) It isn't possible to use this JenkinsFile on a worker with multiple
+// executors. At least not if we want to support building multipe versions of the same P
+workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}" 
 
 pipeline {
-    agent none
+    agent { 
+        node {
+            label node_label
+            customWorkspace workspacePath
+        }
+     }
     // The Gradle cache is re-used between stages, in order to avoid builds interleave,
     // and potentially corrupt each others cache, we grab a global lock for the entire 
     // build.
     options {
         lock resource: 'kotlin_build_lock'
+        timeout(time: 15, activity: true, unit: 'MINUTES') 
     }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
@@ -61,41 +77,53 @@ pipeline {
             }
         }
         stage('Static Analysis') {
+            when { expression { runTests } }
             steps {
                 runStaticAnalysis()
             }
         }
         stage('Tests Compiler Plugin') {
+            when { expression { runTests } }
             steps {
                 runCompilerPluginTest()
             }
         }
         stage('Tests Macos') {
+            when { expression { runTests } }
             steps {
                 test("macosTest")
             }
         }
         stage('Tests Android') {
+            when { expression { runTests } }
             steps {
                 test("connectedAndroidTest")
             }
         }
         stage('Tests JVM (compiler only)') {
+            when { expression { runTests } }
             steps {
                 test('jvmTest --tests "io.realm.test.compiler*"')
             }
         }
         stage('Tests Android Sample App') {
+            when { expression { runTests } }
             steps {
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     runMonkey()
                 }
             }
         }
-        stage('Publish to OJO') {
-            when { expression { shouldReleaseSnapshot(version) } }
+        stage('Publish SNAPSHOT to Maven Central') {
+            when { expression { shouldPublishSnapshot(version) } }
             steps {
-                runPublishToOjo()
+                runPublishSnapshotToMavenCentral()
+            }
+        }
+        stage('Publish Release to Maven Central') {
+            when { expression { publishBuild } }
+            steps {
+                runPublishReleaseOnMavenCentral()
             }
         }
     }
@@ -113,159 +141,167 @@ pipeline {
 }
 
 def runScm() {
-    node(osx_kotlin) {
-        checkout([
-                $class           : 'GitSCM',
-                branches         : scm.branches,
-                gitTool          : 'native git',
-                extensions       : scm.extensions + [
-                        [$class: 'WipeWorkspace'],
-                        [$class: 'CleanCheckout'],
-                        [$class: 'SubmoduleOption', recursiveSubmodules: true]
-                ],
-                userRemoteConfigs: scm.userRemoteConfigs
-        ])
+    checkout([
+            $class           : 'GitSCM',
+            branches         : scm.branches,
+            gitTool          : 'native git',
+            extensions       : scm.extensions + [
+                    [$class: 'WipeWorkspace'],
+                    [$class: 'CleanCheckout'],
+                    [$class: 'SubmoduleOption', recursiveSubmodules: true]
+            ],
+            userRemoteConfigs: scm.userRemoteConfigs
+    ])
 
-        // Check type of Build. We are treating this as a release build if we are building
-        // the exact Git SHA that was tagged.
-        gitTag = readGitTag()
-        version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
-        echo "Git branch/tag: ${currentBranch}/${gitTag ?: 'none'}"
-        if (!gitTag) {
-            gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
-            echo "Building commit: ${version} - ${gitSha}"
-            setBuildName(gitSha)
-            publishBuild = false
+    // Check type of Build. We are treating this as a release build if we are building
+    // the exact Git SHA that was tagged.
+    gitTag = readGitTag()
+    version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
+    echo "Git branch/tag: ${currentBranch}/${gitTag ?: 'none'}"
+    if (!gitTag) {
+        gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
+        echo "Building commit: ${version} - ${gitSha}"
+        setBuildName(gitSha)
+        publishBuild = false
+    } else {
+        if (gitTag != "v${version}") {
+            error "Git tag '${gitTag}' does not match v${version}"
         } else {
-            if (gitTag != "v${version}") {
-                error "Git tag '${gitTag}' does not match v${version}"
-            } else {
-                echo "Building release: '${gitTag}'"
-                setBuildName("Tag ${gitTag}")
-                publishBuild = true
-            }
+            echo "Building release: '${gitTag}'"
+            setBuildName("Tag ${gitTag}")
+            publishBuild = true
         }
-
-        stash includes: '**/*', name: 'source', excludes: './realm/realm-library/cpp_engine/external/realm-object-store/.dockerignore'
     }
 }
 
 def runBuild() {
-    node(osx_kotlin) {
+    withCredentials([
+        [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
+        [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
+    ]) {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            getArchive()
             startEmulatorInBgIfNeeded()
-            sh '''
+            def signingFlags = ""
+            if (isReleaseBranch) {
+                signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
+            }
+            sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew clean assemble --info --stacktrace --no-daemon
-                '''
+                  chmod +x gradlew && ./gradlew clean assemble ${signingFlags} --info --stacktrace --no-daemon
+               """
         }
     }
 }
 
 def runStaticAnalysis() {
-    node(osx_kotlin) {
-        try {
-            sh '''
-            ./gradlew --no-daemon ktlintCheck detekt
+    try {
+        sh '''
+        ./gradlew --no-daemon ktlintCheck detekt
+        '''
+    } finally {
+        // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
+        // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
+        // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
+        sh '''
+                rm -rf /tmp/ktlint
+                rm -rf /tmp/detekt
+                mkdir /tmp/ktlint
+                mkdir /tmp/detekt
+                rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
+                rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
+                rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
+                rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
+                rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
+                rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
+                rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
+                rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
+                rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
+                rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''
-        } finally {
-            // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files
-            // New Generation Warnings plugin throw a NullPointerException when used with recordIssues()
-            // As a work-around we just stash the output of Ktlint and Detekt for manual inspection.
-            sh '''
-                    rm -rf /tmp/ktlint
-                    rm -rf /tmp/detekt
-                    mkdir /tmp/ktlint
-                    mkdir /tmp/detekt
-                    rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
-                    rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
-                    rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
-                    rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
-                    rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
-                    rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
-                    rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
-                    rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
-                    rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
-                    rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
-                    rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
-                    rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
-                '''
-            zip([
-                    'zipFile': 'ktlint.zip',
-                    'archive': true,
-                    'dir'    : '/tmp/ktlint'
-            ])
-            zip([
-                    'zipFile': 'detekt.zip',
-                    'archive': true,
-                    'dir'    : '/tmp/detekt'
-            ])
+        zip([
+                'zipFile': 'ktlint.zip',
+                'archive': true,
+                'dir'    : '/tmp/ktlint'
+        ])
+        zip([
+                'zipFile': 'detekt.zip',
+                'archive': true,
+                'dir'    : '/tmp/detekt'
+        ])
+    }
+}
+
+def runPublishSnapshotToMavenCentral() {
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
+            sh """
+            cd packages
+            ./gradlew publishToSonatype -PossrhUsername=${env.MAVEN_CENTRAL_USER} -PossrhPassword=${env.MAVEN_CENTRAL_PASSWORD} --no-daemon
+            """
         }
     }
 }
 
-def runPublishToOjo() {
-    node(osx_kotlin) {
-        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'bintray', passwordVariable: 'BINTRAY_KEY', usernameVariable: 'BINTRAY_USER']]) {
-                // For some reason calling the "ojoUpload" root task does not seem to propagate properties correctly
-                // to the Publisher Plugin. This only seems to be a problem on the CI Build machine. For now, call 
-                // artifactoryPublish directly.
-                sh """
-                cd packages
-                ./gradlew --no-daemon -DbintrayUser=${env.BINTRAY_USER} -DbintrayKey=${env.BINTRAY_KEY} publishAllPublicationsToOjoRepository
-                """
-            }
-        }
+def  runPublishReleaseOnMavenCentral() {
+    withCredentials([
+            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
+            [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
+            [$class: 'StringBinding', credentialsId: 'slack-webhook-java-ci-channel', variable: 'SLACK_URL_CI'],
+            [$class: 'StringBinding', credentialsId: 'slack-webhook-releases-channel', variable: 'SLACK_URL_RELEASE'],
+            [$class: 'StringBinding', credentialsId: 'gradle-plugin-portal-key', variable: 'GRADLE_PORTAL_KEY'],
+            [$class: 'StringBinding', credentialsId: 'gradle-plugin-portal-secret', variable: 'GRADLE_PORTAL_SECRET'],
+            [$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER'],
+            [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'DOCS_S3_ACCESS_KEY', credentialsId: 'mongodb-realm-docs-s3', secretKeyVariable: 'DOCS_S3_SECRET_KEY'],
+            [$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'REALM_S3_ACCESS_KEY', credentialsId: 'realm-s3', secretKeyVariable: 'REALM_S3_SECRET_KEY']
+    ]) {
+      sh """
+        set +x
+        sh tools/publish_release.sh '$MAVEN_CENTRAL_USER' '$MAVEN_CENTRAL_PASSWORD' \
+        '$REALM_S3_ACCESS_KEY' '$REALM_S3_SECRET_KEY' \
+        '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
+        '$SLACK_URL_RELEASE' '$SLACK_URL_CI' \
+        '$GRADLE_PORTAL_KEY' '$GRADLE_PORTAL_SECRET' \
+        '-PsignBuild=true -PsignSecretRingFileKotlin="$SIGN_KEY" -PsignPasswordKotlin=$SIGN_KEY_PASSWORD'
+      """
     }
 }
 
 def runCompilerPluginTest() {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-        node(osx_kotlin) {
-            sh """
-                cd packages
-                ./gradlew --no-daemon clean :plugin-compiler:test --info --stacktrace
-            """
-            step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
-        }
+        sh """
+            cd packages
+            ./gradlew --no-daemon clean :plugin-compiler:test --info --stacktrace
+        """
+        step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
 }
 
 
 def test(task) {
-    node(osx_kotlin) {
-        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-            sh """
-                cd test
-                ./gradlew $task --info --stacktrace --no-daemon
-            """
-            step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
-        }
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        sh """
+            cd test
+            ./gradlew $task --info --stacktrace --no-daemon
+        """
+        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
     }
 }
 
 def runMonkey() {
-    node(osx_kotlin) {
-        try {
-            withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-                sh """
-                    cd examples/kmm-sample
-                    ./gradlew uninstallAll installDebug --stacktrace --no-daemon
-                    $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
-                """
-            }
-        } catch (err) {
-            currentBuild.result = 'FAILURE'
-            currentBuild.stageResult = 'FAILURE'
+    try {
+        withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+            sh """
+                cd examples/kmm-sample
+                ./gradlew uninstallAll installDebug --stacktrace --no-daemon
+                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
+            """
         }
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        currentBuild.stageResult = 'FAILURE'
     }
-}
-
-def getArchive() {
-    deleteDir()
-    unstash 'source'
 }
 
 def notifySlackIfRequired(String slackMessage) {
@@ -302,7 +338,7 @@ def startEmulatorInBgIfNeeded() {
     }
 }
 
-boolean shouldReleaseSnapshot(version) {
+boolean shouldPublishSnapshot(version) {
     if (!releaseBranches.contains(currentBranch)) {
         return false
     }

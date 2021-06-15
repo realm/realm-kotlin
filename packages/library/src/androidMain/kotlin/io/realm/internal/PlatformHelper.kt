@@ -38,7 +38,7 @@ actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     return Handler(thread.looper).asCoroutineDispatcher()
 }
 
-// FIXME All of the below is common with Android. Should be align in separate source set but
+// FIXME All of the below is common with Android. Should be aligned n separate source set but
 //  that is already tracked by https://github.com/realm/realm-kotlin/issues/175
 
 // Expose platform runBlocking through common interface
@@ -46,16 +46,6 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     return kotlinx.coroutines.runBlocking(context, block)
 }
 
-private class JVMThreadLocal<T> constructor(val initializer: () -> T) : java.lang.ThreadLocal<T>() {
-    override fun initialValue(): T? {
-        return initializer()
-    }
+actual fun threadId(): ULong {
+    return Thread.currentThread().id.toULong()
 }
-
-private val jvmTransactionMap =
-    io.realm.internal.JVMThreadLocal<MutableMap<SuspendableWriter, Boolean>>({ mutableMapOf() })
-actual var transactionMap: MutableMap<SuspendableWriter, Boolean>
-    get() = jvmTransactionMap.get()!!
-    set(value) {
-        jvmTransactionMap.set(value)
-    }
