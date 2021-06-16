@@ -25,6 +25,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.util.PlatformUtils
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
@@ -95,6 +96,7 @@ class MemoryTests {
 
     // make sure that calling realm.close() will force close the Realm and release native memory
     @Test
+    @Ignore // We are not currently keeping track of intermediate frozen versions and closing those
     fun closeShouldFreeMemory() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 
