@@ -73,7 +73,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
                     realmConfiguration,
                     RealmInterop.realm_open(realmConfiguration.nativeConfig),
                 )
-
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
