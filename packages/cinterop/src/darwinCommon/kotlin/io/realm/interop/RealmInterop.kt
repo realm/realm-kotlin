@@ -656,7 +656,6 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
-                    printlntid("onChange")
                     userdata?.asStableRef<Callback>()?.get()?.onChange(
                         CPointerWrapper(
                             change,
@@ -690,7 +689,6 @@ actual object RealmInterop {
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
                     try {
-                        printlntid("onChange")
                         userdata?.asStableRef<Callback>()?.get()?.onChange(
                             CPointerWrapper(
                                 change,
@@ -699,9 +697,7 @@ actual object RealmInterop {
                         ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
-                        printlntid("onChangef")
-                    } finally {
-                        printlntid("onChangasdf")
+                        println("ERROR $e")
                     }
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
@@ -847,14 +843,12 @@ actual object RealmInterop {
         override fun notify() {
             val function: suspend CoroutineScope.() -> Unit = {
                 try {
-                    printlntid("ON DISPATCHER")
+                    printlntid("on dispatcher")
                     callback.value?.let {
                         it.callback.invoke(it.callback_userdata)
                     }
                 } catch (e: Exception) {
-                    printlntid("ON DISPATCHER : $e")
-                } finally {
-                    printlntid("DONE")
+                    println("ERROR: $e")
                 }
             }
             scope.launch(
@@ -868,8 +862,8 @@ actual object RealmInterop {
 
 // Development debugging methods
 // TODO Consider consolidating into platform abstract methods!?
-private inline fun printlntid(s: String) = printlnWithTid(s)
-//private inline fun printlntid(s: String) = Unit
+// private inline fun printlntid(s: String) = printlnWithTid(s)
+private inline fun printlntid(s: String) = Unit
 
 private fun printlnWithTid(s: String) {
     // Don't try to optimize. Putting tid() call directly in formatted string causes crashes

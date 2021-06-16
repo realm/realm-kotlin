@@ -48,7 +48,7 @@ class SuspendableWriter(
 
     private val tid: ULong
     // Must only be accessed from the dispatchers thread
-    private val realm : MutableRealm by lazy {
+    private val realm: MutableRealm by lazy {
         MutableRealm(owner.configuration, dispatcher)
     }
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)

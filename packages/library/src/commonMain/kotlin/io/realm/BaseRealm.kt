@@ -44,7 +44,9 @@ public abstract class BaseRealm internal constructor(
      * taken not to spread operations over different references.
      */
     internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
-    set(_) { throw UnsupportedOperationException("BaseRealm reference should never be updated")}
+        set(_) {
+            throw UnsupportedOperationException("BaseRealm reference should never be updated")
+        }
 
     /**
      * The current data version of this Realm and data fetched from it.

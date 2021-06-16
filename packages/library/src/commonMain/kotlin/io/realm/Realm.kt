@@ -20,7 +20,6 @@ import io.realm.internal.SuspendableWriter
 import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -70,7 +69,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         //    delivered if the Realm is opened on a Looper thread as for Realm Java
         fun open(
             realmConfiguration: RealmConfiguration,
-            notificationDispatcher: CoroutineDispatcher? = null
         ): Realm {
             // TODO API-INTERNAL
             //  IN Android use lazy property delegation init to load the shared library use the
@@ -78,9 +76,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
             val realm =
                 Realm(
-                realmConfiguration,
-                RealmInterop.realm_open(realmConfiguration.nativeConfig, notificationDispatcher),
-            )
+                    realmConfiguration,
+                    RealmInterop.realm_open(realmConfiguration.nativeConfig),
+                )
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
