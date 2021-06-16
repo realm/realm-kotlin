@@ -19,7 +19,6 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.isManaged
-import io.realm.log.LogLevel
 import io.realm.util.PlatformUtils
 import io.realm.version
 import kotlinx.coroutines.Job
