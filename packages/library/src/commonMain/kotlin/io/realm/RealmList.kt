@@ -86,13 +86,18 @@ class RealmList<E> private constructor(
                     Char::class -> (value as Long).toChar()
                     Short::class -> (value as Long).toShort()
                     Int::class -> (value as Long).toInt()
+                    Long::class,
+                    Boolean::class,
+                    Float::class,
+                    Double::class,
+                    String::class -> value
                     else -> when {
                         isRealmObject -> (value as Link).toRealmObject(
                             clazz as KClass<out RealmObject>,
                             mediator,
                             realmPointer
                         )
-                        else -> value
+                        else -> throw IllegalArgumentException("Unsupported type '$clazz'.")
                     }
                 } as E
             }
@@ -139,13 +144,11 @@ private class ManagedListDelegate<E>(
 
     override fun get(index: Int): E {
         operator.checkRealmClosed()
-        rangeCheck(index)
         return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
     }
 
     override fun add(index: Int, element: E) {
         operator.checkRealmClosed()
-        rangeCheckForAdd(index)
         RealmInterop.realm_list_add(listPtr, index.toLong(), element)
     }
 
@@ -165,20 +168,12 @@ private class ManagedListDelegate<E>(
 
     override fun removeAt(index: Int): E = get(index).also {
         operator.checkRealmClosed()
-        rangeCheck(index)
         RealmInterop.realm_list_erase(listPtr, index.toLong())
     }
 
     override fun set(index: Int, element: E): E {
         operator.checkRealmClosed()
-        rangeCheck(index)
         return operator.convert(RealmInterop.realm_list_set(listPtr, index.toLong(), element))
-    }
-
-    private fun rangeCheck(index: Int) {
-        if (index < 0 || index >= size) {
-            throw IndexOutOfBoundsException("Index: '$index', Size: '$size'")
-        }
     }
 
     private fun rangeCheckForAdd(index: Int) {

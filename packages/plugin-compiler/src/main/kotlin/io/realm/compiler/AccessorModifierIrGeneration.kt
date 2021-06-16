@@ -348,12 +348,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
                             // Check if the collection type is a subclass of RealmObject
                             // If so, a flag needs to be added as a parameter
-                            // This is due to native being unable to retrieve the related supertypes
-                            // in runtime
+                            // This is due to Kotlin Native being unable to retrieve the related
+                            // supertypes in runtime
                             if (collectionType != CollectionType.NONE) {
                                 val supertypes = (type as IrSimpleType).classifier.descriptor
                                     .typeConstructor.supertypes
-                                if (supertypes.map { it.toString() }.contains("RealmObject")) {
+                                if (superTypesContainRealmObject(supertypes)) {
                                     putValueArgument(2, irBoolean(true))
                                 }
                             }
@@ -456,7 +456,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val descriptorType = declaration.symbol.descriptor.type
         val listGenericType = descriptorType.arguments[0].type
         for (superType in listGenericType.constructor.supertypes) {
-            if (superType.toString() == "RealmObject") {
+            if (superType.toString() == REALM_OBJECT) {
                 // Nullable objects are not supported
                 if (listGenericType.isNullable()) {
                     error("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
@@ -495,14 +495,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
-                    else -> {
-                        if (type.constructor.supertypes.map { it.toString() }.contains("RealmObject")) {
-                            PropertyType.RLM_PROPERTY_TYPE_OBJECT
-                        } else {
-                            error("Unsupported Kotlin type: '$type'")
-                        }
+                    else -> if (superTypesContainRealmObject(type.constructor.supertypes)) {
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT
+                    } else {
+                        error("Unsupported Kotlin type: '$type'")
                     }
                 }
             } ?: error("Missing identifier for type $type")
     }
+
+    private fun superTypesContainRealmObject(supertypes: Collection<KotlinType>): Boolean =
+        supertypes.map { it.toString() }.contains(REALM_OBJECT)
 }
