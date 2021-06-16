@@ -1,3 +1,4 @@
+@file:Suppress("invisible_reference", "invisible_member")
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -18,19 +19,25 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import io.realm.VersionId
 import io.realm.internal.singleThreadDispatcher
+import io.realm.interop.NativePointer
 import io.realm.util.PlatformUtils
 import io.realm.util.RunLoopThread
 import io.realm.util.Utils.printlntid
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -55,7 +62,8 @@ class NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        configuration =
+            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
     }
 
     @AfterTest
@@ -109,12 +117,37 @@ class NotificationTests {
 
     @Test
     @Suppress("invisible_reference", "invisible_member")
+    fun notifications() {
+        printlntid("main")
+        val exit = Mutex(true)
+        val dispatcher1 = singleThreadDispatcher("notifier")
+        val dispatcher2 = singleThreadDispatcher("writer")
+
+        val notifiers = io.realm.internal.Notifier(configuration, dispatcher1)
+        runBlocking {
+            val async = CoroutineScope(dispatcher1).async {
+                val obs: Flow<RealmResults<Sample>> = notifiers.observe<Sample>()
+                obs.collect {
+                    if (it.size == 1) exit.unlock()
+                }
+            }
+            delay(1000)
+            val writer = io.realm.internal.SuspendableWriter(configuration, dispatcher2)
+            val write: Triple<NativePointer, VersionId, Sample> = writer.write {
+                copyToRealm(Sample())
+            }
+
+            exit.lock()
+            async.cancel()
+        }
+    }
+
+    @Test
     fun notificationOnMainFromBackgroundDispatcherUpdates() = RunLoopThread().run {
         val dispatcher = singleThreadDispatcher("notifier")
 
         val realm = Realm.open(configuration)
         realm.objects<Sample>().observe {
-            printlntid("update ${it.size}")
             if (it.size == 1) terminate()
         }
 
@@ -129,6 +162,7 @@ class NotificationTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun notificationOnBackgroundDispatcherFromMainUpdates() {
+        printlntid("main")
         val dispatcher = singleThreadDispatcher("background")
         val mutex = Mutex(true)
         val exit = Mutex(true)
@@ -136,7 +170,6 @@ class NotificationTests {
             async(dispatcher) {
                 val realm = Realm.open(configuration, dispatcher)
                 realm.objects<Sample>().observe {
-                    printlntid("update: ${it.size}")
                     if (it.size == 1) exit.unlock()
                 }
                 mutex.unlock()
@@ -148,6 +181,24 @@ class NotificationTests {
                 copyToRealm(Sample())
             }
             exit.lock()
+        }
+    }
+
+    // Sanity check to ensure that this doesn't cause crashes
+    @Test
+    fun multipleSchedulersOnSameThread() {
+        printlntid("main")
+        val dispatcher = singleThreadDispatcher("background")
+        val writer1 = io.realm.internal.SuspendableWriter(configuration, dispatcher)
+        val writer2 = io.realm.internal.SuspendableWriter(configuration, dispatcher)
+        runBlocking {
+            val realm = Realm.open(configuration)
+            realm.write { copyToRealm(Sample()) }
+            writer1.write { copyToRealm(Sample()) }
+            writer2.write { copyToRealm(Sample()) }
+            realm.write { copyToRealm(Sample()) }
+            writer1.write { copyToRealm(Sample()) }
+            writer2.write { copyToRealm(Sample()) }
         }
     }
 }

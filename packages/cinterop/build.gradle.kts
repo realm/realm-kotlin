@@ -22,6 +22,16 @@ plugins {
     id("realm-publisher")
 }
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
+    }
+}
+apply(plugin = "kotlinx-atomicfu")
+
 repositories {
     google() // Android build needs com.android.tools.lint:lint-gradle:27.0.1
 }

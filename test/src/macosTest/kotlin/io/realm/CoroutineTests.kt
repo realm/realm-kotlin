@@ -16,9 +16,11 @@
 
 package io.realm
 
+import io.realm.internal.singleThreadDispatcher
 import io.realm.util.NsQueueDispatcher
 import io.realm.util.PlatformUtils
 import io.realm.util.Utils.printlntid
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -87,5 +89,20 @@ class CoroutineTests {
             printlntid("async")
         }
         CFRunLoopRun()
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun currentDispatcher() {
+        val dispatcher = singleThreadDispatcher("background")
+
+        val tid = runBlocking(dispatcher) { PlatformUtils.threadId() }
+
+        val currentDispatcher = runBlocking(dispatcher) {
+            coroutineContext[CoroutineDispatcher.Key]
+        }
+        runBlocking(currentDispatcher!!) {
+            assertEquals(tid, PlatformUtils.threadId())
+        }
     }
 }

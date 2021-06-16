@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
@@ -33,6 +35,7 @@ import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
+import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -276,8 +279,10 @@ actual object RealmInterop {
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         printlntid("opening")
-        // TODO Consider just grabbing the current dispatcher by coroutineContext[CoroutineDispatcher.Key]
-        //  but requires opting in for @ExperimentalStdlibApi
+        // TODO Consider just grabbing the current dispatcher by
+        //      val dispatcher = runBlocking { coroutineContext[CoroutineDispatcher.Key] }
+        //  but requires opting in for @ExperimentalStdlibApi, and have really gotten it to play
+        //  for default cases.
         if (dispatcher != null) {
             val scheduler = checkedPointerResult(createSingleThreadDispatcherScheduler(dispatcher))
             realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)
@@ -651,6 +656,7 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
+                    printlntid("onChange")
                     userdata?.asStableRef<Callback>()?.get()?.onChange(
                         CPointerWrapper(
                             change,
@@ -683,14 +689,20 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
-                    printlntid("onChange")
-                    userdata?.asStableRef<Callback>()?.get()?.onChange(
-                        CPointerWrapper(
-                            change,
-                            managed = false
-                        )
-                    ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
-                        ?: error("Notification callback data should never be null")
+                    try {
+                        printlntid("onChange")
+                        userdata?.asStableRef<Callback>()?.get()?.onChange(
+                            CPointerWrapper(
+                                change,
+                                managed = false
+                            )
+                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                            ?: error("Notification callback data should never be null")
+                    } catch (e: Exception) {
+                        printlntid("onChangef")
+                    } finally {
+                        printlntid("onChangasdf")
+                    }
                 },
                 // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
@@ -743,7 +755,7 @@ actual object RealmInterop {
 
     private fun createSingleThreadDispatcherScheduler(dispatcher: CoroutineDispatcher): CPointer<realm_scheduler_t>? {
         printlntid("createSingleThreadDispatcherScheduler")
-        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher)
+        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher).freeze()
 
         return realm_wrapper.realm_scheduler_new(
             // userdata: kotlinx.cinterop.CValuesRef<*>?,
@@ -774,8 +786,9 @@ actual object RealmInterop {
                 //  before first call to is_on_thread and that set_notify_callback has frozen the
                 //  scheduler
                 val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
-                scheduler.threadId == tid()
+                val b = scheduler.threadId == tid()
+                printlntid("is_on_thread[$scheduler] $b ${scheduler.threadId} " + tid())
+                b
             },
 
             // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
@@ -797,8 +810,7 @@ actual object RealmInterop {
                 try {
                     val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                     printlntid("set notify callback [$scheduler]: $notify_callback $notify_callback_userdata")
-                    scheduler.set_notify_callback(notify_callback!!, notify_callback_userdata!!)
-                    scheduler.freeze()
+                    scheduler.set_notify_callback(CoreCallback(notify_callback!!, notify_callback_userdata!!))
                 } catch (e: Exception) {
                     println("ERROR: $e")
                 }
@@ -806,41 +818,44 @@ actual object RealmInterop {
         )
     }
 
+    data class CoreCallback(
+        val callback: realm_scheduler_notify_func_t,
+        val callback_userdata: CPointer<out CPointed>,
+    )
+
     interface Scheduler {
-        var callback: realm_scheduler_notify_func_t
-        var callback_userdata: CPointer<out CPointed>
-
-        fun set_notify_callback(
-            callback: realm_scheduler_notify_func_t,
-            callback1: COpaquePointer
-        ) {
-            this.callback = callback
-            this.callback_userdata = callback1
-        }
-
-        // Must be thread safe
+        fun set_notify_callback(coreCallback: CoreCallback)
         fun notify()
     }
 
     class SingleThreadDispatcherScheduler(
         val threadId: ULong,
-        val dispatcher: CoroutineDispatcher
+        dispatcher: CoroutineDispatcher
     ) : Scheduler {
+        val callback: AtomicRef<CoreCallback?> = atomic(null)
         val scope: CoroutineScope = CoroutineScope(dispatcher)
-
         val ref: CPointer<out CPointed>
-
-        override lateinit var callback: realm_scheduler_notify_func_t
-        override lateinit var callback_userdata: CPointer<out CPointed>
 
         init {
             ref = StableRef.create(this).asCPointer()
         }
 
+        override fun set_notify_callback(coreCallback: CoreCallback) {
+            callback.value = coreCallback
+        }
+
         override fun notify() {
             val function: suspend CoroutineScope.() -> Unit = {
-                printlntid("ON DISPATCHER")
-                callback.invoke(callback_userdata)
+                try {
+                    printlntid("ON DISPATCHER")
+                    callback.value?.let {
+                        it.callback.invoke(it.callback_userdata)
+                    }
+                } catch (e: Exception) {
+                    printlntid("ON DISPATCHER : $e")
+                } finally {
+                    printlntid("DONE")
+                }
             }
             scope.launch(
                 scope.coroutineContext,
@@ -851,24 +866,27 @@ actual object RealmInterop {
     }
 }
 
-// FIXME Consolidate into platform abstract methods
-private fun printlntid(s: String) {
+// Development debugging methods
+// TODO Consider consolidating into platform abstract methods!?
+private inline fun printlntid(s: String) = printlnWithTid(s)
+//private inline fun printlntid(s: String) = Unit
+
+private fun printlnWithTid(s: String) {
+    // Don't try to optimize. Putting tid() call directly in formatted string causes crashes
+    // (probably some compiler optimizations that causes references to be collected to early)
     val tid = tid()
     println("<" + tid.toString() + "> $s")
 }
-
 private fun tid(): ULong {
     memScoped {
         initRuntimeIfNeeded()
         val tidVar = alloc<ULongVar>()
-        pthread_threadid_np(null, tidVar.ptr) // .ensureUnixCallResult("pthread_threadid_np")
+        pthread_threadid_np(null, tidVar.ptr).ensureUnixCallResult("pthread_threadid_np")
         return tidVar.value
     }
 }
-
 private fun getUnixError() = strerror(posix_errno())!!.toKString()
 private inline fun Int.ensureUnixCallResult(s: String): Int {
-    println("check return value for '$s'")
     if (this != 0) {
         throw Error("$s ${getUnixError()}")
     }
