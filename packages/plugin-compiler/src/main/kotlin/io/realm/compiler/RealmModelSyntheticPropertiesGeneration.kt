@@ -39,7 +39,7 @@ import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
-import io.realm.compiler.Names.REALM_POINTER
+import io.realm.compiler.Names.REALM_OWNER
 import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -125,7 +125,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addVariableProperty(REALM_POINTER, nullableNativePointerInterface, ::irNull)
+            addVariableProperty(REALM_OWNER, pluginContext.irBuiltIns.anyType.makeNullable(), ::irNull)
             addVariableProperty(OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
             addVariableProperty(
                 OBJECT_TABLE_NAME,

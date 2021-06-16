@@ -735,29 +735,29 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.interop.NativePointer? visibility:private
+      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Pointer> visibility:public modality:OPEN <> ($this:sample.input.Sample) returnType:io.realm.interop.NativePointer?
-          correspondingProperty: PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:sample.input.Sample) returnType:kotlin.Any?
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$Pointer> (): io.realm.interop.NativePointer? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$Owner> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Pointer> (): io.realm.interop.NativePointer? declared in sample.input.Sample'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.interop.NativePointer? visibility:private' type=io.realm.interop.NativePointer? origin=null
-                receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-$realm$Pointer>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Pointer> visibility:public modality:OPEN <> ($this:sample.input.Sample, <set-?>:io.realm.interop.NativePointer?) returnType:kotlin.Unit
-          correspondingProperty: PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in sample.input.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
+                receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-$realm$Owner>' type=sample.input.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:sample.input.Sample, <set-?>:kotlin.Any?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$Pointer> (<set-?>: io.realm.interop.NativePointer?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$Owner> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample
-          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.interop.NativePointer?
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.interop.NativePointer? visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-$realm$Pointer>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.interop.NativePointer? declared in sample.input.Sample.<set-$realm$Pointer>' type=io.realm.interop.NativePointer? origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-$realm$Owner>' type=sample.input.Sample origin=null
+              value: GET_VAR '<set-?>: kotlin.Any? declared in sample.input.Sample.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private
           EXPRESSION_BODY
@@ -996,29 +996,29 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.interop.NativePointer? visibility:private
+      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Pointer> visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:io.realm.interop.NativePointer?
-          correspondingProperty: PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:kotlin.Any?
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$Pointer> (): io.realm.interop.NativePointer? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$Owner> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Pointer> (): io.realm.interop.NativePointer? declared in sample.input.Child'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.interop.NativePointer? visibility:private' type=io.realm.interop.NativePointer? origin=null
-                receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-$realm$Pointer>' type=sample.input.Child origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Pointer> visibility:public modality:OPEN <> ($this:sample.input.Child, <set-?>:io.realm.interop.NativePointer?) returnType:kotlin.Unit
-          correspondingProperty: PROPERTY name:$realm$Pointer visibility:public modality:OPEN [var]
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in sample.input.Child'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
+                receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-$realm$Owner>' type=sample.input.Child origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:sample.input.Child, <set-?>:kotlin.Any?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$Pointer> (<set-?>: io.realm.interop.NativePointer?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$Owner> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
-          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.interop.NativePointer?
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Pointer type:io.realm.interop.NativePointer? visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-$realm$Pointer>' type=sample.input.Child origin=null
-              value: GET_VAR '<set-?>: io.realm.interop.NativePointer? declared in sample.input.Child.<set-$realm$Pointer>' type=io.realm.interop.NativePointer? origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-$realm$Owner>' type=sample.input.Child origin=null
+              value: GET_VAR '<set-?>: kotlin.Any? declared in sample.input.Child.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private
           EXPRESSION_BODY

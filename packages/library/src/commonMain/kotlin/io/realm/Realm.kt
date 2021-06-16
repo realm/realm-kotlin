@@ -15,6 +15,7 @@
  */
 package io.realm
 
+import io.realm.internal.RealmReference
 import io.realm.internal.SuspendableWriter
 import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
@@ -26,8 +27,24 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    private val writer: SuspendableWriter = SuspendableWriter(configuration)
+    private val writer: SuspendableWriter = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
+
+    private var updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> =
+        kotlinx.atomicfu.atomic<RealmReference>(RealmReference(this, dbPointer))
+    /**
+     * The current Realm reference that points to the underlying frozen C++ SharedRealm.
+     *
+     * NOTE: As this is updated to a new frozen version on notifications about changes in the
+     * underlying realm, care should be taken not to spread operations over different references.
+     */
+    internal override var realmReference: RealmReference
+        get() {
+            return updateableRealm.value
+        }
+        set(value) {
+            updateableRealm!!.value = value
+        }
 
     companion object {
         /**
@@ -45,7 +62,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             //  IN Android use lazy property delegation init to load the shared library use the
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
-            val realm = Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
+            val realm =
+                Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
@@ -117,8 +135,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         realmPointerMutex.withLock {
             log.debug("Updating Realm version: $version -> $newVersion")
             if (newVersion >= version) {
-                dbPointer = newRealm
-                version = newVersion
+                realmReference = RealmReference(this, newRealm)
             }
         }
     }

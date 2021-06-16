@@ -55,27 +55,27 @@ class MutableRealm : BaseRealm {
         super(configuration, parentRealm)
 
     internal fun beginTransaction() {
-        RealmInterop.realm_begin_write(dbPointer)
+        RealmInterop.realm_begin_write(realmReference.dbPointer)
     }
 
     internal fun commitTransaction() {
-        RealmInterop.realm_commit(dbPointer)
+        RealmInterop.realm_commit(realmReference.dbPointer)
     }
 
     internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(dbPointer)
+        return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
     }
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
      */
     public fun cancelWrite() {
-        RealmInterop.realm_rollback(dbPointer)
+        RealmInterop.realm_rollback(realmReference.dbPointer)
     }
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(configuration.mediator, dbPointer, type)
+        return io.realm.internal.create(configuration.mediator, realmReference, type)
     }
     // Convenience inline method for the above to skip KClass argument
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
@@ -83,7 +83,7 @@ class MutableRealm : BaseRealm {
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
-        return io.realm.internal.create(configuration.mediator, dbPointer, type, primaryKey)
+        return io.realm.internal.create(configuration.mediator, realmReference, type, primaryKey)
     }
 
     /**
@@ -97,7 +97,7 @@ class MutableRealm : BaseRealm {
      * @return The managed version of the `instance`.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
-        return io.realm.internal.copyToRealm(configuration.mediator, dbPointer, instance)
+        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
     }
 
     /**

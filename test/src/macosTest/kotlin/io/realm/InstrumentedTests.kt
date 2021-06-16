@@ -55,12 +55,12 @@ class InstrumentedTests {
             // Accessing getters/setters
             realmModel.`$realm$IsManaged` = true
             realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
-            realmModel.`$realm$Pointer` = CPointerWrapper(ptr2.ptr)
+            realmModel.`$realm$Owner` = CPointerWrapper(ptr2.ptr)
             realmModel.`$realm$TableName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)
             assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
-            assertEquals(ptr2.rawPtr.toLong(), (realmModel.`$realm$Pointer` as CPointerWrapper).ptr.toLong())
+            assertEquals(ptr2.rawPtr.toLong(), (realmModel.`$realm$Owner` as CPointerWrapper).ptr.toLong())
             assertEquals("Sample", realmModel.`$realm$TableName`)
         }
     }
