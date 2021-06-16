@@ -60,13 +60,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         /**
          * Open a realm.
          */
-        // FIXME Dispatcher that should be used to deliver notifications.
-        //  MUST:
-        //  - be backed by only one thread
-        //  - be backed by the same thread on which the realm is opened
-        //  NOTE:
-        //  - The dispatcher is not taken into account on Android and notifications are only
-        //    delivered if the Realm is opened on a Looper thread as for Realm Java
         fun open(
             realmConfiguration: RealmConfiguration,
         ): Realm {
@@ -74,11 +67,13 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             //  IN Android use lazy property delegation init to load the shared library use the
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
+            // FIXME Ensure that we have a frozen realm
             val realm =
                 Realm(
                     realmConfiguration,
                     RealmInterop.realm_open(realmConfiguration.nativeConfig),
                 )
+
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }

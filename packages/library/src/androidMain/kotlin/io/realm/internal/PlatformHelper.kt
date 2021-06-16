@@ -38,7 +38,7 @@ actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     return Handler(thread.looper).asCoroutineDispatcher()
 }
 
-// FIXME All of the below is common with Android. Should be aligned n separate source set but
+// FIXME All of the below is common with Android. Should be aligned in separate source set but
 //  that is already tracked by https://github.com/realm/realm-kotlin/issues/175
 
 // Expose platform runBlocking through common interface

@@ -782,9 +782,8 @@ actual object RealmInterop {
                 //  before first call to is_on_thread and that set_notify_callback has frozen the
                 //  scheduler
                 val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                val b = scheduler.threadId == tid()
-                printlntid("is_on_thread[$scheduler] $b ${scheduler.threadId} " + tid())
-                b
+                printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
+                scheduler.threadId == tid()
             },
 
             // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
@@ -801,8 +800,6 @@ actual object RealmInterop {
             //     free callback userdata realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
             //     notify realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */) -> kotlin.Unit>>? */)
             staticCFunction { userdata, notify_callback_userdata, free_notify_callback_userdata, notify_callback ->
-                // FIXME Only works if we are guaranteed that this is only called once and always
-                //  called on the same thread that constructed the scheduler
                 try {
                     val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                     printlntid("set notify callback [$scheduler]: $notify_callback $notify_callback_userdata")
