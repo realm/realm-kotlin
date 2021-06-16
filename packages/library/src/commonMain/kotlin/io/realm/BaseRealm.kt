@@ -17,7 +17,6 @@ package io.realm
 
 import io.realm.internal.RealmLog
 import io.realm.internal.RealmReference
-import io.realm.internal.checkClosed
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
@@ -34,7 +33,18 @@ public abstract class BaseRealm internal constructor(
     dbPointer: NativePointer
 ) {
 
-    internal open val realmReference: RealmReference = RealmReference(this, dbPointer)
+    /**
+     * Realm reference that links the Kotlin instance with the underlying C++ SharedRealm.
+     *
+     * The C++ SharedRealm can be either a frozen or live realm, so even though this reference is
+     * not updated the version of the underlying Realm can change.
+     *
+     * NOTE: [Realm] overwrites this to an updatable property which is advanced when the [Realm] is
+     * updated to point to a new frozen version after writes or notification, so care should be
+     * taken not to spread operations over different references.
+     */
+    internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
+    set(_) { throw UnsupportedOperationException("BaseRealm reference should never be updated")}
 
     /**
      * The current data version of this Realm and data fetched from it.
@@ -82,7 +92,7 @@ public abstract class BaseRealm internal constructor(
      * @return `true` if the Realm has been closed. `false` if not.
      */
     public fun isClosed(): Boolean {
-        return realmReference.closed()
+        return realmReference.isClosed()
     }
 
     // Not all sub classes of `BaseRealm` can be closed by users.

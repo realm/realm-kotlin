@@ -11,7 +11,6 @@
 
 ### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0-native-mt
-  -
 
 ### Internal
 * Updated to Android NDK: 22.1.7171670

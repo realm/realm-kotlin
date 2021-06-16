@@ -64,7 +64,6 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
         }
     }
 
-    // FIXME Should we have this here ... What about abstracting it to RealmReferrer and implementing that instead
     public var version: VersionId = VersionId(0)
         get() {
             checkRealmClosed(realm)

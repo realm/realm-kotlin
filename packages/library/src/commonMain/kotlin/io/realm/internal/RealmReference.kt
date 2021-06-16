@@ -6,19 +6,19 @@ import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 
 /**
- * FIXME Update
- * A TransactionId makes it possible to track which public Realm instance an underlying C++ SharedRealm is associated
- * with (represented by the `dbPointer`). This is needed as each Results, List or Object need to know, both which
- * public Realm they belong to, but also what underlying SharedRealm they are part of. But since the public Realm
- * instance might update its own `dbPointer`, derived objects cannot just keep a pointer to the public Realm instance.
+ * A _Realm Reference_ that links a specific Kotlin BaseRealm instance with an underlying C++
+ * SharedRealm.
  *
- * For frozen Realms, the `dbPointer` will thus point to a specific version of a read transaction that is guaranteed
- * to not change.
+ * This is needed as each Results, List or Object need to know, both which public Realm they belong
+ * to, but also what underlying SharedRealm they are part of. Each object linked to a Realm needs
+ * to keep it's own C++ SharedInstance, as the owning [Realm]'s C++ SharedRealm instance is updated
+ * on writes/notifications.
  *
- * For live Realms, the `dbPointer` will point to a live SharedRealm that can advance its internal version.
+ * For frozen Realms, the `dbPointer` will point to a specific version of a read transaction that
+ * is guaranteed to not change.
  *
- * For both versions, the public Realm reference is allowed to change independently from the underlying
- * `dbPointer`, so care should be taken when accessing any methods on the public Realm.
+ * For live Realms, the `dbPointer` will point to a live SharedRealm that can advance its internal
+ * version.
  */
 data class RealmReference(
     val owner: BaseRealm,
@@ -31,29 +31,18 @@ data class RealmReference(
         return VersionId(RealmInterop.realm_get_version_id(dbPointer))
     }
 
-    override fun frozen(): Boolean {
+    override fun isFrozen(): Boolean {
         checkClosed()
         return RealmInterop.realm_is_frozen(dbPointer)
     }
 
-    override fun closed(): Boolean {
+    override fun isClosed(): Boolean {
         return RealmInterop.realm_is_closed(dbPointer)
     }
-}
 
-interface RealmLifeCycle {
-    fun version(): VersionId
-    fun frozen(): Boolean
-    fun closed(): Boolean
-}
-
-// Inline this for a cleaner stack trace in case it throws.
-@Suppress("MemberVisibilityCanBePrivate")
-inline fun RealmLifeCycle.checkClosed() {
-    if (closed()) {
-        // FIXME Is this needed outside of RealmReference? Because we don't have access to the
-        //  configuration in the interface
-        throw IllegalStateException("Realm has been closed and is no longer accessible")
-//        throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
+    inline fun checkClosed() {
+        if (isClosed()) {
+            throw IllegalStateException("Realm has been closed and is no longer accessible: ${owner.configuration.path}")
+        }
     }
 }

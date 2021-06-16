@@ -19,7 +19,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmLifeCycleTests
 import io.realm.VersionId
-import io.realm.frozen
+import io.realm.isFrozen
 import io.realm.isValid
 import io.realm.util.PlatformUtils
 import io.realm.version
@@ -90,30 +90,32 @@ class RealmObjectTests : RealmLifeCycleTests {
     }
 
     @Test
-    override fun frozen() {
-        assertTrue { parent.frozen() }
+    override fun isFrozen() {
+        assertTrue { parent.isFrozen() }
         realm.writeBlocking {
             val parent = copyToRealm(Parent())
-            assertFalse { parent.frozen() }
+            assertFalse { parent.isFrozen() }
         }
     }
 
     @Test
-    override fun frozen_throwsOnUnmanagedObject() {
+    override fun isFrozen_throwsOnUnmanagedObject() {
         val unmanagedParent = Parent()
         assertFailsWith<IllegalArgumentException> {
-            unmanagedParent.frozen()
+            unmanagedParent.isFrozen()
         }
     }
 
-    override fun frozen_throwsIfRealmIsClosed() {
+    override fun isFrozen_throwsIfRealmIsClosed() {
         realm.close()
-        parent.frozen()
+        assertFailsWith<IllegalStateException> {
+            parent.isFrozen()
+        }
     }
 
     // FIXME RealmObject doesn't actually implement RealmLifeCycle yet
     @Ignore
-    override fun closed() {
+    override fun isClosed() {
         TODO("Not yet implemented")
     }
 }

@@ -30,21 +30,15 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     private val writer: SuspendableWriter = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
 
-    /**
-     * FIXME Update docs when design is settled
-     * Returns an ID identifying any Realm data at the point in time this method is called.
-     *
-     * This is done by pairing a reference to the public Realm instance alongside the current `dbPointer`.
-     * For live Realms, the `dbPointer` point to a underlying live SharedRealm that might mutate. For frozen
-     * Realms the `dbPointer` points to a frozen SharedRealm that is guaranteed to remain the same, even if
-     * the public Realm advance to a later version.
-     *
-     * The public Realm instance part of the ID can also mutate, so care must be taken if any methods on that
-     * Realm is used.
-     */
-    var updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> =
+    private var updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> =
         kotlinx.atomicfu.atomic<RealmReference>(RealmReference(this, dbPointer))
-    override var realmReference: RealmReference
+    /**
+     * The current Realm reference that points to the underlying frozen C++ SharedRealm.
+     *
+     * NOTE: As this is updated to a new frozen version on notifications about changes in the
+     * underlying realm, care should be taken not to spread operations over different references.
+     */
+    internal override var realmReference: RealmReference
         get() {
             return updateableRealm.value
         }
