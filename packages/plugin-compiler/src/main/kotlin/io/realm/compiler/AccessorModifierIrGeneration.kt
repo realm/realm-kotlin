@@ -23,7 +23,7 @@ import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
-import io.realm.compiler.Names.REALM_POINTER
+import io.realm.compiler.Names.REALM_OWNER
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrStatement
@@ -98,14 +98,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         pluginContext.lookupFunctionInClass(FqName("kotlin.Int"), "toLong")
 
     private lateinit var objectPointerProperty: IrProperty
-    private lateinit var dbPointerProperty: IrProperty
+    private lateinit var ownerProperty: IrProperty
     private lateinit var isManagedProperty: IrProperty
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
         val fields = SchemaCollector.properties.getOrPut(irClass, { mutableMapOf() })
 
-        dbPointerProperty = irClass.lookupProperty(REALM_POINTER)
+        ownerProperty = irClass.lookupProperty(REALM_OWNER)
         objectPointerProperty = irClass.lookupProperty(OBJECT_POINTER)
         isManagedProperty = irClass.lookupProperty(OBJECT_IS_MANAGED)
 
