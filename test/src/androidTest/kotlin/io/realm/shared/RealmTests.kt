@@ -59,7 +59,6 @@ class RealmTests {
         RealmConfiguration.Builder()
             .path("$tmpDir/default.realm",)
             .schema(setOf(Parent::class, Child::class))
-            .log(level = LogLevel.DEBUG)
             .build()
     }
 
