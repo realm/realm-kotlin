@@ -387,11 +387,11 @@ internal abstract class ManagedListTester<T>(
         val dataSet = typeSafetyManager.getInitialDataSet()
         val assertions = { list: RealmList<T> ->
             // Fails when using invalid indices
-            // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+            // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
             assertFailsWith<RuntimeException> {
                 list[-1]
             }
-            // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+            // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
             assertFailsWith<RuntimeException> {
                 list[666]
             }
@@ -441,11 +441,11 @@ internal abstract class ManagedListTester<T>(
             }
 
             // Fails when using invalid indices
-            // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+            // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
             assertFailsWith<RuntimeException> {
                 list.add(-1, typeSafetyManager.getInitialDataSet()[0])
             }
-            // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+            // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
             assertFailsWith<RuntimeException> {
                 list.add(666, typeSafetyManager.getInitialDataSet()[0])
             }
@@ -498,11 +498,11 @@ internal abstract class ManagedListTester<T>(
             }
 
             // Fails when using invalid indices
-            // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+            // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
             assertFailsWith<RuntimeException> {
                 list.addAll(-1, dataSet)
             }
-            // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+            // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
             assertFailsWith<RuntimeException> {
                 list.addAll(666, dataSet)
             }
@@ -514,11 +514,11 @@ internal abstract class ManagedListTester<T>(
                 val list = typeSafetyManager.createContainerAndGetList(this)
 
                 // Fails when using wrong indices
-                // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+                // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
                 assertFailsWith<RuntimeException> {
                     list.addAll(-1, listOf())
                 }
-                // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+                // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
                 assertFailsWith<RuntimeException> {
                     list.addAll(666, listOf())
                 }
@@ -601,7 +601,7 @@ internal abstract class ManagedListTester<T>(
                 val list = typeSafetyManager.createContainerAndGetList(this)
 
                 // Fails when using invalid indices
-                // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+                // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
                 assertFailsWith<RuntimeException> {
                     list.removeAt(0)
                 }
@@ -609,11 +609,11 @@ internal abstract class ManagedListTester<T>(
                 list.add(copyToRealmIfNeeded(dataSet[0]))
 
                 // Fails when using invalid indices
-                // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+                // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
                 assertFailsWith<RuntimeException> {
                     list.removeAt(-1)
                 }
-                // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+                // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
                 assertFailsWith<RuntimeException> {
                     list.removeAt(666)
                 }
@@ -660,11 +660,11 @@ internal abstract class ManagedListTester<T>(
                 assertElementsAreEqual(dataSet[0], previousElement)
 
                 // Fails when using invalid indices
-                // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+                // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
                 assertFailsWith<RuntimeException> {
                     list[-1] = copyToRealmIfNeeded(dataSet[0])
                 }
-                // TODO: should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
+                // TODO should be IndexOutOfBoundsException - see https://jira.mongodb.org/browse/RKOTLIN-57
                 assertFailsWith<RuntimeException> {
                     list[666] = copyToRealmIfNeeded(dataSet[0])
                 }
