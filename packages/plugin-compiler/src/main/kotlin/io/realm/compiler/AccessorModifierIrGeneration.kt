@@ -521,12 +521,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
-                    else -> if (superTypesContainRealmObject(type.constructor.supertypes)) {
-                        PropertyType.RLM_PROPERTY_TYPE_OBJECT
-                    } else {
-                        logError("Unsupported type for list: '$type'")
-                        null
-                    }
+                    else ->
+                        if (superTypesContainRealmObject(type.constructor.supertypes)) {
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT
+                        } else {
+                            logError("Unsupported type for list: '$type'")
+                            null
+                        }
                 }
             }
     }
