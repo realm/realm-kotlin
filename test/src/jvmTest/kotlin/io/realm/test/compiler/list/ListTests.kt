@@ -57,7 +57,7 @@ class ListTests {
     }
 
     @Test
-    fun `unsupported non-nullable list fail`() {
+    fun `unsupported non-nullable list - fails`() {
         val result = NON_NULLABLE_LIST_CODE.format("Exception")
             .let {
                 SourceFile.kotlin("unsupportedNonNullableList.kt", it)
@@ -88,7 +88,7 @@ class ListTests {
     }
 
     @Test
-    fun `nullable RealmObject list fail`() {
+    fun `nullable RealmObject list - fails`() {
         val result = NULLABLE_TYPE_CODE.format("NullableTypeList")
             .let {
                 SourceFile.kotlin("nullableTypeList.kt", it)
@@ -105,7 +105,7 @@ class ListTests {
     // ------------------------------------------------
 
     @Test
-    fun `nullable lists fail`() {
+    fun `nullable lists - fails`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
             val result = NULLABLE_LIST_CODE.format(primitiveType)
                 .let {
@@ -116,6 +116,15 @@ class ListTests {
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
             assertTrue(result.messages.contains("a RealmList field cannot be marked as nullable"))
         }
+    }
+
+    @Test
+    fun `star projection list - fails`() {
+        // Test that a star-projected list fails to compile
+        // It is not possible to test a list missing generics since this would not even compile
+        val result = compileFromSource(SourceFile.kotlin("nullableList.kt", STAR_PROJECTION))
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("RealmLists cannot use a '*' projection"))
     }
 }
 
@@ -149,5 +158,16 @@ import java.lang.Exception
 
 class NullableTypeList : RealmObject {
     var nullableList: RealmList<%s?> = RealmList()
+}
+""".trimIndent()
+
+private val STAR_PROJECTION = """
+import io.realm.RealmList
+import io.realm.RealmObject
+
+import java.lang.Exception
+
+class NullableTypeList : RealmObject {
+    var list: RealmList<*> = RealmList<String>()
 }
 """.trimIndent()

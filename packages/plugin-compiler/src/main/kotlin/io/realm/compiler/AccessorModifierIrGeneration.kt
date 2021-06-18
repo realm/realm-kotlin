@@ -76,6 +76,7 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.StarProjectionImpl
 import org.jetbrains.kotlin.types.isNullable
 import kotlin.collections.set
 
@@ -290,7 +291,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         name: String,
         declaration: IrProperty
     ) {
-        val listGenericType = declaration.symbol.descriptor.type.arguments[0].type
+        val type = declaration.symbol.descriptor.type
+        if (type.arguments[0] is StarProjectionImpl) {
+            logError("Error in field ${declaration.name} - RealmLists cannot use a '*' projection.")
+            return
+        }
+        val listGenericType = type.arguments[0].type
         val coreGenericTypes = getListGenericCoreType(declaration)
 
         // Only process field if we got valid generics
