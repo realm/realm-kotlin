@@ -16,8 +16,8 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.thaw
 import io.realm.internal.unmanage
-import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -54,14 +54,6 @@ class MutableRealm : BaseRealm {
     internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher? = null) :
         super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
-    /**
-     * Create a MutableRealm which represents a standard write transaction, i.e. any modifications
-     * are immediately represented in the `parentRealm`.
-     */
-    @Deprecated("Should be avoided and will be removed once we have the proper Frozen Architecture in place.")
-    internal constructor(configuration: RealmConfiguration, parentRealm: NativePointer) :
-        super(configuration, parentRealm)
-
     internal fun beginTransaction() {
         RealmInterop.realm_begin_write(realmReference.dbPointer)
     }
@@ -72,6 +64,35 @@ class MutableRealm : BaseRealm {
 
     internal fun isInTransaction(): Boolean {
         return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
+    }
+
+    /**
+     * Realm write transactions always operate on the latest version of data. This method
+     * makes it possible to easily find the latest version of any frozen Realm Object and
+     * return a copy of it that can be modified while inside the write block.
+     *
+     * *Note:* This object is not readable outside the write block unless it has been explicitly
+     * returned from the write.
+     *
+     * @param obj Realm object to look up. Its latest state will be returned. If the object
+     * has been deleted, `null` will be returned.
+     */
+    public fun <T : RealmObject> findLatest(obj: T?): T? {
+        return if (obj == null || !obj.isValid()) {
+            null
+        } else if (!obj.isManaged()) {
+            throw IllegalArgumentException(
+                "Unmanaged objects must be part of the Realm, before " +
+                    "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
+                    "a managed object."
+            )
+        } else if (!obj.isFrozen()) {
+            // If already valid, managed and not frozen, it must be live, and thus already
+            // up to date, just return input
+            obj
+        } else {
+            (obj as RealmObjectInternal).thaw(this.realmReference.owner)
+        }
     }
 
     /**

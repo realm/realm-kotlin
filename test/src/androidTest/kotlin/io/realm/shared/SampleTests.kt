@@ -21,6 +21,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.delete
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -37,7 +38,7 @@ class SampleTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 

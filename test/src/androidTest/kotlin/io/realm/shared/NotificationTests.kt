@@ -19,10 +19,13 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.internal.singleThreadDispatcher
+import io.realm.observe
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import io.realm.util.Utils.printlntid
 import io.realm.util.awaitTestComplete
 import io.realm.util.completeTest
+import io.realm.util.write
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collect
@@ -50,7 +53,7 @@ class NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
@@ -93,12 +96,25 @@ class NotificationTests {
         // FIXME
     }
 
-    private fun observeRealmObject() {
-        // FIXME
+    private fun observeRealmObject() = runBlocking {
+        val obj: Sample = realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        val listener = async {
+            obj.observe().collect {
+                if (it?.stringField == "Bar") {
+                    currentCoroutineContext().completeTest()
+                }
+            }
+        }
+        obj.write {
+            stringField = "Bar"
+        }
+        listener.awaitTestComplete()
     }
 
     private fun observeRealmList() {
-        // FIXME
+        // FIXME Wait for RealmList support
     }
 
     private fun observeRealmResults() = runBlocking {
@@ -115,7 +131,7 @@ class NotificationTests {
     }
 
     private fun observeRealm() {
-        // FIXME
+        // FIXME Wait for a Global change listener to become available
     }
 
 //    fun addChangeListenerResults() = RunLoopThread().run {

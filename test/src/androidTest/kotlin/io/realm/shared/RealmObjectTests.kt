@@ -22,6 +22,7 @@ import io.realm.VersionId
 import io.realm.isFrozen
 import io.realm.isValid
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import io.realm.version
 import test.link.Child
 import test.link.Parent
@@ -48,7 +49,7 @@ class RealmObjectTests : RealmLifeCycleTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
         realm = Realm.open(configuration)
         parent = realm.writeBlocking { copyToRealm(Parent()) }
     }

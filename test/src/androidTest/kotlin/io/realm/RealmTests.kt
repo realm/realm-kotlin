@@ -34,7 +34,7 @@ class RealmTests {
 
     private val configuration: RealmConfiguration by lazy {
         RealmConfiguration(
-            path = "$tmpDir/default.realm",
+            path = "$tmpDir/${createRandomString(16)}.realm",
             schema = setOf(Parent::class, Child::class)
         )
     }

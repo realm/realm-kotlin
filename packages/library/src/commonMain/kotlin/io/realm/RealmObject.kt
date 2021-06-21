@@ -98,7 +98,7 @@ public fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?
     return realm.addObjectChangeListener(this as T, callback)
 }
 
-public fun <T : RealmObject> RealmObject.observe(): Flow<T?> {
+public fun <T : RealmObject> T.observe(): Flow<T?> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")

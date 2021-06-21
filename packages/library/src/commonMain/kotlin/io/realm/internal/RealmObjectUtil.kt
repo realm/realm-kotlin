@@ -21,6 +21,7 @@ import io.realm.RealmObject
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.isValid
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
@@ -84,15 +85,16 @@ fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T {
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T? {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     val dbPointer = liveRealm.realmReference.dbPointer
-    return managedModel.manage(
+    val liveObject = managedModel.manage(
         liveRealm.realmReference,
         `$realm$Mediator` as Mediator,
         type,
         RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)
     )
+    return if (liveObject.isValid()) liveObject else null
 }
