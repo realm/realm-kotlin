@@ -46,4 +46,4 @@ internal class NotifierRealm : BaseRealm {
     override fun <T : RealmObject> observeObject(obj: T): Flow<T> {
         throw UnsupportedOperationException(errorMessage)
     }
-} 
+}

@@ -16,7 +16,6 @@
  */
 package io.realm.shared
 
-import co.touchlab.stately.concurrency.AtomicReference
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.internal.singleThreadDispatcher
@@ -24,14 +23,14 @@ import io.realm.util.PlatformUtils
 import io.realm.util.Utils.printlntid
 import io.realm.util.awaitTestComplete
 import io.realm.util.completeTest
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
-import org.junit.Ignore
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -102,25 +101,17 @@ class NotificationTests {
         // FIXME
     }
 
-    private fun observeRealmResults() {
-
-        @Suppress("JoinDeclarationAndAssignment")
-        val listenerJob: AtomicReference<Deferred<Any>?> = AtomicReference(null)
-        runBlocking {
-            listenerJob.set(
-                async {
-                    realm.objects(Sample::class).observe().collect {
-                        assertEquals(1, it.size)
-                        listenerJob.get()!!.completeTest()
-                    }
-                }
-            )
-
-            realm.write {
-                copyToRealm(Sample().apply { stringField = "Foo" })
+    private fun observeRealmResults() = runBlocking {
+        val listenerJob = async {
+            realm.objects(Sample::class).observe().collect {
+                assertEquals(1, it.size)
+                currentCoroutineContext().completeTest()
             }
-            listenerJob.get()!!.awaitTestComplete()
         }
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        listenerJob.awaitTestComplete()
     }
 
     private fun observeRealm() {

@@ -20,6 +20,8 @@ package io.realm.util
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -52,27 +54,31 @@ object Utils {
  * should be paired with [Job.awaitTestComplete] or [Deferred.awaitTestComplete].
  */
 
-val testTerminatedException = CancellationException("Test is done!")
+val testFinishedException = CancellationException("Test is done!")
 
 fun Job.completeTest() {
-    cancel(testTerminatedException)
+    cancel(testFinishedException)
 }
 
 suspend fun Job.awaitTestComplete() {
     try {
         join()
     } catch (ex: CancellationException) {
-        if (ex != testTerminatedException) {
+        if (ex != testFinishedException) {
             throw ex
         }
     }
+}
+
+suspend fun CoroutineContext.completeTest() {
+    cancel(testFinishedException)
 }
 
 suspend fun <T> Deferred<T>.awaitTestComplete() {
     try {
         await() /* Ignore return value */
     } catch (ex: CancellationException) {
-        if (ex != testTerminatedException) {
+        if (ex != testFinishedException) {
             throw ex
         }
     }
