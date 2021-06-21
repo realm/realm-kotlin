@@ -56,13 +56,13 @@ class RealmResultsTests {
     @Test
     fun version() {
         val results: RealmResults<Parent> = realm.objects(Parent::class)
-        assertEquals(INITIAL_VERSION, results.version)
+        assertEquals(INITIAL_VERSION, results.version())
     }
 
     @Test
     fun versionThrowsIfRealmIsClosed() {
         val results: RealmResults<Parent> = realm.objects(Parent::class)
         realm.close()
-        assertFailsWith<IllegalStateException> { results.version }
+        assertFailsWith<IllegalStateException> { results.version() }
     }
 }

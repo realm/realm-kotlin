@@ -20,6 +20,7 @@ import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
@@ -121,4 +122,31 @@ class MutableRealm : BaseRealm {
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
+
+    override fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>> {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>> {
+        throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> observeObject(obj: T): Flow<T> {
+        throw IllegalStateException("Changes to RealmObject cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> addResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> addListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> addObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
 }

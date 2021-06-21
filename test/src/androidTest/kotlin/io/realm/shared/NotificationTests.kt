@@ -16,174 +16,151 @@
  */
 package io.realm.shared
 
+import co.touchlab.stately.concurrency.AtomicReference
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmResults
-import io.realm.VersionId
 import io.realm.internal.singleThreadDispatcher
-import io.realm.interop.NativePointer
 import io.realm.util.PlatformUtils
-import io.realm.util.RunLoopThread
 import io.realm.util.Utils.printlntid
-import kotlinx.coroutines.CoroutineScope
+import io.realm.util.awaitTestComplete
+import io.realm.util.completeTest
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
+import org.junit.Ignore
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
-private const val INITIAL = "Hello, World!"
-private const val FIRST = "FIRST"
-private const val SECOND = "SECOND"
-
-// FIXME This file is sym-linked into the `nativeTest`-equivalent. Ideally it would just all be in
-//  `commonTest` but as it is currently not possible to trigger common tests on Android it is
-//  replicated in the various source sets. Sym-linking to `commonTest` would create overlapping
-//  definitions.
-//  https://youtrack.jetbrains.com/issue/KT-34535
-@OptIn(ExperimentalTime::class)
 class NotificationTests {
+
+    enum class ClassType {
+        REALM,
+        REALM_RESULTS,
+        REALM_LIST,
+        REALM_OBJECT
+    }
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
+    lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration =
-            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
     fun tearDown() {
+        realm.close()
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
-    fun notificationsOnMain() = RunLoopThread().run {
-        val c = Channel<List<Sample>>(1)
-
-        val realm = Realm.open(configuration)
-
-        val results = realm.objects(Sample::class)
-
-        assertEquals(0, results.size)
-
-        val token = results.observe {
-            assertTrue(it is RealmResults<Sample>)
-            assertEquals(results, it)
-            val updatedResults = results.toList()
-            this@run.launch {
-                c.send(updatedResults)
+    fun observe() {
+        ClassType.values().forEach {
+            when(it) {
+                ClassType.REALM -> observeRealm()
+                ClassType.REALM_RESULTS -> observeRealmResults()
+                ClassType.REALM_LIST -> observeRealmList()
+                ClassType.REALM_OBJECT -> observeRealmObject()
+                else -> throw NotImplementedError(it.toString())
             }
-        }
-
-        launch {
-            val size = c.receive().size
-            val sample = realm.writeBlocking {
-                assertEquals(0, size)
-                create(Sample::class).apply { stringField = INITIAL }
-            }
-
-            val result = c.receive()
-            assertEquals(1, result.size)
-            assertEquals(sample.stringField, result[0].stringField)
-
-            token.cancel()
-
-            realm.writeBlocking {
-                create(Sample::class).apply { stringField = INITIAL }
-            }
-
-            delay(1.seconds)
-            assertTrue(c.isEmpty)
-
-            realm.close()
-            terminate()
         }
     }
 
     @Test
-    fun notificationOnMainFromBackgroundDispatcherUpdates() = RunLoopThread().run {
-        val dispatcher = singleThreadDispatcher("notifier")
+    fun cancelObserve() {
+        // FIXME
+    }
 
-        val realm = Realm.open(configuration)
-        realm.objects<Sample>().observe {
-            if (it.size == 1) terminate()
-        }
+    @Test
+    fun closingRealmCancelObservers() {
+        // FIXME
+    }
 
-        async(dispatcher) {
-            val realm = Realm.open(configuration)
+    @Test
+    fun addChangeListener() {
+        // FIXME
+    }
+
+    @Test
+    fun addChangeListener_emitOnProvidedDispatcher() {
+        // FIXME
+    }
+
+    private fun observeRealmObject() {
+        // FIXME
+    }
+
+    private fun observeRealmList() {
+        // FIXME
+    }
+
+    private fun observeRealmResults() {
+
+        @Suppress("JoinDeclarationAndAssignment")
+        val listenerJob: AtomicReference<Deferred<Any>?> = AtomicReference(null)
+        runBlocking {
+            listenerJob.set(async {
+                realm.objects(Sample::class).observe().collect {
+                    assertEquals(1, it.size)
+                    listenerJob.get()!!.completeTest()
+                }
+            })
+
             realm.write {
-                copyToRealm(Sample())
+                copyToRealm(Sample().apply { stringField = "Foo" })
             }
+            listenerJob.get()!!.awaitTestComplete()
         }
     }
 
-    @Test
-    @Suppress("invisible_reference", "invisible_member")
-    fun notificationOnBackgroundDispatcherFromSuspendableWriterUpdates() {
-        printlntid("main")
-        val exit = Mutex(true)
-        val dispatcher1 = singleThreadDispatcher("notifier")
-        val dispatcher2 = singleThreadDispatcher("writer")
-
-        val baseRealm = Realm.open(configuration)
-
-        val notifiers = io.realm.internal.Notifier(configuration, dispatcher1)
-        runBlocking {
-            val async = CoroutineScope(dispatcher1).async {
-                val obs: Flow<RealmResults<Sample>> = notifiers.observe<Sample>()
-                obs.collect {
-                    if (it.size == 1) exit.unlock()
-                }
-            }
-            delay(1000)
-            val writer = io.realm.internal.SuspendableWriter(baseRealm, dispatcher2)
-            val write: Triple<NativePointer, VersionId, Sample> = writer.write {
-                copyToRealm(Sample())
-            }
-
-            exit.lock()
-            async.cancel()
-        }
+    private fun observeRealm() {
+        // FIXME
     }
 
+
+//    fun addChangeListenerResults() = RunLoopThread().run {
+//        realm.objects(Sample::class).addChangeListener {
+//            assertEquals(1, it.size)
+//            terminate()
+//        }
+//
+//        realm.writeBlocking {
+//            copyToRealm(Sample())
+//        }
+//    }
+
     @Test
-    @Suppress("invisible_reference", "invisible_member")
-    fun notificationOnBackgroundDispatcherFromMainRealmUpdates() {
-        printlntid("main")
-        val exit = Mutex(true)
-        val dispatcher1 = singleThreadDispatcher("notifier")
+    fun openSameRealmFileWithDifferentDispatchers() {
+        // FIXME: This seems to not work
+    }
 
-        val notifiers = io.realm.internal.Notifier(configuration, dispatcher1)
-        runBlocking {
-            val async = CoroutineScope(dispatcher1).async {
-                val obs: Flow<RealmResults<Sample>> = notifiers.observe<Sample>()
-                obs.collect {
-                    if (it.size == 1) exit.unlock()
-                }
-            }
-            delay(1000)
-            Realm.open(configuration).write {
-                copyToRealm(Sample())
-            }
+    // Verify that the Main dispatcher can be used for both writes and notifications
+    // It should be considered an anti-pattern in production, but is plausible in tests.
+    @Test
+    fun useMainDispatchers() {
+        // FIXME
+    }
 
-            exit.lock()
-            async.cancel()
-        }
+    // Verify that users can use the Main dispatcher for notifications and a background
+    // dispatcher for writes. This is the closest match to how this currently works
+    // in Realm Java.
+    @Test
+    fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
+
+    }
+
+    // Verify that the special test dispatchers provided by Google also when using Realm.
+    @Test
+    fun useTestDispatchers() {
+        // FIXME
     }
 
     // Sanity check to ensure that this doesn't cause crashes

@@ -16,10 +16,23 @@
 package io.realm
 
 import io.realm.internal.RealmReference
+import io.realm.internal.SuspendableNotifier
 import io.realm.internal.SuspendableWriter
 import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -27,11 +40,15 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    private val writer: SuspendableWriter = SuspendableWriter(this)
+    internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notifierDispatcher)
+    // FIXME: Replay should match other notifications. I believe they mit their starting state when you register a listener
+    private val realmFlow = MutableSharedFlow<Realm>(replay = 1)
+    private val notifierJob: AtomicRef<Job?> = atomic(null)
+    private val notifier = SuspendableNotifier(this, configuration.notifierDispatcher)
+    private val writer = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
 
-    private var updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> =
-        kotlinx.atomicfu.atomic<RealmReference>(RealmReference(this, dbPointer))
+    private var updateableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
      *
@@ -43,7 +60,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             return updateableRealm.value
         }
         set(value) {
-            updateableRealm!!.value = value
+            updateableRealm.value = value
         }
 
     companion object {
@@ -61,20 +78,29 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
          * Open a realm.
          */
         fun open(
-            realmConfiguration: RealmConfiguration,
+            configuration: RealmConfiguration,
         ): Realm {
             // TODO API-INTERNAL
             //  IN Android use lazy property delegation init to load the shared library use the
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
             // FIXME Ensure that we have a frozen realm
-            val realm =
-                Realm(
-                    realmConfiguration,
-                    RealmInterop.realm_open(realmConfiguration.nativeConfig),
-                )
-            realm.log.info("Opened Realm: ${realmConfiguration.path}")
+            // FIXME: Can we get the frozen Realm immediately?
+            val liveDbPointer = RealmInterop.realm_open(configuration.nativeConfig)
+            val frozenDbPointer = RealmInterop.realm_freeze(liveDbPointer)
+            RealmInterop.realm_close(liveDbPointer)
+            val realm = Realm(configuration, frozenDbPointer)
+            realm.log.info("Opened Realm: ${configuration.path}")
             return realm
+        }
+    }
+
+    init {
+        // Update the Realm if another process or the Sync Client updates the Realm
+        notifierJob.value = realmScope.launch {
+            notifier.realmChanged().collect {
+                updateRealmPointer(it.first, it.second)
+            }
         }
     }
 
@@ -140,6 +166,48 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         }
     }
 
+    /**
+     * FIXME
+     * Be notified whenever this Realm is updated.
+     */
+    public fun observe(): Flow<Realm> {
+        return realmFlow.asSharedFlow()
+    }
+
+    /**
+     * FIXME
+     */
+    public fun addChangeListener(): Cancellable {
+        TODO()
+    }
+
+    override fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>> {
+        return notifier.resultsChanged(results)
+    }
+
+    override fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>> {
+        return notifier.listChanged(list)
+    }
+
+    override fun <T : RealmObject> observeObject(obj: T): Flow<T> {
+        return notifier.objectChanged(obj)
+    }
+
+    override fun <T : RealmObject> addResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable {
+        return notifier.addResultsChangedListener(results, callback)
+    }
+
+    override fun <T : RealmObject> addListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T : RealmObject> addObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+        TODO("Not yet implemented")
+    }
+
     private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
         realmPointerMutex.withLock {
             log.debug("Updating Realm version: $version -> $newVersion")
@@ -147,6 +215,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
                 realmReference = RealmReference(this, newRealm)
             }
         }
+
+        // Notify public observers that the Realm changed
+        realmFlow.emit(this)
     }
 
     /**
@@ -167,6 +238,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         //  writer thread and just close the realm in writer.close()
         writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
         writer.close()
+
+        notifier.checkIsSendingNotification("Cannot close the Realm while handling a notification from it.")
+        notifierJob.value?.cancel()
+        notifier.close()
         super.close()
         // TODO There is currently nothing that tears down the dispatcher
     }

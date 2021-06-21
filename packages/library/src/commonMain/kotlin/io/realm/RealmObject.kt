@@ -19,6 +19,7 @@ package io.realm
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Marker interface to define a model (managed by Realm).
@@ -87,5 +88,33 @@ public fun RealmObject.isValid(): Boolean {
     } else {
         // Unmanaged objects are always valid
         true
+    }
+}
+
+public fun <T: RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
+    checkNotificationsAvailable()
+    val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner
+    @Suppress("UNCHECKED_CAST")
+    return realm.addObjectChangeListener(this as T, callback)
+}
+
+public fun <T: RealmObject> RealmObject.observe(): Flow<T?> {
+    checkNotificationsAvailable()
+    val internalObject = this as RealmObjectInternal
+    @Suppress("UNCHECKED_CAST")
+    return (internalObject.`$realm$Owner` as RealmReference).owner.observeObject(this as T)
+}
+
+private fun RealmObject.checkNotificationsAvailable() {
+    val internalObject = this as RealmObjectInternal
+    val realm = (internalObject.`$realm$Owner` as RealmReference?)
+    if (realm != null && RealmInterop.realm_is_closed(realm.dbPointer)) {
+        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
+    }
+    if (!isManaged()) {
+        throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
+    }
+    if (!isValid()) {
+        throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
     }
 }

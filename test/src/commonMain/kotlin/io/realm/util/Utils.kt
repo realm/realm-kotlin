@@ -17,6 +17,9 @@
 
 package io.realm.util
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -31,13 +34,47 @@ expect object PlatformUtils {
 
 // Platform independent helper methods
 object Utils {
+
     fun createRandomString(length: Int): String {
         val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
         return (1..length)
             .map { allowedChars.random() }
             .joinToString("")
     }
+
     fun printlntid(message: String) {
         println("<" + PlatformUtils.threadId() + "> $message")
+    }
+
+}
+
+/**
+ * Terminate a job because it is considered "done". This will throw a [CancellationException] so using this function
+ * should be paired with [Job.awaitTestComplete] or [Deferred.awaitTestComplete].
+ */
+
+val testTerminatedException = CancellationException("Test is done!")
+
+fun Job.completeTest() {
+    cancel(testTerminatedException)
+}
+
+suspend fun Job.awaitTestComplete() {
+    try {
+        join()
+    } catch (ex: CancellationException) {
+        if (ex != testTerminatedException) {
+            throw ex
+        }
+    }
+}
+
+suspend fun <T> Deferred<T>.awaitTestComplete() {
+    try {
+        await() /* Ignore return value */
+    } catch (ex: CancellationException) {
+        if (ex != testTerminatedException) {
+            throw ex
+        }
     }
 }
