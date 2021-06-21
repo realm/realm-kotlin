@@ -45,7 +45,6 @@ object Utils {
     fun printlntid(message: String) {
         println("<" + PlatformUtils.threadId() + "> $message")
     }
-
 }
 
 /**

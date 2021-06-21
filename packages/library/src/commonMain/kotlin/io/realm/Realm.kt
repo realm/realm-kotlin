@@ -24,10 +24,8 @@ import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -41,7 +39,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     BaseRealm(configuration, dbPointer) {
 
     internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notifierDispatcher)
-    // FIXME: Replay should match other notifications. I believe they mit their starting state when you register a listener
+    // FIXME Replay should match other notifications. I believe they mit their starting state when you register a listener
     private val realmFlow = MutableSharedFlow<Realm>(replay = 1)
     private val notifierJob: AtomicRef<Job?> = atomic(null)
     private val notifier = SuspendableNotifier(this, configuration.notifierDispatcher)
@@ -85,7 +83,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
             //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
             // FIXME Ensure that we have a frozen realm
-            // FIXME: Can we get the frozen Realm immediately?
+            // FIXME Can we get the frozen Realm immediately?
             val liveDbPointer = RealmInterop.realm_open(configuration.nativeConfig)
             val frozenDbPointer = RealmInterop.realm_freeze(liveDbPointer)
             RealmInterop.realm_close(liveDbPointer)

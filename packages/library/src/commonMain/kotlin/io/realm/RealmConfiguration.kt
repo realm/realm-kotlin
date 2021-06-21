@@ -46,6 +46,7 @@ public data class LogConfiguration(
     public val loggers: List<RealmLogger>
 )
 
+@Suppress("LongParameterList")
 public class RealmConfiguration private constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
@@ -64,7 +65,7 @@ public class RealmConfiguration private constructor(
     public val log: LogConfiguration
     public val maxNumberOfActiveVersions: Long
     public val writeDispatcher: CoroutineDispatcher
-    public val notifierDispatcher:CoroutineDispatcher
+    public val notifierDispatcher: CoroutineDispatcher
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -246,5 +247,4 @@ public class RealmConfiguration private constructor(
             )
         }
     }
-
 }

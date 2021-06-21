@@ -76,24 +76,24 @@ public abstract class BaseRealm internal constructor(
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
-    internal abstract fun <T: RealmObject> addResultsChangeListener(
+    internal abstract fun <T : RealmObject> addResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable
 
-    internal abstract fun <T: RealmObject> addListChangeListener(
+    internal abstract fun <T : RealmObject> addListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable
 
-    internal abstract fun <T: RealmObject> addObjectChangeListener(
+    internal abstract fun <T : RealmObject> addObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable
 
-    internal abstract fun <T: RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>>
-    internal abstract fun <T: RealmObject> observeList(list: List<T>): Flow<List<T>>
-    internal abstract fun <T: RealmObject> observeObject(obj: T): Flow<T>
+    internal abstract fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>>
+    internal abstract fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>>
+    internal abstract fun <T : RealmObject> observeObject(obj: T): Flow<T>
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have

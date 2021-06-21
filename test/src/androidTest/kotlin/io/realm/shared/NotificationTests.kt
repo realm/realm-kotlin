@@ -64,7 +64,7 @@ class NotificationTests {
     @Test
     fun observe() {
         ClassType.values().forEach {
-            when(it) {
+            when (it) {
                 ClassType.REALM -> observeRealm()
                 ClassType.REALM_RESULTS -> observeRealmResults()
                 ClassType.REALM_LIST -> observeRealmList()
@@ -107,12 +107,14 @@ class NotificationTests {
         @Suppress("JoinDeclarationAndAssignment")
         val listenerJob: AtomicReference<Deferred<Any>?> = AtomicReference(null)
         runBlocking {
-            listenerJob.set(async {
-                realm.objects(Sample::class).observe().collect {
-                    assertEquals(1, it.size)
-                    listenerJob.get()!!.completeTest()
+            listenerJob.set(
+                async {
+                    realm.objects(Sample::class).observe().collect {
+                        assertEquals(1, it.size)
+                        listenerJob.get()!!.completeTest()
+                    }
                 }
-            })
+            )
 
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
@@ -124,7 +126,6 @@ class NotificationTests {
     private fun observeRealm() {
         // FIXME
     }
-
 
 //    fun addChangeListenerResults() = RunLoopThread().run {
 //        realm.objects(Sample::class).addChangeListener {
@@ -139,7 +140,7 @@ class NotificationTests {
 
     @Test
     fun openSameRealmFileWithDifferentDispatchers() {
-        // FIXME: This seems to not work
+        // FIXME This seems to not work
     }
 
     // Verify that the Main dispatcher can be used for both writes and notifications
@@ -154,7 +155,6 @@ class NotificationTests {
     // in Realm Java.
     @Test
     fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
-
     }
 
     // Verify that the special test dispatchers provided by Google also when using Realm.

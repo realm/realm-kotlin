@@ -91,14 +91,14 @@ public fun RealmObject.isValid(): Boolean {
     }
 }
 
-public fun <T: RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
+public fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
     checkNotificationsAvailable()
     val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner
     @Suppress("UNCHECKED_CAST")
     return realm.addObjectChangeListener(this as T, callback)
 }
 
-public fun <T: RealmObject> RealmObject.observe(): Flow<T?> {
+public fun <T : RealmObject> RealmObject.observe(): Flow<T?> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")

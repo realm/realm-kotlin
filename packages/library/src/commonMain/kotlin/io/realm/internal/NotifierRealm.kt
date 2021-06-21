@@ -18,7 +18,7 @@ internal class NotifierRealm : BaseRealm {
     val errorMessage = "Flows are not implemented for Notifier Realms, use the callback API instead."
 
     internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher) :
-            super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
+        super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     override fun <T : RealmObject> addResultsChangeListener(
         results: RealmResults<T>,
