@@ -31,40 +31,45 @@ import kotlin.reflect.KClass
 /**
  * Configuration for log events created by a Realm instance.
  */
-public data class LogConfiguration(
+data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
      */
-    public val level: LogLevel,
+    val level: LogLevel,
 
     /**
      * Any loggers to install. They will receive all log events with a priority equal to or higher than
      * the value defined in [LogConfiguration.level].
      */
-    public val loggers: List<RealmLogger>
+    val loggers: List<RealmLogger>
 )
 
-public class RealmConfiguration private constructor(
+class RealmConfiguration private constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
-    maxNumberOfActiveVersions: Long
+    maxNumberOfActiveVersions: Long,
+    schemaVersion: Long,
+    deleteRealmIfMigrationNeeded: Boolean,
 ) {
 
     // Public properties making up the RealmConfiguration
     // TODO Add KDoc for all of these
-    public val path: String
-    public val name: String
-    public val schema: Set<KClass<out RealmObject>>
-    public val log: LogConfiguration
-    public val maxNumberOfActiveVersions: Long
+    val path: String
+    val name: String
+    val schema: Set<KClass<out RealmObject>>
+    val log: LogConfiguration
+    val maxNumberOfActiveVersions: Long
+    val schemaVersion: Long
+    val deleteRealmIfMigrationNeeded: Boolean
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
+    internal var mediator: Mediator
+
     internal val nativeConfig: NativePointer = RealmInterop.realm_config_new()
-    internal lateinit var mediator: Mediator
 
     init {
         this.path = if (path == null || path.isEmpty()) {
@@ -78,25 +83,34 @@ public class RealmConfiguration private constructor(
         this.mapOfKClassWithCompanion = companionMap
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
+        this.schemaVersion = schemaVersion
+        this.deleteRealmIfMigrationNeeded = deleteRealmIfMigrationNeeded
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
-        RealmInterop.realm_config_set_schema_mode(
-            nativeConfig,
-            SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
-        )
-        RealmInterop.realm_config_set_schema_version(nativeConfig, version = 0) // TODO expose version when handling migration modes
-        val schema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
-        RealmInterop.realm_config_set_schema(nativeConfig, schema)
+
+        when (deleteRealmIfMigrationNeeded) {
+            true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
+            false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
+        }.also { schemaMode ->
+            RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
+        }
+
+        RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
+
+        val nativeSchema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
+
+        RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
         RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal = (
-                mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
-                    ?: error("$clazz not part of this configuration schema")
-                ) as RealmObjectInternal
+                    mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
+                        ?: error("$clazz not part of this configuration schema")
+                    ) as RealmObjectInternal
 
-            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion = mapOfKClassWithCompanion[clazz]
-                ?: error("$clazz not part of this configuration schema")
+            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
+                mapOfKClassWithCompanion[clazz]
+                    ?: error("$clazz not part of this configuration schema")
         }
     }
 
@@ -110,19 +124,34 @@ public class RealmConfiguration private constructor(
      */
     // This constructor is never used at runtime, all calls to it are being rewired by the Realm Compiler Plugin to call
     // the internal secondary constructor with all schema classes mapped to their RealmCompanion.
-    public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>) :
-        this(path, name, mapOf())
+    constructor(
+        path: String? = null,
+        name: String = Realm.DEFAULT_FILE_NAME,
+        schema: Set<KClass<out RealmObject>>,
+        schemaVersion: Long = 0,
+        deleteRealmIfMigrationNeeded: Boolean = false
+    ) : this(path, name, mapOf(), schemaVersion, deleteRealmIfMigrationNeeded)
 
     // Called by the compiler plugin, with a populated companion map
-    internal constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Map<KClass<out RealmObject>, RealmObjectCompanion>) :
-        this(
-            schema,
-            path,
-            name,
-            schema.keys,
-            LogConfiguration(LogLevel.WARN, listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))),
-            Long.MAX_VALUE
-        )
+    internal constructor(
+        path: String? = null,
+        name: String = Realm.DEFAULT_FILE_NAME,
+        schema: Map<KClass<out RealmObject>, RealmObjectCompanion>,
+        schemaVersion: Long = 0,
+        deleteRealmIfMigrationNeeded: Boolean = false
+    ) : this(
+        schema,
+        path,
+        name,
+        schema.keys,
+        LogConfiguration(
+            LogLevel.WARN,
+            listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+        ),
+        Long.MAX_VALUE,
+        schemaVersion,
+        deleteRealmIfMigrationNeeded
+    )
 
     /**
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
@@ -138,11 +167,14 @@ public class RealmConfiguration private constructor(
         private var removeSystemLogger: Boolean = false
         private var userLoggers: List<RealmLogger> = listOf()
         private var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
+        private var deleteRealmIfMigrationNeeded: Boolean = false
+        private var schemaVersion: Long = 0
 
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
         fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes }
-        fun schema(vararg classes: KClass<out RealmObject>) = apply { this.schema = setOf(*classes) }
+        fun schema(vararg classes: KClass<out RealmObject>) =
+            apply { this.schema = setOf(*classes) }
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
@@ -173,10 +205,26 @@ public class RealmConfiguration private constructor(
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
          */
-        fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) = apply {
-            this.logLevel = level
-            this.userLoggers = customLoggers
-        }
+        fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
+            apply {
+                this.logLevel = level
+                this.userLoggers = customLoggers
+            }
+
+        /**
+         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
+         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
+         *
+         * **WARNING!** This will result in loss of data.
+         */
+        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
+
+        /**
+         * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
+         * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
+         */
+        fun schemaVersion(schemaVersion: Long) =
+            apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
 
         /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
@@ -206,8 +254,17 @@ public class RealmConfiguration private constructor(
                 name,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
-                maxNumberOfActiveVersions
+                maxNumberOfActiveVersions,
+                schemaVersion,
+                deleteRealmIfMigrationNeeded
             )
+        }
+
+        private fun validateSchemaVersion(schemaVersion: Long): Long {
+            if (schemaVersion < 0) {
+                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
+            }
+            return schemaVersion
         }
     }
 }
