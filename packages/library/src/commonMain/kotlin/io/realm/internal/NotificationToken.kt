@@ -18,6 +18,7 @@ package io.realm.internal
 
 import io.realm.Cancellable
 import io.realm.interop.NativePointer
+import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
@@ -27,8 +28,7 @@ class NotificationToken<T>(t: T, private val token: NativePointer) : Cancellable
 
     override fun cancel() {
         if (t.value != null) {
-            // FIXME Do we manually need to freeze this?
-//            RealmInterop.realm_release(token)
+            RealmInterop.realm_release(token)
         }
         t.value = null
     }

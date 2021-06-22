@@ -651,8 +651,9 @@ actual object RealmInterop {
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
                 staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    userdata?.asStableRef<Callback>()?.dispose()
-                        ?: error("Notification callback data should never be null")
+                    // FIXME This throws Uncaught Kotlin exception: kotlin.native.IncorrectDereferenceException: illegal attempt to access non-shared <object>@a742f038 from other thread
+//                    userdata?.asStableRef<Callback>()?.dispose()
+//                        ?: error("Notification callback data should never be null")
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
@@ -683,8 +684,9 @@ actual object RealmInterop {
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
                 staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    userdata?.asStableRef<Callback>()?.dispose()
-                        ?: error("Notification callback data should never be null")
+                    // FIXME This throws Uncaught Kotlin exception: kotlin.native.IncorrectDereferenceException: illegal attempt to access non-shared <object>@a742f038 from other thread
+//                    userdata?.asStableRef<Callback>()?.dispose()
+//                        ?: error("Notification callback data should never be null")
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->

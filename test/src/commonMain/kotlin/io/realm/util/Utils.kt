@@ -53,48 +53,14 @@ object Utils {
     }
 }
 
-val testFinishedException = CancellationException("Test is done!")
-
-/**
- * Terminate a job because it is considered "done". This will throw a [CancellationException] so using this function
- * should be paired with [Job.awaitTestComplete] or [Deferred.awaitTestComplete].
- */
-fun CoroutineContext.completeTest() {
-    cancel(testFinishedException)
-}
-
-fun Job.completeTest() {
-    cancel(testFinishedException)
-}
-
-suspend fun Job.awaitTestComplete() {
-    try {
-        join()
-    } catch (ex: CancellationException) {
-        if (ex != testFinishedException) {
-            throw ex
-        }
-    }
-}
-
-suspend fun <T> Deferred<T>.awaitTestComplete() {
-    try {
-        await() /* Ignore return value */
-    } catch (ex: CancellationException) {
-        if (ex != testFinishedException) {
-            throw ex
-        }
-    }
-}
-
 /**
  * Helper method for easily updating a single object. The updated object will be returned.
  * This method control its own write transaction, so cannot be called inside a write transaction
  */
-suspend fun <T : RealmObject> T.write(block: T.() -> Unit): T {
+suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
     val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner as Realm
     return realm.write {
-        val liveObject: T = findLatest(this@write)!!
+        val liveObject: T = findLatest(this@update)!!
         block(liveObject)
         liveObject
     }

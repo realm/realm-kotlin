@@ -18,16 +18,15 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmResults
 import io.realm.internal.singleThreadDispatcher
 import io.realm.observe
 import io.realm.util.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import io.realm.util.Utils.printlntid
-import io.realm.util.awaitTestComplete
-import io.realm.util.completeTest
-import io.realm.util.write
+import io.realm.util.update
 import kotlinx.coroutines.async
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import test.Sample
@@ -36,6 +35,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class NotificationTests {
 
@@ -63,9 +63,20 @@ class NotificationTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
+    private fun testClassTypes(block: (type: ClassType) -> Unit) {
+        ClassType.values().forEach {
+            try {
+                block(it)
+            } catch (ex: Throwable) {
+                println("Test for type failed: $it")
+                throw ex
+            }
+        }
+    }
+
     @Test
     fun observe() {
-        ClassType.values().forEach {
+        testClassTypes {
             when (it) {
                 ClassType.REALM -> observeRealm()
                 ClassType.REALM_RESULTS -> observeRealmResults()
@@ -78,7 +89,84 @@ class NotificationTests {
 
     @Test
     fun cancelObserve() {
-        // FIXME
+        testClassTypes {
+            when (it) {
+                ClassType.REALM -> cancelObserveRealm()
+                ClassType.REALM_RESULTS -> cancelObserveRealmResults()
+                ClassType.REALM_LIST -> cancelObserveRealmList()
+                ClassType.REALM_OBJECT -> cancelObserveRealmObject()
+                else -> throw NotImplementedError(it.toString())
+            }
+        }
+    }
+
+    private fun cancelObserveRealmObject() = runBlocking {
+        val obj: Sample = realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        val c1 = Channel<Sample?>(1)
+        val c2 = Channel<Sample?>(1)
+        val observer1 = async {
+            obj.observe().collect {
+                c1.trySend(it)
+            }
+        }
+        val observer2 = async {
+            obj.observe().collect {
+                c2.trySend(it)
+            }
+        }
+        obj.update {
+            stringField = "Bar"
+        }
+        assertEquals("Bar", c1.receive()!!.stringField)
+        assertEquals("Bar", c2.receive()!!.stringField)
+        observer1.cancel()
+        obj.update {
+            stringField = "Baz"
+        }
+        assertEquals("Baz", c2.receive()!!.stringField)
+        assertTrue(c1.isEmpty)
+        observer2.cancel()
+        c1.close()
+        c2.close()
+    }
+
+    private fun cancelObserveRealmList() {
+        // FIXME Wait for RealmList support
+    }
+
+    private fun cancelObserveRealmResults() = runBlocking {
+        val c1 = Channel<RealmResults<Sample>>(1)
+        val c2 = Channel<RealmResults<Sample>>(1)
+        val observer1 = async {
+            realm.objects(Sample::class).observe().collect {
+                c1.trySend(it)
+            }
+        }
+        val observer2 = async {
+            realm.objects(Sample::class).observe().collect {
+                c2.trySend(it)
+            }
+        }
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "Bar"})
+        }
+        assertEquals(1, c1.receive().size)
+        assertEquals(1, c2.receive().size)
+        observer1.cancel()
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "Baz"})
+        }
+        assertEquals(2, c2.receive().size)
+        assertTrue(c1.isEmpty)
+        observer2.cancel()
+        c1.close()
+        c2.close()
+    }
+
+    private fun cancelObserveRealm() {
+        // FIXME Wait for Realm observer support
     }
 
     @Test
@@ -97,20 +185,26 @@ class NotificationTests {
     }
 
     private fun observeRealmObject() = runBlocking {
+        val c = Channel<Sample?>(1)
         val obj: Sample = realm.write {
             copyToRealm(Sample().apply { stringField = "Foo" })
         }
-        val listener = async {
+        val observer = async {
             obj.observe().collect {
-                if (it?.stringField == "Bar") {
-                    currentCoroutineContext().completeTest()
-                }
+                c.trySend(it)
             }
         }
-        obj.write {
+        assertEquals("Foo", c.receive()!!.stringField)
+        obj.update {
             stringField = "Bar"
         }
-        listener.awaitTestComplete()
+        assertEquals("Bar", c.receive()!!.stringField)
+        obj.update {
+            stringField = "Baz"
+        }
+        assertEquals("Baz", c.receive()!!.stringField)
+        observer.cancel()
+        c.close()
     }
 
     private fun observeRealmList() {
@@ -118,32 +212,23 @@ class NotificationTests {
     }
 
     private fun observeRealmResults() = runBlocking {
-        val listenerJob = async {
+        val c = Channel<Int>(1)
+        val observer = async {
             realm.objects(Sample::class).observe().collect {
-                assertEquals(1, it.size)
-                currentCoroutineContext().completeTest()
+                c.trySend(it.size)
             }
         }
         realm.write {
             copyToRealm(Sample().apply { stringField = "Foo" })
         }
-        listenerJob.awaitTestComplete()
+        assertEquals(1, c.receive())
+        observer.cancel()
+        c.close()
     }
 
     private fun observeRealm() {
         // FIXME Wait for a Global change listener to become available
     }
-
-//    fun addChangeListenerResults() = RunLoopThread().run {
-//        realm.objects(Sample::class).addChangeListener {
-//            assertEquals(1, it.size)
-//            terminate()
-//        }
-//
-//        realm.writeBlocking {
-//            copyToRealm(Sample())
-//        }
-//    }
 
     @Test
     fun openSameRealmFileWithDifferentDispatchers() {
@@ -162,6 +247,7 @@ class NotificationTests {
     // in Realm Java.
     @Test
     fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
+        // FIXME
     }
 
     // Verify that the special test dispatchers provided by Google also when using Realm.
@@ -191,4 +277,5 @@ class NotificationTests {
             writer2.write { copyToRealm(Sample()) }
         }
     }
+
 }

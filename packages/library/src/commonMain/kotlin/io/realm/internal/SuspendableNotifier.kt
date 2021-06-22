@@ -11,11 +11,12 @@ import io.realm.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -87,20 +88,30 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
+                ensureActive()
                 val newToken = addResultsChangedListener(results) { frozenResults ->
                     // Realm should already have been updated with the latest version
                     // So `owner` should as a minimum be at the same version as the notification Realm.
                     val result = trySend(frozenResults)
-                    if (!result.isSuccess) {
-                        // FIXME What to do if this fails?
-                        throw IllegalStateException("Notification could not be handled: $result")
-                    }
+                    checkResult(result)
                 }
                 token.value = newToken
             }
             awaitClose {
                 token.value.cancel()
             }
+        }
+    }
+
+    // Verify that notifications emitted to Streams are handled in an uniform manner
+    private fun checkResult(result: ChannelResult<Unit>) {
+        if (result.isClosed) {
+            // If the Flow was closed, we assume it is on purpose, so avoid raising an exception.
+            return
+        }
+        if (!result.isSuccess) {
+            // TODO Is there a better way to handle this?
+            throw IllegalStateException("Notification could not be handled: $result")
         }
     }
 
@@ -136,8 +147,10 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
+                ensureActive()
                 token.value = addObjectChangedListener(obj) { frozenObj ->
-                    trySend(frozenObj)
+                    val result = trySend(frozenObj)
+                    checkResult(result)
                 }
             }
             awaitClose {

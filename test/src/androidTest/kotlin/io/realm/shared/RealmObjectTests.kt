@@ -106,6 +106,12 @@ class RealmObjectTests : RealmLifeCycleTests {
             unmanagedParent.isFrozen()
         }
     }
+    
+    
+    @Test
+    fun observeWhenObjectIsDeleted() {
+        // FIXME
+    }
 
     override fun isFrozen_throwsIfRealmIsClosed() {
         realm.close()
@@ -119,4 +125,5 @@ class RealmObjectTests : RealmLifeCycleTests {
     override fun isClosed() {
         TODO("Not yet implemented")
     }
+    
 }
