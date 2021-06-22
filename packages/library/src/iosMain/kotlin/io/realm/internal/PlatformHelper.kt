@@ -16,13 +16,13 @@
 package io.realm.internal
 
 import io.realm.log.RealmLogger
-import kotlin.native.concurrent.ensureNeverFrozen
-import kotlin.native.concurrent.freeze
-import kotlin.native.concurrent.isFrozen
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
+import kotlin.native.concurrent.ensureNeverFrozen
+import kotlin.native.concurrent.freeze
+import kotlin.native.concurrent.isFrozen
 
 actual object PlatformHelper {
     actual fun appFilesDirectory(): String {

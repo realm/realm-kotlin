@@ -35,4 +35,3 @@ actual val <T> T.isFrozen: Boolean
     get() = this.isFrozen
 
 actual fun Any.ensureNeverFrozen() = this.ensureNeverFrozen()
-

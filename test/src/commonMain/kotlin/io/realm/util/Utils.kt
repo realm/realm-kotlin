@@ -21,11 +21,6 @@ import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 

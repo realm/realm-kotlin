@@ -150,13 +150,13 @@ class NotificationTests {
             }
         }
         realm.write {
-            copyToRealm(Sample().apply { stringField = "Bar"})
+            copyToRealm(Sample().apply { stringField = "Bar" })
         }
         assertEquals(1, c1.receive().size)
         assertEquals(1, c2.receive().size)
         observer1.cancel()
         realm.write {
-            copyToRealm(Sample().apply { stringField = "Baz"})
+            copyToRealm(Sample().apply { stringField = "Baz" })
         }
         assertEquals(2, c2.receive().size)
         assertTrue(c1.isEmpty)
@@ -277,5 +277,4 @@ class NotificationTests {
             writer2.write { copyToRealm(Sample()) }
         }
     }
-
 }
