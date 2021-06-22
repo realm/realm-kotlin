@@ -25,3 +25,5 @@ actual object PlatformHelper {
 
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
 }
+
+actual typealias WeakReference<T> = kotlin.native.ref.WeakReference<T>

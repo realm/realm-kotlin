@@ -17,9 +17,12 @@ package io.realm
 
 import io.realm.internal.RealmReference
 import io.realm.internal.SuspendableWriter
+import io.realm.internal.WeakReference
 import io.realm.internal.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -30,8 +33,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     private val writer: SuspendableWriter = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
 
-    private var updateableRealm: kotlinx.atomicfu.AtomicRef<RealmReference> =
-        kotlinx.atomicfu.atomic<RealmReference>(RealmReference(this, dbPointer))
+    private var updateableRealm: AtomicRef<RealmReference> =
+        atomic(RealmReference(this, dbPointer))
+
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
      *
@@ -46,6 +50,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             updateableRealm!!.value = value
         }
 
+    internal val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> =
+        atomic(mutableSetOf())
+
     companion object {
         /**
          * Default name for Realm files unless overridden by [RealmConfiguration.Builder.name].
@@ -58,12 +65,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         public const val DEFAULT_LOG_TAG = "REALM"
 
         fun open(realmConfiguration: RealmConfiguration): Realm {
-            // TODO API-INTERNAL
-            //  IN Android use lazy property delegation init to load the shared library use the
-            //  function call (lazy init to do any preprocessing before starting Realm eg: log level etc)
-            //  or implement an init method which is a No-OP in iOS but in Android it load the shared library
-            val realm =
-                Realm(realmConfiguration, RealmInterop.realm_open(realmConfiguration.nativeConfig))
+            // TODO Find a cleaner way to get the initial frozen instance
+            val liveRealm = RealmInterop.realm_open(realmConfiguration.nativeConfig)
+            val frozenRealm = RealmInterop.realm_freeze(liveRealm)
+            RealmInterop.realm_close(liveRealm)
+            val realm = Realm(realmConfiguration, frozenRealm)
             realm.log.info("Opened Realm: ${realmConfiguration.path}")
             return realm
         }
@@ -134,9 +140,23 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
         realmPointerMutex.withLock {
             log.debug("Updating Realm version: $version -> $newVersion")
-            if (newVersion >= version) {
-                realmReference = RealmReference(this, newRealm)
+            val newReference = RealmReference(this, newRealm)
+            val intermediateReference = if (newVersion >= version) {
+                val version = Pair(realmReference.dbPointer, WeakReference(realmReference))
+                realmReference = newReference
+                version
+            } else {
+                Pair(newRealm, WeakReference(newReference))
             }
+            // Close references that are no longer referenced
+            val unusedVersions =
+                intermediateReferences.value.filter { (_, ref) -> ref.get() == null }
+            unusedVersions.map { (pointer, _) ->
+                log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
+                RealmInterop.realm_close(pointer)
+            }
+            intermediateReferences.value =
+                intermediateReferences.value.plus(intermediateReference).subtract(unusedVersions)
         }
     }
 
@@ -157,8 +177,18 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
         //  writer thread and just close the realm in writer.close()
         writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
-        writer.close()
-        super.close()
+        runBlocking {
+            realmPointerMutex.withLock {
+                writer.close()
+                super.close()
+                intermediateReferences.value.forEach { (pointer, _) ->
+                    log.debug(
+                        "Closing intermediated version: ${RealmInterop.realm_get_version_id(pointer)}"
+                    )
+                    RealmInterop.realm_close(pointer)
+                }
+            }
+        }
         // TODO There is currently nothing that tears down the dispatcher
     }
 }

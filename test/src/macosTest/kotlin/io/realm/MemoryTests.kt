@@ -19,6 +19,7 @@ package io.realm
 
 import io.realm.util.PlatformUtils.createTempDir
 import io.realm.util.PlatformUtils.deleteTempDir
+import io.realm.util.PlatformUtils.triggerGC
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
@@ -35,7 +36,6 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@Ignore // Need to clean up intermediate versions
 class MemoryTests {
 
     lateinit var tmpDir: String
@@ -84,7 +84,7 @@ class MemoryTests {
         // After releasing all the 'realm_object_create' reference the Realm should be closed and the
         // no memory mapped file is allocated in the process
         referenceHolder.clear()
-        GC.collect()
+        triggerGC()
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process references
         assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "Freeing the references should close the Realm so no memory mapped allocation should be present")
     }
@@ -117,7 +117,7 @@ class MemoryTests {
             realm.close() // force closing will free the native memory even though we still have reference to realm_object open.
         }()
 
-        GC.collect()
+        triggerGC()
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
         assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "we should not have any mmap allocations")
     }
