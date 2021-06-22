@@ -29,7 +29,6 @@ import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
 import test.Sample
-import kotlin.native.internal.GC
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

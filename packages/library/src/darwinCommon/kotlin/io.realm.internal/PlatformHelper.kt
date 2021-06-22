@@ -46,3 +46,5 @@ actual fun threadId(): ULong {
         return tidVar.value
     }
 }
+
+actual typealias WeakReference<T> = kotlin.native.ref.WeakReference<T>

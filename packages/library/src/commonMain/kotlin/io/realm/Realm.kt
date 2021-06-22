@@ -33,7 +33,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     private val writer: SuspendableWriter = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
 
-    private var updateableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
+    private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -43,10 +43,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     internal override var realmReference: RealmReference
         get() {
-            return updateableRealm.value
+            return updatableRealm.value
         }
         set(value) {
-            updateableRealm!!.value = value
+            updatableRealm!!.value = value
         }
 
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
