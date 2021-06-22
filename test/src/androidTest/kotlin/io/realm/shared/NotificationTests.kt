@@ -26,6 +26,7 @@ import io.realm.util.Utils.createRandomString
 import io.realm.util.Utils.printlntid
 import io.realm.util.update
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
@@ -35,6 +36,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class NotificationTests {
@@ -87,6 +90,7 @@ class NotificationTests {
         }
     }
 
+    // Verify that a flow can be cancelled
     @Test
     fun cancelObserve() {
         testClassTypes {
@@ -99,6 +103,128 @@ class NotificationTests {
             }
         }
     }
+
+    // Verify that the initial element in a Flow is an update. We don't emit
+    // the original state.
+    @Test
+    fun initialElement() {
+        testClassTypes {
+            when (it) {
+                ClassType.REALM -> initialElementRealm()
+                ClassType.REALM_RESULTS -> initialElementRealmResults()
+                ClassType.REALM_LIST -> initialElementRealmList()
+                ClassType.REALM_OBJECT -> initialElementRealmObject()
+                else -> throw NotImplementedError(it.toString())
+            }
+        }
+    }
+
+    private fun initialElementRealm() {
+        // FIXME Waiting for Realm change listener support
+    }
+
+    private fun initialElementRealmResults() = runBlocking {
+        val c = Channel<RealmResults<Sample>>(1)
+        val observer = async {
+            realm.objects(Sample::class).observe().collect {
+                c.trySend(it)
+            }
+        }
+        val initialElement: RealmResults<Sample> = c.receive()
+        assertEquals(0, initialElement.size)
+        observer.cancel()
+        c.close()
+    }
+
+    private fun initialElementRealmObject() = runBlocking {
+        val c = Channel<Sample?>(1)
+        val obj = realm.write {
+            copyToRealm(Sample().apply {
+                stringField = "Foo"
+            })
+        }
+        val observer = async {
+            obj.observe().collect {
+                c.trySend(it)
+            }
+        }
+        assertEquals("Foo", c.receive()!!.stringField)
+        observer.cancel()
+        c.close()
+    }
+
+    private fun initialElementRealmList() {
+        // FIXME Waiting for RealmList support
+    }
+
+    // Verify that `null` is emitted and the Flow is closed whenever the object
+    // being observed is deleted.
+    @Test
+    fun deleteObservable() {
+        testClassTypes {
+            when (it) {
+                ClassType.REALM -> { /* Realms cannot be deleted, ignore */ }
+                ClassType.REALM_RESULTS -> deleteObservableRealmResults()
+                ClassType.REALM_LIST -> deleteObservableRealmList()
+                ClassType.REALM_OBJECT -> deleteObservableRealmObject()
+                else -> throw NotImplementedError(it.toString())
+            }
+        }
+    }
+
+    private fun deleteObservableRealmResults() = runBlocking {
+        val c = Channel<RealmResults<Sample>>(1)
+        realm.write {
+            copyToRealm(Sample().apply {
+                stringField = "Foo"
+            })
+        }
+        val observer = async {
+            realm.objects(Sample::class).observe().collect {
+                c.trySend(it)
+            }
+        }
+        assertEquals(1, c.receive().size)
+        realm.write {
+            delete(objects(Sample::class).first())
+        }
+        assertEquals(0, c.receive().size)
+        observer.cancel()
+        c.close()
+    }
+
+    private fun deleteObservableRealmList() {
+        // FIXME Waiting for list observer tests
+    }
+
+    private fun deleteObservableRealmObject() = runBlocking {
+        val c = Channel<Sample?>(1)
+        val obj: Sample = realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        val observer = async {
+            obj.observe().collect {
+                c.trySend(it)
+            }
+            // Emit sentinel value to signal that flow completed
+            c.send(Sample())
+        }
+        assertNotNull(c.receive())
+        realm.write {
+            delete(findLatest(obj)!!)
+        }
+        assertNull(c.receive()) // Null is sent when object is deleted
+        assertEquals(Sample().stringField, c.receive()!!.stringField) // Test for sentinel value
+        observer.cancel()
+        c.close()
+    }
+
+    // Verify that closing the Realm while inside a flow throws an exception (I think)
+    @Test
+    fun closeRealmInsideFlowThrows() {
+        // FIXME
+    }
+
 
     private fun cancelObserveRealmObject() = runBlocking {
         val obj: Sample = realm.write {
@@ -212,7 +338,7 @@ class NotificationTests {
     }
 
     private fun observeRealmResults() = runBlocking {
-        val c = Channel<Int>(1)
+        val c = Channel<Int>(capacity = 1)
         val observer = async {
             realm.objects(Sample::class).observe().collect {
                 c.trySend(it.size)

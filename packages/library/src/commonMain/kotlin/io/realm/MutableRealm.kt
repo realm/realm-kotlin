@@ -134,6 +134,7 @@ class MutableRealm : BaseRealm {
      * @throws IllegalArgumentException if the object is not managed by Realm.
      */
     fun <T : RealmObject> delete(obj: T) {
+        // TODO: It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
         val internalObject = obj as RealmObjectInternal
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
             ?: throw IllegalArgumentException("An unmanaged unmanaged object cannot be deleted from the Realm.")
@@ -148,11 +149,11 @@ class MutableRealm : BaseRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>> {
+    override fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?> {
         throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> observeObject(obj: T): Flow<T> {
+    override fun <T : RealmObject> observeObject(obj: T): Flow<T?> {
         throw IllegalStateException("Changes to RealmObject cannot be observed during a write.")
     }
 

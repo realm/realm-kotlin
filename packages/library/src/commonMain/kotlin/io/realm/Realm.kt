@@ -183,11 +183,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         return notifier.resultsChanged(results)
     }
 
-    override fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>> {
+    override fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?> {
         return notifier.listChanged(list)
     }
 
-    override fun <T : RealmObject> observeObject(obj: T): Flow<T> {
+    override fun <T : RealmObject> observeObject(obj: T): Flow<T?> {
         return notifier.objectChanged(obj)
     }
 

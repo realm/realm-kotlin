@@ -39,11 +39,11 @@ internal class NotifierRealm : BaseRealm {
         throw UnsupportedOperationException(errorMessage)
     }
 
-    override fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>> {
+    override fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?> {
         throw UnsupportedOperationException(errorMessage)
     }
 
-    override fun <T : RealmObject> observeObject(obj: T): Flow<T> {
+    override fun <T : RealmObject> observeObject(obj: T): Flow<T?> {
         throw UnsupportedOperationException(errorMessage)
     }
 }

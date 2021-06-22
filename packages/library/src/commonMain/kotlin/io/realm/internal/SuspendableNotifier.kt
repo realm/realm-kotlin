@@ -141,9 +141,9 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     }
 
     /**
-     * Listen to changes to a RealmObject through a [Flow]. If the object is deleted, the flow will complete.
+     * Listen to changes to a RealmObject through a [Flow]. If the object is deleted, null is emitted and the flow will complete.
      */
-    fun <T : RealmObject> objectChanged(obj: T): Flow<T> {
+    fun <T : RealmObject> objectChanged(obj: T): Flow<T?> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
@@ -151,6 +151,9 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
                 token.value = addObjectChangedListener(obj) { frozenObj ->
                     val result = trySend(frozenObj)
                     checkResult(result)
+                    if (frozenObj == null) {
+                        close()
+                    }
                 }
             }
             awaitClose {
@@ -165,7 +168,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
      * Listen to changes to a RealmObject through a change listener. The callback will happen
      * on the configured [SuspendableNotifier.dispatcher] thread.
      */
-    fun <T : RealmObject> addObjectChangedListener(obj: T, callback: Callback<T>): Cancellable {
+    fun <T : RealmObject> addObjectChangedListener(obj: T, callback: Callback<T?>): Cancellable {
         val liveObject: RealmObjectInternal? = (obj as RealmObjectInternal).thaw(realm.realmReference.owner) as RealmObjectInternal?
         if (liveObject == null || !liveObject.isValid()) {
             return NO_OP_NOTIFICATION_TOKEN
@@ -174,10 +177,13 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
             liveObject.`$realm$ObjectPointer`!!,
             object : io.realm.interop.Callback {
                 override fun onChange(objectChanges: NativePointer) {
-                    // TODO What happens when the object is deleted?
                     // Realm should already have been updated with the latest version
                     // So `owner` should as a minimum be at the same version as the notification Realm.
-                    callback.onChange(liveObject.freeze(owner.realmReference))
+                    if (!liveObject.isValid()) {
+                        callback.onChange(null)
+                    } else {
+                        callback.onChange(liveObject.freeze(owner.realmReference))
+                    }
                 }
             }
         )
@@ -187,7 +193,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     /**
      * Listen to changes to a RealmList through a [Flow]. If the list is deleted the flow will complete.
      */
-    fun <T : RealmObject> listChanged(list: List<T>): Flow<List<T>> {
+    fun <T : RealmObject> listChanged(list: List<T?>): Flow<List<T?>?> {
         TODO("Implement and convert method to use RealmList when available")
     }
 

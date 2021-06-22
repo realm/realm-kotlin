@@ -92,8 +92,8 @@ public abstract class BaseRealm internal constructor(
     ): Cancellable
 
     internal abstract fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>>
-    internal abstract fun <T : RealmObject> observeList(list: List<T>): Flow<List<T>>
-    internal abstract fun <T : RealmObject> observeObject(obj: T): Flow<T>
+    internal abstract fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?>
+    internal abstract fun <T : RealmObject> observeObject(obj: T): Flow<T?>
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have
