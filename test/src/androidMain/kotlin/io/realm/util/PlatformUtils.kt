@@ -43,9 +43,10 @@ actual object PlatformUtils {
 
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()
 
+    // Empiric approach to trigger GC
     @Suppress("ExplicitGarbageCollectionCall")
     actual fun triggerGC() {
-        for (i in 1..2) {
+        for (i in 1..30) {
             allocGarbage(0)
             SystemClock.sleep(100)
             System.gc()

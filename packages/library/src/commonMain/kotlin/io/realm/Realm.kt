@@ -33,8 +33,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     private val writer: SuspendableWriter = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
 
-    private var updateableRealm: AtomicRef<RealmReference> =
-        atomic(RealmReference(this, dbPointer))
+    private var updateableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -50,6 +49,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             updateableRealm!!.value = value
         }
 
+    // Set of currently open realms. Storing the native pointer explicitly to enable us to close
+    // the realm when the RealmReference is no longer referenced anymore.
     internal val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> =
         atomic(mutableSetOf())
 
@@ -137,27 +138,33 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         }
     }
 
-    private suspend fun updateRealmPointer(newRealm: NativePointer, newVersion: VersionId) {
+    private suspend fun updateRealmPointer(newPointer: NativePointer, newVersion: VersionId) {
         realmPointerMutex.withLock {
             log.debug("Updating Realm version: $version -> $newVersion")
-            val newReference = RealmReference(this, newRealm)
-            val intermediateReference = if (newVersion >= version) {
-                val version = Pair(realmReference.dbPointer, WeakReference(realmReference))
-                realmReference = newReference
-                version
+            val newRealmReference = RealmReference(this, newPointer)
+            // If we advance to a newer version then we should keep track of the preceeding one,
+            // otherwise just track the new one directly.
+            val untrackedReference = if (newVersion >= version) {
+                val previousRealmReference = realmReference
+                realmReference = newRealmReference
+                previousRealmReference
             } else {
-                Pair(newRealm, WeakReference(newReference))
+                newRealmReference
             }
-            // Close references that are no longer referenced
-            val unusedVersions =
-                intermediateReferences.value.filter { (_, ref) -> ref.get() == null }
-            unusedVersions.map { (pointer, _) ->
-                log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
-                RealmInterop.realm_close(pointer)
-            }
-            intermediateReferences.value =
-                intermediateReferences.value.plus(intermediateReference).subtract(unusedVersions)
+            trackNewAndCloseExpiredReferences(untrackedReference)
         }
+    }
+
+    // Must only be called with realmPointerMutex locked
+    private fun trackNewAndCloseExpiredReferences(realmReference: RealmReference) {
+        val expiredReferences = intermediateReferences.value.filter { (_, ref) -> ref.get() == null }
+        expiredReferences.map { (pointer, _) ->
+            log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
+            RealmInterop.realm_close(pointer)
+        }
+        intermediateReferences.value = intermediateReferences.value
+            .plus(Pair(realmReference.dbPointer, WeakReference(realmReference)))
+            .subtract(expiredReferences)
     }
 
     /**
