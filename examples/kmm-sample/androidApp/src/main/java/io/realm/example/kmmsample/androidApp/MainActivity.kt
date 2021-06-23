@@ -6,9 +6,11 @@ import android.text.TextWatcher
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import io.realm.Cancellable
+import androidx.lifecycle.lifecycleScope
 import io.realm.example.kmmsample.Calculator
 import io.realm.example.kmmsample.Greeting
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 fun greet(): String {
     return Greeting().greeting()
@@ -17,7 +19,6 @@ fun greet(): String {
 class MainActivity : AppCompatActivity() {
 
     private lateinit var countTV: TextView
-    private lateinit var registration: Cancellable
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,17 +53,12 @@ class MainActivity : AppCompatActivity() {
 
         numATV.addTextChangedListener(textWatcher)
         numBTV.addTextChangedListener(textWatcher)
-    }
 
-    override fun onResume() {
-        super.onResume()
-        registration = Calculator.listen {
-            countTV.text = "History count: ${Calculator.history().size}"
+        lifecycleScope.launch {
+            Calculator.listen().collect {
+                countTV.text = "History count: ${Calculator.history().size}"
+            }
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        registration.cancel()
-    }
 }
