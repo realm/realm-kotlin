@@ -90,6 +90,8 @@ class MutableRealm : BaseRealm {
      *
      * @param obj Realm object to look up. Its latest state will be returned. If the object
      * has been deleted, `null` will be returned.
+     *
+     * @throws IllegalArgumentException if called on an unmanaged object.
      */
     public fun <T : RealmObject> findLatest(obj: T?): T? {
         return if (obj == null || !obj.isValid()) {
