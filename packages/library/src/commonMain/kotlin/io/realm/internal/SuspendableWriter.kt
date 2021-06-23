@@ -141,7 +141,10 @@ class SuspendableWriter(
             //  conditions/crashed. Maybe signal this faster by canceling the users scope of the
             //  transaction, etc.
             shouldClose.value = true
-            transactionMutex.withLock {
+            // We have verified that we are not on the dispatcher thread, so safe to schedule this
+            // which will itself prevent other transactions to start as the dispatcher can only run
+            // a single job at a time
+            withContext(dispatcher) {
                 realm.close()
             }
         }

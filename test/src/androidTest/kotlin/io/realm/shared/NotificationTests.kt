@@ -190,10 +190,6 @@ class NotificationTests {
 
     // Sanity check to ensure that this doesn't cause crashes
     @Test
-    @Ignore
-    // I think there is some kind of resource issue when combining too many realms/schedulers. If
-    // this test is enabled execution of all test sometimes fails. Something similarly happens if
-    // the public realm_open in Realm.open is extended to take a dispatcher to setup notifications.
     fun multipleSchedulersOnSameThread() {
         printlntid("main")
         val baseRealm = Realm.open(configuration)
@@ -208,5 +204,8 @@ class NotificationTests {
             writer1.write { copyToRealm(Sample()) }
             writer2.write { copyToRealm(Sample()) }
         }
+        writer1.close()
+        writer2.close()
+        baseRealm.close()
     }
 }
