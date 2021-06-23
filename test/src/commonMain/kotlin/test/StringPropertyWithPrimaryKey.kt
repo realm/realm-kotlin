@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package test
 
+import io.realm.PrimaryKey
 import io.realm.RealmObject
-import io.realm.isValid
+import kotlin.random.Random
+import kotlin.random.nextULong
 
-/**
- * Internal interface for Realm objects.
- *
- * The interface is added by the compiler plugin to all [RealmObject] classes to have an interface
- * exposing our internal API and compiler plugin additions without leaking it to the public
- * [RealmObject].
- */
-interface RealmObjectInternal : RealmObject, io.realm.interop.RealmObjectInterop
-
-fun RealmObjectInternal.checkValid() {
-    if (!this.isValid()) {
-        throw IllegalStateException("Cannot perform operation on an invalid/deleted object")
-    }
+class StringPropertyWithPrimaryKey : RealmObject {
+    @PrimaryKey
+    var id: String = Random.nextULong().toString()
+    var value: String? = null
 }

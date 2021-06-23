@@ -82,7 +82,7 @@ expect object RealmInterop {
     fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
     fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer
-    fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer
+    fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer?
 
     fun realm_object_as_link(obj: NativePointer): Link
 

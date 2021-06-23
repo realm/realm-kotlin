@@ -16,7 +16,7 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.unmanage
+import io.realm.internal.thaw
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,9 +34,14 @@ class MutableRealm : BaseRealm {
     internal companion object {
         internal fun <T : RealmObject> delete(obj: T) {
             val internalObject = obj as RealmObjectInternal
+            checkObjectValid(internalObject)
             internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-                ?: throw IllegalArgumentException("Cannot delete unmanaged object")
-            internalObject.unmanage()
+        }
+
+        private fun checkObjectValid(obj: RealmObjectInternal) {
+            if (!obj.isValid()) {
+                throw IllegalArgumentException("Cannot perform operation on an invalid/deleted object")
+            }
         }
     }
 
@@ -71,6 +76,37 @@ class MutableRealm : BaseRealm {
 
     internal fun isInTransaction(): Boolean {
         return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
+    }
+
+    /**
+     * Realm write transactions always operate on the latest version of data. This method
+     * makes it possible to easily find the latest version of any frozen Realm Object and
+     * return a copy of it that can be modified while inside the write block.
+     *
+     * *Note:* This object is not readable outside the write block unless it has been explicitly
+     * returned from the write.
+     *
+     * @param obj Realm object to look up. Its latest state will be returned. If the object
+     * has been deleted, `null` will be returned.
+     */
+    public fun <T : RealmObject> findLatest(obj: T?): T? {
+        return if (obj == null || !obj.isValid()) {
+            null
+        } else if (!obj.isManaged()) {
+            throw IllegalArgumentException(
+                "Unmanaged objects must be part of the Realm, before " +
+                    "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
+                    "a managed object."
+            )
+        } else if (!obj.isFrozen()) {
+            // If already valid, managed and not frozen, it must be live, and thus already
+            // up to date, just return input
+            obj
+        } else {
+            val realmReference1 = this.realmReference
+            val liveRealm = realmReference1.owner
+            (obj as RealmObjectInternal).thaw(liveRealm)
+        }
     }
 
     /**
@@ -113,9 +149,8 @@ class MutableRealm : BaseRealm {
      */
     fun <T : RealmObject> delete(obj: T) {
         val internalObject = obj as RealmObjectInternal
+        checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-            ?: throw IllegalArgumentException("An unmanaged unmanaged object cannot be deleted from the Realm.")
-        internalObject.unmanage()
     }
 
     // FIXME Consider adding a delete-all along with query support

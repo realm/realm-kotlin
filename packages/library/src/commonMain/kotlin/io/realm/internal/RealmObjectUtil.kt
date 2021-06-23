@@ -25,7 +25,12 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmObjectInternal.manage(realm: RealmReference, mediator: Mediator, type: KClass<T>, objectPointer: NativePointer): T {
+fun <T : RealmObject> RealmObjectInternal.manage(
+    realm: RealmReference,
+    mediator: Mediator,
+    type: KClass<T>,
+    objectPointer: NativePointer
+): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
@@ -38,7 +43,12 @@ fun <T : RealmObject> RealmObjectInternal.manage(realm: RealmReference, mediator
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmObjectInternal.link(realm: RealmReference, mediator: Mediator, type: KClass<T>, link: Link): T {
+fun <T : RealmObject> RealmObjectInternal.link(
+    realm: RealmReference,
+    mediator: Mediator,
+    type: KClass<T>,
+    link: Link
+): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
     this.`$realm$TableName` = type.simpleName
@@ -84,15 +94,24 @@ fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T {
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T? {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     val dbPointer = liveRealm.realmReference.dbPointer
-    return managedModel.manage(
-        liveRealm.realmReference,
-        `$realm$Mediator` as Mediator,
-        type,
-        RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)
-    )
+    // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
+    //  catching that and returning null
+    @Suppress("TooGenericExceptionCaught")
+    try {
+        return RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)!!.let { thawedObject ->
+            managedModel.manage(
+                liveRealm.realmReference,
+                `$realm$Mediator` as Mediator,
+                type,
+                thawedObject
+            )
+        }
+    } catch (e: Exception) {
+        return null
+    }
 }
