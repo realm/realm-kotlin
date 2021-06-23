@@ -36,11 +36,17 @@ repositories {
 //  somehow derive a `isMainHost` property as proposed in
 //  https://kotlinlang.org/docs/reference/mpp-publish-lib.html
 //  Currently just adding the common darwin parts to macos-target.
-val idea = System.getProperty("idea.active") == "true"
+val idea: Boolean = System.getProperty("idea.active") == "true"
+
+// CONFIGURATION is an env variable set by XCode or could be passed to the gradle task to force a certain build type
+//               * Example: to force build a release
+//               realm-kotlin/packages> CONFIGURATION=Release ./gradlew capiIosArm64
+//               * to force build a debug (default BTW) use
+//               realm-kotlin/packages> CONFIGURATION=Debug ./gradlew capiIosArm64
+val isReleaseBuild: Boolean = (System.getenv("CONFIGURATION") ?: "DEBUG").equals("Release", ignoreCase = true)
 
 val corePath = "external/core"
-val relativeCorePath = "../$corePath"
-val cinteropCorePath = "$rootDir/$corePath"
+val absoluteCorePath = "$rootDir/$corePath"
 
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
@@ -60,12 +66,6 @@ android {
                 // "val test by getting" instead
                 // androidTest.java.srcDirs += "src/androidTest/kotlin"
             }
-        }
-    }
-    buildTypes {
-        val release by getting {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     defaultConfig {
@@ -88,24 +88,53 @@ android {
     }
 }
 
-val nativeLibraryIncludesMacosUniversal = listOf(
-    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
-    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/librealm-dbg.a",
-    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/parser/librealm-parser-dbg.a",
-    "-include-binary", "$cinteropCorePath/capi_macos_universal/src/realm/object-store/librealm-object-store-dbg.a"
+val nativeLibraryIncludesMacosUniversalRelease = listOf(
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static.a",
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal/src/realm/librealm.a",
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal/src/realm/parser/librealm-parser.a",
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal/src/realm/object-store/librealm-object-store.a"
 )
-// TODO remove the debug suffix (-dbg) when switching to use release
-val nativeLibraryIncludesIosArm64 = listOf(
-    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-ffi-static-dbg.a",
-    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-dbg.a",
-    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-parser-dbg.a",
-    "-include-binary", "$cinteropCorePath/build-capi_ios_Arm64/lib/librealm-object-store-dbg.a"
+val nativeLibraryIncludesMacosUniversalDebug = listOf(
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/librealm-dbg.a",
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/parser/librealm-parser-dbg.a",
+    "-include-binary",
+    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/object-store/librealm-object-store-dbg.a"
 )
-val nativeLibraryIncludesIosSimulatorUniversal = listOf(
-    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-ffi-static-dbg.a",
-    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-dbg.a",
-    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-parser-dbg.a",
-    "-include-binary", "$cinteropCorePath/build-simulator_universal/lib/librealm-object-store-dbg.a"
+val nativeLibraryIncludesIosArm64Debug = listOf(
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-ffi-static-dbg.a",
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-dbg.a",
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-parser-dbg.a",
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-object-store-dbg.a"
+)
+val nativeLibraryIncludesIosArm64Release = listOf(
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm-ffi-static.a",
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm.a",
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm-parser.a",
+    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm-object-store.a"
+)
+val nativeLibraryIncludesIosSimulatorUniversalRelease = listOf(
+    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm-ffi-static.a",
+    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm.a",
+    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm-parser.a",
+    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm-object-store.a"
+)
+val nativeLibraryIncludesIosSimulatorUniversalDebug = listOf(
+    "-include-binary",
+    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-ffi-static-dbg.a",
+    "-include-binary",
+    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-dbg.a",
+    "-include-binary",
+    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-parser-dbg.a",
+    "-include-binary",
+    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-object-store-dbg.a"
 )
 
 kotlin {
@@ -131,7 +160,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs(project.file("$relativeCorePath/src/"))
+                includeDirs("$absoluteCorePath/src/")
             }
             // Relative paths in def file depends are resolved differently dependent on execution
             // location
@@ -140,7 +169,11 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += if (this.konanTarget == KonanTarget.IOS_ARM64) nativeLibraryIncludesIosArm64 else nativeLibraryIncludesIosSimulatorUniversal
+            kotlinOptions.freeCompilerArgs += if (this.konanTarget == KonanTarget.IOS_ARM64) {
+                if (isReleaseBuild) nativeLibraryIncludesIosArm64Release else nativeLibraryIncludesIosArm64Debug
+            } else {
+                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorUniversalRelease else nativeLibraryIncludesIosSimulatorUniversalDebug
+            }
         }
     }
 
@@ -149,7 +182,7 @@ kotlin {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/nativeCommon/realm.def")
                 packageName = "realm_wrapper"
-                includeDirs(project.file("$relativeCorePath/src/"))
+                includeDirs("$absoluteCorePath/src/")
             }
             // Relative paths in def file depends are resolved differently dependent on execution
             // location
@@ -158,7 +191,7 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += nativeLibraryIncludesMacosUniversal
+            kotlinOptions.freeCompilerArgs += if (isReleaseBuild) nativeLibraryIncludesMacosUniversalRelease else nativeLibraryIncludesMacosUniversalDebug
         }
     }
 
@@ -241,7 +274,7 @@ kotlin {
             dependsOn(darwinTest)
             dependsOn(iosMain)
             // Only add common sources to one platform when in the IDE. See comment at 'idea'
-            // difinition for full details.
+            // definition for full details.
             if (!idea) {
                 kotlin.srcDir("src/darwinTest/kotlin")
             }
@@ -277,15 +310,15 @@ val capiAndroidRelease by tasks.registering {
 }
 // Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for macOS
 val capiMacosUniversal by tasks.registering {
-    build_C_API_Macos_Universal(releaseBuild = false) // TODO https://github.com/realm/realm-kotlin/issues/142 switch to Release build (with assertion enabled) once we reach Beta stability?
+    build_C_API_Macos_Universal(releaseBuild = isReleaseBuild)
 }
 // Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for iphone simulator
 val capiSimulatorUniversal by tasks.registering {
-    build_C_API_Simulator_Universal(releaseBuild = false)
+    build_C_API_Simulator_Universal(releaseBuild = isReleaseBuild)
 }
 // Building for ios device (arm64 only)
 val capiIosArm64 by tasks.registering {
-    build_C_API_iOS_Arm64(releaseBuild = false)
+    build_C_API_iOS_Arm64(releaseBuild = isReleaseBuild)
 }
 
 fun Task.build_C_API_Android(releaseBuild: Boolean = false) {
@@ -293,58 +326,86 @@ fun Task.build_C_API_Android(releaseBuild: Boolean = false) {
     doLast {
         // x86_64
         exec {
-            workingDir(project.file("$relativeCorePath"))
-            commandLine("tools/cross_compile.sh", "-t", buildType, "-a", "x86_64", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
+            workingDir(project.file("$absoluteCorePath"))
+            commandLine(
+                "$absoluteCorePath/tools/cross_compile.sh",
+                "-t",
+                buildType,
+                "-a",
+                "x86_64",
+                "-o",
+                "android",
+                "-f",
+                "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON"
+            )
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
         }
 
         // arm64-v8a
         exec {
-            workingDir(project.file("$relativeCorePath"))
-            commandLine("tools/cross_compile.sh", "-t", buildType, "-a", "arm64-v8a", "-o", "android", "-f", "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON")
+            workingDir(project.file("$absoluteCorePath"))
+            commandLine(
+                "$absoluteCorePath/tools/cross_compile.sh",
+                "-t",
+                buildType,
+                "-a",
+                "arm64-v8a",
+                "-o",
+                "android",
+                "-f",
+                "-DREALM_ENABLE_SYNC=0 -DREALM_NO_TESTS=ON"
+            )
             environment(mapOf("ANDROID_NDK" to android.ndkDirectory))
         }
     }
 }
 
-// There is no Interop tasks per build type yet AFAIK , but we can choose to switch between debug and release here
 fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
+    val directory = "$absoluteCorePath/capi_macos_universal$buildTypeSuffix"
     doLast {
         exec {
-            workingDir(project.file("$relativeCorePath"))
-            commandLine("mkdir", "-p", "capi_macos_universal")
+            commandLine("mkdir", "-p", directory)
         }
         exec {
-            commandLine("cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/macosx.toolchain.cmake", "-DCMAKE_BUILD_TYPE=$buildType", "-DREALM_ENABLE_SYNC=0", "-DREALM_NO_TESTS=1", "-DOSX_ARM64=1", "..")
-            workingDir(project.file("$relativeCorePath/capi_macos_universal"))
+            workingDir(project.file(directory))
+            commandLine(
+                "cmake",
+                "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/macosx.toolchain.cmake",
+                "-DCMAKE_BUILD_TYPE=$buildType",
+                "-DREALM_ENABLE_SYNC=0",
+                "-DREALM_NO_TESTS=1",
+                "-DOSX_ARM64=1",
+                ".."
+            )
         }
         exec {
-            workingDir(project.file("$relativeCorePath/capi_macos_universal"))
+            workingDir(project.file(directory))
             commandLine("cmake", "--build", ".", "-j8")
         }
     }
-    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/librealm$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/capi_macos_universal/src/realm/object-store/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/src/realm/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/librealm-object-store$buildTypeSuffix.a"))
 }
 
 fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
+    val directory = "$absoluteCorePath/build-simulator_universal$buildTypeSuffix"
     doLast {
         exec {
-            workingDir(project.file("$relativeCorePath"))
-            commandLine("mkdir", "-p", "build-simulator_universal")
+            workingDir(project.file(absoluteCorePath))
+            commandLine("mkdir", "-p", directory)
         }
         exec {
-            workingDir(project.file("$relativeCorePath/build-simulator_universal"))
+            workingDir(project.file(directory))
             commandLine(
-                "cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
+                "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
@@ -356,38 +417,38 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
             )
         }
         exec {
-            workingDir(project.file("$relativeCorePath/build-simulator_universal"))
+            workingDir(project.file(directory))
             commandLine(
                 "xcodebuild",
                 "-sdk",
                 "iphonesimulator",
                 "-configuration",
-                "Debug",
+                "$buildType",
                 "-target",
                 "install", "ONLY_ACTIVE_ARCH=NO",
                 "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
             )
         }
     }
-    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm-parser$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/build-simulator_universal/lib/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-parser$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-object-store$buildTypeSuffix.a"))
 }
 
 fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
+    val directory = "$absoluteCorePath/build-capi_ios_Arm64$buildTypeSuffix"
 
     doLast {
         exec {
-            workingDir(project.file("$relativeCorePath"))
-            commandLine("mkdir", "-p", "build-capi_ios_Arm64")
+            commandLine("mkdir", "-p", directory)
         }
         exec {
-            workingDir(project.file("$relativeCorePath/build-capi_ios_Arm64"))
+            workingDir(project.file(directory))
             commandLine(
-                "cmake", "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/ios.toolchain.cmake",
+                "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
@@ -399,13 +460,13 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
             )
         }
         exec {
-            workingDir(project.file("$relativeCorePath/build-capi_ios_Arm64"))
+            workingDir(project.file(directory))
             commandLine(
                 "xcodebuild",
                 "-sdk",
                 "iphoneos",
                 "-configuration",
-                "Debug",
+                buildType,
                 "-target",
                 "install",
                 "-arch",
@@ -415,10 +476,10 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
             )
         }
     }
-    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm-parser$buildTypeSuffix.a"))
-    outputs.file(project.file("$relativeCorePath/build-capi_ios_Arm64/lib/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-ffi-static$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-parser$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-object-store$buildTypeSuffix.a"))
 }
 
 afterEvaluate {
@@ -454,8 +515,9 @@ tasks.named("cinteropRealm_wrapperMacos") {
 realmPublish {
     pom {
         name = "C Interop"
-        description = "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
-            "supposed to be consumed directly, but through " +
-            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+        description =
+            "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
+                    "supposed to be consumed directly, but through " +
+                    "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
 }

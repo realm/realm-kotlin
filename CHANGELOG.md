@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* [Support Apple Release builds](https://github.com/realm/realm-kotlin/issues/142).
 
 ### Fixed
 * None.

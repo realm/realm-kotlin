@@ -91,8 +91,8 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isMinifyEnabled = true
+            consumerProguardFiles("proguard-rules-consumer-common.pro")
         }
     }
 
@@ -135,7 +135,7 @@ kotlin {
     }
 }
 
-// IOS Configurastion
+// IOS Configuration
 kotlin {
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
