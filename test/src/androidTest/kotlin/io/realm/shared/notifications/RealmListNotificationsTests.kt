@@ -68,5 +68,4 @@ class RealmListNotificationsTests : NotificationTests {
     override fun closingRealmDoesNotCancelFlows() {
         TODO("Waiting for RealmList support")
     }
-
 }

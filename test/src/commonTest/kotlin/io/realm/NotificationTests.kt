@@ -73,5 +73,4 @@ interface NotificationTests {
     fun useTestDispatchers() {
         // FIXME
     }
-
 }

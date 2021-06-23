@@ -19,8 +19,8 @@ package io.realm
 
 import io.realm.util.PlatformUtils.createTempDir
 import io.realm.util.PlatformUtils.deleteTempDir
-import io.realm.util.Utils.createRandomString
 import io.realm.util.PlatformUtils.triggerGC
+import io.realm.util.Utils.createRandomString
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString

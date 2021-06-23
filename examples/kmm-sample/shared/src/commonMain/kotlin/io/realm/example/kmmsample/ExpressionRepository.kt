@@ -17,10 +17,8 @@
 
 package io.realm.example.kmmsample
 
-import io.realm.Cancellable
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmResults
 import kotlinx.coroutines.flow.Flow
 
 class ExpressionRepository {

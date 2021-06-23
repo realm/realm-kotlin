@@ -112,9 +112,11 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<RealmResults<Sample>>(1)
             realm.write {
-                copyToRealm(Sample().apply {
-                    stringField = "Foo"
-                })
+                copyToRealm(
+                    Sample().apply {
+                        stringField = "Foo"
+                    }
+                )
             }
             val observer = async {
                 realm.objects(Sample::class).observe().collect {
@@ -187,5 +189,4 @@ class RealmResultsNotificationsTests : NotificationTests {
             c.close()
         }
     }
-
 }

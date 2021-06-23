@@ -265,8 +265,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         runBlocking {
             realmPointerMutex.withLock {
                 writer.close()
-		        notifierJob.value?.cancel()
-        		notifier.close()
+                notifierJob.value?.cancel()
+                notifier.close()
                 super.close()
                 intermediateReferences.value.forEach { (pointer, _) ->
                     log.debug(

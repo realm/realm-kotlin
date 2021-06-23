@@ -10,7 +10,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class RealmNotificationsTests : NotificationTests {
 
@@ -68,5 +67,4 @@ class RealmNotificationsTests : NotificationTests {
     override fun closingRealmDoesNotCancelFlows() {
         TODO("Wait for a Global change listener to become available")
     }
-
 }
