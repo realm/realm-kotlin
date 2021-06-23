@@ -111,7 +111,7 @@ public class RealmConfiguration private constructor(
     // This constructor is never used at runtime, all calls to it are being rewired by the Realm Compiler Plugin to call
     // the internal secondary constructor with all schema classes mapped to their RealmCompanion.
     public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>) :
-        this(path, name, mapOf())
+        this(path, name, mapOf()) // REPLACED_BY_IR()
 
     // Called by the compiler plugin, with a populated companion map
     internal constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Map<KClass<out RealmObject>, RealmObjectCompanion>) :
@@ -223,5 +223,5 @@ public class RealmConfiguration private constructor(
     // FIXME
     //  - Add injection point in the configuration
     //  - Don't know how to enforce that it has to be backed by a single thread
-    internal fun writeDispatcher(id: String): CoroutineDispatcher = io.realm.internal.defaultWriteDispatcher(id)
+    internal fun writeDispatcher(id: String): CoroutineDispatcher = io.realm.internal.singleThreadDispatcher(id)
 }

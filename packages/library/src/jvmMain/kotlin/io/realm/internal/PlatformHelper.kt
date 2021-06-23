@@ -33,7 +33,7 @@ actual object PlatformHelper {
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = StdOutLogger(tag)
 }
 
-public actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+public actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     // TODO Propagate id to the underlying thread
     return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 }

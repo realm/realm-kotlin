@@ -28,7 +28,7 @@ expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 /**
  * Returns a default Realm write dispatcher for a Realm opened on the calling thread.
  */
-expect fun defaultWriteDispatcher(id: String): CoroutineDispatcher
+expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
 
 /**
  * Return the current thread id.

@@ -19,6 +19,7 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.unmanage
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
@@ -42,9 +43,15 @@ class MutableRealm : BaseRealm {
     /**
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
      * done inside the MutableRealm is not immediately reflected in the `parentRealm`.
+     *
+     * The core scheduler used to deliver notifications are:
+     * - Android: The default Android scheduler, which delivers notifications on the looper of
+     * the current thread.
+     * - Native: Either a scheduler dispatching to the supplied dispatcher or the default Darwin
+     * scheduler, that delivers notifications on the main run loop.
      */
-    internal constructor(configuration: RealmConfiguration) :
-        super(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+    internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher? = null) :
+        super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     /**
      * Create a MutableRealm which represents a standard write transaction, i.e. any modifications
@@ -99,7 +106,6 @@ class MutableRealm : BaseRealm {
     fun <T : RealmObject> copyToRealm(instance: T): T {
         return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
     }
-
     /**
      * Deletes the object from the underlying Realm.
      *

@@ -32,13 +32,13 @@ actual object PlatformHelper {
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
 }
 
-actual fun defaultWriteDispatcher(id: String): CoroutineDispatcher {
+actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     val thread = HandlerThread("RealmWriter[$id]")
     thread.start()
     return Handler(thread.looper).asCoroutineDispatcher()
 }
 
-// FIXME All of the below is common with Android. Should be align in separate source set but
+// FIXME All of the below is common with Android. Should be aligned in separate source set but
 //  that is already tracked by https://github.com/realm/realm-kotlin/issues/175
 
 // Expose platform runBlocking through common interface

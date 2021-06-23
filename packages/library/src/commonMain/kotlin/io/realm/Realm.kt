@@ -65,6 +65,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
          */
         public const val DEFAULT_LOG_TAG = "REALM"
 
+        /**
+         * Open a realm.
+         */
         fun open(realmConfiguration: RealmConfiguration): Realm {
             // TODO Find a cleaner way to get the initial frozen instance
             val liveRealm = RealmInterop.realm_open(realmConfiguration.nativeConfig)

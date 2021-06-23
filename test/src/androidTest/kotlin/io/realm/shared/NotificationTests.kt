@@ -1,3 +1,4 @@
+@file:Suppress("invisible_reference", "invisible_member")
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -18,11 +19,21 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import io.realm.VersionId
+import io.realm.internal.singleThreadDispatcher
+import io.realm.interop.NativePointer
 import io.realm.util.PlatformUtils
 import io.realm.util.RunLoopThread
+import io.realm.util.Utils.printlntid
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -51,7 +62,8 @@ class NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        configuration =
+            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
     }
 
     @AfterTest
@@ -60,8 +72,8 @@ class NotificationTests {
     }
 
     @Test
-    @Ignore // Notifications won't trigger as they are registered on the wrong realm. Fixed by https://github.com/realm/realm-kotlin/pull/296
-    fun resultsListener() = RunLoopThread().run {
+    @Ignore // Notifications won't trigger as they are registered on a frozen realm. Fixed by https://github.com/realm/realm-kotlin/pull/296
+    fun notificationsOnMain() = RunLoopThread().run {
         val c = Channel<List<Sample>>(1)
 
         val realm = Realm.open(configuration)
@@ -74,7 +86,9 @@ class NotificationTests {
             assertTrue(it is RealmResults<Sample>)
             assertEquals(results, it)
             val updatedResults = results.toList()
-            this@run.launch { c.send(updatedResults) }
+            this@run.launch {
+                c.send(updatedResults)
+            }
         }
 
         launch {
@@ -100,5 +114,98 @@ class NotificationTests {
             realm.close()
             terminate()
         }
+    }
+
+    @Test
+    @Ignore // Notifications won't trigger as they are registered on a frozen realm. Fixed by https://github.com/realm/realm-kotlin/pull/296
+    fun notificationOnMainFromBackgroundDispatcherUpdates() = RunLoopThread().run {
+        val dispatcher = singleThreadDispatcher("notifier")
+
+        val realm = Realm.open(configuration)
+        realm.objects<Sample>().observe {
+            if (it.size == 1) terminate()
+        }
+
+        async(dispatcher) {
+            val realm = Realm.open(configuration)
+            realm.write {
+                copyToRealm(Sample())
+            }
+        }
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun notificationOnBackgroundDispatcherFromSuspendableWriterUpdates() {
+        printlntid("main")
+        val exit = Mutex(true)
+        val dispatcher1 = singleThreadDispatcher("notifier")
+        val dispatcher2 = singleThreadDispatcher("writer")
+
+        val baseRealm = Realm.open(configuration)
+
+        val notifiers = io.realm.internal.Notifier(configuration, dispatcher1)
+        runBlocking {
+            val async = CoroutineScope(dispatcher1).async {
+                val obs: Flow<RealmResults<Sample>> = notifiers.observe<Sample>()
+                obs.collect {
+                    if (it.size == 1) exit.unlock()
+                }
+            }
+            delay(1000)
+            val writer = io.realm.internal.SuspendableWriter(baseRealm, dispatcher2)
+            val write: Triple<NativePointer, VersionId, Sample> = writer.write {
+                copyToRealm(Sample())
+            }
+
+            exit.lock()
+            async.cancel()
+        }
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun notificationOnBackgroundDispatcherFromMainRealmUpdates() {
+        printlntid("main")
+        val exit = Mutex(true)
+        val dispatcher1 = singleThreadDispatcher("notifier")
+
+        val notifiers = io.realm.internal.Notifier(configuration, dispatcher1)
+        runBlocking {
+            val async = CoroutineScope(dispatcher1).async {
+                val obs: Flow<RealmResults<Sample>> = notifiers.observe<Sample>()
+                obs.collect {
+                    if (it.size == 1) exit.unlock()
+                }
+            }
+            delay(1000)
+            Realm.open(configuration).write {
+                copyToRealm(Sample())
+            }
+
+            exit.lock()
+            async.cancel()
+        }
+    }
+
+    // Sanity check to ensure that this doesn't cause crashes
+    @Test
+    fun multipleSchedulersOnSameThread() {
+        printlntid("main")
+        val baseRealm = Realm.open(configuration)
+        val dispatcher = singleThreadDispatcher("background")
+        val writer1 = io.realm.internal.SuspendableWriter(baseRealm, dispatcher)
+        val writer2 = io.realm.internal.SuspendableWriter(baseRealm, dispatcher)
+        runBlocking {
+            baseRealm.write { copyToRealm(Sample()) }
+            writer1.write { copyToRealm(Sample()) }
+            writer2.write { copyToRealm(Sample()) }
+            baseRealm.write { copyToRealm(Sample()) }
+            writer1.write { copyToRealm(Sample()) }
+            writer2.write { copyToRealm(Sample()) }
+        }
+        writer1.close()
+        writer2.close()
+        baseRealm.close()
     }
 }

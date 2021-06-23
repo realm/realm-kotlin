@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import kotlinx.coroutines.CoroutineDispatcher
+
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 
@@ -39,7 +41,22 @@ expect object RealmInterop {
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
-    fun realm_open(config: NativePointer): NativePointer
+    /**
+     * Open a realm on the current thread.
+     *
+     * The core scheduler is only advancing/delivering notifications if:
+     * - Android: This is called on a thread with a Looper, in which case all events are delivered
+     *   to the looper
+     * - Native: This is called on the main thread or if supplying a single threaded dispatcher
+     *   that is backed by the same thread that is opening the realm.
+     * TODO Consider doing a custom JVM core scheduler that uses a coroutine dispatcher, or find a
+     *  way to get a dispatcher for the current execution environment on Native so that we can avoid
+     *  passing the dispatcher from outside. See comments in native implementation on how this
+     *  could maybe be achieved.
+     */
+    // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
+    // dispatcher. The realm itself must also be opened on the same thread
+    fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_thaw(frozenRealm: NativePointer): NativePointer
     fun realm_is_frozen(realm: NativePointer): Boolean
