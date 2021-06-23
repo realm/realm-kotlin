@@ -157,14 +157,19 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
 
     // Must only be called with realmPointerMutex locked
     private fun trackNewAndCloseExpiredReferences(realmReference: RealmReference) {
-        val expiredReferences = intermediateReferences.value.filter { (_, ref) -> ref.get() == null }
-        expiredReferences.map { (pointer, _) ->
-            log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
-            RealmInterop.realm_close(pointer)
+        val references = mutableSetOf<Pair<NativePointer, WeakReference<RealmReference>>>(
+            Pair(realmReference.dbPointer, WeakReference(realmReference))
+        )
+        intermediateReferences.value.forEach { entry ->
+            val (pointer, ref) = entry
+            if (ref.get() == null) {
+                log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
+                RealmInterop.realm_close(pointer)
+            } else {
+                references.add(entry)
+            }
         }
-        intermediateReferences.value = intermediateReferences.value
-            .plus(Pair(realmReference.dbPointer, WeakReference(realmReference)))
-            .subtract(expiredReferences)
+        intermediateReferences.value = references
     }
 
     /**
