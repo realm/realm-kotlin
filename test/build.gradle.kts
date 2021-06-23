@@ -56,6 +56,8 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
+                // Doesn't seem to be in place for native!?
+                // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0")
             }
         }
     }
@@ -102,6 +104,15 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    // To avoid
+    //     > More than one file was found with OS independent path 'META-INF/AL2.0'.
+    // after adding
+    //     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+    packagingOptions {
+        exclude("META-INF/AL2.0")
+        exclude("META-INF/LGPL2.1")
     }
 }
 

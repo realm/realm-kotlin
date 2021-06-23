@@ -21,6 +21,7 @@ import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.singleThreadDispatcher
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
@@ -45,13 +46,16 @@ public data class LogConfiguration(
     public val loggers: List<RealmLogger>
 )
 
+@Suppress("LongParameterList")
 public class RealmConfiguration private constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
-    maxNumberOfActiveVersions: Long
+    maxNumberOfActiveVersions: Long,
+    notificationDispatcher: CoroutineDispatcher,
+    writeDispatcher: CoroutineDispatcher,
 ) {
     // Public properties making up the RealmConfiguration
     // TODO Add KDoc for all of these
@@ -60,6 +64,8 @@ public class RealmConfiguration private constructor(
     public val schema: Set<KClass<out RealmObject>>
     public val log: LogConfiguration
     public val maxNumberOfActiveVersions: Long
+    public val notificationDispatcher: CoroutineDispatcher
+    public val writeDispatcher: CoroutineDispatcher
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -78,6 +84,8 @@ public class RealmConfiguration private constructor(
         this.mapOfKClassWithCompanion = companionMap
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
+        this.notificationDispatcher = notificationDispatcher
+        this.writeDispatcher = writeDispatcher
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
         RealmInterop.realm_config_set_schema_mode(
@@ -121,7 +129,9 @@ public class RealmConfiguration private constructor(
             name,
             schema.keys,
             LogConfiguration(LogLevel.WARN, listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))),
-            Long.MAX_VALUE
+            Long.MAX_VALUE,
+            singleThreadDispatcher(name),
+            singleThreadDispatcher(name),
         )
 
     /**
@@ -138,6 +148,8 @@ public class RealmConfiguration private constructor(
         private var removeSystemLogger: Boolean = false
         private var userLoggers: List<RealmLogger> = listOf()
         private var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
+        private var notificationDispatcher: CoroutineDispatcher? = null
+        private var writeDispatcher: CoroutineDispatcher? = null
 
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
@@ -179,6 +191,32 @@ public class RealmConfiguration private constructor(
         }
 
         /**
+         * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
+         * Realm objects from any thread, but the underlying logic will run on this dispatcher
+         * before any changes are returned to the caller thread.
+         *
+         * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
+         * by a single thread only.
+         */
+        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
+            this.writeDispatcher = dispatcher
+        }
+
+        /**
+         * Dispatcher used to run background writes to the Realm.
+         *
+         * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * @param dispatcher Dispatcher on which writes are run. It is required to be backed by a
+         * single thread only.
+         */
+        public fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
+            this.notificationDispatcher = dispatcher
+        }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -206,22 +244,10 @@ public class RealmConfiguration private constructor(
                 name,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
-                maxNumberOfActiveVersions
+                maxNumberOfActiveVersions,
+                notificationDispatcher ?: singleThreadDispatcher(name),
+                writeDispatcher ?: singleThreadDispatcher(name),
             )
         }
     }
-
-    /**
-     * Write dispatcher for background writes.
-     *
-     * Current implementation differs on platforms:
-     * - *_Android_* Set's up a background looper thread and executes tasks through it's associated
-     *   handler.
-     * - *_iOS_* Creates a new single threaded context with
-     * kotlinx.coroutines.newSingleThreadContext.
-     */
-    // FIXME
-    //  - Add injection point in the configuration
-    //  - Don't know how to enforce that it has to be backed by a single thread
-    internal fun writeDispatcher(id: String): CoroutineDispatcher = io.realm.internal.singleThreadDispatcher(id)
 }

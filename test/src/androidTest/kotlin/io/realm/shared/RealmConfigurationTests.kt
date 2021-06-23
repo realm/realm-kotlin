@@ -18,8 +18,12 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.internal.PlatformHelper
+import io.realm.internal.runBlocking
 import io.realm.log.LogLevel
+import io.realm.util.PlatformUtils
 import io.realm.util.TestLogger
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.newSingleThreadContext
 import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -148,4 +152,66 @@ class RealmConfigurationTests {
         assertFailsWith<IllegalArgumentException> { builder.maxNumberOfActiveVersions(0) }
         assertFailsWith<IllegalArgumentException> { builder.maxNumberOfActiveVersions(-1) }
     }
+
+    @Test
+    fun notificationDispatcherRealmConfigurationDefault() {
+        val configuration = RealmConfiguration(schema = setOf(Sample::class))
+        assertTrue(configuration.notificationDispatcher is CoroutineDispatcher)
+    }
+
+    @Test
+    fun notificationDispatcherRealmConfigurationBuilderDefault() {
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+        assertTrue(configuration.notificationDispatcher is CoroutineDispatcher)
+    }
+
+    @Test
+    fun notificationDispatcherRealmConfigurationBuilder() {
+        val dispatcher = newSingleThreadContext("ConfigurationTest")
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).notificationDispatcher(dispatcher).build()
+        assertTrue { dispatcher === configuration.notificationDispatcher }
+    }
+
+    @Test
+    fun writeDispatcherRealmConfigurationDefault() {
+        val configuration = RealmConfiguration(schema = setOf(Sample::class))
+        assertTrue(configuration.writeDispatcher is CoroutineDispatcher)
+    }
+
+    @Test
+    fun writeDispatcherRealmConfigurationBuilderDefault() {
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+        assertTrue(configuration.writeDispatcher is CoroutineDispatcher)
+    }
+
+    @Test
+    fun writeDispatcherRealmConfigurationBuilder() {
+        val dispatcher = newSingleThreadContext("ConfigurationTest")
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
+        assertTrue { dispatcher === configuration.writeDispatcher }
+    }
+
+    @Test
+    fun writesExecutesOnWriteDispatcher() {
+        val dispatcher = newSingleThreadContext("ConfigurationTest")
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
+        val threadId: ULong = runBlocking(configuration.writeDispatcher) { PlatformUtils.threadId() }
+        val realm = Realm.open(configuration)
+        realm.writeBlocking {
+            assertEquals(threadId, PlatformUtils.threadId())
+        }
+        realm.close()
+    }
+
+    // TestCoroutineDispatcher isn't available as "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0" isn't available on native
+//    @Test
+//    fun testDispatcherAsWriteDispatcher() {
+//        val dispatcher = TestCoroutineDispatcher()
+//        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
+//        val realm = Realm.open(configuration)
+//        realm.writeBlocking {
+//            copyToRealm(Sample())
+//        }
+//        realm.close()
+//    }
 }
