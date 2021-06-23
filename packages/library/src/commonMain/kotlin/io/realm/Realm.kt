@@ -237,7 +237,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
         writer.close()
 
-        notifier.checkIsSendingNotification("Cannot close the Realm while handling a notification from it.")
         notifierJob.value?.cancel()
         notifier.close()
         super.close()

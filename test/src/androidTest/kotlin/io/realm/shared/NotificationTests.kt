@@ -16,6 +16,7 @@
  */
 package io.realm.shared
 
+import co.touchlab.stately.concurrency.AtomicInt
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
@@ -39,6 +40,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class NotificationTests {
 
@@ -62,7 +64,9 @@ class NotificationTests {
 
     @AfterTest
     fun tearDown() {
-        realm.close()
+        if (!realm.isClosed()) {
+            realm.close()
+        }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
@@ -104,8 +108,8 @@ class NotificationTests {
         }
     }
 
-    // Verify that the initial element in a Flow is an update. We don't emit
-    // the original state.
+    // Verify that the initial element in a Flow is the element itself
+    // TODO Is this the semantics we want?
     @Test
     fun initialElement() {
         testClassTypes {
@@ -117,6 +121,176 @@ class NotificationTests {
                 else -> throw NotImplementedError(it.toString())
             }
         }
+    }
+
+    // Verify that `null` is emitted and the Flow is closed whenever the object
+    // being observed is deleted.
+    @Test
+    fun deleteObservable() {
+        testClassTypes {
+            when (it) {
+                ClassType.REALM -> { /* Realms cannot be deleted, ignore */ }
+                ClassType.REALM_RESULTS -> deleteObservableRealmResults()
+                ClassType.REALM_LIST -> deleteObservableRealmList()
+                ClassType.REALM_OBJECT -> deleteObservableRealmObject()
+                else -> throw NotImplementedError(it.toString())
+            }
+        }
+    }
+
+    // Verify that closing the Realm while inside a flow throws an exception (I think)
+    @Test
+    @Ignore // Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out
+    fun closeRealmInsideFlowThrows() {
+        testClassTypes {
+            when (it) {
+                ClassType.REALM -> { closeInsideFlowRealm() }
+                ClassType.REALM_RESULTS -> closeInsideFlowRealmResults()
+                ClassType.REALM_LIST -> closeInsideFlowRealmList()
+                ClassType.REALM_OBJECT -> closeInsideFlowRealmObject()
+                else -> throw NotImplementedError(it.toString())
+            }
+        }
+    }
+
+    // Currently, closing a Realm will not cancel any flows from Realm
+    //
+    @Test
+    @Ignore // Until proper Realm tracking is in place
+    fun closingRealmDoesNotCancelFlows() {
+        testClassTypes {
+            when (it) {
+                ClassType.REALM -> { closingRealmDoesNotCancelRealmFlow() }
+                ClassType.REALM_RESULTS -> closingRealmDoesNotCancelRealmResultsFlow()
+                ClassType.REALM_LIST -> closingRealmDoesNotCancelRealmListFlow()
+                ClassType.REALM_OBJECT -> closingRealmDoesNotCancelRealmObjectFlow()
+                else -> throw NotImplementedError(it.toString())
+            }
+        }
+    }
+
+    private fun closingRealmDoesNotCancelRealmFlow() {
+        // FIXME Wait for Realm change listener support
+    }
+
+    private fun closingRealmDoesNotCancelRealmResultsFlow() = runBlocking {
+        val c = Channel<Int>(capacity = 1)
+        val observer = async {
+            realm.objects(Sample::class).observe().collect {
+                c.send(it.size)
+            }
+            fail("Flow should not be canceled.")
+        }
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        assertEquals(1, c.receive())
+        realm.close()
+        observer.cancel()
+        c.close()
+    }
+
+    private fun closingRealmDoesNotCancelRealmListFlow() {
+        // FIXME Wait for RealmList change listener support
+    }
+
+    private fun closingRealmDoesNotCancelRealmObjectFlow() = runBlocking {
+        val c = Channel<Sample?>(1)
+        val obj: Sample = realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        val observer = async {
+            obj.observe().collect {
+                c.trySend(it)
+            }
+            fail("Flow should not be canceled.")
+        }
+        assertEquals("Foo", c.receive()!!.stringField)
+        realm.close()
+        observer.cancel()
+        c.close()
+    }
+
+    @Test
+    fun addChangeListener() {
+        // FIXME Implement in another PR
+    }
+
+    @Test
+    fun addChangeListener_emitOnProvidedDispatcher() {
+        // FIXME Implement in another PR
+    }
+
+    @Test
+    fun openSameRealmFileWithDifferentDispatchers() {
+        // FIXME This seems to not work
+    }
+
+    // Verify that the Main dispatcher can be used for both writes and notifications
+    // It should be considered an anti-pattern in production, but is plausible in tests.
+    @Test
+    fun useMainDispatchers() {
+        // FIXME
+    }
+
+    // Verify that users can use the Main dispatcher for notifications and a background
+    // dispatcher for writes. This is the closest match to how this currently works
+    // in Realm Java.
+    @Test
+    fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
+        // FIXME
+    }
+
+    // Verify that the special test dispatchers provided by Google also when using Realm.
+    @Test
+    fun useTestDispatchers() {
+        // FIXME
+    }
+
+    private fun closeInsideFlowRealm() = runBlocking {
+        // FIXME Waiting for Realm changelistener support
+    }
+
+    private fun closeInsideFlowRealmResults() = runBlocking {
+        val c = Channel<Int>(capacity = 1)
+        val counter = AtomicInt(0)
+        val observer1 = async {
+            realm.objects(Sample::class).observe().collect {
+                when(counter.incrementAndGet()) {
+                    1 -> c.trySend(it.size)
+                    2 -> {
+                        realm.close()
+                        c.trySend(-1)
+                        println("realm closed")
+                    }
+                }
+            }
+        }
+        val observer2 = async {
+            realm.objects(Sample::class).observe().collect {
+                println(it.first().stringField)
+                println("$it -> ${realm.isClosed()}")
+            }
+        }
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        assertEquals(1, c.receive())
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "Bar" })
+        }
+        assertEquals(-1, c.receive())
+        observer1.cancel()
+        observer2.cancel()
+        c.close()
+    }
+
+    private fun closeInsideFlowRealmList() {
+        // FIXME Waiting for list support
+    }
+
+    private fun closeInsideFlowRealmObject() {
+        // FIXME TODO("Not yet implemented")
     }
 
     private fun initialElementRealm() {
@@ -155,21 +329,6 @@ class NotificationTests {
 
     private fun initialElementRealmList() {
         // FIXME Waiting for RealmList support
-    }
-
-    // Verify that `null` is emitted and the Flow is closed whenever the object
-    // being observed is deleted.
-    @Test
-    fun deleteObservable() {
-        testClassTypes {
-            when (it) {
-                ClassType.REALM -> { /* Realms cannot be deleted, ignore */ }
-                ClassType.REALM_RESULTS -> deleteObservableRealmResults()
-                ClassType.REALM_LIST -> deleteObservableRealmList()
-                ClassType.REALM_OBJECT -> deleteObservableRealmObject()
-                else -> throw NotImplementedError(it.toString())
-            }
-        }
     }
 
     private fun deleteObservableRealmResults() = runBlocking {
@@ -218,13 +377,6 @@ class NotificationTests {
         observer.cancel()
         c.close()
     }
-
-    // Verify that closing the Realm while inside a flow throws an exception (I think)
-    @Test
-    fun closeRealmInsideFlowThrows() {
-        // FIXME
-    }
-
 
     private fun cancelObserveRealmObject() = runBlocking {
         val obj: Sample = realm.write {
@@ -295,21 +447,6 @@ class NotificationTests {
         // FIXME Wait for Realm observer support
     }
 
-    @Test
-    fun closingRealmCancelObservers() {
-        // FIXME
-    }
-
-    @Test
-    fun addChangeListener() {
-        // FIXME
-    }
-
-    @Test
-    fun addChangeListener_emitOnProvidedDispatcher() {
-        // FIXME
-    }
-
     private fun observeRealmObject() = runBlocking {
         val c = Channel<Sample?>(1)
         val obj: Sample = realm.write {
@@ -354,32 +491,6 @@ class NotificationTests {
 
     private fun observeRealm() {
         // FIXME Wait for a Global change listener to become available
-    }
-
-    @Test
-    fun openSameRealmFileWithDifferentDispatchers() {
-        // FIXME This seems to not work
-    }
-
-    // Verify that the Main dispatcher can be used for both writes and notifications
-    // It should be considered an anti-pattern in production, but is plausible in tests.
-    @Test
-    fun useMainDispatchers() {
-        // FIXME
-    }
-
-    // Verify that users can use the Main dispatcher for notifications and a background
-    // dispatcher for writes. This is the closest match to how this currently works
-    // in Realm Java.
-    @Test
-    fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
-        // FIXME
-    }
-
-    // Verify that the special test dispatchers provided by Google also when using Realm.
-    @Test
-    fun useTestDispatchers() {
-        // FIXME
     }
 
     // Sanity check to ensure that this doesn't cause crashes
