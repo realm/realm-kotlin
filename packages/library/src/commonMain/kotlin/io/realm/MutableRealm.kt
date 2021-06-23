@@ -79,6 +79,8 @@ class MutableRealm : BaseRealm {
     }
 
     /**
+     * Get latest version of an object.
+     *
      * Realm write transactions always operate on the latest version of data. This method
      * makes it possible to easily find the latest version of any frozen Realm Object and
      * return a copy of it that can be modified while inside the write block.
