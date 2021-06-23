@@ -49,3 +49,5 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
 actual fun threadId(): ULong {
     return Thread.currentThread().id.toULong()
 }
+
+actual typealias WeakReference<T> = java.lang.ref.WeakReference<T>

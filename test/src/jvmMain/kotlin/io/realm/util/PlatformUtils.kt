@@ -34,4 +34,8 @@ actual object PlatformUtils {
     }
 
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()
+
+    actual fun triggerGC() {
+        TODO()
+    }
 }

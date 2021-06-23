@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -59,6 +60,7 @@ class NotificationTests {
     }
 
     @Test
+    @Ignore // Notifications won't trigger as they are registered on the wrong realm. Fixed by https://github.com/realm/realm-kotlin/pull/296
     fun resultsListener() = RunLoopThread().run {
         val c = Channel<List<Sample>>(1)
 
