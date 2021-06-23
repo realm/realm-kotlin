@@ -30,6 +30,6 @@ interface RealmObjectInternal : RealmObject, io.realm.interop.RealmObjectInterop
 
 fun RealmObjectInternal.checkValid() {
     if (!this.isValid()) {
-        throw IllegalStateException("Cannot perform operation on an invalid/deleted object")
+        throw IllegalStateException("Cannot perform this operation on an invalid/deleted object")
     }
 }

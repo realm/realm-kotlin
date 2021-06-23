@@ -19,7 +19,6 @@ import io.realm.util.PlatformUtils
 import test.StringPropertyWithPrimaryKey
 import test.link.Child
 import test.link.Parent
-import java.lang.IllegalArgumentException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

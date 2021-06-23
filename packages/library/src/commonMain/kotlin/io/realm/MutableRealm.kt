@@ -40,7 +40,7 @@ class MutableRealm : BaseRealm {
 
         private fun checkObjectValid(obj: RealmObjectInternal) {
             if (!obj.isValid()) {
-                throw IllegalArgumentException("Cannot perform operation on an invalid/deleted object")
+                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
             }
         }
     }
@@ -105,8 +105,7 @@ class MutableRealm : BaseRealm {
             // up to date, just return input
             obj
         } else {
-            val realmReference1 = this.realmReference
-            val liveRealm = realmReference1.owner
+            val liveRealm = realmReference.owner
             (obj as RealmObjectInternal).thaw(liveRealm)
         }
     }

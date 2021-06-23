@@ -89,8 +89,6 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T
     val type: KClass<T> = this::class as KClass<T>
     val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
     val dbPointer = liveRealm.realmReference.dbPointer
-    // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
-    //  catching that and returning null
     @Suppress("TooGenericExceptionCaught")
     try {
         return RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)!!.let { thawedObject ->
@@ -102,6 +100,13 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T
             )
         }
     } catch (e: Exception) {
-        return null
+        // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
+        //  catching that and returning null. Only treat unknown null pointers as non-existing objects
+        //  to avoid handling unintended situations here.
+        if (e.message?.startsWith("[2]: null") ?: false) {
+            return null
+        } else {
+            throw e
+        }
     }
 }

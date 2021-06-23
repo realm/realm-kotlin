@@ -74,7 +74,7 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val runtimeException = RuntimeException(error.message?.toKString())
+            val runtimeException = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
             realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             //  https://github.com/realm/realm-kotlin/issues/70
