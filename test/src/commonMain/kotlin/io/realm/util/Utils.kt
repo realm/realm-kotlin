@@ -31,6 +31,7 @@ expect object PlatformUtils {
     @OptIn(ExperimentalTime::class)
     fun sleep(duration: Duration)
     fun threadId(): ULong
+    fun triggerGC()
 }
 
 // Platform independent helper methods

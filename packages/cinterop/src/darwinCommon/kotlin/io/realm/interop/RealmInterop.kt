@@ -657,17 +657,26 @@ actual object RealmInterop {
                 },
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
-                    userdata?.asStableRef<Callback>()?.get()?.onChange(
-                        CPointerWrapper(
-                            change,
-                            managed = false
-                        )
-                    ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
-                        ?: error("Notification callback data should never be null")
+                    try {
+                        userdata?.asStableRef<Callback>()?.get()?.onChange(
+                            CPointerWrapper(
+                                change,
+                                managed = false
+                            )
+                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                            ?: error("Notification callback data should never be null")
+                    } catch (e: Exception) {
+                        // TODO API-NOTIFICATION Consider catching errors and propagate to error
+                        //  callback like the C-API error callback below
+                        //  https://github.com/realm/realm-kotlin/issues/303
+                        e.printStackTrace()
+                    }
                 },
-                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
-                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                    // TODO Propagate errors to callback
+                    //  https://github.com/realm/realm-kotlin/issues/303
+                },
+                // C-API currently uses the realm's default scheduler no matter what passed here
                 null
             ),
             managed = false
@@ -699,12 +708,17 @@ actual object RealmInterop {
                         ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
-                        println("ERROR $e")
+                        // TODO API-NOTIFICATION Consider catching errors and propagate to error
+                        //  callback like the C-API error callback below
+                        //  https://github.com/realm/realm-kotlin/issues/303
+                        e.printStackTrace()
                     }
                 },
-                // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError -> },
-                // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                    // TODO Propagate errors to callback
+                    //  https://github.com/realm/realm-kotlin/issues/303
+                },
+                // C-API currently uses the realm's default scheduler no matter what passed here
                 null
             ),
             managed = false
@@ -773,16 +787,15 @@ actual object RealmInterop {
                 try {
                     scheduler.notify()
                 } catch (e: Exception) {
-                    println("ERROR: $e")
+                    // Should never happen, but is included for development to get some indicators
+                    // on errors instead of silent crashes.
+                    e.printStackTrace()
                 }
             },
 
             // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
             staticCFunction<COpaquePointer?, Boolean> { userdata ->
                 // Must be thread safe
-                // FIXME Only works if we are guaranteed that the set_notify_callback is called
-                //  before first call to is_on_thread and that set_notify_callback has frozen the
-                //  scheduler
                 val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                 printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
                 scheduler.threadId == tid()
@@ -807,7 +820,9 @@ actual object RealmInterop {
                     printlntid("set notify callback [$scheduler]: $notify_callback $notify_callback_userdata")
                     scheduler.set_notify_callback(CoreCallback(notify_callback!!, notify_callback_userdata!!))
                 } catch (e: Exception) {
-                    println("ERROR: $e")
+                    // Should never happen, but is included for development to get some indicators
+                    // on errors instead of silent crashes.
+                    e.printStackTrace()
                 }
             }
         )
@@ -847,7 +862,9 @@ actual object RealmInterop {
                         it.callback.invoke(it.callback_userdata)
                     }
                 } catch (e: Exception) {
-                    println("ERROR: $e")
+                    // Should never happen, but is included for development to get some indicators
+                    // on errors instead of silent crashes.
+                    e.printStackTrace()
                 }
             }
             scope.launch(

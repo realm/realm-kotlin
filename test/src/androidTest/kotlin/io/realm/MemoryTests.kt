@@ -18,14 +18,13 @@
 package io.realm
 
 import android.os.Process
-import android.os.SystemClock
 import android.text.format.Formatter
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.util.PlatformUtils
+import io.realm.util.PlatformUtils.triggerGC
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
@@ -96,7 +95,6 @@ class MemoryTests {
 
     // make sure that calling realm.close() will force close the Realm and release native memory
     @Test
-    @Ignore // We are not currently keeping track of intermediate frozen versions and closing those
     fun closeShouldFreeMemory() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 
@@ -162,41 +160,8 @@ class MemoryTests {
         return numberOfBytes
     }
 
-    // Empiric approach to trigger GC
-    @Suppress("ExplicitGarbageCollectionCall")
-    private fun triggerGC() {
-        for (i in 1..30) {
-            allocGarbage(0)
-            SystemClock.sleep(100)
-            System.gc()
-            System.runFinalization()
-        }
-        SystemClock.sleep(5000) // 5 seconds to give the GC some time to process
-    }
-
     private fun bytesToHumanReadable(mappedMemorySize: Long): String {
         return Formatter.formatFileSize(InstrumentationRegistry.getInstrumentation().targetContext, mappedMemorySize)
-    }
-
-    // Allocs as much garbage as we can. Pass maxSize = 0 to use all available memory in the process.
-    private fun allocGarbage(garbageSize: Int): ByteArray {
-        var garbageSize = garbageSize
-        if (garbageSize == 0) {
-            val maxMemory = Runtime.getRuntime().maxMemory()
-            val totalMemory = Runtime.getRuntime().totalMemory()
-            garbageSize = (maxMemory - totalMemory).toInt() / 10 * 9
-        }
-        var garbage = ByteArray(0)
-        try {
-            if (garbageSize > 0) {
-                garbage = ByteArray(garbageSize)
-                garbage[0] = 1
-                garbage[garbage.size - 1] = 1
-            }
-        } catch (oom: OutOfMemoryError) {
-            return allocGarbage(garbageSize / 10 * 9)
-        }
-        return garbage
     }
 
     private fun openRealmFromTmpDir(): Realm {

@@ -56,3 +56,5 @@ actual val <T> T.isFrozen: Boolean
     get() = false
 
 actual fun Any.ensureNeverFrozen() {}
+
+actual typealias WeakReference<T> = java.lang.ref.WeakReference<T>

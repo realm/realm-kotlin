@@ -27,6 +27,7 @@ import kotlinx.cinterop.value
 import platform.posix.nanosleep
 import platform.posix.pthread_threadid_np
 import platform.posix.timespec
+import kotlin.native.internal.GC
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -55,5 +56,9 @@ actual object PlatformUtils {
             pthread_threadid_np(null, tidVar.ptr)
             return tidVar.value
         }
+    }
+
+    actual fun triggerGC() {
+        GC.collect()
     }
 }

@@ -50,3 +50,13 @@ expect val <T> T.isFrozen: Boolean
  * This is a noop on non-native platforms.
  */
 expect fun Any.ensureNeverFrozen()
+
+/**
+ * Platform agnostic _WeakReference_ wrapper.
+ *
+ * Basically just wrapping underlying platform implementations.
+ */
+expect class WeakReference<T : Any>(referred: T) {
+    fun clear()
+    fun get(): T?
+}
