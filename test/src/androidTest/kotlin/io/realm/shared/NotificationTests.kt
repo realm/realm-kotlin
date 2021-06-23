@@ -72,6 +72,7 @@ class NotificationTests {
     }
 
     @Test
+    @Ignore // Notifications won't trigger as they are registered on a frozen realm. Fixed by https://github.com/realm/realm-kotlin/pull/296
     fun notificationsOnMain() = RunLoopThread().run {
         val c = Channel<List<Sample>>(1)
 
@@ -116,6 +117,7 @@ class NotificationTests {
     }
 
     @Test
+    @Ignore // Notifications won't trigger as they are registered on a frozen realm. Fixed by https://github.com/realm/realm-kotlin/pull/296
     fun notificationOnMainFromBackgroundDispatcherUpdates() = RunLoopThread().run {
         val dispatcher = singleThreadDispatcher("notifier")
 

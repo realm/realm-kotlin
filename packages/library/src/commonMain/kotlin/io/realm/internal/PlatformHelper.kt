@@ -34,3 +34,13 @@ expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
  * Return the current thread id.
  */
 expect fun threadId(): ULong
+
+/**
+ * Platform agnostic _WeakReference_ wrapper.
+ *
+ * Basically just wrapping underlying platform implementations.
+ */
+expect class WeakReference<T : Any>(referred: T) {
+    fun clear()
+    fun get(): T?
+}
