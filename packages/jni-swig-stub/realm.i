@@ -218,14 +218,17 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_results_add_notification_callback(
-            results,
-            // Use the callback as user data
-            static_cast<jobject>(get_env()->NewGlobalRef(callback)),
+        results,
+        // Use the callback as user data
+        static_cast<jobject>(get_env()->NewGlobalRef(callback)),
         [](void *userdata) {
             get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
         },
         // change callback
         [](void *userdata, const realm_collection_changes_t *changes) {
+            // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
+            //  like the C-API error callback below
+            //  https://github.com/realm/realm-kotlin/issues/303
             auto jenv = get_env(true);
             if (jenv->ExceptionCheck()) {
                 jenv->ExceptionDescribe();
@@ -235,10 +238,12 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                                  on_change_method,
                                  reinterpret_cast<jlong>(changes));
         },
-        // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
         []( void *userdata,
-        const realm_async_error_t *async_error) {},
-        // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+        const realm_async_error_t *async_error) {
+            // TODO Propagate errors to callback
+            //  https://github.com/realm/realm-kotlin/issues/303
+        },
+        // C-API currently uses the realm's default scheduler no matter what passed here
         NULL
     );
 }
@@ -251,16 +256,17 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_object_add_notification_callback(
-            object,
-            // Use the callback as user data
-            static_cast<jobject>(get_env()->NewGlobalRef(callback)),
+        object,
+        // Use the callback as user data
+        static_cast<jobject>(get_env()->NewGlobalRef(callback)),
         [](void *userdata) {
             get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
         },
         // change callback
         [](void *userdata, const realm_object_changes_t *changes) {
-            // FIXME API-NOTIFICATION Consider catching errors and propagate to error callback
+            // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
             //  like the C-API error callback below
+            //  https://github.com/realm/realm-kotlin/issues/303
             auto jenv = get_env(true);
             if (jenv->ExceptionCheck()) {
                 jenv->ExceptionDescribe();
@@ -270,10 +276,12 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
                                  on_change_method,
                                  reinterpret_cast<jlong>(changes));
         },
-        // FIXME API-NOTIFICATION Error callback, C-API realm_get_async_error not available yet
         []( void *userdata,
-        const realm_async_error_t *async_error) {},
-        // FIXME NOTIFICATION C-API currently uses the realm's default scheduler
+        const realm_async_error_t *async_error) {
+            // TODO Propagate errors to callback
+            //  https://github.com/realm/realm-kotlin/issues/303
+        },
+        // C-API currently uses the realm's default scheduler no matter what passed here
         NULL
     );
 }
