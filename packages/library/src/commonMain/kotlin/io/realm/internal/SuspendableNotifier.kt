@@ -144,7 +144,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
                     val frozenResults = liveResults.freeze(frozenRealm)
                     callback.onChange(frozenResults)
                 }
-            }
+            }.freeze() // Freeze to allow cleaning up on another thread
         )
         return NotificationToken(callback, token)
     }
@@ -206,7 +206,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
                         callback.onChange(liveObject.freeze(frozenRealm))
                     }
                 }
-            }
+            }.freeze() // Freeze to allow cleaning up on another thread
         )
         return NotificationToken(callback, token)
     }
