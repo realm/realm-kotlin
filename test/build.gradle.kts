@@ -56,8 +56,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                // Doesn't seem to be in place for native!?
-                // implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0")
             }
         }
     }
@@ -106,10 +104,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    // To avoid
-    //     > More than one file was found with OS independent path 'META-INF/AL2.0'.
-    // after adding
-    //     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+    // Remove overlapping resources after adding "org.jetbrains.kotlinx:kotlinx-coroutines-test" to
+    // avoid errors like "More than one file was found with OS independent path 'META-INF/AL2.0'."
     packagingOptions {
         exclude("META-INF/AL2.0")
         exclude("META-INF/LGPL2.1")
@@ -136,6 +132,7 @@ kotlin {
                 implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
                 implementation("androidx.test:runner:${Versions.androidxTest}")
                 implementation("androidx.test:rules:${Versions.androidxTest}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
             }
         }
     }

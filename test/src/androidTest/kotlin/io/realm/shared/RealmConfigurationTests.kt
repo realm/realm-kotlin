@@ -202,16 +202,4 @@ class RealmConfigurationTests {
         }
         realm.close()
     }
-
-    // TestCoroutineDispatcher isn't available as "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0" isn't available on native
-//    @Test
-//    fun testDispatcherAsWriteDispatcher() {
-//        val dispatcher = TestCoroutineDispatcher()
-//        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
-//        val realm = Realm.open(configuration)
-//        realm.writeBlocking {
-//            copyToRealm(Sample())
-//        }
-//        realm.close()
-//    }
 }
