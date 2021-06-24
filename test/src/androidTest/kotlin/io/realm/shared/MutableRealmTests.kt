@@ -17,6 +17,7 @@ package io.realm
 
 import io.realm.util.PlatformUtils
 import io.realm.util.Utils.createRandomString
+import test.StringPropertyWithPrimaryKey
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest
@@ -24,6 +25,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class MutableRealmTests {
 
@@ -36,7 +39,7 @@ class MutableRealmTests {
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration(
             path = "$tmpDir/${createRandomString(16)}.realm",
-            schema = setOf(Parent::class, Child::class)
+            schema = setOf(Parent::class, Child::class, StringPropertyWithPrimaryKey::class)
         )
         realm = Realm.open(configuration)
     }
@@ -66,6 +69,71 @@ class MutableRealmTests {
             // FIXME Should be IllegalStateException
             assertFailsWith<RuntimeException> {
                 cancelWrite()
+            }
+        }
+    }
+
+    @Test
+    fun findLatest_basic() {
+        val instance = realm.writeBlocking { copyToRealm(StringPropertyWithPrimaryKey()) }
+
+        realm.writeBlocking {
+            val latest = findLatest(instance)
+            assertNotNull(latest)
+            assertEquals(instance.id, latest.id)
+        }
+    }
+
+    @Test
+    fun findLatest_updated() {
+        val updatedValue = "UPDATED"
+        val instance = realm.writeBlocking { copyToRealm(StringPropertyWithPrimaryKey()) }
+        assertNull(instance.value)
+
+        realm.writeBlocking {
+            val latest = findLatest(instance)
+            assertNotNull(latest)
+            assertEquals(instance.id, latest.id)
+            latest.value = updatedValue
+        }
+        assertNull(instance.value)
+
+        realm.writeBlocking {
+            val latest = findLatest(instance)
+            assertNotNull(latest)
+            assertEquals(instance.id, latest.id)
+            assertEquals(updatedValue, latest.value)
+        }
+    }
+
+    @Test
+    fun findLatest_deleted() {
+        val instance = realm.writeBlocking { copyToRealm(StringPropertyWithPrimaryKey()) }
+
+        realm.writeBlocking {
+            findLatest(instance)?.let {
+                delete(it)
+            }
+        }
+        realm.writeBlocking {
+            assertNull(findLatest(instance))
+        }
+    }
+
+    @Test
+    fun findLatest_identityForLiveObject() {
+        realm.writeBlocking {
+            val instance = copyToRealm(StringPropertyWithPrimaryKey())
+            val latest = findLatest(instance)
+            assert(instance === latest)
+        }
+    }
+
+    @Test
+    fun findLatest_unmanagedThrows() {
+        realm.writeBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                val latest = findLatest(StringPropertyWithPrimaryKey())
             }
         }
     }

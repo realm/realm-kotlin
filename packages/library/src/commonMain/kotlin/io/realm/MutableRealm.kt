@@ -17,7 +17,6 @@ package io.realm
 
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.thaw
-import io.realm.internal.unmanage
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -35,9 +34,14 @@ class MutableRealm : BaseRealm {
     internal companion object {
         internal fun <T : RealmObject> delete(obj: T) {
             val internalObject = obj as RealmObjectInternal
+            checkObjectValid(internalObject)
             internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-                ?: throw IllegalArgumentException("Cannot delete unmanaged object")
-            internalObject.unmanage()
+        }
+
+        private fun checkObjectValid(obj: RealmObjectInternal) {
+            if (!obj.isValid()) {
+                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
+            }
         }
     }
 
@@ -67,6 +71,8 @@ class MutableRealm : BaseRealm {
     }
 
     /**
+     * Get latest version of an object.
+     *
      * Realm write transactions always operate on the latest version of data. This method
      * makes it possible to easily find the latest version of any frozen Realm Object and
      * return a copy of it that can be modified while inside the write block.
@@ -76,6 +82,8 @@ class MutableRealm : BaseRealm {
      *
      * @param obj Realm object to look up. Its latest state will be returned. If the object
      * has been deleted, `null` will be returned.
+     *
+     * @throws IllegalArgumentException if called on an unmanaged object.
      */
     public fun <T : RealmObject> findLatest(obj: T?): T? {
         return if (obj == null || !obj.isValid()) {
@@ -91,7 +99,8 @@ class MutableRealm : BaseRealm {
             // up to date, just return input
             obj
         } else {
-            (obj as RealmObjectInternal).thaw(this.realmReference.owner)
+            val liveRealm = realmReference.owner
+            (obj as RealmObjectInternal).thaw(liveRealm)
         }
     }
 
@@ -136,9 +145,8 @@ class MutableRealm : BaseRealm {
     fun <T : RealmObject> delete(obj: T) {
         // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
         val internalObject = obj as RealmObjectInternal
+        checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-            ?: throw IllegalArgumentException("An unmanaged unmanaged object cannot be deleted from the Realm.")
-        internalObject.unmanage()
     }
 
     // FIXME Consider adding a delete-all along with query support
