@@ -39,11 +39,11 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notifierDispatcher)
+    internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     // FIXME Replay should match other notifications. I believe they mit their starting state when you register a listener
     private val realmFlow = MutableSharedFlow<Realm>(replay = 1)
     private val notifierJob: AtomicRef<Job?> = atomic(null)
-    private val notifier = SuspendableNotifier(this, configuration.notifierDispatcher)
+    private val notifier = SuspendableNotifier(this, configuration.notificationDispatcher)
     private val writer = SuspendableWriter(this)
     private val realmPointerMutex = Mutex()
 
