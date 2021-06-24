@@ -175,9 +175,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
 
     /**
-     * FIXME
+     * FIXME Hidden until we can add proper support
      */
-    public fun addChangeListener(): Cancellable {
+    internal fun addChangeListener(): Cancellable {
         TODO()
     }
 

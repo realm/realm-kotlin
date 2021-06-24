@@ -91,7 +91,10 @@ public fun RealmObject.isValid(): Boolean {
     }
 }
 
-public fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
+/**
+ * FIXME Hidden until we can add proper support
+ */
+internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
     checkNotificationsAvailable()
     val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner
     @Suppress("UNCHECKED_CAST")

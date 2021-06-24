@@ -93,11 +93,13 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     }
 
     /**
+     * FIXME Hidden until we can add proper support
+     *
      * Observe changes to a Realm result.
      *
      * Follows the pattern of [Realm.addChangeListener]
      */
-    fun addChangeListener(callback: Callback<RealmResults<T>>): Cancellable {
+    internal fun addChangeListener(callback: Callback<RealmResults<T>>): Cancellable {
         realm.checkClosed()
         return realm.owner.addResultsChangeListener(this, callback)
     }
