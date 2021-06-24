@@ -47,6 +47,14 @@ class MutableRealmTests {
     }
 
     @Test
+    fun copyToRealmWithDefaults() {
+        realm.writeBlocking { copyToRealm(Parent()) }
+        val parents = realm.objects<Parent>()
+        assertEquals(1, parents.size)
+        assertEquals("N.N.", parents[0].name)
+    }
+
+    @Test
     fun cancelingWrite() {
         assertEquals(0, realm.objects(Parent::class).count())
         realm.writeBlocking {
