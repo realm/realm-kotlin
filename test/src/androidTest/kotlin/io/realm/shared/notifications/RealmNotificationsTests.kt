@@ -3,13 +3,20 @@ package io.realm.shared.notifications
 import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.VersionId
+import io.realm.internal.runBlocking
 import io.realm.util.PlatformUtils
 import io.realm.util.Utils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RealmNotificationsTests : NotificationTests {
 
@@ -34,9 +41,21 @@ class RealmNotificationsTests : NotificationTests {
     }
 
     @Test
-    @Ignore
     override fun observe() {
-        TODO("Wait for a Global change listener to become available")
+        runBlocking {
+            val c = Channel<Realm>(1)
+            val startingVersion = realm.version
+            val observer = async {
+                realm.observe().collect {
+                    c.send(it)
+                }
+            }
+            assertEquals(startingVersion, c.receive().version)
+            realm.write { /* Do nothing */ }
+            assertEquals(VersionId(startingVersion.version + 1), c.receive().version)
+            observer.cancel()
+            c.close()
+        }
     }
 
     @Test
@@ -46,9 +65,19 @@ class RealmNotificationsTests : NotificationTests {
     }
 
     @Test
-    @Ignore
     override fun initialElement() {
-        TODO("Wait for a Global change listener to become available")
+        runBlocking {
+            val c = Channel<Realm>(1)
+            val startingVersion = realm.version
+            val observer = async {
+                realm.observe().collect {
+                    c.send(it)
+                }
+            }
+            assertEquals(startingVersion, c.receive().version)
+            observer.cancel()
+            c.close()
+        }
     }
 
     @Test

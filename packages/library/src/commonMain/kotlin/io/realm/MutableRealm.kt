@@ -134,7 +134,7 @@ class MutableRealm : BaseRealm {
      * @throws IllegalArgumentException if the object is not managed by Realm.
      */
     fun <T : RealmObject> delete(obj: T) {
-        // TODO: It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
+        // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
         val internalObject = obj as RealmObjectInternal
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
             ?: throw IllegalArgumentException("An unmanaged unmanaged object cannot be deleted from the Realm.")

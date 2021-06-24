@@ -60,7 +60,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             return updatableRealm.value
         }
         set(value) {
-            updatableRealm!!.value = value
+            updatableRealm.value = value
         }
 
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
@@ -98,6 +98,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     init {
         // Update the Realm if another process or the Sync Client updates the Realm
         notifierJob.value = realmScope.launch {
+            realmFlow.emit(this@Realm)
             notifier.realmChanged().collect {
                 updateRealmPointer(it.first, it.second)
             }
