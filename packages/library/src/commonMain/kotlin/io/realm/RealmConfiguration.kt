@@ -54,8 +54,8 @@ public class RealmConfiguration private constructor(
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
+    notificationDispatcher: CoroutineDispatcher,
     writeDispatcher: CoroutineDispatcher,
-    notifierDispatcher: CoroutineDispatcher
 ) {
     // Public properties making up the RealmConfiguration
     // TODO Add KDoc for all of these
@@ -64,8 +64,8 @@ public class RealmConfiguration private constructor(
     public val schema: Set<KClass<out RealmObject>>
     public val log: LogConfiguration
     public val maxNumberOfActiveVersions: Long
+    public val notificationDispatcher: CoroutineDispatcher
     public val writeDispatcher: CoroutineDispatcher
-    public val notifierDispatcher: CoroutineDispatcher
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -84,8 +84,8 @@ public class RealmConfiguration private constructor(
         this.mapOfKClassWithCompanion = companionMap
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
+        this.notificationDispatcher = notificationDispatcher
         this.writeDispatcher = writeDispatcher
-        this.notifierDispatcher = notifierDispatcher
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
         RealmInterop.realm_config_set_schema_mode(
@@ -132,7 +132,7 @@ public class RealmConfiguration private constructor(
             LogConfiguration(LogLevel.WARN, listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))),
             Long.MAX_VALUE,
             singleThreadDispatcher(name),
-            singleThreadDispatcher(name)
+            singleThreadDispatcher(name),
         )
 
     /**
@@ -149,8 +149,8 @@ public class RealmConfiguration private constructor(
         private var removeSystemLogger: Boolean = false
         private var userLoggers: List<RealmLogger> = listOf()
         private var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
-        private var writeDispatcher = singleThreadDispatcher(name)
-        private var notifierDispatcher = singleThreadDispatcher(name)
+        private var notificationDispatcher: CoroutineDispatcher? = null
+        private var writeDispatcher: CoroutineDispatcher? = null
 
         fun path(path: String) = apply { this.path = path }
         fun name(name: String) = apply { this.name = name }
@@ -192,25 +192,35 @@ public class RealmConfiguration private constructor(
         }
 
         /**
-         * Dispatcher on which Realm notifications are run. It is possible to listen to changes to
-         * Realm objects from any thread, but the underlying logic will run on this dispatcher before any changes are
-         * returned to the caller thread.
-         *
-         * @param dispatcher Dispatcher on which notifications are run. It is required to be backed by a
-         * single thread only.
-         */
-        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
-            this.writeDispatcher = dispatcher
-        }
-
-        /**
          * Dispatcher used to run background writes to the Realm.
+         *
+         * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * NOTE On Android the dispatcher's thread must have an initialized
+         * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
          *
          * @param dispatcher Dispatcher on which writes are run. It is required to be backed by a
          * single thread only.
          */
-        public fun notifierDispatcher(dispatcher: CoroutineDispatcher) = apply {
-            this.notifierDispatcher = dispatcher
+        public fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
+            this.notificationDispatcher = dispatcher
+        }
+
+        /**
+         * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
+         * Realm objects from any thread, but the underlying logic will run on this dispatcher
+         * before any changes are returned to the caller thread.
+         *
+         * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * NOTE On Android the dispatcher's thread must have an initialized
+         * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
+         *
+         * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
+         * by a single thread only.
+         */
+        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
+            this.writeDispatcher = dispatcher
         }
 
         /**
@@ -242,8 +252,8 @@ public class RealmConfiguration private constructor(
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                writeDispatcher,
-                notifierDispatcher
+                notificationDispatcher ?: singleThreadDispatcher(name),
+                writeDispatcher ?: singleThreadDispatcher(name),
             )
         }
     }
