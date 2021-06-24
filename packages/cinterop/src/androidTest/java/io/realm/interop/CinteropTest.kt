@@ -45,6 +45,115 @@ class CinteropTest {
         assertEquals("10.5.2", realmc.realm_get_library_version())
     }
 
+    @Test
+    fun open_different_versions() {
+        System.loadLibrary("realmc")
+
+        val rlmInvalidPropertyKey = realmc.getRLM_INVALID_PROPERTY_KEY()
+        val rlmInvalidClassKey = realmc.getRLM_INVALID_CLASS_KEY()
+        val path = Files.createTempDirectory("android_tests").absolutePathString() + "/c_api_test.realm"
+
+        // ---------------- FIRST CONFIG
+        val class_1 = realm_class_info_t().apply {
+            name = "foo"
+            primary_key = ""
+            num_properties = 1
+            num_computed_properties = 0
+            key = rlmInvalidClassKey
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+        }
+
+        val prop_1_1 = realm_property_info_t().apply {
+            name = "int"
+            public_name = ""
+            type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
+            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
+            link_target = ""
+            link_origin_property_name = ""
+            key = rlmInvalidPropertyKey
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+        }
+
+        val classes_1 = realmc.new_classArray(1)
+        val props_1 = realmc.new_propertyArrayArray(1)
+
+        realmc.classArray_setitem(classes_1, 0, class_1)
+
+        val properties_1 = realmc.new_propertyArray(3).also {
+            realmc.propertyArray_setitem(it, 0, prop_1_1)
+        }
+        realmc.propertyArrayArray_setitem(props_1, 0, properties_1)
+
+        val realmSchemaNew_1 = realmc.realm_schema_new(classes_1, 1, props_1)
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew_1, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+
+        val config_1: Long = realmc.realm_config_new()
+
+        realmc.realm_config_set_path(config_1, path)
+        realmc.realm_config_set_schema(config_1, realmSchemaNew_1)
+        realmc.realm_config_set_schema_mode(config_1, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
+        realmc.realm_config_set_schema_version(config_1, 2)
+
+        val realm_1 = realmc.realm_open(config_1)
+
+        realmc.realm_release(config_1)
+        realmc.realm_release(realmSchemaNew_1)
+
+        // Schema validates
+        val schema_1 = realmc.realm_get_schema(realm_1)
+        assertTrue(realmc.realm_schema_validate(schema_1, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+        realmc.realm_release(schema_1)
+
+        assertEquals(1, realmc.realm_get_num_classes(realm_1))
+
+        realmc.realm_close(realm_1)
+
+        // ---------------- SECOND CONFIG
+        val class_2 = realm_class_info_t().apply {
+            name = "bar"
+            primary_key = ""
+            num_properties = 1
+            num_computed_properties = 0
+            key = rlmInvalidClassKey
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+        }
+
+        val prop_2_1 = realm_property_info_t().apply {
+            name = "int"
+            public_name = ""
+            type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
+            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
+            link_target = ""
+            link_origin_property_name = ""
+            key = rlmInvalidPropertyKey
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+        }
+
+        val classes_2 = realmc.new_classArray(1)
+        val props_2 = realmc.new_propertyArrayArray(1)
+
+        realmc.classArray_setitem(classes_2, 0, class_2)
+
+        val properties_2 = realmc.new_propertyArray(3).also {
+            realmc.propertyArray_setitem(it, 0, prop_2_1)
+        }
+        realmc.propertyArrayArray_setitem(props_2, 0, properties_2)
+
+        val realmSchemaNew_2 = realmc.realm_schema_new(classes_2, 1, props_2)
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew_2, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+
+        val config_2: Long = realmc.realm_config_new()
+
+        realmc.realm_config_set_path(config_2, path)
+        realmc.realm_config_set_schema(config_2, realmSchemaNew_2)
+//        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
+        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema_version(config_2, 1)
+
+        val realm_2 = realmc.realm_open(config_2)
+        realmc.realm_close(realm_2)
+    }
+
     @ExperimentalPathApi
     @Test
     fun cinterop_swig() {
