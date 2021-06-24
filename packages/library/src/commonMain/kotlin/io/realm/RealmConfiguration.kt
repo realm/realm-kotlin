@@ -191,29 +191,35 @@ public class RealmConfiguration private constructor(
         }
 
         /**
-         * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
-         * Realm objects from any thread, but the underlying logic will run on this dispatcher
-         * before any changes are returned to the caller thread.
-         *
-         * Defaults to a single threaded dispatcher started when the configuration is built.
-         *
-         * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
-         * by a single thread only.
-         */
-        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
-            this.writeDispatcher = dispatcher
-        }
-
-        /**
          * Dispatcher used to run background writes to the Realm.
          *
          * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * NOTE On Android the dispatcher's thread must have an initialized
+         * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
          *
          * @param dispatcher Dispatcher on which writes are run. It is required to be backed by a
          * single thread only.
          */
         public fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.notificationDispatcher = dispatcher
+        }
+
+        /**
+         * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
+         * Realm objects from any thread, but the underlying logic will run on this dispatcher
+         * before any changes are returned to the caller thread.
+         *
+         * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * NOTE On Android the dispatcher's thread must have an initialized
+         * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
+         *
+         * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
+         * by a single thread only.
+         */
+        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
+            this.writeDispatcher = dispatcher
         }
 
         /**
