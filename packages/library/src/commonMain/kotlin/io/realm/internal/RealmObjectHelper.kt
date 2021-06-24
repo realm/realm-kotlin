@@ -32,6 +32,7 @@ object RealmObjectHelper {
     // Consider inlining
     @Suppress("unused") // Called from generated code
     fun <R> getValue(obj: RealmObjectInternal, col: String): Any? {
+        obj.checkValid()
         val realm = obj.`$realm$Owner` as RealmReference? ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
@@ -44,6 +45,7 @@ object RealmObjectHelper {
         obj: RealmObjectInternal,
         col: String,
     ): Any? {
+        obj.checkValid()
         val realm = obj.`$realm$Owner` as RealmReference? ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
@@ -64,6 +66,7 @@ object RealmObjectHelper {
     // Consider inlining
     @Suppress("unused") // Called from generated code
     fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
+        obj.checkValid()
         val realm = obj.`$realm$Owner` as RealmReference? ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
@@ -81,6 +84,7 @@ object RealmObjectHelper {
         col: String,
         value: R?
     ) {
+        obj.checkValid()
         val newValue = if (value?.`$realm$IsManaged` == false) {
             copyToRealm(obj.`$realm$Mediator` as Mediator, obj.`$realm$Owner` as RealmReference, value)
         } else value

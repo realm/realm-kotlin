@@ -74,7 +74,7 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val runtimeException = RuntimeException(error.message?.toKString())
+            val runtimeException = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
             realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             //  https://github.com/realm/realm-kotlin/issues/70
@@ -400,7 +400,7 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
     }
 
-    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer {
+    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
         return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
     }
 
