@@ -16,6 +16,7 @@
 package io.realm
 
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import kotlinx.coroutines.runBlocking
 import test.link.Child
 import test.link.Parent
