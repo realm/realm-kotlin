@@ -32,9 +32,7 @@ import kotlin.reflect.KClass
 //  this and SuspendableWriter
 class Notifier(
     configuration: RealmConfiguration,
-    val dispatcher: CoroutineDispatcher = configuration.writeDispatcher(
-        configuration.path
-    )
+    val dispatcher: CoroutineDispatcher = configuration.writeDispatcher
 ) {
     class NotifierRealm(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher) :
         BaseRealm(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))

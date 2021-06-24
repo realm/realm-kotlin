@@ -41,9 +41,7 @@ import kotlinx.coroutines.withContext
  */
 class SuspendableWriter(
     private val owner: BaseRealm,
-    val dispatcher: CoroutineDispatcher = owner.configuration.writeDispatcher(
-        owner.configuration.path
-    )
+    val dispatcher: CoroutineDispatcher = owner.configuration.writeDispatcher
 ) {
 
     private val tid: ULong
