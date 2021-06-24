@@ -40,11 +40,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     BaseRealm(configuration, dbPointer) {
 
     internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
-    // FIXME Replay should match other notifications. I believe they mit their starting state when you register a listener
-    private val realmFlow = MutableSharedFlow<Realm>(replay = 1)
+    private val realmFlow = MutableSharedFlow<Realm>(replay = 1) // Realm notifications emit their initial state when subscribed to
     private val notifierJob: AtomicRef<Job?> = atomic(null)
     private val notifier = SuspendableNotifier(this, configuration.notificationDispatcher)
-    private val writer = SuspendableWriter(this)
+    private val writer = SuspendableWriter(this, configuration.writeDispatcher)
     private val realmPointerMutex = Mutex()
 
     private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
@@ -99,8 +98,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         // Update the Realm if another process or the Sync Client updates the Realm
         notifierJob.value = realmScope.launch {
             realmFlow.emit(this@Realm)
-            notifier.realmChanged().collect {
-                updateRealmPointer(it.first, it.second)
+            notifier.realmChanged().collect { (dbPointer: NativePointer, version: VersionId) ->
+                updateRealmPointer(dbPointer, version)
             }
         }
     }
@@ -223,10 +222,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
                 newRealmReference
             }
             trackNewAndCloseExpiredReferences(untrackedReference)
-        }
 
-        // Notify public observers that the Realm changed
-        realmFlow.emit(this)
+            // Notify public observers that the Realm changed
+            realmFlow.emit(this)
+        }
     }
 
     // Must only be called with realmPointerMutex locked

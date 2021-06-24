@@ -108,11 +108,11 @@ public fun <T : RealmObject> T.observe(): Flow<T?> {
 private fun RealmObject.checkNotificationsAvailable() {
     val internalObject = this as RealmObjectInternal
     val realm = (internalObject.`$realm$Owner` as RealmReference?)
-    if (realm != null && RealmInterop.realm_is_closed(realm.dbPointer)) {
-        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
-    }
     if (!isManaged()) {
         throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
+    }
+    if (realm != null && RealmInterop.realm_is_closed(realm.dbPointer)) {
+        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
     }
     if (!isValid()) {
         throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")

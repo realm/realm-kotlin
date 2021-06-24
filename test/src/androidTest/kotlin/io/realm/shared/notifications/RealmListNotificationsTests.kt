@@ -4,7 +4,6 @@ import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.util.PlatformUtils
-import io.realm.util.Utils
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -21,7 +20,7 @@ class RealmListNotificationsTests : NotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration(path = "$tmpDir/${Utils.createRandomString(16)}.realm", schema = setOf(Sample::class))
+            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 

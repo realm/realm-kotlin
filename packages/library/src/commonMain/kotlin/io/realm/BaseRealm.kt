@@ -34,6 +34,10 @@ public abstract class BaseRealm internal constructor(
     dbPointer: NativePointer
 ) {
 
+    companion object {
+        const val flowNotSupportMessage = "Flows are not implemented for this type of Realm, use the callback API instead."
+    }
+
     /**
      * Realm reference that links the Kotlin instance with the underlying C++ SharedRealm.
      *
@@ -76,24 +80,37 @@ public abstract class BaseRealm internal constructor(
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
-    internal abstract fun <T : RealmObject> addResultsChangeListener(
+    internal open fun <T : RealmObject> addResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
-    ): Cancellable
+    ): Cancellable {
+        throw NotImplementedError(flowNotSupportMessage)
+    }
 
-    internal abstract fun <T : RealmObject> addListChangeListener(
+    internal open fun <T : RealmObject> addListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
-    ): Cancellable
+    ): Cancellable {
+        throw NotImplementedError(flowNotSupportMessage)
+    }
 
-    internal abstract fun <T : RealmObject> addObjectChangeListener(
+    internal open fun <T : RealmObject> addObjectChangeListener(
         obj: T,
         callback: Callback<T?>
-    ): Cancellable
+    ): Cancellable {
+        throw NotImplementedError(flowNotSupportMessage)
+    }
 
-    internal abstract fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>>
-    internal abstract fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?>
-    internal abstract fun <T : RealmObject> observeObject(obj: T): Flow<T?>
+    internal open fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>> {
+        throw NotImplementedError(flowNotSupportMessage)
+    }
+    internal open fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?> {
+        throw NotImplementedError(flowNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> observeObject(obj: T): Flow<T?> {
+        throw NotImplementedError(flowNotSupportMessage)
+    }
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have

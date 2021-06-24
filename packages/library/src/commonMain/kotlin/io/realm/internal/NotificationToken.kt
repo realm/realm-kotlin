@@ -22,15 +22,19 @@ import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
-class NotificationToken<T>(t: T, private val token: NativePointer) : Cancellable {
+class NotificationToken<T>(callback: T, token: NativePointer) : Cancellable {
 
-    private var t: AtomicRef<T?> = atomic(t)
+    private val observer: AtomicRef<T?> = atomic(callback)
+    private val token: AtomicRef<NativePointer?> = atomic(token)
 
     override fun cancel() {
-        if (t.value != null) {
-            RealmInterop.realm_release(token)
+        if (observer.value != null) {
+            val frozenToken: NativePointer? = token.getAndSet(null)
+            frozenToken?.let {
+                RealmInterop.realm_release(it)
+            }
         }
-        t.value = null
+        observer.value = null
     }
 
     // FIXME API We currently favor to do explicit registration.

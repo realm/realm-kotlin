@@ -41,7 +41,7 @@ class SystemNotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration(path = "$tmpDir/${Utils.createRandomString(16)}.realm", schema = setOf(Sample::class))
+            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
@@ -55,7 +55,6 @@ class SystemNotificationTests {
 
     // Sanity check to ensure that this doesn't cause crashes
     @Test
-    @Ignore
     // I think there is some kind of resource issue when combining too many realms/schedulers. If
     // this test is enabled execution of all test sometimes fails. Something similarly happens if
     // the public realm_open in Realm.open is extended to take a dispatcher to setup notifications.

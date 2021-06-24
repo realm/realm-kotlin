@@ -36,17 +36,23 @@ expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
 expect fun threadId(): ULong
 
 /**
- * Method to freeze state. Calls the platform implementation of 'freeze' on native, and is a noop on other platforms.
+ * Method to freeze state.
+ * Calls the platform implementation of 'freeze' on native, and is a noop on other platforms.
+ *
+ * Note, this method refers to Kotlin Natives notion of frozen objects, and not Realms variant
+ * of frozen objects.
  */
 expect fun <T> T.freeze(): T
 
 /**
- * Determine if object is frozen. Will return false on non-native platforms.
+ * Determine if object is frozen.
+ * Will return false on non-native platforms.
  */
 expect val <T> T.isFrozen: Boolean
 
 /**
- * Call on an object which should never be frozen. Will help debug when something inadvertently is.
+ * Call on an object which should never be frozen.
+ * Will help debug when something inadvertently is.
  * This is a noop on non-native platforms.
  */
 expect fun Any.ensureNeverFrozen()

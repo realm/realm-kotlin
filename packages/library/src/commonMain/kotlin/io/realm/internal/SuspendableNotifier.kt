@@ -83,11 +83,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     }
 
     fun addRealmChangedListener(callback: Callback<Pair<NativePointer, VersionId>>): Cancellable {
-        // FIXME Waiting for RealmInterop to have support for global Realm changed
-        return object : Cancellable {
-            override fun cancel() {
-            }
-        }
+        TODO("Waiting for RealmInterop to have support for global Realm changed")
     }
 
     /**
@@ -233,6 +229,8 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     fun close() {
         // FIXME Is it safe at all times to close a Realm? Probably not during a changelistener callback, but Mutexes
         //  are not supported within change listeners as they are not suspendable.
-        realm.close()
+        runBlocking(dispatcher) {
+            realm.close()
+        }
     }
 }

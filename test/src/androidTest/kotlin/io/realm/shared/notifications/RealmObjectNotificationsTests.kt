@@ -5,7 +5,6 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.observe
 import io.realm.util.PlatformUtils
-import io.realm.util.Utils
 import io.realm.util.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -32,7 +31,7 @@ class RealmObjectNotificationsTests : NotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration(path = "$tmpDir/${Utils.createRandomString(16)}.realm", schema = setOf(Sample::class))
+            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
