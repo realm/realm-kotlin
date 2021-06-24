@@ -4,7 +4,8 @@
 * None.
 
 ### Enhancements
-* None.
+* [Support Apple Release builds](https://github.com/realm/realm-kotlin/issues/142).
+* Enabling [shrinker](https://github.com/realm/realm-kotlin/issues/293) for Android Release builds.
 
 ### Fixed
 * None.
