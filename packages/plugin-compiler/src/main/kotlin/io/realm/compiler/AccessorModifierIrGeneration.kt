@@ -17,6 +17,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.REALM_LIST
+import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -75,8 +76,10 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
+import org.jetbrains.kotlin.types.typeUtil.supertypes
 import kotlin.collections.set
 
 private const val REALM_OBJECT = "RealmObject"
@@ -496,7 +499,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     else ->
-                        if (superTypesContainRealmObject(type.constructor.supertypes)) {
+                        if (superTypesContainRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
                             error("Unsupported Kotlin type: '$type'")
@@ -506,5 +509,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     }
 
     private fun superTypesContainRealmObject(supertypes: Collection<KotlinType>): Boolean =
-        supertypes.map { it.toString() }.contains(REALM_OBJECT)
+        supertypes.any {
+            it.constructor.declarationDescriptor?.fqNameSafe == REALM_MODEL_INTERFACE
+        }
 }
