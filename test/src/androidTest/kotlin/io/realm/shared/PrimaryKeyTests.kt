@@ -21,6 +21,7 @@ import io.realm.RealmObject
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.util.TypeDescriptor.rType
+import io.realm.util.Utils.createRandomString
 import test.primarykey.NoPrimaryKey
 import test.primarykey.PrimaryKeyByte
 import test.primarykey.PrimaryKeyByteNullable
@@ -56,7 +57,7 @@ class PrimaryKeyTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration.Builder(path = "$tmpDir/default.realm")
+            RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm")
                 .schema(
                     PrimaryKeyString::class,
                     PrimaryKeyStringNullable::class,
@@ -221,7 +222,7 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
         )
 
-        val configuration = RealmConfiguration.Builder("$tmpDir/default.realm")
+        val configuration = RealmConfiguration.Builder("$tmpDir/${createRandomString(16)}.realm")
             .schema(
                 PrimaryKeyByte::class,
                 PrimaryKeyByteNullable::class,

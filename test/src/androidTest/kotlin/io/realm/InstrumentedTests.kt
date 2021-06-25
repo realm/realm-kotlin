@@ -21,6 +21,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -40,7 +41,7 @@ class InstrumentedTests {
     @Before
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 

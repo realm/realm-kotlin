@@ -17,9 +17,9 @@ package io.realm
 
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.thaw
-import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
@@ -57,14 +57,6 @@ class MutableRealm : BaseRealm {
      */
     internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher? = null) :
         super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
-
-    /**
-     * Create a MutableRealm which represents a standard write transaction, i.e. any modifications
-     * are immediately represented in the `parentRealm`.
-     */
-    @Deprecated("Should be avoided and will be removed once we have the proper Frozen Architecture in place.")
-    internal constructor(configuration: RealmConfiguration, parentRealm: NativePointer) :
-        super(configuration, parentRealm)
 
     internal fun beginTransaction() {
         RealmInterop.realm_begin_write(realmReference.dbPointer)
@@ -151,6 +143,7 @@ class MutableRealm : BaseRealm {
      * @throws IllegalArgumentException if the object is not managed by Realm.
      */
     fun <T : RealmObject> delete(obj: T) {
+        // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
         val internalObject = obj as RealmObjectInternal
         checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
@@ -159,4 +152,31 @@ class MutableRealm : BaseRealm {
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
+
+    override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+        throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
+        throw IllegalStateException("Changes to RealmObject cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
 }

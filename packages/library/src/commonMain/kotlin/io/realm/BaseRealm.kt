@@ -19,6 +19,7 @@ import io.realm.internal.RealmLog
 import io.realm.internal.RealmReference
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
@@ -32,6 +33,10 @@ public abstract class BaseRealm internal constructor(
     public val configuration: RealmConfiguration,
     dbPointer: NativePointer
 ) {
+
+    companion object {
+        const val observerablesNotSupportMessage = "Observing changes are not supported by this Realm."
+    }
 
     /**
      * Realm reference that links the Kotlin instance with the underlying C++ SharedRealm.
@@ -74,6 +79,38 @@ public abstract class BaseRealm internal constructor(
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
+
+    internal open fun <T : RealmObject> registerResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerListChangeListener(
+        list: List<T>,
+        callback: Callback<List<T>>
+    ): Cancellable {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerObjectChangeListener(
+        obj: T,
+        callback: Callback<T?>
+    ): Cancellable {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+    internal open fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have

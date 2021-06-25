@@ -47,6 +47,7 @@ kotlin {
             dependencies {
                 // TODO AUTO-SETUP
                 implementation("io.realm.kotlin:library:$version")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-native-mt")
             }
         }
         val commonTest by getting {

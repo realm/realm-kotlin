@@ -121,7 +121,8 @@ public class RealmConfiguration private constructor(
     public constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Set<KClass<out RealmObject>>) :
         this(path, name, mapOf()) // REPLACED_BY_IR()
 
-    // Called by the compiler plugin, with a populated companion map
+    // Called by the compiler plugin, with a populated companion map.
+    // Default values should match what happens when calling `RealmConfiguration.Builder(schema = setOf(...)).build()`
     internal constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Map<KClass<out RealmObject>, RealmObjectCompanion>) :
         this(
             schema,

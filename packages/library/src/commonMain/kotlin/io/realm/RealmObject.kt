@@ -19,6 +19,7 @@ package io.realm
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Marker interface to define a model (managed by Realm).
@@ -87,5 +88,45 @@ public fun RealmObject.isValid(): Boolean {
     } else {
         // Unmanaged objects are always valid
         true
+    }
+}
+
+/**
+ * FIXME Hidden until we can add proper support
+ */
+internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
+    checkNotificationsAvailable()
+    val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner
+    @Suppress("UNCHECKED_CAST")
+    return realm.registerObjectChangeListener(this as T, callback)
+}
+
+/**
+ * Observe changes to a Realm object. Any change to the object, will cause the flow to emit the updated
+ * object. If the observed object is deleted from the Realm, the flow will complete, otherwise it will
+ * continue running until canceled.
+ *
+ * The change calculations will on on the thread represented by [RealmConfiguration.notificationDispatcher].
+ *
+ * @return a flow representing changes to the object.
+ */
+public fun <T : RealmObject> T.observe(): Flow<T> {
+    checkNotificationsAvailable()
+    val internalObject = this as RealmObjectInternal
+    @Suppress("UNCHECKED_CAST")
+    return (internalObject.`$realm$Owner` as RealmReference).owner.registerObjectObserver(this as T)
+}
+
+private fun RealmObject.checkNotificationsAvailable() {
+    val internalObject = this as RealmObjectInternal
+    val realm = (internalObject.`$realm$Owner` as RealmReference?)
+    if (!isManaged()) {
+        throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
+    }
+    if (realm != null && RealmInterop.realm_is_closed(realm.dbPointer)) {
+        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
+    }
+    if (!isValid()) {
+        throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
     }
 }

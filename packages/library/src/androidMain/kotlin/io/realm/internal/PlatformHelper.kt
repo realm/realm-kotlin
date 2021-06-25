@@ -50,4 +50,11 @@ actual fun threadId(): ULong {
     return Thread.currentThread().id.toULong()
 }
 
+actual fun <T> T.freeze(): T = this
+
+actual val <T> T.isFrozen: Boolean
+    get() = false
+
+actual fun Any.ensureNeverFrozen() {}
+
 actual typealias WeakReference<T> = java.lang.ref.WeakReference<T>

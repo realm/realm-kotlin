@@ -39,10 +39,7 @@ import kotlinx.coroutines.withContext
  * @param configuration
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
-class SuspendableWriter(
-    private val owner: BaseRealm,
-    val dispatcher: CoroutineDispatcher = owner.configuration.writeDispatcher
-) {
+class SuspendableWriter(private val owner: BaseRealm, val dispatcher: CoroutineDispatcher) {
 
     private val tid: ULong
     // Must only be accessed from the dispatchers thread

@@ -21,6 +21,7 @@ import io.realm.VersionId
 import io.realm.isManaged
 import io.realm.util.PlatformUtils
 import io.realm.util.PlatformUtils.triggerGC
+import io.realm.util.Utils.createRandomString
 import io.realm.version
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -57,7 +58,7 @@ class RealmTests {
 
     private val configuration: RealmConfiguration by lazy {
         RealmConfiguration.Builder()
-            .path("$tmpDir/default.realm",)
+            .path("$tmpDir/${createRandomString(16)}.realm",)
             .schema(setOf(Parent::class, Child::class))
             .build()
     }

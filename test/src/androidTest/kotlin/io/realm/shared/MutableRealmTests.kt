@@ -16,6 +16,7 @@
 package io.realm
 
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import test.StringPropertyWithPrimaryKey
 import test.link.Child
 import test.link.Parent
@@ -37,7 +38,7 @@ class MutableRealmTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration(
-            path = "$tmpDir/default.realm",
+            path = "$tmpDir/${createRandomString(16)}.realm",
             schema = setOf(Parent::class, Child::class, StringPropertyWithPrimaryKey::class)
         )
         realm = Realm.open(configuration)
