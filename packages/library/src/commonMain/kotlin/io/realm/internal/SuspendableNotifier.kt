@@ -217,6 +217,8 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     /**
      * Listen to changes to a RealmObject through a change listener. The callback will happen
      * on the configured [SuspendableNotifier.dispatcher] thread.
+     *
+     * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
      */
     internal fun <T : RealmObject> registerObjectChangedListener(obj: T, callback: Callback<T?>): Cancellable {
         val liveObject: RealmObjectInternal? = (obj as RealmObjectInternal).thaw(realm.realmReference.owner) as RealmObjectInternal?
