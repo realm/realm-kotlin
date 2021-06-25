@@ -15,6 +15,7 @@
  */
 package io.realm
 
+import io.realm.internal.FlowNotificationToken
 import io.realm.internal.RealmReference
 import io.realm.internal.SuspendableNotifier
 import io.realm.internal.SuspendableWriter
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -169,7 +171,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * Observe changes to the Realm. If there is any change to the Realm, the flow will emit the
      * updated Realm. The flow will continue running indefinitely until canceled.
      *
-     * The change calculations will run on the thread defined by [RealmConfiguration.notificationDispatcher].
+     * The latest version of the Realm will be immediately emitted as the first element when
+     * [Flow.collect] is called.
+     *
+     * The change calculations will automatically run on on the thread represented by
+     * [RealmConfiguration.notificationDispatcher].
      *
      * @return a flow representing changes to this Realm.
      */
@@ -178,10 +184,27 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
 
     /**
-     * FIXME Hidden until we can add proper support
+     * Observe changes to the Realm. If there is any change to the Realm, the flow will emit the
+     * updated Realm. The flow will continue running indefinitely until canceled.
+     *
+     * The latest version of the Realm will be immediately emitted as the first element when
+     * [Flow.collect] is called.
+     *
+     * The change calculations will automatically run on on the thread represented by
+     * [RealmConfiguration.notificationDispatcher].
+     *
+     * @param callback callback to be notified whenever the underlying Realm object changes.
+     *
+     * @return a token that can be used to cancel further notifications and free the
+     * underlying resources. Failing to cancel the listener will result in a memory leak.
      */
-    internal fun addChangeListener(): Cancellable {
-        TODO()
+    public fun addChangeListener(callback: Callback<Realm>): Cancellable {
+        val job = realmScope.launch {
+            realmFlow.collect {
+                callback.onChange(it)
+            }
+        }
+        return FlowNotificationToken(callback, job)
     }
 
     internal override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
@@ -200,15 +223,34 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
-        return notifier.directResultChangedListener(results, callback)
+        val job = realmScope.launch {
+            notifier.resultsChanged(results).collect {
+                callback.onChange(it)
+            }
+        }
+        return FlowNotificationToken(callback, job)
     }
 
-    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>?>): Cancellable {
         TODO("Not yet implemented")
     }
 
     internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
-        TODO("Not yet implemented")
+        val job = realmScope.launch {
+            notifier.objectChanged(obj)
+                .onCompletion { error: Throwable? ->
+                    if (error == null) {
+                        callback.onChange(null)
+                    } else {
+                        // TODO How should we handle errors?
+                        throw error
+                    }
+                }
+                .collect {
+                    callback.onChange(it)
+                }
+        }
+        return FlowNotificationToken(callback, job)
     }
 
     private suspend fun updateRealmPointer(newPointer: NativePointer, newVersion: VersionId) {

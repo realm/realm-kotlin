@@ -4,10 +4,10 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 
 /**
- * All classes (Realm, RealmObject, RealmResults, RealmList) that expose notifications should
- * implement this interface to be sure that we test common behaviour across those classes.
+ * All classes (Realm, RealmObject, RealmResults, RealmList) that expose Flow notifications
+ * should implement this interface to be sure that we test common behaviour across those classes.
  */
-interface NotificationTests {
+interface FlowNotificationTests {
 
     // Verify that the initial element in a Flow is the element itself
     // TODO Is this the semantics we want?
@@ -27,6 +27,13 @@ interface NotificationTests {
     @Test
     fun deleteObservable()
 
+    // Verify that errors  inside the Flow propagate to users. Especially errors from Realm Core.
+    @Test
+    @Ignore
+    fun errorInsideObserverThrows() {
+        // FIXME
+    }
+
     // Verify that closing the Realm while inside a flow throws an exception (I think)
     @Test
     @Ignore // Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out
@@ -37,16 +44,6 @@ interface NotificationTests {
     @Test
     @Ignore // Until proper Realm tracking is in place
     fun closingRealmDoesNotCancelFlows()
-
-    @Test
-    fun addChangeListener() {
-        // FIXME Implement in another PR
-    }
-
-    @Test
-    fun addChangeListener_emitOnProvidedDispatcher() {
-        // FIXME Implement in another PR
-    }
 
     @Test
     fun openSameRealmFileWithDifferentDispatchers() {

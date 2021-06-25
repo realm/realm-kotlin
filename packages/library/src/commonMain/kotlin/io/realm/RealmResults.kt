@@ -93,13 +93,20 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     }
 
     /**
-     * FIXME Hidden until we can add proper support
+     * Observe changes to the RealmResult. If there is any change to objects represented by the query
+     * backing the RealmResult, the callback will be notified with the updated RealmResult. The callback
+     * will continue to be notified about changes until [Cancellable.cancel] is called.
      *
-     * Observe changes to a Realm result.
+     * The latest version of the observed object will be immediately emitted as the first element when
+     * [Flow.collect] is called.
      *
-     * Follows the pattern of [Realm.addChangeListener]
+     * The change callback will return on the thread represented by [RealmConfiguration.notificationDispatcher].
+     *
+     * @param callback callback to be notified whenever the underlying RealmResults changes.
+     * @return a token that can be used to cancel further notifications and free the
+     * underlying resources. Failing to cancel the listener will result in a memory leak.
      */
-    internal fun addChangeListener(callback: Callback<RealmResults<T>>): Cancellable {
+    public fun addChangeListener(callback: Callback<RealmResults<T>>): Cancellable {
         realm.checkClosed()
         return realm.owner.registerResultsChangeListener(this, callback)
     }
@@ -109,7 +116,11 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
      * backing the RealmResult, the flow will emit the updated RealmResult. The flow will continue
      * running indefinitely until canceled.
      *
-     * The change calculations will on on the thread represented by [RealmConfiguration.notificationDispatcher].
+     * The latest version of the observed query will be immediately emitted as the first element when
+     * [Flow.collect] is called.
+     *
+     * The change calculations will automatically run on on the thread represented by
+     * [RealmConfiguration.notificationDispatcher].
      *
      * @return a flow representing changes to the RealmResults.
      */

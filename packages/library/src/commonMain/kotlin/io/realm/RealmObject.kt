@@ -92,7 +92,18 @@ public fun RealmObject.isValid(): Boolean {
 }
 
 /**
- * FIXME Hidden until we can add proper support
+ * Observe changes to the Realm object. If there is any change to the object, the callback will be notified
+ * with the updated RealmResult. The callback will continue to be notified about changes until
+ * [Cancellable.cancel] is called.
+ *
+ * The latest version of the observed object will be immediately emitted as the first element when
+ * the change listener is registered.
+ *
+ * The change callback will return on the thread represented by [RealmConfiguration.notificationDispatcher].
+ *
+ * @param callback callback to be notified whenever the underlying Realm object changes.
+ * @return a token that can be used to cancel further notifications and free the
+ * underlying resources. Failing to cancel the listener will result in a memory leak.
  */
 internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
     checkNotificationsAvailable()
@@ -105,6 +116,9 @@ internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<
  * Observe changes to a Realm object. Any change to the object, will cause the flow to emit the updated
  * object. If the observed object is deleted from the Realm, the flow will complete, otherwise it will
  * continue running until canceled.
+ *
+ * The latest version of the observed object will be immediately emitted as the first element when
+ * [Flow.collect] is called.
  *
  * The change calculations will on on the thread represented by [RealmConfiguration.notificationDispatcher].
  *

@@ -1,6 +1,7 @@
 package io.realm.shared.notifications
 
-import io.realm.NotificationTests
+import io.realm.CallbackNotificationTests
+import io.realm.FlowNotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
@@ -9,14 +10,16 @@ import io.realm.util.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.sync.Mutex
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-class RealmNotificationsTests : NotificationTests {
+class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -39,39 +42,36 @@ class RealmNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun initialElement() {
-        runBlocking {
-            val c = Channel<Realm>(1)
-            val startingVersion = realm.version
-            val observer = async {
-                realm.observe().collect {
-                    c.send(it)
-                }
+    override fun initialElement() = runBlocking {
+        val c = Channel<Realm>(1)
+        val startingVersion = realm.version
+        async {
+            realm.observe().collect {
+                c.send(it)
             }
-            assertEquals(startingVersion, c.receive().version)
-            observer.cancel()
-            c.close()
+        }
+        c.receive().version.let { updatedVersion: VersionId ->
+            assertEquals(startingVersion, updatedVersion)
         }
     }
 
     @Test
-    override fun observe() {
-        runBlocking {
-            val c = Channel<Realm>(1)
-            val startingVersion = realm.version
-            val observer = async {
-                realm.observe().collect {
-                    c.send(it)
-                }
+    override fun observe() = runBlocking {
+        val c = Channel<Realm>(1)
+        val startingVersion = realm.version
+        val observer = async {
+            realm.observe().collect {
+                c.send(it)
             }
-            assertEquals(startingVersion, c.receive().version)
-            realm.write { /* Do nothing */ }
-            c.receive().version.let { updatedVersion ->
-                assertEquals(VersionId(startingVersion.version + 1), updatedVersion)
-            }
-            observer.cancel()
-            c.close()
         }
+        assertEquals(startingVersion, c.receive().version)
+        realm.write { /* Do nothing */ }
+        c.receive().version.let { updatedVersion ->
+            assertEquals(VersionId(startingVersion.version + 1), updatedVersion)
+        }
+        observer.cancel()
+        c.close()
+        Unit
     }
 
     @Test
@@ -95,5 +95,40 @@ class RealmNotificationsTests : NotificationTests {
     @Ignore
     override fun closingRealmDoesNotCancelFlows() {
         TODO("Wait for a Global change listener to become available")
+    }
+
+    @Test
+    override fun initialCallback() = runBlocking {
+        val waitLock = Mutex()
+        val token = realm.addChangeListener { updatedRealm: Realm ->
+            assertTrue {realm == updatedRealm }
+            waitLock.unlock()
+        }
+        waitLock.lock()
+        token.cancel()
+    }
+
+    @Test
+    override fun updateCallback() = runBlocking {
+        val c = Channel<Realm>(1)
+        val startingVersion = realm.version
+        val token = realm.addChangeListener {
+            c.trySend(it)
+        }
+        c.receive().version.let {
+            assertEquals(startingVersion, it)
+        }
+        realm.write { /* Do nothing */ }
+        c.receive().version.let { updatedVersion ->
+            assertEquals(VersionId(startingVersion.version + 1), updatedVersion)
+        }
+        token.cancel()
+        c.close()
+        Unit
+    }
+
+    @Test
+    override fun parentDeletedCallback() {
+        /* Not relevant for Realms as they cannot be deleted while being observed */
     }
 }

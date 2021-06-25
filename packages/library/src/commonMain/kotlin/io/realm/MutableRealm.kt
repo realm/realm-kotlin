@@ -172,7 +172,7 @@ class MutableRealm : BaseRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>?>): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 

@@ -1,6 +1,7 @@
 package io.realm.shared.notifications
 
-import io.realm.NotificationTests
+import io.realm.CallbackNotificationTests
+import io.realm.FlowNotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.observe
@@ -21,7 +22,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-class RealmObjectNotificationsTests : NotificationTests {
+class RealmObjectNotificationsTests : FlowNotificationTests, CallbackNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -173,5 +174,17 @@ class RealmObjectNotificationsTests : NotificationTests {
             observer.cancel()
             c.close()
         }
+    }
+
+    override fun initialCallback() {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateCallback() {
+        TODO("Not yet implemented")
+    }
+
+    override fun parentDeletedCallback() {
+        TODO("Not yet implemented")
     }
 }

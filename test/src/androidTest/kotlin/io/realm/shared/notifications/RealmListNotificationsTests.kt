@@ -1,6 +1,7 @@
 package io.realm.shared.notifications
 
-import io.realm.NotificationTests
+import io.realm.CallbackNotificationTests
+import io.realm.FlowNotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.util.PlatformUtils
@@ -10,7 +11,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 
-class RealmListNotificationsTests : NotificationTests {
+class RealmListNotificationsTests : FlowNotificationTests, CallbackNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -58,6 +59,12 @@ class RealmListNotificationsTests : NotificationTests {
 
     @Test
     @Ignore
+    override fun errorInsideObserverThrows() {
+        TODO("Not yet implemented")
+    }
+
+    @Test
+    @Ignore
     override fun closeRealmInsideFlowThrows() {
         TODO("Waiting for RealmList support")
     }
@@ -65,6 +72,24 @@ class RealmListNotificationsTests : NotificationTests {
     @Test
     @Ignore
     override fun closingRealmDoesNotCancelFlows() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    @Ignore
+    override fun initialCallback() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    @Ignore
+    override fun updateCallback() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    @Ignore
+    override fun parentDeletedCallback() {
         TODO("Waiting for RealmList support")
     }
 }

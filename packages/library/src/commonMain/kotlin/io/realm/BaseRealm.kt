@@ -89,7 +89,7 @@ public abstract class BaseRealm internal constructor(
 
     internal open fun <T : RealmObject> registerListChangeListener(
         list: List<T>,
-        callback: Callback<List<T>>
+        callback: Callback<List<T>?>
     ): Cancellable {
         throw NotImplementedError(observerablesNotSupportMessage)
     }

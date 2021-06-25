@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,14 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 
-class NotificationToken<T>(callback: T, private val token: NativePointer) : Cancellable {
+/**
+ * Token representing a Kotlin Flow. If this token is canceled, the underlying
+ * flow is cancelled and no more further notifications are emitted.
+ */
+class FlowNotificationToken<T>(callback: T, private val job: Job) : Cancellable {
 
     private val lock = reentrantLock()
     private val observer: AtomicRef<T?> = atomic(callback)
@@ -32,16 +38,9 @@ class NotificationToken<T>(callback: T, private val token: NativePointer) : Canc
     override fun cancel() {
         lock.withLock {
             if (observer.value != null) {
-                RealmInterop.realm_release(token)
+                job.cancel(CancellationException("Flow has been manually canceled."))
             }
             observer.value = null
         }
     }
-
-    // FIXME API We currently favor to do explicit registration.
-    //  Only works on JVM. KN Cleaner is not available before v1.4.30-M1-eap-48
-    //  https://github.com/realm/realm-kotlin/issues/23
-    //  fun finalize() {
-    //      cancel()
-    //  }
 }

@@ -49,14 +49,14 @@ kotlin {
                 // for now, but ideally they should go to the compiler plugin tests.
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+                // TODO AtomicFu doesn't work on the test project due to
+                //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
+                implementation("co.touchlab:stately-concurrency:1.1.7")
             }
         }
 
         getByName("commonTest") {
             dependencies {
-                // TODO AtomicFu doesn't work on the test project due to
-                //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
-                implementation("co.touchlab:stately-concurrency:1.1.7")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }

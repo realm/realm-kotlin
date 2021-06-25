@@ -1,8 +1,9 @@
 package io.realm.shared.notifications
 
 import co.touchlab.stately.concurrency.AtomicInt
+import io.realm.CallbackNotificationTests
 import io.realm.Cancellable
-import io.realm.NotificationTests
+import io.realm.FlowNotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
@@ -21,7 +22,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-class RealmResultsNotificationsTests : NotificationTests {
+class RealmResultsNotificationsTests : FlowNotificationTests, CallbackNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -211,5 +212,17 @@ class RealmResultsNotificationsTests : NotificationTests {
             observer.cancel()
             c.close()
         }
+    }
+
+    override fun initialCallback() {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateCallback() {
+        TODO("Not yet implemented")
+    }
+
+    override fun parentDeletedCallback() {
+        TODO("Not yet implemented")
     }
 }

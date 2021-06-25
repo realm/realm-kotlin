@@ -13,8 +13,6 @@ import io.realm.isValid
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
@@ -25,21 +23,22 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /**
- * Class responsible for controlling notifications for a Realm. It does this by wrapping a live Realm on which
- * notifications can be registered. Since all objects that are otherwise exposed to users are frozen, they need
- * to be thawed when reaching the live Realm.
+ * Class responsible for controlling notifications for a Realm. All changes are exposeded as Flows.
  *
- * For Lists and Objects, this can result in the object no longer existing. In this case, Flows will just complete.
- * End users can catch this case by using `flow.onCompletion { ... }`.
+ * It does this by wrapping a live Realm on which notifications can be registered. Since all objects
+ * that are otherwise exposed to users are frozen, they need to be thawed when reaching the live
+ * Realm.
  *
- * Users are only exposed to live objects inside a [MutableRealm], and change listeners are not supported
- * inside writes. Users can therefor not register change listeners on live objects, but it is assumed that other
- * layers check that invariant before methods on this class are called.
+ * For Lists and Objects, this can result in the object no longer existing. In this case, Flows will
+ * just complete. End users can catch this case by using `flow.onCompletion { ... }`.
+ *
+ * Users are only exposed to live objects inside a [MutableRealm], and change listeners are not
+ * supported inside writes. Users can therefor not register change listeners on live objects, but it
+ * is assumed that other layers check that invariant before methods on this class are called.
  */
 internal class SuspendableNotifier(private val owner: Realm, private val dispatcher: CoroutineDispatcher) {
 
@@ -100,7 +99,6 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     internal fun <T : RealmObject> resultsChanged(results: RealmResults<T>): Flow<RealmResults<T>> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-            println("resultsChanged")
             withContext(dispatcher) {
                 ensureActive()
                 val newToken = registerResultsChangedListener(results) { frozenResults ->
@@ -220,7 +218,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
                 }
             }.freeze() // Freeze to allow cleaning up on another thread
         )
-        return NotificationToken(callback, token)
+        return RealmCoreNotificationToken(callback, token)
     }
 
     /**
@@ -265,7 +263,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
                 }
             }.freeze() // Freeze to allow cleaning up on another thread
         )
-        return NotificationToken(callback, token)
+        return RealmCoreNotificationToken(callback, token)
     }
 
     internal fun close() {
