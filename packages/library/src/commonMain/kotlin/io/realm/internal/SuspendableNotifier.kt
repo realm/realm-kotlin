@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * Class responsible for controlling notifications for a Realm. It does this by wrapping a live Realm on which
- * notifications can be registered. Since all objects that is otherwise exposed to users are frozen, they need
+ * notifications can be registered. Since all objects that are otherwise exposed to users are frozen, they need
  * to be thawed when reaching the live Realm.
  *
  * For Lists and Objects, this can result in the object no longer existing. In this case, Flows emit null then
@@ -35,7 +35,7 @@ import kotlinx.coroutines.withContext
  *
  * Users are only exposed to live objects inside a [MutableRealm], and change listeners are not supported
  * inside writes. Users can therefor not register change listeners on live objects, but it is assumed that other
- * layers check that invariant before methods on this class is called.
+ * layers check that invariant before methods on this class are called.
  */
 internal class SuspendableNotifier(private val owner: Realm, private val dispatcher: CoroutineDispatcher) {
 

@@ -54,9 +54,8 @@ kotlin {
 
         getByName("commonTest") {
             dependencies {
-                // TODO AtomicFu doesn't work on the test project. It throws:
-                //  Source set 'androidMain' of project 'test' is part of several compilations [debug, release]
-                //  Reason is unclear.
+                // TODO AtomicFu doesn't work on the test project due to
+                //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
                 implementation("co.touchlab:stately-concurrency:1.1.7")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
