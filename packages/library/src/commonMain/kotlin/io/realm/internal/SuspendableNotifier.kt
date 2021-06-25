@@ -12,6 +12,10 @@ import io.realm.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
@@ -20,6 +24,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -96,6 +102,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     internal fun <T : RealmObject> resultsChanged(results: RealmResults<T>): Flow<RealmResults<T>> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+            println("resultsChanged")
             withContext(dispatcher) {
                 ensureActive()
                 val newToken = registerResultsChangedListener(results) { frozenResults ->
@@ -168,6 +175,20 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
      */
     internal fun registerRealmChangedListener(callback: Callback<Pair<NativePointer, VersionId>>): Cancellable {
         TODO("Waiting for RealmInterop to have support for global Realm changed")
+    }
+
+    fun <T : RealmObject> directResultChangedListener(results: RealmResults<T>, callback: Callback<RealmResults<T>>): Cancellable {
+        val scope = CoroutineScope(dispatcher)
+        val runBlocking = scope.async {
+            resultsChanged(results).collect {
+                callback.onChange(it)
+            }
+        }
+        return object : Cancellable {
+            override fun cancel() {
+                runBlocking.cancel()
+            }
+        }
     }
 
     // FIXME Need to expose change details to the user

@@ -196,7 +196,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
-        return notifier.registerResultsChangedListener(results, callback)
+        return notifier.directResultChangedListener(results, callback)
     }
 
     internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {

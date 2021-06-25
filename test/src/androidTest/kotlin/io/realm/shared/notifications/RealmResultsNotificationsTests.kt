@@ -1,10 +1,12 @@
 package io.realm.shared.notifications
 
 import co.touchlab.stately.concurrency.AtomicInt
+import io.realm.Cancellable
 import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import io.realm.log.LogLevel
 import io.realm.util.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -29,7 +31,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+            RealmConfiguration.Builder(path = "$tmpDir/default.realm", schema = setOf(Sample::class)).log(LogLevel.DEBUG).build()
         realm = Realm.open(configuration)
     }
 
@@ -74,6 +76,30 @@ class RealmResultsNotificationsTests : NotificationTests {
             c.close()
         }
     }
+
+    @Test
+    @Suppress("invisible_member")
+    fun changelistener() { runBlocking {
+        val c = Channel<Int>(capacity = 1)
+        var token: Cancellable? = realm.addResultsChangeListener(realm.objects<Sample>()) {
+                println("ASdf")
+                c.trySend(it.size)
+            }
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        println("ASdf")
+        assertEquals(1, c.receive())
+        println("ASasdff")
+//        observer.cancel()
+        c.close()
+        token?.let {
+            println("Canceling")
+            it.cancel()
+        }
+        println("ASasdff")
+        realm.close()
+    }}
 
     @Test
     override fun cancelObserve() {
