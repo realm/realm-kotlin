@@ -102,6 +102,7 @@ class ListTests {
     // ------------------------------------------------
     // RealmList<E>?
     // - nullable lists fail
+    // - star projection fails
     // ------------------------------------------------
 
     @Test

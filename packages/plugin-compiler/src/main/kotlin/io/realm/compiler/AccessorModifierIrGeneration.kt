@@ -17,6 +17,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.REALM_LIST
+import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -75,12 +76,12 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.StarProjectionImpl
 import org.jetbrains.kotlin.types.isNullable
+import org.jetbrains.kotlin.types.typeUtil.supertypes
 import kotlin.collections.set
-
-private const val REALM_OBJECT = "RealmObject"
 
 /**
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
@@ -377,7 +378,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             if (collectionType != CollectionType.NONE) {
                                 val supertypes = (type as IrSimpleType).classifier.descriptor
                                     .typeConstructor.supertypes
-                                if (superTypesContainRealmObject(supertypes)) {
+                                if (inheritsFromRealmObject(supertypes)) {
                                     putValueArgument(2, irBoolean(true))
                                 }
                             }
@@ -479,18 +480,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         // Check first if the generic is a subclass of RealmObject
         val descriptorType = declaration.symbol.descriptor.type
         val listGenericType = descriptorType.arguments[0].type
-        for (superType in listGenericType.constructor.supertypes) {
-            if (superType.toString() == REALM_OBJECT) {
-                // Nullable objects are not supported
-                if (listGenericType.isNullable()) {
-                    logError("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
-                    return null
-                }
-                return CoreType(
-                    propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-                    nullable = false
-                )
+        if (inheritsFromRealmObject(listGenericType.constructor.supertypes)) {
+            // Nullable objects are not supported
+            if (listGenericType.isNullable()) {
+                logError("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
             }
+            return CoreType(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+                nullable = false
+            )
         }
 
         // If not a RealmObject, check whether the list itself is nullable - if so, throw error
@@ -528,7 +526,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     else ->
-                        if (superTypesContainRealmObject(type.constructor.supertypes)) {
+                        if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
                             logError("Unsupported type for list: '$type'")
@@ -538,6 +536,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             }
     }
 
-    private fun superTypesContainRealmObject(supertypes: Collection<KotlinType>): Boolean =
-        supertypes.map { it.toString() }.contains(REALM_OBJECT)
+    private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
+        supertypes.any {
+            it.constructor.declarationDescriptor?.fqNameSafe == REALM_MODEL_INTERFACE
+        }
 }

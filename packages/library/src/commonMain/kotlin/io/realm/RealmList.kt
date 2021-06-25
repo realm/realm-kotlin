@@ -107,7 +107,7 @@ class RealmList<E> private constructor(
          * Checks if the Realm associated to this RealmList is still accessible, throwing an
          * [IllegalStateException] if not.
          */
-        // TODO consider merging with RealmUtils.checkRealmClosed
+        // FIXME consider merging with RealmUtils.checkRealmClosed
         fun checkRealmClosed() {
             if (RealmInterop.realm_is_closed(metadata.realmPointer)) {
                 throw IllegalStateException("Realm has been closed and is no longer accessible.")
