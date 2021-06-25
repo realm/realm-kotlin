@@ -207,18 +207,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         return FlowNotificationToken(callback, job)
     }
 
-    internal override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
-        return notifier.resultsChanged(results)
-    }
-
-    internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
-        return notifier.listChanged(list)
-    }
-
-    internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
-        return notifier.objectChanged(obj)
-    }
-
     internal override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
