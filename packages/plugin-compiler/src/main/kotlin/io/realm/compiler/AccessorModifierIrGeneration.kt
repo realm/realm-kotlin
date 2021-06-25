@@ -356,7 +356,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             if (collectionType != CollectionType.NONE) {
                                 val supertypes = (type as IrSimpleType).classifier.descriptor
                                     .typeConstructor.supertypes
-                                if (superTypesContainRealmObject(supertypes)) {
+                                if (inheritsFromRealmObject(supertypes)) {
                                     putValueArgument(2, irBoolean(true))
                                 }
                             }
@@ -458,17 +458,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         // Check first if the generic is a subclass of RealmObject
         val descriptorType = declaration.symbol.descriptor.type
         val listGenericType = descriptorType.arguments[0].type
-        for (superType in listGenericType.constructor.supertypes) {
-            if (superType.toString() == REALM_OBJECT) {
-                // Nullable objects are not supported
-                if (listGenericType.isNullable()) {
-                    error("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
-                }
-                return CoreType(
-                    propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-                    nullable = false
-                )
+        if (inheritsFromRealmObject(listGenericType.constructor.supertypes)) {
+            // Nullable objects are not supported
+            if (listGenericType.isNullable()) {
+                error("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
             }
+            return CoreType(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+                nullable = false
+            )
         }
 
         // If not a RealmObject, check whether the list itself is nullable - if so, throw error
@@ -499,7 +497,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     else ->
-                        if (superTypesContainRealmObject(type.supertypes())) {
+                        if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
                             error("Unsupported Kotlin type: '$type'")
@@ -508,7 +506,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             } ?: error("Missing identifier for type $type")
     }
 
-    private fun superTypesContainRealmObject(supertypes: Collection<KotlinType>): Boolean =
+    private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
         supertypes.any {
             it.constructor.declarationDescriptor?.fqNameSafe == REALM_MODEL_INTERFACE
         }
