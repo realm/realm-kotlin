@@ -16,7 +16,7 @@
  */
 
 object Realm {
-    const val version = "0.2.0-SNAPSHOT"
+    const val version = "0.3.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -58,23 +58,23 @@ object Versions {
         const val buildTools = "4.1.0"
         const val ndkVersion = "22.0.6917172"
     }
-    const val androidxStartup = "1.0.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
-    const val androidxJunit = "1.1.2" // https://maven.google.com/web/index.html#androidx.test.ext:junit
-    const val androidxTest = "1.3.0" // https://maven.google.com/web/index.html#androidx.test:rules
-    const val autoService = "1.0-rc6"
+    const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
+    const val androidxJunit = "1.1.3-beta02" // https://maven.google.com/web/index.html#androidx.test.ext:junit
+    const val androidxTest = "1.4.0-beta02" // https://maven.google.com/web/index.html#androidx.test:rules
+    const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
-    const val coroutines = "1.4.2"
-    const val detektPlugin = "1.16.0" // https://github.com/detekt/detekt
-    const val dokka = "1.4.20" // https://github.com/Kotlin/dokka
+    const val coroutines = "1.5.0" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
+    const val detektPlugin = "1.17.1" // https://github.com/detekt/detekt
+    const val dokka = "1.4.32" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.14.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
-    const val junit = "4.12"
+    const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
-    const val kotlin = "1.4.30"
-    const val kotlinCompileTesting = "1.2.6" // https://github.com/tschuchortdev/kotlin-compile-testing
-    const val ktlintPlugin = "9.4.1" // https://github.com/jlleitschuh/ktlint-gradle
-    const val ktlintVersion = "0.39.0" // https://github.com/pinterest/ktlint
+    const val kotlin = "1.5.10"
+    const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
+    const val ktlintPlugin = "10.1.0" // https://github.com/jlleitschuh/ktlint-gradle
+    const val ktlintVersion = "0.41.0" // https://github.com/pinterest/ktlint
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
-    const val shadowJar =  "5.2.0"
+    const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
 }
 
 // Could be actual Dependency objects

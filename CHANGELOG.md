@@ -1,4 +1,23 @@
-## 0.2.0 (YYYY-MM-DD)
+## 0.3.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* [Support Apple Release builds](https://github.com/realm/realm-kotlin/issues/142).
+* Enabling [shrinker](https://github.com/realm/realm-kotlin/issues/293) for Android Release builds.
+
+### Fixed
+* None.
+
+### Compatibility 
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+
+## 0.2.0 (2021-06-09)
 
 ### Breaking Changes
 * The Realm Kotlin Gradle plugin has changed name from `realm-kotlin` to `io.realm.kotlin` to align with Gradle Plugin Portal requirements.
@@ -9,8 +28,11 @@
 ### Fixed
 * None.
 
+### Compatibility 
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
 ### Internal
-* None.
+* Updated to Realm Core commit: ed9fbb907e0b5e97e0e2d5b8efdc0951b2eb980c.
 
 
 ## 0.1.0 (2021-05-07)
