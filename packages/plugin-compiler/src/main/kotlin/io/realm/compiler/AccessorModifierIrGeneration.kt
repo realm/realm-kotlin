@@ -78,11 +78,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.StarProjectionImpl
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import kotlin.collections.set
-
-private const val REALM_OBJECT = "RealmObject"
 
 /**
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
@@ -267,30 +266,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isRealmList() -> {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
-                        val listGenericType = declaration.symbol.descriptor.type.arguments[0].type
-                        fields[name] = SchemaProperty(
-                            propertyType = getPropertyTypeFromKotlinType(listGenericType),
-                            declaration = declaration,
-                            collectionType = CollectionType.LIST,
-                            genericTypes = listOf(getListGenericCoreType(declaration))
-                        )
-                        // TODO OPTIMIZE consider synthetic property generation for lists to cache
-                        //  reference instead of emitting a new list every time - also for links
-                        //  see e.g.
-                        //  if (isManaged()) {
-                        //      if ($realm$synthetic$myList == null) {
-                        //          $realm$synthetic$myList = RealmObjectHelper.getList(this, "myList")
-                        //      }
-                        //      return $realm$synthetic$myList
-                        //  } else {
-                        //      return backing_field
-                        //  }
-
-                        modifyAccessor(
-                            property = declaration,
-                            getFunction = getList,
-                            collectionType = CollectionType.LIST
-                        )
+                        processListField(fields, name, declaration)
                     }
                     !propertyType.isPrimitiveType() -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
@@ -309,6 +285,52 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 return super.visitProperty(declaration)
             }
         })
+    }
+
+    private fun processListField(
+        fields: MutableMap<String, SchemaProperty>,
+        name: String,
+        declaration: IrProperty
+    ) {
+        val type = declaration.symbol.descriptor.type
+        if (type.arguments[0] is StarProjectionImpl) {
+            logError("Error in field ${declaration.name} - RealmLists cannot use a '*' projection.")
+            return
+        }
+        val listGenericType = type.arguments[0].type
+        val coreGenericTypes = getListGenericCoreType(declaration)
+
+        // Only process field if we got valid generics
+        if (coreGenericTypes != null) {
+            val genericPropertyType = getPropertyTypeFromKotlinType(listGenericType)
+
+            // Only process
+            if (genericPropertyType != null) {
+                fields[name] = SchemaProperty(
+                    propertyType = genericPropertyType,
+                    declaration = declaration,
+                    collectionType = CollectionType.LIST,
+                    coreGenericTypes = listOf(coreGenericTypes)
+                )
+                // TODO OPTIMIZE consider synthetic property generation for lists to cache
+                //  reference instead of emitting a new list every time - also for links
+                //  see e.g.
+                //  if (isManaged()) {
+                //      if ($realm$synthetic$myList == null) {
+                //          $realm$synthetic$myList = RealmObjectHelper.getList(this, "myList")
+                //      }
+                //      return $realm$synthetic$myList
+                //  } else {
+                //      return backing_field
+                //  }
+
+                modifyAccessor(
+                    property = declaration,
+                    getFunction = getList,
+                    collectionType = CollectionType.LIST
+                )
+            }
+        }
     }
 
     @Suppress("LongParameterList")
@@ -454,14 +476,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == realmListClassId
     }
 
-    private fun getListGenericCoreType(declaration: IrProperty): CoreType {
+    @Suppress("ReturnCount")
+    private fun getListGenericCoreType(declaration: IrProperty): CoreType? {
         // Check first if the generic is a subclass of RealmObject
         val descriptorType = declaration.symbol.descriptor.type
         val listGenericType = descriptorType.arguments[0].type
         if (inheritsFromRealmObject(listGenericType.constructor.supertypes)) {
             // Nullable objects are not supported
             if (listGenericType.isNullable()) {
-                error("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
+                logError("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
             }
             return CoreType(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -471,18 +494,25 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         // If not a RealmObject, check whether the list itself is nullable - if so, throw error
         if (descriptorType.isNullable()) {
-            error("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.")
+            logError("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.")
+            return null
         }
 
         // Otherwise just return the matching core type present in the declaration
-        return CoreType(
-            propertyType = getPropertyTypeFromKotlinType(listGenericType),
-            nullable = listGenericType.isNullable()
-        )
+        val genericPropertyType = getPropertyTypeFromKotlinType(listGenericType)
+        return if (genericPropertyType != null) {
+            CoreType(
+                propertyType = genericPropertyType,
+                nullable = listGenericType.isNullable()
+            )
+        } else {
+            logError("Unsupported type for lists: '$listGenericType'")
+            null
+        }
     }
 
     // TODO do the lookup only once
-    private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType {
+    private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType? {
         return type.constructor.declarationDescriptor
             ?.name
             ?.let { identifier ->
@@ -500,10 +530,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
-                            error("Unsupported Kotlin type: '$type'")
+                            logError("Unsupported type for list: '$type'")
+                            null
                         }
                 }
-            } ?: error("Missing identifier for type $type")
+            }
     }
 
     private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =

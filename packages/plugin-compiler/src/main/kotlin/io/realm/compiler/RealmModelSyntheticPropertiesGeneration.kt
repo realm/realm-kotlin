@@ -288,7 +288,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         when (value.collectionType) {
                                             CollectionType.LIST ->
                                                 // Extract generic type as mentioned
-                                                getType(getListType(value.genericTypes))
+                                                getType(getListType(value.coreGenericTypes))
                                                     ?: error("Unknown type ${value.propertyType} - should be a valid type for lists.")
                                             CollectionType.SET ->
                                                 error("Sets not available yet.")
@@ -312,7 +312,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 val nullable = if (value.collectionType == CollectionType.NONE) {
                                     backingField.type.isNullable()
                                 } else {
-                                    value.genericTypes?.get(0)?.nullable
+                                    value.coreGenericTypes?.get(0)?.nullable
                                         ?: error("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
