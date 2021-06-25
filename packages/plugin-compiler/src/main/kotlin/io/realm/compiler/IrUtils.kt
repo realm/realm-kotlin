@@ -187,7 +187,7 @@ data class CoreType(
 data class SchemaProperty(
     val propertyType: PropertyType,
     val declaration: IrProperty,
-    val collectionType: CollectionType,
+    val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null
 )
 
