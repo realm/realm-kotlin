@@ -4,7 +4,7 @@ This release contains a big depature in the architectural design of how Realm is
 
 At a high level this has a number of implications:
 
-    1. Only one Realm instance is needed across the entire application. 
+    1. Only one Realm instance (per `RealmConfiguration`) is needed across the entire application. 
     2. The only reason for closing the Realm instance is if the Realm file itself needs to be deleted or compacted.
     3. Realm objects can be freely moved and read across threads.
     4. Changes to objects can only be observered through Kotlin Flows. Standard change listener support will come in a future release.
