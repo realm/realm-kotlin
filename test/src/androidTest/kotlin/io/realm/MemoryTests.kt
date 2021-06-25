@@ -23,10 +23,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.util.PlatformUtils
 import io.realm.util.PlatformUtils.triggerGC
-import io.realm.util.Utils.createRandomString
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import test.Sample
@@ -52,7 +50,6 @@ class MemoryTests {
     }
 
     @Test
-    @Ignore // Probably related to the frozen Realms in the Notifier not being released as they are dropped inside the Flow to the public Realm 
     fun garbageCollectorShouldFreeNativeResources() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 
@@ -98,7 +95,6 @@ class MemoryTests {
 
     // make sure that calling realm.close() will force close the Realm and release native memory
     @Test
-    @Ignore // Probably related to the frozen Realms in the Notifier not being released as they are dropped inside the Flow to the public Realm
     fun closeShouldFreeMemory() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 
@@ -169,7 +165,7 @@ class MemoryTests {
     }
 
     private fun openRealmFromTmpDir(): Realm {
-        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         return Realm.open(configuration)
     }
 }
