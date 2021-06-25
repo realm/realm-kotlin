@@ -101,7 +101,16 @@ internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<
     return realm.registerObjectChangeListener(this as T, callback)
 }
 
-public fun <T : RealmObject> T.observe(): Flow<T?> {
+/**
+ * Observe changes to a Realm object. Any change to the object, will cause the flow to emit the updated
+ * object. If the observed object is deleted from the Realm, the flow will complete, otherwise it will
+ * continue running until canceled.
+ *
+ * The change calculations will on on the thread represented by [RealmConfiguration.notificationDispatcher].
+ *
+ * @return a flow representing changes to the object.
+ */
+public fun <T : RealmObject> T.observe(): Flow<T> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")

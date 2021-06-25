@@ -28,10 +28,8 @@ import kotlinx.coroutines.withContext
  * notifications can be registered. Since all objects that are otherwise exposed to users are frozen, they need
  * to be thawed when reaching the live Realm.
  *
- * For Lists and Objects, this can result in the object no longer existing. In this case, Flows emit null then
- * complete immediately.
- **
- * FIXME What about changelisteners will never be triggered? (Is this the semantics we want? What do others do?).
+ * For Lists and Objects, this can result in the object no longer existing. In this case, Flows will just complete.
+ * End users can catch this case by using `flow.onCompletion { ... }`.
  *
  * Users are only exposed to live objects inside a [MutableRealm], and change listeners are not supported
  * inside writes. Users can therefor not register change listeners on live objects, but it is assumed that other
@@ -115,23 +113,24 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     /**
      * Listen to changes to a RealmList through a [Flow]. If the list is deleted, `null` is emitted and the flow will complete.
      */
-    internal fun <T : RealmObject> listChanged(list: List<T?>): Flow<List<T?>?> {
+    internal fun <T : RealmObject> listChanged(list: List<T>): Flow<List<T>> {
         TODO("Implement and convert method to use RealmList when available")
     }
 
     /**
      * Listen to changes to a RealmObject through a [Flow]. If the object is deleted, null is emitted and the flow will complete.
      */
-    internal fun <T : RealmObject> objectChanged(obj: T): Flow<T?> {
+    internal fun <T : RealmObject> objectChanged(obj: T): Flow<T> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
                 ensureActive()
                 token.value = registerObjectChangedListener(obj) { frozenObj ->
-                    val result = trySend(frozenObj)
-                    checkResult(result)
                     if (frozenObj == null) {
                         close()
+                    } else {
+                        val result = trySend(frozenObj)
+                        checkResult(result)
                     }
                 }
             }
@@ -155,8 +154,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
 
     private fun notifyRealmChanged(frozenRealm: RealmReference) {
         if (!_realmChanged.tryEmit(frozenRealm)) {
-            println("Failed to send update to Realm from the Notifier: ${owner.configuration.path}")
-//            throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
+            throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
         }
     }
 

@@ -20,7 +20,6 @@ package io.realm
 import io.realm.util.PlatformUtils.createTempDir
 import io.realm.util.PlatformUtils.deleteTempDir
 import io.realm.util.PlatformUtils.triggerGC
-import io.realm.util.Utils.createRandomString
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
@@ -141,7 +140,7 @@ class MemoryTests {
     }
 
     private fun openRealmFromTmpDir(): Realm {
-        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
         return Realm.open(configuration)
     }
 
