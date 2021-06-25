@@ -65,14 +65,25 @@ object RealmObjectHelper {
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
-    fun getList(obj: RealmObjectInternal, col: String): RealmList<Any?> {
+    inline fun <reified R> getList(
+        obj: RealmObjectInternal,
+        col: String,
+        isRealmObject: Boolean = false
+    ): RealmList<Any?> {
         val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key: ColumnKey = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
 
-        // TODO OPTIMIZE Consider not returning a new instance every time
-        return RealmList(listPtr)
+        return RealmList(
+            listPtr,
+            RealmList.OperatorMetadata(
+                clazz = R::class,
+                isRealmObject = isRealmObject,
+                mediator = obj.`$realm$Mediator` as Mediator,
+                realmPointer = obj.`$realm$Pointer`!!
+            )
+        )
     }
 
     // Consider inlining

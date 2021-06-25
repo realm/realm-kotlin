@@ -283,19 +283,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 // 1 - primitive type, in which case it is extracted as is
                                 // 2 - collection type, in which case the collection type(s)
                                 //     specified in value.genericTypes should be used as type
-                                val type = when (val primitiveType = getType(value.type)) {
+                                val type = when (val primitiveType = getType(value.propertyType)) {
                                     null -> // Primitive type is null for collections
                                         when (value.collectionType) {
                                             CollectionType.LIST ->
                                                 // Extract generic type as mentioned
                                                 getType(getListType(value.genericTypes))
-                                                    ?: error("Unknown type ${value.type} - should be a valid type for lists.")
+                                                    ?: error("Unknown type ${value.propertyType} - should be a valid type for lists.")
                                             CollectionType.SET ->
                                                 error("Sets not available yet.")
                                             CollectionType.DICTIONARY ->
                                                 error("Dictionaries not available yet.")
                                             else ->
-                                                error("Unknown type ${value.type}.")
+                                                error("Unknown type ${value.propertyType}.")
                                         }
                                     else -> // Primitive type is non-null
                                         primitiveType
@@ -303,7 +303,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
                                 val objectType = propertyTypes.firstOrNull {
                                     it.name == PROPERTY_TYPE_OBJECT
-                                } ?: error("Unknown type ${value.type}")
+                                } ?: error("Unknown type ${value.propertyType}")
 
                                 val property = value.declaration
                                 val backingField = property.backingField
@@ -424,15 +424,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }.symbol)
     }
 
-    private fun getType(type: String): IrEnumEntry? {
+    private fun getType(type: PropertyType): IrEnumEntry? {
         return propertyTypes.firstOrNull {
-            it.name.identifier.toLowerCaseAsciiOnly().contains(type)
+            it.name.identifier.toLowerCaseAsciiOnly().contains(type.name.toLowerCaseAsciiOnly())
         }
     }
 
-    private fun getListType(generics: List<CoreType>?): String =
-        checkNotNull(generics) { "Missing type for list." }[0]
-            .propertyType.name.toLowerCaseAsciiOnly()
+    private fun getListType(generics: List<CoreType>?): PropertyType =
+        checkNotNull(generics) { "Missing type for list." }[0].propertyType
 
     private fun propertyFlags(flags: List<Name>): List<IrGetEnumValueImpl> =
         flags.map { flag ->

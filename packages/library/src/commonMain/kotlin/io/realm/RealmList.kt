@@ -16,166 +16,169 @@
 
 package io.realm
 
+import io.realm.internal.Mediator
+import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.reflect.KClass
 
 /**
- * TODO
+ * RealmList is used to model one-to-many relationships in a [RealmObject].
+ *
+ * A RealmList has two modes: managed and unmanaged. In `managed` mode all objects are persisted
+ * inside a Realm whereas in `unmanaged` mode it works as a normal [MutableList].
+ *
+ * Only Realm can create managed RealmLists. Managed RealmLists will automatically update their
+ * content whenever the underlying Realm is updated. Said content can only be accessed using the
+ * getter of a [RealmObject].
+ *
+ * Unmanaged RealmLists can be created by the user and can contain both managed and unmanaged
+ * [RealmObject]s. This is useful when dealing with JSON deserializers like GSON or other frameworks
+ * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
+ * [MutableRealm.copyToRealm] method.
  */
-class RealmList<E> : MutableList<E>, AbstractMutableCollection<E> {
-
-    private var facade: ListFacade<E>
-
-    // -------------------------------------------------
-    // Unmanaged
-    // -------------------------------------------------
+class RealmList<E> private constructor(
+    delegate: MutableList<E>
+) : MutableList<E> by delegate {
 
     /**
-     * Constructs a `RealmList` in unmanaged mode.
+     * Constructs a RealmList in unmanaged mode.
      */
-    constructor() : super() {
-        this.facade = UnmanagedListFacade()
-    }
-
-    // -------------------------------------------------
-    // Managed
-    // -------------------------------------------------
+    constructor() : this(UnmanagedListDelegate())
 
     /**
-     * Constructs a `RealmList` in managed mode. This constructor is used internally by Realm.
+     * Constructs a RealmList in managed mode. For internal use only.
      */
-    constructor(listPtr: NativePointer) : super() {
-        this.facade = ManagedListFacade(listPtr)
+    constructor(
+        listPtr: NativePointer,
+        metadata: OperatorMetadata
+    ) : this(ManagedListDelegate(listPtr, metadata))
+
+    /**
+     * Metadata needed to correctly instantiate a list operator. For internal use only.
+     */
+    data class OperatorMetadata(
+        val clazz: KClass<*>,
+        val isRealmObject: Boolean,
+        val mediator: Mediator,
+        val realmPointer: NativePointer
+    )
+
+    /**
+     * Facilitates conversion between Realm Core types and Kotlin types and other Realm-related
+     * checks.
+     */
+    internal class Operator<E>(
+        private val metadata: OperatorMetadata
+    ) {
+
+        /**
+         * Converts the underlying Core type to the correct type expressed in the RealmList.
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun convert(value: Any?): E {
+            if (value == null) {
+                return null as E
+            }
+            return with(metadata) {
+                when (clazz) {
+                    Byte::class -> (value as Long).toByte()
+                    Char::class -> (value as Long).toChar()
+                    Short::class -> (value as Long).toShort()
+                    Int::class -> (value as Long).toInt()
+                    Long::class,
+                    Boolean::class,
+                    Float::class,
+                    Double::class,
+                    String::class -> value
+                    else -> when {
+                        isRealmObject -> (value as Link).toRealmObject(
+                            clazz as KClass<out RealmObject>,
+                            mediator,
+                            realmPointer
+                        )
+                        else -> throw IllegalArgumentException("Unsupported type '$clazz'.")
+                    }
+                } as E
+            }
+        }
+
+        /**
+         * Checks if the Realm associated to this RealmList is still accessible, throwing an
+         * [IllegalStateException] if not.
+         */
+        // FIXME consider merging with RealmUtils.checkRealmClosed
+        fun checkRealmClosed() {
+            if (RealmInterop.realm_is_closed(metadata.realmPointer)) {
+                throw IllegalStateException("Realm has been closed and is no longer accessible.")
+            }
+        }
     }
-
-    override val size: Int
-        get() = facade.size
-
-    override fun get(index: Int): E = facade[index]
-
-    override fun indexOf(element: E): Int = facade.indexOf(element)
-
-    override fun iterator(): MutableIterator<E> = facade.iterator()
-
-    override fun lastIndexOf(element: E): Int = facade.lastIndexOf(element)
-
-    override fun add(element: E): Boolean = facade.add(element)
-
-    override fun add(index: Int, element: E) = facade.add(index, element)
-
-    override fun addAll(index: Int, elements: Collection<E>): Boolean =
-        facade.addAll(index, elements)
-
-    override fun listIterator(): MutableListIterator<E> = facade.listIterator()
-
-    override fun listIterator(index: Int): MutableListIterator<E> = facade.listIterator(index)
-
-    override fun removeAt(index: Int): E = facade.removeAt(index)
-
-    override fun set(index: Int, element: E): E = facade.set(index, element)
-
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> =
-        facade.subList(fromIndex, toIndex)
-
-    override fun clear() = facade.clear()
 }
 
 /**
- * TODO
+ * Represents an unmanaged [RealmList] backed by a [MutableList] via class delegation.
  */
-private abstract class ListFacade<E> : MutableList<E>, AbstractMutableCollection<E>()
+private class UnmanagedListDelegate<E>(
+    list: MutableList<E> = mutableListOf()
+) : MutableList<E> by list
 
 /**
- * TODO
+ * Represents a managed [RealmList]. Its data will be persisted in Realm.
+ *
+ * [AbstractMutableList] provides enough default implementations on which we can rely. It can also
+ * be used as a delegate since it implements [MutableList].
  */
-private class UnmanagedListFacade<E> : ListFacade<E>() {
+private class ManagedListDelegate<E>(
+    private val listPtr: NativePointer,
+    metadata: RealmList.OperatorMetadata
+) : AbstractMutableList<E>() {
 
-    private val unmanagedList = mutableListOf<E>()
+    private val operator = RealmList.Operator<E>(metadata)
 
     override val size: Int
-        get() = unmanagedList.size
+        get() {
+            operator.checkRealmClosed()
+            return RealmInterop.realm_list_size(listPtr).toInt()
+        }
 
-    override fun get(index: Int): E = unmanagedList[index]
-
-    override fun indexOf(element: E): Int = unmanagedList.indexOf(element)
-
-    override fun iterator(): MutableIterator<E> = unmanagedList.iterator()
-
-    override fun lastIndexOf(element: E): Int = unmanagedList.lastIndexOf(element)
-
-    override fun add(element: E): Boolean = unmanagedList.add(element)
-
-    override fun add(index: Int, element: E) = unmanagedList.add(index, element)
-
-    override fun addAll(index: Int, elements: Collection<E>): Boolean =
-        unmanagedList.addAll(index, elements)
-
-    override fun listIterator(): MutableListIterator<E> = unmanagedList.listIterator()
-
-    override fun listIterator(index: Int): MutableListIterator<E> =
-        unmanagedList.listIterator(index)
-
-    override fun removeAt(index: Int): E = unmanagedList.removeAt(index)
-
-    override fun set(index: Int, element: E): E = unmanagedList.set(index, element)
-
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> =
-        unmanagedList.subList(fromIndex, toIndex)
-}
-
-/**
- * TODO
- */
-private class ManagedListFacade<E>(
-    private val listPtr: NativePointer
-) : ListFacade<E>() {
-
-    override val size: Int
-        get() = RealmInterop.realm_list_size(listPtr).toInt()
-
-    override fun get(index: Int): E = RealmInterop.realm_list_get(listPtr, index.toLong())
-
-    override fun indexOf(element: E): Int {
-        TODO("indexOf(element: E) - Not yet implemented")
+    override fun get(index: Int): E {
+        operator.checkRealmClosed()
+        return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
     }
 
-    override fun iterator(): MutableIterator<E> {
-        TODO("iterator() - Not yet implemented")
-    }
-
-    override fun lastIndexOf(element: E): Int {
-        TODO("lastIndexOf(element: E) - Not yet implemented")
-    }
-
-    override fun add(element: E): Boolean = RealmInterop.realm_list_add(listPtr, element)
-        .let { true }
-
-    override fun add(index: Int, element: E) =
+    override fun add(index: Int, element: E) {
+        operator.checkRealmClosed()
         RealmInterop.realm_list_add(listPtr, index.toLong(), element)
+    }
 
+    // FIXME bug in AbstractMutableList.addAll native implementation:
+    //  https://youtrack.jetbrains.com/issue/KT-47211
+    //  Remove this method once the native implementation has a check for valid index
     override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        TODO("addAll(index: Int, elements: Collection<E>) - Not yet implemented")
+        operator.checkRealmClosed()
+        rangeCheckForAdd(index)
+        return super.addAll(index, elements)
     }
 
-    override fun listIterator(): MutableListIterator<E> {
-        TODO("listIterator() - Not yet implemented")
+    override fun clear() {
+        operator.checkRealmClosed()
+        RealmInterop.realm_list_clear(listPtr)
     }
 
-    override fun listIterator(index: Int): MutableListIterator<E> {
-        TODO("listIterator(index: Int) - Not yet implemented")
-    }
-
-    override fun removeAt(index: Int): E {
-        TODO("removeAt(index: Int) - Not yet implemented")
+    override fun removeAt(index: Int): E = get(index).also {
+        operator.checkRealmClosed()
+        RealmInterop.realm_list_erase(listPtr, index.toLong())
     }
 
     override fun set(index: Int, element: E): E {
-        TODO("set(index: Int, element: E) - Not yet implemented")
+        operator.checkRealmClosed()
+        return operator.convert(RealmInterop.realm_list_set(listPtr, index.toLong(), element))
     }
 
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
-        TODO("subList(fromIndex: Int, toIndex: Int) - Not yet implemented")
+    private fun rangeCheckForAdd(index: Int) {
+        if (index < 0 || index > size) {
+            throw IndexOutOfBoundsException("Index: '$index', Size: '$size'")
+        }
     }
-
-    override fun clear() = RealmInterop.realm_list_clear(listPtr)
 }
