@@ -9,6 +9,7 @@ import io.realm.util.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
 import test.Sample
 import kotlin.test.AfterTest
@@ -132,18 +133,21 @@ class RealmObjectNotificationsTests : NotificationTests {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
             val observer = async {
-                obj.observe().collect {
-                    c.trySend(it)
-                }
-                // Emit sentinel value to signal that flow completed
-                c.send(Sample())
+                obj.observe()
+                    .onCompletion {
+                        // Emit sentinel value to signal that flow completed
+                        c.send(Sample())
+                    }
+                    .collect {
+                        c.send(it)
+                    }
             }
             assertNotNull(c.receive())
             realm.write {
                 delete(findLatest(obj)!!)
             }
-            assertNull(c.receive()) // Null is sent when object is deleted
-            assertEquals(Sample().stringField, c.receive()!!.stringField) // Test for sentinel value
+            // Test for sentinel value
+            assertEquals(Sample().stringField, c.receive()!!.stringField)
             observer.cancel()
             c.close()
         }
