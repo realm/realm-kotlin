@@ -16,25 +16,23 @@
 
 package io.realm
 
+import io.realm.internal.Mediator
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.link
+import io.realm.interop.Link
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.reflect.KClass
 
 /**
  * Marker interface to define a model (managed by Realm).
  */
 interface RealmObject
 
-// FIXME API Currently just adding these as extension methods as putting them directly into
-//  RealmModel would break compiler plugin. Reiterate along with
-//  https://github.com/realm/realm-kotlin/issues/83
-public fun RealmObject.delete() {
-    MutableRealm.delete(this)
-}
-
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
-public var RealmObject.version: VersionId
+var RealmObject.version: VersionId
     get() {
         val internalObject = this as RealmObjectInternal
         internalObject.`$realm$Pointer`?.let {
@@ -45,6 +43,13 @@ public var RealmObject.version: VersionId
         throw UnsupportedOperationException("Setter is required by the Kotlin Compiler, but should not be called directly")
     }
 
+// FIXME API Currently just adding these as extension methods as putting them directly into
+//  RealmModel would break compiler plugin. Reiterate along with
+//  https://github.com/realm/realm-kotlin/issues/83
+fun RealmObject.delete() {
+    MutableRealm.delete(this)
+}
+
 /**
  * Returns whether or not this object is managed by Realm.
  *
@@ -52,7 +57,7 @@ public var RealmObject.version: VersionId
  * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely seperate from
  * Realm.
  */
-public fun RealmObject.isManaged(): Boolean {
+fun RealmObject.isManaged(): Boolean {
     val internalObject = this as RealmObjectInternal
     return internalObject.`$realm$IsManaged`
 }
@@ -61,7 +66,7 @@ public fun RealmObject.isManaged(): Boolean {
  * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
  * not been deleted. Unmanaged objects are always valid.
  */
-public fun RealmObject.isValid(): Boolean {
+fun RealmObject.isValid(): Boolean {
     return if (isManaged()) {
         val internalObject = this as RealmObjectInternal
         val ptr = internalObject.`$realm$ObjectPointer`
@@ -74,4 +79,16 @@ public fun RealmObject.isValid(): Boolean {
         // Unmanaged objects are always valid
         true
     }
+}
+
+/**
+ * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
+ */
+internal fun <T : RealmObject> Link.toRealmObject(
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realmPointer: NativePointer
+): T {
+    return mediator.createInstanceOf(clazz)
+        .link(realmPointer, mediator, clazz, this)
 }

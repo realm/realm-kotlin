@@ -234,6 +234,41 @@ actual object RealmInterop {
         realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
     }
 
+    actual fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer {
+        return LongPointerWrapper(realmc.realm_get_list((obj as LongPointerWrapper).ptr, key.key))
+    }
+
+    actual fun realm_list_size(list: NativePointer): Long {
+        val size = realm_size_t()
+        realmc.realm_list_size(list.cptr(), size)
+        return size.value
+    }
+
+    actual fun <T> realm_list_get(list: NativePointer, index: Long): T {
+        val cvalue = realm_value_t()
+        realmc.realm_list_get(list.cptr(), index, cvalue)
+        return from_realm_value(cvalue)
+    }
+
+    actual fun <T> realm_list_add(list: NativePointer, index: Long, value: T) {
+        val cvalue = to_realm_value(value)
+        realmc.realm_list_insert(list.cptr(), index, cvalue)
+    }
+
+    actual fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T {
+        return realm_list_get<T>(list, index).also {
+            realmc.realm_list_set(list.cptr(), index, to_realm_value(value))
+        }
+    }
+
+    actual fun realm_list_clear(list: NativePointer) {
+        realmc.realm_list_clear(list.cptr())
+    }
+
+    actual fun realm_list_erase(list: NativePointer, index: Long) {
+        realmc.realm_list_erase(list.cptr(), index)
+    }
+
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
     private fun <T> to_realm_value(value: T): realm_value_t {
