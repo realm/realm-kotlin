@@ -43,6 +43,12 @@ pluginBundle {
     website = "https://github.com/realm/realm-kotlin"
     vcsUrl = "https://github.com/realm/realm-kotlin"
     tags = listOf("MongoDB", "Realm", "Database", "Kotlin", "Mobile", "Multiplatform", "Android", "KMM")
+
+    mavenCoordinates {
+        groupId = Realm.group
+        artifactId = Realm.gradlePluginId
+        version = Realm.version
+    }
 }
 
 gradlePlugin {

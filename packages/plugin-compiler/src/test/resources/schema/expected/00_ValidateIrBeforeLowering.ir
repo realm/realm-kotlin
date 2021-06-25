@@ -631,17 +631,17 @@ MODULE_FRAGMENT name:<main>
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:A modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.A.Companion
                 CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.reflect.KClass<*>, io.realm.internal.RealmObjectCompanion> origin=null
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.B.Companion
                 CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.reflect.KClass<*>, io.realm.internal.RealmObjectCompanion> origin=null
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.C.Companion
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf1> visibility:public modality:FINAL <> () returnType:io.realm.RealmConfiguration
         correspondingProperty: PROPERTY name:conf1 visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -666,17 +666,17 @@ MODULE_FRAGMENT name:<main>
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:A modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.A.Companion
                 CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.reflect.KClass<*>, io.realm.internal.RealmObjectCompanion> origin=null
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.B.Companion
                 CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.reflect.KClass<*>, io.realm.internal.RealmObjectCompanion> origin=null
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.C.Companion
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf2> visibility:public modality:FINAL <> () returnType:io.realm.RealmConfiguration
         correspondingProperty: PROPERTY name:conf2 visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -694,12 +694,12 @@ MODULE_FRAGMENT name:<main>
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:A modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.A.Companion
                 CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.reflect.KClass<*>, io.realm.internal.RealmObjectCompanion> origin=null
                   <class: A>: kotlin.reflect.KClass<*>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
-                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=io.realm.internal.RealmObjectCompanion
+                  second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.C.Companion
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf3> visibility:public modality:FINAL <> () returnType:io.realm.RealmConfiguration
         correspondingProperty: PROPERTY name:conf3 visibility:public modality:FINAL [val]
         BLOCK_BODY

@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
@@ -322,7 +323,7 @@ private fun populateCompanion(
                             IrGetObjectValueImpl(
                                 startOffset,
                                 endOffset,
-                                realmObjectCompanionIrClass.defaultType,
+                                symbol.defaultType,
                                 symbol
                             )
                         )

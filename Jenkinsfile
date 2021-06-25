@@ -30,18 +30,33 @@ currentBranch = env.BRANCH_NAME
 publishBuild = false
 // Version of Realm Kotlin being tested. This values is defined in `buildSrc/src/main/kotlin/Config.kt`.
 version = null
+// Wether or not to run test steps
+runTests = true
 isReleaseBranch = releaseBranches.contains(currentBranch)
 
 // Mac CI dedicated machine
 node_label = 'osx_kotlin'
 
+// When having multiple executors available, Jenkins might append @2/@3/etc. to workspace folders in order
+// to allow multiple parallel builds on the same branch. Unfortunately this breaks Ninja and thus us
+// building native code. To work around this, we force the workspace to mirror the git path.
+// This has two side-effects: 1) It isn't possible to use this JenkinsFile on a worker with multiple
+// executors. At least not if we want to support building multipe versions of the same P
+workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}" 
+
 pipeline {
-    agent { label node_label }
+    agent { 
+        node {
+            label node_label
+            customWorkspace workspacePath
+        }
+     }
     // The Gradle cache is re-used between stages, in order to avoid builds interleave,
     // and potentially corrupt each others cache, we grab a global lock for the entire 
     // build.
     options {
         lock resource: 'kotlin_build_lock'
+        timeout(time: 15, activity: true, unit: 'MINUTES') 
     }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
@@ -62,31 +77,37 @@ pipeline {
             }
         }
         stage('Static Analysis') {
+            when { expression { runTests } }
             steps {
                 runStaticAnalysis()
             }
         }
         stage('Tests Compiler Plugin') {
+            when { expression { runTests } }
             steps {
                 runCompilerPluginTest()
             }
         }
         stage('Tests Macos') {
+            when { expression { runTests } }
             steps {
                 test("macosTest")
             }
         }
         stage('Tests Android') {
+            when { expression { runTests } }
             steps {
                 test("connectedAndroidTest")
             }
         }
         stage('Tests JVM (compiler only)') {
+            when { expression { runTests } }
             steps {
                 test('jvmTest --tests "io.realm.test.compiler*"')
             }
         }
         stage('Tests Android Sample App') {
+            when { expression { runTests } }
             steps {
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     runMonkey()
@@ -217,7 +238,7 @@ def runPublishSnapshotToMavenCentral() {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'maven-central-credentials', passwordVariable: 'MAVEN_CENTRAL_PASSWORD', usernameVariable: 'MAVEN_CENTRAL_USER']]) {
             sh """
             cd packages
-            ./gradlew publishToSonatype -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_PASSWORD --no-daemon
+            ./gradlew publishToSonatype -PossrhUsername=${env.MAVEN_CENTRAL_USER} -PossrhPassword=${env.MAVEN_CENTRAL_PASSWORD} --no-daemon
             """
         }
     }
@@ -242,7 +263,7 @@ def  runPublishReleaseOnMavenCentral() {
         '$DOCS_S3_ACCESS_KEY' '$DOCS_S3_SECRET_KEY' \
         '$SLACK_URL_RELEASE' '$SLACK_URL_CI' \
         '$GRADLE_PORTAL_KEY' '$GRADLE_PORTAL_SECRET' \
-        '-PsignBuild=true -PsignSecretRingFileKotlin="${env.SIGN_KEY}" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}'
+        '-PsignBuild=true -PsignSecretRingFileKotlin="$SIGN_KEY" -PsignPasswordKotlin=$SIGN_KEY_PASSWORD'
       """
     }
 }
