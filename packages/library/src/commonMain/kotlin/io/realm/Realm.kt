@@ -25,8 +25,8 @@ import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -41,7 +41,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
 
     internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow = MutableSharedFlow<Realm>(replay = 1) // Realm notifications emit their initial state when subscribed to
-    private val notifierJob: AtomicRef<Job?> = atomic(null)
     private val notifier = SuspendableNotifier(this, configuration.notificationDispatcher)
     private val writer = SuspendableWriter(this, configuration.writeDispatcher)
     private val realmPointerMutex = Mutex()
@@ -96,7 +95,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
 
     init {
         // Update the Realm if another process or the Sync Client updates the Realm
-        notifierJob.value = realmScope.launch {
+        realmScope.launch {
             realmFlow.emit(this@Realm)
             notifier.realmChanged().collect { (dbPointer: NativePointer, version: VersionId) ->
                 updateRealmPointer(dbPointer, version)
@@ -181,30 +180,30 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         TODO()
     }
 
-    override fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>> {
+    internal override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
         return notifier.resultsChanged(results)
     }
 
-    override fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?> {
+    internal override fun <T : RealmObject> registerListObserver(list: List<T?>): Flow<List<T?>?> {
         return notifier.listChanged(list)
     }
 
-    override fun <T : RealmObject> observeObject(obj: T): Flow<T?> {
+    internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T?> {
         return notifier.objectChanged(obj)
     }
 
-    override fun <T : RealmObject> addResultsChangeListener(
+    internal override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
-        return notifier.addResultsChangedListener(results, callback)
+        return notifier.registerResultsChangedListener(results, callback)
     }
 
-    override fun <T : RealmObject> addListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
         TODO("Not yet implemented")
     }
 
-    override fun <T : RealmObject> addObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+    internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
         TODO("Not yet implemented")
     }
 
@@ -265,7 +264,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         runBlocking {
             realmPointerMutex.withLock {
                 writer.close()
-                notifierJob.value?.cancel()
+                realmScope.cancel()
                 notifier.close()
                 super.close()
                 intermediateReferences.value.forEach { (pointer, _) ->

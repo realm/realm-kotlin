@@ -1,5 +1,6 @@
 package io.realm.internal
 
+import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.Realm
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -28,11 +28,14 @@ import kotlinx.coroutines.withContext
  * notifications can be registered. Since all objects that is otherwise exposed to users are frozen, they need
  * to be thawed when reaching the live Realm.
  *
- * For Lists and Objects, this can result in the object no longer existing. In this case, Flows complete
- * immediately and changelisteners will never be triggered (Is this the semantics we want? What do Room do?).
+ * For Lists and Objects, this can result in the object no longer existing. In this case, Flows emit null then
+ * complete immediately.
+ **
+ * FIXME What about changelisteners will never be triggered? (Is this the semantics we want? What do others do?).
  *
- * Notifications are not allowed on live objects. But it is assumed that other layers check that invariant before
- * methods on this class is called.
+ * Users are only exposed to live objects inside a [MutableRealm], and change listeners are not supported
+ * inside writes. Users can therefor not register change listeners on live objects, but it is assumed that other
+ * layers check that invariant before methods on this class is called.
  */
 internal class SuspendableNotifier(private val owner: Realm, private val dispatcher: CoroutineDispatcher) {
 
@@ -44,26 +47,31 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
 
     // FIXME Work-around for the global Realm changed listener not working
     // This Flow exposes a stream of changes to the owner Realm
-    private val _realmChanged = MutableSharedFlow<RealmReference>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.SUSPEND)
+    private val _realmChanged = MutableSharedFlow<RealmReference>(onBufferOverflow = BufferOverflow.SUSPEND)
 
     // Must only be accessed from the dispatchers thread
-    private val realm: NotifierRealm by lazy {
-        NotifierRealm(owner.configuration, dispatcher)
+    private val realm: BaseRealm by lazy {
+        val dbPointer = RealmInterop.realm_open(owner.configuration.nativeConfig, dispatcher)
+        object : BaseRealm(owner.configuration, dbPointer) {
+            /* Realms used by the Notifier is just a basic Live Realm */
+        }
     }
 
     /**
+     * FIXME Currently this is a hacked implementation that only does the correct thing if
+     *  other RealmResults or RealmObjects are being observed. But all writes should also flow
+     *  from [SuspendableWriter], so no Realm updates will be lost to end users.
+     *
      * Listen to changes to a Realm.
      *
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    fun realmChanged(): Flow<Pair<NativePointer, VersionId>> {
+    internal fun realmChanged(): Flow<Pair<NativePointer, VersionId>> {
         // FIXME Workaround until proper Realm Changed Listeners are implemented
         return _realmChanged.asSharedFlow()
             .map {
                 Pair(it.dbPointer, VersionId(RealmInterop.realm_get_version_id(it.dbPointer)))
-            }.distinctUntilChanged { old, new ->
-                old.second == new.second
             }
 //        return callbackFlow {
 //            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
@@ -82,25 +90,50 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
 //        }
     }
 
-    fun addRealmChangedListener(callback: Callback<Pair<NativePointer, VersionId>>): Cancellable {
-        TODO("Waiting for RealmInterop to have support for global Realm changed")
-    }
-
     /**
-     * Listen to changes to a RealmResults
+     * Listen to changes to a RealmResults.
      */
-    fun <T : RealmObject> resultsChanged(results: RealmResults<T>): Flow<RealmResults<T>> {
+    internal fun <T : RealmObject> resultsChanged(results: RealmResults<T>): Flow<RealmResults<T>> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
                 ensureActive()
-                val newToken = addResultsChangedListener(results) { frozenResults ->
+                val newToken = registerResultsChangedListener(results) { frozenResults ->
                     // Realm should already have been updated with the latest version
                     // So `owner` should as a minimum be at the same version as the notification Realm.
                     val result = trySend(frozenResults)
                     checkResult(result)
                 }
                 token.value = newToken
+            }
+            awaitClose {
+                token.value.cancel()
+            }
+        }
+    }
+
+    /**
+     * Listen to changes to a RealmList through a [Flow]. If the list is deleted, `null` is emitted and the flow will complete.
+     */
+    internal fun <T : RealmObject> listChanged(list: List<T?>): Flow<List<T?>?> {
+        TODO("Implement and convert method to use RealmList when available")
+    }
+
+    /**
+     * Listen to changes to a RealmObject through a [Flow]. If the object is deleted, null is emitted and the flow will complete.
+     */
+    internal fun <T : RealmObject> objectChanged(obj: T): Flow<T?> {
+        return callbackFlow {
+            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+            withContext(dispatcher) {
+                ensureActive()
+                token.value = registerObjectChangedListener(obj) { frozenObj ->
+                    val result = trySend(frozenObj)
+                    checkResult(result)
+                    if (frozenObj == null) {
+                        close()
+                    }
+                }
             }
             awaitClose {
                 token.value.cancel()
@@ -120,12 +153,32 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
         }
     }
 
+    private fun notifyRealmChanged(frozenRealm: RealmReference) {
+        if (!_realmChanged.tryEmit(frozenRealm)) {
+            println("Failed to send update to Realm from the Notifier: ${owner.configuration.path}")
+//            throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
+        }
+    }
+
+    /**
+     * Listen to changes to the Realm.
+     * The callback will happen on the configured [SuspendableNotifier.dispatcher] thread.     *
+     *
+     * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
+     */
+    internal fun registerRealmChangedListener(callback: Callback<Pair<NativePointer, VersionId>>): Cancellable {
+        TODO("Waiting for RealmInterop to have support for global Realm changed")
+    }
+
     // FIXME Need to expose change details to the user
     //  https://github.com/realm/realm-kotlin/issues/115
     /**
      * Register a change listener on a live RealmResults. All objects returned in the callback are frozen.
+     * The callback will happen on the configured [SuspendableNotifier.dispatcher] thread.     *
+     *
+     * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
      */
-    fun <T : RealmObject> addResultsChangedListener(results: RealmResults<T>, callback: Callback<RealmResults<T>>): Cancellable {
+    internal fun <T : RealmObject> registerResultsChangedListener(results: RealmResults<T>, callback: Callback<RealmResults<T>>): Cancellable {
         val liveResults = results.thaw(realm.realmReference)
         val token = RealmInterop.realm_results_add_notification_callback(
             liveResults.result,
@@ -149,33 +202,14 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
         return NotificationToken(callback, token)
     }
 
-    private fun notifyRealmChanged(frozenRealm: RealmReference) {
-        if (!_realmChanged.tryEmit(frozenRealm)) {
-            println("Failed to send update to Realm from the Notifier: ${owner.configuration.path}")
-//            throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
-        }
-    }
-
     /**
-     * Listen to changes to a RealmObject through a [Flow]. If the object is deleted, null is emitted and the flow will complete.
+     * Listen to changes to a RealmList through a change listener. The callback will happen
+     * on the configured [SuspendableNotifier.dispatcher] thread.
+     *
+     * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
      */
-    fun <T : RealmObject> objectChanged(obj: T): Flow<T?> {
-        return callbackFlow {
-            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-            withContext(dispatcher) {
-                ensureActive()
-                token.value = addObjectChangedListener(obj) { frozenObj ->
-                    val result = trySend(frozenObj)
-                    checkResult(result)
-                    if (frozenObj == null) {
-                        close()
-                    }
-                }
-            }
-            awaitClose {
-                token.value.cancel()
-            }
-        }
+    internal fun <T : RealmObject> registerListChangedListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+        TODO("Implement and convert method to use RealmList when available")
     }
 
     // FIXME Need to expose change details to the user
@@ -184,7 +218,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
      * Listen to changes to a RealmObject through a change listener. The callback will happen
      * on the configured [SuspendableNotifier.dispatcher] thread.
      */
-    fun <T : RealmObject> addObjectChangedListener(obj: T, callback: Callback<T?>): Cancellable {
+    internal fun <T : RealmObject> registerObjectChangedListener(obj: T, callback: Callback<T?>): Cancellable {
         val liveObject: RealmObjectInternal? = (obj as RealmObjectInternal).thaw(realm.realmReference.owner) as RealmObjectInternal?
         if (liveObject == null || !liveObject.isValid()) {
             return NO_OP_NOTIFICATION_TOKEN
@@ -211,22 +245,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
         return NotificationToken(callback, token)
     }
 
-    /**
-     * Listen to changes to a RealmList through a [Flow]. If the list is deleted, `null` is emitted and the flow will complete.
-     */
-    fun <T : RealmObject> listChanged(list: List<T?>): Flow<List<T?>?> {
-        TODO("Implement and convert method to use RealmList when available")
-    }
-
-    /**
-     * Listen to changes to a RealmList through a change listener. The callback will happen
-     * on the configured [SuspendableNotifier.dispatcher] thread.
-     */
-    fun <T : RealmObject> addListChangedListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
-        TODO("Implement and convert method to use RealmList when available")
-    }
-
-    fun close() {
+    internal fun close() {
         // FIXME Is it safe at all times to close a Realm? Probably not during a changelistener callback, but Mutexes
         //  are not supported within change listeners as they are not suspendable.
         runBlocking(dispatcher) {

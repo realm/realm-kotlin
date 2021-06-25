@@ -34,6 +34,12 @@ class RealmListNotificationsTests : NotificationTests {
 
     @Test
     @Ignore
+    override fun initialElement() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    @Ignore
     override fun observe() {
         TODO("Waiting for RealmList support")
     }
@@ -41,12 +47,6 @@ class RealmListNotificationsTests : NotificationTests {
     @Test
     @Ignore
     override fun cancelObserve() {
-        TODO("Waiting for RealmList support")
-    }
-
-    @Test
-    @Ignore
-    override fun initialElement() {
         TODO("Waiting for RealmList support")
     }
 

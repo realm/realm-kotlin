@@ -44,6 +44,26 @@ class RealmObjectNotificationsTests : NotificationTests {
     }
 
     @Test
+    override fun initialElement() {
+        runBlocking {
+            val c = Channel<Sample?>(1)
+            val obj = realm.write {
+                copyToRealm(
+                    Sample().apply { stringField = "Foo" }
+                )
+            }
+            val observer = async {
+                obj.observe().collect {
+                    c.trySend(it)
+                }
+            }
+            assertEquals("Foo", c.receive()!!.stringField)
+            observer.cancel()
+            c.close()
+        }
+    }
+
+    @Test
     override fun observe() {
         runBlocking {
             val c = Channel<Sample?>(1)
@@ -101,28 +121,6 @@ class RealmObjectNotificationsTests : NotificationTests {
             observer2.cancel()
             c1.close()
             c2.close()
-        }
-    }
-
-    @Test
-    override fun initialElement() {
-        runBlocking {
-            val c = Channel<Sample?>(1)
-            val obj = realm.write {
-                copyToRealm(
-                    Sample().apply {
-                        stringField = "Foo"
-                    }
-                )
-            }
-            val observer = async {
-                obj.observe().collect {
-                    c.trySend(it)
-                }
-            }
-            assertEquals("Foo", c.receive()!!.stringField)
-            observer.cancel()
-            c.close()
         }
     }
 

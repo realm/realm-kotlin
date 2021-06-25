@@ -153,30 +153,30 @@ class MutableRealm : BaseRealm {
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
 
-    override fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>> {
+    override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?> {
+    override fun <T : RealmObject> registerListObserver(list: List<T?>): Flow<List<T?>?> {
         throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> observeObject(obj: T): Flow<T?> {
+    override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T?> {
         throw IllegalStateException("Changes to RealmObject cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> addResultsChangeListener(
+    override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> addListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> addObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+    override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 }

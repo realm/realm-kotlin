@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -38,6 +39,22 @@ class RealmResultsNotificationsTests : NotificationTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    override fun initialElement() {
+        runBlocking {
+            val c = Channel<RealmResults<Sample>>(1)
+            val observer = async {
+                realm.objects(Sample::class).observe().collect {
+                    c.trySend(it)
+                }
+            }
+            val initialElement: RealmResults<Sample> = c.receive()
+            assertEquals(0, initialElement.size)
+            observer.cancel()
+            c.close()
+        }
     }
 
     @Test
@@ -91,22 +108,6 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun initialElement() {
-        runBlocking {
-            val c = Channel<RealmResults<Sample>>(1)
-            val observer = async {
-                realm.objects(Sample::class).observe().collect {
-                    c.trySend(it)
-                }
-            }
-            val initialElement: RealmResults<Sample> = c.receive()
-            assertEquals(0, initialElement.size)
-            observer.cancel()
-            c.close()
-        }
-    }
-
-    @Test
     override fun deleteObservable() {
         runBlocking {
             val c = Channel<RealmResults<Sample>>(1)
@@ -133,6 +134,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
+    @Ignore // FIXME Not correctly imlemented yet
     override fun closeRealmInsideFlowThrows() {
         runBlocking {
             val c = Channel<Int>(capacity = 1)

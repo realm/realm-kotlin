@@ -54,9 +54,6 @@ class SystemNotificationTests {
 
     // Sanity check to ensure that this doesn't cause crashes
     @Test
-    // I think there is some kind of resource issue when combining too many realms/schedulers. If
-    // this test is enabled execution of all test sometimes fails. Something similarly happens if
-    // the public realm_open in Realm.open is extended to take a dispatcher to setup notifications.
     fun multipleSchedulersOnSameThread() {
         Utils.printlntid("main")
         val baseRealm = Realm.open(configuration)

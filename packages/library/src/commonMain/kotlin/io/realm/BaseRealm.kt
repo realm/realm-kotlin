@@ -35,7 +35,7 @@ public abstract class BaseRealm internal constructor(
 ) {
 
     companion object {
-        const val flowNotSupportMessage = "Flows are not implemented for this type of Realm, use the callback API instead."
+        const val observerablesNotSupportMessage = "Observing changes are not supported by this Realm."
     }
 
     /**
@@ -80,36 +80,36 @@ public abstract class BaseRealm internal constructor(
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
-    internal open fun <T : RealmObject> addResultsChangeListener(
+    internal open fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
-        throw NotImplementedError(flowNotSupportMessage)
+        throw NotImplementedError(observerablesNotSupportMessage)
     }
 
-    internal open fun <T : RealmObject> addListChangeListener(
+    internal open fun <T : RealmObject> registerListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable {
-        throw NotImplementedError(flowNotSupportMessage)
+        throw NotImplementedError(observerablesNotSupportMessage)
     }
 
-    internal open fun <T : RealmObject> addObjectChangeListener(
+    internal open fun <T : RealmObject> registerObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {
-        throw NotImplementedError(flowNotSupportMessage)
+        throw NotImplementedError(observerablesNotSupportMessage)
     }
 
-    internal open fun <T : RealmObject> observeResults(results: RealmResults<T>): Flow<RealmResults<T>> {
-        throw NotImplementedError(flowNotSupportMessage)
+    internal open fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+        throw NotImplementedError(observerablesNotSupportMessage)
     }
-    internal open fun <T : RealmObject> observeList(list: List<T?>): Flow<List<T?>?> {
-        throw NotImplementedError(flowNotSupportMessage)
+    internal open fun <T : RealmObject> registerListObserver(list: List<T?>): Flow<List<T?>?> {
+        throw NotImplementedError(observerablesNotSupportMessage)
     }
 
-    internal open fun <T : RealmObject> observeObject(obj: T): Flow<T?> {
-        throw NotImplementedError(flowNotSupportMessage)
+    internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T?> {
+        throw NotImplementedError(observerablesNotSupportMessage)
     }
 
     /**

@@ -98,14 +98,14 @@ internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<
     checkNotificationsAvailable()
     val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner
     @Suppress("UNCHECKED_CAST")
-    return realm.addObjectChangeListener(this as T, callback)
+    return realm.registerObjectChangeListener(this as T, callback)
 }
 
 public fun <T : RealmObject> T.observe(): Flow<T?> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$Owner` as RealmReference).owner.observeObject(this as T)
+    return (internalObject.`$realm$Owner` as RealmReference).owner.registerObjectObserver(this as T)
 }
 
 private fun RealmObject.checkNotificationsAvailable() {

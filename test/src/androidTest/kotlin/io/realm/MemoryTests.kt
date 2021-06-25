@@ -98,7 +98,7 @@ class MemoryTests {
 
     // make sure that calling realm.close() will force close the Realm and release native memory
     @Test
-    @Ignore // Probably related to the frozen Realms in the Notifier not being released as they are dropped inside the Flow to the public Realm 
+    @Ignore // Probably related to the frozen Realms in the Notifier not being released as they are dropped inside the Flow to the public Realm
     fun closeShouldFreeMemory() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 

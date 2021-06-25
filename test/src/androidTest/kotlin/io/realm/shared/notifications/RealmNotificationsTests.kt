@@ -39,30 +39,6 @@ class RealmNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun observe() {
-        runBlocking {
-            val c = Channel<Realm>(1)
-            val startingVersion = realm.version
-            val observer = async {
-                realm.observe().collect {
-                    c.send(it)
-                }
-            }
-            assertEquals(startingVersion, c.receive().version)
-            realm.write { /* Do nothing */ }
-            assertEquals(VersionId(startingVersion.version + 1), c.receive().version)
-            observer.cancel()
-            c.close()
-        }
-    }
-
-    @Test
-    @Ignore
-    override fun cancelObserve() {
-        TODO("Wait for a Global change listener to become available")
-    }
-
-    @Test
     override fun initialElement() {
         runBlocking {
             val c = Channel<Realm>(1)
@@ -76,6 +52,32 @@ class RealmNotificationsTests : NotificationTests {
             observer.cancel()
             c.close()
         }
+    }
+
+    @Test
+    override fun observe() {
+        runBlocking {
+            val c = Channel<Realm>(1)
+            val startingVersion = realm.version
+            val observer = async {
+                realm.observe().collect {
+                    c.send(it)
+                }
+            }
+            assertEquals(startingVersion, c.receive().version)
+            realm.write { /* Do nothing */ }
+            c.receive().version.let { updatedVersion ->
+                assertEquals(VersionId(startingVersion.version + 1), updatedVersion)
+            }
+            observer.cancel()
+            c.close()
+        }
+    }
+
+    @Test
+    @Ignore
+    override fun cancelObserve() {
+        TODO("Wait for a Global change listener to become available")
     }
 
     @Test

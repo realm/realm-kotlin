@@ -101,7 +101,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
      */
     internal fun addChangeListener(callback: Callback<RealmResults<T>>): Cancellable {
         realm.checkClosed()
-        return realm.owner.addResultsChangeListener(this, callback)
+        return realm.owner.registerResultsChangeListener(this, callback)
     }
 
     /**
@@ -111,7 +111,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
      */
     fun observe(): Flow<RealmResults<T>> {
         realm.checkClosed()
-        return realm.owner.observeResults(this)
+        return realm.owner.registerResultsObserver(this)
     }
 
     fun delete() {
