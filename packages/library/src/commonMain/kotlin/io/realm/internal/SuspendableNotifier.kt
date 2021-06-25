@@ -154,7 +154,9 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
 
     private fun notifyRealmChanged(frozenRealm: RealmReference) {
         if (!_realmChanged.tryEmit(frozenRealm)) {
-            throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
+            // FIXME Figure out why we sometimes end up here
+            println("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
+            // throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
         }
     }
 
