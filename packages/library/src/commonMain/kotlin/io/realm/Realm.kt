@@ -166,8 +166,12 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
 
     /**
-     * FIXME
-     * Be notified whenever this Realm is updated.
+     * Observe changes to the Realm. If there is any change to the Realm, the flow will emit the
+     * updated Realm. The flow will continue running indefinitely until canceled.
+     *
+     * The change calculations will run on the thread defined by [RealmConfiguration.notificationDispatcher].
+     *
+     * @return a flow representing changes to this Realm.
      */
     public fun observe(): Flow<Realm> {
         return realmFlow.asSharedFlow()
@@ -184,11 +188,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         return notifier.resultsChanged(results)
     }
 
-    internal override fun <T : RealmObject> registerListObserver(list: List<T?>): Flow<List<T?>?> {
+    internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
         return notifier.listChanged(list)
     }
 
-    internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T?> {
+    internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
         return notifier.objectChanged(obj)
     }
 

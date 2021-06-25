@@ -157,11 +157,11 @@ class MutableRealm : BaseRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerListObserver(list: List<T?>): Flow<List<T?>?> {
+    override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
         throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T?> {
+    override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
         throw IllegalStateException("Changes to RealmObject cannot be observed during a write.")
     }
 

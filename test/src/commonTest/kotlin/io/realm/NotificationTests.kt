@@ -50,7 +50,7 @@ interface NotificationTests {
 
     @Test
     fun openSameRealmFileWithDifferentDispatchers() {
-        // FIXME This seems to not work
+        // FIXME
     }
 
     // Verify that the Main dispatcher can be used for both writes and notifications

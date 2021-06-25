@@ -105,9 +105,13 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     }
 
     /**
-     * Observe changes to a Realm result.
+     * Observe changes to the RealmResult. If there is any change to objects represented by the query
+     * backing the RealmResult, the flow will emit the updated RealmResult. The flow will continue
+     * running indefinitely until canceled.
      *
-     * Follows the pattern of [Realm.observe]
+     * The change calculations will on on the thread represented by [RealmConfiguration.notificationDispatcher].
+     *
+     * @return a flow representing changes to the RealmResults.
      */
     fun observe(): Flow<RealmResults<T>> {
         realm.checkClosed()
