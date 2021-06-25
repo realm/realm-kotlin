@@ -79,27 +79,23 @@ class RealmResultsNotificationsTests : NotificationTests {
 
     @Test
     @Suppress("invisible_member")
-    fun changelistener() { runBlocking {
-        val c = Channel<Int>(capacity = 1)
-        var token: Cancellable? = realm.addResultsChangeListener(realm.objects<Sample>()) {
-                println("ASdf")
+    fun changelistener() {
+        runBlocking {
+            val c = Channel<Int>(capacity = 1)
+            var token: Cancellable? = realm.registerResultsChangeListener(realm.objects<Sample>()) {
                 c.trySend(it.size)
             }
-        realm.write {
-            copyToRealm(Sample().apply { stringField = "Foo" })
+            realm.write {
+                copyToRealm(Sample().apply { stringField = "Foo" })
+            }
+            assertEquals(1, c.receive())
+            c.close()
+            token?.let {
+                it.cancel()
+            }
+            realm.close()
         }
-        println("ASdf")
-        assertEquals(1, c.receive())
-        println("ASasdff")
-//        observer.cancel()
-        c.close()
-        token?.let {
-            println("Canceling")
-            it.cancel()
-        }
-        println("ASasdff")
-        realm.close()
-    }}
+    }
 
     @Test
     override fun cancelObserve() {
