@@ -72,7 +72,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
-                @Suppress("LongMethod")
+                @Suppress("LongMethod", "MagicNumber")
                 override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
                     if (REALM_CONFIGURATION == expression.symbol.owner.returnType.classFqName &&
                         !expression.symbol.owner.isPrimary

@@ -240,7 +240,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
-        realm_wrapper.realm_config_set_schema_version(config.cptr(), maxNumberOfVersions.toULong())
+        realm_wrapper.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions.toULong())
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {

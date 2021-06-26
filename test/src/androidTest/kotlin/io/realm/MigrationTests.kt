@@ -22,6 +22,7 @@ import test.link.Child
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 class MigrationTests {
 
@@ -66,7 +67,6 @@ class MigrationTests {
             schemaVersion = 2
         ).also {
             val realm = Realm.open(it)
-            println("PATH 1: ${realm.configuration.path}")
             realm.close()
         }
 
@@ -75,9 +75,10 @@ class MigrationTests {
             schema = setOf(Child::class),
             schemaVersion = 1
         ).also {
-            val realm = Realm.open(it)
-            println("PATH 2: ${realm.configuration.path}")
-            realm.close()
+            // Provided schema version 1 is less than last set version 2.
+            assertFailsWith<RuntimeException> {
+                Realm.open(it)
+            }
         }
     }
 }

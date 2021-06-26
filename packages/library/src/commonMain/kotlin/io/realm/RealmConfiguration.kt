@@ -44,6 +44,7 @@ data class LogConfiguration(
     val loggers: List<RealmLogger>
 )
 
+@Suppress("LongParameterList")
 class RealmConfiguration private constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
@@ -104,9 +105,9 @@ class RealmConfiguration private constructor(
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal = (
-                    mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
-                        ?: error("$clazz not part of this configuration schema")
-                    ) as RealmObjectInternal
+                mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
+                    ?: error("$clazz not part of this configuration schema")
+                ) as RealmObjectInternal
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]
