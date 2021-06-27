@@ -23,6 +23,7 @@ import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -56,39 +57,43 @@ class SuspendableWriter(private val owner: BaseRealm, val dispatcher: CoroutineD
     suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
         return withContext(dispatcher) {
-            var result: R
-
-            @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
-            transactionMutex.withLock {
-                try {
-                    realm.beginTransaction()
-                    ensureActive()
-                    result = block(realm)
-                    ensureActive()
-                    if (!shouldClose.value && realm.isInTransaction()) {
-                        realm.commitTransaction()
-                    }
-                } catch (e: Exception) {
-                    if (realm.isInTransaction()) {
-                        realm.cancelWrite()
-                    }
-                    throw e
-                }
-            }
-
-            // Freeze the triple of <Realm, Version, Result> while in the context
-            // of the Dispatcher. The dispatcher should be single-threaded so will
-            // guarantee that no other threads can modify the Realm between
-            // the transaction is committed and we freeze it.
-            // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
-            //  lock this code?
-            val newDbPointer = RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-            val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
-            // FIXME Should we actually rather just throw if we cannot freeze the result?
-            if (shouldFreezeWriteReturnValue(result)) {
-                result = freezeWriteReturnValue(result, newDbPointer)
-            }
-            Triple(newDbPointer, newVersion, result)
+            TODO()
+//            var result: R
+//
+//            @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
+//            transactionMutex.withLock {
+//                try {
+//                    realm.beginTransaction()
+//                    ensureActive()
+//                    result = block(realm)
+//                    ensureActive()
+//                    if (!shouldClose.value && realm.isInTransaction()) {
+//                        realm.commitTransaction()
+//                    }
+//                } catch (e: Exception) {
+//                    if (realm.isInTransaction()) {
+//                        realm.cancelWrite()
+//                    }
+//                    throw e
+//                }
+//            }
+//
+//            // Freeze the triple of <Realm, Version, Result> while in the context
+//            // of the Dispatcher. The dispatcher should be single-threaded so will
+//            // guarantee that no other threads can modify the Realm between
+//            // the transaction is committed and we freeze it.
+//            // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
+//            //  lock this code?
+//            val newDbPointer = RealmInterop.realm_freeze(realm.realmReference.dbPointer)
+//            val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
+//            // FIXME Should we actually rather just throw if we cannot freeze the result?
+//            if (shouldFreezeWriteReturnValue(result)) {
+//                result = freezeWriteReturnValue(result, newDbPointer)
+//            }
+//            GCCollect()
+//            Triple(newDbPointer, newVersion, result as R)
+////            val newVersion = VersionId(RealmInterop.realm_get_version_id(realm.dbPointeri))
+////            Triple(realm.dbPointer, newVersion, Unit as R)
         }
     }
 

@@ -39,13 +39,14 @@ import kotlinx.coroutines.sync.withLock
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
-    internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
-    private val realmFlow = MutableSharedFlow<Realm>(replay = 1) // Realm notifications emit their initial state when subscribed to
-    private val notifier = SuspendableNotifier(this, configuration.notificationDispatcher)
-    private val writer = SuspendableWriter(this, configuration.writeDispatcher)
+//    internal val realmScope: CoroutineScope = CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
+//    private val realmFlow = MutableSharedFlow<Realm>(replay = 1) // Realm notifications emit their initial state when subscribed to
+//    private val notifier = SuspendableNotifier(this, configuration.notificationDispatcher)
+//    private val writer = SuspendableWriter(this, configuration.writeDispatcher)
     private val realmPointerMutex = Mutex()
 
-    private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
+//    private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
+//    private var updatableRealm: RealmReference = RealmReference(this, dbPointer)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -53,18 +54,18 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * NOTE: As this is updated to a new frozen version on notifications about changes in the
      * underlying realm, care should be taken not to spread operations over different references.
      */
-    internal override var realmReference: RealmReference
-        get() {
-            return updatableRealm.value
-        }
-        set(value) {
-            updatableRealm.value = value
-        }
+//    internal override var realmReference: RealmReference
+//        get() {
+//            return updatableRealm
+//        }
+//        set(value) {
+//            updatableRealm = value
+//        }
 
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
-    internal val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> =
-        atomic(mutableSetOf())
+//    internal val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> =
+//        atomic(mutableSetOf())
 
     companion object {
         /**
@@ -85,22 +86,24 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         ): Realm {
             // TODO Find a cleaner way to get the initial frozen instance
             val liveRealm = RealmInterop.realm_open(configuration.nativeConfig)
-            val frozenRealm = RealmInterop.realm_freeze(liveRealm)
-            RealmInterop.realm_close(liveRealm)
-            val realm = Realm(configuration, frozenRealm)
-            realm.log.info("Opened Realm: ${configuration.path}")
+//            val frozenRealm = RealmInterop.realm_freeze(liveRealm)
+//            RealmInterop.realm_close(liveRealm)
+            println("Opening Realm: ${configuration.path}")
+//            val realm = Realm(configuration, frozenRealm)
+            val realm = Realm(configuration, liveRealm)
+//            realm.log.info("Opened Realm: ${configuration.path}")
             return realm
         }
     }
 
     init {
         // Update the Realm if another process or the Sync Client updates the Realm
-        realmScope.launch {
-            realmFlow.emit(this@Realm)
-            notifier.realmChanged().collect { (dbPointer: NativePointer, version: VersionId) ->
-                updateRealmPointer(dbPointer, version)
-            }
-        }
+//        realmScope.launch {
+//            realmFlow.emit(this@Realm)
+////            notifier.realmChanged().collect { (dbPointer: NativePointer, version: VersionId) ->
+////                updateRealmPointer(dbPointer, version)
+////            }
+//        }
     }
 
     /**
@@ -112,8 +115,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      *  this constructor should be the primary way to open Realms (as you only need
      *  to do it once pr. app).
      */
-    public constructor(configuration: RealmConfiguration) :
-        this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+//    public constructor(configuration: RealmConfiguration) :
+//        this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write
@@ -133,13 +136,14 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     suspend fun <R> write(block: MutableRealm.() -> R): R {
         @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
-            val (nativePointer, versionId, result) = this.writer.write(block)
+//            val (nativePointer, versionId, result) = this.writer.write(block)
             // Update the user facing Realm before returning the result.
             // That way, querying the Realm right after the `write` completes will return
             // the written data. Otherwise, we would have to wait for the Notifier thread
             // to detect it and update the user Realm.
-            updateRealmPointer(nativePointer, versionId)
-            return result
+//            updateRealmPointer(nativePointer, versionId)
+//            return result
+            TODO()
         } catch (e: Exception) {
             throw e
         }
@@ -159,10 +163,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * @throws IllegalStateException if invoked inside an existing transaction.
      */
     fun <R> writeBlocking(block: MutableRealm.() -> R): R {
-        writer.checkInTransaction("Cannot initiate transaction when already in a write transaction")
-        return runBlocking {
-            write(block)
-        }
+//        writer.checkInTransaction("Cannot initiate transaction when already in a write transaction")
+        TODO()
+//        return runBlocking {
+//            write(block)
+//        }
     }
 
     /**
@@ -174,7 +179,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * @return a flow representing changes to this Realm.
      */
     public fun observe(): Flow<Realm> {
-        return realmFlow.asSharedFlow()
+//        return realmFlow.asSharedFlow()
+        TODO()
     }
 
     /**
@@ -185,22 +191,26 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
 
     internal override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
-        return notifier.resultsChanged(results)
+        TODO()
+//        return notifier.resultsChanged(results)
     }
 
     internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
-        return notifier.listChanged(list)
+        TODO()
+//        return notifier.listChanged(list)
     }
 
     internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
-        return notifier.objectChanged(obj)
+        TODO()
+//        return notifier.objectChanged(obj)
     }
 
     internal override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
-        return notifier.registerResultsChangedListener(results, callback)
+//        return notifier.registerResultsChangedListener(results, callback)
+        TODO()
     }
 
     internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
@@ -212,40 +222,40 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
 
     private suspend fun updateRealmPointer(newPointer: NativePointer, newVersion: VersionId) {
-        realmPointerMutex.withLock {
-            log.debug("Updating Realm version: $version -> $newVersion")
-            val newRealmReference = RealmReference(this, newPointer)
-            // If we advance to a newer version then we should keep track of the preceeding one,
-            // otherwise just track the new one directly.
-            val untrackedReference = if (newVersion >= version) {
-                val previousRealmReference = realmReference
-                realmReference = newRealmReference
-                previousRealmReference
-            } else {
-                newRealmReference
-            }
-            trackNewAndCloseExpiredReferences(untrackedReference)
-
-            // Notify public observers that the Realm changed
-            realmFlow.emit(this)
-        }
+//        realmPointerMutex.withLock {
+//            log.debug("Updating Realm version: $version -> $newVersion")
+//            val newRealmReference = RealmReference(this, newPointer)
+//            // If we advance to a newer version then we should keep track of the preceeding one,
+//            // otherwise just track the new one directly.
+//            val untrackedReference = if (newVersion >= version) {
+//                val previousRealmReference = realmReference
+//                realmReference = newRealmReference
+//                previousRealmReference
+//            } else {
+//                newRealmReference
+//            }
+//            trackNewAndCloseExpiredReferences(untrackedReference)
+//
+//            // Notify public observers that the Realm changed
+//            realmFlow.emit(this)
+//        }
     }
 
     // Must only be called with realmPointerMutex locked
     private fun trackNewAndCloseExpiredReferences(realmReference: RealmReference) {
-        val references = mutableSetOf<Pair<NativePointer, WeakReference<RealmReference>>>(
-            Pair(realmReference.dbPointer, WeakReference(realmReference))
-        )
-        intermediateReferences.value.forEach { entry ->
-            val (pointer, ref) = entry
-            if (ref.get() == null) {
-                log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
-                RealmInterop.realm_close(pointer)
-            } else {
-                references.add(entry)
-            }
-        }
-        intermediateReferences.value = references
+//        val references = mutableSetOf<Pair<NativePointer, WeakReference<RealmReference>>>(
+//            Pair(realmReference.dbPointer, WeakReference(realmReference))
+//        )
+//        intermediateReferences.value.forEach { entry ->
+//            val (pointer, ref) = entry
+//            if (ref.get() == null) {
+//                log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
+//                RealmInterop.realm_close(pointer)
+//            } else {
+//                references.add(entry)
+//            }
+//        }
+//        intermediateReferences.value = references
     }
 
     /**
@@ -264,21 +274,21 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     public override fun close() {
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
         //  writer thread and just close the realm in writer.close()
-        writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
-        runBlocking {
-            realmPointerMutex.withLock {
-                writer.close()
-                realmScope.cancel()
-                notifier.close()
-                super.close()
-                intermediateReferences.value.forEach { (pointer, _) ->
-                    log.debug(
-                        "Closing intermediated version: ${RealmInterop.realm_get_version_id(pointer)}"
-                    )
-                    RealmInterop.realm_close(pointer)
-                }
-            }
-        }
+//        writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
+//        runBlocking {
+//            realmPointerMutex.withLock {
+////                writer.close()
+//                realmScope.cancel()
+//                //notifier.close()
+//                super.close()
+//                intermediateReferences.value.forEach { (pointer, _) ->
+//                    log.debug(
+//                        "Closing intermediated version: ${RealmInterop.realm_get_version_id(pointer)}"
+//                    )
+//                    RealmInterop.realm_close(pointer)
+//                }
+//            }
+//        }
         // TODO There is currently nothing that tears down the dispatcher
     }
 }

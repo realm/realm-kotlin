@@ -48,17 +48,23 @@ public abstract class BaseRealm internal constructor(
      * updated to point to a new frozen version after writes or notification, so care should be
      * taken not to spread operations over different references.
      */
-    internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
-        set(_) {
-            throw UnsupportedOperationException("BaseRealm reference should never be updated")
-        }
+    // FIXME Representing the underlying refetrence with a RealmReference seems to cause the
+    //  GC to not collect both the owner and reference on Native, so seems like the cycle is not
+    //  detected. 
+    internal open var dbPoiner: NativePointer = dbPointer
+//    internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
+//        set(_) {
+//            throw UnsupportedOperationException("BaseRealm reference should never be updated")
+//        }
 
     /**
      * The current data version of this Realm and data fetched from it.
      */
     // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     public var version: VersionId = VersionId(0)
-        get() { return realmReference.version() }
+        get() {
+            TODO() // return RealmInterop.version() }
+        }
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
@@ -67,15 +73,16 @@ public abstract class BaseRealm internal constructor(
     }
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+        TODO()
         // Use same reference through out all operations to avoid locking
-        val realmReference = this.realmReference
-        realmReference.checkClosed()
-        return RealmResults.fromQuery(
-            realmReference,
-            RealmInterop.realm_query_parse(realmReference.dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
-            clazz,
-            configuration.mediator
-        )
+//        val realmReference = this.realmReference
+//        realmReference.checkClosed()
+//        return RealmResults.fromQuery(
+//            realmReference,
+//            RealmInterop.realm_query_parse(realmReference.dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
+//            clazz,
+//            configuration.mediator
+//        )
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
@@ -119,9 +126,10 @@ public abstract class BaseRealm internal constructor(
      * @see [RealmConfiguration.Builder.maxNumberOfActiveVersions]
      */
     public fun getNumberOfActiveVersions(): Long {
-        val reference = realmReference
-        reference.checkClosed()
-        return RealmInterop.realm_get_num_versions(reference.dbPointer)
+        TODO()
+//        val reference = realmReference
+//        reference.checkClosed()
+//        return RealmInterop.realm_get_num_versions(reference.dbPointer)
     }
 
     /**
@@ -131,14 +139,16 @@ public abstract class BaseRealm internal constructor(
      * @return `true` if the Realm has been closed. `false` if not.
      */
     public fun isClosed(): Boolean {
-        return realmReference.isClosed()
+        TODO()
+//        return realmReference.isClosed()
     }
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        val reference = realmReference
-        reference.checkClosed()
-        RealmInterop.realm_close(reference.dbPointer)
-        log.info("Realm closed: ${configuration.path}")
+        TODO()
+//        val reference = realmReference
+//        reference.checkClosed()
+//        RealmInterop.realm_close(reference.dbPointer)
+//        log.info("Realm closed: ${configuration.path}")
     }
 }

@@ -59,15 +59,16 @@ class MutableRealm : BaseRealm {
         super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     internal fun beginTransaction() {
-        RealmInterop.realm_begin_write(realmReference.dbPointer)
+//        RealmInterop.realm_begin_write(realmReference.dbPointer)
     }
 
     internal fun commitTransaction() {
-        RealmInterop.realm_commit(realmReference.dbPointer)
+//        RealmInterop.realm_commit(realmReference.dbPointer)
     }
 
     internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
+        TODO()
+//        return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
     }
 
     /**
@@ -86,34 +87,36 @@ class MutableRealm : BaseRealm {
      * @throws IllegalArgumentException if called on an unmanaged object.
      */
     public fun <T : RealmObject> findLatest(obj: T?): T? {
-        return if (obj == null || !obj.isValid()) {
-            null
-        } else if (!obj.isManaged()) {
-            throw IllegalArgumentException(
-                "Unmanaged objects must be part of the Realm, before " +
-                    "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
-                    "a managed object."
-            )
-        } else if (!obj.isFrozen()) {
-            // If already valid, managed and not frozen, it must be live, and thus already
-            // up to date, just return input
-            obj
-        } else {
-            val liveRealm = realmReference.owner
-            (obj as RealmObjectInternal).thaw(liveRealm)
-        }
+//        return if (obj == null || !obj.isValid()) {
+//            null
+//        } else if (!obj.isManaged()) {
+//            throw IllegalArgumentException(
+//                "Unmanaged objects must be part of the Realm, before " +
+//                    "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
+//                    "a managed object."
+//            )
+//        } else if (!obj.isFrozen()) {
+//            // If already valid, managed and not frozen, it must be live, and thus already
+//            // up to date, just return input
+//            obj
+//        } else {
+//            val liveRealm = realmReference.owner
+//            (obj as RealmObjectInternal).thaw(liveRealm)
+//        }
+        TODO()
     }
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
      */
     public fun cancelWrite() {
-        RealmInterop.realm_rollback(realmReference.dbPointer)
+//        RealmInterop.realm_rollback(realmReference.dbPointer)
     }
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(configuration.mediator, realmReference, type)
+        TODO()
+//        return io.realm.internal.create(configuration.mediator, realmReference, type)
     }
     // Convenience inline method for the above to skip KClass argument
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
@@ -121,7 +124,8 @@ class MutableRealm : BaseRealm {
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
-        return io.realm.internal.create(configuration.mediator, realmReference, type, primaryKey)
+        TODO()
+//        return io.realm.internal.create(configuration.mediator, realmReference, type, primaryKey)
     }
 
     /**
@@ -135,7 +139,8 @@ class MutableRealm : BaseRealm {
      * @return The managed version of the `instance`.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
-        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
+        TODO()
+//        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
     }
     /**
      * Deletes the object from the underlying Realm.
