@@ -11,7 +11,7 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 
 https://github.com/realm/realm-kotlin-samples
 
-# Quick Startup
+# Quick Start
 
 ## Prerequisite
 
@@ -26,8 +26,7 @@ Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) proj
 ```Gradle
 buildscript {
     repositories {
-        // other repo
-        maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+        mavenCentral()
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")// minimum 1.4.20
@@ -38,8 +37,7 @@ buildscript {
 
 allprojects {
     repositories {
-        // other repo 
-        maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+        mavenCentral()
     }
 }
 ```
@@ -104,17 +102,9 @@ val person = Person().apply {
 }
 
 // persist it in a transaction
-realm.beginTransaction()
-val managedPerson = realm.copyToRealm(person)
-realm.commitTransaction()
-
-// alternatively we can use
-realm.beginTransaction()
-realm.create<Person>().apply {
-            name = "Bar"
-            dog = Dog().apply { name = "Filo"; age = 11 }
-        }
-realm.commitTransaction()
+realm.writeBlocking {
+    val managedPerson = this.copyToRealm(person)
+}
 ```
 
 ## Query
@@ -140,9 +130,9 @@ realm.objects<Person>().query("dog == NULL LIMIT(1)")
     .firstOrNull()
     ?.also { personWithoutDog ->
         // Add a dog in a transaction
-        realm.beginTransaction()
-        personWithoutDog.dog = Dog().apply { name = "Laika";  age = 3 }
-        realm.commitTransaction()
+        realm.writeBlocking {
+            personWithoutDog.dog = Dog().apply { name = "Laika"; age = 3 }
+        }
     }
 ```
 
@@ -151,11 +141,10 @@ realm.objects<Person>().query("dog == NULL LIMIT(1)")
 Use the result of a query to delete from the database
 ```Kotlin
 // delete all Dogs
-realm.beginTransaction()
-realm.objects<Dog>().delete()
-realm.commitTransaction()
+realm.writeBlocking {
+    realm.objects<Dog>().delete()
+}
 ```
-
 
 Next: head to the full KMM [example](./examples/kmm-sample).  
 
