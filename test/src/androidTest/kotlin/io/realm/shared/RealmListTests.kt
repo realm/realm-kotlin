@@ -393,7 +393,7 @@ internal abstract class ManagedListTester<T>(
             }
             // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
             assertFailsWith<RuntimeException> {
-                list[666]
+                list[123]
             }
 
             dataSet.forEachIndexed { index, t ->
@@ -447,7 +447,7 @@ internal abstract class ManagedListTester<T>(
             }
             // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
             assertFailsWith<RuntimeException> {
-                list.add(666, typeSafetyManager.getInitialDataSet()[0])
+                list.add(123, typeSafetyManager.getInitialDataSet()[0])
             }
         }
 
@@ -504,7 +504,7 @@ internal abstract class ManagedListTester<T>(
             }
             // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
             assertFailsWith<RuntimeException> {
-                list.addAll(666, dataSet)
+                list.addAll(123, dataSet)
             }
         }
 
@@ -520,7 +520,7 @@ internal abstract class ManagedListTester<T>(
                 }
                 // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
                 assertFailsWith<RuntimeException> {
-                    list.addAll(666, listOf())
+                    list.addAll(123, listOf())
                 }
 
                 // Returns false when list does not change
@@ -615,7 +615,7 @@ internal abstract class ManagedListTester<T>(
                 }
                 // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
                 assertFailsWith<RuntimeException> {
-                    list.removeAt(666)
+                    list.removeAt(123)
                 }
 
                 assertElementsAreEqual(dataSet[0], list.removeAt(0))
@@ -666,7 +666,7 @@ internal abstract class ManagedListTester<T>(
                 }
                 // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
                 assertFailsWith<RuntimeException> {
-                    list[666] = copyToRealmIfNeeded(dataSet[0])
+                    list[123] = copyToRealmIfNeeded(dataSet[0])
                 }
 
                 assertions(list)

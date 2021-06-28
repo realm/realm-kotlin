@@ -170,8 +170,8 @@ class RealmConfigurationTests {
 
     @Test
     fun schemaVersionNumber() {
-        val config = RealmConfiguration(schema = setOf(Sample::class), schemaVersion = 666)
-        assertEquals(666, config.schemaVersion)
+        val config = RealmConfiguration(schema = setOf(Sample::class), schemaVersion = 123)
+        assertEquals(123, config.schemaVersion)
     }
 
     @Test
