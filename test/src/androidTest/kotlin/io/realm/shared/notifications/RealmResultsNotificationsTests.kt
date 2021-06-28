@@ -2,7 +2,6 @@ package io.realm.shared.notifications
 
 import co.touchlab.stately.concurrency.AtomicInt
 import io.realm.CallbackNotificationTests
-import io.realm.Cancellable
 import io.realm.FlowNotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
@@ -19,7 +18,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.test.fail

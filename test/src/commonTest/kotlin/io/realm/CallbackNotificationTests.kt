@@ -55,6 +55,4 @@ interface CallbackNotificationTests {
         // FIXME Verify that listener native resources are not cleaned up when the Realm
         //  is closed (current behaviour).
     }
-
-
 }

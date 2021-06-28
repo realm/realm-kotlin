@@ -1,10 +1,10 @@
 package io.realm.shared.notifications
 
-import io.realm.addChangeListener
 import io.realm.CallbackNotificationTests
 import io.realm.FlowNotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.addChangeListener
 import io.realm.delete
 import io.realm.observe
 import io.realm.util.PlatformUtils
@@ -121,7 +121,7 @@ class RealmObjectNotificationsTests : FlowNotificationTests, CallbackNotificatio
         c1.close()
         c2.close()
         observer2.cancel()
-}
+    }
 
     @Test
     override fun deleteObservable() = runBlocking {

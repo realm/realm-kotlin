@@ -84,5 +84,4 @@ interface FlowNotificationTests {
     // Verify that adding listeners to objects, where the Realm has been closed, throws.
     @Test
     fun observingClosedObjectThrows()
-
 }

@@ -20,7 +20,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -120,7 +119,7 @@ class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests
     override fun initialCallback() = runBlocking {
         val waitLock = Mutex()
         val token = realm.addChangeListener { updatedRealm: Realm ->
-            assertTrue {realm == updatedRealm }
+            assertTrue { realm == updatedRealm }
             waitLock.unlock()
         }
         waitLock.lock()
