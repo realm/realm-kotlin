@@ -6,11 +6,12 @@
 ### Enhancements
 * [Support Apple Release builds](https://github.com/realm/realm-kotlin/issues/142).
 * Enabling [shrinker](https://github.com/realm/realm-kotlin/issues/293) for Android Release builds.
+* Add automatic [schema migration](https://github.com/realm/realm-kotlin/issues/284) by default, and `deleteRealmIfMigrationNeeded` option to be set on the `RealmConfiguration` to delete the Realm file in case an automatic migration is not possible, the old Realm file will be deleted, then a new one will be create with the new specified schema.
 
 ### Fixed
 * None.
 
-### Compatibility 
+### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
 
 ### Internal
@@ -28,7 +29,7 @@
 ### Fixed
 * None.
 
-### Compatibility 
+### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
 
 ### Internal
@@ -69,4 +70,4 @@ plugins {
 
 See the [README](https://github.com/realm/realm-kotlin#readme) for more information.
 
-Please report any issues [here](https://github.com/realm/realm-kotlin/issues/new). 
+Please report any issues [here](https://github.com/realm/realm-kotlin/issues/new).

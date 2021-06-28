@@ -317,6 +317,24 @@ All dependency versions and other constants we might want to share between proje
 `buildSrc/src/main/kotlin/Config.kt`. Any new dependencies should be added to this file as well, so we only have one
 location for these.
 
+## Debugging Kotlin/Native Tests
+
+- Location of the kexe file that contains this test - make sure to compile the test beforehand:
+`test/build/bin/macos/debugTest/test.kexe`
+- Open:
+`lldb test/build/bin/macos/debugTest/test.kexe`
+- Set breakpoints, e.g.:
+`breakpoint set --file realm_coordinator.cpp --line 288`
+- Run ONLY the test you want:
+`r --gtest_filter="io.realm.MigrationTests.deleteOnMigration"`
+- Step into:
+`s`
+- Step over:
+`n`
+- Step out:
+`finish`
+
+
 ## Contributing Enhancements
 
 We love contributions to Realm! If you'd like to contribute code, documentation, or any other improvements, please [file a Pull Request](https://github.com/realm/realm-kotlin/pulls) on our GitHub repository. Make sure to accept our [CLA](#CLA)!

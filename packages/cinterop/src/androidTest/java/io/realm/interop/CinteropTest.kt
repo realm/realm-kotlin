@@ -79,7 +79,7 @@ class CinteropTest {
 
         realmc.classArray_setitem(classes_1, 0, class_1)
 
-        val properties_1 = realmc.new_propertyArray(3).also {
+        val properties_1 = realmc.new_propertyArray(1).also {
             realmc.propertyArray_setitem(it, 0, prop_1_1)
         }
         realmc.propertyArrayArray_setitem(props_1, 0, properties_1)
@@ -134,7 +134,7 @@ class CinteropTest {
 
         realmc.classArray_setitem(classes_2, 0, class_2)
 
-        val properties_2 = realmc.new_propertyArray(3).also {
+        val properties_2 = realmc.new_propertyArray(1).also {
             realmc.propertyArray_setitem(it, 0, prop_2_1)
         }
         realmc.propertyArrayArray_setitem(props_2, 0, properties_2)
@@ -146,7 +146,6 @@ class CinteropTest {
 
         realmc.realm_config_set_path(config_2, path)
         realmc.realm_config_set_schema(config_2, realmSchemaNew_2)
-//        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
         realmc.realm_config_set_schema_version(config_2, 1)
 
