@@ -19,6 +19,8 @@ Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) proj
 
 ## Setup
 
+*See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) or the [realm-kotlin releases](https://github.com/realm/realm-kotlin/releases) for the latest version number.*
+
 - Add the following Gradle configuration in the root project (make sure you're using Kotlin `1.4.20` or recent)
 `<root project>/build.gradle.kts`
 ```Gradle
@@ -30,7 +32,7 @@ buildscript {
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")// minimum 1.4.20
         classpath("com.android.tools.build:gradle:4.0.1")
-        classpath("io.realm.kotlin:gradle-plugin:0.0.1-SNAPSHOT")
+        classpath("io.realm.kotlin:gradle-plugin:<VERSION>")
     }
 }
 
@@ -41,29 +43,25 @@ allprojects {
     }
 }
 ```
-![Gradle Configuration](./images/RootGradle.png)
 
-- Apply the `realm-kotlin` plugin and specify the dependency in the common source set.
-
-*See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.*
+- Apply the `io.realm.kotlin` plugin and specify the dependency in the common source set.
 
 ```Gradle
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
-    id("realm-kotlin")
+    id("io.realm.kotlin")
 }
 
 kotlin {
   sourceSets {
       val commonMain by getting {
           dependencies {
-              implementation("io.realm.kotlin:library:0.0.1-SNAPSHOT")
+              implementation("io.realm.kotlin:library:<VERSION>")
           }
       }
 }
 ```
-![Gradle Configuration](./images/SharedGradle.png)
 
 ## Define model
 
