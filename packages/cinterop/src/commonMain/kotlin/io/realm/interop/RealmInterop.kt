@@ -69,6 +69,15 @@ expect object RealmInterop {
     fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T
     fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean)
 
+    // list
+    fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer
+    fun realm_list_size(list: NativePointer): Long
+    fun <T> realm_list_get(list: NativePointer, index: Long): T
+    fun <T> realm_list_add(list: NativePointer, index: Long, value: T)
+    fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T
+    fun realm_list_clear(list: NativePointer)
+    fun realm_list_erase(list: NativePointer, index: Long)
+
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
 

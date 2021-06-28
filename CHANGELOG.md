@@ -6,6 +6,7 @@
 ### Enhancements
 * [Support Apple Release builds](https://github.com/realm/realm-kotlin/issues/142).
 * Enabling [shrinker](https://github.com/realm/realm-kotlin/issues/293) for Android Release builds.
+* Added support for `RealmList` as supported field in model classes. A `RealmList` is used to model one-to-many relationships in a Realm object.
 * Add automatic [schema migration](https://github.com/realm/realm-kotlin/issues/284) by default, and `deleteRealmIfMigrationNeeded` option to be set on the `RealmConfiguration` to delete the Realm file in case an automatic migration is not possible, the old Realm file will be deleted, then a new one will be create with the new specified schema.
 
 ### Fixed

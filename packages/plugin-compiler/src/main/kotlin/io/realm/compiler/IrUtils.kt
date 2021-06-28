@@ -150,8 +150,48 @@ internal fun IrPluginContext.lookupConstructorInClass(
 }
 
 object SchemaCollector {
-    val properties = mutableMapOf<IrClass, MutableMap<String, Pair<String, IrProperty>>>()
+    val properties = mutableMapOf<IrClass, MutableMap<String, SchemaProperty>>()
 }
+
+// ------------------------------------------------------------------------------
+
+/**
+ * This matches RealmEnums.CollectionType.
+ */
+enum class CollectionType {
+    NONE,
+    LIST,
+    SET,
+    DICTIONARY
+}
+
+/**
+ * This matches RealmEnums.PropertyType.
+ */
+enum class PropertyType {
+    RLM_PROPERTY_TYPE_INT,
+    RLM_PROPERTY_TYPE_BOOL,
+    RLM_PROPERTY_TYPE_STRING,
+    RLM_PROPERTY_TYPE_OBJECT,
+    RLM_PROPERTY_TYPE_FLOAT,
+    RLM_PROPERTY_TYPE_DOUBLE
+}
+
+data class CoreType(
+    val propertyType: PropertyType,
+    val nullable: Boolean
+)
+
+// FIXME use PropertyType instead of "type: String", consider using a common/shared type when implementing public schema
+//  see (https://github.com/realm/realm-kotlin/issues/238)
+data class SchemaProperty(
+    val propertyType: PropertyType,
+    val declaration: IrProperty,
+    val collectionType: CollectionType = CollectionType.NONE,
+    val coreGenericTypes: List<CoreType>? = null
+)
+
+// ------------------------------------------------------------------------------
 
 @Suppress("LongParameterList")
 internal fun <T : IrExpression> buildOf(

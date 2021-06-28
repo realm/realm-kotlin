@@ -7,7 +7,7 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
-# Examples 
+# Examples
 
 https://github.com/realm/realm-kotlin-samples
 
@@ -15,7 +15,7 @@ https://github.com/realm/realm-kotlin-samples
 
 ## Prerequisite
 
-Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) project. 
+Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) project.
 
 ## Setup
 
@@ -36,7 +36,7 @@ buildscript {
 
 allprojects {
     repositories {
-        // other repo 
+        // other repo
         maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
     }
 }
@@ -162,7 +162,7 @@ realm.commitTransaction()
 Next: head to the full KMM [example](./examples/kmm-sample).  
 
 NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
- 
+
 # Developer Preview
 
 The Realm Kotlin SDK is in Developer Preview. All API's might change without warning and no guarantees are given about stability. *Do not use in production*.  
@@ -301,19 +301,19 @@ are using the following work-around:
 ```
 cd test/src/macosTest/kotlin/io/realm/shared
 ln -sf ../../../../../androidTest/kotlin/io/realm/shared/* ./
-``` 
+```
 
 3) Both the real test file and the symlink must be committed to Git.
 
 
 4) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
- 
+
 
 All platform specific tests should be placed outside the `io.realm.shared` package, the default being `io.realm`.
 
 ## Defining dependencies
 
-All dependency versions and other constants we might want to share between projects are defined inside the file 
+All dependency versions and other constants we might want to share between projects are defined inside the file
 `buildSrc/src/main/kotlin/Config.kt`. Any new dependencies should be added to this file as well, so we only have one
 location for these.
 

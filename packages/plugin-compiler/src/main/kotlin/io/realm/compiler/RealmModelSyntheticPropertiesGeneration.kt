@@ -31,6 +31,7 @@ import io.realm.compiler.Names.MEDIATOR
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
+import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
@@ -69,6 +70,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
@@ -139,7 +141,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     @Suppress("LongMethod")
     fun addCompanionFields(
         companion: IrClass,
-        properties: MutableMap<String, Pair<String, IrProperty>>?,
+        properties: MutableMap<String, SchemaProperty>?,
     ) {
         val kPropertyType = kProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
@@ -157,7 +159,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 endOffset = endOffset,
                 elementType = kPropertyType,
                 args = properties!!.entries.map {
-                    val property = it.value.second
+                    val property = it.value.declaration
                     IrPropertyReferenceImpl(
                         startOffset = startOffset,
                         endOffset = endOffset,
@@ -172,11 +174,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
         }
 
-        val primaryKeyFields = properties!!.filter { it.value.second.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields = properties!!.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
         val primaryKey: IrProperty? = when (primaryKeyFields.size) {
             0 -> null
-            1 -> primaryKeyFields.entries.first().value.second
+            1 -> primaryKeyFields.entries.first().value.declaration
             else -> {
                 logError("RealmObject can only have one primary key")
                 null
@@ -212,10 +214,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val companionObject = irClass.companionObject() as? IrClass
             ?: error("Companion object not available")
 
-        val fields: MutableMap<String, Pair<String, IrProperty>> =
+        val fields: MutableMap<String, SchemaProperty> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        val primaryKeyFields = fields.filter { it.value.second.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields = fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
@@ -276,17 +278,43 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             pluginContext, startOffset, endOffset, propertyClass.defaultType,
                             fields.map { entry ->
                                 val value = entry.value
-                                val type = propertyTypes.firstOrNull {
-                                    it.name.identifier.toLowerCaseAsciiOnly()
-                                        .contains(value.first)
-                                } ?: error("Unknown type ${value.first}")
-                                val objectType =
-                                    propertyTypes.firstOrNull { it.name == PROPERTY_TYPE_OBJECT }
-                                        ?: error("Unknown type ${value.first}")
-                                val property = value.second
+
+                                // Extract type based on whether the field is a:
+                                // 1 - primitive type, in which case it is extracted as is
+                                // 2 - collection type, in which case the collection type(s)
+                                //     specified in value.genericTypes should be used as type
+                                val type = when (val primitiveType = getType(value.propertyType)) {
+                                    null -> // Primitive type is null for collections
+                                        when (value.collectionType) {
+                                            CollectionType.LIST ->
+                                                // Extract generic type as mentioned
+                                                getType(getListType(value.coreGenericTypes))
+                                                    ?: error("Unknown type ${value.propertyType} - should be a valid type for lists.")
+                                            CollectionType.SET ->
+                                                error("Sets not available yet.")
+                                            CollectionType.DICTIONARY ->
+                                                error("Dictionaries not available yet.")
+                                            else ->
+                                                error("Unknown type ${value.propertyType}.")
+                                        }
+                                    else -> // Primitive type is non-null
+                                        primitiveType
+                                }
+
+                                val objectType = propertyTypes.firstOrNull {
+                                    it.name == PROPERTY_TYPE_OBJECT
+                                } ?: error("Unknown type ${value.propertyType}")
+
+                                val property = value.declaration
                                 val backingField = property.backingField
-                                    ?: error("Property without backing field or type")
-                                val nullable = backingField.type.isNullable()
+                                    ?: error("Property without backing field or type.")
+                                // Nullability applies to the generic type in collections
+                                val nullable = if (value.collectionType == CollectionType.NONE) {
+                                    backingField.type.isNullable()
+                                } else {
+                                    value.coreGenericTypes?.get(0)?.nullable
+                                        ?: error("Missing generic type while processing a collection field.")
+                                }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
                                 val propertyFlags = mutableListOf<Name>()
                                 if (nullable) {
@@ -335,23 +363,42 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                             symbol = type.symbol
                                         )
                                     )
-                                    // Collection type
+                                    // Collection type: remember to specify it correctly here - the
+                                    // type of the contents itself is specified as "type" above!
+                                    val collectionTypeSymbol = when (value.collectionType) {
+                                        CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
+                                        CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
+                                        else ->
+                                            error("Unsupported collection type '${value.collectionType}' for field ${entry.key}")
+                                    }
                                     putValueArgument(
                                         arg++,
                                         IrGetEnumValueImpl(
                                             startOffset = UNDEFINED_OFFSET,
                                             endOffset = UNDEFINED_OFFSET,
                                             type = collectionType.defaultType,
-                                            symbol = collectionTypes.first { it.name == PROPERTY_COLLECTION_TYPE_NONE }.symbol
+                                            symbol = collectionTypes.first {
+                                                it.name == collectionTypeSymbol
+                                            }.symbol
                                         )
                                     )
                                     // Link target
                                     putValueArgument(
                                         arg++,
                                         if (type == objectType) {
-                                            irString(backingField.type.classifierOrFail.descriptor.name.identifier)
-                                        } else
+                                            // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                            val linkTargetType = when (collectionTypeSymbol) {
+                                                PROPERTY_COLLECTION_TYPE_NONE ->
+                                                    backingField.type
+                                                PROPERTY_COLLECTION_TYPE_LIST ->
+                                                    (backingField.type as IrSimpleType).arguments[0] as IrSimpleType
+                                                else ->
+                                                    error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                            }
+                                            irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
+                                        } else {
                                             irString("")
+                                        }
                                     )
                                     // Link property name
                                     putValueArgument(arg++, irString(""))
@@ -377,7 +424,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }.symbol)
     }
 
-    private fun propertyFlags(flags: List<Name>) =
+    private fun getType(type: PropertyType): IrEnumEntry? {
+        return propertyTypes.firstOrNull {
+            it.name.identifier.toLowerCaseAsciiOnly().contains(type.name.toLowerCaseAsciiOnly())
+        }
+    }
+
+    private fun getListType(generics: List<CoreType>?): PropertyType =
+        checkNotNull(generics) { "Missing type for list." }[0].propertyType
+
+    private fun propertyFlags(flags: List<Name>): List<IrGetEnumValueImpl> =
         flags.map { flag ->
             IrGetEnumValueImpl(
                 startOffset = UNDEFINED_OFFSET,

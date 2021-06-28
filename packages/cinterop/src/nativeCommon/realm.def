@@ -37,6 +37,12 @@ static bool realm_set_value_by_ref(realm_object_t* object, realm_property_key_t 
 static realm_object_t* realm_object_create_with_primary_key_by_ref(realm_t* realm, realm_class_key_t col, realm_value_t* pk) {
     return realm_object_create_with_primary_key(realm, col, *pk);
 }
+static bool realm_list_add_by_ref(realm_list_t* list, size_t index, realm_value_t* value) {
+    return realm_list_insert(list, index, *value);
+}
+static bool realm_list_set_by_ref(realm_list_t* list, size_t index, realm_value_t* value) {
+    return realm_list_set(list, index, *value);
+}
 
 // These functions are a work around to avoid anonymous union not being supported in Kotlin/Native https://youtrack.jetbrains.com/issue/KT-43833
 // which will call to `realm_wrapper.realm_set_value` using a `cValue<realm_value>` throw a
