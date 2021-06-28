@@ -92,4 +92,8 @@ class RealmListNotificationsTests : FlowNotificationTests, CallbackNotificationT
     override fun observerDeletedCallback() {
         TODO("Waiting for RealmList support")
     }
+
+    override fun addingListenerOnUnmanagedObjectThrows() {
+        TODO("Waiting for RealmList support")
+    }
 }

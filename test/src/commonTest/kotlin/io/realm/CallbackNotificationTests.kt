@@ -22,10 +22,7 @@ interface CallbackNotificationTests {
     fun observerDeletedCallback()
 
     @Test
-    @Ignore
-    fun addingListenerOnUnmanagedObjectThrows() {
-        // FIXME
-    }
+    fun addingListenerOnUnmanagedObjectThrows()
 
     // Verify what happens if you cancel the token on a different thread than it was created on.
     @Test

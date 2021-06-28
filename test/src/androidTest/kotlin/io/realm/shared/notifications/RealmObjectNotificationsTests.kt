@@ -19,6 +19,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -223,5 +224,11 @@ class RealmObjectNotificationsTests : FlowNotificationTests, CallbackNotificatio
         assertNull(c.receive())
         c.close()
         token.cancel()
+    }
+
+    @Test
+    override fun addingListenerOnUnmanagedObjectThrows() {
+        val obj = Sample()
+        assertFailsWith<IllegalStateException> { obj.addChangeListener { fail() } }
     }
 }

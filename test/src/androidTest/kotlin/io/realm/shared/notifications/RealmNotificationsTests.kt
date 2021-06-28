@@ -133,4 +133,8 @@ class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests
     override fun observerDeletedCallback() {
         /* Not relevant for Realms as they cannot be deleted while being observed */
     }
+
+    override fun addingListenerOnUnmanagedObjectThrows() {
+        /* Not relevant for Realms. They are always managed */
+    }
 }

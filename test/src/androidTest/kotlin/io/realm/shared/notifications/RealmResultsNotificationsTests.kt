@@ -208,6 +208,11 @@ class RealmResultsNotificationsTests : FlowNotificationTests, CallbackNotificati
     }
 
     override fun observerDeletedCallback() {
-        /* It isn't possible to delete the parent of a RealmResults */
+        // It isn't possible to delete the parent of a RealmResults.
+    }
+
+    @Test
+    override fun addingListenerOnUnmanagedObjectThrows() {
+        // RealmResults are always managed until [RealmResults.Mode.Empty] is implemented.
     }
 }
