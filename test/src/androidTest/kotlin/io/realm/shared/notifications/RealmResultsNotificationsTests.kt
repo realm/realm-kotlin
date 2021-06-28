@@ -99,10 +99,9 @@ class RealmResultsNotificationsTests : FlowNotificationTests, CallbackNotificati
         }
         assertEquals(2, c2.receive().size)
         assertTrue(c1.isEmpty)
-        observer2.cancel()
         c1.close()
         c2.close()
-        Unit
+        observer2.cancel()
     }
 
     @Test
@@ -231,6 +230,8 @@ class RealmResultsNotificationsTests : FlowNotificationTests, CallbackNotificati
 
     @Test
     override fun addingListenerOnClosedObjectThrows() {
-        TODO("Not yet implemented")
+        val results = realm.objects(Sample::class)
+        realm.close()
+        assertFailsWith<IllegalStateException> { results.observe() }
     }
 }

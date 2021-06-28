@@ -19,26 +19,20 @@ package io.realm.internal
 import io.realm.Cancellable
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
 
 /**
  * Token representing a Realm Core notification. If this token is canceled, the underlying
  * C++ change listener is released and no more further notifications are emitted.
  */
-class RealmCoreNotificationToken<T>(callback: T, private val token: NativePointer) : Cancellable {
+class RealmCoreNotificationToken(private val token: NativePointer) : Cancellable {
 
-    private val lock = reentrantLock()
-    private val observer: AtomicRef<T?> = atomic(callback)
+    private val isActive: AtomicBoolean = atomic(true)
 
     override fun cancel() {
-        lock.withLock {
-            if (observer.value != null) {
-                RealmInterop.realm_release(token)
-            }
-            observer.value = null
+        if (isActive.getAndSet(false)) {
+            RealmInterop.realm_release(token)
         }
     }
 
