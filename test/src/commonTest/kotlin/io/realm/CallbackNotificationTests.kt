@@ -17,12 +17,19 @@ interface CallbackNotificationTests {
     @Test
     fun updateCallback()
 
-    // Verify that the callback is notified with `null` if the parent is deleted.
+    // Verify that the callback is notified with `null` if the object being observed is deleted.
     @Test
-    fun parentDeletedCallback()
+    fun observerDeletedCallback()
+
+    @Test
+    @Ignore
+    fun addingListenerOnUnmanagedObjectThrows() {
+        // FIXME
+    }
 
     // Verify what happens if you cancel the token on a different thread than it was created on.
     @Test
+    @Ignore
     fun cancelTokenInOtherThread() {
         // FIXME
     }

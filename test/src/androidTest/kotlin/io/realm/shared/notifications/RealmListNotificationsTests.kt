@@ -89,7 +89,7 @@ class RealmListNotificationsTests : FlowNotificationTests, CallbackNotificationT
 
     @Test
     @Ignore
-    override fun parentDeletedCallback() {
+    override fun observerDeletedCallback() {
         TODO("Waiting for RealmList support")
     }
 }

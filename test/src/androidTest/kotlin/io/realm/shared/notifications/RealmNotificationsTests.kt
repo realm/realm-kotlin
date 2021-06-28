@@ -45,7 +45,7 @@ class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests
     override fun initialElement() = runBlocking {
         val c = Channel<Realm>(1)
         val startingVersion = realm.version
-        async {
+        val observer = async {
             realm.observe().collect {
                 c.send(it)
             }
@@ -53,6 +53,8 @@ class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests
         c.receive().version.let { updatedVersion: VersionId ->
             assertEquals(startingVersion, updatedVersion)
         }
+        c.close()
+        observer.cancel()
     }
 
     @Test
@@ -128,7 +130,7 @@ class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests
     }
 
     @Test
-    override fun parentDeletedCallback() {
+    override fun observerDeletedCallback() {
         /* Not relevant for Realms as they cannot be deleted while being observed */
     }
 }

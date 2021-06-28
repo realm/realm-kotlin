@@ -175,20 +175,6 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
         TODO("Waiting for RealmInterop to have support for global Realm changed")
     }
 
-    fun <T : RealmObject> directResultChangedListener(results: RealmResults<T>, callback: Callback<RealmResults<T>>): Cancellable {
-        val scope = CoroutineScope(dispatcher)
-        val runBlocking = scope.async {
-            resultsChanged(results).collect {
-                callback.onChange(it)
-            }
-        }
-        return object : Cancellable {
-            override fun cancel() {
-                runBlocking.cancel()
-            }
-        }
-    }
-
     // FIXME Need to expose change details to the user
     //  https://github.com/realm/realm-kotlin/issues/115
     /**

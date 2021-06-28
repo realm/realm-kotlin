@@ -34,6 +34,12 @@ interface FlowNotificationTests {
         // FIXME
     }
 
+    @Test
+    @Ignore
+    fun observingUnmanagedObjectThrows() {
+        // FIXME
+    }
+
     // Verify that closing the Realm while inside a flow throws an exception (I think)
     @Test
     @Ignore // Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out

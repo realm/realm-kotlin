@@ -105,7 +105,7 @@ public fun RealmObject.isValid(): Boolean {
  * @return a token that can be used to cancel further notifications and free the
  * underlying resources. Failing to cancel the listener will result in a memory leak.
  */
-internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
+public fun <T : RealmObject> T.addChangeListener(callback: Callback<T?>): Cancellable {
     checkNotificationsAvailable()
     val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner
     @Suppress("UNCHECKED_CAST")
