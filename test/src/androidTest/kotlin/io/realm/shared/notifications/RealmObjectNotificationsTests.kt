@@ -172,6 +172,19 @@ class RealmObjectNotificationsTests : FlowNotificationTests, CallbackNotificatio
         observer.cancel()
     }
 
+    @Test
+    override fun observingOnUnmanagedObjectThrows() {
+        val obj = Sample()
+        assertFailsWith<IllegalStateException> { obj.observe() }
+    }
+
+    @Test
+    override fun observingClosedObjectThrows() {
+        val obj = realm.writeBlocking { copyToRealm(Sample()) }
+        realm.close()
+        assertFailsWith<IllegalStateException> { obj.observe() }
+    }
+
     override fun initialCallback() = runBlocking {
         val c = Channel<Sample?>(1)
         val obj: Sample = realm.write {

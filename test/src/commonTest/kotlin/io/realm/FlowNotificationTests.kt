@@ -76,4 +76,13 @@ interface FlowNotificationTests {
     fun useTestDispatchers() {
         // FIXME
     }
+
+    // Verify that adding listeners to unmanaged objects throws.
+    @Test
+    fun observingOnUnmanagedObjectThrows()
+
+    // Verify that adding listeners to objects, where the Realm has been closed, throws.
+    @Test
+    fun observingClosedObjectThrows()
+
 }

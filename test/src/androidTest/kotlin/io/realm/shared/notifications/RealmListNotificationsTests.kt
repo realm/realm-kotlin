@@ -77,6 +77,18 @@ class RealmListNotificationsTests : FlowNotificationTests, CallbackNotificationT
 
     @Test
     @Ignore
+    override fun observingOnUnmanagedObjectThrows() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    @Ignore
+    override fun observingClosedObjectThrows() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    @Ignore
     override fun initialCallback() {
         TODO("Waiting for RealmList support")
     }

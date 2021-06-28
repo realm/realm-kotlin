@@ -6,6 +6,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.internal.runBlocking
+import io.realm.observe
 import io.realm.util.PlatformUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -102,6 +103,17 @@ class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests
     @Ignore
     override fun closingRealmDoesNotCancelFlows() {
         TODO("Wait for a Global change listener to become available")
+    }
+
+    @Test
+    override fun observingOnUnmanagedObjectThrows() {
+        // Realms cannot be unmanaged.
+    }
+
+    @Test
+    override fun observingClosedObjectThrows() {
+        realm.close()
+        assertFailsWith<IllegalStateException> { realm.observe() }
     }
 
     @Test

@@ -19,6 +19,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -181,6 +183,18 @@ class RealmResultsNotificationsTests : FlowNotificationTests, CallbackNotificati
         realm.close()
         c.close()
         observer.cancel()
+    }
+
+    @Test
+    override fun observingOnUnmanagedObjectThrows() {
+        // RealmResults cannot be unmanaged until [RealmResults.Mode.EMPTY] is supported
+    }
+
+    @Test
+    override fun observingClosedObjectThrows() {
+        val results: RealmResults<Sample> = realm.objects(Sample::class)
+        realm.close()
+        assertFailsWith<IllegalStateException> { results.observe() }
     }
 
     override fun initialCallback() = runBlocking {

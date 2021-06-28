@@ -180,6 +180,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * @return a flow representing changes to this Realm.
      */
     public fun observe(): Flow<Realm> {
+        realmReference.checkClosed()
         return realmFlow.asSharedFlow()
     }
 
