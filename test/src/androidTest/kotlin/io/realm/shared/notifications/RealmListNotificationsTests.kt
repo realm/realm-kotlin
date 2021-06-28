@@ -93,7 +93,15 @@ class RealmListNotificationsTests : FlowNotificationTests, CallbackNotificationT
         TODO("Waiting for RealmList support")
     }
 
+    @Test
+    @Ignore
     override fun addingListenerOnUnmanagedObjectThrows() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    @Ignore
+    override fun addingListenerOnClosedObjectThrows() {
         TODO("Waiting for RealmList support")
     }
 }

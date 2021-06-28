@@ -5,6 +5,7 @@ import io.realm.CallbackNotificationTests
 import io.realm.FlowNotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.delete
 import io.realm.observe
 import io.realm.util.PlatformUtils
 import io.realm.util.update
@@ -229,6 +230,13 @@ class RealmObjectNotificationsTests : FlowNotificationTests, CallbackNotificatio
     @Test
     override fun addingListenerOnUnmanagedObjectThrows() {
         val obj = Sample()
+        assertFailsWith<IllegalStateException> { obj.addChangeListener { fail() } }
+    }
+
+    @Test
+    override fun addingListenerOnClosedObjectThrows() {
+        val obj = realm.writeBlocking { copyToRealm(Sample()) }
+        realm.close()
         assertFailsWith<IllegalStateException> { obj.addChangeListener { fail() } }
     }
 }

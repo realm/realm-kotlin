@@ -199,6 +199,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * underlying resources. Failing to cancel the listener will result in a memory leak.
      */
     public fun addChangeListener(callback: Callback<Realm>): Cancellable {
+        realmReference.checkClosed()
         val job = realmScope.launch {
             realmFlow.collect {
                 callback.onChange(it)
@@ -211,6 +212,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
+        realmReference.checkClosed()
         val job = realmScope.launch {
             notifier.resultsChanged(results).collect {
                 callback.onChange(it)
@@ -224,6 +226,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
 
     internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+        realmReference.checkClosed()
         val job = realmScope.launch {
             notifier.objectChanged(obj)
                 .onCompletion { error: Throwable? ->
@@ -242,14 +245,17 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     }
 
     internal override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+        realmReference.checkClosed()
         return notifier.resultsChanged(results)
     }
 
     internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+        realmReference.checkClosed()
         return notifier.listChanged(list)
     }
 
     internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
+        realmReference.checkClosed()
         return notifier.objectChanged(obj)
     }
 

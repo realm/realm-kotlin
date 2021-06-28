@@ -7,17 +7,22 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.internal.runBlocking
 import io.realm.util.PlatformUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests {
 
@@ -131,10 +136,25 @@ class RealmNotificationsTests : FlowNotificationTests, CallbackNotificationTests
 
     @Test
     override fun observerDeletedCallback() {
-        /* Not relevant for Realms as they cannot be deleted while being observed */
+        // Not relevant for Realms as they cannot be deleted while being observed
     }
 
+    @Test
     override fun addingListenerOnUnmanagedObjectThrows() {
-        /* Not relevant for Realms. They are always managed */
+        // Not relevant for Realms. They are always managed
+    }
+
+    @Test
+    override fun addingListenerOnClosedObjectThrows() {
+        realm.close()
+        assertFailsWith<IllegalStateException> { realm.addChangeListener { fail() } }
+    }
+
+    @Test
+    override fun cancelTokenInOtherThread() = runBlocking {
+        val token = realm.addChangeListener { }
+        withContext(Dispatchers.Default) {
+            token.cancel()
+        }
     }
 }
