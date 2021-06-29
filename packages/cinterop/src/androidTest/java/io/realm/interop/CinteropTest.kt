@@ -87,8 +87,11 @@ class CinteropTest {
         assertFailsWith<RuntimeException> {
             realmc.realm_open(config_2)
         }.run {
-            assertEquals("[18]: Migration is required due to the following errors:\n" +
-                    "- Property 'foo.newColumn' has been added.", message)
+            assertEquals(
+                "[18]: Migration is required due to the following errors:\n" +
+                    "- Property 'foo.newColumn' has been added.",
+                message
+            )
         }
         // Incrementing the schema version migrate the Realm automatically
         realmc.realm_config_set_schema_version(config_2, 2)
@@ -119,8 +122,11 @@ class CinteropTest {
         assertFailsWith<RuntimeException> {
             realmc.realm_open(config_3)
         }.run {
-            assertEquals("[18]: Migration is required due to the following errors:\n" +
-                    "- Property 'foo.int' has been removed.", message)
+            assertEquals(
+                "[18]: Migration is required due to the following errors:\n" +
+                    "- Property 'foo.int' has been removed.",
+                message
+            )
         }
         // Incrementing the schema version migrate the Realm automatically
         realmc.realm_config_set_schema_version(config_3, 3)
