@@ -31,21 +31,21 @@ import kotlin.reflect.KClass
 /**
  * Configuration for log events created by a Realm instance.
  */
-data class LogConfiguration(
+public data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
      */
-    val level: LogLevel,
+    public val level: LogLevel,
 
     /**
      * Any loggers to install. They will receive all log events with a priority equal to or higher than
      * the value defined in [LogConfiguration.level].
      */
-    val loggers: List<RealmLogger>
+    public val loggers: List<RealmLogger>
 )
 
 @Suppress("LongParameterList")
-class RealmConfiguration private constructor(
+public class RealmConfiguration private constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
@@ -58,13 +58,13 @@ class RealmConfiguration private constructor(
 
     // Public properties making up the RealmConfiguration
     // TODO Add KDoc for all of these
-    val path: String
-    val name: String
-    val schema: Set<KClass<out RealmObject>>
-    val log: LogConfiguration
-    val maxNumberOfActiveVersions: Long
-    val schemaVersion: Long
-    val deleteRealmIfMigrationNeeded: Boolean
+    public val path: String
+    public val name: String
+    public val schema: Set<KClass<out RealmObject>>
+    public val log: LogConfiguration
+    public val maxNumberOfActiveVersions: Long
+    public val schemaVersion: Long
+    public val deleteRealmIfMigrationNeeded: Boolean
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -125,13 +125,11 @@ class RealmConfiguration private constructor(
      */
     // This constructor is never used at runtime, all calls to it are being rewired by the Realm Compiler Plugin to call
     // the internal secondary constructor with all schema classes mapped to their RealmCompanion.
-    constructor(
+    public constructor(
         path: String? = null,
         name: String = Realm.DEFAULT_FILE_NAME,
-        schema: Set<KClass<out RealmObject>>,
-        schemaVersion: Long = 0,
-        deleteRealmIfMigrationNeeded: Boolean = false
-    ) : this(path, name, mapOf(), schemaVersion, deleteRealmIfMigrationNeeded)
+        schema: Set<KClass<out RealmObject>>
+    ) : this(path, name, mapOf())
 
     // Called by the compiler plugin, with a populated companion map
     internal constructor(
