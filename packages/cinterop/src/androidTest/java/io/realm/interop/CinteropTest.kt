@@ -46,111 +46,179 @@ class CinteropTest {
     }
 
     @Test
-    fun open_different_versions() {
+    fun schema_migration_automatic() {
         System.loadLibrary("realmc")
-
-        val rlmInvalidPropertyKey = realmc.getRLM_INVALID_PROPERTY_KEY()
-        val rlmInvalidClassKey = realmc.getRLM_INVALID_CLASS_KEY()
         val path = Files.createTempDirectory("android_tests").absolutePathString() + "/c_api_test.realm"
 
-        // ---------------- FIRST CONFIG
-        val class_1 = realm_class_info_t().apply {
-            name = "foo"
-            primary_key = ""
-            num_properties = 1
-            num_computed_properties = 0
-            key = rlmInvalidClassKey
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL
-        }
-
-        val prop_1_1 = realm_property_info_t().apply {
-            name = "int"
-            public_name = ""
-            type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
-            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
-            link_target = ""
-            link_origin_property_name = ""
-            key = rlmInvalidPropertyKey
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
-        }
-
-        val classes_1 = realmc.new_classArray(1)
-        val props_1 = realmc.new_propertyArrayArray(1)
-
-        realmc.classArray_setitem(classes_1, 0, class_1)
-
-        val properties_1 = realmc.new_propertyArray(1).also {
-            realmc.propertyArray_setitem(it, 0, prop_1_1)
-        }
-        realmc.propertyArrayArray_setitem(props_1, 0, properties_1)
-
-        val realmSchemaNew_1 = realmc.realm_schema_new(classes_1, 1, props_1)
-        assertTrue(realmc.realm_schema_validate(realmSchemaNew_1, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+        val class_1 = createClass("foo", 1)
+        val prop_1_1 = createIntProperty("int")
+        val schema_1 = createSchema(listOf(Pair(class_1, listOf(prop_1_1))))
 
         val config_1: Long = realmc.realm_config_new()
-
         realmc.realm_config_set_path(config_1, path)
-        realmc.realm_config_set_schema(config_1, realmSchemaNew_1)
+        realmc.realm_config_set_schema(config_1, schema_1)
         realmc.realm_config_set_schema_mode(config_1, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
-        realmc.realm_config_set_schema_version(config_1, 2)
+        realmc.realm_config_set_schema_version(config_1, 1)
 
-        val realm_1 = realmc.realm_open(config_1)
+        realmc.realm_open(config_1).also { realm ->
+            // insert some data
+            realmc.realm_begin_write(realm)
+            realmc.realm_object_create(realm, findTable(realm, "foo").key)
+            realmc.realm_commit(realm)
 
-        realmc.realm_release(config_1)
-        realmc.realm_release(realmSchemaNew_1)
-
-        // Schema validates
-        val schema_1 = realmc.realm_get_schema(realm_1)
-        assertTrue(realmc.realm_schema_validate(schema_1, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
-        realmc.realm_release(schema_1)
-
-        assertEquals(1, realmc.realm_get_num_classes(realm_1))
-
-        realmc.realm_close(realm_1)
-
-        // ---------------- SECOND CONFIG
-        val class_2 = realm_class_info_t().apply {
-            name = "bar"
-            primary_key = ""
-            num_properties = 1
-            num_computed_properties = 0
-            key = rlmInvalidClassKey
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+            // close Realm
+            realmc.realm_release(config_1)
+            realmc.realm_release(schema_1)
+            realmc.realm_close(realm)
         }
 
-        val prop_2_1 = realm_property_info_t().apply {
-            name = "int"
-            public_name = ""
-            type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
-            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
-            link_target = ""
-            link_origin_property_name = ""
-            key = rlmInvalidPropertyKey
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
-        }
-
-        val classes_2 = realmc.new_classArray(1)
-        val props_2 = realmc.new_propertyArrayArray(1)
-
-        realmc.classArray_setitem(classes_2, 0, class_2)
-
-        val properties_2 = realmc.new_propertyArray(1).also {
-            realmc.propertyArray_setitem(it, 0, prop_2_1)
-        }
-        realmc.propertyArrayArray_setitem(props_2, 0, properties_2)
-
-        val realmSchemaNew_2 = realmc.realm_schema_new(classes_2, 1, props_2)
-        assertTrue(realmc.realm_schema_validate(realmSchemaNew_2, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+        // **** Using the same schema version with new column throws an exception *** //
+        val class_2 = createClass("foo", 2)
+        val prop_2_1 = createIntProperty("int")
+        val prop_2_2 = createIntProperty("newColumn")
+        val schema_2 = createSchema(listOf(Pair(class_2, listOf(prop_2_1, prop_2_2))))
 
         val config_2: Long = realmc.realm_config_new()
-
         realmc.realm_config_set_path(config_2, path)
-        realmc.realm_config_set_schema(config_2, realmSchemaNew_2)
-        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema(config_2, schema_2)
+        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2, 1)
 
-        val realm_2 = realmc.realm_open(config_2)
-        realmc.realm_close(realm_2)
+        assertFailsWith<RuntimeException> {
+            realmc.realm_open(config_2)
+        }.run {
+            assertEquals("[18]: Migration is required due to the following errors:\n" +
+                    "- Property 'foo.newColumn' has been added.", message)
+        }
+        // Incrementing the schema version migrate the Realm automatically
+        realmc.realm_config_set_schema_version(config_2, 2)
+        realmc.realm_open(config_2).also { realm ->
+            // make sure data was preserved
+            val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
+            val count = realm_size_t()
+            realmc.realm_query_count(query, count)
+            assertEquals(1, count.value)
+
+            // close Realm
+            realmc.realm_release(config_2)
+            realmc.realm_release(schema_2)
+            realmc.realm_close(realm)
+        }
+
+        // **** Using the same schema version when removing a column throws an exception *** //
+        val class_3 = createClass("foo", 1)
+        val prop_3_1 = createIntProperty("newColumn")
+        val schema_3 = createSchema(listOf(Pair(class_3, listOf(prop_3_1))))
+
+        val config_3: Long = realmc.realm_config_new()
+        realmc.realm_config_set_path(config_3, path)
+        realmc.realm_config_set_schema(config_3, schema_3)
+        realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
+        realmc.realm_config_set_schema_version(config_3, 2)
+
+        assertFailsWith<RuntimeException> {
+            realmc.realm_open(config_3)
+        }.run {
+            assertEquals("[18]: Migration is required due to the following errors:\n" +
+                    "- Property 'foo.int' has been removed.", message)
+        }
+        // Incrementing the schema version migrate the Realm automatically
+        realmc.realm_config_set_schema_version(config_3, 3)
+        realmc.realm_open(config_3).also { realm ->
+            // make sure data was preserved
+            val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
+            val count = realm_size_t()
+            realmc.realm_query_count(query, count)
+            assertEquals(1, count.value)
+
+            // close Realm
+            realmc.realm_release(config_3)
+            realmc.realm_release(schema_3)
+            realmc.realm_close(realm)
+        }
+    }
+
+    @Test
+    fun schema_migration_reset() {
+        System.loadLibrary("realmc")
+        val path = Files.createTempDirectory("android_tests").absolutePathString() + "/c_api_test.realm"
+
+        val class_1 = createClass("foo", 1)
+        val prop_1_1 = createIntProperty("int")
+        val schema_1 = createSchema(listOf(Pair(class_1, listOf(prop_1_1))))
+
+        val config_1: Long = realmc.realm_config_new()
+        realmc.realm_config_set_path(config_1, path)
+        realmc.realm_config_set_schema(config_1, schema_1)
+        realmc.realm_config_set_schema_mode(config_1, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema_version(config_1, 0)
+
+        realmc.realm_open(config_1).also { realm ->
+            // insert some data
+            realmc.realm_begin_write(realm)
+            realmc.realm_object_create(realm, findTable(realm, "foo").key)
+            realmc.realm_commit(realm)
+
+            // close Realm
+            realmc.realm_release(config_1)
+            realmc.realm_release(schema_1)
+            realmc.realm_close(realm)
+        }
+
+        // **** Using the same schema version and adding a new column reset the file  *** //
+        val class_2 = createClass("foo", 2)
+        val prop_2_1 = createIntProperty("int")
+        val prop_2_2 = createIntProperty("newColumn")
+        val schema_2 = createSchema(listOf(Pair(class_2, listOf(prop_2_1, prop_2_2))))
+
+        val config_2: Long = realmc.realm_config_new()
+        realmc.realm_config_set_path(config_2, path)
+        realmc.realm_config_set_schema(config_2, schema_2)
+        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema_version(config_2, 0)
+
+        realmc.realm_open(config_2).also { realm ->
+            // make sure the Realm is empty (reset)
+            val foo_class = findTable(realm, "foo")
+            val query: Long = realmc.realm_query_parse(realm, foo_class.key, "TRUEPREDICATE", 0, realm_value_t())
+            val count = realm_size_t()
+            realmc.realm_query_count(query, count)
+            assertEquals(0, count.value)
+
+            // adding some data
+            realmc.realm_begin_write(realm)
+            realmc.realm_object_create(realm, foo_class.key)
+            realmc.realm_commit(realm)
+
+            // close Realm
+            realmc.realm_release(config_2)
+            realmc.realm_release(schema_2)
+            realmc.realm_close(realm)
+        }
+
+        // **** Using the same schema version and removing a column reset the file  *** //
+        val class_3 = createClass("foo", 1)
+        val prop_3_1 = createIntProperty("newColumn")
+        val schema_3 = createSchema(listOf(Pair(class_3, listOf(prop_3_1))))
+
+        val config_3: Long = realmc.realm_config_new()
+        realmc.realm_config_set_path(config_3, path)
+        realmc.realm_config_set_schema(config_3, schema_3)
+        realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema_version(config_3, 0)
+
+        realmc.realm_open(config_3).also { realm ->
+            // make sure the Realm is empty (reset)
+            val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
+            val count = realm_size_t()
+            realmc.realm_query_count(query, count)
+            assertEquals(0, count.value)
+
+            // close Realm
+            realmc.realm_release(config_3)
+            realmc.realm_release(schema_3)
+            realmc.realm_close(realm)
+        }
     }
 
     @ExperimentalPathApi
@@ -471,5 +539,52 @@ class CinteropTest {
         realmc.realm_set_value(parent1, child_property.key, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_LINK; link = realmc.realm_object_as_link(child) }, false)
 
         realmc.realm_get_value(parent1, child_property.key, realm_value_t())
+    }
+
+    private fun createIntProperty(propertyName: String): realm_property_info_t {
+        return realm_property_info_t().apply {
+            name = propertyName
+            public_name = ""
+            type = realm_property_type_e.RLM_PROPERTY_TYPE_INT
+            collection_type = realm_collection_type_e.RLM_COLLECTION_TYPE_NONE
+            link_target = ""
+            link_origin_property_name = ""
+            key = realmc.getRLM_INVALID_PROPERTY_KEY()
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+        }
+    }
+
+    private fun createClass(className: String, numberOfProperties: Long): realm_class_info_t {
+        return realm_class_info_t().apply {
+            name = className
+            primary_key = ""
+            num_properties = numberOfProperties
+            num_computed_properties = 0
+            key = realmc.getRLM_INVALID_CLASS_KEY()
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+        }
+    }
+
+    private fun createSchema(properties: List<Pair<realm_class_info_t, List<realm_property_info_t>>>): Long {
+        val classes = realmc.new_classArray(properties.size) // Array of classes
+        val classesProperties = realmc.new_propertyArrayArray(properties.size) // Array of array (properties, 1 array per class)
+        for ((classIndex, classProperties: Pair<realm_class_info_t, List<realm_property_info_t>>) in properties.withIndex()) {
+            realmc.classArray_setitem(classes, classIndex, classProperties.first)
+            val properties = realmc.new_propertyArray(classProperties.second.size).also {
+                for ((propertyIndex, property) in classProperties.second.withIndex()) {
+                    realmc.propertyArray_setitem(it, propertyIndex, property)
+                }
+            }
+            realmc.propertyArrayArray_setitem(classesProperties, classIndex, properties)
+        }
+        return realmc.realm_schema_new(classes, properties.size.toLong(), classesProperties)
+    }
+
+    private fun findTable(realm: Long, name: String): realm_class_info_t {
+        val class_info = realm_class_info_t()
+        val found: BooleanArray = booleanArrayOf(false)
+        realmc.realm_find_class(realm, name, found, class_info)
+        assertTrue(found[0])
+        return class_info
     }
 }
