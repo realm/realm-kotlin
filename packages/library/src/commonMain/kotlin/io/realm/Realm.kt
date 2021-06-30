@@ -18,7 +18,7 @@ package io.realm
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 
-// TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
+// TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 
