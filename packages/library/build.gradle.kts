@@ -1,3 +1,5 @@
+import io.realm.getPropertyValue
+
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -198,20 +200,54 @@ realmPublish {
 }
 
 tasks.dokkaHtml.configure {
-    moduleName.set("Realm Kotlin SDK")
+    moduleName.set("Realm Kotlin SDK ${Realm.version}")
     dokkaSourceSets {
         configureEach {
             moduleVersion.set(Realm.version)
             reportUndocumented.set(true)
             skipEmptyPackages.set(true)
             perPackageOption {
-                matchingRegex.set(".*\\.internal\\..*")
+                matchingRegex.set("io\\.realm\\.internal\\.*")
                 suppress.set(true)
             }
         }
         val commonMain by getting {
             includes.from("overview.md", "io.realm.md")
             sourceRoot("../runtime-api/src/commonMain/kotlin")
+        }
+    }
+}
+
+tasks.register("uploadDokka") {
+    dependsOn("dokkaHtml")
+    group = "Release"
+    description = "Upload SDK docs to S3"
+    doLast {
+        val awsAccessKey = getPropertyValue(this.project, "SDK_DOCS_AWS_ACCESS_KEY")
+        val awsSecretKey = getPropertyValue(this.project, "SDK_DOCS_AWS_SECRET_KEY")
+
+        // Failsafe check, ensuring that we catch if the path ever changes, which it might since it is an
+        // implementation detail of the Kotlin Gradle Plugin
+        val dokkaDir = File("$rootDir/library/build/dokka/html")
+        if (!dokkaDir.exists() || !dokkaDir.isDirectory || dokkaDir.listFiles().isEmpty()) {
+            throw GradleException("Could not locate dir with dokka files in: ${dokkaDir.path}")
+        }
+
+        // Upload two copies, to 'latest' and a versioned folder for posterity.
+        // Symlinks would have been safer and faster, but this is not supported by S3.
+        listOf(Realm.version, "latest").forEach { version: String ->
+            exec {
+                commandLine = listOf(
+                    "s3cmd",
+                    "put",
+                    "--recursive",
+                    "--acl-public",
+                    "--access_key=$awsAccessKey",
+                    "--secret_key=$awsSecretKey",
+                    "${dokkaDir.absolutePath}/", // Add / to only upload content of the folder, not the folder itself.
+                    "s3://realm-sdks/realm-sdks/kotlin/$version/"
+                )
+            }
         }
     }
 }
