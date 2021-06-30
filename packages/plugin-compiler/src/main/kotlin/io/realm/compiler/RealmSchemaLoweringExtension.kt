@@ -106,11 +106,9 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             val populatedCompanionMap = buildCompanionMap(specifiedModels, pluginContext)
                             putValueArgument(2, populatedCompanionMap)
 
-                            // Schema version
-                            putValueArgument(3, expression.getValueArgument(3))
-
-                            // Delete Realm on migration
-                            putValueArgument(4, expression.getValueArgument(4))
+                            // Schema version & Delete Realm on migration cannot be set from the public ctor (they need to be set via the Builder)
+                            putValueArgument(3, null)
+                            putValueArgument(4, null)
                         }
                     }
                     return super.visitConstructorCall(expression)

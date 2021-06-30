@@ -44,10 +44,10 @@ class MigrationTests {
     @Test
     fun automaticMigrationAddingNewClasses() {
         val path = "$tmpDir/default.realm"
-        RealmConfiguration(
+        RealmConfiguration.Builder(
             path = path,
             schema = setOf(Sample::class)
-        ).also {
+        ).build().also {
             Realm.open(it).run {
                 writeBlocking {
                     copyToRealm(Sample().apply { stringField = "Kotlin!" })
@@ -56,14 +56,20 @@ class MigrationTests {
             }
         }
 
-        RealmConfiguration(
+        RealmConfiguration.Builder(
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class)
-        ).also {
+        ).build().also {
             Realm.open(it).run {
                 objects(Sample::class).first().run {
                     assertEquals("Kotlin!", stringField)
                 }
+                // make sure the added classes are available in the new schema
+                writeBlocking {
+                    copyToRealm(Child())
+                }
+
+                assertEquals(1, objects(Sample::class).count())
                 close()
             }
         }
@@ -113,12 +119,11 @@ class MigrationTests {
             }
         }
 
-        RealmConfiguration(
+        RealmConfiguration.Builder(
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class),
-            deleteRealmIfMigrationNeeded = true
-
-        ).also {
+        ).deleteRealmIfMigrationNeeded()
+            .build().also {
             Realm.open(it).run {
                 objects(Sample::class).first().run {
                     assertEquals("Kotlin!", stringField)
@@ -143,12 +148,12 @@ class MigrationTests {
             }
         }
 
-        RealmConfiguration(
+        RealmConfiguration.Builder(
             path = path,
-            schema = setOf(Parent::class, Child::class),
-            deleteRealmIfMigrationNeeded = true
-
-        ).also {
+            schema = setOf(Parent::class, Child::class)
+        ).deleteRealmIfMigrationNeeded()
+            .build()
+            .also {
             Realm.open(it).run {
                 objects(Child::class).first().run {
                     assertEquals("Kotlin!", name)

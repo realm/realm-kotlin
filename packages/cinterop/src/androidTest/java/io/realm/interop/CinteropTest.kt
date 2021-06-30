@@ -45,6 +45,11 @@ class CinteropTest {
         assertEquals("10.5.2", realmc.realm_get_library_version())
     }
 
+    // Test various schema migration with automatic flag:
+    //  - If you add or remove a class you don't need to update the schema version.
+    //  - If you add/remove a column you need to set a greater version number for migration.
+    //  - If you rename a column it will be treated as removing and adding a column, so it needs a greater version number for migration.
+    //    (note: data will not be migrated into the renamed column)
     @Test
     fun schema_migration_automatic() {
         System.loadLibrary("realmc")
@@ -63,7 +68,10 @@ class CinteropTest {
         realmc.realm_open(config_1).also { realm ->
             // insert some data
             realmc.realm_begin_write(realm)
-            realmc.realm_object_create(realm, findTable(realm, "foo").key)
+            val foo1 = realmc.realm_object_create(realm, findTable(realm, "foo").key)
+            val foo_int_property = findProperty(realm, "foo", "int")
+            realmc.realm_set_value(foo1, foo_int_property.key, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 }, false)
+
             realmc.realm_commit(realm)
 
             // close Realm
@@ -72,17 +80,69 @@ class CinteropTest {
             realmc.realm_close(realm)
         }
 
-        // **** Using the same schema version with new column throws an exception *** //
+        //*** Renaming a column is treated as removing then adding a new column (data on the old column will not be migrated) ***//
+        val class_2_renamed_col = createClass("foo", 1)
+        val prop_2_1_renamed_col = createIntProperty("int_renamed")
+        val schema_2_renamed_col = createSchema(listOf(Pair(class_2_renamed_col, listOf(prop_2_1_renamed_col))))
+
+        val config_2_renamed_col: Long = realmc.realm_config_new()
+        realmc.realm_config_set_path(config_2_renamed_col, path)
+        realmc.realm_config_set_schema(config_2_renamed_col, schema_2_renamed_col)
+        realmc.realm_config_set_schema_mode(config_2_renamed_col, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
+        realmc.realm_config_set_schema_version(config_2_renamed_col, 1)
+
+        assertFailsWith<RuntimeException> {
+            realmc.realm_open(config_2_renamed_col)
+        }.run {
+            assertEquals(
+                "[18]: Migration is required due to the following errors:\n" +
+                        "- Property 'foo.int' has been removed.\n" +
+                        "- Property 'foo.int_renamed' has been added.",
+                message
+            )
+        }
+        // Incrementing the schema version migrate the Realm automatically
+        realmc.realm_config_set_schema_version(config_2_renamed_col, 2)
+        realmc.realm_open(config_2_renamed_col).also { realm ->
+            // make sure data was preserved
+            val foo_class = findTable(realm, "foo").key
+            var query: Long = realmc.realm_query_parse(realm, foo_class, "TRUEPREDICATE", 0, realm_value_t())
+            val count = realm_size_t()
+            realmc.realm_query_count(query, count)
+            assertEquals(1, count.value)
+
+            // but data will not be migrated on the new column
+            query = realmc.realm_query_parse(realm, foo_class, "int_renamed == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 })
+            realmc.realm_query_count(query, count)
+            assertEquals(0, count.value)
+
+            // old column was removed
+            assertFailsWith<RuntimeException> {
+                realmc.realm_query_parse(realm, foo_class, "int == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 })
+            }.run {
+                assertEquals(
+                    "[36]: 'foo' has no property: 'int'",
+                    message
+                )
+            }
+
+            // close Realm
+            realmc.realm_release(config_2_renamed_col)
+            realmc.realm_release(schema_2_renamed_col)
+            realmc.realm_close(realm)
+        }
+
+
+        // *** Using the same schema version with a new column throws an exception *** //
         val class_2 = createClass("foo", 2)
-        val prop_2_1 = createIntProperty("int")
         val prop_2_2 = createIntProperty("newColumn")
-        val schema_2 = createSchema(listOf(Pair(class_2, listOf(prop_2_1, prop_2_2))))
+        val schema_2 = createSchema(listOf(Pair(class_2, listOf(prop_2_1_renamed_col, prop_2_2))))
 
         val config_2: Long = realmc.realm_config_new()
         realmc.realm_config_set_path(config_2, path)
         realmc.realm_config_set_schema(config_2, schema_2)
         realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
-        realmc.realm_config_set_schema_version(config_2, 1)
+        realmc.realm_config_set_schema_version(config_2, 2)
 
         assertFailsWith<RuntimeException> {
             realmc.realm_open(config_2)
@@ -93,8 +153,9 @@ class CinteropTest {
                 message
             )
         }
+
         // Incrementing the schema version migrate the Realm automatically
-        realmc.realm_config_set_schema_version(config_2, 2)
+        realmc.realm_config_set_schema_version(config_2, 3)
         realmc.realm_open(config_2).also { realm ->
             // make sure data was preserved
             val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
@@ -108,7 +169,9 @@ class CinteropTest {
             realmc.realm_close(realm)
         }
 
-        // **** Using the same schema version when removing a column throws an exception *** //
+
+
+        // *** Using the same schema version when removing a column throws an exception *** //
         val class_3 = createClass("foo", 1)
         val prop_3_1 = createIntProperty("newColumn")
         val schema_3 = createSchema(listOf(Pair(class_3, listOf(prop_3_1))))
@@ -117,19 +180,19 @@ class CinteropTest {
         realmc.realm_config_set_path(config_3, path)
         realmc.realm_config_set_schema(config_3, schema_3)
         realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
-        realmc.realm_config_set_schema_version(config_3, 2)
+        realmc.realm_config_set_schema_version(config_3, 3)
 
         assertFailsWith<RuntimeException> {
             realmc.realm_open(config_3)
         }.run {
             assertEquals(
                 "[18]: Migration is required due to the following errors:\n" +
-                    "- Property 'foo.int' has been removed.",
+                    "- Property 'foo.int_renamed' has been removed.",
                 message
             )
         }
         // Incrementing the schema version migrate the Realm automatically
-        realmc.realm_config_set_schema_version(config_3, 3)
+        realmc.realm_config_set_schema_version(config_3, 4)
         realmc.realm_open(config_3).also { realm ->
             // make sure data was preserved
             val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
@@ -140,6 +203,57 @@ class CinteropTest {
             // close Realm
             realmc.realm_release(config_3)
             realmc.realm_release(schema_3)
+            realmc.realm_close(realm)
+        }
+
+        // *** Using the same schema version when adding a new class will not throw *** //
+        val class_4 = createClass("baz", 1)
+        val prop_4_1 = createIntProperty("col1")
+        val schema_4 = createSchema(listOf(Pair(class_4, listOf(prop_4_1)), Pair(class_3, listOf(prop_3_1))))
+
+        val config_4: Long = realmc.realm_config_new()
+        realmc.realm_config_set_path(config_4, path)
+        realmc.realm_config_set_schema(config_4, schema_4)
+        realmc.realm_config_set_schema_mode(config_4, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
+        realmc.realm_config_set_schema_version(config_4, 4)
+
+        realmc.realm_open(config_4).also { realm ->
+            // make sure data was preserved
+            var query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
+            val count = realm_size_t()
+            realmc.realm_query_count(query, count)
+            assertEquals(1, count.value)
+
+            // new class is available
+            query = realmc.realm_query_parse(realm, findTable(realm, "baz").key, "TRUEPREDICATE", 0, realm_value_t())
+            realmc.realm_query_count(query, count)
+            assertEquals(0, count.value)
+
+            // close Realm
+            realmc.realm_release(config_4)
+            realmc.realm_release(schema_4)
+            realmc.realm_close(realm)
+        }
+
+        // *** Using the same schema version when removing a class will not throw *** //
+        val schema_5 = createSchema(listOf(Pair(class_3, listOf(prop_3_1))))
+
+        val config_5: Long = realmc.realm_config_new()
+        realmc.realm_config_set_path(config_5, path)
+        realmc.realm_config_set_schema(config_5, schema_5)
+        realmc.realm_config_set_schema_mode(config_5, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
+        realmc.realm_config_set_schema_version(config_5, 4)
+
+        realmc.realm_open(config_5).also { realm ->
+            // make sure data was preserved
+            val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
+            val count = realm_size_t()
+            realmc.realm_query_count(query, count)
+            assertEquals(1, count.value)
+
+            // close Realm
+            realmc.realm_release(config_5)
+            realmc.realm_release(schema_5)
             realmc.realm_close(realm)
         }
     }
@@ -592,5 +706,13 @@ class CinteropTest {
         realmc.realm_find_class(realm, name, found, class_info)
         assertTrue(found[0])
         return class_info
+    }
+
+    private fun findProperty(realm: Long, table: String, propertyName: String): realm_property_info_t {
+        val property = realm_property_info_t()
+        val found: BooleanArray = booleanArrayOf(false)
+        realmc.realm_find_property(realm, findTable(realm, table).key, propertyName, found, property)
+        assertTrue(found[0])
+        return property
     }
 }
