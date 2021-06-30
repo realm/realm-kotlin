@@ -228,7 +228,7 @@ tasks.register("uploadDokka") {
 
         // Failsafe check, ensuring that we catch if the path ever changes, which it might since it is an
         // implementation detail of the Kotlin Gradle Plugin
-        val dokkaDir = File("${rootDir}/library/build/dokka/html")
+        val dokkaDir = File("$rootDir/library/build/dokka/html")
         if (!dokkaDir.exists() || !dokkaDir.isDirectory || dokkaDir.listFiles().isEmpty()) {
             throw GradleException("Could not locate dir with dokka files in: ${dokkaDir.path}")
         }
@@ -242,10 +242,10 @@ tasks.register("uploadDokka") {
                     "put",
                     "--recursive",
                     "--acl-public",
-                    "--access_key=${awsAccessKey}",
-                    "--secret_key=${awsSecretKey}",
+                    "--access_key=$awsAccessKey",
+                    "--secret_key=$awsSecretKey",
                     "${dokkaDir.absolutePath}/", // Add / to only upload content of the folder, not the folder itself.
-                    "s3://realm-sdks/realm-sdks/kotlin/${version}/"
+                    "s3://realm-sdks/realm-sdks/kotlin/$version/"
                 )
             }
         }
