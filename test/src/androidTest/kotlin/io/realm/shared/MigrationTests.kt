@@ -124,13 +124,13 @@ class MigrationTests {
             schema = setOf(Sample::class, Parent::class, Child::class),
         ).deleteRealmIfMigrationNeeded()
             .build().also {
-            Realm.open(it).run {
-                objects(Sample::class).first().run {
-                    assertEquals("Kotlin!", stringField)
+                Realm.open(it).run {
+                    objects(Sample::class).first().run {
+                        assertEquals("Kotlin!", stringField)
+                    }
+                    close()
                 }
-                close()
             }
-        }
     }
 
     @Test
@@ -154,13 +154,13 @@ class MigrationTests {
         ).deleteRealmIfMigrationNeeded()
             .build()
             .also {
-            Realm.open(it).run {
-                objects(Child::class).first().run {
-                    assertEquals("Kotlin!", name)
+                Realm.open(it).run {
+                    objects(Child::class).first().run {
+                        assertEquals("Kotlin!", name)
+                    }
+                    close()
                 }
-                close()
             }
-        }
     }
 
     // TODO add test for adding/remove columns when we have an API to open with an existing Realm.

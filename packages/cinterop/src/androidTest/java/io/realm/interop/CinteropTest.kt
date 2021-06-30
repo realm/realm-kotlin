@@ -80,7 +80,7 @@ class CinteropTest {
             realmc.realm_close(realm)
         }
 
-        //*** Renaming a column is treated as removing then adding a new column (data on the old column will not be migrated) ***//
+        // *** Renaming a column is treated as removing then adding a new column (data on the old column will not be migrated) ***//
         val class_2_renamed_col = createClass("foo", 1)
         val prop_2_1_renamed_col = createIntProperty("int_renamed")
         val schema_2_renamed_col = createSchema(listOf(Pair(class_2_renamed_col, listOf(prop_2_1_renamed_col))))
@@ -96,8 +96,8 @@ class CinteropTest {
         }.run {
             assertEquals(
                 "[18]: Migration is required due to the following errors:\n" +
-                        "- Property 'foo.int' has been removed.\n" +
-                        "- Property 'foo.int_renamed' has been added.",
+                    "- Property 'foo.int' has been removed.\n" +
+                    "- Property 'foo.int_renamed' has been added.",
                 message
             )
         }
@@ -131,7 +131,6 @@ class CinteropTest {
             realmc.realm_release(schema_2_renamed_col)
             realmc.realm_close(realm)
         }
-
 
         // *** Using the same schema version with a new column throws an exception *** //
         val class_2 = createClass("foo", 2)
@@ -168,8 +167,6 @@ class CinteropTest {
             realmc.realm_release(schema_2)
             realmc.realm_close(realm)
         }
-
-
 
         // *** Using the same schema version when removing a column throws an exception *** //
         val class_3 = createClass("foo", 1)
