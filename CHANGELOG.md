@@ -1,4 +1,4 @@
-## 0.3.0 (YYYY-MM-DD)
+## 0.3.0 (2021-06-30)
 
 ### Breaking Changes
 * None.

@@ -43,7 +43,8 @@ val idea: Boolean = System.getProperty("idea.active") == "true"
 //               realm-kotlin/packages> CONFIGURATION=Release ./gradlew capiIosArm64
 //               * to force build a debug (default BTW) use
 //               realm-kotlin/packages> CONFIGURATION=Debug ./gradlew capiIosArm64
-val isReleaseBuild: Boolean = (System.getenv("CONFIGURATION") ?: "DEBUG").equals("Release", ignoreCase = true)
+//               default is 'Release'
+val isReleaseBuild: Boolean = (System.getenv("CONFIGURATION") ?: "RELEASE").equals("Release", ignoreCase = true)
 
 val corePath = "external/core"
 val absoluteCorePath = "$rootDir/$corePath"
