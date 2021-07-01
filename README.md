@@ -21,7 +21,7 @@ Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) proj
 
 *See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) or the [realm-kotlin releases](https://github.com/realm/realm-kotlin/releases) for the latest version number.*
 
-- In the shared module, apply the `io.realm.kotlin` plugin and specify the dependency in the common source set.
+- In the shared module (`shared/build.gradle.kts`), apply the `io.realm.kotlin` plugin and specify the dependency in the common source set.
 
 ```Gradle
 plugins {
