@@ -127,10 +127,10 @@ upload_debug_symbols() {
   cd $HERE
 }
 
-upload_javadoc() {
+upload_dokka() {
   echo "Uploading docs..."
-  cd $REALM_KOTLIN_PATH
-  ./gradlew uploadJavadoc -PSDK_DOCS_AWS_ACCESS_KEY=$DOCS_S3_ACCESS_KEY -PSDK_DOCS_AWS_SECRET_KEY=$DOCS_S3_SECRET_KEY
+  cd $REALM_KOTLIN_PATH/packages/library
+  ./gradlew uploadDokka -PSDK_DOCS_AWS_ACCESS_KEY=$DOCS_S3_ACCESS_KEY -PSDK_DOCS_AWS_SECRET_KEY=$DOCS_S3_SECRET_KEY
   cd $HERE
 }
 
@@ -173,7 +173,6 @@ if [ "$1" != "verify" ]; then
   create_javadoc
   publish_artifacts
   upload_debug_symbols
-  # TODO: Determine how to publish JavaDoc before enabling this
-  # upload_javadoc
+  upload_dokka
   notify_slack_channels
 fi

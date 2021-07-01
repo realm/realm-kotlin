@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-// TODO API-PUBLIC Document platform specific internals (RealmInitilizer, etc.)
+// TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
 

@@ -16,7 +16,7 @@
  */
 
 object Realm {
-    const val version = "0.3.0-SNAPSHOT"
+    const val version = "0.4.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -68,10 +68,10 @@ object Versions {
     const val coroutines = "1.5.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val detektPlugin = "1.17.1" // https://github.com/detekt/detekt
     const val dokka = "1.4.32" // https://github.com/Kotlin/dokka
-    const val gradlePluginPublishPlugin = "0.14.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
+    const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
-    const val kotlin = "1.5.10"
+    const val kotlin = "1.5.20" // https://github.com/JetBrains/kotlin
     const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "10.1.0" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.41.0" // https://github.com/pinterest/ktlint

@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
@@ -71,7 +72,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
-                @Suppress("LongMethod")
+                @Suppress("LongMethod", "MagicNumber")
                 override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
                     if (REALM_CONFIGURATION == expression.symbol.owner.returnType.classFqName &&
                         !expression.symbol.owner.isPrimary
@@ -92,7 +93,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             internalConstructor,
                             typeArgumentsCount = 0,
                             constructorTypeArgumentsCount = 0,
-                            valueArgumentsCount = 3,
+                            valueArgumentsCount = 5,
                         ).apply {
                             // copy path/name arguments from the original constructor call
                             putValueArgument(0, expression.getValueArgument(0))
@@ -104,6 +105,10 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             findSchemaClassLiterals(schemaArgument, pluginContext, specifiedModels)
                             val populatedCompanionMap = buildCompanionMap(specifiedModels, pluginContext)
                             putValueArgument(2, populatedCompanionMap)
+
+                            // Schema version & Delete Realm on migration cannot be set from the public ctor (they need to be set via the Builder)
+                            putValueArgument(3, null)
+                            putValueArgument(4, null)
                         }
                     }
                     return super.visitConstructorCall(expression)
@@ -322,7 +327,7 @@ private fun populateCompanion(
                             IrGetObjectValueImpl(
                                 startOffset,
                                 endOffset,
-                                realmObjectCompanionIrClass.defaultType,
+                                symbol.defaultType,
                                 symbol
                             )
                         )

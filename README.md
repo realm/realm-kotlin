@@ -11,7 +11,7 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 
 https://github.com/realm/realm-kotlin-samples
 
-# Quick Startup
+# Quick Start
 
 ## Prerequisite
 
@@ -19,51 +19,47 @@ Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) proj
 
 ## Setup
 
+*See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) or the [realm-kotlin releases](https://github.com/realm/realm-kotlin/releases) for the latest version number.*
+
 - Add the following Gradle configuration in the root project (make sure you're using Kotlin `1.4.20` or recent)
 `<root project>/build.gradle.kts`
 ```Gradle
 buildscript {
     repositories {
-        // other repo
-        maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+        mavenCentral()
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")// minimum 1.4.20
         classpath("com.android.tools.build:gradle:4.0.1")
-        classpath("io.realm.kotlin:gradle-plugin:0.0.1-SNAPSHOT")
+        classpath("io.realm.kotlin:gradle-plugin:<VERSION>")
     }
 }
 
 allprojects {
     repositories {
-        // other repo 
-        maven(url = "https://oss.jfrog.org/artifactory/oss-snapshot-local")
+        mavenCentral()
     }
 }
 ```
-![Gradle Configuration](./images/RootGradle.png)
 
-- Apply the `realm-kotlin` plugin and specify the dependency in the common source set.
-
-*See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.*
+- Apply the `io.realm.kotlin` plugin and specify the dependency in the common source set.
 
 ```Gradle
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
-    id("realm-kotlin")
+    id("io.realm.kotlin")
 }
 
 kotlin {
   sourceSets {
       val commonMain by getting {
           dependencies {
-              implementation("io.realm.kotlin:library:0.0.1-SNAPSHOT")
+              implementation("io.realm.kotlin:library:<VERSION>")
           }
       }
 }
 ```
-![Gradle Configuration](./images/SharedGradle.png)
 
 ## Define model
 
@@ -106,17 +102,9 @@ val person = Person().apply {
 }
 
 // persist it in a transaction
-realm.beginTransaction()
-val managedPerson = realm.copyToRealm(person)
-realm.commitTransaction()
-
-// alternatively we can use
-realm.beginTransaction()
-realm.create<Person>().apply {
-            name = "Bar"
-            dog = Dog().apply { name = "Filo"; age = 11 }
-        }
-realm.commitTransaction()
+realm.writeBlocking {
+    val managedPerson = this.copyToRealm(person)
+}
 ```
 
 ## Query
@@ -142,9 +130,9 @@ realm.objects<Person>().query("dog == NULL LIMIT(1)")
     .firstOrNull()
     ?.also { personWithoutDog ->
         // Add a dog in a transaction
-        realm.beginTransaction()
-        personWithoutDog.dog = Dog().apply { name = "Laika";  age = 3 }
-        realm.commitTransaction()
+        realm.writeBlocking {
+            personWithoutDog.dog = Dog().apply { name = "Laika"; age = 3 }
+        }
     }
 ```
 
@@ -153,11 +141,10 @@ realm.objects<Person>().query("dog == NULL LIMIT(1)")
 Use the result of a query to delete from the database
 ```Kotlin
 // delete all Dogs
-realm.beginTransaction()
-realm.objects<Dog>().delete()
-realm.commitTransaction()
+realm.writeBlocking {
+    realm.objects<Dog>().delete()
+}
 ```
-
 
 Next: head to the full KMM [example](./examples/kmm-sample).  
 
@@ -201,16 +188,16 @@ cd test
 
 # Using Snapshots
 
-If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [JFrog OSS](http://oss.jfrog.org/oss-snapshot-local/io/realm/kotlin/gradle-plugin/)
+If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/) (Browsing not available unless you have an account at https://oss.sonatype.org/)
 
 ```
 // Global build.gradle
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
-            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
         maven {
             url 'https://dl.bintray.com/kotlin/kotlin-dev'
@@ -224,15 +211,24 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
-            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
         maven {
             url 'https://dl.bintray.com/kotlin/kotlin-dev'
         }
     }
 }
+
+// Module build.gradle
+
+// Don't cache SNAPSHOT (changing) dependencies.
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+apply plugin: "io.realm.kotlin"
 ```
 
 See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.
@@ -316,6 +312,24 @@ All platform specific tests should be placed outside the `io.realm.shared` packa
 All dependency versions and other constants we might want to share between projects are defined inside the file 
 `buildSrc/src/main/kotlin/Config.kt`. Any new dependencies should be added to this file as well, so we only have one
 location for these.
+
+## Debugging Kotlin/Native Tests
+
+- Location of the kexe file that contains this test - make sure to compile the test beforehand:
+`test/build/bin/macos/debugTest/test.kexe`
+- Open:
+`lldb test/build/bin/macos/debugTest/test.kexe`
+- Set breakpoints, e.g.:
+`breakpoint set --file realm_coordinator.cpp --line 288`
+- Run ONLY the test you want:
+`r --gtest_filter="io.realm.MigrationTests.deleteOnMigration"`
+- Step into:
+`s`
+- Step over:
+`n`
+- Step out:
+`finish`
+
 
 ## Contributing Enhancements
 

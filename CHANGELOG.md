@@ -1,4 +1,4 @@
-## 0.3.0 (YYYY-MM-DD)
+## 0.4.0 (YYYY-MM-DD)
 
 This release contains a big depature in the architectural design of how Realm is currently implemented. At a high level it moves from "Thread-confined, Live Objects" to "Frozen Objects". The reasons for this shift are discussed [here](https://docs.google.com/document/d/1bGfjbKLD6DSBpTiVwyorSBcMqkUQWedAmmS_VAhL8QU/edit#heading=h.fzlh39twuifc). 
 
@@ -36,11 +36,36 @@ This new architecture is intended to make it easier to consume and work with Rea
 * None.
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0-native-mt
+* This release is compatible with Kotlin 1.5.20 and Coroutines 1.5.0.
 
 ### Internal
+* Updated `com.gradle.plugin-publish` to 0.15.0.
+* Updated Kotlin support to 1.5.20.
+* Updated to Realm Core commit: 5ed4343e61e2c949ae03443c4bc3d450396e0ce2.
 * Updated to Android NDK: 22.1.7171670
 * Introduced usage of `kotlinx.atomicfu`: 0.16.1
+
+
+## 0.3.0 (2021-07-01)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* [Support Apple Release builds](https://github.com/realm/realm-kotlin/issues/142).
+* Enabling [shrinker](https://github.com/realm/realm-kotlin/issues/293) for Android Release builds.
+* Added support for `RealmList` as supported field in model classes. A `RealmList` is used to model one-to-many relationships in a Realm object.
+* Schema migration is handled automatically when adding or removing a property or class to the model without specifying a `schemaVersion`.
+If a class or column is renamed you need to set a greater `schemaVersion` to migrate the Realm (note: currently renaming will not copy data to the new column). Alternatively `deleteRealmIfMigrationNeeded` could be set to (without setting `schemaVersion`) to delete the Realm file if an automatic migration is not possible. Fixes [#284](https://github.com/realm/realm-kotlin/issues/284).
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
 
 
 ## 0.2.0 (2021-06-09)
@@ -54,7 +79,7 @@ This new architecture is intended to make it easier to consume and work with Rea
 ### Fixed
 * None.
 
-### Compatibility 
+### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
 
 ### Internal
@@ -95,4 +120,4 @@ plugins {
 
 See the [README](https://github.com/realm/realm-kotlin#readme) for more information.
 
-Please report any issues [here](https://github.com/realm/realm-kotlin/issues/new). 
+Please report any issues [here](https://github.com/realm/realm-kotlin/issues/new).

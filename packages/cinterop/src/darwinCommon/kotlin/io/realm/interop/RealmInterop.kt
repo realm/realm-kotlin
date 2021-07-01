@@ -261,7 +261,7 @@ actual object RealmInterop {
         config: NativePointer,
         maxNumberOfVersions: Long
     ) {
-        realm_wrapper.realm_config_set_schema_version(config.cptr(), maxNumberOfVersions.toULong())
+        realm_wrapper.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions.toULong())
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
@@ -351,6 +351,10 @@ actual object RealmInterop {
 
     actual fun realm_rollback(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_rollback(realm.cptr()))
+    }
+
+    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
+        return realm_wrapper.realm_is_writable(realm.cptr())
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
@@ -458,6 +462,62 @@ actual object RealmInterop {
                 )
             )
         }
+    }
+
+    actual fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
+    }
+
+    actual fun realm_list_size(list: NativePointer): Long {
+        memScoped {
+            val size = alloc<ULongVar>()
+            checkedBooleanResult(realm_wrapper.realm_list_size(list.cptr(), size.ptr))
+            return size.value.toLong()
+        }
+    }
+
+    actual fun <T> realm_list_get(list: NativePointer, index: Long): T {
+        memScoped {
+            val cvalue = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_list_get(list.cptr(), index.toULong(), cvalue.ptr)
+            )
+            return from_realm_value(cvalue)
+        }
+    }
+
+    actual fun <T> realm_list_add(list: NativePointer, index: Long, value: T) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_list_add_by_ref(
+                    list.cptr(),
+                    index.toULong(),
+                    to_realm_value(value).ptr
+                )
+            )
+        }
+    }
+
+    actual fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T {
+        return memScoped {
+            realm_list_get<T>(list, index).also {
+                checkedBooleanResult(
+                    realm_wrapper.realm_list_set_by_ref(
+                        list.cptr(),
+                        index.toULong(),
+                        to_realm_value(value).ptr
+                    )
+                )
+            }
+        }
+    }
+
+    actual fun realm_list_clear(list: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_list_clear(list.cptr()))
+    }
+
+    actual fun realm_list_erase(list: NativePointer, index: Long) {
+        checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {

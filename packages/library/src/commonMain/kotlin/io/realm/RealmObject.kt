@@ -16,22 +16,20 @@
 
 package io.realm
 
+import io.realm.internal.Mediator
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
+import io.realm.internal.link
+import io.realm.interop.Link
+import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
 /**
  * Marker interface to define a model (managed by Realm).
  */
 interface RealmObject
-
-// FIXME API Currently just adding these as extension methods as putting them directly into
-//  RealmModel would break compiler plugin. Reiterate along with
-//  https://github.com/realm/realm-kotlin/issues/83
-public fun RealmObject.delete() {
-    MutableRealm.delete(this)
-}
 
 public fun RealmObject.isFrozen(): Boolean {
     val internalObject = this as RealmObjectInternal
@@ -60,6 +58,13 @@ public var RealmObject.version: VersionId
         throw UnsupportedOperationException("Setter is required by the Kotlin Compiler, but should not be called directly")
     }
 
+// FIXME API Currently just adding these as extension methods as putting them directly into
+//  RealmModel would break compiler plugin. Reiterate along with
+//  https://github.com/realm/realm-kotlin/issues/83
+fun RealmObject.delete() {
+    MutableRealm.delete(this)
+}
+
 /**
  * Returns whether or not this object is managed by Realm.
  *
@@ -67,7 +72,7 @@ public var RealmObject.version: VersionId
  * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely seperate from
  * Realm.
  */
-public fun RealmObject.isManaged(): Boolean {
+fun RealmObject.isManaged(): Boolean {
     val internalObject = this as RealmObjectInternal
     return internalObject.`$realm$IsManaged`
 }
@@ -129,4 +134,16 @@ private fun RealmObject.checkNotificationsAvailable() {
     if (!isValid()) {
         throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
     }
+}
+
+/**
+ * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
+ */
+internal fun <T : RealmObject> Link.toRealmObject(
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realmPointer: NativePointer
+): T {
+    return mediator.createInstanceOf(clazz)
+        .link(realmPointer, mediator, clazz, this)
 }

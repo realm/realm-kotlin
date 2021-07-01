@@ -30,54 +30,77 @@ internal object TypeDescriptor {
     @Suppress("LongParameterList")
     enum class CoreFieldType(
         val type: PropertyType,
-        val nullable: Boolean,
-        val nonNullable: Boolean,
+        val nullable: Boolean, // TODO this doesn't contain enough info for lists
+        val nonNullable: Boolean, // TODO this doesn't contain enough info for lists
         val listSupport: Boolean,
         val primaryKeySupport: Boolean,
+        val canBeNull: Set<CollectionType>, // favor using this over "nullable"
+        val canBeNotNull: Set<CollectionType> // favor using this over "nonNullable"
     ) {
         INT(
             type = PropertyType.RLM_PROPERTY_TYPE_INT,
             nullable = true,
             nonNullable = true,
             listSupport = true,
-            primaryKeySupport = true
+            primaryKeySupport = true,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         ),
         BOOL(
             type = PropertyType.RLM_PROPERTY_TYPE_BOOL,
             nullable = true,
             nonNullable = true,
             listSupport = true,
-            primaryKeySupport = false
+            primaryKeySupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         ),
         STRING(
             type = PropertyType.RLM_PROPERTY_TYPE_STRING,
             nullable = true,
             nonNullable = true,
             listSupport = true,
-            primaryKeySupport = true
+            primaryKeySupport = true,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         ),
         OBJECT(
             type = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             nullable = true,
             nonNullable = false,
             listSupport = true,
-            primaryKeySupport = false
+            primaryKeySupport = false,
+            canBeNull = nullabilityForAll.toMutableSet().apply {
+                remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
+            },
+            canBeNotNull = nullabilityForAll
         ),
         FLOAT(
             type = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             nullable = true,
             nonNullable = true,
             listSupport = true,
-            primaryKeySupport = false
+            primaryKeySupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         ),
         DOUBLE(
             type = PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             nullable = true,
             nonNullable = true,
             listSupport = true,
-            primaryKeySupport = false
+            primaryKeySupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         );
     }
+
+    private val nullabilityForAll: Set<CollectionType> = setOf(
+        CollectionType.RLM_COLLECTION_TYPE_NONE,
+        CollectionType.RLM_COLLECTION_TYPE_LIST,
+        CollectionType.RLM_COLLECTION_TYPE_SET,
+        CollectionType.RLM_COLLECTION_TYPE_DICTIONARY
+    )
 
     // Kotlin classifier to Core field type mappings
     val classifiers: Map<KClassifier, CoreFieldType> = mapOf(
@@ -125,15 +148,39 @@ internal object TypeDescriptor {
         )
     }
 
+    fun elementTypesForList(
+        classifiers: Collection<KClassifier>,
+    ): MutableSet<ElementType> {
+        return classifiers.fold(
+            mutableSetOf<ElementType>(),
+            { acc, classifier ->
+                val realmFieldType = TypeDescriptor.classifiers[classifier]
+                    ?: error("Unmapped classifier $classifier")
+                if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
+                    acc.add(ElementType(classifier, true))
+                }
+                if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
+                    acc.add(ElementType(classifier, false))
+                }
+                acc
+            }
+        )
+    }
+
     // Convenience variables holding collections of the various supported types
     val elementClassifiers: Set<KClassifier> = classifiers.keys
     val elementTypes = elementTypes(elementClassifiers)
+    val elementTypesForList = elementTypesForList(elementClassifiers)
 
     // Convenience variables holding collection of various groups of Realm field types
-    val allSingularFieldTypes =
-        elementTypes.map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_NONE, it) }
-    val allListFieldTypes = elementTypes.filter { it.realmFieldType.listSupport }
-        .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
+    val allSingularFieldTypes = elementTypes.map {
+        RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_NONE, it)
+    }
+    val allListFieldTypes = elementTypesForList.filter {
+        it.realmFieldType.listSupport
+    }.map {
+        RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_LIST, it)
+    }
     // TODO Set
     // TODO Dict
     val allFieldTypes = allSingularFieldTypes + allListFieldTypes
