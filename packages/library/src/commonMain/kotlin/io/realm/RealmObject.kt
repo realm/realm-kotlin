@@ -21,7 +21,6 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
 import io.realm.internal.link
 import io.realm.interop.Link
-import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
