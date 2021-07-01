@@ -1,3 +1,23 @@
+## 0.4.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.20 and Coroutines 1.5.0.
+
+### Internal
+* Updated `com.gradle.plugin-publish` to 0.15.0.
+* Updated Kotlin support to 1.5.20.
+* Updated to Realm Core commit: 5ed4343e61e2c949ae03443c4bc3d450396e0ce2.
+
+
 ## 0.3.0 (2021-07-01)
 
 ### Breaking Changes
