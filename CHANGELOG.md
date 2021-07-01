@@ -26,7 +26,7 @@ This new architecture is intended to make it easier to consume and work with Rea
 * As a consequence of the above, when a change listener fires, the changed data can only be observed in the new object received, not in the original, which was possible before this release.
 
 ### Enhancements
-* A `version()` method has been added to Realm`, `RealmResults` and `RealmObject`. This returns the version of the data contained. New versions are obtained by observing changes to the object.
+* A `version()` method has been added to `Realm`, `RealmResults` and `RealmObject`. This returns the version of the data contained. New versions are obtained by observing changes to the object.
 * `Realm.observe()`, `RealmResults.observe()` and `RealmObject.observe()` has been added and expose a Flow of updates to the object.
 * Add support for suspending writes executed on the Realm Write Dispatcher with `suspend fun <R> write(block: MutableRealm.() -> R): R`
 * Add support for setting background write and notification dispatchers with `RealmConfigruation.Builder.notificationDispatcher(dispatcher: CoroutineDispatcher)` and `RealmConfiguration.Builder.writeDispatcher(dispatcher: CoroutineDispatcher)`
@@ -42,8 +42,8 @@ This new architecture is intended to make it easier to consume and work with Rea
 * Updated `com.gradle.plugin-publish` to 0.15.0.
 * Updated Kotlin support to 1.5.20.
 * Updated to Realm Core commit: 5ed4343e61e2c949ae03443c4bc3d450396e0ce2.
-* Updated to Android NDK: 22.1.7171670
-* Introduced usage of `kotlinx.atomicfu`: 0.16.1
+* Updated to Android NDK: 22.1.7171670.
+* Introduced usage of `kotlinx.atomicfu`: 0.16.1.
 
 
 ## 0.3.0 (2021-07-01)
