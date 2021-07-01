@@ -104,10 +104,6 @@ class MutableRealm : BaseRealm {
         }
     }
 
-    internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(dbPointer)
-    }
-
     /**
      * Cancel the write. Any changes will not be persisted to disk.
      */

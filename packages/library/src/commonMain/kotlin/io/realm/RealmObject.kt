@@ -142,8 +142,8 @@ private fun RealmObject.checkNotificationsAvailable() {
 internal fun <T : RealmObject> Link.toRealmObject(
     clazz: KClass<T>,
     mediator: Mediator,
-    realmPointer: NativePointer
+    realm: RealmReference
 ): T {
     return mediator.createInstanceOf(clazz)
-        .link(realmPointer, mediator, clazz, this)
+        .link(realm, mediator, clazz, this)
 }

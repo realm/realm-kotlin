@@ -175,10 +175,6 @@ actual object RealmInterop {
         realmc.realm_begin_write((realm as LongPointerWrapper).ptr)
     }
 
-    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
-        return realmc.realm_is_writable(realm.cptr())
-    }
-
     actual fun realm_commit(realm: NativePointer) {
         realmc.realm_commit((realm as LongPointerWrapper).ptr)
     }

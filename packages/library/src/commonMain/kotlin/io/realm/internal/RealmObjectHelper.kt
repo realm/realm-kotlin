@@ -72,9 +72,9 @@ object RealmObjectHelper {
         col: String,
         isRealmObject: Boolean = false
     ): RealmList<Any?> {
-        val realm = obj.`$realm$Pointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val realm = obj.`$realm$Owner` as RealmReference ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key: ColumnKey = RealmInterop.realm_get_col_key(realm, obj.`$realm$TableName`!!, col)
+        val key: ColumnKey = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
 
         return RealmList(
@@ -83,7 +83,7 @@ object RealmObjectHelper {
                 clazz = R::class,
                 isRealmObject = isRealmObject,
                 mediator = obj.`$realm$Mediator` as Mediator,
-                realmPointer = obj.`$realm$Pointer`!!
+                realm = obj.`$realm$Owner`!! as RealmReference
             )
         )
     }

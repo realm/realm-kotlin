@@ -28,6 +28,7 @@ import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -81,6 +82,7 @@ class RealmListTests {
     }
 
     @Test
+    @Ignore // FIXME Realm cannot be closed inside a write. Rewrite once we can pass a List out again
     fun addWithIndexFailsIfClosed() {
         // No need to be exhaustive
         managedTesters[0].addWithIndexFailsIfClosed(getCloseableRealm())
@@ -94,6 +96,7 @@ class RealmListTests {
     }
 
     @Test
+    @Ignore // FIXME Realm cannot be closed inside a write. Rewrite once we can pass a List out again
     fun addAllWithIndexFailsIfClosed() {
         // No need to be exhaustive
         managedTesters[0].addAllWithIndexFailsIfClosed(getCloseableRealm())
@@ -107,6 +110,7 @@ class RealmListTests {
     }
 
     @Test
+    @Ignore // FIXME Realm cannot be closed inside a write. Rewrite once we can pass a List out again
     fun clearFailsIfClosed() {
         // No need to be exhaustive
         managedTesters[0].clearFailsIfClosed(getCloseableRealm())
@@ -120,6 +124,7 @@ class RealmListTests {
     }
 
     @Test
+    @Ignore // FIXME Realm cannot be closed inside a write. Rewrite once we can pass a List out again
     fun removeAtFailsIfClosed() {
         // No need to be exhaustive
         managedTesters[0].removeAtFailsIfClosed(getCloseableRealm())
@@ -133,6 +138,7 @@ class RealmListTests {
     }
 
     @Test
+    @Ignore // FIXME Realm cannot be closed inside a write. Rewrite once we can pass a List out again
     fun setFailsIfClosed() {
         // No need to be exhaustive
         managedTesters[0].setFailsIfClosed(getCloseableRealm())
@@ -704,7 +710,7 @@ internal abstract class ManagedListTester<T>(
 
         // Clean up
         realm.writeBlocking {
-            delete(container)
+            delete(findLatest(container)!!)
         }
     }
 }

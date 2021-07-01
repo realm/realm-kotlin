@@ -136,25 +136,14 @@ public class RealmConfiguration private constructor(
         path: String? = null,
         name: String = Realm.DEFAULT_FILE_NAME,
         schema: Set<KClass<out RealmObject>>
-    ) : this(path, name, mapOf())
+    ) : this(path, name, mapOf()) // REPLACED_BY_IR
 
     // Called by the compiler plugin, with a populated companion map.
     // Default values should match what happens when calling `RealmConfiguration.Builder(schema = setOf(...)).build()`
-    internal constructor(path: String? = null, name: String = Realm.DEFAULT_FILE_NAME, schema: Map<KClass<out RealmObject>, RealmObjectCompanion>) :
-        this(
-            schema,
-            path,
-            name,
-            schema.keys,
-            LogConfiguration(LogLevel.WARN, listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))),
-            Long.MAX_VALUE,
-        )
     internal constructor(
         path: String? = null,
         name: String = Realm.DEFAULT_FILE_NAME,
-        schema: Map<KClass<out RealmObject>, RealmObjectCompanion>,
-        schemaVersion: Long = 0,
-        deleteRealmIfMigrationNeeded: Boolean = false
+        schema: Map<KClass<out RealmObject>, RealmObjectCompanion>
     ) : this(
         schema,
         path,
@@ -167,8 +156,8 @@ public class RealmConfiguration private constructor(
         Long.MAX_VALUE,
         singleThreadDispatcher(name),
         singleThreadDispatcher(name),
-        schemaVersion,
-        deleteRealmIfMigrationNeeded
+        0,
+        false
     )
 
     /**

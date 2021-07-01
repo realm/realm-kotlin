@@ -41,7 +41,7 @@ This new architecture is intended to make it easier to consume and work with Rea
 ### Internal
 * Updated `com.gradle.plugin-publish` to 0.15.0.
 * Updated Kotlin support to 1.5.20.
-* Updated to Realm Core commit: 5ed4343e61e2c949ae03443c4bc3d450396e0ce2.
+* Updated to Realm Core commit: 4cf63d689ba099057345f122265cbb880a8eb19d.
 * Updated to Android NDK: 22.1.7171670.
 * Introduced usage of `kotlinx.atomicfu`: 0.16.1.
 
