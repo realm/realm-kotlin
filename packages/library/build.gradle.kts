@@ -244,7 +244,7 @@ tasks.register("uploadDokka") {
                     "--acl-public",
                     "--access_key=$awsAccessKey",
                     "--secret_key=$awsSecretKey",
-                    "${dokkaDir.absolutePath}/-realm -kotlin -s-d-k-$version/", // Add / to only upload content of the folder, not the folder itself.
+                    "${dokkaDir.absolutePath}/", // Add / to only upload content of the folder, not the folder itself.
                     "s3://realm-sdks/realm-sdks/kotlin/$version/"
                 )
             }
