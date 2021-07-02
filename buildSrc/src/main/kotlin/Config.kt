@@ -16,7 +16,7 @@
  */
 
 object Realm {
-    const val version = "0.3.0"
+    const val version = "0.3.1"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"

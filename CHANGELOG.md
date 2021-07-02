@@ -1,3 +1,22 @@
+## 0.3.1 (2021-07-02)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Android Release build variant (AAR) was stripped from all classes due to presence of `isMinifyEnabled` flag in the library module. The flag is removed now.
+
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+
 ## 0.3.0 (2021-07-01)
 
 ### Breaking Changes
