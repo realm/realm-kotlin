@@ -21,6 +21,7 @@ import io.realm.RealmObject
 import io.realm.isManaged
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.classifiers
+import io.realm.util.Utils.createRandomString
 import test.Sample
 import test.link.Child
 import test.link.Parent
@@ -42,7 +43,7 @@ class ImportTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class, Sample::class))
+            RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class, Sample::class))
         realm = Realm.open(configuration)
     }
 

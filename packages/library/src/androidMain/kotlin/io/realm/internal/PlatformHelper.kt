@@ -15,7 +15,13 @@
  */
 package io.realm.internal
 
+import android.os.Handler
+import android.os.HandlerThread
 import io.realm.log.RealmLogger
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.android.asCoroutineDispatcher
+import kotlin.coroutines.CoroutineContext
 
 actual object PlatformHelper {
 
@@ -25,3 +31,30 @@ actual object PlatformHelper {
     // Returns the default logger for the platform
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = LogCatLogger(tag)
 }
+
+actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
+    val thread = HandlerThread("RealmWriter[$id]")
+    thread.start()
+    return Handler(thread.looper).asCoroutineDispatcher()
+}
+
+// FIXME All of the below is common with Android. Should be aligned in separate source set but
+//  that is already tracked by https://github.com/realm/realm-kotlin/issues/175
+
+// Expose platform runBlocking through common interface
+public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    return kotlinx.coroutines.runBlocking(context, block)
+}
+
+actual fun threadId(): ULong {
+    return Thread.currentThread().id.toULong()
+}
+
+actual fun <T> T.freeze(): T = this
+
+actual val <T> T.isFrozen: Boolean
+    get() = false
+
+actual fun Any.ensureNeverFrozen() {}
+
+actual typealias WeakReference<T> = java.lang.ref.WeakReference<T>

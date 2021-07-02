@@ -17,18 +17,47 @@
 
 package io.realm.util
 
+import io.realm.Realm
+import io.realm.RealmObject
+import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmReference
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+
 // Platform dependant helper methods
 expect object PlatformUtils {
     fun createTempDir(): String
     fun deleteTempDir(path: String)
+    @OptIn(ExperimentalTime::class)
+    fun sleep(duration: Duration)
+    fun threadId(): ULong
+    fun triggerGC()
 }
 
 // Platform independent helper methods
 object Utils {
+
     fun createRandomString(length: Int): String {
         val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
         return (1..length)
             .map { allowedChars.random() }
             .joinToString("")
+    }
+
+    fun printlntid(message: String) {
+        println("<" + PlatformUtils.threadId() + "> $message")
+    }
+}
+
+/**
+ * Helper method for easily updating a single object. The updated object will be returned.
+ * This method control its own write transaction, so cannot be called inside a write transaction
+ */
+suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
+    val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner as Realm
+    return realm.write {
+        val liveObject: T = findLatest(this@update)!!
+        block(liveObject)
+        liveObject
     }
 }

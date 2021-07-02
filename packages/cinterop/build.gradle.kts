@@ -22,6 +22,21 @@ plugins {
     id("realm-publisher")
 }
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
+    }
+}
+apply(plugin = "kotlinx-atomicfu")
+// AtomicFu cannot transform JVM code. Throws
+// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
+project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
+    transformJvm = false
+}
+
 repositories {
     google() // Android build needs com.android.tools.lint:lint-gradle:27.0.1
 }
@@ -200,6 +215,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
             }
         }
 

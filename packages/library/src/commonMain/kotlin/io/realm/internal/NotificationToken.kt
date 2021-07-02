@@ -19,16 +19,23 @@ package io.realm.internal
 import io.realm.Cancellable
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.locks.reentrantLock
+import kotlinx.atomicfu.locks.withLock
 
-class NotificationToken<T>(t: T, private val token: NativePointer) : Cancellable {
+class NotificationToken<T>(callback: T, private val token: NativePointer) : Cancellable {
 
-    private var t: T? = t
+    private val lock = reentrantLock()
+    private val observer: AtomicRef<T?> = atomic(callback)
 
     override fun cancel() {
-        if (t != null) {
-            RealmInterop.realm_release(token)
+        lock.withLock {
+            if (observer.value != null) {
+                RealmInterop.realm_release(token)
+            }
+            observer.value = null
         }
-        t = null
     }
 
     // FIXME API We currently favor to do explicit registration.

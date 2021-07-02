@@ -16,9 +16,10 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.unmanage
-import io.realm.interop.NativePointer
+import io.realm.internal.thaw
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
@@ -28,59 +29,91 @@ import kotlin.reflect.KClass
  */
 class MutableRealm : BaseRealm {
 
-    // Track wether or not the write should be persisted
-    internal var commitWrite: Boolean = true
-
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
     internal companion object {
         internal fun <T : RealmObject> delete(obj: T) {
             val internalObject = obj as RealmObjectInternal
+            checkObjectValid(internalObject)
             internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-                ?: throw IllegalArgumentException("Cannot delete unmanaged object")
-            internalObject.unmanage()
+        }
+
+        private fun checkObjectValid(obj: RealmObjectInternal) {
+            if (!obj.isValid()) {
+                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
+            }
         }
     }
 
     /**
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
      * done inside the MutableRealm is not immediately reflected in the `parentRealm`.
+     *
+     * The core scheduler used to deliver notifications are:
+     * - Android: The default Android scheduler, which delivers notifications on the looper of
+     * the current thread.
+     * - Native: Either a scheduler dispatching to the supplied dispatcher or the default Darwin
+     * scheduler, that delivers notifications on the main run loop.
      */
-    internal constructor(parentRealm: Realm) :
-        super(parentRealm.configuration, RealmInterop.realm_open(parentRealm.configuration.nativeConfig))
-
-    /**
-     * Create a MutableRealm which represents a standard write transaction, i.e. any modifications
-     * are immediately represented in the `parentRealm`.
-     */
-    @Deprecated("Should be avoided and will be removed once we have the proper Frozen Architecture in place.")
-    internal constructor(configuration: RealmConfiguration, parentRealm: NativePointer) :
-        super(configuration, parentRealm)
+    internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher? = null) :
+        super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     internal fun beginTransaction() {
-        RealmInterop.realm_begin_write(dbPointer)
-        commitWrite = true
+        RealmInterop.realm_begin_write(realmReference.dbPointer)
     }
 
     internal fun commitTransaction() {
-        RealmInterop.realm_commit(dbPointer)
+        RealmInterop.realm_commit(realmReference.dbPointer)
     }
 
     internal fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(dbPointer)
+        return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
+    }
+
+    /**
+     * Get latest version of an object.
+     *
+     * Realm write transactions always operate on the latest version of data. This method
+     * makes it possible to easily find the latest version of any frozen Realm Object and
+     * return a copy of it that can be modified while inside the write block.
+     *
+     * *Note:* This object is not readable outside the write block unless it has been explicitly
+     * returned from the write.
+     *
+     * @param obj Realm object to look up. Its latest state will be returned. If the object
+     * has been deleted, `null` will be returned.
+     *
+     * @throws IllegalArgumentException if called on an unmanaged object.
+     */
+    public fun <T : RealmObject> findLatest(obj: T?): T? {
+        return if (obj == null || !obj.isValid()) {
+            null
+        } else if (!obj.isManaged()) {
+            throw IllegalArgumentException(
+                "Unmanaged objects must be part of the Realm, before " +
+                    "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
+                    "a managed object."
+            )
+        } else if (!obj.isFrozen()) {
+            // If already valid, managed and not frozen, it must be live, and thus already
+            // up to date, just return input
+            obj
+        } else {
+            val liveRealm = realmReference.owner
+            (obj as RealmObjectInternal).thaw(liveRealm)
+        }
     }
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
      */
     public fun cancelWrite() {
-        RealmInterop.realm_rollback(dbPointer)
-        commitWrite = false
+        RealmInterop.realm_rollback(realmReference.dbPointer)
     }
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>): T {
-        return io.realm.internal.create(configuration.mediator, dbPointer, type)
+        return io.realm.internal.create(configuration.mediator, realmReference, type)
     }
     // Convenience inline method for the above to skip KClass argument
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
@@ -88,7 +121,7 @@ class MutableRealm : BaseRealm {
 
     @Deprecated("Use MutableRealm.copyToRealm() instead", ReplaceWith("io.realm.MutableRealm.copyToRealm(obj)"))
     fun <T : RealmObject> create(type: KClass<T>, primaryKey: Any?): T {
-        return io.realm.internal.create(configuration.mediator, dbPointer, type, primaryKey)
+        return io.realm.internal.create(configuration.mediator, realmReference, type, primaryKey)
     }
 
     /**
@@ -102,22 +135,48 @@ class MutableRealm : BaseRealm {
      * @return The managed version of the `instance`.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T {
-        return io.realm.internal.copyToRealm(configuration.mediator, dbPointer, instance)
+        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
     }
-
     /**
      * Deletes the object from the underlying Realm.
      *
      * @throws IllegalArgumentException if the object is not managed by Realm.
      */
     fun <T : RealmObject> delete(obj: T) {
+        // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
         val internalObject = obj as RealmObjectInternal
+        checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-            ?: throw IllegalArgumentException("An unmanaged unmanaged object cannot be deleted from the Realm.")
-        internalObject.unmanage()
     }
 
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
+
+    override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+        throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
+        throw IllegalStateException("Changes to RealmObject cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
 }

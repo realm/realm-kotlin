@@ -16,8 +16,10 @@
 package io.realm
 
 import io.realm.internal.RealmLog
+import io.realm.internal.RealmReference
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
@@ -29,21 +31,35 @@ public abstract class BaseRealm internal constructor(
      * Configuration used to configure this Realm instance.
      */
     public val configuration: RealmConfiguration,
-    protected val dbPointer: NativePointer
+    dbPointer: NativePointer
 ) {
+
+    companion object {
+        const val observerablesNotSupportMessage = "Observing changes are not supported by this Realm."
+    }
+
+    /**
+     * Realm reference that links the Kotlin instance with the underlying C++ SharedRealm.
+     *
+     * The C++ SharedRealm can be either a frozen or live realm, so even though this reference is
+     * not updated the version of the underlying Realm can change.
+     *
+     * NOTE: [Realm] overwrites this to an updatable property which is advanced when the [Realm] is
+     * updated to point to a new frozen version after writes or notification, so care should be
+     * taken not to spread operations over different references.
+     */
+    internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
+        set(_) {
+            throw UnsupportedOperationException("BaseRealm reference should never be updated")
+        }
 
     /**
      * The current data version of this Realm and data fetched from it.
      */
+    // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     public var version: VersionId = VersionId(0)
-        get() {
-            checkClosed()
-            return VersionId(RealmInterop.realm_get_version_id(dbPointer))
-        }
+        get() { return realmReference.version() }
 
-    // Use this boolean to track closed instead of `NativePointer?` to avoid forcing
-    // null checks everywhere, when it is rarely needed.
-    private var isClosed: Boolean = false
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
     init {
@@ -51,17 +67,50 @@ public abstract class BaseRealm internal constructor(
     }
 
     fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        checkClosed()
-        return RealmResults(
-            configuration,
-            dbPointer,
-            { RealmInterop.realm_query_parse(dbPointer, clazz.simpleName!!, "TRUEPREDICATE") },
+        // Use same reference through out all operations to avoid locking
+        val realmReference = this.realmReference
+        realmReference.checkClosed()
+        return RealmResults.fromQuery(
+            realmReference,
+            RealmInterop.realm_query_parse(realmReference.dbPointer, clazz.simpleName!!, "TRUEPREDICATE"),
             clazz,
             configuration.mediator
         )
     }
     // Convenience inline method for the above to skip KClass argument
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
+
+    internal open fun <T : RealmObject> registerResultsChangeListener(
+        results: RealmResults<T>,
+        callback: Callback<RealmResults<T>>
+    ): Cancellable {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerListChangeListener(
+        list: List<T>,
+        callback: Callback<List<T>>
+    ): Cancellable {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerObjectChangeListener(
+        obj: T,
+        callback: Callback<T?>
+    ): Cancellable {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+    internal open fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
+
+    internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
+        throw NotImplementedError(observerablesNotSupportMessage)
+    }
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have
@@ -70,8 +119,9 @@ public abstract class BaseRealm internal constructor(
      * @see [RealmConfiguration.Builder.maxNumberOfActiveVersions]
      */
     public fun getNumberOfActiveVersions(): Long {
-        checkClosed()
-        return RealmInterop.realm_get_num_versions(dbPointer)
+        val reference = realmReference
+        reference.checkClosed()
+        return RealmInterop.realm_get_num_versions(reference.dbPointer)
     }
 
     /**
@@ -81,22 +131,14 @@ public abstract class BaseRealm internal constructor(
      * @return `true` if the Realm has been closed. `false` if not.
      */
     public fun isClosed(): Boolean {
-        return isClosed
-    }
-
-    // Inline this for a cleaner stack trace in case it throws.
-    @Suppress("MemberVisibilityCanBePrivate")
-    internal inline fun checkClosed() {
-        if (isClosed) {
-            throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
-        }
+        return realmReference.isClosed()
     }
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        checkClosed()
-        RealmInterop.realm_close(dbPointer)
-        isClosed = true
+        val reference = realmReference
+        reference.checkClosed()
+        RealmInterop.realm_close(reference.dbPointer)
         log.info("Realm closed: ${configuration.path}")
     }
 }
