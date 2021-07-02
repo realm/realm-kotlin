@@ -129,8 +129,8 @@ upload_debug_symbols() {
 
 upload_dokka() {
   echo "Uploading docs..."
-  cd $REALM_KOTLIN_PATH/packages/library
-  ./gradlew uploadDokka -PSDK_DOCS_AWS_ACCESS_KEY=$DOCS_S3_ACCESS_KEY -PSDK_DOCS_AWS_SECRET_KEY=$DOCS_S3_SECRET_KEY
+  cd $REALM_KOTLIN_PATH/packages
+  ./gradlew :library:uploadDokka
   cd $HERE
 }
 
