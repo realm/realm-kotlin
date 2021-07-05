@@ -62,6 +62,13 @@ class RealmListTests {
     }
 
     @Test
+    fun copyToRealm() {
+        for (tester in managedTesters) {
+            tester.copyToRealm()
+        }
+    }
+
+    @Test
     fun get() {
         for (tester in managedTesters) {
             tester.get()
@@ -223,6 +230,7 @@ class RealmListTests {
 internal interface ListApiTester {
 
     override fun toString(): String
+    fun copyToRealm()
     fun get()
     fun getFailsIfClosed(realm: Realm)
     fun addWithIndex()
@@ -274,6 +282,11 @@ internal interface TypeSafetyManager<T> {
     override fun toString(): String // Default implementation not allowed as it comes from "Any"
     fun createContainerAndGetList(realm: MutableRealm? = null): RealmList<T>
     fun getInitialDataSet(): List<T>
+
+    fun createPrePopulatedContainer(dataSet: List<T>): RealmListContainer =
+        RealmListContainer().also {
+            property.get(it).apply { addAll(dataSet) }
+        }
 
     fun getList(container: RealmListContainer): RealmList<T> = property.get(container)
 }
@@ -389,6 +402,27 @@ internal abstract class ManagedListTester<T>(
 
     override fun toString(): String = "Managed-$typeSafetyManager"
 
+    override fun copyToRealm() {
+        val dataSet = typeSafetyManager.getInitialDataSet()
+
+        val assertions = { container: RealmListContainer ->
+            dataSet.forEachIndexed { index, t ->
+                assertElementsAreEqual(t, typeSafetyManager.getList(container)[index])
+            }
+        }
+
+        errorCatcher {
+            val container = typeSafetyManager.createPrePopulatedContainer(dataSet)
+
+            realm.writeBlocking {
+                val managedContainer = copyToRealm(container)
+                assertions(managedContainer)
+            }
+        }
+
+        assertContainerAndCleanup { container -> assertions(container) }
+    }
+
     override fun get() {
         val dataSet = typeSafetyManager.getInitialDataSet()
         val assertions = { list: RealmList<T> ->
@@ -415,7 +449,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun getFailsIfClosed(realm: Realm) {
@@ -471,7 +505,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun addWithIndexFailsIfClosed(realm: Realm) {
@@ -541,7 +575,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun addAllWithIndexFailsIfClosed(realm: Realm) {
@@ -577,7 +611,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun clearFailsIfClosed(realm: Realm) {
@@ -629,7 +663,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun removeAtFailsIfClosed(realm: Realm) {
@@ -679,7 +713,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun setFailsIfClosed(realm: Realm) {
@@ -699,13 +733,27 @@ internal abstract class ManagedListTester<T>(
     }
 
     // Retrieves the list again but this time from Realm to check the getter is called correctly
-    private fun assertAndCleanup(assertion: (RealmList<T>) -> Unit) {
+    private fun assertListAndCleanup(assertion: (RealmList<T>) -> Unit) {
         val container = realm.objects<RealmListContainer>().first()
         val list = typeSafetyManager.getList(container)
 
         // Assert
         errorCatcher {
             assertion(list)
+        }
+
+        // Clean up
+        realm.writeBlocking {
+            delete(findLatest(container)!!)
+        }
+    }
+
+    private fun assertContainerAndCleanup(assertion: (RealmListContainer) -> Unit) {
+        val container = realm.objects<RealmListContainer>().first()
+
+        // Assert
+        errorCatcher {
+            assertion(container)
         }
 
         // Clean up

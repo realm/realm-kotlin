@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
@@ -29,7 +30,7 @@ import kotlin.reflect.KProperty1
 @Suppress("FunctionNaming")
 internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
-        "Has the `realm-kotlin` Gradle plugin been applied to the project?"
+            "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
 
 internal fun checkRealmClosed(realm: RealmReference) {
@@ -64,7 +65,12 @@ fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KC
 }
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, primaryKey: Any?): T {
+fun <T : RealmObject> create(
+    mediator: Mediator,
+    realm: RealmReference,
+    type: KClass<T>,
+    primaryKey: Any?
+): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
     //  some runtime container of an open realm.
@@ -88,7 +94,12 @@ fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KC
     }
 }
 
-fun <T : RealmObject> copyToRealm(mediator: Mediator, realm: RealmReference, instance: T, cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()): T {
+fun <T : RealmObject> copyToRealm(
+    mediator: Mediator,
+    realm: RealmReference,
+    instance: T,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()
+): T {
     // Copying already managed instance is an no-op
     if ((instance as RealmObjectInternal).`$realm$IsManaged`) return instance
 
@@ -102,8 +113,15 @@ fun <T : RealmObject> copyToRealm(mediator: Mediator, realm: RealmReference, ins
     // TODO OPTIMIZE We could set all properties at once with on C-API call
     for (member: KMutableProperty1<T, Any?> in members) {
         val targetValue = member.get(instance).let { sourceObject ->
+            // Check whether the source is a RealmObject, a primitive or a list
+            // In case of list ensure the values from the source are passed to the native list
+
             if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
-                cache.getOrPut(sourceObject) { copyToRealm(mediator, realm, sourceObject, cache) }
+                cache.getOrPut(sourceObject) {
+                    copyToRealm(mediator, realm, sourceObject, cache)
+                }
+            } else if (sourceObject is RealmList<*>) {
+                processListMember(mediator, realm, cache, member, target, sourceObject)
             } else {
                 sourceObject
             }
@@ -116,3 +134,28 @@ fun <T : RealmObject> copyToRealm(mediator: Mediator, realm: RealmReference, ins
     }
     return target
 }
+
+private fun <T : RealmObject> processListMember(
+    mediator: Mediator,
+    realm: RealmReference,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal>,
+    member: KMutableProperty1<T, Any?>,
+    target: T,
+    sourceObject: RealmList<*>
+): RealmList<Any?> {
+    @Suppress("UNCHECKED_CAST")
+    val list = member.get(target) as RealmList<Any?>
+    for (item in sourceObject) {
+        // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
+        if (item is RealmObjectInternal && !item.`$realm$IsManaged`) {
+            val value = cache.getOrPut(item) {
+                copyToRealm(mediator, realm, item, cache)
+            }
+            list.add(value)
+        } else {
+            list.add(item)
+        }
+    }
+    return list
+}
+
