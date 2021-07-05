@@ -46,7 +46,7 @@ DOCS_S3_SECRET_KEY="$6"
 SLACK_WEBHOOK_RELEASES_URL="$7"
 SLACK_WEBHOOK_JAVA_CI_URL="$8"
 GRADLE_PORTAL_KEY="$9"
-GRADLE_PORTAL_KEY="${10}"
+GRADLE_PORTAL_SECRET="${10}"
 GRADLE_BUILD_PARAMS="${11}"
 
 abort_release() {
@@ -129,8 +129,8 @@ upload_debug_symbols() {
 
 upload_dokka() {
   echo "Uploading docs..."
-  cd $REALM_KOTLIN_PATH/packages/library
-  ./gradlew uploadDokka -PSDK_DOCS_AWS_ACCESS_KEY=$DOCS_S3_ACCESS_KEY -PSDK_DOCS_AWS_SECRET_KEY=$DOCS_S3_SECRET_KEY
+  cd $REALM_KOTLIN_PATH/packages
+  ./gradlew :library:uploadDokka -PSDK_DOCS_AWS_ACCESS_KEY=$DOCS_S3_ACCESS_KEY -PSDK_DOCS_AWS_SECRET_KEY=$DOCS_S3_SECRET_KEY
   cd $HERE
 }
 
