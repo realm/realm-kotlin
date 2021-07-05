@@ -30,7 +30,7 @@ import kotlin.reflect.KProperty1
 @Suppress("FunctionNaming")
 internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
-            "Has the `realm-kotlin` Gradle plugin been applied to the project?"
+        "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
 
 internal fun checkRealmClosed(realm: RealmReference) {
@@ -135,6 +135,7 @@ fun <T : RealmObject> copyToRealm(
     return target
 }
 
+@Suppress("LongParameterList")
 private fun <T : RealmObject> processListMember(
     mediator: Mediator,
     realm: RealmReference,
@@ -158,4 +159,3 @@ private fun <T : RealmObject> processListMember(
     }
     return list
 }
-
