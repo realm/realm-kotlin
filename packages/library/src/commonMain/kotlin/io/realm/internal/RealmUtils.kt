@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.RealmConfiguration
+import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -66,7 +67,12 @@ fun <T : RealmObject> create(mediator: Mediator, realmPointer: NativePointer, ty
 }
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmObject> create(mediator: Mediator, realm: NativePointer, type: KClass<T>, primaryKey: Any?): T {
+fun <T : RealmObject> create(
+    mediator: Mediator,
+    realm: NativePointer,
+    type: KClass<T>,
+    primaryKey: Any?
+): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
     //  some runtime container of an open realm.
@@ -90,7 +96,12 @@ fun <T : RealmObject> create(mediator: Mediator, realm: NativePointer, type: KCl
     }
 }
 
-fun <T : RealmObject> copyToRealm(mediator: Mediator, realmPointer: NativePointer, instance: T, cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()): T {
+fun <T : RealmObject> copyToRealm(
+    mediator: Mediator,
+    realmPointer: NativePointer,
+    instance: T,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()
+): T {
     // Copying already managed instance is an no-op
     if ((instance as RealmObjectInternal).`$realm$IsManaged`) return instance
 
@@ -98,14 +109,25 @@ fun <T : RealmObject> copyToRealm(mediator: Mediator, realmPointer: NativePointe
     val members = companion.`$realm$fields` as List<KMutableProperty1<T, Any?>>
 
     val target = companion.`$realm$primaryKey`?.let { primaryKey ->
-        create(mediator, realmPointer, instance::class, (primaryKey as KProperty1<T, Any?>).get(instance))
+        create(
+            mediator,
+            realmPointer,
+            instance::class,
+            (primaryKey as KProperty1<T, Any?>).get(instance)
+        )
     } ?: create(mediator, realmPointer, instance::class)
     cache[instance] = target as RealmObjectInternal
     // TODO OPTIMIZE We could set all properties at once with on C-API call
     for (member: KMutableProperty1<T, Any?> in members) {
         val targetValue = member.get(instance).let { sourceObject ->
+            // Check whether the source is a RealmObject, a primitive or a list
+            // In case of list ensure the values from the source are passed to the native list
             if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
-                cache.getOrPut(sourceObject) { copyToRealm(mediator, realmPointer, sourceObject, cache) }
+                cache.getOrPut(sourceObject) {
+                    copyToRealm(mediator, realmPointer, sourceObject, cache)
+                }
+            } else if (sourceObject is RealmList<*>) {
+                processListMember(mediator, realmPointer, cache, member, target, sourceObject)
             } else {
                 sourceObject
             }
@@ -117,4 +139,29 @@ fun <T : RealmObject> copyToRealm(mediator: Mediator, realmPointer: NativePointe
         }
     }
     return target
+}
+
+@Suppress("LongParameterList")
+private fun <T : RealmObject> processListMember(
+    mediator: Mediator,
+    realmPointer: NativePointer,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal>,
+    member: KMutableProperty1<T, Any?>,
+    target: T,
+    sourceObject: RealmList<*>
+): RealmList<Any?> {
+    @Suppress("UNCHECKED_CAST")
+    val list = member.get(target) as RealmList<Any?>
+    for (item in sourceObject) {
+        // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
+        if (item is RealmObjectInternal && !item.`$realm$IsManaged`) {
+            val value = cache.getOrPut(item) {
+                copyToRealm(mediator, realmPointer, item, cache)
+            }
+            list.add(value)
+        } else {
+            list.add(item)
+        }
+    }
+    return list
 }
