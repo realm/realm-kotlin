@@ -76,3 +76,19 @@ class RealmListContainer : RealmObject {
         ).toMap()
     }
 }
+
+// Circular dependencies with lists
+class Level1 : RealmObject {
+    var name: String = ""
+    var list: RealmList<Level2> = RealmList()
+}
+
+class Level2 : RealmObject {
+    var name: String = ""
+    var list: RealmList<Level3> = RealmList()
+}
+
+class Level3 : RealmObject {
+    var name: String = ""
+    var list: RealmList<Level1> = RealmList()
+}
