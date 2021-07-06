@@ -1,3 +1,21 @@
+## 0.3.2 (2021-07-06)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* [Bug](https://github.com/realm/realm-kotlin/issues/334) in `copyToRealm` causing a `RealmList` not to be saved as part of the model.
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+
 ## 0.3.1 (2021-07-02)
 
 ### Breaking Changes
