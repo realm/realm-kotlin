@@ -19,7 +19,6 @@ package io.realm.internal
 import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -35,14 +34,14 @@ internal inline fun REPLACED_BY_IR(
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
 
-internal fun checkRealmClosed(realm: NativePointer, configuration: RealmConfiguration) {
-    if (RealmInterop.realm_is_closed(realm)) {
-        throw IllegalStateException("Realm has been closed and is no longer accessible: ${configuration.path}")
+internal fun checkRealmClosed(realm: RealmReference) {
+    if (RealmInterop.realm_is_closed(realm.dbPointer)) {
+        throw IllegalStateException("Realm has been closed and is no longer accessible: ${realm.owner.configuration.path}")
     }
 }
 
 @Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
-fun <T : RealmObject> create(mediator: Mediator, realmPointer: NativePointer, type: KClass<T>): T {
+fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
     //  some runtime container of an open realm.
@@ -51,12 +50,12 @@ fun <T : RealmObject> create(mediator: Mediator, realmPointer: NativePointer, ty
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
         val managedModel = mediator.createInstanceOf(type)
-        val key = RealmInterop.realm_find_class(realmPointer, objectType)
+        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
         return managedModel.manage(
-            realmPointer,
+            realm,
             mediator,
             type,
-            RealmInterop.realm_object_create(realmPointer, key)
+            RealmInterop.realm_object_create(realm.dbPointer, key)
         )
     } catch (e: RuntimeException) {
         // FIXME Throw proper exception
@@ -81,12 +80,12 @@ fun <T : RealmObject> create(
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
         val managedModel = mediator.createInstanceOf(type)
-        val key = RealmInterop.realm_find_class(realm, objectType)
+        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
         return managedModel.manage(
             realm,
             mediator,
             type,
-            RealmInterop.realm_object_create_with_primary_key(realm, key, primaryKey)
+            RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
         )
     } catch (e: RuntimeException) {
         // FIXME Throw proper exception

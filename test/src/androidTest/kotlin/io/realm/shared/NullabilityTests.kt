@@ -18,6 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import test.Nullability
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -33,7 +34,7 @@ class NullabilityTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Nullability::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Nullability::class))
         realm = Realm.open(configuration)
     }
 

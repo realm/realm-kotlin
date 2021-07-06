@@ -188,16 +188,16 @@ cd test
 
 # Using Snapshots
 
-If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [JFrog OSS](http://oss.jfrog.org/oss-snapshot-local/io/realm/kotlin/gradle-plugin/)
+If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/) (Browsing not available unless you have an account at https://oss.sonatype.org/)
 
 ```
 // Global build.gradle
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
-            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
         maven {
             url 'https://dl.bintray.com/kotlin/kotlin-dev'
@@ -211,15 +211,24 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
-            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
         maven {
             url 'https://dl.bintray.com/kotlin/kotlin-dev'
         }
     }
 }
+
+// Module build.gradle
+
+// Don't cache SNAPSHOT (changing) dependencies.
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+apply plugin: "io.realm.kotlin"
 ```
 
 See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.

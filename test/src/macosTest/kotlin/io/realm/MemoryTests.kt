@@ -19,6 +19,7 @@ package io.realm
 
 import io.realm.util.PlatformUtils.createTempDir
 import io.realm.util.PlatformUtils.deleteTempDir
+import io.realm.util.PlatformUtils.triggerGC
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
@@ -28,9 +29,9 @@ import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
 import test.Sample
-import kotlin.native.internal.GC
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -50,9 +51,11 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
+    @Ignore // We currently do not clean up intermediate versions if the realm itself is garbage collected
     fun garbageCollectorShouldFreeNativeResources() {
         val referenceHolder = mutableListOf<Sample>()
-        val amountOfMemoryMappedInProcessCMD = "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
+        val amountOfMemoryMappedInProcessCMD =
+            "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
         {
             val realm = openRealmFromTmpDir()
             // TODO use Realm.delete once this is implemented
@@ -68,29 +71,41 @@ class MemoryTests {
                 }
             }.toString()
 
-            realm.writeBlocking {
-                // inserting ~ 100MB of data
-                for (i in 1..100) {
-                    create(Sample::class).apply {
-                        stringField = oneMBstring
-                    }.also { referenceHolder.add(it) }
+            // inserting ~ 100MB of data
+            val elements: List<Sample> =
+                realm.writeBlocking {
+                    IntRange(1, 100).map {
+                        copyToRealm(Sample()).apply {
+                            stringField = oneMBstring
+                        }
+                    }
                 }
-            }
+            referenceHolder.addAll(elements)
         }()
-        assertEquals("99.0M", runSystemCommand(amountOfMemoryMappedInProcessCMD), "We should have at least 99 MB allocated as mmap")
+        assertEquals(
+            "99.0M",
+            runSystemCommand(amountOfMemoryMappedInProcessCMD),
+            "We should have at least 99 MB allocated as mmap"
+        )
         // After releasing all the 'realm_object_create' reference the Realm should be closed and the
         // no memory mapped file is allocated in the process
         referenceHolder.clear()
-        GC.collect()
+        triggerGC()
+
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process references
-        assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "Freeing the references should close the Realm so no memory mapped allocation should be present")
+        assertEquals(
+            "",
+            runSystemCommand(amountOfMemoryMappedInProcessCMD),
+            "Freeing the references should close the Realm so no memory mapped allocation should be present"
+        )
     }
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
     fun closeShouldFreeMemory() {
         val referenceHolder = mutableListOf<Sample>()
-        val amountOfMemoryMappedInProcessCMD = "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
+        val amountOfMemoryMappedInProcessCMD =
+            "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
         {
             val realm = openRealmFromTmpDir()
 
@@ -102,20 +117,26 @@ class MemoryTests {
                 }
             }.toString()
 
-            realm.writeBlocking {
-                // inserting ~ 100MB of data
-                for (i in 1..100) {
-                    create(Sample::class).apply {
-                        stringField = oneMBstring
-                    }.also { referenceHolder.add(it) }
+            // inserting ~ 100MB of data
+            val elements: List<Sample> =
+                realm.writeBlocking {
+                    IntRange(1, 100).map {
+                        copyToRealm(Sample()).apply {
+                            stringField = oneMBstring
+                        }
+                    }
                 }
-            }
+            referenceHolder.addAll(elements)
             realm.close() // force closing will free the native memory even though we still have reference to realm_object open.
         }()
 
-        GC.collect()
+        triggerGC()
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
-        assertEquals("", runSystemCommand(amountOfMemoryMappedInProcessCMD), "we should not have any mmap allocations")
+        assertEquals(
+            "",
+            runSystemCommand(amountOfMemoryMappedInProcessCMD),
+            "we should not have any mmap allocations"
+        )
     }
 
     private fun openRealmFromTmpDir(): Realm {

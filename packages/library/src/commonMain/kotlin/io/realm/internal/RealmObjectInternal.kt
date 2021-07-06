@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.RealmObject
+import io.realm.isValid
 
 /**
  * Internal interface for Realm objects.
@@ -26,3 +27,9 @@ import io.realm.RealmObject
  * [RealmObject].
  */
 interface RealmObjectInternal : RealmObject, io.realm.interop.RealmObjectInterop
+
+fun RealmObjectInternal.checkValid() {
+    if (!this.isValid()) {
+        throw IllegalStateException("Cannot perform this operation on an invalid/deleted object")
+    }
+}

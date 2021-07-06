@@ -21,6 +21,7 @@ import io.realm.RealmObject
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.util.TypeDescriptor.rType
+import io.realm.util.Utils.createRandomString
 import test.primarykey.NoPrimaryKey
 import test.primarykey.PrimaryKeyByte
 import test.primarykey.PrimaryKeyByteNullable
@@ -56,7 +57,7 @@ class PrimaryKeyTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration.Builder(path = "$tmpDir/default.realm")
+            RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm")
                 .schema(
                     PrimaryKeyString::class,
                     PrimaryKeyStringNullable::class,
@@ -204,7 +205,6 @@ class PrimaryKeyTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun testPrimaryKeyForAllSupportedTypes() {
-        val types = allPrimaryKeyFieldTypes.toMutableSet()
 
         // TODO Maybe we would only need to iterate underlying Realm types?
         val classes = arrayOf(
@@ -222,7 +222,7 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
         )
 
-        val configuration = RealmConfiguration.Builder("$tmpDir/default.realm")
+        val configuration = RealmConfiguration.Builder("$tmpDir/${createRandomString(16)}.realm")
             .schema(
                 PrimaryKeyByte::class,
                 PrimaryKeyByteNullable::class,
@@ -244,6 +244,7 @@ class PrimaryKeyTests {
         val realm = Realm.open(configuration)
 
         realm.writeBlocking {
+            val types = allPrimaryKeyFieldTypes.toMutableSet()
             for (c in classes) {
                 // We could expose this through the test model definitions instead if that is better to avoid the internals
                 val realmObjectCompanion = mediator.companionOf(c)

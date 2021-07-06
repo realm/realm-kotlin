@@ -21,6 +21,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -40,7 +41,7 @@ class InstrumentedTests {
     @Before
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
         realm = Realm.open(configuration)
     }
 
@@ -90,13 +91,12 @@ class InstrumentedTests {
 
     @Test
     fun query_parseErrorThrows() {
-        val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
-        // Will first fail when accessing the actual elements as the query is lazily evaluated
-        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationException as
+        val objects: RealmResults<Sample> = realm.objects(Sample::class)
+        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
         //  in realm-java ;)
         //  https://github.com/realm/realm-kotlin/issues/70
         assertFailsWith<RuntimeException> {
-            println(objects3)
+            objects.query("name == str")
         }
     }
 
@@ -111,7 +111,7 @@ class InstrumentedTests {
         assertEquals(2, objects1.size)
 
         realm.writeBlocking {
-            realm.objects(Sample::class).delete()
+            objects(Sample::class).delete()
         }
 
         assertEquals(0, realm.objects(Sample::class).size)
