@@ -9,6 +9,7 @@ import io.realm.util.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.runBlocking
 import test.Sample
 import kotlin.test.AfterTest
@@ -81,12 +82,12 @@ class RealmResultsNotificationsTests : NotificationTests {
             val c1 = Channel<RealmResults<Sample>>(1)
             val c2 = Channel<RealmResults<Sample>>(1)
             val observer1 = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
                     c1.trySend(it)
                 }
             }
             val observer2 = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
                     c2.trySend(it)
                 }
             }
@@ -176,7 +177,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
                     c.send(it.size)
                 }
                 fail("Flow should not be canceled.")

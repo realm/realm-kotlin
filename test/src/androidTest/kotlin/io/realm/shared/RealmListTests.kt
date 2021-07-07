@@ -448,7 +448,7 @@ internal interface ManagedList {
  *      }
  *
  *      // Assert again outside the transaction and cleanup
- *      assertAndCleanup { list -> assertions(list) }
+ *      assertListAndCleanup { list -> assertions(list) }
  *  }
  */
 internal abstract class ManagedListTester<T>(
