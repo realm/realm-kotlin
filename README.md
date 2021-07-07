@@ -40,7 +40,7 @@ kotlin {
 }
 ```
 
-- If you use the model classes or query results inside the Android module(`androidApp/build.gradle.kts`) you need to add a compile time dependency as follow:
+- If you use the model classes or query results inside the Android module(`androidApp/build.gradle.kts`) you need to add a compile time dependency as follows:
 
 ```Gradle
 dependencies {
