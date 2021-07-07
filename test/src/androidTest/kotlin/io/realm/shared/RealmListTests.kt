@@ -21,8 +21,12 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.RealmResults
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
+import test.list.Level1
+import test.list.Level2
+import test.list.Level3
 import test.list.RealmListContainer
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -48,7 +52,7 @@ class RealmListTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(
             path = "$tmpDir/default.realm",
-            schema = setOf(RealmListContainer::class)
+            schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class)
         )
         realm = Realm.open(configuration)
     }
@@ -59,6 +63,83 @@ class RealmListTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun nestedObjectTest() {
+        realm.writeBlocking {
+            val level1_1 = Level1().apply { name = "l1_1" }
+            val level1_2 = Level1().apply { name = "l1_2" }
+            val level2_1 = Level2().apply { name = "l2_1" }
+            val level2_2 = Level2().apply { name = "l2_2" }
+            val level3_1 = Level3().apply { name = "l3_1" }
+            val level3_2 = Level3().apply { name = "l3_2" }
+
+            level1_1.list.add(level2_1)
+            level1_2.list.addAll(listOf(level2_1, level2_2))
+
+            level2_1.list.add(level3_1)
+            level2_2.list.addAll(listOf(level3_1, level3_2))
+
+            level3_1.list.add(level1_1)
+            level3_2.list.addAll(listOf(level1_1, level1_2))
+
+            copyToRealm(level1_2) // this includes the graph of all 6 objects
+        }
+
+        val objectsL1: RealmResults<Level1> =
+            realm.objects<Level1>().query("name BEGINSWITH \"l\" SORT(name ASC)")
+        val objectsL2: RealmResults<Level2> =
+            realm.objects<Level2>().query("name BEGINSWITH \"l\" SORT(name ASC)")
+        val objectsL3: RealmResults<Level3> =
+            realm.objects<Level3>().query("name BEGINSWITH \"l\" SORT(name ASC)")
+
+        assertEquals(2, objectsL1.count())
+        assertEquals(2, objectsL2.count())
+        assertEquals(2, objectsL3.count())
+
+        // Checking insertion order is honoured
+        assertEquals("l1_1", objectsL1[0].name)
+        assertEquals(1, objectsL1[0].list.size)
+        assertEquals("l2_1", objectsL1[0].list[0].name)
+
+        assertEquals("l1_2", objectsL1[1].name)
+        assertEquals(2, objectsL1[1].list.size)
+        assertEquals("l2_1", objectsL1[1].list[0].name)
+        assertEquals("l2_2", objectsL1[1].list[1].name)
+
+        assertEquals("l2_1", objectsL2[0].name)
+        assertEquals(1, objectsL2[0].list.size)
+        assertEquals("l3_1", objectsL2[0].list[0].name)
+
+        assertEquals("l2_2", objectsL2[1].name)
+        assertEquals(2, objectsL2[1].list.size)
+        assertEquals("l3_1", objectsL2[1].list[0].name)
+        assertEquals("l3_2", objectsL2[1].list[1].name)
+
+        assertEquals("l3_1", objectsL3[0].name)
+        assertEquals(1, objectsL3[0].list.size)
+        assertEquals("l1_1", objectsL3[0].list[0].name)
+
+        assertEquals("l3_2", objectsL3[1].name)
+        assertEquals(2, objectsL3[1].list.size)
+        assertEquals("l1_1", objectsL3[1].list[0].name)
+        assertEquals("l1_2", objectsL3[1].list[1].name)
+
+        // Following circular links
+        assertEquals("l1_1", objectsL1[0].name)
+        assertEquals(1, objectsL1[0].list.size)
+        assertEquals("l2_1", objectsL1[0].list[0].name)
+        assertEquals(1, objectsL1[0].list[0].list.size)
+        assertEquals("l3_1", objectsL1[0].list[0].list[0].name)
+        assertEquals("l1_1", objectsL1[0].list[0].list[0].list[0].name)
+    }
+
+    @Test
+    fun copyToRealm() {
+        for (tester in managedTesters) {
+            tester.copyToRealm()
+        }
     }
 
     @Test
@@ -223,6 +304,7 @@ class RealmListTests {
 internal interface ListApiTester {
 
     override fun toString(): String
+    fun copyToRealm()
     fun get()
     fun getFailsIfClosed(realm: Realm)
     fun addWithIndex()
@@ -274,6 +356,11 @@ internal interface TypeSafetyManager<T> {
     override fun toString(): String // Default implementation not allowed as it comes from "Any"
     fun createContainerAndGetList(realm: MutableRealm? = null): RealmList<T>
     fun getInitialDataSet(): List<T>
+
+    fun createPrePopulatedContainer(dataSet: List<T>): RealmListContainer =
+        RealmListContainer().also {
+            property.get(it).apply { addAll(dataSet) }
+        }
 
     fun getList(container: RealmListContainer): RealmList<T> = property.get(container)
 }
@@ -361,7 +448,7 @@ internal interface ManagedList {
  *      }
  *
  *      // Assert again outside the transaction and cleanup
- *      assertAndCleanup { list -> assertions(list) }
+ *      assertListAndCleanup { list -> assertions(list) }
  *  }
  */
 internal abstract class ManagedListTester<T>(
@@ -389,6 +476,27 @@ internal abstract class ManagedListTester<T>(
 
     override fun toString(): String = "Managed-$typeSafetyManager"
 
+    override fun copyToRealm() {
+        val dataSet = typeSafetyManager.getInitialDataSet()
+
+        val assertions = { container: RealmListContainer ->
+            dataSet.forEachIndexed { index, t ->
+                assertElementsAreEqual(t, typeSafetyManager.getList(container)[index])
+            }
+        }
+
+        errorCatcher {
+            val container = typeSafetyManager.createPrePopulatedContainer(dataSet)
+
+            realm.writeBlocking {
+                val managedContainer = copyToRealm(container)
+                assertions(managedContainer)
+            }
+        }
+
+        assertContainerAndCleanup { container -> assertions(container) }
+    }
+
     override fun get() {
         val dataSet = typeSafetyManager.getInitialDataSet()
         val assertions = { list: RealmList<T> ->
@@ -415,7 +523,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun getFailsIfClosed(realm: Realm) {
@@ -471,7 +579,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun addWithIndexFailsIfClosed(realm: Realm) {
@@ -541,7 +649,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun addAllWithIndexFailsIfClosed(realm: Realm) {
@@ -577,7 +685,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun clearFailsIfClosed(realm: Realm) {
@@ -629,7 +737,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun removeAtFailsIfClosed(realm: Realm) {
@@ -679,7 +787,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun setFailsIfClosed(realm: Realm) {
@@ -699,13 +807,27 @@ internal abstract class ManagedListTester<T>(
     }
 
     // Retrieves the list again but this time from Realm to check the getter is called correctly
-    private fun assertAndCleanup(assertion: (RealmList<T>) -> Unit) {
+    private fun assertListAndCleanup(assertion: (RealmList<T>) -> Unit) {
         val container = realm.objects<RealmListContainer>().first()
         val list = typeSafetyManager.getList(container)
 
         // Assert
         errorCatcher {
             assertion(list)
+        }
+
+        // Clean up
+        realm.writeBlocking {
+            delete(findLatest(container)!!)
+        }
+    }
+
+    private fun assertContainerAndCleanup(assertion: (RealmListContainer) -> Unit) {
+        val container = realm.objects<RealmListContainer>().first()
+
+        // Assert
+        errorCatcher {
+            assertion(container)
         }
 
         // Clean up
