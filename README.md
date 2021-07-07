@@ -21,34 +21,13 @@ Start a new [KMM](https://kotlinlang.org/docs/mobile/create-first-app.html) proj
 
 *See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) or the [realm-kotlin releases](https://github.com/realm/realm-kotlin/releases) for the latest version number.*
 
-- Add the following Gradle configuration in the root project (make sure you're using Kotlin `1.4.20` or recent)
-`<root project>/build.gradle.kts`
-```Gradle
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")// minimum 1.4.20
-        classpath("com.android.tools.build:gradle:4.0.1")
-        classpath("io.realm.kotlin:gradle-plugin:<VERSION>")
-    }
-}
-
-allprojects {
-    repositories {
-        mavenCentral()
-    }
-}
-```
-
-- Apply the `io.realm.kotlin` plugin and specify the dependency in the common source set.
+- In the shared module (`shared/build.gradle.kts`), apply the `io.realm.kotlin` plugin and specify the dependency in the common source set.
 
 ```Gradle
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
-    id("io.realm.kotlin")
+    id("io.realm.kotlin") version "<VERSION>"
 }
 
 kotlin {
@@ -61,6 +40,13 @@ kotlin {
 }
 ```
 
+- If you use the model classes or query results inside the Android module(`androidApp/build.gradle.kts`) you need to add a compile time dependency as follows:
+
+```Gradle
+dependencies {
+    compileOnly("io.realm.kotlin:library:<VERSION>")
+}
+```
 ## Define model
 
 Start writing your shared database logic in the shared module by defining first your model
