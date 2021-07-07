@@ -63,7 +63,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
                     c.trySend(it.size)
                 }
             }

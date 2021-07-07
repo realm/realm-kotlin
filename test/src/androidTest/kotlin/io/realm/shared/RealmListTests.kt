@@ -832,7 +832,7 @@ internal abstract class ManagedListTester<T>(
 
         // Clean up
         realm.writeBlocking {
-            delete(container)
+            delete(findLatest(container)!!)
         }
     }
 }
