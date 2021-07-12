@@ -34,7 +34,7 @@ public abstract class BaseRealm internal constructor(
     dbPointer: NativePointer
 ) {
 
-    companion object {
+    private companion object {
         private const val observablesNotSupportedMessage = "Observing changes are not supported by this Realm."
     }
 
