@@ -16,6 +16,8 @@
 package io.realm
 
 /**
+ * A `VersionId` representing the transactional id of the Realm itself or it's objects.
+ *
  * Realm is an [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control) database. This means that at any
  * given time, multiple version of data can be visible. This class describes the version of such data.
  *

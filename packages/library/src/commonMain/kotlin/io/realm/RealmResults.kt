@@ -30,6 +30,12 @@ import kotlin.reflect.KClass
 //  - Lazy API makes it harded to debug
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
+/**
+ * A _Realm Result_ holds the results of querying the Realm.
+ *
+ * @see Realm.objects
+ * @see MutableRealm.objects
+ */
 class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
 
     private val mode: Mode

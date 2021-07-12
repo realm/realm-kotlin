@@ -19,4 +19,13 @@ package io.realm
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.FIELD)
 @MustBeDocumented
+/**
+ * Annotation marking a field as a primary key inside Realm.
+ *
+ * Only one field in a RealmObject class can have this annotation, and the field should uniquely
+ * identify the object.
+ *
+ * It is allowed to apply this annotation on the following primitive types: String, Byte, Char,
+ * Short, Int, and Long and are permitted to have null as a primary key value.
+ */
 annotation class PrimaryKey

@@ -1,7 +1,10 @@
 package io.realm.log
 
+import io.realm.RealmConfiguration
 /**
  * Interface describing a logger implementation.
+ *
+ * @see [RealmConfiguration.Builder.log]
  */
 interface RealmLogger {
 

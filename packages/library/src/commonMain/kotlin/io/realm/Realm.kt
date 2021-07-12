@@ -34,7 +34,14 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
+/**
+ * Main entry point for interacting with the persisted Realm store.
+ *
+ * @see Realm.open
+ * @see RealmConfiguration
+ */
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
@@ -112,8 +119,20 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      *  this constructor should be the primary way to open Realms (as you only need
      *  to do it once pr. app).
      */
+    // FIXME This is not updated to the frozen architecture. Which way to go? Towards Realm.open or
+    //  move logic from Realm.open to this constructor?
     public constructor(configuration: RealmConfiguration) :
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+
+    /**
+     * Returns the results of querying for all objects of a specific type.
+     *
+     * The result is reflecting the state of the Realm at the invocation time, thus the results
+     * will not change on updates to the Realm.
+     */
+    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+        return super.objects(clazz)
+    }
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write
