@@ -32,7 +32,7 @@ import kotlin.reflect.KClass
  * All objects created and/or obtained from the _mutable realm_ in a write-transaction are bound to
  * the thread executing the transaction and all operations on the _mutable realm_ or on any of the
  * objects must be done on the thread executing the transaction. Only exception are objects returned
- * from [Realm.write] and [Realm.writeBlocking] which will be frozen and kept tied to resulting
+ * from [Realm.write] and [Realm.writeBlocking] which will be frozen and kept tied to the resulting
  * version of the write-transaction.
  */
 class MutableRealm : BaseRealm {

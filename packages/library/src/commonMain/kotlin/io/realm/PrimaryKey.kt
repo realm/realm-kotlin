@@ -26,6 +26,6 @@ package io.realm
  * identify the object.
  *
  * It is allowed to apply this annotation on the following primitive types: String, Byte, Char,
- * Short, Int, and Long and are permitted to have null as a primary key value.
+ * Short, Int, and Long, as well as their nullable variants.
  */
 annotation class PrimaryKey
