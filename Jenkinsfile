@@ -156,7 +156,7 @@ def runScm() {
     // Check type of Build. We are treating this as a release build if we are building
     // the exact Git SHA that was tagged.
     gitTag = readGitTag()
-    version = sh(returnStdout: true, script: 'grep version buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
+    version = sh(returnStdout: true, script: 'grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
     echo "Git branch/tag: ${currentBranch}/${gitTag ?: 'none'}"
     if (!gitTag) {
         gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
