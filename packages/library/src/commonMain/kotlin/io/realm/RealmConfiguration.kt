@@ -33,7 +33,6 @@ import kotlin.reflect.KClass
 /**
  * Configuration for log events created by a Realm instance.
  */
-// FIXME Any reason for this to be public?
 public data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.

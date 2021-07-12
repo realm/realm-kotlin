@@ -1,1 +1,1 @@
-# Module realm-kotlin
+# Module Realm Kotlin Multiplatform SDK

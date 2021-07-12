@@ -155,6 +155,9 @@ class MutableRealm : BaseRealm {
      * The result is live and are thus also reflecting any update to the MutableRealm.
      *
      * The result is only valid on the calling thread.
+     *
+     * @param clazz The class of the objects to query for.
+     * @return The result of the query, reflecting future updates to the mutable realm.
      */
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         return super.objects(clazz)

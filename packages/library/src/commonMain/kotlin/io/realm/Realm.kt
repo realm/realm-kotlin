@@ -37,9 +37,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
 /**
- * Main entry point for interacting with the persisted Realm store.
+ * A Realm instance is the main entry point for interacting with the persisted Realm.
  *
- * @see Realm.open
  * @see RealmConfiguration
  */
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
@@ -90,17 +89,21 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         fun open(
             configuration: RealmConfiguration,
         ): Realm {
-            // TODO Find a cleaner way to get the initial frozen instance
             val liveRealm = RealmInterop.realm_open(configuration.nativeConfig)
-            val frozenRealm = RealmInterop.realm_freeze(liveRealm)
-            RealmInterop.realm_close(liveRealm)
-            val realm = Realm(configuration, frozenRealm)
+            val realm = Realm(configuration, liveRealm)
             realm.log.info("Opened Realm: ${configuration.path}")
             return realm
         }
     }
 
     init {
+        // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
+        //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
+        //  frozen pointer and close the live one.
+        val initialLiveDbPointer = realmReference.dbPointer
+        val frozenRealm = RealmInterop.realm_freeze(initialLiveDbPointer)
+        RealmInterop.realm_close(initialLiveDbPointer)
+        realmReference = RealmReference(this, frozenRealm)
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
             realmFlow.emit(this@Realm)
@@ -114,13 +117,9 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * Open a Realm instance. This instance grants access to an underlying Realm file defined by
      * the provided [RealmConfiguration].
      *
-     * FIXME Figure out how to describe the constructor better
-     * FIXME Once the implementation of this class moves to the frozen architecture
-     *  this constructor should be the primary way to open Realms (as you only need
-     *  to do it once pr. app).
+     * @param configuration The RealmConfiguration used to open the Realm.
      */
-    // FIXME This is not updated to the frozen architecture. Which way to go? Towards Realm.open or
-    //  move logic from Realm.open to this constructor?
+    // FIXME Figure out how to describe the constructor better
     public constructor(configuration: RealmConfiguration) :
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
 
@@ -128,7 +127,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * Returns the results of querying for all objects of a specific type.
      *
      * The result is reflecting the state of the Realm at the invocation time, thus the results
-     * will not change on updates to the Realm.
+     * will not change on updates to the Realm and can be accessed from any thread.
+     *
+     * @param clazz The class of the objects to query for.
+     * @return The result of the query as of the time of invoking this method.
      */
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         return super.objects(clazz)

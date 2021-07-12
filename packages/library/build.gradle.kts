@@ -217,7 +217,8 @@ realmPublish {
 }
 
 tasks.dokkaHtml.configure {
-    moduleName.set("realm-kotlin")
+    moduleName.set("Realm Kotlin Multiplatform SDK")
+    moduleVersion.set(Realm.version)
     dokkaSourceSets {
         configureEach {
             moduleVersion.set(Realm.version)

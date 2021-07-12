@@ -21,7 +21,12 @@ package io.realm
 //    dependent on how the final API is going to look like.
 //  - Query could alternatively be separated into builder to await constructing new results until
 //    actually executing the query
-// FIXME Is this deprecated?
+//  https://github.com/realm/realm-kotlin/issues/206
+/**
+ * Interface holding common query methods.
+ *
+ * Will most likely change in the future.
+ */
 interface Queryable<T : RealmObject> {
     fun query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>
 }
