@@ -54,7 +54,7 @@ public abstract class BaseRealm internal constructor(
         }
 
     /**
-     * The current version of the data in this Realm.
+     * The current version of the data in this realm.
      */
     // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     public var version: VersionId = VersionId(0)

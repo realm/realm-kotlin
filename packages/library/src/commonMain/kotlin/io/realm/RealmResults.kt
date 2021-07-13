@@ -69,6 +69,9 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
         }
     }
 
+    /**
+     * The current version of the data in this Realm.
+     */
     public fun version(): VersionId {
         return realm.owner.version
     }
@@ -84,10 +87,20 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
         return model as T
     }
 
-    // Query string follows the Swift/JS filter/sort-syntax as described in
-    // https://realm.io/docs/javascript/latest/#filtering
-    // Ex.:
-    //   'color = "tan" AND name BEGINSWITH "B" SORT(name DESC) LIMIT(5)'
+    /**
+     * Perform a query on the objects of this result using the Realm Query Language.
+     *
+     * See [these docs][https://docs.mongodb.com/realm-sdks/java/latest/io/realm/RealmQuery.html#rawPredicate-java.lang.String-java.lang.Object...-]
+     * for a description and [these docs][https://docs.mongodb.com/realm-sdks/js/latest/tutorial-query-language.html]
+     * for a more detailed description of the actual Realm Query Language.
+     *
+     * Ex.:
+     *  `'color = "tan" AND name BEGINSWITH "B" SORT(name DESC) LIMIT(5)`
+     *
+     * @param query The query string to use for filtering and sort.
+     * @param args The query parameters.
+     * @return new result according to the query and query arguments.
+     */
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any): RealmResults<T> {
         return fromQuery(
