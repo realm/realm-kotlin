@@ -25,7 +25,7 @@ package io.realm
  * Only one field in a RealmObject class can have this annotation, and the field should uniquely
  * identify the object.
  *
- * It is allowed to apply this annotation on the following primitive types: String, Byte, Char,
+ * This annotation applies to the following primitive types: String, Byte, Char,
  * Short, Int and Long, as well as their nullable variants.
  */
 annotation class PrimaryKey

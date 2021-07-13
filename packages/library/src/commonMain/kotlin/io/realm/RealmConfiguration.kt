@@ -49,8 +49,8 @@ public data class LogConfiguration(
 /**
  * A _Realm Configuration_ defining specific setup and configuration for a Realm instance.
  *
- * The RealmConfiguration can, for simple uses cases, be created directly through the constructor,
- * while more advanced setup requires building the RealmConfiguration through
+ * The RealmConfiguration can, for simple uses cases, be created directly through the constructor.
+ * More advanced setup requires building the RealmConfiguration through
  * [RealmConfiguration.Builder.build].
  *
  * @see Realm.open
