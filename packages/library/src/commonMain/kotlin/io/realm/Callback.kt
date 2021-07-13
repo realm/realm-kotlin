@@ -16,7 +16,10 @@
 
 package io.realm
 
-fun interface Callback<T> {
+/**
+ * A `callback` interface to receive notifications about updates.
+ */
+internal fun interface Callback<T> {
     fun onChange(result: T)
     // FIXME API-NOTIFICATION Consider adding an onError(throwable: Throwable)
 }

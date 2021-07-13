@@ -34,7 +34,13 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
+/**
+ * A Realm instance is the main entry point for interacting with a persisted Realm.
+ *
+ * @see RealmConfiguration
+ */
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 class Realm private constructor(configuration: RealmConfiguration, dbPointer: NativePointer) :
     BaseRealm(configuration, dbPointer) {
@@ -83,17 +89,21 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         fun open(
             configuration: RealmConfiguration,
         ): Realm {
-            // TODO Find a cleaner way to get the initial frozen instance
             val liveRealm = RealmInterop.realm_open(configuration.nativeConfig)
-            val frozenRealm = RealmInterop.realm_freeze(liveRealm)
-            RealmInterop.realm_close(liveRealm)
-            val realm = Realm(configuration, frozenRealm)
+            val realm = Realm(configuration, liveRealm)
             realm.log.info("Opened Realm: ${configuration.path}")
             return realm
         }
     }
 
     init {
+        // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
+        //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
+        //  frozen pointer and close the live one.
+        val initialLiveDbPointer = realmReference.dbPointer
+        val frozenRealm = RealmInterop.realm_freeze(initialLiveDbPointer)
+        RealmInterop.realm_close(initialLiveDbPointer)
+        realmReference = RealmReference(this, frozenRealm)
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
             realmFlow.emit(this@Realm)
@@ -107,13 +117,24 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      * Open a Realm instance. This instance grants access to an underlying Realm file defined by
      * the provided [RealmConfiguration].
      *
-     * FIXME Figure out how to describe the constructor better
-     * FIXME Once the implementation of this class moves to the frozen architecture
-     *  this constructor should be the primary way to open Realms (as you only need
-     *  to do it once pr. app).
+     * @param configuration The RealmConfiguration used to open the Realm.
      */
+    // FIXME Figure out how to describe the constructor better
     public constructor(configuration: RealmConfiguration) :
         this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+
+    /**
+     * Returns the results of querying for all objects of a specific type.
+     *
+     * The result reflects the state of the realm at invocation time, so the results
+     * do not change when the realm updates. You can access these results from any thread.
+     *
+     * @param clazz The class of the objects to query for.
+     * @return The result of the query as of the time of invoking this method.
+     */
+    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+        return super.objects(clazz)
+    }
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write

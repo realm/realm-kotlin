@@ -218,6 +218,7 @@ realmPublish {
 
 tasks.dokkaHtml.configure {
     moduleName.set("Realm Kotlin Multiplatform SDK")
+    moduleVersion.set(Realm.version)
     dokkaSourceSets {
         configureEach {
             moduleVersion.set(Realm.version)
@@ -227,9 +228,14 @@ tasks.dokkaHtml.configure {
                 matchingRegex.set("io\\.realm\\.internal\\.*")
                 suppress.set(true)
             }
+            jdkVersion.set(8)
         }
         val commonMain by getting {
-            includes.from("overview.md", "io.realm.md")
+            includes.from(
+                "overview.md",
+                "src/commonMain/kotlin/io/realm/info.md",
+                "src/commonMain/kotlin/io/realm/log/info.md"
+            )
             sourceRoot("../runtime-api/src/commonMain/kotlin")
         }
     }

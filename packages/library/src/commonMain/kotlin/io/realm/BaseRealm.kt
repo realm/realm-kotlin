@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
- * Base class for all Realm instances.
+ * Base class for all Realm instances ([Realm] and [MutableRealm]).
  */
 @Suppress("UnnecessaryAbstractClass")
 public abstract class BaseRealm internal constructor(
@@ -34,8 +34,8 @@ public abstract class BaseRealm internal constructor(
     dbPointer: NativePointer
 ) {
 
-    companion object {
-        const val observerablesNotSupportMessage = "Observing changes are not supported by this Realm."
+    private companion object {
+        private const val observablesNotSupportedMessage = "Observing changes are not supported by this Realm."
     }
 
     /**
@@ -54,7 +54,7 @@ public abstract class BaseRealm internal constructor(
         }
 
     /**
-     * The current data version of this Realm and data fetched from it.
+     * The current version of the data in this realm.
      */
     // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     public var version: VersionId = VersionId(0)
@@ -66,7 +66,17 @@ public abstract class BaseRealm internal constructor(
         log.info("Realm opened: ${configuration.path}")
     }
 
-    fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+    /**
+     * Returns the results of querying for all objects of a specific type.
+     *
+     * For a [Realm] instance this reflects the state of the realm at the invocation time, thus
+     * the results will not change on updates to the Realm. For a [MutableRealm] the result is live
+     * and will in fact reflect updates to the [MutableRealm].
+     *
+     * @param clazz The class of the objects to query for.
+     * @return The result of the query as of the time of invoking this method.
+     */
+    open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         // Use same reference through out all operations to avoid locking
         val realmReference = this.realmReference
         realmReference.checkClosed()
@@ -77,39 +87,48 @@ public abstract class BaseRealm internal constructor(
             configuration.mediator
         )
     }
-    // Convenience inline method for the above to skip KClass argument
+    /**
+     * Returns the results of querying for all objects of a specific type.
+     *
+     * Convenience inline method to catch the reified class type of single argument variant of [objects].
+     *
+     * @param T The type of the objects to query for.
+     * @return The result of the query. Dependent of the type of the Realm this will either reflect
+     * for [Realm]: the state at invocation or for [MutableRealm] the latest updated state of the
+     * mutable realm.
+     */
     inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
-        throw NotImplementedError(observerablesNotSupportMessage)
+        throw NotImplementedError(observablesNotSupportedMessage)
     }
 
     internal open fun <T : RealmObject> registerListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable {
-        throw NotImplementedError(observerablesNotSupportMessage)
+        throw NotImplementedError(observablesNotSupportedMessage)
     }
 
     internal open fun <T : RealmObject> registerObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {
-        throw NotImplementedError(observerablesNotSupportMessage)
+        throw NotImplementedError(observablesNotSupportedMessage)
     }
 
     internal open fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
-        throw NotImplementedError(observerablesNotSupportMessage)
+        throw NotImplementedError(observablesNotSupportedMessage)
     }
     internal open fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
-        throw NotImplementedError(observerablesNotSupportMessage)
+        throw NotImplementedError(observablesNotSupportedMessage)
     }
 
     internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
-        throw NotImplementedError(observerablesNotSupportMessage)
+        throw NotImplementedError(observablesNotSupportedMessage)
     }
 
     /**

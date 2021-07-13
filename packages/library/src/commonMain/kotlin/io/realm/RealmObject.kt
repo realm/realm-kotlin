@@ -30,6 +30,14 @@ import kotlin.reflect.KClass
  */
 interface RealmObject
 
+/**
+ * Returns whether the object is frozen or not.
+ *
+ * A frozen object is tied to a specific version of the data in the realm and fields retrieved
+ * from this object instance will not update even if the object is updated in the Realm.
+ *
+ * @return true if the object is frozen, false otherwise.
+ */
 public fun RealmObject.isFrozen(): Boolean {
     val internalObject = this as RealmObjectInternal
     internalObject.`$realm$ObjectPointer`?.let {
@@ -57,6 +65,12 @@ public var RealmObject.version: VersionId
         throw UnsupportedOperationException("Setter is required by the Kotlin Compiler, but should not be called directly")
     }
 
+/**
+ * Deletes the RealmObject.
+ *
+ * @throws InvalidArgumentException if invoked on an invalid object
+ * @throws RuntimeException if invoked outside of a [Realm.write] or [Realm.writeBlocking] block.
+ */
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83

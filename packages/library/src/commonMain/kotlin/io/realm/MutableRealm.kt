@@ -23,9 +23,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
- * This class represents the writeable state of a Realm file. The only way to modify data in a Realm is through
- * instances of this class. These are provided and managed automatically through either [Realm.write] or
+ * Represents the writeable state of a Realm file.
+ *
+ * To modify data in a [Realm], use instances of this class.
+ * These are provided and managed automatically through either [Realm.write] or
  * [Realm.writeBlocking].
+ *
+ * All objects created and/or obtained from the _mutable realm_ in a write-transaction are bound to
+ * the thread executing the transaction. All operations on the _mutable realm_ or on any of the
+ * objects contained in that realm must execute on the thread executing the transaction. The only exception is objects returned
+ * from [Realm.write] and [Realm.writeBlocking], which are frozen and remain tied to the resulting
+ * version of the write-transaction.
  */
 class MutableRealm : BaseRealm {
 
@@ -134,9 +142,27 @@ class MutableRealm : BaseRealm {
      * @param instance The object to create a copy from.
      * @return The managed version of the `instance`.
      */
+    // FIXME Due to lack of throwing C-API this will not throw on duplicate keys, so this
+    //  currently effectively mimics the copyOrUpdate API from realm-java.
+    //  https://github.com/realm/realm-kotlin/issues/192
     fun <T : RealmObject> copyToRealm(instance: T): T {
         return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
     }
+
+    /**
+     * Returns the results of querying for all objects of a specific type.
+     *
+     * The result is live and thus also reflects any update to the [MutableRealm].
+     *
+     * The result is only valid on the calling thread.
+     *
+     * @param clazz The class of the objects to query for.
+     * @return The result of the query, reflecting future updates to the mutable realm.
+     */
+    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+        return super.objects(clazz)
+    }
+
     /**
      * Deletes the object from the underlying Realm.
      *
@@ -153,30 +179,30 @@ class MutableRealm : BaseRealm {
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
 
-    override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+    internal override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+    internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
         throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
+    internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
         throw IllegalStateException("Changes to RealmObject cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerResultsChangeListener(
+    internal override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResults<T>,
         callback: Callback<RealmResults<T>>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+    internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 }

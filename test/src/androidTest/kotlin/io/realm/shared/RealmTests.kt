@@ -67,7 +67,7 @@ class RealmTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = configuration
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -382,7 +382,6 @@ class RealmTests {
     }
 
     @Test
-    @Ignore // We currently do not keep track of all intermediate versions
     fun closeClosesAllVersions() {
         runBlocking {
             realm.write { copyToRealm(Parent()) }

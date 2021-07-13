@@ -16,6 +16,9 @@
 
 package io.realm
 
-interface Cancellable {
+/**
+ * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
+ */
+internal interface Cancellable {
     fun cancel()
 }
