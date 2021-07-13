@@ -124,6 +124,9 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
         return realm.owner.registerResultsObserver(this)
     }
 
+    /**
+     * Delete all objects from this result from the realm.
+     */
     fun delete() {
         // TODO OPTIMIZE Are there more efficient ways to do this? realm_query_delete_all is not
         //  available in C-API yet, but should probably await final query design
