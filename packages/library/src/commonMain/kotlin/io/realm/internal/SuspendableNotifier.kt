@@ -43,9 +43,9 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
         }
     }
 
-    // FIXME Work-around for the global Realm changed listener not working. Adding extra buffer
-    //  capacity as the realm is processing updates on the same dispatcher, thus cannot make
-    //  rendezvous one the same thread. Should be reworked when global changed listener is in place.
+    // FIXME Work-around for the global Realm changed listener not working.
+    // FIXME Adding extra buffer capacity as we are otherwise never able to emit anything. Needs to
+    //  be investigated.
     // This Flow exposes a stream of changes to the owner Realm
     private val _realmChanged = MutableSharedFlow<RealmReference>(onBufferOverflow = BufferOverflow.SUSPEND, extraBufferCapacity = 1)
 
