@@ -63,8 +63,8 @@ class InstrumentedTests {
     fun createAndUpdate() {
         val s = "Hello, World!"
         realm.writeBlocking {
-            val sample = create(Sample::class)
-            assertEquals("", sample.stringField)
+            val sample = copyToRealm(Sample())
+            assertEquals("Realm", sample.stringField)
             sample.stringField = s
             assertEquals(s, sample.stringField)
         }
@@ -75,8 +75,8 @@ class InstrumentedTests {
         val s = "Hello, World!"
 
         realm.writeBlocking {
-            create(Sample::class).run { stringField = s }
-            create(Sample::class).run { stringField = "Hello, Realm!" }
+            copyToRealm(Sample()).run { stringField = s }
+            copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
@@ -103,8 +103,8 @@ class InstrumentedTests {
     @Test
     fun query_delete() {
         realm.writeBlocking {
-            create(Sample::class).run { stringField = "Hello, World!" }
-            create(Sample::class).run { stringField = "Hello, Realm!" }
+            copyToRealm(Sample()).run { stringField = "Hello, World!" }
+            copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
@@ -120,7 +120,7 @@ class InstrumentedTests {
     @Test
     fun delete() {
         realm.writeBlocking {
-            val sample = create(Sample::class)
+            val sample = copyToRealm(Sample())
             delete(sample)
             assertFailsWith<IllegalArgumentException> {
                 delete(sample)

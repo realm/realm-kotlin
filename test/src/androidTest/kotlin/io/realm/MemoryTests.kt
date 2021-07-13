@@ -71,7 +71,7 @@ class MemoryTests {
         val referenceHolder = mutableListOf<Sample>()
         realm!!.writeBlocking {
             for (i in 1..100) {
-                create(Sample::class).apply {
+                copyToRealm(Sample()).apply {
                     stringField = oneMBstring
                 }.also { referenceHolder.add(it) }
             }
@@ -116,7 +116,7 @@ class MemoryTests {
         val referenceHolder = mutableListOf<Sample>()
         realm.writeBlocking {
             for (i in 1..100) {
-                create(Sample::class).apply {
+                copyToRealm(Sample()).apply {
                     stringField = oneMBstring
                 }.also { referenceHolder.add(it) }
             }

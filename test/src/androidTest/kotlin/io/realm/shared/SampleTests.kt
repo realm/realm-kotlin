@@ -53,8 +53,8 @@ class SampleTests {
         val s = "Hello, World!"
 
         realm.writeBlocking {
-            val sample = create(Sample::class)
-            assertEquals("", sample.stringField)
+            val sample = copyToRealm(Sample())
+            assertEquals("Realm", sample.stringField)
             sample.stringField = s
             assertEquals(s, sample.stringField)
         }
@@ -64,7 +64,7 @@ class SampleTests {
     fun updateOutsideTransactionThrows() {
         val s = "Hello, World!"
         val sample: Sample = realm.writeBlocking {
-            val sample = create(Sample::class)
+            val sample = copyToRealm(Sample())
             sample.stringField = s
             assertEquals(s, sample.stringField)
             sample
@@ -78,7 +78,7 @@ class SampleTests {
     @Test
     fun delete() {
         realm.writeBlocking {
-            val sample = create(Sample::class)
+            val sample = copyToRealm(Sample())
             delete(sample)
             assertFailsWith<IllegalArgumentException> {
                 sample.delete()
@@ -94,8 +94,8 @@ class SampleTests {
         val s = "Hello, World!"
 
         realm.writeBlocking {
-            create(Sample::class).run { stringField = s }
-            create(Sample::class).run { stringField = "Hello, Realm!" }
+            copyToRealm(Sample()).run { stringField = s }
+            copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
@@ -123,8 +123,8 @@ class SampleTests {
     @Test
     fun query_delete() {
         realm.writeBlocking {
-            create(Sample::class).run { stringField = "Hello, World!" }
-            create(Sample::class).run { stringField = "Hello, Realm!" }
+            copyToRealm(Sample()).run { stringField = "Hello, World!" }
+            copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
@@ -140,7 +140,7 @@ class SampleTests {
     @Test
     fun primitiveTypes() {
         realm.writeBlocking {
-            create(Sample::class).apply {
+            copyToRealm(Sample()).apply {
                 stringField = "Realm Kotlin"
                 byteField = 0xb
                 charField = 'b'
