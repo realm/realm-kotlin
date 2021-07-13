@@ -20,15 +20,8 @@ plugins {
     id("com.android.application")
     kotlin("android")
     id("kotlin-android-extensions")
-    // Apply Realm Kotlin plugin even though we technically do not need it, to ensure that we have
-    // the right kotlinOptions
-    id("io.realm.kotlin") version "0.1.0"
-    // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
 }
-
-group = "io.realm.example"
-version = "0.1.0"
 
 dependencies {
     implementation(project(":shared"))
@@ -37,7 +30,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.0.4")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
     // TODO AUTO-SETUP
-    compileOnly("io.realm.kotlin:library:$version")
+    compileOnly("io.realm.kotlin:library:${Realm.version}")
 }
 
 android {

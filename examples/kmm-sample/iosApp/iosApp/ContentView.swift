@@ -8,8 +8,8 @@ struct ContentView: View {
     @State private var firstNum: String = "0"
     @State private var secondNum: String = "0"
     
-    @State var token: LibraryCancellable? = nil
-        
+    @State var job: Closeable? = nil
+    
     private var sum: String {
         if let firstNum = Int32(firstNum), let secondNum = Int32(secondNum) {
             return String(calculator.sum(a: firstNum, b: secondNum))
@@ -40,22 +40,17 @@ struct ContentView: View {
             }
             Text("History count: \(count)")
         }.onAppear() {
-            self.token = self.listen()
+            self.job = self.listen()
         }.onDisappear() {
-            self.token?.cancel()
+            self.job?.close()
         }
     }
     
-    private func listen() -> LibraryCancellable {
-        do {
-            return try calculator.listen {
-                print("History updated \(self.calculator.history().count)")
-            }
-        } catch {
-            fatalError("Failed to register for notifications: \(error)")
+    private func listen() -> Closeable {
+        return calculator.listenAsCommonFlow().watch { expressions in
+            print("History updated \(expressions!.count)")
         }
     }
-    
 }
 
 struct ContentView_Previews: PreviewProvider {

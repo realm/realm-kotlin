@@ -6,7 +6,7 @@ multiplatform project for both Android and iOS.
 The example is based on the Kotlin Multiplatform Mobile Project from
 https://github.com/Kotlin/kmm-sample/blob/master/README.md
 
-NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
+NOTE: The SDK doesn't currently support `x86` - Please use an `x86_64` or `arm64` emulator/device
 
 
 ## Overview

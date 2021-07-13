@@ -185,12 +185,9 @@ buildscript {
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
         }
-        maven {
-            url 'https://dl.bintray.com/kotlin/kotlin-dev'
-        }
     }
     dependencies {
-        classpath 'io.realm.kotlin:plugin-gradle:<VERSION>'
+        classpath 'io.realm.kotlin:gradle-plugin:<VERSION>'
     }
 }
 
@@ -200,9 +197,6 @@ allprojects {
         mavenCentral()
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
-        maven {
-            url 'https://dl.bintray.com/kotlin/kotlin-dev'
         }
     }
 }
