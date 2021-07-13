@@ -34,6 +34,10 @@ class Calculator private constructor() {
             return this.repository.observeChanges()
         }
 
+        fun listenAsCommonFlow(): CFlow<List<Expression>> {
+            return this.repository.observeChanges().wrap()
+        }
+
         fun history(): List<Expression> {
             return repository.expressions()
         }
