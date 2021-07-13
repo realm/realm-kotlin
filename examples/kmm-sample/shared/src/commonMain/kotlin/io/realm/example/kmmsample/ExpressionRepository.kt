@@ -17,15 +17,15 @@
 
 package io.realm.example.kmmsample
 
-import io.realm.Cancellable
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import kotlinx.coroutines.flow.Flow
 
 class ExpressionRepository {
 
     val realm: Realm by lazy {
         val configuration = RealmConfiguration(schema = setOf(Expression::class))
-        Realm.open(configuration)
+        Realm(configuration)
     }
 
     fun addExpression(expression: String): Expression {
@@ -38,7 +38,7 @@ class ExpressionRepository {
         return realm.objects(Expression::class)
     }
 
-    fun listen(block: () -> Unit): Cancellable {
-        return realm.objects(Expression::class).observe { block() }
+    fun observeChanges(): Flow<List<Expression>> {
+        return realm.objects(Expression::class).observe()
     }
 }

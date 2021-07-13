@@ -21,6 +21,7 @@ import io.realm.RealmObject
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.util.TypeDescriptor.rType
+import io.realm.util.Utils.createRandomString
 import test.primarykey.NoPrimaryKey
 import test.primarykey.PrimaryKeyByte
 import test.primarykey.PrimaryKeyByteNullable
@@ -56,14 +57,14 @@ class PrimaryKeyTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration.Builder(path = "$tmpDir/default.realm")
+            RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm")
                 .schema(
                     PrimaryKeyString::class,
                     PrimaryKeyStringNullable::class,
                     NoPrimaryKey::class
                 )
                 .build()
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -74,7 +75,7 @@ class PrimaryKeyTests {
     @Test
     fun string() {
         realm.writeBlocking {
-            create(PrimaryKeyString::class, PRIMARY_KEY)
+            copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
         }
 
         assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
@@ -83,31 +84,20 @@ class PrimaryKeyTests {
     @Test
     fun nullPrimaryKey() {
         realm.writeBlocking {
-            create(PrimaryKeyStringNullable::class, null)
+            copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
         }
 
         assertNull(realm.objects(PrimaryKeyStringNullable::class)[0].primaryKey)
     }
 
     @Test
-    fun missingPrimaryKeyThrows() {
-        realm.writeBlocking {
-            assertFailsWith<RuntimeException> {
-                create(PrimaryKeyString::class)
-            }
-        }
-
-        assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
-    }
-
-    @Test
     @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicatePrimaryKeyThrows() {
         realm.writeBlocking {
-            create(PrimaryKeyString::class, PRIMARY_KEY)
+            copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
             assertFailsWith<RuntimeException> {
                 // C-API semantics is currently to return any existing object if already present
-                create(PrimaryKeyString::class, PRIMARY_KEY)
+                copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
             }
             cancelWrite()
         }
@@ -119,10 +109,10 @@ class PrimaryKeyTests {
     @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicateNullPrimaryKeyThrows() {
         realm.writeBlocking {
-            create(PrimaryKeyString::class, null)
+            copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
             assertFailsWith<RuntimeException> {
                 // C-API semantics is currently to return any existing object if already present
-                create(PrimaryKeyString::class, null)
+                copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
             }
             cancelWrite()
         }
@@ -130,27 +120,6 @@ class PrimaryKeyTests {
         val objects = realm.objects(PrimaryKeyStringNullable::class)
         assertEquals(1, objects.size)
         assertNull(objects[0].primaryKey)
-    }
-
-    @Test
-    fun primaryKeyForNonPrimaryKeyObjectThrows() {
-        realm.writeBlocking {
-            assertFailsWith<RuntimeException> {
-                create(NoPrimaryKey::class, PRIMARY_KEY)
-            }
-        }
-
-        assertTrue(realm.objects(NoPrimaryKey::class).isEmpty())
-    }
-
-    @Test
-    fun primaryKeyWithWrongTypeThrows() {
-        realm.writeBlocking {
-            assertFailsWith<RuntimeException> {
-                create(PrimaryKeyString::class, 14)
-            }
-        }
-        assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
     }
 
     @Test
@@ -204,7 +173,6 @@ class PrimaryKeyTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun testPrimaryKeyForAllSupportedTypes() {
-        val types = allPrimaryKeyFieldTypes.toMutableSet()
 
         // TODO Maybe we would only need to iterate underlying Realm types?
         val classes = arrayOf(
@@ -222,7 +190,7 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
         )
 
-        val configuration = RealmConfiguration.Builder("$tmpDir/default.realm")
+        val configuration = RealmConfiguration.Builder("$tmpDir/${createRandomString(16)}.realm")
             .schema(
                 PrimaryKeyByte::class,
                 PrimaryKeyByteNullable::class,
@@ -241,9 +209,10 @@ class PrimaryKeyTests {
 
         val mediator = configuration.mediator
 
-        val realm = Realm.open(configuration)
+        val realm = Realm(configuration)
 
         realm.writeBlocking {
+            val types = allPrimaryKeyFieldTypes.toMutableSet()
             for (c in classes) {
                 // We could expose this through the test model definitions instead if that is better to avoid the internals
                 val realmObjectCompanion = mediator.companionOf(c)

@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import kotlinx.coroutines.CoroutineDispatcher
+
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
@@ -118,10 +120,26 @@ actual object RealmInterop {
         realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
     }
 
-    actual fun realm_open(config: NativePointer): NativePointer {
+    actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
+    }
+
+    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
+    }
+
+    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
+        val realmPtr = LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
+        // Ensure that we can read version information, etc.
+        realm_begin_read(realmPtr)
+        return realmPtr
+    }
+
+    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+        return realmc.realm_is_frozen(realm.cptr())
     }
 
     actual fun realm_close(realm: NativePointer) {
@@ -179,6 +197,14 @@ actual object RealmInterop {
 
     actual fun realm_object_is_valid(obj: NativePointer): Boolean {
         return realmc.realm_object_is_valid(obj.cptr())
+    }
+
+    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
+    }
+
+    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
+        return LongPointerWrapper(realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): Long {
@@ -397,6 +423,14 @@ actual object RealmInterop {
 
     actual fun realm_query_find_all(query: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_freeze(liveResults.cptr(), frozenRealm.cptr()))
+    }
+
+    actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

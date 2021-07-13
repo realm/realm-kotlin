@@ -22,6 +22,15 @@ plugins {
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
 }
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
+    }
+}
+apply(plugin = "kotlinx-atomicfu")
 
 repositories {
     google()
@@ -41,6 +50,8 @@ kotlin {
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
 
@@ -62,6 +73,12 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
+}
+
+// AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
+// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
+project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
+    transformJvm = false
 }
 
 // JVM
@@ -99,6 +116,7 @@ android {
 
     dependencies {
         implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
     }
 }
 
@@ -199,7 +217,8 @@ realmPublish {
 }
 
 tasks.dokkaHtml.configure {
-    moduleName.set("Realm Kotlin SDK ${Realm.version}")
+    moduleName.set("Realm Kotlin Multiplatform SDK")
+    moduleVersion.set(Realm.version)
     dokkaSourceSets {
         configureEach {
             moduleVersion.set(Realm.version)
@@ -209,9 +228,14 @@ tasks.dokkaHtml.configure {
                 matchingRegex.set("io\\.realm\\.internal\\.*")
                 suppress.set(true)
             }
+            jdkVersion.set(8)
         }
         val commonMain by getting {
-            includes.from("overview.md", "io.realm.md")
+            includes.from(
+                "overview.md",
+                "src/commonMain/kotlin/io/realm/info.md",
+                "src/commonMain/kotlin/io/realm/log/info.md"
+            )
             sourceRoot("../runtime-api/src/commonMain/kotlin")
         }
     }

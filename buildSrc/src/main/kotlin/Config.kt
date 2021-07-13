@@ -16,7 +16,7 @@
  */
 
 object Realm {
-    const val version = "0.3.2"
+    const val version = "0.4.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -56,20 +56,22 @@ object Versions {
         const val compileSdkVersion = 29
         const val buildToolsVersion = "29.0.2"
         const val buildTools = "4.1.0"
-        const val ndkVersion = "22.0.6917172"
+        const val ndkVersion = "22.1.7171670"
     }
     const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3-beta02" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.4.0-beta02" // https://maven.google.com/web/index.html#androidx.test:rules
+    // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
+    const val atomicfu = "0.16.1" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
-    const val coroutines = "1.5.0" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
+    const val coroutines = "1.5.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val detektPlugin = "1.17.1" // https://github.com/detekt/detekt
     const val dokka = "1.4.32" // https://github.com/Kotlin/dokka
-    const val gradlePluginPublishPlugin = "0.14.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
+    const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
-    const val kotlin = "1.5.10"
+    const val kotlin = "1.5.20" // https://github.com/JetBrains/kotlin
     const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "10.1.0" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.41.0" // https://github.com/pinterest/ktlint

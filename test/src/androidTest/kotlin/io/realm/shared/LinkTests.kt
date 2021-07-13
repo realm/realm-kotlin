@@ -18,6 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest
@@ -35,8 +36,8 @@ class LinkTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class))
-        realm = Realm.open(configuration)
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -48,8 +49,8 @@ class LinkTests {
     fun basics() {
         val name = "Realm"
         val parent = realm.writeBlocking {
-            val parent = create(Parent::class)
-            val child = create(Child::class)
+            val parent = copyToRealm(Parent())
+            val child = copyToRealm(Child())
             child.name = name
 
             assertNull(parent.child)
@@ -60,10 +61,11 @@ class LinkTests {
 
         assertEquals(1, realm.objects(Parent::class).size)
 
-        val child1 = realm.objects(Parent::class)[0].child
+        val child1 = realm.objects(Parent::class).first().child
         assertEquals(name, child1?.name)
 
         realm.writeBlocking {
+            val parent = objects<Parent>().first()
             assertNotNull(parent.child)
             parent.child = null
             assertNull(parent.child)

@@ -21,6 +21,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.RealmInitializer
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -40,8 +41,8 @@ class InstrumentedTests {
     @Before
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        realm = Realm.open(configuration)
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
+        realm = Realm(configuration)
     }
 
     @After
@@ -62,8 +63,8 @@ class InstrumentedTests {
     fun createAndUpdate() {
         val s = "Hello, World!"
         realm.writeBlocking {
-            val sample = create(Sample::class)
-            assertEquals("", sample.stringField)
+            val sample = copyToRealm(Sample())
+            assertEquals("Realm", sample.stringField)
             sample.stringField = s
             assertEquals(s, sample.stringField)
         }
@@ -74,8 +75,8 @@ class InstrumentedTests {
         val s = "Hello, World!"
 
         realm.writeBlocking {
-            create(Sample::class).run { stringField = s }
-            create(Sample::class).run { stringField = "Hello, Realm!" }
+            copyToRealm(Sample()).run { stringField = s }
+            copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
@@ -90,28 +91,27 @@ class InstrumentedTests {
 
     @Test
     fun query_parseErrorThrows() {
-        val objects3: RealmResults<Sample> = realm.objects(Sample::class).query("name == str")
-        // Will first fail when accessing the actual elements as the query is lazily evaluated
-        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationException as
+        val objects: RealmResults<Sample> = realm.objects(Sample::class)
+        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
         //  in realm-java ;)
         //  https://github.com/realm/realm-kotlin/issues/70
         assertFailsWith<RuntimeException> {
-            println(objects3)
+            objects.query("name == str")
         }
     }
 
     @Test
     fun query_delete() {
         realm.writeBlocking {
-            create(Sample::class).run { stringField = "Hello, World!" }
-            create(Sample::class).run { stringField = "Hello, Realm!" }
+            copyToRealm(Sample()).run { stringField = "Hello, World!" }
+            copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
 
         realm.writeBlocking {
-            realm.objects(Sample::class).delete()
+            objects(Sample::class).delete()
         }
 
         assertEquals(0, realm.objects(Sample::class).size)
@@ -120,7 +120,7 @@ class InstrumentedTests {
     @Test
     fun delete() {
         realm.writeBlocking {
-            val sample = create(Sample::class)
+            val sample = copyToRealm(Sample())
             delete(sample)
             assertFailsWith<IllegalArgumentException> {
                 delete(sample)

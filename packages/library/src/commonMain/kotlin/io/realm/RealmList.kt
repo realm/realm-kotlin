@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.internal.Mediator
+import io.realm.internal.RealmReference
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -61,7 +62,7 @@ class RealmList<E> private constructor(
         val clazz: KClass<*>,
         val isRealmObject: Boolean,
         val mediator: Mediator,
-        val realmPointer: NativePointer
+        val realm: RealmReference
     )
 
     /**
@@ -95,7 +96,7 @@ class RealmList<E> private constructor(
                         isRealmObject -> (value as Link).toRealmObject(
                             clazz as KClass<out RealmObject>,
                             mediator,
-                            realmPointer
+                            realm
                         )
                         else -> throw IllegalArgumentException("Unsupported type '$clazz'.")
                     }
@@ -107,11 +108,8 @@ class RealmList<E> private constructor(
          * Checks if the Realm associated to this RealmList is still accessible, throwing an
          * [IllegalStateException] if not.
          */
-        // FIXME consider merging with RealmUtils.checkRealmClosed
         fun checkRealmClosed() {
-            if (RealmInterop.realm_is_closed(metadata.realmPointer)) {
-                throw IllegalStateException("Realm has been closed and is no longer accessible.")
-            }
+            metadata.realm.checkClosed()
         }
     }
 }

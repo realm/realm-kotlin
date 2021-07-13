@@ -18,7 +18,7 @@
 
 package io.realm.example.kmmsample
 
-import io.realm.Cancellable
+import kotlinx.coroutines.flow.Flow
 
 class Calculator private constructor() {
     companion object {
@@ -30,8 +30,12 @@ class Calculator private constructor() {
             return a + b
         }
 
-        fun listen(block: () -> Unit): Cancellable {
-            return this.repository.listen(block)
+        fun listen(): Flow<List<Expression>> {
+            return this.repository.observeChanges()
+        }
+
+        fun listenAsCommonFlow(): CFlow<List<Expression>> {
+            return this.repository.observeChanges().wrap()
         }
 
         fun history(): List<Expression> {

@@ -29,7 +29,7 @@ internal object Names {
 
     val SET = Name.special("<set-?>")
     // names must match `RealmObjectInterop` properties
-    val REALM_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Pointer")
+    val REALM_OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Owner")
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")

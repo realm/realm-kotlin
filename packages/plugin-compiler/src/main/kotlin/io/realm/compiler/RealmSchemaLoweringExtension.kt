@@ -93,7 +93,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             internalConstructor,
                             typeArgumentsCount = 0,
                             constructorTypeArgumentsCount = 0,
-                            valueArgumentsCount = 5,
+                            valueArgumentsCount = 3,
                         ).apply {
                             // copy path/name arguments from the original constructor call
                             putValueArgument(0, expression.getValueArgument(0))
@@ -105,10 +105,6 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             findSchemaClassLiterals(schemaArgument, pluginContext, specifiedModels)
                             val populatedCompanionMap = buildCompanionMap(specifiedModels, pluginContext)
                             putValueArgument(2, populatedCompanionMap)
-
-                            // Schema version & Delete Realm on migration cannot be set from the public ctor (they need to be set via the Builder)
-                            putValueArgument(3, null)
-                            putValueArgument(4, null)
                         }
                     }
                     return super.visitConstructorCall(expression)

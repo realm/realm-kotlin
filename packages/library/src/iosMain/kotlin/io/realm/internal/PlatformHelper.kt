@@ -20,6 +20,9 @@ import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
+import kotlin.native.concurrent.ensureNeverFrozen
+import kotlin.native.concurrent.freeze
+import kotlin.native.concurrent.isFrozen
 
 actual object PlatformHelper {
     actual fun appFilesDirectory(): String {
@@ -31,3 +34,10 @@ actual object PlatformHelper {
 
     actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
 }
+
+actual fun <T> T.freeze(): T = this.freeze()
+
+actual val <T> T.isFrozen: Boolean
+    get() = this.isFrozen
+
+actual fun Any.ensureNeverFrozen() = this.ensureNeverFrozen()

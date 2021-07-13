@@ -48,11 +48,15 @@ kotlin {
                 // Our current compiler plugin tests only runs on JVM, so makes sense to keep them
                 // for now, but ideally they should go to the compiler plugin tests.
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
 
         getByName("commonTest") {
             dependencies {
+                // TODO AtomicFu doesn't work on the test project due to
+                //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
+                implementation("co.touchlab:stately-concurrency:1.1.7")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
@@ -102,6 +106,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+    // Remove overlapping resources after adding "org.jetbrains.kotlinx:kotlinx-coroutines-test" to
+    // avoid errors like "More than one file was found with OS independent path 'META-INF/AL2.0'."
+    packagingOptions {
+        exclude("META-INF/AL2.0")
+        exclude("META-INF/LGPL2.1")
+    }
 }
 
 kotlin {
@@ -124,6 +135,7 @@ kotlin {
                 implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
                 implementation("androidx.test:runner:${Versions.androidxTest}")
                 implementation("androidx.test:rules:${Versions.androidxTest}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
             }
         }
     }

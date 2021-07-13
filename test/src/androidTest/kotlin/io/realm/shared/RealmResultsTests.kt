@@ -20,6 +20,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.util.PlatformUtils
+import io.realm.util.Utils.createRandomString
 import test.link.Child
 import test.link.Parent
 import kotlin.test.AfterTest
@@ -41,8 +42,8 @@ class RealmResultsTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Parent::class, Child::class))
-        realm = Realm.open(configuration)
+        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -56,13 +57,13 @@ class RealmResultsTests {
     @Test
     fun version() {
         val results: RealmResults<Parent> = realm.objects(Parent::class)
-        assertEquals(INITIAL_VERSION, results.version)
+        assertEquals(INITIAL_VERSION, results.version())
     }
 
     @Test
     fun versionThrowsIfRealmIsClosed() {
         val results: RealmResults<Parent> = realm.objects(Parent::class)
         realm.close()
-        assertFailsWith<IllegalStateException> { results.version }
+        assertFailsWith<IllegalStateException> { results.version() }
     }
 }

@@ -48,7 +48,7 @@ class MigrationTests {
             path = path,
             schema = setOf(Sample::class)
         ).build().also {
-            Realm.open(it).run {
+            Realm(it).run {
                 writeBlocking {
                     copyToRealm(Sample().apply { stringField = "Kotlin!" })
                 }
@@ -60,7 +60,7 @@ class MigrationTests {
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class)
         ).build().also {
-            Realm.open(it).run {
+            Realm(it).run {
                 objects(Sample::class).first().run {
                     assertEquals("Kotlin!", stringField)
                 }
@@ -83,7 +83,7 @@ class MigrationTests {
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class)
         ).also {
-            Realm.open(it).run {
+            Realm(it).run {
                 writeBlocking {
                     copyToRealm(Child().apply { name = "Kotlin!" })
                 }
@@ -95,7 +95,7 @@ class MigrationTests {
             path = path,
             schema = setOf(Parent::class, Child::class)
         ).also {
-            Realm.open(it).run {
+            Realm(it).run {
                 objects(Child::class).first().run {
                     assertEquals("Kotlin!", name)
                 }
@@ -111,7 +111,7 @@ class MigrationTests {
             path = path,
             schema = setOf(Sample::class),
         ).also {
-            Realm.open(it).run {
+            Realm(it).run {
                 writeBlocking {
                     copyToRealm(Sample().apply { stringField = "Kotlin!" })
                 }
@@ -124,7 +124,7 @@ class MigrationTests {
             schema = setOf(Sample::class, Parent::class, Child::class),
         ).deleteRealmIfMigrationNeeded()
             .build().also {
-                Realm.open(it).run {
+                Realm(it).run {
                     objects(Sample::class).first().run {
                         assertEquals("Kotlin!", stringField)
                     }
@@ -140,7 +140,7 @@ class MigrationTests {
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class),
         ).also {
-            Realm.open(it).run {
+            Realm(it).run {
                 writeBlocking {
                     copyToRealm(Child().apply { name = "Kotlin!" })
                 }
@@ -154,7 +154,7 @@ class MigrationTests {
         ).deleteRealmIfMigrationNeeded()
             .build()
             .also {
-                Realm.open(it).run {
+                Realm(it).run {
                     objects(Child::class).first().run {
                         assertEquals("Kotlin!", name)
                     }

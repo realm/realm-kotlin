@@ -21,11 +21,13 @@ import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.singleThreadDispatcher
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
@@ -44,6 +46,16 @@ public data class LogConfiguration(
     public val loggers: List<RealmLogger>
 )
 
+/**
+ * A _Realm Configuration_ defining specific setup and configuration for a Realm instance.
+ *
+ * The RealmConfiguration can, for simple uses cases, be created directly through the constructor.
+ * More advanced setup requires building the RealmConfiguration through
+ * [RealmConfiguration.Builder.build].
+ *
+ * @see Realm
+ * @see RealmConfiguration.Builder
+ */
 @Suppress("LongParameterList")
 public class RealmConfiguration private constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
@@ -52,18 +64,61 @@ public class RealmConfiguration private constructor(
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
+    notificationDispatcher: CoroutineDispatcher,
+    writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
     deleteRealmIfMigrationNeeded: Boolean,
 ) {
-
     // Public properties making up the RealmConfiguration
-    // TODO Add KDoc for all of these
+    // TODO Add more elaborate KDoc for all of these
+    /**
+     * Path to the realm file.
+     */
     public val path: String
+
+    /**
+     * Filename of the realm file.
+     */
     public val name: String
+
+    /**
+     * The set of classes included in the schema for the realm.
+     */
     public val schema: Set<KClass<out RealmObject>>
+
+    /**
+     * The log configuration used for the realm instance.
+     */
     public val log: LogConfiguration
+
+    /**
+     * Maximum number of active versions.
+     *
+     * Holding references to objects from previous version of the data in the realm will also
+     * require keeping the data in the actual file. This can cause growth of the file. See
+     * [Builder.maxNumberOfActiveVersions] for details.
+     */
     public val maxNumberOfActiveVersions: Long
+
+    /**
+     * The coroutine dispatcher for internal handling of notification registration and delivery.
+     */
+    public val notificationDispatcher: CoroutineDispatcher
+
+    /**
+     * The coroutine dispatcher used for all write operations.
+     */
+    public val writeDispatcher: CoroutineDispatcher
+
+    /**
+     * The schema version.
+     */
     public val schemaVersion: Long
+
+    /**
+     * Flag indicating whether the realm will be deleted if the schema has changed in a way that
+     * requires schema migration.
+     */
     public val deleteRealmIfMigrationNeeded: Boolean
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
@@ -84,6 +139,8 @@ public class RealmConfiguration private constructor(
         this.mapOfKClassWithCompanion = companionMap
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
+        this.notificationDispatcher = notificationDispatcher
+        this.writeDispatcher = writeDispatcher
         this.schemaVersion = schemaVersion
         this.deleteRealmIfMigrationNeeded = deleteRealmIfMigrationNeeded
 
@@ -129,15 +186,14 @@ public class RealmConfiguration private constructor(
         path: String? = null,
         name: String = Realm.DEFAULT_FILE_NAME,
         schema: Set<KClass<out RealmObject>>
-    ) : this(path, name, mapOf())
+    ) : this(path, name, mapOf()) // REPLACED_BY_IR
 
-    // Called by the compiler plugin, with a populated companion map
+    // Called by the compiler plugin, with a populated companion map.
+    // Default values should match what happens when calling `RealmConfiguration.Builder(schema = setOf(...)).build()`
     internal constructor(
         path: String? = null,
         name: String = Realm.DEFAULT_FILE_NAME,
-        schema: Map<KClass<out RealmObject>, RealmObjectCompanion>,
-        schemaVersion: Long = 0,
-        deleteRealmIfMigrationNeeded: Boolean = false
+        schema: Map<KClass<out RealmObject>, RealmObjectCompanion>
     ) : this(
         schema,
         path,
@@ -148,8 +204,10 @@ public class RealmConfiguration private constructor(
             listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
         ),
         Long.MAX_VALUE,
-        schemaVersion,
-        deleteRealmIfMigrationNeeded
+        singleThreadDispatcher(name),
+        singleThreadDispatcher(name),
+        0,
+        false
     )
 
     /**
@@ -166,12 +224,36 @@ public class RealmConfiguration private constructor(
         private var removeSystemLogger: Boolean = false
         private var userLoggers: List<RealmLogger> = listOf()
         private var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
+        private var notificationDispatcher: CoroutineDispatcher? = null
+        private var writeDispatcher: CoroutineDispatcher? = null
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var schemaVersion: Long = 0
 
+        /**
+         * Sets the absolute path of the realm file.
+         */
         fun path(path: String) = apply { this.path = path }
+
+        /**
+         * Sets the filename of the realm file.
+         */
         fun name(name: String) = apply { this.name = name }
+
+        /**
+         * Sets the classes of the schema.
+         *
+         * The elements of the set must be direct class literals.
+         *
+         * @param classes The set of classes that the schema consists of.
+         */
         fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes }
+        /**
+         * Sets the classes of the schema.
+         *
+         * The `classes` arguments must be direct class literals.
+         *
+         * @param classes The classes that the schema consists of.
+         */
         fun schema(vararg classes: KClass<out RealmObject>) =
             apply { this.schema = setOf(*classes) }
 
@@ -211,6 +293,38 @@ public class RealmConfiguration private constructor(
             }
 
         /**
+         * Dispatcher used to run background writes to the Realm.
+         *
+         * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * NOTE On Android the dispatcher's thread must have an initialized
+         * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
+         *
+         * @param dispatcher Dispatcher on which writes are run. It is required to be backed by a
+         * single thread only.
+         */
+        public fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
+            this.notificationDispatcher = dispatcher
+        }
+
+        /**
+         * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
+         * Realm objects from any thread, but the underlying logic will run on this dispatcher
+         * before any changes are returned to the caller thread.
+         *
+         * Defaults to a single threaded dispatcher started when the configuration is built.
+         *
+         * NOTE On Android the dispatcher's thread must have an initialized
+         * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
+         *
+         * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
+         * by a single thread only.
+         */
+        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
+            this.writeDispatcher = dispatcher
+        }
+
+        /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
          * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
          *
@@ -236,6 +350,11 @@ public class RealmConfiguration private constructor(
          */
         internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
 
+        /**
+         * Creates the RealmConfiguration based on the builder properties.
+         *
+         * @return the created RealmConfiguration.
+         */
         fun build(): RealmConfiguration {
             REPLACED_BY_IR()
         }
@@ -254,6 +373,8 @@ public class RealmConfiguration private constructor(
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
+                notificationDispatcher ?: singleThreadDispatcher(name),
+                writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
                 deleteRealmIfMigrationNeeded
             )
