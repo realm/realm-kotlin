@@ -91,6 +91,13 @@ val person = Person().apply {
 realm.writeBlocking {
     val managedPerson = this.copyToRealm(person)
 }
+
+// asynchroneous updates with Kotlin coroutines
+CoroutineScope(context).async {
+    realm.write {
+        val managedPerson = copyToRealm(person())
+    }
+}
 ```
 
 ## Query
@@ -106,6 +113,13 @@ val filteredByName = realm.objects<Person>().query("name = $0", "Carlo")
 
 // Person having a dog aged more than 7 with a name starting with 'Fi'
 val filteredByDog = realm.objects<Person>().query("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi")
+
+// Observing for changes with Kotlin Coroutine Flows
+CoroutineScope(context).async {
+    filteredByName.observe().collect { result: RealmResults<Person> ->
+        println("Realm updated: Number of persons is ${result.size}")
+    }
+}
 ```
 
 ## Update
