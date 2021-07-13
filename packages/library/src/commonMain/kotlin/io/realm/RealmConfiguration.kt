@@ -229,9 +229,31 @@ public class RealmConfiguration private constructor(
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var schemaVersion: Long = 0
 
+        /**
+         * Sets the absolute path of the realm file.
+         */
         fun path(path: String) = apply { this.path = path }
+
+        /**
+         * Sets the filename of the realm file.
+         */
         fun name(name: String) = apply { this.name = name }
+
+        /**
+         * Sets the classes of the schema.
+         *
+         * The elements of the set must be direct class literals.
+         *
+         * @param classes The set of classes that the schema consists of.
+         */
         fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes }
+        /**
+         * Sets the classes of the schema.
+         *
+         * The `classes` arguments must be direct class literals.
+         *
+         * @param classes The classes that the schema consists of.
+         */
         fun schema(vararg classes: KClass<out RealmObject>) =
             apply { this.schema = setOf(*classes) }
 
@@ -328,6 +350,11 @@ public class RealmConfiguration private constructor(
          */
         internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
 
+        /**
+         * Creates the RealmConfiguration based on the builder properties.
+         *
+         * @return the created RealmConfiguration.
+         */
         fun build(): RealmConfiguration {
             REPLACED_BY_IR()
         }

@@ -90,8 +90,9 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
     /**
      * Perform a query on the objects of this result using the Realm Query Language.
      *
-     * See [these docs][https://docs.mongodb.com/realm-sdks/java/latest/io/realm/RealmQuery.html#rawPredicate-java.lang.String-java.lang.Object...-]
-     * for a description and [these docs][https://docs.mongodb.com/realm-sdks/js/latest/tutorial-query-language.html]
+     * See [these docs](https://docs.mongodb.com/realm-sdks/java/latest/io/realm/RealmQuery.html#rawPredicate-java.lang.String-java.lang.Object...-)
+     * for a description of the equivalent realm-java API and
+     * [these docs](https://docs.mongodb.com/realm-sdks/js/latest/tutorial-query-language.html)
      * for a more detailed description of the actual Realm Query Language.
      *
      * Ex.:

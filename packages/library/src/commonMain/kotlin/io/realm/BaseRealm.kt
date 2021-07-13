@@ -69,7 +69,7 @@ public abstract class BaseRealm internal constructor(
     /**
      * Returns the results of querying for all objects of a specific type.
      *
-     * For a [Realm] instance this will reflect the state of the Realm at the invocation time, thus
+     * For a [Realm] instance this reflects the state of the realm at the invocation time, thus
      * the results will not change on updates to the Realm. For a [MutableRealm] the result is live
      * and will in fact reflect updates to the [MutableRealm].
      *
