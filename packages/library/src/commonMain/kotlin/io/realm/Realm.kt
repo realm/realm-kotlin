@@ -37,7 +37,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
 /**
- * A Realm instance is the main entry point for interacting with the persisted Realm.
+ * A Realm instance is the main entry point for interacting with a persisted Realm.
  *
  * @see RealmConfiguration
  */
@@ -126,8 +126,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
     /**
      * Returns the results of querying for all objects of a specific type.
      *
-     * The result is reflecting the state of the Realm at the invocation time, thus the results
-     * will not change on updates to the Realm and can be accessed from any thread.
+     * The result reflects the state of the realm at invocation time, so the results
+     * do not change when the realm updates. You can access these results from any thread.
      *
      * @param clazz The class of the objects to query for.
      * @return The result of the query as of the time of invoking this method.

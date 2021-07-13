@@ -25,14 +25,14 @@ import kotlin.reflect.KClass
 /**
  * Represents the writeable state of a Realm file.
  *
- * The only way to modify data in a Realm is through instances of this class.
+ * To modify data in a [Realm], use instances of this class.
  * These are provided and managed automatically through either [Realm.write] or
  * [Realm.writeBlocking].
  *
  * All objects created and/or obtained from the _mutable realm_ in a write-transaction are bound to
- * the thread executing the transaction and all operations on the _mutable realm_ or on any of the
- * objects must be done on the thread executing the transaction. Only exception are objects returned
- * from [Realm.write] and [Realm.writeBlocking] which will be frozen and kept tied to the resulting
+ * the thread executing the transaction. All operations on the _mutable realm_ or on any of the
+ * objects contained in that realm must execute on the thread executing the transaction. The only exception is objects returned
+ * from [Realm.write] and [Realm.writeBlocking], which are frozen and remain tied to the resulting
  * version of the write-transaction.
  */
 class MutableRealm : BaseRealm {
@@ -152,7 +152,7 @@ class MutableRealm : BaseRealm {
     /**
      * Returns the results of querying for all objects of a specific type.
      *
-     * The result is live and are thus also reflecting any update to the MutableRealm.
+     * The result is live and thus also reflects any update to the [MutableRealm].
      *
      * The result is only valid on the calling thread.
      *
