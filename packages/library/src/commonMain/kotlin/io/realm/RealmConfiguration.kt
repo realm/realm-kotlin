@@ -70,15 +70,55 @@ public class RealmConfiguration private constructor(
     deleteRealmIfMigrationNeeded: Boolean,
 ) {
     // Public properties making up the RealmConfiguration
-    // TODO Add KDoc for all of these
+    // TODO Add more elaborate KDoc for all of these
+    /**
+     * Path to the realm file.
+     */
     public val path: String
+
+    /**
+     * Filename of the realm file.
+     */
     public val name: String
+
+    /**
+     * The set of classes included in the schema for the realm.
+     */
     public val schema: Set<KClass<out RealmObject>>
+
+    /**
+     * The log configuration used for the realm instance.
+     */
     public val log: LogConfiguration
+
+    /**
+     * Maximum number of active versions.
+     *
+     * Holding references to objects from previous version of the data in the realm will also
+     * require keeping the data in the actual file. This can cause growth of the file. See
+     * [Builder.maxNumberOfActiveVersions] for details.
+     */
     public val maxNumberOfActiveVersions: Long
+
+    /**
+     * The coroutine dispatcher for internal handling of notification registration and delivery.
+     */
     public val notificationDispatcher: CoroutineDispatcher
+
+    /**
+     * The coroutine dispatcher used for all write operations.
+     */
     public val writeDispatcher: CoroutineDispatcher
+
+    /**
+     * The schema version.
+     */
     public val schemaVersion: Long
+
+    /**
+     * Flag indicating whether the realm will be deleted if the schema has changed in a way that
+     * requires schema migration.
+     */
     public val deleteRealmIfMigrationNeeded: Boolean
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about

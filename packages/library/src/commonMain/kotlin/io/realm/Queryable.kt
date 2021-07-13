@@ -24,8 +24,6 @@ package io.realm
 //  https://github.com/realm/realm-kotlin/issues/206
 /**
  * Interface holding common query methods.
- *
- * Will most likely change in the future.
  */
 interface Queryable<T : RealmObject> {
     fun query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>
