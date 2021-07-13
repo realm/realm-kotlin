@@ -27,7 +27,7 @@ plugins {
 }
 
 configurations.all {
-    resolutionStrategy.cacheChangingModulesFor( 0, "seconds")
+    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }
 
 // Apply Realm Kotlin plugin
