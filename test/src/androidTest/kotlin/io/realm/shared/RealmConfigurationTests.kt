@@ -209,7 +209,7 @@ class RealmConfigurationTests {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
         val threadId: ULong = runBlocking(configuration.writeDispatcher) { PlatformUtils.threadId() }
-        val realm = Realm.open(configuration)
+        val realm = Realm(configuration)
         realm.writeBlocking {
             assertEquals(threadId, PlatformUtils.threadId())
         }

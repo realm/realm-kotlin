@@ -64,7 +64,7 @@ class PrimaryKeyTests {
                     NoPrimaryKey::class
                 )
                 .build()
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -75,7 +75,7 @@ class PrimaryKeyTests {
     @Test
     fun string() {
         realm.writeBlocking {
-            create(PrimaryKeyString::class, PRIMARY_KEY)
+            copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
         }
 
         assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
@@ -84,31 +84,20 @@ class PrimaryKeyTests {
     @Test
     fun nullPrimaryKey() {
         realm.writeBlocking {
-            create(PrimaryKeyStringNullable::class, null)
+            copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
         }
 
         assertNull(realm.objects(PrimaryKeyStringNullable::class)[0].primaryKey)
     }
 
     @Test
-    fun missingPrimaryKeyThrows() {
-        realm.writeBlocking {
-            assertFailsWith<RuntimeException> {
-                create(PrimaryKeyString::class)
-            }
-        }
-
-        assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
-    }
-
-    @Test
     @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicatePrimaryKeyThrows() {
         realm.writeBlocking {
-            create(PrimaryKeyString::class, PRIMARY_KEY)
+            copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
             assertFailsWith<RuntimeException> {
                 // C-API semantics is currently to return any existing object if already present
-                create(PrimaryKeyString::class, PRIMARY_KEY)
+                copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
             }
             cancelWrite()
         }
@@ -120,10 +109,10 @@ class PrimaryKeyTests {
     @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicateNullPrimaryKeyThrows() {
         realm.writeBlocking {
-            create(PrimaryKeyString::class, null)
+            copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
             assertFailsWith<RuntimeException> {
                 // C-API semantics is currently to return any existing object if already present
-                create(PrimaryKeyString::class, null)
+                copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
             }
             cancelWrite()
         }
@@ -131,27 +120,6 @@ class PrimaryKeyTests {
         val objects = realm.objects(PrimaryKeyStringNullable::class)
         assertEquals(1, objects.size)
         assertNull(objects[0].primaryKey)
-    }
-
-    @Test
-    fun primaryKeyForNonPrimaryKeyObjectThrows() {
-        realm.writeBlocking {
-            assertFailsWith<RuntimeException> {
-                create(NoPrimaryKey::class, PRIMARY_KEY)
-            }
-        }
-
-        assertTrue(realm.objects(NoPrimaryKey::class).isEmpty())
-    }
-
-    @Test
-    fun primaryKeyWithWrongTypeThrows() {
-        realm.writeBlocking {
-            assertFailsWith<RuntimeException> {
-                create(PrimaryKeyString::class, 14)
-            }
-        }
-        assertTrue(realm.objects(PrimaryKeyString::class).isEmpty())
     }
 
     @Test
@@ -241,7 +209,7 @@ class PrimaryKeyTests {
 
         val mediator = configuration.mediator
 
-        val realm = Realm.open(configuration)
+        val realm = Realm(configuration)
 
         realm.writeBlocking {
             val types = allPrimaryKeyFieldTypes.toMutableSet()

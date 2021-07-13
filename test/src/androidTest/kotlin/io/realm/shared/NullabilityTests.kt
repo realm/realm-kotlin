@@ -35,7 +35,7 @@ class NullabilityTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Nullability::class))
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -46,11 +46,9 @@ class NullabilityTests {
     @Test
     fun nullability() {
         realm.writeBlocking {
-            val nullability = create(Nullability::class)
+            val nullability = copyToRealm(Nullability())
             assertNull(nullability.stringNullable)
-            // TODO We cannot verify this before implementing support for default values
-            //  https://github.com/realm/realm-kotlin/issues/106
-            // assertNonNull(nullability.stringNonNullable)
+            assertNotNull(nullability.stringNonNullable)
 
             nullability.stringNullable = "Realm"
             assertNotNull(nullability.stringNullable)

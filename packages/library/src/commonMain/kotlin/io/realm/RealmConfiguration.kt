@@ -53,7 +53,7 @@ public data class LogConfiguration(
  * More advanced setup requires building the RealmConfiguration through
  * [RealmConfiguration.Builder.build].
  *
- * @see Realm.open
+ * @see Realm
  * @see RealmConfiguration.Builder
  */
 @Suppress("LongParameterList")

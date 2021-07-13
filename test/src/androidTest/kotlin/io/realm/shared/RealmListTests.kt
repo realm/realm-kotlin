@@ -54,7 +54,7 @@ class RealmListTests {
             path = "$tmpDir/default.realm",
             schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class)
         )
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -238,7 +238,7 @@ class RealmListTests {
         path = "$tmpDir/closeable.realm",
         schema = setOf(RealmListContainer::class)
     ).let {
-        Realm.open(it)
+        Realm(it)
     }
 
     // TODO investigate how to add properties/values directly so that it works for multiplatform

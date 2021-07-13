@@ -37,7 +37,7 @@ class LinkTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -49,8 +49,8 @@ class LinkTests {
     fun basics() {
         val name = "Realm"
         val parent = realm.writeBlocking {
-            val parent = create(Parent::class)
-            val child = create(Child::class)
+            val parent = copyToRealm(Parent())
+            val child = copyToRealm(Child())
             child.name = name
 
             assertNull(parent.child)

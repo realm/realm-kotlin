@@ -44,7 +44,7 @@ class ImportTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class, Sample::class))
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -140,7 +140,7 @@ class ImportTests {
         val v3 = "FD"
 
         val managedChild = realm.writeBlocking {
-            val parent = create(Parent::class)
+            val parent = copyToRealm(Parent())
 
             val unmanaged = Child()
             unmanaged.name = v1
@@ -179,7 +179,7 @@ class ImportTests {
         val v2 = "Initially unmanaged object"
 
         val managed = realm.writeBlocking {
-            create<Sample>().apply { stringField = v1 }
+            copyToRealm(Sample()).apply { stringField = v1 }
         }
         assertEquals(1, realm.objects(Sample::class).count())
 
