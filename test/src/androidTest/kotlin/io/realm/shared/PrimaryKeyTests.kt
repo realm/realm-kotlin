@@ -64,7 +64,7 @@ class PrimaryKeyTests {
                     NoPrimaryKey::class
                 )
                 .build()
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -241,7 +241,7 @@ class PrimaryKeyTests {
 
         val mediator = configuration.mediator
 
-        val realm = Realm.open(configuration)
+        val realm = Realm(configuration)
 
         realm.writeBlocking {
             val types = allPrimaryKeyFieldTypes.toMutableSet()

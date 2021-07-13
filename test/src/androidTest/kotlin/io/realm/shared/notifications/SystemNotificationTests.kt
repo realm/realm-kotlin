@@ -41,7 +41,7 @@ class SystemNotificationTests {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
             RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest
@@ -56,7 +56,7 @@ class SystemNotificationTests {
     @Test
     fun multipleSchedulersOnSameThread() {
         Utils.printlntid("main")
-        val baseRealm = Realm.open(configuration)
+        val baseRealm = Realm(configuration)
         val dispatcher = singleThreadDispatcher("background")
         val writer1 = io.realm.internal.SuspendableWriter(baseRealm, dispatcher)
         val writer2 = io.realm.internal.SuspendableWriter(baseRealm, dispatcher)

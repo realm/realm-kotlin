@@ -43,7 +43,7 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest

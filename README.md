@@ -72,7 +72,7 @@ val configuration = RealmConfiguration(schema = setOf(Person::class, Dog::class)
 ```
 
 ```Kotlin
-val realm = Realm.open(configuration)
+val realm = Realm(configuration)
 ```
 
 

@@ -21,7 +21,7 @@ class RealmListNotificationsTests : NotificationTests {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
             RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest

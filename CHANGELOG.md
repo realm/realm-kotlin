@@ -24,6 +24,7 @@ This new architecture is intended to make it easier to consume and work with Rea
 * The Realm instance itself is now thread safe and can be accessed from any thread. 
 * Objects queried outside write transactions are now frozen by default and can be freely read from any thread.
 * As a consequence of the above, when a change listener fires, the changed data can only be observed in the new object received, not in the original, which was possible before this release.
+* Removed `Realm.open(configuration: RealmConfiguration)`. Use the interchangeable `Realm(configuration: RealmConfiguration)`-constructor instead.
 
 ### Enhancements
 * A `version()` method has been added to `Realm`, `RealmResults` and `RealmObject`. This returns the version of the data contained. New versions are obtained by observing changes to the object.

@@ -41,7 +41,7 @@ class MutableRealmTests {
             path = "$tmpDir/${createRandomString(16)}.realm",
             schema = setOf(Parent::class, Child::class, StringPropertyWithPrimaryKey::class)
         )
-        realm = Realm.open(configuration)
+        realm = Realm(configuration)
     }
 
     @AfterTest

@@ -82,18 +82,6 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
          * Default tag used by log entries
          */
         public const val DEFAULT_LOG_TAG = "REALM"
-
-        /**
-         * Open a realm.
-         */
-        fun open(
-            configuration: RealmConfiguration,
-        ): Realm {
-            val liveRealm = RealmInterop.realm_open(configuration.nativeConfig)
-            val realm = Realm(configuration, liveRealm)
-            realm.log.info("Opened Realm: ${configuration.path}")
-            return realm
-        }
     }
 
     init {
