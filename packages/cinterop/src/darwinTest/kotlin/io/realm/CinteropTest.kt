@@ -81,7 +81,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("10.5.2", realm_get_library_version()!!.toKString())
+        assertEquals("10.8.0", realm_get_library_version()!!.toKString())
     }
 
     @Test
@@ -180,7 +180,7 @@ class CinteropTest {
             val s = alloc<realm_string_t>()
             s.set(memScope, "")
             assertEquals(0UL, s.size)
-            assertNull(s.data)
+            assertNotNull(s.data)
         }
     }
 
