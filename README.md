@@ -11,6 +11,10 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 
 https://github.com/realm/realm-kotlin-samples
 
+# Documentation
+
+https://docs.mongodb.com/realm/sdk/kotlin-multiplatform/
+
 # Quick Start
 
 ## Prerequisite
@@ -150,10 +154,6 @@ Next: head to the full KMM [example](./examples/kmm-sample).
 
 NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
  
-# Developer Preview
-
-The Realm Kotlin SDK is in Developer Preview. All API's might change without warning and no guarantees are given about stability. *Do not use in production*.  
-
 ## Design documents
 
 The public API of the SDK has not been finalized. Design discussions will happen in both Google Doc and this Github repository. Most bigger features will first undergo a design process that might not involve code. These design documents can be found using the following links:
