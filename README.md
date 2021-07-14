@@ -152,8 +152,10 @@ realm.writeBlocking {
 
 Next: head to the full KMM [example](./examples/kmm-sample).  
 
-NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
+### NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
  
+## The project is in Alpha. Features and API may change in future versions.
+
 ## Design documents
 
 The public API of the SDK has not been finalized. Design discussions will happen in both Google Doc and this Github repository. Most bigger features will first undergo a design process that might not involve code. These design documents can be found using the following links:
