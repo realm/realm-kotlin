@@ -133,7 +133,6 @@ class PrimaryKeyTests {
         }
     }
 
-
     @Test
     @OptIn(ExperimentalStdlibApi::class)
     fun verifyPrimaryKeyTypeSupport() {

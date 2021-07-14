@@ -128,10 +128,10 @@ class MutableRealm : BaseRealm {
      *
      * @param instance The object to create a copy from.
      * @return The managed version of the `instance`.
+     *
+     * @throws RuntimeException if the class has a primary key field and an object with the same
+     * primary key already exists.
      */
-    // FIXME Due to lack of throwing C-API this will not throw on duplicate keys, so this
-    //  currently effectively mimics the copyOrUpdate API from realm-java.
-    //  https://github.com/realm/realm-kotlin/issues/192
     fun <T : RealmObject> copyToRealm(instance: T): T {
         return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
     }

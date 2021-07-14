@@ -85,6 +85,9 @@ fun <T : RealmObject> create(
         //  https://github.com/realm/realm-core/issues/4595
         val existingPrimaryKeyObject = RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
         existingPrimaryKeyObject?.let {
+            // FIXME Throw proper exception
+            //  https://github.com/realm/realm-kotlin/issues/70
+            @Suppress("TooGenericExceptionThrown")
             throw RuntimeException("Cannot create object with existing primary key")
         }
         val managedModel = mediator.createInstanceOf(type)
