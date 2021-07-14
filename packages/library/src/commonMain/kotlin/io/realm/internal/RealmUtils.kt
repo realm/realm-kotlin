@@ -79,8 +79,15 @@ fun <T : RealmObject> create(
     //  https://github.com/realm/realm-kotlin/issues/105
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
-        val managedModel = mediator.createInstanceOf(type)
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
+        // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
+        //  instead
+        //  https://github.com/realm/realm-core/issues/4595
+        val existingPrimaryKeyObject = RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
+        existingPrimaryKeyObject?.let {
+            throw RuntimeException("Cannot create object with existing primary key")
+        }
+        val managedModel = mediator.createInstanceOf(type)
         return managedModel.manage(
             realm,
             mediator,

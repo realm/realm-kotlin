@@ -187,12 +187,12 @@ actual object RealmInterop {
         return realmc.realm_is_writable(realm.cptr())
     }
 
-    actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, key))
+    actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, classKey.key))
     }
 
-    actual fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, key, to_realm_value(primaryKey)))
+    actual fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer {
+        return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, classKey.key, to_realm_value(primaryKey)))
     }
 
     actual fun realm_object_is_valid(obj: NativePointer): Boolean {
@@ -207,14 +207,14 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
     }
 
-    actual fun realm_find_class(realm: NativePointer, name: String): Long {
+    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
         val info = realm_class_info_t()
         val found = booleanArrayOf(false)
         realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
         if (!found[0]) {
             throw RuntimeException("Cannot find class: '$name")
         }
-        return info.key
+        return ClassKey(info.key)
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -450,12 +450,26 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.tableKey, link.objKey))
     }
 
+    actual fun realm_object_find_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer? {
+        val cprimaryKey = to_realm_value(primaryKey)
+        val found = booleanArrayOf(false)
+        return nativePointerOrNull(realmc.realm_object_find_with_primary_key(realm.cptr(), classKey.key, cprimaryKey, found))
+    }
+
     actual fun realm_results_delete_all(results: NativePointer) {
         realmc.realm_results_delete_all(results.cptr())
     }
 
     actual fun realm_object_delete(obj: NativePointer) {
         realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
+    }
+
+    fun nativePointerOrNull(ptr: Long, managed: Boolean = true): NativePointer? {
+        return if (ptr != 0L) {
+            LongPointerWrapper(ptr, managed)
+        } else {
+            null
+        }
     }
 
     fun NativePointer.cptr(): Long {

@@ -348,7 +348,7 @@ actual object RealmInterop {
         return realm_wrapper.realm_is_writable(realm.cptr())
     }
 
-    actual fun realm_find_class(realm: NativePointer, name: String): Long {
+    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
         memScoped {
             val found = alloc<BooleanVar>()
             val classInfo = alloc<realm_class_info_t>()
@@ -363,24 +363,24 @@ actual object RealmInterop {
             if (!found.value) {
                 throw RuntimeException("Class \"$name\" not found")
             }
-            return classInfo.key.toLong()
+            return ClassKey(classInfo.key.toLong())
         }
     }
 
-    actual fun realm_object_create(realm: NativePointer, key: Long): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), key.toUInt()))
+    actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), classKey.key.toUInt()))
     }
 
     actual fun realm_object_create_with_primary_key(
         realm: NativePointer,
-        key: Long,
+        classKey: ClassKey,
         primaryKey: Any?
     ): NativePointer {
         memScoped {
             return CPointerWrapper(
                 realm_wrapper.realm_object_create_with_primary_key_by_ref(
                     realm.cptr(),
-                    key.toUInt(),
+                    classKey.key.toUInt(),
                     to_realm_value(primaryKey).ptr
                 )
             )
@@ -682,6 +682,20 @@ actual object RealmInterop {
             )
         )
         return CPointerWrapper(ptr)
+    }
+
+    actual fun realm_object_find_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer? {
+        val ptr = memScoped {
+            val found = alloc<BooleanVar>()
+            realm_wrapper.realm_object_find_with_primary_key_by_ref(
+                realm.cptr(),
+                classKey.key.toUInt(),
+                to_realm_value(primaryKey).ptr,
+                found.ptr
+            )
+        }
+        val checkedPtr = checkedPointerResult(ptr)
+        return if (checkedPtr != null) CPointerWrapper(checkedPtr) else null
     }
 
     actual fun realm_results_delete_all(results: NativePointer) {
