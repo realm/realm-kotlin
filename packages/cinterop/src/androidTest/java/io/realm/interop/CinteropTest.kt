@@ -42,7 +42,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("10.8.0", realmc.realm_get_library_version())
+        assertEquals("10.8.1", realmc.realm_get_library_version())
     }
 
     // Test various schema migration with automatic flag:
