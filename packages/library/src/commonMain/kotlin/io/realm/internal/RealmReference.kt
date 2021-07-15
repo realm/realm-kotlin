@@ -19,6 +19,9 @@ import io.realm.interop.RealmInterop
  *
  * For live Realms, the `dbPointer` will point to a live SharedRealm that can advance its internal
  * version.
+ *
+ * NOTE: There should never be multiple RealmReferences with the same `dbPointer` as the underlying
+ * C++ SharedRealm is closed when the RealmReference is no longer referenced by the [Realm].
  */
 data class RealmReference(
     val owner: BaseRealm,
