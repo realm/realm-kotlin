@@ -91,19 +91,21 @@ pipeline {
         stage('Tests Macos') {
             when { expression { runTests } }
             steps {
-                test("macosTest")
+                testAndCollect("packages", "macosTest")
+                testAndCollect("test",     "macosTest")
             }
         }
         stage('Tests Android') {
             when { expression { runTests } }
             steps {
-                test("connectedAndroidTest")
+                testAndCollect("packages", "connectedAndroidTest")
+                testAndCollect("test",     "connectedAndroidTest")
             }
         }
         stage('Tests JVM (compiler only)') {
             when { expression { runTests } }
             steps {
-                test('jvmTest --tests "io.realm.test.compiler*"')
+                testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
             }
         }
         stage('Tests Android Sample App') {
@@ -279,13 +281,14 @@ def runCompilerPluginTest() {
 }
 
 
-def test(task) {
+def testAndCollect(dir, task) {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
         sh """
-            cd test
+            pushd $dir
             ./gradlew $task --info --stacktrace --no-daemon
+            popd
         """
-        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "test/build/**/TEST-*.xml"])
+        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
     }
 }
 
