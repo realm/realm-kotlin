@@ -95,8 +95,8 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
             realmFlow.emit(this@Realm)
-            notifier.realmChanged().collect { (dbPointer: NativePointer, version: VersionId) ->
-                updateRealmPointer(dbPointer, version)
+            notifier.realmChanged().collect { realmReference ->
+                updateRealmPointer(realmReference)
             }
         }
     }
@@ -147,7 +147,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             // That way, querying the Realm right after the `write` completes will return
             // the written data. Otherwise, we would have to wait for the Notifier thread
             // to detect it and update the user Realm.
-            updateRealmPointer(nativePointer, versionId)
+            updateRealmPointer(RealmReference(this, nativePointer))
             return result
         } catch (e: Exception) {
             throw e
@@ -220,11 +220,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         TODO("Not yet implemented")
     }
 
-    private suspend fun updateRealmPointer(newPointer: NativePointer, newVersion: VersionId) {
+    private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
         realmPointerMutex.withLock {
+            val newVersion = newRealmReference.version()
             log.debug("Updating Realm version: $version -> $newVersion")
-            val newRealmReference = RealmReference(this, newPointer)
-            // If we advance to a newer version then we should keep track of the preceeding one,
+            // If we advance to a newer version then we should keep track of the preceding one,
             // otherwise just track the new one directly.
             val untrackedReference = if (newVersion >= version) {
                 val previousRealmReference = realmReference
