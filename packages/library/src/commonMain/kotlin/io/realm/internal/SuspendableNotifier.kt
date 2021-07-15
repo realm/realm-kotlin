@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /**
@@ -67,12 +66,9 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    internal fun realmChanged(): Flow<Pair<NativePointer, VersionId>> {
+    internal fun realmChanged(): Flow<RealmReference> {
         // FIXME Workaround until proper Realm Changed Listeners are implemented
         return _realmChanged.asSharedFlow()
-            .map {
-                Pair(it.dbPointer, VersionId(RealmInterop.realm_get_version_id(it.dbPointer)))
-            }
 //        return callbackFlow {
 //            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
 //            withContext(dispatcher) {

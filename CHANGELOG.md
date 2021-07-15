@@ -8,6 +8,7 @@
 
 ### Fixed
 * Throw exception when violating primary key uniqeness constraint when importing objects with `copyToRealm`.
+* Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
 
 ### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
