@@ -17,11 +17,17 @@
 package io.realm.interop
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlin.jvm.JvmInline
 
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 
-inline class ColumnKey(val key: Long)
+// Wrapper for the C-API realm_class_key_t uniquely identifying the class/table in the schema
+@JvmInline
+value class ClassKey(val key: Long)
+// Wrapper for the C-API realm_property_key_t uniquely identifying the property within a class/table
+@JvmInline
+value class ColumnKey(val key: Long)
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -77,9 +83,9 @@ expect object RealmInterop {
 
     // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
     // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
-    fun realm_find_class(realm: NativePointer, name: String): Long
-    fun realm_object_create(realm: NativePointer, key: Long): NativePointer
-    fun realm_object_create_with_primary_key(realm: NativePointer, key: Long, primaryKey: Any?): NativePointer
+    fun realm_find_class(realm: NativePointer, name: String): ClassKey
+    fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
+    fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
     fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer
     fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer?
@@ -113,6 +119,8 @@ expect object RealmInterop {
     fun <T> realm_results_get(results: NativePointer, index: Long): Link
 
     fun realm_get_object(realm: NativePointer, link: Link): NativePointer
+
+    fun realm_object_find_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer?
 
     // delete
     fun realm_results_delete_all(results: NativePointer)

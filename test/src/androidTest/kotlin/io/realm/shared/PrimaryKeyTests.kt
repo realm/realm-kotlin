@@ -91,30 +91,26 @@ class PrimaryKeyTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicatePrimaryKeyThrows() {
         realm.writeBlocking {
-            copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
+            val obj = PrimaryKeyString().apply { primaryKey = PRIMARY_KEY }
+            copyToRealm(obj)
             assertFailsWith<RuntimeException> {
-                // C-API semantics is currently to return any existing object if already present
-                copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
+                copyToRealm(obj)
             }
-            cancelWrite()
         }
 
         assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/4595
     fun duplicateNullPrimaryKeyThrows() {
         realm.writeBlocking {
-            copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
+            val obj = PrimaryKeyStringNullable().apply { primaryKey = null }
+            copyToRealm(obj)
             assertFailsWith<RuntimeException> {
-                // C-API semantics is currently to return any existing object if already present
-                copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
+                copyToRealm(obj)
             }
-            cancelWrite()
         }
 
         val objects = realm.objects(PrimaryKeyStringNullable::class)
@@ -123,28 +119,18 @@ class PrimaryKeyTests {
     }
 
     @Test
-    fun importUnmanagedWithPrimaryKey() {
-        val o = PrimaryKeyString().apply { primaryKey = PRIMARY_KEY }
+    // Maybe prevent updates of primary key fields completely by forcing it to be vals, but if it
+    // is somehow possible (maybe from dynamic API), we should at least throw errors. Filed
+    // https://github.com/realm/realm-core/issues/4808
+    @Ignore
+    fun updateWithDuplicatePrimaryKeyThrows() {
         realm.writeBlocking {
-            copyToRealm(o)
-        }
-
-        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
-    }
-
-    @Test
-    @Ignore // https://github.com/realm/realm-core/issues/4595
-    fun importUnmanagedWithDuplicatePrimaryKeyThrows() {
-        val o = PrimaryKeyString()
-        realm.writeBlocking {
-            copyToRealm(o)
+            val first = copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
+            val second = copyToRealm(PrimaryKeyString().apply { primaryKey = "Other key" })
             assertFailsWith<RuntimeException> {
-                copyToRealm(o)
+                second.primaryKey = PRIMARY_KEY
             }
         }
-
-        val objects = realm.objects(PrimaryKeyString::class)
-        assertEquals(1, objects.size)
     }
 
     @Test
