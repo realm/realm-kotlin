@@ -288,7 +288,7 @@ def testAndCollect(dir, task) {
             ./gradlew $task --info --stacktrace --no-daemon
             popd
         """
-        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/build/**/TEST-*.xml"])
+        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
     }
 }
 
