@@ -22,8 +22,10 @@ import kotlin.jvm.JvmInline
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
 
+// Wrapper for the C-API realm_class_key_t uniquely identifying the class/table in the schema
 @JvmInline
 value class ClassKey(val key: Long)
+// Wrapper for the C-API realm_property_key_t uniquely identifying the property within a class/table
 @JvmInline
 value class ColumnKey(val key: Long)
 

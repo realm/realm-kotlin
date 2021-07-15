@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* Throw exception when violating primary key uniqeness constrain when importing objects with `copyToRealm`.
 
 ### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
