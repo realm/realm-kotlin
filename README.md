@@ -190,7 +190,7 @@ cd test
 
 # Using Snapshots
 
-If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/) (Browsing not available unless you have an account at https://oss.sonatype.org/)
+If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
 
 ```
 // Global build.gradle
