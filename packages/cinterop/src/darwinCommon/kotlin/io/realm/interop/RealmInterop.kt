@@ -511,6 +511,20 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
+    actual fun realm_list_freeze(liveList: NativePointer,
+        frozenRealm: NativePointer
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_list_freeze(liveList.cptr(), frozenRealm.cptr())
+        )
+    }
+
+    actual fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_list_thaw(frozenList.cptr(), liveRealm.cptr())
+        )
+    }
+
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
         val cvalue: realm_value_t = alloc()
         when (value) {
@@ -786,6 +800,24 @@ actual object RealmInterop {
             ),
             managed = false
         )
+    }
+
+    actual fun realm_list_add_notification_callback(
+        list: NativePointer,
+        callback: Callback
+    ): NativePointer {
+        TODO()
+//        return LongPointerWrapper(
+//            realmc.register_list_notification_cb(
+//                list.cptr(),
+//                object : NotificationCallback {
+//                    override fun onChange(pointer: Long) {
+//                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+//                    }
+//                }
+//            ),
+//            managed = false
+//        )
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

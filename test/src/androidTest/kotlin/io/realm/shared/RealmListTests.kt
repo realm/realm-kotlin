@@ -24,10 +24,19 @@ import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import test.list.Level1
 import test.list.Level2
 import test.list.Level3
 import test.list.RealmListContainer
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -226,6 +235,20 @@ class RealmListTests {
     }
 
     @Test
+    fun observe_emitListOnListCollect() {
+        for (tester in managedTesters) {
+            tester.observeEmitListOnListCollect()
+        }
+    }
+
+    @Test
+    fun observe_emitListOnListUpdates() {
+        for (tester in managedTesters) {
+            tester.observeEmitListOnListUpdates()
+        }
+    }
+
+    @Test
     fun unmanaged() {
         // No need to be exhaustive here, just checking delegation works
         val list = RealmList<RealmListContainer>()
@@ -317,6 +340,8 @@ internal interface ListApiTester {
     fun removeAtFailsIfClosed(realm: Realm)
     fun set()
     fun setFailsIfClosed(realm: Realm)
+    fun observeEmitListOnListCollect()
+    fun observeEmitListOnListUpdates()
 
     // All the other functions are not tested since we rely on implementations from parent classes.
 
@@ -804,6 +829,83 @@ internal abstract class ManagedListTester<T>(
                 }
             }
         }
+    }
+
+    override fun observeEmitListOnListCollect() {
+        val dataSet = typeSafetyManager.getInitialDataSet()
+
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetList(this)
+                list.addAll(copyToRealmIfNeeded(dataSet))
+            }
+
+            val countDownLatch = CountDownLatch(1)
+
+            val context = Dispatchers.Main
+            val scope = CoroutineScope(context)
+
+            scope.launch {
+                val container = realm.objects<RealmListContainer>()
+                    .first()
+
+                typeSafetyManager.getList(container)
+                    .observe()
+                    .onEach { flowList ->
+                        assertNotNull(flowList)
+                        assertEquals(dataSet.size, flowList.size)
+                        scope.cancel("Cancelling scope...")
+                    }.onCompletion {
+                        countDownLatch.countDown()
+                    }.collect()
+            }
+            countDownLatch.await(30, TimeUnit.SECONDS)
+        }
+        assertListAndCleanup { /* No additional assertions */ }
+    }
+
+    override fun observeEmitListOnListUpdates() {
+        val dataSet = typeSafetyManager.getInitialDataSet()
+
+        errorCatcher {
+            realm.writeBlocking {
+                // Just create an empty container with empty lists
+                typeSafetyManager.createContainerAndGetList(this)
+            }
+
+            val countDownLatch = CountDownLatch(1)
+
+            val context = Dispatchers.Main
+            val scope = CoroutineScope(context)
+
+            scope.launch {
+                val container = realm.objects<RealmListContainer>()
+                    .first()
+
+                typeSafetyManager.getList(container)
+                    .observe()
+                    .onEach { flowList ->
+                        assertNotNull(flowList)
+
+                        // Update list if the flow list is empty
+                        if (flowList.isEmpty()) {
+                            realm.writeBlocking {
+                                val queriedContainer = objects<RealmListContainer>()
+                                    .first()
+                                val queriedList = typeSafetyManager.getList(queriedContainer)
+                                queriedList.addAll(copyToRealmIfNeeded(dataSet))
+                            }
+                        } else {
+                            assertEquals(dataSet.size, flowList.size)
+                            scope.cancel("Cancelling scope...")
+                        }
+                    }.onCompletion {
+                        countDownLatch.countDown()
+                    }.collect()
+            }
+            countDownLatch.await(30, TimeUnit.SECONDS)
+        }
+        assertListAndCleanup { /* No additional assertions */ }
     }
 
     // Retrieves the list again but this time from Realm to check the getter is called correctly

@@ -81,7 +81,6 @@ object RealmObjectHelper {
             listPtr,
             RealmList.OperatorMetadata(
                 clazz = R::class,
-                isRealmObject = isRealmObject,
                 mediator = obj.`$realm$Mediator` as Mediator,
                 realm = obj.`$realm$Owner`!! as RealmReference
             )
