@@ -18,6 +18,7 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_FLAG
 import io.realm.compiler.FqNames.COLLECTION_TYPE
+import io.realm.compiler.FqNames.IGNORE_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
@@ -37,6 +38,7 @@ import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_IGNORED_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
@@ -142,6 +144,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     fun addCompanionFields(
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
+        ignoredProperties: MutableMap<String, IrProperty>?,
     ) {
         val kPropertyType = kProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
@@ -203,6 +206,32 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     setter = primaryKey.setter?.symbol
                 )
             } ?: IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
+        }
+
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_IGNORED_FIELDS_MEMBER,
+            listIrClass.typeWith(kPropertyType)
+        ) { startOffset, endOffset ->
+            buildListOf(
+                context = pluginContext,
+                startOffset = startOffset,
+                endOffset = endOffset,
+                elementType = kPropertyType,
+                args = ignoredProperties!!.values.map { property ->
+                    IrPropertyReferenceImpl(
+                        startOffset = startOffset,
+                        endOffset = endOffset,
+                        type = kPropertyType,
+                        symbol = property.symbol,
+                        typeArgumentsCount = 0,
+                        field = null,
+                        getter = property.getter?.symbol,
+                        setter = property.setter?.symbol
+                    )
+                }
+            )
         }
     }
 
