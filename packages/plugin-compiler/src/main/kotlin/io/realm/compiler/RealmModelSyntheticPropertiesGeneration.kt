@@ -36,8 +36,8 @@ import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_EXCLUDED_PROPERTIES_MEMBER
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
