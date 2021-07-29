@@ -76,6 +76,27 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:ignoredStringField type:kotlin.String visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-ignoredStringField>' type=sample.input.Sample origin=null
               value: GET_VAR '<set-?>: kotlin.String declared in sample.input.Sample.<set-ignoredStringField>' type=kotlin.String origin=null
+      PROPERTY name:transientStringField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:transientStringField type:kotlin.String visibility:private
+          annotations:
+            Transient
+          EXPRESSION_BODY
+            CONST String type=kotlin.String value=""
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-transientStringField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:transientStringField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-transientStringField> (): kotlin.String declared in sample.input.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:transientStringField type:kotlin.String visibility:private' type=kotlin.String origin=null
+                receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-transientStringField>' type=sample.input.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-transientStringField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.String) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:transientStringField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:transientStringField type:kotlin.String visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-transientStringField>' type=sample.input.Sample origin=null
+              value: GET_VAR '<set-?>: kotlin.String declared in sample.input.Sample.<set-transientStringField>' type=kotlin.String origin=null
       PROPERTY name:stringField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private
           EXPRESSION_BODY
@@ -1577,6 +1598,7 @@ MODULE_FRAGMENT name:<main>
                 <T>: kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>
                 elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>>
                   PROPERTY_REFERENCE 'public final ignoredStringField: kotlin.String [var]' field=null getter='public final fun <get-ignoredStringField> (): kotlin.String declared in sample.input.Sample' setter='public final fun <set-ignoredStringField> (<set-?>: kotlin.String): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  PROPERTY_REFERENCE 'public final transientStringField: kotlin.String [var]' field=null getter='public final fun <get-transientStringField> (): kotlin.String declared in sample.input.Sample' setter='public final fun <set-transientStringField> (<set-?>: kotlin.String): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ignoredFields> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>>
             correspondingProperty: PROPERTY name:$realm$ignoredFields visibility:public modality:FINAL [var]
             overridden:
