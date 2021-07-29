@@ -30,6 +30,9 @@ class Sample : RealmObject {
     @Ignore
     var ignoredStringField: String = ""
 
+    @Transient
+    var transientStringField: String = ""
+
     // Primitive types
     var stringField: String? = "Realm"
     var byteField: Byte? = 0xA
