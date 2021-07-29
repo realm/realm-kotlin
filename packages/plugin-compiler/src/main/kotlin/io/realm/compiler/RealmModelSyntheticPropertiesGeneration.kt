@@ -18,7 +18,6 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_FLAG
 import io.realm.compiler.FqNames.COLLECTION_TYPE
-import io.realm.compiler.FqNames.IGNORE_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
@@ -124,6 +123,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val listIrClass: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
+    private val kMutableProperty1Class: IrClass =
+        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
 
@@ -146,7 +147,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         properties: MutableMap<String, SchemaProperty>?,
         ignoredProperties: MutableMap<String, IrProperty>?,
     ) {
-        val kPropertyType = kProperty1Class.typeWith(
+        val kMutablePropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
@@ -154,19 +155,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_FIELDS_MEMBER,
-            listIrClass.typeWith(kPropertyType)
+            listIrClass.typeWith(kMutablePropertyType)
         ) { startOffset, endOffset ->
             buildListOf(
                 context = pluginContext,
                 startOffset = startOffset,
                 endOffset = endOffset,
-                elementType = kPropertyType,
+                elementType = kMutablePropertyType,
                 args = properties!!.entries.map {
                     val property = it.value.declaration
                     IrPropertyReferenceImpl(
                         startOffset = startOffset,
                         endOffset = endOffset,
-                        type = kPropertyType,
+                        type = kMutablePropertyType,
                         symbol = property.symbol,
                         typeArgumentsCount = 0,
                         field = null,
@@ -192,13 +193,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER,
-            kPropertyType
+            kMutablePropertyType
         ) { startOffset, endOffset ->
             primaryKey?.let {
                 IrPropertyReferenceImpl(
                     startOffset = startOffset,
                     endOffset = endOffset,
-                    type = kPropertyType,
+                    type = kMutablePropertyType,
                     symbol = primaryKey.symbol,
                     typeArgumentsCount = 0,
                     field = null,
@@ -208,6 +209,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             } ?: IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
         }
 
+        val kPropertyType = kProperty1Class.typeWith(
+            companion.parentAsClass.defaultType,
+            pluginContext.irBuiltIns.anyNType.makeNullable()
+        )
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,

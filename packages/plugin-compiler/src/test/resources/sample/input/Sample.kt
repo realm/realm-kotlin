@@ -23,6 +23,7 @@ import io.realm.Ignore
 import java.util.*
 
 class Sample : RealmObject {
+    val readOnlyString: String = ""
 
     @PrimaryKey
     var id: Long = Random().nextLong()
