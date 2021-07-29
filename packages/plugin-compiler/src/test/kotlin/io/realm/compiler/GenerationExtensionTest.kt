@@ -161,6 +161,7 @@ class GenerationExtensionTest {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun `synthetic method generated`() {
         val inputs = Files("/sample")
 
