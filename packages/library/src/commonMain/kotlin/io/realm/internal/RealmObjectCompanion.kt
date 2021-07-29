@@ -24,7 +24,7 @@ import kotlin.reflect.KProperty1
 @Suppress("VariableNaming")
 interface RealmObjectCompanion {
     val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$ignoredFields`: List<KProperty1<*, *>>?
+    val `$realm$excludedProperties`: List<KProperty1<*, *>>?
     val `$realm$primaryKey`: KMutableProperty1<*, *>?
     fun `$realm$schema`(): Table
     fun `$realm$newInstance`(): Any

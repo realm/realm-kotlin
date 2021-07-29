@@ -77,21 +77,21 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> declared in schema.input.A.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-$realm$primaryKey>' type=schema.input.A.Companion origin=null
-        PROPERTY name:$realm$ignoredFields visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:$realm$ignoredFields type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> visibility:private
+        PROPERTY name:$realm$excludedProperties visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$excludedProperties type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
               CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> origin=null
                 <T>: kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>
                 elements: VARARG type=kotlin.Array<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>>
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ignoredFields> visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>>
-            correspondingProperty: PROPERTY name:$realm$ignoredFields visibility:public modality:FINAL [var]
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$excludedProperties> visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:$realm$excludedProperties visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-$realm$ignoredFields> (): kotlin.collections.List<kotlin.reflect.KProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-$realm$excludedProperties> (): kotlin.collections.List<kotlin.reflect.KProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-$realm$ignoredFields> (): kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> declared in schema.input.A.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ignoredFields type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> origin=null
-                  receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-$realm$ignoredFields>' type=schema.input.A.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$excludedProperties> (): kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> declared in schema.input.A.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$excludedProperties type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.A, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-$realm$excludedProperties>' type=schema.input.A.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.RealmObject
@@ -296,21 +296,21 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> declared in schema.input.C.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-$realm$primaryKey>' type=schema.input.C.Companion origin=null
-        PROPERTY name:$realm$ignoredFields visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:$realm$ignoredFields type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> visibility:private
+        PROPERTY name:$realm$excludedProperties visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$excludedProperties type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
               CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> origin=null
                 <T>: kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>
                 elements: VARARG type=kotlin.Array<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>>
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ignoredFields> visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>>
-            correspondingProperty: PROPERTY name:$realm$ignoredFields visibility:public modality:FINAL [var]
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$excludedProperties> visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:$realm$excludedProperties visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-$realm$ignoredFields> (): kotlin.collections.List<kotlin.reflect.KProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-$realm$excludedProperties> (): kotlin.collections.List<kotlin.reflect.KProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-$realm$ignoredFields> (): kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> declared in schema.input.C.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ignoredFields type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> origin=null
-                  receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-$realm$ignoredFields>' type=schema.input.C.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$excludedProperties> (): kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> declared in schema.input.C.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$excludedProperties type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.C, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-$realm$excludedProperties>' type=schema.input.C.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.RealmObject
@@ -515,21 +515,21 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> declared in schema.input.B.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-$realm$primaryKey>' type=schema.input.B.Companion origin=null
-        PROPERTY name:$realm$ignoredFields visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:$realm$ignoredFields type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> visibility:private
+        PROPERTY name:$realm$excludedProperties visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$excludedProperties type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
               CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> origin=null
                 <T>: kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>
                 elements: VARARG type=kotlin.Array<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>>
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ignoredFields> visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>>
-            correspondingProperty: PROPERTY name:$realm$ignoredFields visibility:public modality:FINAL [var]
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$excludedProperties> visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:$realm$excludedProperties visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-$realm$ignoredFields> (): kotlin.collections.List<kotlin.reflect.KProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-$realm$excludedProperties> (): kotlin.collections.List<kotlin.reflect.KProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-$realm$ignoredFields> (): kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> declared in schema.input.B.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ignoredFields type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> origin=null
-                  receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-$realm$ignoredFields>' type=schema.input.B.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$excludedProperties> (): kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> declared in schema.input.B.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$excludedProperties type:kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KProperty1<schema.input.B, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-$realm$excludedProperties>' type=schema.input.B.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.RealmObject

@@ -26,7 +26,7 @@ internal object Names {
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
-    val REALM_OBJECT_COMPANION_IGNORED_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ignoredFields")
+    val REALM_OBJECT_COMPANION_EXCLUDED_PROPERTIES_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}excludedProperties")
 
     val SET = Name.special("<set-?>")
     // names must match `RealmObjectInterop` properties

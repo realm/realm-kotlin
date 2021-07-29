@@ -176,12 +176,12 @@ class GenerationExtensionTest {
         assertTrue(companionObject is RealmObjectCompanion)
 
         val table = companionObject.`$realm$schema`()
-        val ignoredFieldsCount = companionObject.`$realm$ignoredFields`!!.count()
+        val excludedPropertiesCount = companionObject.`$realm$excludedProperties`!!.count()
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
         assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
-        assertEquals(sampleModel::class.declaredMemberProperties.size - ignoredFieldsCount, table.properties.size)
+        assertEquals(sampleModel::class.declaredMemberProperties.size - excludedPropertiesCount, table.properties.size)
         val properties = mapOf(
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,

@@ -133,7 +133,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
         val fields = SchemaCollector.properties.getOrPut(irClass, { mutableMapOf() })
-        val ignoredFields = SchemaCollector.ignoredProperties.getOrPut(irClass, { mutableMapOf() })
+        val excludedProperties = SchemaCollector.excludedProperties.getOrPut(irClass, { mutableMapOf() })
 
         ownerProperty = irClass.lookupProperty(REALM_OWNER)
         objectPointerProperty = irClass.lookupProperty(OBJECT_POINTER)
@@ -155,14 +155,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val propertyTypeRaw = declaration.backingField!!.type
                 val propertyType = propertyTypeRaw.makeNotNull()
                 val nullable = propertyTypeRaw.isNullable()
-                val ignored = declaration.backingField!!.hasAnnotation(FqNames.IGNORE_ANNOTATION) ||
+                val excludeProperty = declaration.backingField!!.hasAnnotation(FqNames.IGNORE_ANNOTATION) ||
                     declaration.backingField!!.hasAnnotation(FqNames.TRANSIENT_ANNOTATION) ||
                     declaration.backingField!!.isFinal
 
                 when {
-                    ignored -> {
+                    excludeProperty -> {
                         logInfo("Property named ${declaration.name} ignored")
-                        ignoredFields[name] = declaration
+                        excludedProperties[name] = declaration
                     }
                     propertyType.isString() -> {
                         logInfo("String property named ${declaration.name} is nullable $nullable")
