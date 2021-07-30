@@ -68,6 +68,7 @@ public class RealmConfiguration private constructor(
     writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
     deleteRealmIfMigrationNeeded: Boolean,
+    encryptionKey: ByteArray?,
 ) {
     // Public properties making up the RealmConfiguration
     // TODO Add more elaborate KDoc for all of these
@@ -121,6 +122,11 @@ public class RealmConfiguration private constructor(
      */
     public val deleteRealmIfMigrationNeeded: Boolean
 
+    /**
+     * 64 byte key used to encrypt and decrypt the Realm file.
+     */
+    public val encryptionKey: ByteArray?
+
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     internal var mediator: Mediator
@@ -143,6 +149,7 @@ public class RealmConfiguration private constructor(
         this.writeDispatcher = writeDispatcher
         this.schemaVersion = schemaVersion
         this.deleteRealmIfMigrationNeeded = deleteRealmIfMigrationNeeded
+        this.encryptionKey = encryptionKey?.copyOf()
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
 
@@ -207,7 +214,8 @@ public class RealmConfiguration private constructor(
         singleThreadDispatcher(name),
         singleThreadDispatcher(name),
         0,
-        false
+        false,
+        null,
     )
 
     /**
@@ -228,6 +236,7 @@ public class RealmConfiguration private constructor(
         private var writeDispatcher: CoroutineDispatcher? = null
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var schemaVersion: Long = 0
+        private var encryptionKey: ByteArray? = null
 
         /**
          * Sets the absolute path of the realm file.
@@ -340,6 +349,12 @@ public class RealmConfiguration private constructor(
             apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
 
         /**
+         * Sets the 64 byte key used to encrypt and decrypt the Realm file.
+         */
+        fun encryptionKey(encryptionKey: ByteArray) =
+            apply { this.encryptionKey = validateEncryptionKey(encryptionKey) }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -376,7 +391,8 @@ public class RealmConfiguration private constructor(
                 notificationDispatcher ?: singleThreadDispatcher(name),
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
-                deleteRealmIfMigrationNeeded
+                deleteRealmIfMigrationNeeded,
+                encryptionKey
             )
         }
 
@@ -385,6 +401,13 @@ public class RealmConfiguration private constructor(
                 throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
             }
             return schemaVersion
+        }
+
+        private fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
+            if (encryptionKey.size < Realm.ENCRYPTION_KEY_LENGTH) {
+                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. Yours was: ${encryptionKey.size}")
+            }
+            return encryptionKey
         }
     }
 }

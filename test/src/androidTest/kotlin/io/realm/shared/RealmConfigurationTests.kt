@@ -25,10 +25,14 @@ import io.realm.util.TestLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
 import test.Sample
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RealmConfigurationTests {
@@ -240,5 +244,36 @@ class RealmConfigurationTests {
             .deleteRealmIfMigrationNeeded()
             .build()
         assertTrue(config.deleteRealmIfMigrationNeeded)
+    }
+
+    @Test
+    fun defaultEncryptionKey() {
+        val config = RealmConfiguration(schema = setOf(Sample::class))
+        assertNull(config.encryptionKey)
+    }
+
+    @Test
+    fun encryptionKey() {
+        val encryptionKey = Random.nextBytes(Realm.ENCRYPTION_KEY_LENGTH)
+
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .encryptionKey(encryptionKey)
+            .build()
+
+        // Validate that we clone the input encryption key.
+        assertNotSame(encryptionKey, config.encryptionKey)
+        // but key contents must be the same
+        assertContentEquals(encryptionKey, config.encryptionKey)
+    }
+
+    @Test
+    fun wrongEncryptionKeyThrowsIllegalArgumentException() {
+        val encryptionKey = Random.nextBytes(8)
+
+        val builder = RealmConfiguration.Builder(schema = setOf(Sample::class))
+
+        assertFailsWith(IllegalArgumentException::class) {
+            builder.encryptionKey(encryptionKey)
+        }
     }
 }
