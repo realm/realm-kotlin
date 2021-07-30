@@ -23,16 +23,17 @@ import io.realm.Ignore
 import java.util.*
 
 class Sample : RealmObject {
-    val readOnlyString: String = ""
 
     @PrimaryKey
     var id: Long = Random().nextLong()
 
     @Ignore
-    var ignoredStringField: String = ""
+    var ignoredString: String = ""
 
     @Transient
-    var transientStringField: String = ""
+    var transientString: String = ""
+
+    val readOnlyString: String = ""
 
     // Primitive types
     var stringField: String? = "Realm"

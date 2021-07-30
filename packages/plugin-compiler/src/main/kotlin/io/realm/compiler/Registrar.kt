@@ -52,6 +52,7 @@ class Registrar : ComponentRegistrar {
         messageCollector =
             configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
         SchemaCollector.properties.clear()
+        SchemaCollector.excludedProperties.clear()
 
         // Trigger generation of companion objects and addition of the RealmObjectCompanion to it
         SyntheticResolveExtension.registerExtension(
