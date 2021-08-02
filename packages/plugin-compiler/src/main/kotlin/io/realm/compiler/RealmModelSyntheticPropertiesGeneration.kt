@@ -143,7 +143,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
-        val kMutablePropertyType = kProperty1Class.typeWith(
+        val kPropertyType = kProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
@@ -151,19 +151,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_FIELDS_MEMBER,
-            listIrClass.typeWith(kMutablePropertyType)
+            listIrClass.typeWith(kPropertyType)
         ) { startOffset, endOffset ->
             buildListOf(
                 context = pluginContext,
                 startOffset = startOffset,
                 endOffset = endOffset,
-                elementType = kMutablePropertyType,
+                elementType = kPropertyType,
                 args = properties!!.entries.map {
                     val property = it.value.declaration
                     IrPropertyReferenceImpl(
                         startOffset = startOffset,
                         endOffset = endOffset,
-                        type = kMutablePropertyType,
+                        type = kPropertyType,
                         symbol = property.symbol,
                         typeArgumentsCount = 0,
                         field = null,
@@ -189,13 +189,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER,
-            kMutablePropertyType
+            kPropertyType
         ) { startOffset, endOffset ->
             primaryKey?.let {
                 IrPropertyReferenceImpl(
                     startOffset = startOffset,
                     endOffset = endOffset,
-                    type = kMutablePropertyType,
+                    type = kPropertyType,
                     symbol = primaryKey.symbol,
                     typeArgumentsCount = 0,
                     field = null,
