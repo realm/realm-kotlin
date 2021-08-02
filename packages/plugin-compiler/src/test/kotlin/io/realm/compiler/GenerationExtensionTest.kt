@@ -29,7 +29,6 @@ import java.io.File
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.companionObjectInstance
-import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
