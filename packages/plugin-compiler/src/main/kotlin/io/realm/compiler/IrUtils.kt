@@ -151,7 +151,6 @@ internal fun IrPluginContext.lookupConstructorInClass(
 
 object SchemaCollector {
     val properties = mutableMapOf<IrClass, MutableMap<String, SchemaProperty>>()
-    val excludedProperties = mutableMapOf<IrClass, MutableMap<String, IrProperty>>()
 }
 
 // ------------------------------------------------------------------------------

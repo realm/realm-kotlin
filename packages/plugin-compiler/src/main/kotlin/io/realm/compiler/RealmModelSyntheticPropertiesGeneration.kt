@@ -36,7 +36,6 @@ import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
-import io.realm.compiler.Names.REALM_OBJECT_COMPANION_EXCLUDED_PROPERTIES_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
@@ -123,8 +122,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val listIrClass: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
-    private val kMutableProperty1Class: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
 
@@ -145,9 +142,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     fun addCompanionFields(
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
-        ignoredProperties: MutableMap<String, IrProperty>?,
     ) {
-        val kMutablePropertyType = kMutableProperty1Class.typeWith(
+        val kMutablePropertyType = kProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
@@ -207,36 +203,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     setter = primaryKey.setter?.symbol
                 )
             } ?: IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
-        }
-
-        val kPropertyType = kProperty1Class.typeWith(
-            companion.parentAsClass.defaultType,
-            pluginContext.irBuiltIns.anyNType.makeNullable()
-        )
-        companion.addValueProperty(
-            pluginContext,
-            realmObjectCompanionInterface,
-            REALM_OBJECT_COMPANION_EXCLUDED_PROPERTIES_MEMBER,
-            listIrClass.typeWith(kPropertyType)
-        ) { startOffset, endOffset ->
-            buildListOf(
-                context = pluginContext,
-                startOffset = startOffset,
-                endOffset = endOffset,
-                elementType = kPropertyType,
-                args = ignoredProperties!!.values.map { property ->
-                    IrPropertyReferenceImpl(
-                        startOffset = startOffset,
-                        endOffset = endOffset,
-                        type = kPropertyType,
-                        symbol = property.symbol,
-                        typeArgumentsCount = 0,
-                        field = null,
-                        getter = property.getter?.symbol,
-                        setter = property.setter?.symbol
-                    )
-                }
-            )
         }
     }
 

@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Add support for excluding properties from an Object schema. The properties excluded are constants or properties annotated with `@Ignore` or `@Transient`. Fixes [#278](https://github.com/realm/realm-kotlin/issues/278).
+* Add support for excluding properties annotated with `@Ignore` or `@Transient` from an Object schema. Fixes [#278](https://github.com/realm/realm-kotlin/issues/278).
 
 ### Fixed
 * Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.

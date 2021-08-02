@@ -33,8 +33,6 @@ class Sample : RealmObject {
     @Transient
     var transientString: String = ""
 
-    val readOnlyString: String = ""
-
     // Primitive types
     var stringField: String? = "Realm"
     var byteField: Byte? = 0xA

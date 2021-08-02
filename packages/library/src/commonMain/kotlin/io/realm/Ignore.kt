@@ -16,7 +16,7 @@
 
 package io.realm
 
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
 @MustBeDocumented
 /**
