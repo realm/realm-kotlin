@@ -4,10 +4,10 @@
 * None.
 
 ### Enhancements
-* None.
+* Add support for excluding properties from the Realm schema. This is done by either using JVM `@Transient` or the newly added `@io.realm.kotlin.Ignore` annotation. (Issue [#278](https://github.com/realm/realm-kotlin/issues/278)).
 
 ### Fixed
-* Throw exception when violating primary key uniqeness constraint when importing objects with `copyToRealm`.
+* Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
 * Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
 
 ### Compatibility
