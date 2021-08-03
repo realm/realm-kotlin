@@ -29,7 +29,6 @@ import java.io.File
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.companionObjectInstance
-import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -161,6 +160,7 @@ class GenerationExtensionTest {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun `synthetic method generated`() {
         val inputs = Files("/sample")
 
@@ -175,10 +175,12 @@ class GenerationExtensionTest {
         assertTrue(companionObject is RealmObjectCompanion)
 
         val table = companionObject.`$realm$schema`()
+        val realmFields = companionObject.`$realm$fields`!!
+
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
         assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
-        assertEquals(sampleModel::class.declaredMemberProperties.size, table.properties.size)
+        assertEquals(realmFields.count(), table.properties.size)
         val properties = mapOf(
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
