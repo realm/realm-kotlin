@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Add support for excluding properties from the Realm schema. This is done by either using JVM `@Transient` or the newly added `@io.realm.kotlin.Ignore` annotation. (Issue [#278](https://github.com/realm/realm-kotlin/issues/278)).
+* Add support for encrypted Realms. Encryption can be enabled by passing a 64-byte encryption key to the configuration builder. (Issue [#227](https://github.com/realm/realm-kotlin/issues/227))
 
 ### Fixed
 * Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
