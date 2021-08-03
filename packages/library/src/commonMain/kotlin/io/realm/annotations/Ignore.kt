@@ -20,7 +20,7 @@ package io.realm.annotations
 @Target(AnnotationTarget.FIELD)
 @MustBeDocumented
 /**
- * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the object's schema.
+ * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.
  *
  * Any field in a RealmObject class can have this annotation.
  */
