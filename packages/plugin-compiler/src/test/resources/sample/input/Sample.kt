@@ -19,7 +19,7 @@ package sample.input
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.PrimaryKey
-import io.realm.Ignore
+import io.realm.annotations.Ignore
 import java.util.*
 
 class Sample : RealmObject {
