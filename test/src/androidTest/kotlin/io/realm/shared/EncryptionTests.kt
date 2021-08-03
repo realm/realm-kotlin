@@ -16,14 +16,14 @@
  */
 package io.realm.shared
 
-import io.realm.RealmConfiguration
 import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.util.PlatformUtils
 import test.Sample
 import kotlin.random.Random
-import kotlin.test.Test
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertFails
 
 class EncryptionTests {
@@ -78,6 +78,5 @@ class EncryptionTests {
 
             Realm(unencryptedConf)
         }
-
     }
 }
