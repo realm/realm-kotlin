@@ -125,7 +125,7 @@ public class RealmConfiguration private constructor(
     /**
      * 64 byte key used to encrypt and decrypt the Realm file.
      */
-    public val encryptionKey: ByteArray?
+    public val encryptionKey get() = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -149,7 +149,6 @@ public class RealmConfiguration private constructor(
         this.writeDispatcher = writeDispatcher
         this.schemaVersion = schemaVersion
         this.deleteRealmIfMigrationNeeded = deleteRealmIfMigrationNeeded
-        this.encryptionKey = encryptionKey?.copyOf()
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
 
@@ -166,6 +165,10 @@ public class RealmConfiguration private constructor(
 
         RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
         RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
+
+        encryptionKey?.let {
+            RealmInterop.realm_config_set_encryption_key(nativeConfig, it)
+        }
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal = (

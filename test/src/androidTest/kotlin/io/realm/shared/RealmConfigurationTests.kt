@@ -260,9 +260,7 @@ class RealmConfigurationTests {
             .encryptionKey(encryptionKey)
             .build()
 
-        // Validate that we clone the input encryption key.
-        assertNotSame(encryptionKey, config.encryptionKey)
-        // but key contents must be the same
+        // Validate that the key stored in core is the same that the one we provided
         assertContentEquals(encryptionKey, config.encryptionKey)
     }
 
