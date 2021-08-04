@@ -128,7 +128,9 @@ actual object RealmInterop {
         val key = ByteArray(64)
         val keyLength: Long = realmc.realm_config_get_encryption_key(config.cptr(), key)
 
-        if (keyLength == 64L) return key
+        if (keyLength == 64L) {
+            return key
+        }
         return null
     }
 
