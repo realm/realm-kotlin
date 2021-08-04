@@ -163,7 +163,7 @@ struct realm_size_t {
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
 
-// int8_t parameter for realm_config_get_encryption_key and realm_config_set_encryption_key
+// Enable passing uint8_t* parameters for realm_config_get_encryption_key and realm_config_set_encryption_key as Byte[]
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
 
