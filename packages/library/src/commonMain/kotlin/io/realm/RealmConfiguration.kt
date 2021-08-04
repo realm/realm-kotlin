@@ -413,7 +413,7 @@ public class RealmConfiguration private constructor(
 
         private fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
             if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
-                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. Yours was: ${encryptionKey.size}")
+                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes.")
             }
             return encryptionKey
         }
