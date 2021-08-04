@@ -26,6 +26,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFails
 
+/**
+ * This class contains all the Realm encryption integration tests that validate opening a Realm with an encryption key.
+ *
+ *  [RealmConfigurationTests] tests how the encryption key is passed to a [RealmConfiguration].
+ */
 class EncryptionTests {
     private lateinit var tmpDir: String
 
@@ -59,24 +64,58 @@ class EncryptionTests {
 
     @Test
     fun openEncryptedRealmWithWrongKey() {
-        val key = Random.nextBytes(64)
+        val actualKey = Random.nextBytes(64)
+
+        // Initialize an encrypted Realm
         val encryptedConf = RealmConfiguration
             .Builder(
                 path = "$tmpDir/default.realm",
                 schema = setOf(Sample::class)
             )
-            .encryptionKey(key)
+            .encryptionKey(actualKey)
             .build()
-
-        // Initializes an encrypted Realm
         Realm(encryptedConf).close()
 
+        // Assert fails with no encryption key
         assertFails {
-            val unencryptedConf = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .path("$tmpDir/default.realm")
                 .build()
+            Realm(conf)
+        }
 
-            Realm(unencryptedConf)
+        // Assert fails with wrong encryption key
+        val randomKey = Random.nextBytes(64)
+        assertFails {
+            val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .path("$tmpDir/default.realm")
+                .encryptionKey(randomKey)
+                .build()
+
+            Realm(conf)
+        }
+    }
+
+    @Test
+    fun openUnencryptedRealmWithWrongKey() {
+        // Initialize an unencrypted Realm
+        val unencryptedConf = RealmConfiguration
+            .Builder(
+                path = "$tmpDir/default.realm",
+                schema = setOf(Sample::class)
+            )
+            .build()
+        Realm(unencryptedConf).close()
+
+        // Assert fails opening with encryption key
+        val randomKey = Random.nextBytes(64)
+        assertFails {
+            val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .path("$tmpDir/default.realm")
+                .encryptionKey(randomKey)
+                .build()
+
+            Realm(conf)
         }
     }
 }

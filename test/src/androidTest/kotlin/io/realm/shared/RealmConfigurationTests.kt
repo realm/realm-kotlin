@@ -265,12 +265,18 @@ class RealmConfigurationTests {
 
     @Test
     fun wrongEncryptionKeyThrowsIllegalArgumentException() {
-        val encryptionKey = Random.nextBytes(8)
-
         val builder = RealmConfiguration.Builder(schema = setOf(Sample::class))
 
+        assertFailsWithEncryptionKey(builder, 0)
+        assertFailsWithEncryptionKey(builder, 63)
+        assertFailsWithEncryptionKey(builder, 65)
+        assertFailsWithEncryptionKey(builder, Int.MAX_VALUE)
+    }
+
+    private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {
+        val key = Random.nextBytes(keyLength)
         assertFailsWith(IllegalArgumentException::class) {
-            builder.encryptionKey(encryptionKey)
+            builder.encryptionKey(key)
         }
     }
 }

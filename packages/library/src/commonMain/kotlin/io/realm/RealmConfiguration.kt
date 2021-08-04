@@ -125,7 +125,7 @@ public class RealmConfiguration private constructor(
     /**
      * 64 byte key used to encrypt and decrypt the Realm file.
      */
-    public val encryptionKey get() = RealmInterop.realm_config_get_encryption_key(nativeConfig)
+    public val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -352,7 +352,12 @@ public class RealmConfiguration private constructor(
             apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
 
         /**
-         * Sets the 64 byte key used to encrypt and decrypt the Realm file.
+         * Sets the 64 byte key used to encrypt and decrypt the Realm file. Not setting an encryption key would
+         * default to an unencrypted Realm.
+         *
+         * It is important that this key is created and stored securely. See [this link](https://docs.mongodb.com/realm/sdk/android/advanced-guides/encryption/) for suggestions on how to do that.
+         *
+         * @param encryptionKey 64-byte key encryption key.
          */
         fun encryptionKey(encryptionKey: ByteArray) =
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) }
@@ -407,7 +412,7 @@ public class RealmConfiguration private constructor(
         }
 
         private fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
-            if (encryptionKey.size < Realm.ENCRYPTION_KEY_LENGTH) {
+            if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
                 throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. Yours was: ${encryptionKey.size}")
             }
             return encryptionKey
