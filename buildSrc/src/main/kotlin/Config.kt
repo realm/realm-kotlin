@@ -52,10 +52,13 @@ object Realm {
 object Versions {
     object Android {
         const val minSdk = 16
-        const val targetSdk = 29
-        const val compileSdkVersion = 29
-        const val buildToolsVersion = "29.0.2"
-        const val buildTools = "4.1.0"
+        const val targetSdk = 30
+        const val compileSdkVersion = 30
+        const val buildToolsVersion = "30.0.2"
+        // When updating buildTools, we also need to manually update the following files
+        // - examples/kmm-sample/settings.gradle.kts
+        // - packages/settings.gradle.kts
+        const val buildTools = "7.0.0"
         const val ndkVersion = "22.1.7171670"
     }
     const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime

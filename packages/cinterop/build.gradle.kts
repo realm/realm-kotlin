@@ -65,18 +65,17 @@ val corePath = "external/core"
 val absoluteCorePath = "$rootDir/$corePath"
 
 android {
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
     ndkVersion = Versions.Android.ndkVersion
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
-        versionName = Realm.version
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
-            val main by getting {
+            getByName("main") {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
                 // Don't know how to set AndroidTest source dir, probably in its own source set by
                 // "val test by getting" instead
