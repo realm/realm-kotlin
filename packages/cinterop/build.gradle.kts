@@ -82,22 +82,25 @@ android {
                 // androidTest.java.srcDirs += "src/androidTest/kotlin"
             }
         }
-    }
-    defaultConfig {
+
         ndk {
             abiFilters += setOf("x86_64", "arm64-v8a")
         }
+
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
+                targets.add("realmc")
             }
         }
+
     }
+
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
-            version = "${Versions.cmake}"
+            version = Versions.cmake
             path = project.file("src/jvmCommon/CMakeLists.txt")
         }
     }
