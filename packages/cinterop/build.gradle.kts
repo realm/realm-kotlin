@@ -92,9 +92,9 @@ android {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
                 targets.add("realmc")
+                println("targets: $targets")
             }
         }
-
     }
 
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
