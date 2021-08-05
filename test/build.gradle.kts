@@ -29,7 +29,6 @@ repositories {
     jcenter()
     mavenCentral()
     mavenLocal()
-    maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
 }
 
 // Common Kotlin configuration
