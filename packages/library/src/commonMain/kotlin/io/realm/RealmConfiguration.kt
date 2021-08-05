@@ -124,6 +124,8 @@ public class RealmConfiguration private constructor(
 
     /**
      * 64 byte key used to encrypt and decrypt the Realm file.
+     *
+     * @return null on unencrypted Realms.
      */
     public val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
@@ -352,7 +354,7 @@ public class RealmConfiguration private constructor(
             apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
 
         /**
-         * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file 
+         * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file
          * will be unencrypted.
          *
          * It is important that this key is created and stored securely. See [this link](https://docs.mongodb.com/realm/sdk/android/advanced-guides/encryption/) for suggestions on how to do that.

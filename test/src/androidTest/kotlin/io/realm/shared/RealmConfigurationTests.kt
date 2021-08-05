@@ -275,7 +275,7 @@ class RealmConfigurationTests {
 
     private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {
         val key = Random.nextBytes(keyLength)
-        assertFailsWith(IllegalArgumentException::class) {
+        assertFailsWith(IllegalArgumentException::class, "Encryption key with length $keyLength should not be valid") {
             builder.encryptionKey(key)
         }
     }

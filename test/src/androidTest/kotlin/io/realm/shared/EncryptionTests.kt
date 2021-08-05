@@ -24,7 +24,7 @@ import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 
 /**
  * This class contains all the Realm encryption integration tests that validate opening a Realm with an encryption key.
@@ -77,7 +77,7 @@ class EncryptionTests {
         Realm(encryptedConf).close()
 
         // Assert fails with no encryption key
-        assertFails {
+        assertFailsWith(RuntimeException::class, "Encrypted Realm should not be openable with no encryption key") {
             val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .path("$tmpDir/default.realm")
                 .build()
@@ -86,7 +86,7 @@ class EncryptionTests {
 
         // Assert fails with wrong encryption key
         val randomKey = Random.nextBytes(64)
-        assertFails {
+        assertFailsWith(RuntimeException::class, "Encrypted Realm should not be openable with a wrong encryption key") {
             val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .path("$tmpDir/default.realm")
                 .encryptionKey(randomKey)
@@ -109,7 +109,7 @@ class EncryptionTests {
 
         // Assert fails opening with encryption key
         val randomKey = Random.nextBytes(64)
-        assertFails {
+        assertFailsWith(RuntimeException::class, "Unencrypted Realm should not be openable with an encryption key") {
             val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .path("$tmpDir/default.realm")
                 .encryptionKey(randomKey)
