@@ -357,7 +357,7 @@ public class RealmConfiguration private constructor(
          *
          * It is important that this key is created and stored securely. See [this link](https://docs.mongodb.com/realm/sdk/android/advanced-guides/encryption/) for suggestions on how to do that.
          *
-         * @param encryptionKey 64-byte key encryption key.
+         * @param encryptionKey 64-byte encryption key.
          */
         fun encryptionKey(encryptionKey: ByteArray) =
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) }
