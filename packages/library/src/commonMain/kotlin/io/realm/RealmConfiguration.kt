@@ -352,7 +352,7 @@ public class RealmConfiguration private constructor(
             apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
 
         /**
-         * Sets the 64 byte key used to encrypt and decrypt the Realm file. Not setting an encryption key would
+         * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file 
          * default to an unencrypted Realm.
          *
          * It is important that this key is created and stored securely. See [this link](https://docs.mongodb.com/realm/sdk/android/advanced-guides/encryption/) for suggestions on how to do that.
