@@ -97,7 +97,7 @@ class EncryptionTests {
     }
 
     @Test
-    fun openUnencryptedRealmWithWrongKey() {
+    fun openUnencryptedRealmWithEncryptionKey() {
         // Initialize an unencrypted Realm
         val unencryptedConf = RealmConfiguration
             .Builder(
