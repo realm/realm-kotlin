@@ -82,6 +82,11 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
          * Default tag used by log entries
          */
         public const val DEFAULT_LOG_TAG = "REALM"
+
+        /**
+         * The required length for encryption keys used to encrypt Realm data.
+         */
+        public const val ENCRYPTION_KEY_LENGTH = 64
     }
 
     init {
