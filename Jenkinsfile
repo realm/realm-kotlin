@@ -323,7 +323,7 @@ def runBuildAndroidApp() {
     try {
         sh """
             cd examples/kmm-sample/androidApp
-            java --version
+            java -version
             ./gradlew assembleDebug --stacktrace --no-daemon
         """
     } catch (err) {
