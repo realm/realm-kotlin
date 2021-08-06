@@ -16,6 +16,8 @@
 ### Internal
 * Updated Gradle to 7.1.1.
 * Updated Android Gradle Plugin to 4.1.0.
+* Updated to Android Build Tools 30.0.2. 
+* Updated to targetSdk 30 for Android.
 * Now uses Java 11 to build the project.
 
 
