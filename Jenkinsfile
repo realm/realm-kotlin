@@ -322,9 +322,9 @@ def runMonkey() {
 def runBuildAndroidApp() {
     try {
         sh """
-            cd examples/kmm-sample/androidApp
+            cd examples/kmm-sample
             java -version
-            ./gradlew assembleDebug --stacktrace --no-daemon
+            ./gradlew :androidApp:assembleDebug --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'
