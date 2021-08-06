@@ -92,7 +92,6 @@ android {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
                 targets.add("realmc")
-                println("targets: $targets")
             }
         }
     }

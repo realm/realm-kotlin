@@ -79,15 +79,6 @@ pipeline {
                 runBuild()
             }
         }
-        stage('Build Android on Java 8') {
-            when { expression { runTests } }
-            environment {
-                JAVA_HOME="${JAVA_8}"
-            }
-            steps {
-                runBuildAndroidApp()
-            }
-        }
         stage('Static Analysis') {
             when { expression { runTests } }
             steps {
@@ -126,6 +117,15 @@ pipeline {
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     runMonkey()
                 }
+            }
+        }
+        stage('Build Android on Java 8') {
+            when { expression { runTests } }
+            environment {
+                JAVA_HOME="${JAVA_8}"
+            }
+            steps {
+                runBuildAndroidApp()
             }
         }
         stage('Publish SNAPSHOT to Maven Central') {
