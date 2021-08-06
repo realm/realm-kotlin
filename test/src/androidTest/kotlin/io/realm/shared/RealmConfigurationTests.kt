@@ -25,10 +25,13 @@ import io.realm.util.TestLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
 import test.Sample
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RealmConfigurationTests {
@@ -240,5 +243,41 @@ class RealmConfigurationTests {
             .deleteRealmIfMigrationNeeded()
             .build()
         assertTrue(config.deleteRealmIfMigrationNeeded)
+    }
+
+    @Test
+    fun defaultEncryptionKey() {
+        val config = RealmConfiguration(schema = setOf(Sample::class))
+        assertNull(config.encryptionKey)
+    }
+
+    @Test
+    fun encryptionKey() {
+        val encryptionKey = Random.nextBytes(Realm.ENCRYPTION_KEY_LENGTH)
+
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .encryptionKey(encryptionKey)
+            .build()
+
+        // Validate that the key stored in core is the same that the one we provided
+        assertContentEquals(encryptionKey, config.encryptionKey)
+    }
+
+    @Test
+    fun wrongEncryptionKeyThrowsIllegalArgumentException() {
+        val builder = RealmConfiguration.Builder(schema = setOf(Sample::class))
+
+        assertFailsWithEncryptionKey(builder, 3)
+        assertFailsWithEncryptionKey(builder, 8)
+        assertFailsWithEncryptionKey(builder, 32)
+        assertFailsWithEncryptionKey(builder, 128)
+        assertFailsWithEncryptionKey(builder, 256)
+    }
+
+    private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {
+        val key = Random.nextBytes(keyLength)
+        assertFailsWith(IllegalArgumentException::class, "Encryption key with length $keyLength should not be valid") {
+            builder.encryptionKey(key)
+        }
     }
 }
