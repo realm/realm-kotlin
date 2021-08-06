@@ -324,7 +324,7 @@ def runBuildAndroidApp() {
         sh """
             cd examples/kmm-sample
             java -version
-            ./gradlew :androidApp:assembleDebug --stacktrace --no-daemon
+            ./gradlew :androidApp:clean :androidApp:assembleDebug --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'
