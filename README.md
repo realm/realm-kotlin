@@ -174,6 +174,7 @@ The public API of the SDK has not been finalized. Design discussions will happen
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
 - CMake 3.18.1. Can be installed through the Android SDK Manager.
+- Java 11.
 
 ## Commands to build from source
 

@@ -64,6 +64,9 @@ pipeline {
           ANDROID_NDK="${NDK_HOME}"
           ANDROID_NDK_HOME="${NDK_HOME}"
           REALM_DISABLE_ANALYTICS=true
+          JAVA_8='/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home'
+          JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
+          JAVA_HOME="${JAVA_11}"
     }
     stages {
         stage('SCM') {
@@ -114,6 +117,15 @@ pipeline {
                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                     runMonkey()
                 }
+            }
+        }
+        stage('Build Android on Java 8') {
+            when { expression { runTests } }
+            environment {
+                JAVA_HOME="${JAVA_8}"
+            }
+            steps {
+                runBuildAndroidApp()
             }
         }
         stage('Publish SNAPSHOT to Maven Central') {
@@ -301,6 +313,19 @@ def runMonkey() {
                 $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        currentBuild.stageResult = 'FAILURE'
+    }
+}
+
+def runBuildAndroidApp() {
+    try {
+        sh """
+            cd examples/kmm-sample
+            java -version
+            ./gradlew :androidApp:clean :androidApp:assembleDebug --stacktrace --no-daemon
+        """
     } catch (err) {
         currentBuild.result = 'FAILURE'
         currentBuild.stageResult = 'FAILURE'

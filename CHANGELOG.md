@@ -15,7 +15,11 @@
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
 
 ### Internal
-* None.
+* Updated Gradle to 7.1.1.
+* Updated Android Gradle Plugin to 4.1.0.
+* Updated to Android Build Tools 30.0.2. 
+* Updated to targetSdk 30 for Android.
+* Now uses Java 11 to build the project.
 
 
 ## 0.4.0 (2021-07-13)
