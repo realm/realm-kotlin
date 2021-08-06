@@ -79,6 +79,15 @@ pipeline {
                 runBuild()
             }
         }
+        stage('Build Android on Java 8') {
+            when { expression { runTests } }
+            environment {
+                JAVA_HOME="${JAVA_8}"
+            }
+            steps {
+                runBuildAndroidApp()
+            }
+        }
         stage('Static Analysis') {
             when { expression { runTests } }
             steps {
@@ -304,6 +313,19 @@ def runMonkey() {
                 $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        currentBuild.stageResult = 'FAILURE'
+    }
+}
+
+def runBuildAndroidApp() {
+    try {
+        sh """
+            cd examples/kmm-sample/androidApp
+            java --version
+            ./gradlew assembleDebug --stacktrace --no-daemon
+        """
     } catch (err) {
         currentBuild.result = 'FAILURE'
         currentBuild.stageResult = 'FAILURE'
