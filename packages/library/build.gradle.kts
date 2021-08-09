@@ -31,6 +31,11 @@ buildscript {
     }
 }
 apply(plugin = "kotlinx-atomicfu")
+// AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
+// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
+project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
+    transformJvm = false
+}
 
 repositories {
     google()
@@ -41,6 +46,12 @@ repositories {
 
 // Common Kotlin configuration
 kotlin {
+    jvm()
+    android("android") {
+        publishLibraryVariants("release", "debug")
+    }
+    ios()
+    macosX64("macos") {}
     sourceSets {
         commonMain {
             dependencies {
@@ -61,6 +72,39 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
+        getByName("androidMain") {
+            dependsOn(getByName("commonMain"))
+            kotlin.srcDir("src/androidMain/kotlin")
+            dependencies {
+                api(project(":cinterop"))
+                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
+            }
+        }
+
+        getByName("androidTest") {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+                implementation("junit:junit:${Versions.junit}")
+                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
+                implementation("androidx.test:runner:${Versions.androidxTest}")
+                implementation("androidx.test:rules:${Versions.androidxTest}")
+                implementation(kotlin("reflect:${Versions.kotlin}"))
+            }
+        }
+        // TODO HIERARCHICAL-SETUP Common platform symbols won't be resolved in the shared source
+        //  sets until we enable hierarchical setup, but we are awaiting
+        //  https://youtrack.jetbrains.com/issue/KT-48153.
+        create("darwinCommon") {
+            dependsOn(getByName("commonMain"))
+        }
+        getByName("macosMain") {
+            dependsOn(getByName("darwinCommon"))
+        }
+        getByName("iosMain") {
+            dependsOn(getByName("darwinCommon"))
+        }
     }
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
@@ -73,17 +117,6 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
-}
-
-// AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
-// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
-project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
-    transformJvm = false
-}
-
-// JVM
-kotlin {
-    jvm()
 }
 
 // Android configuration
@@ -106,6 +139,9 @@ android {
                 }
             }
         }
+        ndk {
+            abiFilters += setOf("x86_64", "arm64-v8a")
+        }
     }
 
     buildTypes {
@@ -113,89 +149,12 @@ android {
             consumerProguardFiles("proguard-rules-consumer-common.pro")
         }
     }
-
-    dependencies {
-        implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
-    }
     // To avoid
     // Failed to transform kotlinx-coroutines-core-jvm-1.5.0-native-mt.jar ...
     // The dependency contains Java 8 bytecode. Please enable desugaring by adding the following to build.gradle
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
-
-kotlin {
-    android("android") {
-        publishLibraryVariants("release", "debug")
-    }
-    sourceSets {
-        getByName("androidMain") {
-            kotlin.srcDir("src/androidMain/kotlin")
-            dependencies {
-                api(project(":cinterop"))
-            }
-        }
-
-        getByName("androidTest") {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation(kotlin("test-junit"))
-                implementation("junit:junit:${Versions.junit}")
-                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
-                implementation("androidx.test:runner:${Versions.androidxTest}")
-                implementation("androidx.test:rules:${Versions.androidxTest}")
-                implementation(kotlin("reflect:${Versions.kotlin}"))
-            }
-        }
-    }
-}
-
-kotlin {
-    sourceSets {
-        create("darwinCommon") {
-            dependsOn(getByName("commonMain"))
-        }
-    }
-}
-
-// IOS Configuration
-kotlin {
-    // For ARM, should be changed to iosArm32 or iosArm64
-    // For Linux, should be changed to e.g. linuxX64
-    // For MacOS, should be changed to e.g. macosX64
-    // For Windows, should be changed to e.g. mingwX64
-    ios()
-    sourceSets {
-        getByName("iosMain") {
-            dependsOn(getByName("darwinCommon"))
-        }
-        getByName("iosX64Main") {
-            dependsOn(getByName("iosMain"))
-        }
-        getByName("iosArm64Main") {
-            dependsOn(getByName("iosMain"))
-        }
-        getByName("iosTest") {
-        }
-    }
-}
-
-// Macos configuration
-kotlin {
-    // For ARM, should be changed to iosArm32 or iosArm64
-    // For Linux, should be changed to e.g. linuxX64
-    // For MacOS, should be changed to e.g. macosX64
-    // For Windows, should be changed to e.g. mingwX64
-    macosX64("macos") {}
-    sourceSets {
-        getByName("macosMain") {
-            dependsOn(getByName("darwinCommon"))
-        }
-        getByName("macosTest") {
-        }
     }
 }
 

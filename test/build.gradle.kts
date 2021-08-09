@@ -92,6 +92,9 @@ android {
                 }
             }
         }
+        ndk {
+            abiFilters += setOf("x86_64", "arm64-v8a")
+        }
     }
 
     buildTypes {
