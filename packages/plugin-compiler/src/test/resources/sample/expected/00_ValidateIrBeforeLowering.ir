@@ -55,6 +55,48 @@ MODULE_FRAGMENT name:<main>
                     then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:id type:kotlin.Long visibility:private' type=kotlin.Unit origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-id>' type=sample.input.Sample origin=null
                       value: GET_VAR '<set-?>: kotlin.Long declared in sample.input.Sample.<set-id>' type=kotlin.Long origin=null
+      PROPERTY name:ignoredString visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:ignoredString type:kotlin.String visibility:private
+          annotations:
+            Ignore
+          EXPRESSION_BODY
+            CONST String type=kotlin.String value=""
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-ignoredString> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:ignoredString visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-ignoredString> (): kotlin.String declared in sample.input.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:ignoredString type:kotlin.String visibility:private' type=kotlin.String origin=null
+                receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-ignoredString>' type=sample.input.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-ignoredString> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.String) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:ignoredString visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:ignoredString type:kotlin.String visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-ignoredString>' type=sample.input.Sample origin=null
+              value: GET_VAR '<set-?>: kotlin.String declared in sample.input.Sample.<set-ignoredString>' type=kotlin.String origin=null
+      PROPERTY name:transientString visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:transientString type:kotlin.String visibility:private
+          annotations:
+            Transient
+          EXPRESSION_BODY
+            CONST String type=kotlin.String value=""
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-transientString> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:transientString visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-transientString> (): kotlin.String declared in sample.input.Sample'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:transientString type:kotlin.String visibility:private' type=kotlin.String origin=null
+                receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-transientString>' type=sample.input.Sample origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-transientString> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.String) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:transientString visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:transientString type:kotlin.String visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-transientString>' type=sample.input.Sample origin=null
+              value: GET_VAR '<set-?>: kotlin.String declared in sample.input.Sample.<set-transientString>' type=kotlin.String origin=null
       PROPERTY name:stringField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private
           EXPRESSION_BODY

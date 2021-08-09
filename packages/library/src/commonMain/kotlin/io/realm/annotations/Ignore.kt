@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,14 @@
  * limitations under the License.
  */
 
-rootProject.name = "realm-kotlin"
-include("gradle-plugin")
-include("plugin-compiler")
-include("plugin-compiler-shaded")
-include("library")
-include(":cinterop")
-include(":jni-swig-stub")
+package io.realm.annotations
 
-pluginManagement {
-    plugins {
-    }
-    repositories {
-        gradlePluginPortal()
-        google()
-    }
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.namespace == "com.android") {
-                useModule("com.android.tools.build:gradle:4.1.0")
-            }
-        }
-    }
-}
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FIELD)
+@MustBeDocumented
+/**
+ * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.
+ *
+ * Any field in a RealmObject class can have this annotation.
+ */
+annotation class Ignore
