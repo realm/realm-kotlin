@@ -60,7 +60,7 @@ class RealmList<E> private constructor(
     ) : this(ManagedListDelegate(listPtr, metadata))
 
     /**
-     * TODO
+     * Observe changes to a RealmList. Follows the pattern of [Realm.addChangeListener].
      */
     fun observe(): Flow<RealmList<E>> = delegate.observe(this)
 

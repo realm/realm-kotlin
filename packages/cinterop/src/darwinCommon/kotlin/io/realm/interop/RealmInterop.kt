@@ -806,18 +806,41 @@ actual object RealmInterop {
         list: NativePointer,
         callback: Callback
     ): NativePointer {
-        TODO()
-//        return LongPointerWrapper(
-//            realmc.register_list_notification_cb(
-//                list.cptr(),
-//                object : NotificationCallback {
-//                    override fun onChange(pointer: Long) {
-//                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
-//                    }
-//                }
-//            ),
-//            managed = false
-//        )
+        return CPointerWrapper(
+            realm_wrapper.realm_list_add_notification_callback(
+                list.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                    try {
+                        userdata?.asStableRef<Callback>()?.get()?.onChange(
+                            CPointerWrapper(
+                                change,
+                                managed = false
+                            )
+                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                            ?: error("Notification callback data should never be null")
+                    } catch (e: Exception) {
+                        // TODO API-NOTIFICATION Consider catching errors and propagate to error
+                        //  callback like the C-API error callback below
+                        //  https://github.com/realm/realm-kotlin/issues/303
+                        e.printStackTrace()
+                    }
+                },
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                    // TODO Propagate errors to callback
+                    //  https://github.com/realm/realm-kotlin/issues/303
+                },
+                // C-API currently uses the realm's default scheduler no matter what passed here
+                null
+            ),
+            managed = false
+        )
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

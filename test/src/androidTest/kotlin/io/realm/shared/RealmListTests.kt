@@ -24,19 +24,15 @@ import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import test.list.Level1
 import test.list.Level2
 import test.list.Level3
 import test.list.RealmListContainer
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -840,26 +836,27 @@ internal abstract class ManagedListTester<T>(
                 list.addAll(copyToRealmIfNeeded(dataSet))
             }
 
-            val countDownLatch = CountDownLatch(1)
+            runBlocking {
+                val channel = Channel<RealmList<*>>(capacity = 1)
+                val observer = async {
+                    val container = realm.objects<RealmListContainer>()
+                        .first()
 
-            val context = Dispatchers.Main
-            val scope = CoroutineScope(context)
+                    typeSafetyManager.getList(container)
+                        .observe()
+                        .onEach { flowList ->
+                            channel.send(flowList)
+                        }.collect()
+                }
 
-            scope.launch {
-                val container = realm.objects<RealmListContainer>()
-                    .first()
+                // Assertion after empty list is emitted
+                val emittedList = channel.receive()
+                assertNotNull(emittedList)
+                assertEquals(dataSet.size, emittedList.size)
 
-                typeSafetyManager.getList(container)
-                    .observe()
-                    .onEach { flowList ->
-                        assertNotNull(flowList)
-                        assertEquals(dataSet.size, flowList.size)
-                        scope.cancel("Cancelling scope...")
-                    }.onCompletion {
-                        countDownLatch.countDown()
-                    }.collect()
+                observer.cancel()
+                channel.close()
             }
-            countDownLatch.await(30, TimeUnit.SECONDS)
         }
         assertListAndCleanup { /* No additional assertions */ }
     }
@@ -873,37 +870,44 @@ internal abstract class ManagedListTester<T>(
                 typeSafetyManager.createContainerAndGetList(this)
             }
 
-            val countDownLatch = CountDownLatch(1)
+            runBlocking {
+                val channel = Channel<RealmList<*>>(capacity = 2)
+                val observer = async {
+                    val container = realm.objects<RealmListContainer>()
+                        .first()
 
-            val context = Dispatchers.Main
-            val scope = CoroutineScope(context)
+                    typeSafetyManager.getList(container)
+                        .observe()
+                        .onEach { flowList ->
+                            println("--- ONEACH SIZE: ${flowList.size}")
 
-            scope.launch {
-                val container = realm.objects<RealmListContainer>()
-                    .first()
+                            channel.send(flowList)
 
-                typeSafetyManager.getList(container)
-                    .observe()
-                    .onEach { flowList ->
-                        assertNotNull(flowList)
-
-                        // Update list if the flow list is empty
-                        if (flowList.isEmpty()) {
-                            realm.writeBlocking {
-                                val queriedContainer = objects<RealmListContainer>()
-                                    .first()
-                                val queriedList = typeSafetyManager.getList(queriedContainer)
-                                queriedList.addAll(copyToRealmIfNeeded(dataSet))
+                            // Update list if the flow list is empty
+                            if (flowList.isEmpty()) {
+                                realm.writeBlocking {
+                                    val queriedContainer = objects<RealmListContainer>()
+                                        .first()
+                                    val queriedList = typeSafetyManager.getList(queriedContainer)
+                                    queriedList.addAll(copyToRealmIfNeeded(dataSet))
+                                }
                             }
-                        } else {
-                            assertEquals(dataSet.size, flowList.size)
-                            scope.cancel("Cancelling scope...")
-                        }
-                    }.onCompletion {
-                        countDownLatch.countDown()
-                    }.collect()
+                        }.collect()
+                }
+
+                // Assertion after empty list is emmited
+                val firstEmittedList = channel.receive()
+                assertNotNull(firstEmittedList)
+                assertEquals(0, firstEmittedList.size)
+
+                // Assertion after list is updated
+                val updatedList = channel.receive()
+                assertNotNull(updatedList)
+                assertEquals(dataSet.size, updatedList.size)
+
+                observer.cancel()
+                channel.close()
             }
-            countDownLatch.await(30, TimeUnit.SECONDS)
         }
         assertListAndCleanup { /* No additional assertions */ }
     }
