@@ -174,6 +174,7 @@ The public API of the SDK has not been finalized. Design discussions will happen
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
 - CMake 3.18.1. Can be installed through the Android SDK Manager.
+- Java 11.
 
 ## Commands to build from source
 
@@ -194,7 +195,7 @@ cd test
 
 # Using Snapshots
 
-If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/) (Browsing not available unless you have an account at https://oss.sonatype.org/)
+If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
 
 ```
 // Global build.gradle
@@ -286,23 +287,16 @@ Inside `tests/` there are 3 locations the files can be placed in:
 * `test/src/androidTest`
 * `test/src/macosTest`
 
-Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you run you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
+Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
 are using the following work-around:
 
-1) All "common" tests should be placed in the `test/src/androidtest/kotlin/io/realm/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commontTest`.
+1) All "common" tests should be placed in the `test/src/androidtest/kotlin/io/realm/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
 
 
-2) When adding a new test file to `androidTest` we need to re-create the symlinks for macOS. This can be done, using the following command on Mac:
-
-```
-cd test/src/macosTest/kotlin/io/realm/shared
-ln -sf ../../../../../androidTest/kotlin/io/realm/shared/* ./
-``` 
-
-3) Both the real test file and the symlink must be committed to Git.
+2) The `macosTest` shared tests would automatically be picked up from the `androidTests` as it is symlinked to `test/src/androidtest/kotlin/io/realm/shared`.
 
 
-4) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
+3) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
  
 
 All platform specific tests should be placed outside the `io.realm.shared` package, the default being `io.realm`.

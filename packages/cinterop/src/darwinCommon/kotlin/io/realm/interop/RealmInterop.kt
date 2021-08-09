@@ -39,6 +39,7 @@ import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
@@ -51,6 +52,7 @@ import kotlinx.coroutines.launch
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.strerror
+import platform.posix.uint8_tVar
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_config_t
@@ -257,6 +259,35 @@ actual object RealmInterop {
         maxNumberOfVersions: Long
     ) {
         realm_wrapper.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions.toULong())
+    }
+
+    actual fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray) {
+        memScoped {
+            val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
+            realm_wrapper.realm_config_set_encryption_key(
+                config.cptr(),
+                encryptionKeyPointer as CPointer<uint8_tVar>,
+                encryptionKey.size.toULong()
+            )
+        }
+    }
+
+    actual fun realm_config_get_encryption_key(config: NativePointer): ByteArray? {
+        memScoped {
+            val encryptionKey = ByteArray(64)
+            val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
+
+            val keyLength = realm_wrapper.realm_config_get_encryption_key(
+                config.cptr(),
+                encryptionKeyPointer as CPointer<uint8_tVar>
+            )
+
+            if (keyLength == 64UL) {
+                return encryptionKey
+            }
+
+            return null
+        }
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {

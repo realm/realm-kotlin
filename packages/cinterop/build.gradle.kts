@@ -65,40 +65,41 @@ val corePath = "external/core"
 val absoluteCorePath = "$rootDir/$corePath"
 
 android {
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
     ndkVersion = Versions.Android.ndkVersion
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
-        versionName = Realm.version
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
-            val main by getting {
+            getByName("main") {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
                 // Don't know how to set AndroidTest source dir, probably in its own source set by
                 // "val test by getting" instead
                 // androidTest.java.srcDirs += "src/androidTest/kotlin"
             }
         }
-    }
-    defaultConfig {
+
         ndk {
             abiFilters += setOf("x86_64", "arm64-v8a")
         }
+
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
+                targets.add("realmc")
             }
         }
     }
+
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
-            version = "${Versions.cmake}"
+            version = Versions.cmake
             path = project.file("src/jvmCommon/CMakeLists.txt")
         }
     }

@@ -4,17 +4,22 @@
 * None.
 
 ### Enhancements
-* None.
+* Add support for excluding properties from the Realm schema. This is done by either using JVM `@Transient` or the newly added `@io.realm.kotlin.Ignore` annotation. (Issue [#278](https://github.com/realm/realm-kotlin/issues/278)).
+* Add support for encrypted Realms. Encryption can be enabled by passing a 64-byte encryption key to the configuration builder. (Issue [#227](https://github.com/realm/realm-kotlin/issues/227))
 
 ### Fixed
-* Throw exception when violating primary key uniqeness constraint when importing objects with `copyToRealm`.
+* Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
 * Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
 
 ### Compatibility
 * This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
 
 ### Internal
-* None.
+* Updated Gradle to 7.1.1.
+* Updated Android Gradle Plugin to 4.1.0.
+* Updated to Android Build Tools 30.0.2. 
+* Updated to targetSdk 30 for Android.
+* Now uses Java 11 to build the project.
 
 
 ## 0.4.0 (2021-07-13)

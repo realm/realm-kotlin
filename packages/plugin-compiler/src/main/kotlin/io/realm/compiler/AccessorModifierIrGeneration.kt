@@ -154,7 +154,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val propertyTypeRaw = declaration.backingField!!.type
                 val propertyType = propertyTypeRaw.makeNotNull()
                 val nullable = propertyTypeRaw.isNullable()
+                val excludeProperty = declaration.backingField!!.hasAnnotation(FqNames.IGNORE_ANNOTATION) ||
+                    declaration.backingField!!.hasAnnotation(FqNames.TRANSIENT_ANNOTATION)
+
                 when {
+                    excludeProperty -> {
+                        logInfo("Property named ${declaration.name} ignored")
+                    }
                     propertyType.isString() -> {
                         logInfo("String property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(

@@ -121,6 +121,20 @@ actual object RealmInterop {
         realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
     }
 
+    actual fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray) {
+        realmc.realm_config_set_encryption_key(config.cptr(), encryptionKey, encryptionKey.size.toLong())
+    }
+
+    actual fun realm_config_get_encryption_key(config: NativePointer): ByteArray? {
+        val key = ByteArray(64)
+        val keyLength: Long = realmc.realm_config_get_encryption_key(config.cptr(), key)
+
+        if (keyLength == 64L) {
+            return key
+        }
+        return null
+    }
+
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
         // Ensure that we can read version information, etc.
