@@ -542,7 +542,8 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
-    actual fun realm_list_freeze(liveList: NativePointer,
+    actual fun realm_list_freeze(
+        liveList: NativePointer,
         frozenRealm: NativePointer
     ): NativePointer {
         return CPointerWrapper(
