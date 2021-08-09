@@ -26,7 +26,16 @@ import io.realm.isValid
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
-interface RealmObjectInternal : RealmObject, io.realm.interop.RealmObjectInterop
+@Suppress("VariableNaming")
+interface RealmObjectInternal : RealmObject, io.realm.interop.RealmObjectInterop {
+    // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
+
+    // Reference to the public Realm instance and internal transaction to which the object belongs.
+    var `$realm$Owner`: RealmReference?
+    var `$realm$TableName`: String?
+    var `$realm$IsManaged`: Boolean
+    var `$realm$Mediator`: Mediator?
+}
 
 fun RealmObjectInternal.checkValid() {
     if (!this.isValid()) {

@@ -90,29 +90,6 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
-          EXPRESSION_BODY
-            CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.Any?
-          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-          overridden:
-            public abstract fun <get-$realm$Owner> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in schema.input.A'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
-                receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<get-$realm$Owner>' type=schema.input.A origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:kotlin.Any?) returnType:kotlin.Unit
-          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-          overridden:
-            public abstract fun <set-$realm$Owner> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
-          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
-          BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-$realm$Owner>' type=schema.input.A origin=null
-              value: GET_VAR '<set-?>: kotlin.Any? declared in schema.input.A.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private
           EXPRESSION_BODY
@@ -136,6 +113,29 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-$realm$ObjectPointer>' type=schema.input.A origin=null
               value: GET_VAR '<set-?>: io.realm.interop.NativePointer? declared in schema.input.A.<set-$realm$ObjectPointer>' type=io.realm.interop.NativePointer? origin=null
+      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.Any?
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Owner> (): io.realm.internal.RealmReference? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in schema.input.A'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
+                receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<get-$realm$Owner>' type=schema.input.A origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:kotlin.Any?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Owner> (<set-?>: io.realm.internal.RealmReference?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-$realm$Owner>' type=schema.input.A origin=null
+              value: GET_VAR '<set-?>: kotlin.Any? declared in schema.input.A.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private
           EXPRESSION_BODY
@@ -143,7 +143,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$TableName> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.String?
           correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$TableName> (): kotlin.String? declared in schema.input.A'
@@ -152,7 +152,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$TableName> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:kotlin.String?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
           BLOCK_BODY
@@ -166,7 +166,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$IsManaged> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.Boolean
           correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in schema.input.A'
@@ -175,7 +175,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$IsManaged> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:kotlin.Boolean) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean
           BLOCK_BODY
@@ -189,7 +189,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Mediator> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.Any
           correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$Mediator> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$Mediator> (): io.realm.internal.Mediator? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$Mediator> (): kotlin.Any declared in schema.input.A'
@@ -198,7 +198,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Mediator> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:kotlin.Any) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$Mediator> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$Mediator> (<set-?>: io.realm.internal.Mediator?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any
           BLOCK_BODY
@@ -294,29 +294,6 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
-          EXPRESSION_BODY
-            CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.Any?
-          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-          overridden:
-            public abstract fun <get-$realm$Owner> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in schema.input.C'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
-                receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<get-$realm$Owner>' type=schema.input.C origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:kotlin.Any?) returnType:kotlin.Unit
-          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-          overridden:
-            public abstract fun <set-$realm$Owner> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
-          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
-          BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-$realm$Owner>' type=schema.input.C origin=null
-              value: GET_VAR '<set-?>: kotlin.Any? declared in schema.input.C.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private
           EXPRESSION_BODY
@@ -340,6 +317,29 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-$realm$ObjectPointer>' type=schema.input.C origin=null
               value: GET_VAR '<set-?>: io.realm.interop.NativePointer? declared in schema.input.C.<set-$realm$ObjectPointer>' type=io.realm.interop.NativePointer? origin=null
+      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.Any?
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Owner> (): io.realm.internal.RealmReference? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in schema.input.C'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
+                receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<get-$realm$Owner>' type=schema.input.C origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:kotlin.Any?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Owner> (<set-?>: io.realm.internal.RealmReference?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-$realm$Owner>' type=schema.input.C origin=null
+              value: GET_VAR '<set-?>: kotlin.Any? declared in schema.input.C.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private
           EXPRESSION_BODY
@@ -347,7 +347,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$TableName> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.String?
           correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$TableName> (): kotlin.String? declared in schema.input.C'
@@ -356,7 +356,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$TableName> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:kotlin.String?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
           BLOCK_BODY
@@ -370,7 +370,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$IsManaged> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.Boolean
           correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in schema.input.C'
@@ -379,7 +379,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$IsManaged> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:kotlin.Boolean) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean
           BLOCK_BODY
@@ -393,7 +393,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Mediator> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.Any
           correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$Mediator> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$Mediator> (): io.realm.internal.Mediator? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$Mediator> (): kotlin.Any declared in schema.input.C'
@@ -402,7 +402,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Mediator> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:kotlin.Any) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$Mediator> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$Mediator> (<set-?>: io.realm.internal.Mediator?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any
           BLOCK_BODY
@@ -498,29 +498,6 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
-          EXPRESSION_BODY
-            CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.Any?
-          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-          overridden:
-            public abstract fun <get-$realm$Owner> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in schema.input.B'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
-                receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<get-$realm$Owner>' type=schema.input.B origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:kotlin.Any?) returnType:kotlin.Unit
-          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
-          overridden:
-            public abstract fun <set-$realm$Owner> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
-          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
-          BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-$realm$Owner>' type=schema.input.B origin=null
-              value: GET_VAR '<set-?>: kotlin.Any? declared in schema.input.B.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private
           EXPRESSION_BODY
@@ -544,6 +521,29 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-$realm$ObjectPointer>' type=schema.input.B origin=null
               value: GET_VAR '<set-?>: io.realm.interop.NativePointer? declared in schema.input.B.<set-$realm$ObjectPointer>' type=io.realm.interop.NativePointer? origin=null
+      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.Any?
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Owner> (): io.realm.internal.RealmReference? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): kotlin.Any? declared in schema.input.B'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Any? origin=null
+                receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<get-$realm$Owner>' type=schema.input.B origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:kotlin.Any?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Owner> (<set-?>: io.realm.internal.RealmReference?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:kotlin.Any? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-$realm$Owner>' type=schema.input.B origin=null
+              value: GET_VAR '<set-?>: kotlin.Any? declared in schema.input.B.<set-$realm$Owner>' type=kotlin.Any? origin=null
       PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private
           EXPRESSION_BODY
@@ -551,7 +551,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$TableName> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.String?
           correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$TableName> (): kotlin.String? declared in schema.input.B'
@@ -560,7 +560,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$TableName> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:kotlin.String?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
           BLOCK_BODY
@@ -574,7 +574,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$IsManaged> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.Boolean
           correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in schema.input.B'
@@ -583,7 +583,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$IsManaged> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:kotlin.Boolean) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean
           BLOCK_BODY
@@ -597,7 +597,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Mediator> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.Any
           correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$Mediator> (): kotlin.Any? declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <get-$realm$Mediator> (): io.realm.internal.Mediator? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$Mediator> (): kotlin.Any declared in schema.input.B'
@@ -606,7 +606,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Mediator> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:kotlin.Any) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$Mediator> (<set-?>: kotlin.Any?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+            public abstract fun <set-$realm$Mediator> (<set-?>: io.realm.internal.Mediator?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Any
           BLOCK_BODY
