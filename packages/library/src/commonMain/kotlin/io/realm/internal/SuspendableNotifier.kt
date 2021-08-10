@@ -140,7 +140,7 @@ internal class SuspendableNotifier(
     }
 
     /**
-     * Listen to changes to a RealmList through a [Flow]. If the list is deleted, `null` is emitted and the flow will complete.
+     * Listen to changes to a RealmList through a [Flow].
      */
     internal fun <T> listChanged(list: RealmList<T>): Flow<RealmList<T>> {
         return callbackFlow {
@@ -295,6 +295,11 @@ internal class SuspendableNotifier(
                         RealmInterop.realm_freeze(realm.realmReference.dbPointer)
                     )
                     notifyRealmChanged(frozenRealm)
+
+                    // Skip notifications when list is not valid
+                    if (!liveList.isValid()) {
+                        return
+                    }
 
                     // Notifications need to be delivered with the version they where created on, otherwise
                     // the fine-grained notification data might be out of sync.

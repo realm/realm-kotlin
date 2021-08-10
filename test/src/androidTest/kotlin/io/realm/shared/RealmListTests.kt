@@ -17,18 +17,22 @@
 package io.realm.shared
 
 import io.realm.MutableRealm
+import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.observe
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
+import io.realm.util.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
+import test.Sample
 import test.list.Level1
 import test.list.Level2
 import test.list.Level3
@@ -44,8 +48,9 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
-class RealmListTests {
+class RealmListTests : NotificationTests {
 
     private val descriptors = TypeDescriptor.allListFieldTypes
 
@@ -231,16 +236,135 @@ class RealmListTests {
     }
 
     @Test
-    fun observe_emitListOnListCollect() {
+    override fun initialElement() {
         for (tester in managedTesters) {
             tester.observeEmitListOnListCollect()
         }
     }
 
     @Test
-    fun observe_emitListOnListUpdates() {
+    override fun observe() {
         for (tester in managedTesters) {
             tester.observeEmitListOnListUpdates()
+        }
+    }
+
+    // No need to be type-exhaustive
+    @Test
+    override fun cancelObserve() {
+        runBlocking {
+            val managedContainer = realm.write {
+                copyToRealm(RealmListContainer())
+            }
+            val channel1 = Channel<RealmList<*>>(1)
+            val channel2 = Channel<RealmList<*>>(1)
+            val observer1 = async {
+                managedContainer.objectListField
+                    .observe()
+                    .collect { flowList ->
+                        channel1.trySend(flowList)
+                    }
+            }
+            val observer2 = async {
+                managedContainer.objectListField
+                    .observe()
+                    .collect { flowList ->
+                        channel2.trySend(flowList)
+                    }
+            }
+
+            // Trigger an update
+            realm.write {
+                val queriedContainer = objects<RealmListContainer>()
+                    .first()
+                queriedContainer.objectListField
+                    .addAll(OBJECT_VALUES.map { copyToRealm(it) })
+            }
+            assertEquals(OBJECT_VALUES.size, channel1.receive().size)
+            assertEquals(OBJECT_VALUES.size, channel2.receive().size)
+
+            // Cancel observer 1
+            observer1.cancel()
+
+            // Trigger another update
+            realm.write {
+                val queriedContainer = objects<RealmListContainer>()
+                    .first()
+                queriedContainer.objectListField
+                    .add(copyToRealm(RealmListContainer().apply { stringField = "C" }))
+            }
+
+            // Check channel 1 didn't receive the update
+            assertEquals(OBJECT_VALUES.size + 1, channel2.receive().size)
+            assertTrue(channel1.isEmpty)
+
+            observer2.cancel()
+            channel1.close()
+            channel2.close()
+        }
+    }
+
+    // No need to be type-exhaustive
+    @Test
+    override fun deleteObservable() {
+        runBlocking {
+            val channel = Channel<RealmList<*>>(capacity = 1)
+            val managedContainer = realm.write {
+                RealmListContainer()
+                    .apply {
+                        objectListField.addAll(OBJECT_VALUES.map { copyToRealm(it) })
+                    }.let { container ->
+                        copyToRealm(container)
+                    }
+            }
+            val observer = async {
+                managedContainer.objectListField
+                    .observe()
+                    .collect { flowList ->
+                        channel.send(flowList)
+                    }
+            }
+
+            // Assert container got populated correctly
+            val emittedList = channel.receive()
+            assertNotNull(emittedList)
+            assertEquals(OBJECT_VALUES.size, emittedList.size)
+
+            realm.write {
+                delete(findLatest(managedContainer)!!)
+            }
+
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    @Ignore("Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out")
+    override fun closeRealmInsideFlowThrows() {
+        // TODO
+    }
+
+    // No need to be type-exhaustive
+    @Test
+    override fun closingRealmDoesNotCancelFlows() {
+        runBlocking {
+            val channel = Channel<RealmList<*>>(capacity = 1)
+            val container = realm.write {
+                copyToRealm(RealmListContainer())
+            }
+            val observer = async {
+                container.objectListField
+                    .observe()
+                    .collect { flowList ->
+                        channel.trySend(flowList)
+                    }
+                fail("Flow should not be canceled.")
+            }
+            assertTrue(channel.receive().isEmpty())
+            realm.close()
+            observer.cancel()
+            channel.close()
         }
     }
 
@@ -844,9 +968,9 @@ internal abstract class ManagedListTester<T>(
 
                     typeSafetyManager.getList(container)
                         .observe()
-                        .onEach { flowList ->
+                        .collect { flowList ->
                             channel.send(flowList)
-                        }.collect()
+                        }
                 }
 
                 // Assertion after empty list is emitted
@@ -871,16 +995,14 @@ internal abstract class ManagedListTester<T>(
             }
 
             runBlocking {
-                val channel = Channel<RealmList<*>>(capacity = 2)
+                val channel = Channel<RealmList<*>>(capacity = 1)
                 val observer = async {
                     val container = realm.objects<RealmListContainer>()
                         .first()
 
                     typeSafetyManager.getList(container)
                         .observe()
-                        .onEach { flowList ->
-                            println("--- ONEACH SIZE: ${flowList.size}")
-
+                        .collect { flowList ->
                             channel.send(flowList)
 
                             // Update list if the flow list is empty
@@ -892,7 +1014,7 @@ internal abstract class ManagedListTester<T>(
                                     queriedList.addAll(copyToRealmIfNeeded(dataSet))
                                 }
                             }
-                        }.collect()
+                        }
                 }
 
                 // Assertion after empty list is emmited

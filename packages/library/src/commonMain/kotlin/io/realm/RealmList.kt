@@ -67,6 +67,18 @@ class RealmList<E> private constructor(
     internal fun freeze(realm: RealmReference): RealmList<E> = delegate.freeze(realm)
     internal fun thaw(realm: RealmReference): RealmList<E> = delegate.thaw(realm)
 
+    internal fun isValid(): Boolean {
+        // FIXME: workaround for missing realm_list_is_valid in the C-API
+        try {
+            size
+        } catch (e: RuntimeException) {
+            if (e.message?.lowercase()?.contains("access to invalidated list object") == true) {
+                return false
+            }
+        }
+        return true
+    }
+
     /**
      * Metadata needed to correctly instantiate a list operator. For internal use only.
      */
