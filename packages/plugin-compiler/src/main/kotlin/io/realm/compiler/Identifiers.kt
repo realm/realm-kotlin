@@ -81,7 +81,7 @@ internal object FqNames {
     val PROPERTY_TYPE = FqName("io.realm.interop.PropertyType")
     val COLLECTION_TYPE = FqName("io.realm.interop.CollectionType")
     val PROPERTY_FLAG = FqName("io.realm.interop.PropertyFlag")
-    val PRIMARY_KEY_ANNOTATION = FqName("io.realm.PrimaryKey")
+    val PRIMARY_KEY_ANNOTATION = FqName("io.realm.annotations.PrimaryKey")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     // Realm data types
