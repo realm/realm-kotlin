@@ -54,7 +54,7 @@ public var RealmObject.version: VersionId
         val internalObject = this as RealmObjectInternal
         internalObject.`$realm$Owner`?.let {
             // FIXME This check is required as realm_get_version_id doesn't throw if closed!? Core bug?
-            val dbPointer = (it as RealmReference).dbPointer
+            val dbPointer = it.dbPointer
             if (RealmInterop.realm_is_closed(dbPointer)) {
                 throw IllegalStateException("Cannot access properties on closed realm")
             }
@@ -114,7 +114,7 @@ public fun RealmObject.isValid(): Boolean {
  */
 internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
     checkNotificationsAvailable()
-    val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner
+    val realm = ((this as RealmObjectInternal).`$realm$Owner`!!).owner
     @Suppress("UNCHECKED_CAST")
     return realm.registerObjectChangeListener(this as T, callback)
 }
@@ -132,12 +132,12 @@ public fun <T : RealmObject> T.observe(): Flow<T> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$Owner` as RealmReference).owner.registerObjectObserver(this as T)
+    return (internalObject.`$realm$Owner`!!).owner.registerObjectObserver(this as T)
 }
 
 private fun RealmObject.checkNotificationsAvailable() {
     val internalObject = this as RealmObjectInternal
-    val realm = (internalObject.`$realm$Owner` as RealmReference?)
+    val realm = internalObject.`$realm$Owner`
     if (!isManaged()) {
         throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
     }

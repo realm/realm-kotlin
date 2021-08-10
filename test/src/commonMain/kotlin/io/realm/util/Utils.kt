@@ -20,7 +20,6 @@ package io.realm.util
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.RealmReference
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -54,7 +53,7 @@ object Utils {
  * This method control its own write transaction, so cannot be called inside a write transaction
  */
 suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
-    val realm = ((this as RealmObjectInternal).`$realm$Owner` as RealmReference).owner as Realm
+    val realm = ((this as RealmObjectInternal).`$realm$Owner`!!).owner as Realm
     return realm.write {
         val liveObject: T = findLatest(this@update)!!
         block(liveObject)
