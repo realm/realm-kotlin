@@ -14,28 +14,21 @@
  * limitations under the License.
  */
 
-package io.realm.util
+package io.realm.test.platform
 
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import io.realm.test.platform.RunLoopThread
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
 
-actual object PlatformUtils {
-    actual fun createTempDir(): String {
-        TODO("Not yet implemented")
-    }
-
-    actual fun deleteTempDir(path: String) {
+actual class RunLoopThread : CoroutineScope {
+    actual fun run(block: RunLoopThread.() -> Unit) {
         TODO()
     }
 
-    @OptIn(ExperimentalTime::class)
-    actual fun sleep(duration: Duration) {
-        Thread.sleep(duration.toLongMilliseconds())
-    }
-
-    actual fun threadId(): ULong = Thread.currentThread().id.toULong()
-
-    actual fun triggerGC() {
+    actual fun terminate() {
         TODO()
     }
+
+    override val coroutineContext: CoroutineContext
+        get() = TODO("Not yet implemented")
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.util
+package io.realm.test.platform
 
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineDispatcher

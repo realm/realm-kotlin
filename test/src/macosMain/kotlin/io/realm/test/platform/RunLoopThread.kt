@@ -14,40 +14,38 @@
  * limitations under the License.
  */
 
-package io.realm.util
+package io.realm.test.platform
 
-import android.os.Handler
-import android.os.HandlerThread
+import io.realm.util.Main
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.async
-import java.util.concurrent.CountDownLatch
+import platform.CoreFoundation.CFRunLoopGetCurrent
+import platform.CoreFoundation.CFRunLoopRun
+import platform.CoreFoundation.CFRunLoopStop
 import kotlin.coroutines.CoroutineContext
 
 actual class RunLoopThread : CoroutineScope {
 
-    private val exit = CountDownLatch(1)
-
-    private val thread = HandlerThread("test-thread")
-    private val handler: Handler by lazy { thread.start(); Handler(thread.looper) }
-
-    override val coroutineContext: CoroutineContext by lazy { handler.asCoroutineDispatcher() + exceptionHandler }
+    private val dispatcher: CoroutineDispatcher by lazy { Main }
+    override val coroutineContext: CoroutineContext by lazy { dispatcher + exceptionHandler }
 
     private var error: Throwable? = null
 
     val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         error = exception
+        println("CoroutineExceptionHandler got $exception")
         terminate()
     }
 
     actual fun run(block: RunLoopThread.() -> Unit) {
         this.async { block(this@RunLoopThread) }
-        exit.await()
+        CFRunLoopRun()
         error?.let { throw it }
     }
 
     actual fun terminate() {
-        exit.countDown()
+        CFRunLoopStop(CFRunLoopGetCurrent())
     }
 }

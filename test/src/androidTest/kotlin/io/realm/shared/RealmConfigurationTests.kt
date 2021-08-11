@@ -17,10 +17,10 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.internal.PlatformHelper
-import io.realm.internal.runBlocking
+import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.TestLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
@@ -40,14 +40,14 @@ class RealmConfigurationTests {
     fun defaultPath() {
         val config = RealmConfiguration(schema = setOf(Sample::class))
         assertEquals(
-            "${PlatformHelper.appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
             config.path
         )
 
         val configFromBuilder: RealmConfiguration =
             RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
         assertEquals(
-            "${PlatformHelper.appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
             configFromBuilder.path
         )
     }

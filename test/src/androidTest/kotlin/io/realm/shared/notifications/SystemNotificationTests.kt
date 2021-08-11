@@ -19,7 +19,7 @@ package io.realm.shared.notifications
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.internal.platform.singleThreadDispatcher
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils
 import kotlinx.coroutines.runBlocking
 import test.Sample

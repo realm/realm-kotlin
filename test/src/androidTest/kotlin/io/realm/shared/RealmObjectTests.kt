@@ -21,7 +21,7 @@ import io.realm.RealmLifeCycleTests
 import io.realm.VersionId
 import io.realm.isFrozen
 import io.realm.isValid
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import io.realm.version
 import test.link.Child
