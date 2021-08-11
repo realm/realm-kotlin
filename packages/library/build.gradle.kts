@@ -100,16 +100,16 @@ kotlin {
         }
         getByName("macosMain") {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwinCommon/kotlin")
+            kotlin.srcDir("src/darwin/kotlin")
         }
         getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwinCommon/kotlin")
+            kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
         }
         getByName("iosX64Main") {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwinCommon/kotlin")
+            kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
         }
     }

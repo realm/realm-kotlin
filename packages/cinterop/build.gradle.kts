@@ -109,7 +109,7 @@ kotlin {
     ios {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
-                defFile = project.file("src/nativeCommon/realm.def")
+                defFile = project.file("src/native/realm.def")
                 packageName = "realm_wrapper"
                 includeDirs("$absoluteCorePath/src/")
             }
@@ -131,7 +131,7 @@ kotlin {
     macosX64("macos") {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
-                defFile = project.file("src/nativeCommon/realm.def")
+                defFile = project.file("src/native/realm.def")
                 packageName = "realm_wrapper"
                 includeDirs("$absoluteCorePath/src/")
             }
@@ -154,18 +154,18 @@ kotlin {
             }
         }
         // FIXME HIERARCHICAL-BUILD Rename to jvm
-        val jvmCommon by creating {
+        val jvm by creating {
             dependsOn(commonMain)
-            kotlin.srcDir("src/jvmCommon/kotlin")
+            kotlin.srcDir("src/jvm/kotlin")
             dependencies {
                 api(project(":jni-swig-stub"))
             }
         }
         val jvmMain by getting {
-            dependsOn(jvmCommon)
+            dependsOn(jvm)
         }
         val androidMain by getting {
-            dependsOn(jvmCommon)
+            dependsOn(jvm)
         }
         val androidTest by getting {
             dependencies {
@@ -183,14 +183,14 @@ kotlin {
             //  This would also require us to enable hierarchical setup, which is currently blocked by
             //  https://youtrack.jetbrains.com/issue/KT-48153
             // FIXME HIERARCHICAL-BUILD Rename to nativeDarwin
-            kotlin.srcDir("src/darwinCommon/kotlin")
+            kotlin.srcDir("src/darwin/kotlin")
         }
         val iosMain by getting {
             // TODO HIERARCHICAL-BUILD From 1.5.30-M1 we should be able to commonize cinterops using
             //  kotlin.mpp.enableCInteropCommonization=true (https://youtrack.jetbrains.com/issue/KT-40975)
             //  This would also require us to enable hierarchical setup, which is currently blocked by
             //  https://youtrack.jetbrains.com/issue/KT-48153
-            kotlin.srcDir("src/darwinCommon/kotlin")
+            kotlin.srcDir("src/darwin/kotlin")
         }
         val macosTest by getting {
             // FIXME HIERARCHICAL-BUILD Rename to nativeDarwinTest
@@ -257,7 +257,7 @@ android {
     externalNativeBuild {
         cmake {
             version = Versions.cmake
-            path = project.file("src/jvmCommon/CMakeLists.txt")
+            path = project.file("src/jvm/CMakeLists.txt")
         }
     }
     // To avoid
