@@ -18,7 +18,7 @@ package sample.input
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.PrimaryKey
+import io.realm.annotations.PrimaryKey
 import io.realm.annotations.Ignore
 import java.util.*
 

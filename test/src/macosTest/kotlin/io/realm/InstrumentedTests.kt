@@ -20,8 +20,9 @@ package io.realm
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
+import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmReference
 import io.realm.interop.NativePointer
-import io.realm.interop.RealmObjectInterop
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -45,7 +46,7 @@ class InstrumentedTests {
         val p = Sample()
 
         @Suppress("CAST_NEVER_SUCCEEDS")
-        val realmModel: RealmObjectInterop = p as? RealmObjectInterop
+        val realmModel: RealmObjectInternal = p as? RealmObjectInternal
             ?: error("Supertype RealmObjectInternal was not added to Sample class")
 
         memScoped {
@@ -55,12 +56,19 @@ class InstrumentedTests {
             // Accessing getters/setters
             realmModel.`$realm$IsManaged` = true
             realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
-            realmModel.`$realm$Owner` = CPointerWrapper(ptr2.ptr)
+
+            val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
+            val configuration = RealmConfiguration(schema = setOf(Sample::class))
+            @Suppress("invisible_member")
+            realmModel.`$realm$Owner` = RealmReference(object : BaseRealm(configuration, realmPointer) {}, realmPointer)
             realmModel.`$realm$TableName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)
             assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
-            assertEquals(ptr2.rawPtr.toLong(), (realmModel.`$realm$Owner` as CPointerWrapper).ptr.toLong())
+            assertEquals(
+                ptr2.rawPtr.toLong(),
+                (realmModel.`$realm$Owner`!!.dbPointer as CPointerWrapper).ptr!!.rawValue.toLong()
+            )
             assertEquals("Sample", realmModel.`$realm$TableName`)
         }
     }

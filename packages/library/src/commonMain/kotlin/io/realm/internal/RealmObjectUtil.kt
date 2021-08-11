@@ -67,10 +67,11 @@ fun <T : RealmObject> RealmObjectInternal.link(
 fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
-    val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
+    val mediator = `$realm$Mediator`!!
+    val managedModel = mediator.createInstanceOf(type)
     return managedModel.manage(
         frozenRealm!!,
-        `$realm$Mediator` as Mediator,
+        mediator,
         type,
         RealmInterop.realm_object_freeze(
             `$realm$ObjectPointer`!!,
@@ -87,14 +88,15 @@ fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T
 internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T? {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
-    val managedModel = (`$realm$Mediator` as Mediator).createInstanceOf(type)
+    val mediator = `$realm$Mediator`!!
+    val managedModel = mediator.createInstanceOf(type)
     val dbPointer = liveRealm.realmReference.dbPointer
     @Suppress("TooGenericExceptionCaught")
     try {
         return RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)!!.let { thawedObject ->
             managedModel.manage(
                 liveRealm.realmReference,
-                `$realm$Mediator` as Mediator,
+                mediator,
                 type,
                 thawedObject
             )

@@ -59,7 +59,7 @@ class PrimaryKeyTests {
                     """
                         import io.realm.RealmObject
                         import io.realm.RealmConfiguration
-                        import io.realm.PrimaryKey
+                        import io.realm.annotations.PrimaryKey
 
                         class A : RealmObject {
                             @PrimaryKey
@@ -88,7 +88,7 @@ class PrimaryKeyTests {
                 """
                     import io.realm.RealmObject
                     import io.realm.RealmConfiguration
-                    import io.realm.PrimaryKey
+                    import io.realm.annotations.PrimaryKey
 
                     class A : RealmObject {
                         @PrimaryKey

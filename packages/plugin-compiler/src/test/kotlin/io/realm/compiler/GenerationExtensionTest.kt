@@ -148,12 +148,14 @@ class GenerationExtensionTest {
         // Accessing getters/setters
         sampleModel.`$realm$IsManaged` = true
         sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
-        sampleModel.`$realm$Owner` = LongPointer(0XCAFED00D)
+        // Cannot initialize a RealmReference without a model, so skipping this from the test
+        // sampleModel.`$realm$Owner` = LongPointer(0XCAFED00D)
         sampleModel.`$realm$TableName` = "Sample"
 
         assertEquals(true, sampleModel.`$realm$IsManaged`)
         assertEquals(0xCAFEBABE, (sampleModel.`$realm$ObjectPointer` as LongPointer).ptr)
-        assertEquals(0XCAFED00D, (sampleModel.`$realm$Owner` as LongPointer).ptr)
+        // Cannot initialize a RealmReference without a model, so skipping this from the test
+        // assertEquals(0XCAFED00D, (sampleModel.`$realm$Owner` as LongPointer).ptr)
         assertEquals("Sample", sampleModel.`$realm$TableName`)
 
         inputs.assertGeneratedIR()
