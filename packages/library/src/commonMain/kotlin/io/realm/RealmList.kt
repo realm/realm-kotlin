@@ -67,6 +67,7 @@ class RealmList<E> private constructor(
     internal fun freeze(realm: RealmReference): RealmList<E> = delegate.freeze(realm)
     internal fun thaw(realm: RealmReference): RealmList<E> = delegate.thaw(realm)
 
+    @Suppress("TooGenericExceptionCaught")
     internal fun isValid(): Boolean {
         // FIXME workaround until https://github.com/realm/realm-core/issues/4843 is done
         try {
