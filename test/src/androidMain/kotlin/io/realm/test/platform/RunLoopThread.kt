@@ -18,7 +18,6 @@ package io.realm.test.platform
 
 import android.os.Handler
 import android.os.HandlerThread
-import io.realm.test.platform.RunLoopThread
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.android.asCoroutineDispatcher

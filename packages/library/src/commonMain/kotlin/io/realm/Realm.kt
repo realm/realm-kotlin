@@ -20,7 +20,6 @@ import io.realm.internal.SuspendableNotifier
 import io.realm.internal.SuspendableWriter
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
-import io.realm.internal.platform.threadId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef

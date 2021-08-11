@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// TODO https://github.com/realm/realm-kotlin/issues/70
+@file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
 
 package io.realm.interop
 
@@ -159,6 +161,7 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
+@Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
 
     actual fun realm_get_version_id(realm: NativePointer): Long {
@@ -274,7 +277,7 @@ actual object RealmInterop {
 
     actual fun realm_config_get_encryption_key(config: NativePointer): ByteArray? {
         memScoped {
-            val encryptionKey = ByteArray(64)
+            val encryptionKey = ByteArray(ENCRYPTION_KEY_LENGTH)
             val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
 
             val keyLength = realm_wrapper.realm_config_get_encryption_key(
@@ -282,7 +285,7 @@ actual object RealmInterop {
                 encryptionKeyPointer as CPointer<uint8_tVar>
             )
 
-            if (keyLength == 64UL) {
+            if (keyLength == ENCRYPTION_KEY_LENGTH.toULong()) {
                 return encryptionKey
             }
 
@@ -542,6 +545,7 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
+    @Suppress("ComplexMethod")
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
         val cvalue: realm_value_t = alloc()
         when (value) {
@@ -924,7 +928,7 @@ actual object RealmInterop {
 
     data class CoreCallback(
         val callback: realm_scheduler_notify_func_t,
-        val callback_userdata: CPointer<out CPointed>,
+        val callbackUserdata: CPointer<out CPointed>,
     )
 
     interface Scheduler {
@@ -953,7 +957,7 @@ actual object RealmInterop {
                 try {
                     printlntid("on dispatcher")
                     callback.value?.let {
-                        it.callback.invoke(it.callback_userdata)
+                        it.callback.invoke(it.callbackUserdata)
                     }
                 } catch (e: Exception) {
                     // Should never happen, but is included for development to get some indicators

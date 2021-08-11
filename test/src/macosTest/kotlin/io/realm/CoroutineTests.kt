@@ -17,7 +17,7 @@
 package io.realm
 
 import io.realm.internal.platform.singleThreadDispatcher
-import io.realm.util.NsQueueDispatcher
+import io.realm.test.platform.NsQueueDispatcher
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.printlntid
 import kotlinx.coroutines.CoroutineDispatcher

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// TODO https://github.com/realm/realm-kotlin/issues/70
+@file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
 
 package io.realm.interop
 
@@ -30,6 +32,7 @@ private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_
  * NOTE: All methods that return a boolean to indicate an exception are being checked automatically in JNI.
  * So there is no need to verify the return value in the JVM interop layer.
  */
+@Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
 
     // TODO API-CLEANUP Maybe pull library loading into separate method
@@ -125,10 +128,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_get_encryption_key(config: NativePointer): ByteArray? {
-        val key = ByteArray(64)
+        val key = ByteArray(ENCRYPTION_KEY_LENGTH)
         val keyLength: Long = realmc.realm_config_get_encryption_key(config.cptr(), key)
 
-        if (keyLength == 64L) {
+        if (keyLength == ENCRYPTION_KEY_LENGTH.toLong()) {
             return key
         }
         return null

@@ -16,7 +16,6 @@
 
 package io.realm.test.platform
 
-import io.realm.test.platform.RunLoopThread
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 

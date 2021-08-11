@@ -7,9 +7,9 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import platform.posix.pthread_threadid_np
+import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.isFrozen
-import kotlin.native.concurrent.ensureNeverFrozen
 
 actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
 

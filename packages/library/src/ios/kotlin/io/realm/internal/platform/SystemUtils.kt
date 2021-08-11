@@ -11,5 +11,3 @@ actual fun appFilesDirectory(): String {
             .first() as NSURL
         )?.path ?: error("Could not identify default document directory")
 }
-
-
