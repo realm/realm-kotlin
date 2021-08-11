@@ -23,16 +23,13 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.observe
+import io.realm.internal.freeze
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
-import io.realm.util.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
-import test.Sample
 import test.list.Level1
 import test.list.Level2
 import test.list.Level3
@@ -253,6 +250,9 @@ class RealmListTests : NotificationTests {
     @Test
     override fun cancelObserve() {
         runBlocking {
+            // Freeze values since native complains if we reference a package-level defined variable
+            // inside a write block
+            val values = OBJECT_VALUES.freeze()
             val managedContainer = realm.write {
                 copyToRealm(RealmListContainer())
             }
@@ -283,7 +283,7 @@ class RealmListTests : NotificationTests {
                 val queriedContainer = objects
                     .first()
                 queriedContainer.objectListField
-                    .addAll(OBJECT_VALUES.map { copyToRealm(it) })
+                    .addAll(values.map { copyToRealm(it) })
             }
             assertEquals(OBJECT_VALUES.size, channel1.receive().size)
             assertEquals(OBJECT_VALUES.size, channel2.receive().size)
@@ -313,11 +313,14 @@ class RealmListTests : NotificationTests {
     @Test
     override fun deleteObservable() {
         runBlocking {
+            // Freeze values since native complains if we reference a package-level defined variable
+            // inside a write block
+            val values = OBJECT_VALUES.freeze()
             val channel = Channel<RealmList<*>>(capacity = 1)
             val managedContainer = realm.write {
                 RealmListContainer()
                     .apply {
-                        objectListField.addAll(OBJECT_VALUES.map { copyToRealm(it) })
+                        objectListField.addAll(values.map { copyToRealm(it) })
                     }.let { container ->
                         copyToRealm(container)
                     }
@@ -345,7 +348,7 @@ class RealmListTests : NotificationTests {
     }
 
     @Test
-    @Ignore("Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out")
+    @Ignore // FIXME Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out
     override fun closeRealmInsideFlowThrows() {
         // TODO
     }
