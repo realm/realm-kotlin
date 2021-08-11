@@ -276,6 +276,28 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 
 Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
 
+## Multiplatform source layout
+
+The multiplatform source hierarchy is structured like this:
+
+```
+- commonMain
+  ├── jvm
+  │   ├── androidMain
+  │   └── jvmMain
+  └── native
+      └── darwin
+          ├── ios
+          |   ├── iosArm64Main
+          |   └── iosX64Main
+          └── macosX64Main
+```
+
+All source sets ending with `Main` is platform specific source sets, while the others are intermediate source sets shared between multiple targets. Only exception is `commonMain` which is kept to follow the Kotlin MPP gradle convention.
+
+It is currently not possible to enable hierarchical setup due to various issues rendering the IDE unable to resolve common symbols, so for now we are just adding shared source sets to the individual platform specific targets they belong to. (Issues to track: https://youtrack.jetbrains.com/issue/KT-48153, https://youtrack.jetbrains.com/issue/KT-42466, https://youtrack.jetbrains.com/issue/KT-40975, see description of https://github.com/realm/realm-kotlin/pull/370 for details).
+
+All platform differentitated implementations is kept in `platform`-packages with their current package hierarchi, to make it easier to keep track of the level of platform differentiation.
 
 ## Writing Tests
 
