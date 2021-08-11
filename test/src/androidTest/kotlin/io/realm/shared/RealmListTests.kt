@@ -273,9 +273,14 @@ class RealmListTests : NotificationTests {
                     }
             }
 
+            // Ignore first emission with empty lists
+            channel1.receive()
+            channel2.receive()
+
             // Trigger an update
             realm.write {
-                val queriedContainer = objects<RealmListContainer>()
+                val objects = objects<RealmListContainer>()
+                val queriedContainer = objects
                     .first()
                 queriedContainer.objectListField
                     .addAll(OBJECT_VALUES.map { copyToRealm(it) })
@@ -1005,14 +1010,11 @@ internal abstract class ManagedListTester<T>(
                         .collect { flowList ->
                             channel.send(flowList)
 
-                            // Update list if the flow list is empty
-                            if (flowList.isEmpty()) {
-                                realm.writeBlocking {
-                                    val queriedContainer = objects<RealmListContainer>()
-                                        .first()
-                                    val queriedList = typeSafetyManager.getList(queriedContainer)
-                                    queriedList.addAll(copyToRealmIfNeeded(dataSet))
-                                }
+                            realm.writeBlocking {
+                                val queriedContainer = objects<RealmListContainer>()
+                                    .first()
+                                val queriedList = typeSafetyManager.getList(queriedContainer)
+                                queriedList.addAll(copyToRealmIfNeeded(dataSet))
                             }
                         }
                 }

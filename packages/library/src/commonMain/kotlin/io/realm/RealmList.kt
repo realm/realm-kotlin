@@ -68,7 +68,7 @@ class RealmList<E> private constructor(
     internal fun thaw(realm: RealmReference): RealmList<E> = delegate.thaw(realm)
 
     internal fun isValid(): Boolean {
-        // FIXME: workaround for missing realm_list_is_valid in the C-API
+        // FIXME workaround until https://github.com/realm/realm-core/issues/4843 is done
         try {
             size
         } catch (e: RuntimeException) {

@@ -48,9 +48,8 @@ internal class SuspendableNotifier(
     }
 
     // FIXME Work-around for the global Realm changed listener not working.
-    // FIXME Adding extra buffer capacity as we are otherwise never able to emit anything. Needs to
-    //  be investigated.
-    // This Flow exposes a stream of changes to the owner Realm
+    // Adding extra buffer capacity as we are otherwise never able to emit anything
+    // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<RealmReference>(
         onBufferOverflow = BufferOverflow.SUSPEND,
         extraBufferCapacity = 1
@@ -160,26 +159,6 @@ internal class SuspendableNotifier(
         }
     }
 
-    // Verify that notifications emitted to Streams are handled in an uniform manner
-    private fun checkResult(result: ChannelResult<Unit>) {
-        if (result.isClosed) {
-            // If the Flow was closed, we assume it is on purpose, so avoid raising an exception.
-            return
-        }
-        if (!result.isSuccess) {
-            // TODO Is there a better way to handle this?
-            throw IllegalStateException("Notification could not be sent: $result")
-        }
-    }
-
-    private fun notifyRealmChanged(frozenRealm: RealmReference) {
-        if (!_realmChanged.tryEmit(frozenRealm)) {
-            // FIXME Figure out why we sometimes end up here
-            println("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
-            // throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
-        }
-    }
-
     /**
      * Listen to changes to the Realm.
      * The callback will happen on the configured [SuspendableNotifier.dispatcher] thread.     *
@@ -203,29 +182,19 @@ internal class SuspendableNotifier(
         callback: Callback<RealmResults<T>>
     ): Cancellable {
         val liveResults = results.thaw(realm.realmReference)
-        val token = RealmInterop.realm_results_add_notification_callback(
-            liveResults.result,
-            object : io.realm.interop.Callback {
-                override fun onChange(collectionChanges: NativePointer) {
-                    // FIXME How to make sure the Realm isn't closed when handling this?
-
-                    // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
-                    //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
-                    //  We also send it to the owner Realm, so it can keep track of its lifecycle
-                    val frozenRealm = RealmReference(
-                        owner,
-                        RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-                    )
-                    notifyRealmChanged(frozenRealm)
-
-                    // Notifications need to be delivered with the version they where created on, otherwise
-                    // the fine-grained notification data might be out of sync.
-                    val frozenResults = liveResults.freeze(frozenRealm)
-                    callback.onChange(frozenResults)
-                }
-            }.freeze() // Freeze to allow cleaning up on another thread
+        return registerChangedListener(
+            liveComponentPointer = liveResults.result,
+            notifyComponentUpdate = { frozenRealm ->
+                // Notifications need to be delivered with the version they where created on, otherwise
+                // the fine-grained notification data might be out of sync.
+                val frozenResults = liveResults.freeze(frozenRealm)
+                callback.onChange(frozenResults)
+            },
+            getToken = { resultsPtr, interopCallback ->
+                RealmInterop.realm_results_add_notification_callback(resultsPtr, interopCallback)
+            },
+            callback = callback
         )
-        return NotificationToken(callback, token)
     }
 
     // FIXME Need to expose change details to the user
@@ -245,29 +214,20 @@ internal class SuspendableNotifier(
         if (liveObject == null || !liveObject.isValid()) {
             return NO_OP_NOTIFICATION_TOKEN
         }
-        val token = RealmInterop.realm_object_add_notification_callback(
-            liveObject.`$realm$ObjectPointer`!!,
-            object : io.realm.interop.Callback {
-                override fun onChange(objectChanges: NativePointer) {
-                    // FIXME How to make sure the Realm isn't closed when handling this?
-
-                    // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
-                    //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
-                    val frozenRealm = RealmReference(
-                        owner,
-                        RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-                    )
-                    notifyRealmChanged(frozenRealm)
-
-                    if (!liveObject.isValid()) {
-                        callback.onChange(null)
-                    } else {
-                        callback.onChange(liveObject.freeze(frozenRealm))
-                    }
+        return registerChangedListener(
+            liveComponentPointer = liveObject.`$realm$ObjectPointer`!!,
+            notifyComponentUpdate = { frozenRealm ->
+                if (!liveObject.isValid()) {
+                    callback.onChange(null)
+                } else {
+                    callback.onChange(liveObject.freeze(frozenRealm))
                 }
-            }.freeze() // Freeze to allow cleaning up on another thread
+            },
+            getToken = { objPtr, interopCallback ->
+                RealmInterop.realm_object_add_notification_callback(objPtr, interopCallback)
+            },
+            callback = callback
         )
-        return NotificationToken(callback, token)
     }
 
     /**
@@ -281,34 +241,24 @@ internal class SuspendableNotifier(
         callback: Callback<RealmList<T>>
     ): Cancellable {
         val liveList = list.thaw(realm.realmReference)
-        val token = RealmInterop.realm_list_add_notification_callback(
-            liveList.listPtr,
-            object : io.realm.interop.Callback {
-                override fun onChange(collectionChanges: NativePointer) {
-                    // FIXME How to make sure the Realm isn't closed when handling this?
-
-                    // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
-                    //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
-                    //  We also send it to the owner Realm, so it can keep track of its lifecycle
-                    val frozenRealm = RealmReference(
-                        owner,
-                        RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-                    )
-                    notifyRealmChanged(frozenRealm)
-
-                    // Skip notifications when list is not valid
-                    if (!liveList.isValid()) {
-                        return
-                    }
-
-                    // Notifications need to be delivered with the version they where created on, otherwise
-                    // the fine-grained notification data might be out of sync.
-                    val frozenList = liveList.freeze(frozenRealm)
-                    callback.onChange(frozenList)
+        return registerChangedListener(
+            liveComponentPointer = liveList.listPtr,
+            notifyComponentUpdate = { frozenRealm ->
+                // Skip notifications when list is not valid
+                if (!liveList.isValid()) {
+                    return@registerChangedListener
                 }
-            }.freeze() // Freeze to allow cleaning up on another thread
+
+                // Notifications need to be delivered with the version they where created on, otherwise
+                // the fine-grained notification data might be out of sync.
+                val frozenList = liveList.freeze(frozenRealm)
+                callback.onChange(frozenList)
+            },
+            getToken = { listPtr, interopCallback ->
+                RealmInterop.realm_list_add_notification_callback(listPtr, interopCallback)
+            },
+            callback = callback
         )
-        return NotificationToken(callback, token)
     }
 
     internal fun close() {
@@ -316,6 +266,54 @@ internal class SuspendableNotifier(
         //  are not supported within change listeners as they are not suspendable.
         runBlocking(dispatcher) {
             realm.close()
+        }
+    }
+
+    private fun <T> registerChangedListener(
+        liveComponentPointer: NativePointer,
+        notifyComponentUpdate: (frozenRealm: RealmReference) -> Unit,
+        getToken: (
+            liveComponentPointer: NativePointer,
+            interopCallback: io.realm.interop.Callback
+        ) -> NativePointer,
+        callback: Callback<T>
+    ): NotificationToken<Callback<T>> {
+        val interopCallback = object : io.realm.interop.Callback {
+            override fun onChange(change: NativePointer) {
+                // FIXME How to make sure the Realm isn't closed when handling this?
+
+                // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
+                //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
+                //  We also send it to the owner Realm, so it can keep track of its lifecycle
+                val frozenRealm = RealmReference(
+                    owner,
+                    RealmInterop.realm_freeze(realm.realmReference.dbPointer)
+                )
+                notifyRealmChanged(frozenRealm)
+                notifyComponentUpdate(frozenRealm)
+            }
+        }.freeze() // Freeze to allow cleaning up on another thread
+        val token = getToken(liveComponentPointer, interopCallback)
+        return NotificationToken(callback, token)
+    }
+
+    // Verify that notifications emitted to Streams are handled in an uniform manner
+    private fun checkResult(result: ChannelResult<Unit>) {
+        if (result.isClosed) {
+            // If the Flow was closed, we assume it is on purpose, so avoid raising an exception.
+            return
+        }
+        if (!result.isSuccess) {
+            // TODO Is there a better way to handle this?
+            throw IllegalStateException("Notification could not be sent: $result")
+        }
+    }
+
+    private fun notifyRealmChanged(frozenRealm: RealmReference) {
+        if (!_realmChanged.tryEmit(frozenRealm)) {
+            // FIXME Figure out why we sometimes end up here
+            println("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
+            // throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
         }
     }
 }
