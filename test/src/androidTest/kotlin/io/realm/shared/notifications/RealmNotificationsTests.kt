@@ -4,7 +4,7 @@ import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
-import io.realm.internal.runBlocking
+import io.realm.internal.platform.runBlocking
 import io.realm.util.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel

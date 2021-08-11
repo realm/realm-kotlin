@@ -16,7 +16,7 @@
 
 package io.realm
 
-import io.realm.internal.singleThreadDispatcher
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.util.NsQueueDispatcher
 import io.realm.util.PlatformUtils
 import io.realm.util.Utils.printlntid
