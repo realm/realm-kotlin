@@ -72,16 +72,21 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        getByName("androidMain") {
+        create("jvm") {
             dependsOn(getByName("commonMain"))
-            kotlin.srcDir("src/androidMain/kotlin")
+            kotlin.srcDir("src/jvm/kotlin")
+        }
+        getByName("jvmMain") {
+            dependsOn(getByName("jvm"))
+        }
+        getByName("androidMain") {
+            dependsOn(getByName("jvm"))
             dependencies {
                 api(project(":cinterop"))
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-
         getByName("androidTest") {
             dependencies {
                 implementation(kotlin("test"))
@@ -93,17 +98,19 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        // TODO HIERARCHICAL-SETUP Common platform symbols won't be resolved in the shared source
-        //  sets until we enable hierarchical setup, but we are awaiting
-        //  https://youtrack.jetbrains.com/issue/KT-48153.
-        create("darwinCommon") {
-            dependsOn(getByName("commonMain"))
-        }
         getByName("macosMain") {
-            dependsOn(getByName("darwinCommon"))
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwinCommon/kotlin")
         }
-        getByName("iosMain") {
-            dependsOn(getByName("darwinCommon"))
+        getByName("iosArm64Main") {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwinCommon/kotlin")
+            kotlin.srcDir("src/ios/kotlin")
+        }
+        getByName("iosX64Main") {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwinCommon/kotlin")
+            kotlin.srcDir("src/ios/kotlin")
         }
     }
 

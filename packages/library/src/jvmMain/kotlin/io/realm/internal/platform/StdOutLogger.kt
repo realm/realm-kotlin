@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.internal
+package io.realm.internal.platform
 
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
@@ -53,7 +53,7 @@ internal class StdOutLogger(override val tag: String = "REALM") : RealmLogger {
     }
 
     private fun getStackTraceString(t: Throwable): String {
-        val sw = StringWriter(Companion.INITIAL_BUFFER_SIZE)
+        val sw = StringWriter(INITIAL_BUFFER_SIZE)
         val pw = PrintWriter(sw, false)
         t.printStackTrace(pw)
         pw.flush()
