@@ -3,6 +3,7 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
+import io.realm.ManagedRealmList
 import io.realm.Realm
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -141,12 +142,12 @@ internal class SuspendableNotifier(
     /**
      * Listen to changes to a RealmList through a [Flow].
      */
-    internal fun <T> listChanged(list: RealmList<T>): Flow<RealmList<T>> {
+    internal fun <T> listChanged(listDelegate: ManagedRealmList<T>): Flow<RealmList<T>> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
                 ensureActive()
-                token.value = registerListChangedListener(list) { frozenList ->
+                token.value = registerListChangedListener(listDelegate) { frozenList ->
                     // Realm should already have been updated with the latest version
                     // So `owner` should as a minimum be at the same version as the notification Realm.
                     val result = trySend(frozenList)
@@ -237,21 +238,32 @@ internal class SuspendableNotifier(
      * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
      */
     internal fun <T> registerListChangedListener(
-        list: RealmList<T>,
+        listDelegate: ManagedRealmList<T>,
         callback: Callback<RealmList<T>>
     ): Cancellable {
-        val liveList = list.thaw(realm.realmReference)
+        val liveListPointer = RealmInterop.realm_list_thaw(
+            listDelegate.nativePointer,
+            realm.realmReference.dbPointer
+        )
+        val liveListDelegate = ManagedRealmList<T>(
+            liveListPointer,
+            listDelegate.metadata.copy(realm = realm.realmReference)
+        )
         return registerChangedListener(
-            liveComponentPointer = liveList.listPtr,
+            liveComponentPointer = liveListPointer,
             notifyComponentUpdate = { frozenRealm ->
                 // Skip notifications when list is not valid
-                if (!liveList.isValid()) {
+                if (!liveListDelegate.isValid()) {
                     return@registerChangedListener
                 }
 
                 // Notifications need to be delivered with the version they where created on, otherwise
                 // the fine-grained notification data might be out of sync.
-                val frozenList = liveList.freeze(frozenRealm)
+                val frozenListPointer = RealmInterop.realm_list_freeze(
+                    liveListDelegate.nativePointer,
+                    frozenRealm.dbPointer
+                )
+                val frozenList = liveListDelegate.freeze(frozenListPointer, frozenRealm)
                 callback.onChange(frozenList)
             },
             getToken = { listPtr, interopCallback ->

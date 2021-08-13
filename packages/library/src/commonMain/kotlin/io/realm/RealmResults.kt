@@ -167,3 +167,91 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
         return fromResults(realm, liveResultPtr, clazz, schema)
     }
 }
+
+//------------------------------------------------------------------
+// Results playground
+//------------------------------------------------------------------
+
+//interface Queriable<T : RealmObject> {
+//    fun query(query: String = "TRUEPREDICATE", vararg args: Any): Results<T>
+//}
+//
+//internal interface ResultsApi<T: RealmObject> : List<T>,
+//    Queriable<T>, Observable<Results<T>>, Freezable<Results<T>>
+//
+//class ResultsDelegate<T: RealmObject>(
+//    private val realm: RealmReference,
+//    private val results: NativePointer,
+//    private val clazz: KClass<T>,
+//    private val schema: Mediator
+//) : ResultsApi<T>, AbstractList<T>() {
+//
+//    override val size: Int
+//        get() = RealmInterop.realm_results_count(results).toInt()
+//
+//    override fun get(index: Int): T {
+//        val link: Link = RealmInterop.realm_results_get<T>(results, index.toLong())
+//        val model = schema.createInstanceOf(clazz) as RealmObjectInternal
+//        model.link(realm, schema, clazz, link)
+//        @Suppress("UNCHECKED_CAST")
+//        return model as T
+//    }
+//
+//    override fun query(query: String, vararg args: Any): Results<T> {
+//        return Results.fromQuery(
+//            realm,
+//            RealmInterop.realm_query_parse(results, clazz.simpleName!!, query, *args),
+//            clazz,
+//            schema,
+//        )
+//    }
+//
+//    override fun observe(): Flow<Results<T>> {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun freeze(frozenRealm: RealmReference): Results<T> {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun thaw(liveRealm: RealmReference): Results<T> {
+//        TODO("Not yet implemented")
+//    }
+//}
+//
+//class Results<T: RealmObject> private constructor(
+//    private val delegate: ResultsApi<T>
+//) : Observable<Results<T>> by delegate,
+//    List<T> by delegate {
+//
+//    internal companion object {
+//        internal fun <T : RealmObject> fromQuery(
+//            realm: RealmReference,
+//            query: NativePointer,
+//            clazz: KClass<T>,
+//            schema: Mediator
+//        ): Results<T> {
+//            val delegate =
+//                ResultsDelegate(realm, RealmInterop.realm_query_find_all(query), clazz, schema)
+//            return Results(delegate)
+//        }
+//
+//        internal fun <T : RealmObject> fromResults(
+//            realm: RealmReference,
+//            results: NativePointer,
+//            clazz: KClass<T>,
+//            schema: Mediator
+//        ): Results<T> {
+//            val delegate = ResultsDelegate(realm, results, clazz, schema)
+//            return Results(delegate)
+//        }
+//    }
+//
+//    internal fun freeze(realm: RealmReference): Results<T> {
+//        return delegate.freeze(realm)
+//    }
+//
+//    internal fun thaw(realm: RealmReference): Results<T> {
+//        return delegate.thaw(realm)
+//    }
+//}

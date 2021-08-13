@@ -17,6 +17,7 @@
 
 package test
 
+import io.realm.realmList
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -32,24 +33,24 @@ class Sample : RealmObject {
     var doubleField: Double = 1.19840122
     var child: Sample? = null
 
-    var stringListField: RealmList<String> = RealmList()
-    var byteListField: RealmList<Byte> = RealmList()
-    var charListField: RealmList<Char> = RealmList()
-    var shortListField: RealmList<Short> = RealmList()
-    var intListField: RealmList<Int> = RealmList()
-    var longListField: RealmList<Long> = RealmList()
-    var booleanListField: RealmList<Boolean> = RealmList()
-    var floatListField: RealmList<Float> = RealmList()
-    var doubleListField: RealmList<Double> = RealmList()
-    var objectListField: RealmList<Sample> = RealmList()
+    var stringListField: RealmList<String> = realmList()
+    var byteListField: RealmList<Byte> = realmList()
+    var charListField: RealmList<Char> = realmList()
+    var shortListField: RealmList<Short> = realmList()
+    var intListField: RealmList<Int> = realmList()
+    var longListField: RealmList<Long> = realmList()
+    var booleanListField: RealmList<Boolean> = realmList()
+    var floatListField: RealmList<Float> = realmList()
+    var doubleListField: RealmList<Double> = realmList()
+    var objectListField: RealmList<Sample> = realmList()
 
-    var nullableStringListField: RealmList<String?> = RealmList()
-    var nullableByteListField: RealmList<Byte?> = RealmList()
-    var nullableCharListField: RealmList<Char?> = RealmList()
-    var nullableShortListField: RealmList<Short?> = RealmList()
-    var nullableIntListField: RealmList<Int?> = RealmList()
-    var nullableLongListField: RealmList<Long?> = RealmList()
-    var nullableBooleanListField: RealmList<Boolean?> = RealmList()
-    var nullableFloatListField: RealmList<Float?> = RealmList()
-    var nullableDoubleListField: RealmList<Double?> = RealmList()
+    var nullableStringListField: RealmList<String?> = realmList()
+    var nullableByteListField: RealmList<Byte?> = realmList()
+    var nullableCharListField: RealmList<Char?> = realmList()
+    var nullableShortListField: RealmList<Short?> = realmList()
+    var nullableIntListField: RealmList<Int?> = realmList()
+    var nullableLongListField: RealmList<Long?> = realmList()
+    var nullableBooleanListField: RealmList<Boolean?> = realmList()
+    var nullableFloatListField: RealmList<Float?> = realmList()
+    var nullableDoubleListField: RealmList<Double?> = realmList()
 }

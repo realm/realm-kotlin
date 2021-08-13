@@ -17,6 +17,7 @@
 
 package test.list
 
+import io.realm.realmList
 import io.realm.RealmList
 import io.realm.RealmObject
 import kotlin.reflect.KMutableProperty1
@@ -25,26 +26,26 @@ class RealmListContainer : RealmObject {
 
     var stringField: String = "Realm"
 
-    var stringListField: RealmList<String> = RealmList()
-    var byteListField: RealmList<Byte> = RealmList()
-    var charListField: RealmList<Char> = RealmList()
-    var shortListField: RealmList<Short> = RealmList()
-    var intListField: RealmList<Int> = RealmList()
-    var longListField: RealmList<Long> = RealmList()
-    var booleanListField: RealmList<Boolean> = RealmList()
-    var floatListField: RealmList<Float> = RealmList()
-    var doubleListField: RealmList<Double> = RealmList()
-    var objectListField: RealmList<RealmListContainer> = RealmList()
+    var stringListField: RealmList<String> = realmList()
+    var byteListField: RealmList<Byte> = realmList()
+    var charListField: RealmList<Char> = realmList()
+    var shortListField: RealmList<Short> = realmList()
+    var intListField: RealmList<Int> = realmList()
+    var longListField: RealmList<Long> = realmList()
+    var booleanListField: RealmList<Boolean> = realmList()
+    var floatListField: RealmList<Float> = realmList()
+    var doubleListField: RealmList<Double> = realmList()
+    var objectListField: RealmList<RealmListContainer> = realmList()
 
-    var nullableStringListField: RealmList<String?> = RealmList()
-    var nullableByteListField: RealmList<Byte?> = RealmList()
-    var nullableCharListField: RealmList<Char?> = RealmList()
-    var nullableShortListField: RealmList<Short?> = RealmList()
-    var nullableIntListField: RealmList<Int?> = RealmList()
-    var nullableLongListField: RealmList<Long?> = RealmList()
-    var nullableBooleanListField: RealmList<Boolean?> = RealmList()
-    var nullableFloatListField: RealmList<Float?> = RealmList()
-    var nullableDoubleListField: RealmList<Double?> = RealmList()
+    var nullableStringListField: RealmList<String?> = realmList()
+    var nullableByteListField: RealmList<Byte?> = realmList()
+    var nullableCharListField: RealmList<Char?> = realmList()
+    var nullableShortListField: RealmList<Short?> = realmList()
+    var nullableIntListField: RealmList<Int?> = realmList()
+    var nullableLongListField: RealmList<Long?> = realmList()
+    var nullableBooleanListField: RealmList<Boolean?> = realmList()
+    var nullableFloatListField: RealmList<Float?> = realmList()
+    var nullableDoubleListField: RealmList<Double?> = realmList()
 
     companion object {
 
@@ -80,15 +81,15 @@ class RealmListContainer : RealmObject {
 // Circular dependencies with lists
 class Level1 : RealmObject {
     var name: String = ""
-    var list: RealmList<Level2> = RealmList()
+    var list: RealmList<Level2> = realmList()
 }
 
 class Level2 : RealmObject {
     var name: String = ""
-    var list: RealmList<Level3> = RealmList()
+    var list: RealmList<Level3> = realmList()
 }
 
 class Level3 : RealmObject {
     var name: String = ""
-    var list: RealmList<Level1> = RealmList()
+    var list: RealmList<Level1> = realmList()
 }

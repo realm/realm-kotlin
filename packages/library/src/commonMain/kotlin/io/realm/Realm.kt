@@ -229,8 +229,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         TODO("Not yet implemented")
     }
 
-    internal override fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
-        return notifier.listChanged(list)
+    internal override fun <T> registerListObserver(
+        listDelegate: ManagedRealmList<T>
+    ): Flow<RealmList<T>> {
+        return notifier.listChanged(listDelegate)
     }
 
     private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
