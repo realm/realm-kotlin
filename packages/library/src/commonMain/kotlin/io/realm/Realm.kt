@@ -86,7 +86,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         /**
          * The required length for encryption keys used to encrypt Realm data.
          */
-        public const val ENCRYPTION_KEY_LENGTH = 64
+        public const val ENCRYPTION_KEY_LENGTH = io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
     }
 
     init {

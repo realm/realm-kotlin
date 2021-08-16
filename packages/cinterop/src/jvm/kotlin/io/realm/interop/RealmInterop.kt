@@ -18,6 +18,7 @@
 
 package io.realm.interop
 
+import io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?

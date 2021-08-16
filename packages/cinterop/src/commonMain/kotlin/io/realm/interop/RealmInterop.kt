@@ -29,8 +29,6 @@ value class ClassKey(val key: Long)
 @JvmInline
 value class ColumnKey(val key: Long)
 
-public const val ENCRYPTION_KEY_LENGTH = 64
-
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
