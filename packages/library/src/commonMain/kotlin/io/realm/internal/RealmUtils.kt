@@ -20,6 +20,8 @@ package io.realm.internal
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.interop.RealmInterop
+import io.realm.isManaged
+import io.realm.isValid
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -83,7 +85,8 @@ fun <T : RealmObject> create(
         // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
         //  instead
         //  https://github.com/realm/realm-core/issues/4595
-        val existingPrimaryKeyObject = RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
+        val existingPrimaryKeyObject =
+            RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
         existingPrimaryKeyObject?.let {
             // FIXME Throw proper exception
             //  https://github.com/realm/realm-kotlin/issues/70
@@ -102,6 +105,31 @@ fun <T : RealmObject> create(
         //  https://github.com/realm/realm-kotlin/issues/70
         @Suppress("TooGenericExceptionThrown")
         throw RuntimeException("Failed to create object of type '$objectType'", e)
+    }
+}
+
+fun <T> copyToRealmIfNeeded(
+    mediator: Mediator,
+    realmPointer: RealmReference,
+    element: T,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()
+): T {
+    return if (element is RealmObjectInternal) {
+        var elementToCopy = element
+
+        // Throw if object is (managed and) not valid
+        if (!elementToCopy.isValid()) {
+            throw IllegalStateException("Cannot copy an invalid managed object to Realm.")
+        }
+
+        // Copy object if it is not managed
+        if (!elementToCopy.isManaged()) {
+            elementToCopy = copyToRealm(mediator, realmPointer, element, cache)
+        }
+
+        elementToCopy
+    } else {
+        element
     }
 }
 
