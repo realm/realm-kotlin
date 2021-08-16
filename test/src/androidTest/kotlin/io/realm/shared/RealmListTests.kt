@@ -22,7 +22,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.realmList
+import io.realm.realmListOf
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
 import test.list.Level1
@@ -229,7 +229,7 @@ class RealmListTests {
     @Test
     fun unmanaged() {
         // No need to be exhaustive here, just checking delegation works
-        val list = realmList<RealmListContainer>()
+        val list = realmListOf<RealmListContainer>()
         assertTrue(list.isEmpty())
         list.add(RealmListContainer().apply { stringField = "Dummy" })
         assertEquals(1, list.size)

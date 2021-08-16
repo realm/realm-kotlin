@@ -136,7 +136,7 @@ import io.realm.RealmObject
 import java.lang.Exception
 
 class NonNullableList : RealmObject {
-    var nonNullableList: RealmList<%s> = RealmList()
+    var nonNullableList: RealmList<%s> = realmListOf()
 }
 """.trimIndent()
 
@@ -147,7 +147,7 @@ import io.realm.RealmObject
 import java.lang.Exception
 
 class NullableList : RealmObject {
-    var nullableList: RealmList<%s>? = RealmList()
+    var nullableList: RealmList<%s>? = realmListOf()
 }
 """.trimIndent()
 
@@ -158,7 +158,7 @@ import io.realm.RealmObject
 import java.lang.Exception
 
 class NullableTypeList : RealmObject {
-    var nullableList: RealmList<%s?> = RealmList()
+    var nullableList: RealmList<%s?> = realmListOf()
 }
 """.trimIndent()
 

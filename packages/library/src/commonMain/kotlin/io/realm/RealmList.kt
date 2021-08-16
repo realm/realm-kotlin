@@ -52,7 +52,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 }
 
 /**
- * Delegate for managed lists.
+ * Implementation for managed lists, backed by Realm.
  */
 internal class ManagedRealmList<E>(
     override val nativePointer: NativePointer,
@@ -112,6 +112,7 @@ internal class ManagedRealmList<E>(
     override fun thaw(livePointer: NativePointer, liveRealm: RealmReference): RealmList<E> =
         managedRealmList(livePointer, metadata.copy(realm = liveRealm))
 
+    // TODO from LifeCycle interface
     @Suppress("TooGenericExceptionCaught")
     internal fun isValid(): Boolean {
         // FIXME workaround until https://github.com/realm/realm-core/issues/4843 is done
@@ -188,7 +189,16 @@ internal fun <T> managedRealmList(
 /**
  * Instantiates a [RealmList] in **unmanaged** mode.
  */
-fun <T> realmList(): RealmList<T> = UnmanagedRealmList()
+fun <T> realmListOf(vararg elements: T): RealmList<T> =
+    if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()
+
+/**
+ * Instantiates a [RealmList] in **unmanaged** mode.
+ */
+fun <T> realmListOf(): RealmList<T> = UnmanagedRealmList()
+    
+private fun <T> Array<out T>.asRealmList(): RealmList<T> =
+    UnmanagedRealmList<T>().apply { addAll(this) }
 
 ///*
 // * Copyright 2021 Realm Inc.
