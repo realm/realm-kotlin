@@ -18,6 +18,7 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
+import io.realm.internal.copyToRealmIfNeeded
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -185,7 +186,11 @@ private class ManagedListDelegate<E>(
 
     override fun add(index: Int, element: E) {
         metadata.realm.checkClosed()
-        RealmInterop.realm_list_add(listPtr, index.toLong(), element)
+        RealmInterop.realm_list_add(
+            listPtr,
+            index.toLong(),
+            copyToRealmIfNeeded(metadata.mediator, metadata.realm, element)
+        )
     }
 
     // FIXME bug in AbstractMutableList.addAll native implementation:
@@ -209,7 +214,13 @@ private class ManagedListDelegate<E>(
 
     override fun set(index: Int, element: E): E {
         metadata.realm.checkClosed()
-        return operator.convert(RealmInterop.realm_list_set(listPtr, index.toLong(), element))
+        return operator.convert(
+            RealmInterop.realm_list_set(
+                listPtr,
+                index.toLong(),
+                copyToRealmIfNeeded(metadata.mediator, metadata.realm, element)
+            )
+        )
     }
 
     override fun observe(list: RealmList<E>): Flow<RealmList<E>> {

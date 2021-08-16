@@ -52,9 +52,8 @@ class RealmListNotificationsTests : NotificationTests {
 
         realm.writeBlocking {
             val managedContainer = copyToRealm(RealmListContainer())
-            val managedDataSet = dataSet.map { copyToRealm(it) }
             managedContainer.objectListField
-                .addAll(managedDataSet)
+                .addAll(dataSet)
         }
 
         runBlocking {
@@ -99,21 +98,21 @@ class RealmListNotificationsTests : NotificationTests {
                     .observe()
                     .collect { flowList ->
                         channel.send(flowList)
-
-                        realm.writeBlocking {
-                            val queriedContainer = objects<RealmListContainer>()
-                                .first()
-                            val queriedList = queriedContainer.objectListField
-                            val managedDataSet = dataSet.map { copyToRealm(it) }
-                            queriedList.addAll(managedDataSet)
-                        }
                     }
             }
 
-            // Assertion after empty list is emmitted
+            // Assertion after empty list is emitted
             val firstEmittedList = channel.receive()
             assertNotNull(firstEmittedList)
             assertEquals(0, firstEmittedList.size)
+
+            // Trigger update
+            realm.writeBlocking {
+                val queriedContainer = objects<RealmListContainer>()
+                    .first()
+                val queriedList = queriedContainer.objectListField
+                queriedList.addAll(dataSet)
+            }
 
             // Assertion after list is updated
             val updatedList = channel.receive()
