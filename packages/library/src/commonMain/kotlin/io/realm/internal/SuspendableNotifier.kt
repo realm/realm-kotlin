@@ -1,11 +1,9 @@
 package io.realm.internal
 
-import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.Realm
 import io.realm.RealmObject
-import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -34,7 +32,7 @@ import kotlinx.coroutines.withContext
  * inside writes. Users can therefor not register change listeners on live objects, but it is assumed that other
  * layers check that invariant before methods on this class are called.
  */
-internal class SuspendableNotifier(private val owner: Realm, private val dispatcher: CoroutineDispatcher) {
+internal class SuspendableNotifier(private val owner: RealmImpl, private val dispatcher: CoroutineDispatcher) {
 
     companion object {
         val NO_OP_NOTIFICATION_TOKEN = object : Cancellable {
@@ -49,9 +47,9 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     private val _realmChanged = MutableSharedFlow<RealmReference>(onBufferOverflow = BufferOverflow.SUSPEND, extraBufferCapacity = 1)
 
     // Must only be accessed from the dispatchers thread
-    private val realm: BaseRealm by lazy {
+    private val realm: BaseRealmImpl by lazy {
         val dbPointer = RealmInterop.realm_open(owner.configuration.nativeConfig, dispatcher)
-        object : BaseRealm(owner.configuration, dbPointer) {
+        object : BaseRealmImpl(owner.configuration, dbPointer) {
             /* Realms used by the Notifier is just a basic Live Realm */
         }
     }
@@ -89,7 +87,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
     /**
      * Listen to changes to a RealmResults.
      */
-    internal fun <T : RealmObject> resultsChanged(results: RealmResults<T>): Flow<RealmResults<T>> {
+    internal fun <T : RealmObject> resultsChanged(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
@@ -176,7 +174,7 @@ internal class SuspendableNotifier(private val owner: Realm, private val dispatc
      *
      * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
      */
-    internal fun <T : RealmObject> registerResultsChangedListener(results: RealmResults<T>, callback: Callback<RealmResults<T>>): Cancellable {
+    internal fun <T : RealmObject> registerResultsChangedListener(results: RealmResultsImpl<T>, callback: Callback<RealmResultsImpl<T>>): Cancellable {
         val liveResults = results.thaw(realm.realmReference)
         val token = RealmInterop.realm_results_add_notification_callback(
             liveResults.result,

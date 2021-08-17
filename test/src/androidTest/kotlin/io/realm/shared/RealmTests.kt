@@ -18,11 +18,16 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
+import io.realm.internal.RealmReference
+import io.realm.internal.WeakReference
+import io.realm.interop.NativePointer
 import io.realm.isManaged
+import io.realm.objects
 import io.realm.util.PlatformUtils
 import io.realm.util.PlatformUtils.triggerGC
 import io.realm.util.Utils.createRandomString
 import io.realm.version
+import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -67,7 +72,7 @@ class RealmTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = configuration
-        realm = Realm(configuration)
+        realm = Realm.openBlocking(configuration)
     }
 
     @AfterTest
@@ -130,10 +135,10 @@ class RealmTests {
             path = "$tmpDir/exceed-versions.realm",
             schema = setOf(Parent::class, Child::class)
         ).maxNumberOfActiveVersions(1).build()
-        realm = Realm(config)
+        realm = Realm.openBlocking(config)
         // Pin the version, so when starting a new transaction on the first Realm,
         // we don't release older versions.
-        val otherRealm = Realm(config)
+        val otherRealm = Realm.openBlocking(config)
 
         try {
             // FIXME Should be IllegalStateException
@@ -223,7 +228,7 @@ class RealmTests {
         // Ensure that all writes are actually committed
         realm.close()
         assertTrue(realm.isClosed())
-        realm = Realm(configuration)
+        realm = Realm.openBlocking(configuration)
         assertEquals(10, realm.objects(Parent::class).size)
     }
 
@@ -263,7 +268,7 @@ class RealmTests {
         realm.close()
         assertTrue(realm.isClosed())
 
-        realm = Realm(configuration)
+        realm = Realm.openBlocking(configuration)
         assertEquals(1, realm.objects(Parent::class).size)
     }
 
@@ -285,7 +290,7 @@ class RealmTests {
         writeStarted.lock()
         realm.close()
         assert(write.await() is RuntimeException)
-        realm = Realm(configuration)
+        realm = Realm.openBlocking(configuration)
         assertEquals(0, realm.objects<Parent>().size)
     }
 
@@ -322,7 +327,7 @@ class RealmTests {
         // Ensure that write is not committed
         realm.close()
         assertTrue(realm.isClosed())
-        realm = Realm(configuration)
+        realm = Realm.openBlocking(configuration)
         // This assertion doesn't hold on MacOS as all code executes on the same thread as the
         // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in
@@ -356,7 +361,7 @@ class RealmTests {
         // Ensure that only one write is actually committed
         realm.close()
         assertTrue(realm.isClosed())
-        realm = Realm(configuration)
+        realm = Realm.openBlocking(configuration)
         // This assertion doesn't hold on MacOS as all code executes on the same thread as the
         // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in
@@ -397,7 +402,6 @@ class RealmTests {
     }
 
     @Test
-    @Suppress("invisible_member")
     fun closingIntermediateVersionsWhenNoLongerReferenced() {
         assertEquals(0, realm.intermediateReferences.value.size)
         var parent: Parent? = realm.writeBlocking { copyToRealm(Parent()) }
@@ -412,5 +416,10 @@ class RealmTests {
         // Close of intermediate version is currently only done when updating the realm after a write
         realm.writeBlocking { }
         assertEquals(1, realm.intermediateReferences.value.size)
+    }
+
+    private val Realm.intermediateReferences : AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>>
+    get() {
+        return (this as io.realm.internal.RealmImpl).intermediateReferences
     }
 }

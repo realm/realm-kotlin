@@ -43,8 +43,8 @@ class ImportTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class, Sample::class))
-        realm = Realm(configuration)
+            RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class, Sample::class)).build()
+        realm = Realm.openBlocking(configuration)
     }
 
     @AfterTest

@@ -20,6 +20,8 @@ package io.realm
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
+import io.realm.internal.BaseRealmImpl
+import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
 import io.realm.interop.NativePointer
@@ -58,9 +60,9 @@ class InstrumentedTests {
             realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
-            val configuration = RealmConfiguration(schema = setOf(Sample::class))
+            val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
             @Suppress("invisible_member")
-            realmModel.`$realm$Owner` = RealmReference(object : BaseRealm(configuration, realmPointer) {}, realmPointer)
+            realmModel.`$realm$Owner` = RealmReference(object : BaseRealmImpl(configuration as RealmConfigurationImpl, realmPointer) {}, realmPointer)
             realmModel.`$realm$TableName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)

@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.internal.Mediator
+import io.realm.internal.MutableRealmImpl
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
 import io.realm.internal.link
@@ -75,7 +76,7 @@ public var RealmObject.version: VersionId
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83
 fun RealmObject.delete() {
-    MutableRealm.delete(this)
+    MutableRealmImpl.delete(this)
 }
 
 /**

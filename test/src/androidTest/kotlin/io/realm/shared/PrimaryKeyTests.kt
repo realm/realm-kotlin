@@ -64,7 +64,7 @@ class PrimaryKeyTests {
                     NoPrimaryKey::class
                 )
                 .build()
-        realm = Realm(configuration)
+        realm = Realm.openBlocking(configuration)
     }
 
     @AfterTest
@@ -193,9 +193,10 @@ class PrimaryKeyTests {
             )
             .build()
 
-        val mediator = configuration.mediator
+//        @Suppress("invisible_reference", "invisible_member")
+        val mediator = (configuration as io.realm.internal.RealmConfigurationImpl).mediator
 
-        val realm = Realm(configuration)
+        val realm = Realm.openBlocking(configuration)
 
         realm.writeBlocking {
             val types = allPrimaryKeyFieldTypes.toMutableSet()

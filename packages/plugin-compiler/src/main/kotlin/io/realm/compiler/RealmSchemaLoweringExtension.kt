@@ -153,7 +153,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
  *
  * E.g. all of these are valid
  * ```
- * RealmConfiguration(schema = setOf(MyType::class))
+ * RealmConfiguration.Builder(schema = setOf(MyType::class)).build()
  * RealmConfiguration.Builder(schema = setOf(MyType::class)).build()
  * RealmConfiguration.Builder().schema(setOf(MyType::class)).build()
  * RealmConfiguration.Builder().schema(MyType::class, MyOtherType::class).build()
@@ -161,7 +161,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
  * While these are not
  * ```
  * val classes = setOf(MyType::class)
- * RealmConfiguration(schema = classes)
+ * RealmConfiguration.Builder(schema = classes).build()
  *
  * TODO We should lift this restriction
  * ```
@@ -261,7 +261,7 @@ private fun populateCompanion(
     if (specifiedModels.isEmpty()) {
         logError(
             "No schema was provided. It must be defined as a set of class literals (MyType::class) either through " +
-                "RealmConfiguration(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...).build(), " +
+                "RealmConfiguration.Builder(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...).build().build(), " +
                 "or RealmConfiguration.Builder().schema(...).build()."
         )
     }

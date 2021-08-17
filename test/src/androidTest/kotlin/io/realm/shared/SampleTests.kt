@@ -38,8 +38,8 @@ class SampleTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
-        realm = Realm(configuration)
+        val configuration = RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class)).build()
+        realm = Realm.openBlocking(configuration)
     }
 
     @AfterTest
