@@ -28,7 +28,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-
 class MutableRealmImpl : BaseRealmImpl, MutableRealm {
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this

@@ -20,21 +20,12 @@ import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.internal.Mediator
-import io.realm.internal.PlatformHelper
-import io.realm.internal.REPLACED_BY_IR
-import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.RealmObjectInternal
-import io.realm.internal.singleThreadDispatcher
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.log.LogLevel
-import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
-
-
 
 @Suppress("LongParameterList")
 public class RealmConfigurationImpl internal constructor(
@@ -202,5 +193,4 @@ public class RealmConfigurationImpl internal constructor(
         false,
         null,
     )
-
 }

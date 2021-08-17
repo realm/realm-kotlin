@@ -1,6 +1,5 @@
 package io.realm
 
-import io.realm.internal.RealmResultsImpl
 import kotlinx.coroutines.flow.Flow
 
 /**

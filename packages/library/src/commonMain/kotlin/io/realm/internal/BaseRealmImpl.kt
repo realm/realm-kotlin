@@ -27,7 +27,6 @@ import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-
 @Suppress("UnnecessaryAbstractClass")
 public abstract class BaseRealmImpl internal constructor(
     /**

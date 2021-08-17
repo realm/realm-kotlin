@@ -2,8 +2,8 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.Realm
 import io.realm.MutableRealm
+import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.RealmResults
@@ -22,7 +22,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
-
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPointer: NativePointer) :
@@ -56,8 +55,6 @@ class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPoi
     // the realm when the RealmReference is no longer referenced anymore.
     internal val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> =
         atomic(mutableSetOf())
-
-
 
     init {
         // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the

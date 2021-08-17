@@ -18,7 +18,6 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.Queryable
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.VersionId

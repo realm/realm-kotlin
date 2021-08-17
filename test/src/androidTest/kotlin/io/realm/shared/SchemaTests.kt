@@ -83,9 +83,8 @@ class SchemaTests {
     }
 
     private val RealmConfiguration.companionMap: Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>
-
-    get() {
-        @Suppress("invisible_member")
-        return (this as io.realm.internal.RealmConfigurationImpl).mapOfKClassWithCompanion
-    }
+        get() {
+            @Suppress("invisible_member")
+            return (this as io.realm.internal.RealmConfigurationImpl).mapOfKClassWithCompanion
+        }
 }

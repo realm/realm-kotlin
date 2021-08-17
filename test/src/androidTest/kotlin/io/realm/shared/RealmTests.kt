@@ -418,8 +418,8 @@ class RealmTests {
         assertEquals(1, realm.intermediateReferences.value.size)
     }
 
-    private val Realm.intermediateReferences : AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>>
-    get() {
-        return (this as io.realm.internal.RealmImpl).intermediateReferences
-    }
+    private val Realm.intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>>
+        get() {
+            return (this as io.realm.internal.RealmImpl).intermediateReferences
+        }
 }

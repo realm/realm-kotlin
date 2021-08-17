@@ -16,7 +16,6 @@
 package io.realm
 
 import io.realm.internal.RealmImpl
-import io.realm.internal.RealmResultsImpl
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 

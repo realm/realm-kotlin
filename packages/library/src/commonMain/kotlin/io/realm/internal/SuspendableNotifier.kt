@@ -2,7 +2,6 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.VersionId
 import io.realm.interop.NativePointer
