@@ -32,7 +32,7 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T> {
      * @return new result according to the query and query arguments.
      */
     @Suppress("SpreadOperator")
-    override fun query(query: String, vararg args: Any): RealmResultsImpl<T>
+    override fun query(query: String, vararg args: Any): RealmResults<T>
 
     /**
      * Observe changes to the RealmResult. If there is any change to objects represented by the query
@@ -43,7 +43,7 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T> {
      *
      * @return a flow representing changes to the RealmResults.
      */
-    fun observe(): Flow<RealmResultsImpl<T>>
+    fun observe(): Flow<RealmResults<T>>
 
     /**
      * Delete all objects from this result from the realm.

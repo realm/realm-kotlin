@@ -28,5 +28,5 @@ import io.realm.internal.RealmResultsImpl
  * Interface holding common query methods.
  */
 interface Queryable<T : RealmObject> {
-    fun query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResultsImpl<T>
+    fun query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>
 }

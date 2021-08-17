@@ -72,7 +72,3 @@ interface MutableRealm : BaseRealm {
      */
     fun <T : RealmObject> delete(obj: T)
 }
-
-//inline fun <reified T : RealmObject> MutableRealm.objects(): RealmResults<T> {
-//    return this.objects(T::class)
-//}

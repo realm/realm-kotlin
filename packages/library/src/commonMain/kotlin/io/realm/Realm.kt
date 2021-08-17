@@ -44,7 +44,7 @@ interface Realm : BaseRealm {
          */
         public const val ENCRYPTION_KEY_LENGTH = 64
 
-        public fun openBlocking(configuration: RealmConfiguration): RealmImpl {
+        public fun openBlocking(configuration: RealmConfiguration): Realm {
             return RealmImpl(configuration)
         }
     }
@@ -58,7 +58,7 @@ interface Realm : BaseRealm {
      * @param clazz The class of the objects to query for.
      * @return The result of the query as of the time of invoking this method.
      */
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResultsImpl<T>
+    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write
@@ -100,7 +100,7 @@ interface Realm : BaseRealm {
      *
      * @return a flow representing changes to this Realm.
      */
-    fun observe(): Flow<RealmImpl>
+    fun observe(): Flow<Realm>
 
     /**
      * Close this Realm and all underlying resources. Accessing any methods or Realm Objects after this
@@ -117,9 +117,3 @@ interface Realm : BaseRealm {
      */
     fun close()
 }
-
-
-//inline fun <reified T : RealmObject, S : BaseRealm> S.objects(): RealmResults<T> {
-//    return this.objects(T::class)
-//}
-

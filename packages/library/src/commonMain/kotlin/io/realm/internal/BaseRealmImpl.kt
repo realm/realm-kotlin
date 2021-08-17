@@ -20,6 +20,7 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -78,7 +79,7 @@ public abstract class BaseRealmImpl internal constructor(
      * @param clazz The class of the objects to query for.
      * @return The result of the query as of the time of invoking this method.
      */
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResultsImpl<T> {
+    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         // Use same reference through out all operations to avoid locking
         val realmReference = this.realmReference
         realmReference.checkClosed()
@@ -103,7 +104,7 @@ public abstract class BaseRealmImpl internal constructor(
      * for [Realm]: the state at invocation or for [MutableRealm] the latest updated state of the
      * mutable realm.
      */
-    inline fun <reified T : RealmObject> objects(): RealmResultsImpl<T> { return objects(T::class) }
+    inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,

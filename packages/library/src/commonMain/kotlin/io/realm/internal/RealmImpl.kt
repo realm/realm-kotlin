@@ -6,6 +6,7 @@ import io.realm.Realm
 import io.realm.MutableRealm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.RealmResults
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
@@ -85,7 +86,7 @@ class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPoi
     public constructor(configuration: RealmConfiguration) :
         this(configuration as RealmConfigurationImpl, RealmInterop.realm_open(configuration.nativeConfig))
 
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResultsImpl<T> {
+    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         return super.objects(clazz)
     }
 
