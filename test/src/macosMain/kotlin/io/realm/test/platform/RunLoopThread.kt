@@ -16,7 +16,6 @@
 
 package io.realm.test.platform
 
-import io.realm.util.Main
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
