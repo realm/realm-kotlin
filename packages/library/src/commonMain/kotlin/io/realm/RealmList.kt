@@ -18,7 +18,7 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
-import io.realm.internal.copyToRealmIfNeeded
+import io.realm.internal.copyToRealm
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -189,7 +189,7 @@ private class ManagedListDelegate<E>(
         RealmInterop.realm_list_add(
             listPtr,
             index.toLong(),
-            copyToRealmIfNeeded(metadata.mediator, metadata.realm, element)
+            copyToRealm(metadata.mediator, metadata.realm, element)
         )
     }
 
@@ -218,7 +218,7 @@ private class ManagedListDelegate<E>(
             RealmInterop.realm_list_set(
                 listPtr,
                 index.toLong(),
-                copyToRealmIfNeeded(metadata.mediator, metadata.realm, element)
+                copyToRealm(metadata.mediator, metadata.realm, element)
             )
         )
     }

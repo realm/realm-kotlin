@@ -108,7 +108,7 @@ fun <T : RealmObject> create(
     }
 }
 
-fun <T> copyToRealmIfNeeded(
+fun <T> copyToRealm(
     mediator: Mediator,
     realmPointer: RealmReference,
     element: T,
@@ -117,65 +117,65 @@ fun <T> copyToRealmIfNeeded(
     return if (element is RealmObjectInternal) {
         var elementToCopy = element
 
-        // Throw if object is (managed and) not valid
+        // Throw if object is not valid
         if (!elementToCopy.isValid()) {
             throw IllegalStateException("Cannot copy an invalid managed object to Realm.")
         }
 
         // Copy object if it is not managed
         if (!elementToCopy.isManaged()) {
-            elementToCopy = copyToRealm(mediator, realmPointer, element, cache)
+            val instance: RealmObjectInternal = element
+            val companion = mediator.companionOf(instance::class)
+            val members =
+                companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
+
+            val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+                create(
+                    mediator,
+                    realmPointer,
+                    instance::class,
+                    (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance)
+                )
+            } ?: create(mediator, realmPointer, instance::class)
+
+            cache[instance] = target
+
+            // TODO OPTIMIZE We could set all properties at once with on C-API call
+            for (member: KMutableProperty1<RealmObjectInternal, Any?> in members) {
+                val targetValue = member.get(instance).let { sourceObject ->
+                    // Check whether the source is a RealmObject, a primitive or a list
+                    // In case of list ensure the values from the source are passed to the native list
+                    if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
+                        cache.getOrPut(sourceObject) {
+                            copyToRealm(mediator, realmPointer, sourceObject, cache)
+                        }
+                    } else if (sourceObject is RealmList<*>) {
+                        processListMember(
+                            mediator,
+                            realmPointer,
+                            cache,
+                            member,
+                            target,
+                            sourceObject
+                        )
+                    } else {
+                        sourceObject
+                    }
+                }
+                targetValue?.let {
+                    // TODO OPTIMIZE Should we do a separate setter that allows the isDefault flag for sync
+                    //  optimizations
+                    member.set(target, it)
+                }
+            }
+            elementToCopy = target as T
         }
 
         elementToCopy
     } else {
+        // Ignore copy if the element is of a primitive type
         element
     }
-}
-
-fun <T : RealmObject> copyToRealm(
-    mediator: Mediator,
-    realmPointer: RealmReference,
-    instance: T,
-    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()
-): T {
-    // Copying already managed instance is an no-op
-    if ((instance as RealmObjectInternal).`$realm$IsManaged`) return instance
-
-    val companion = mediator.companionOf(instance::class)
-    val members = companion.`$realm$fields` as List<KMutableProperty1<T, Any?>>
-
-    val target = companion.`$realm$primaryKey`?.let { primaryKey ->
-        create(
-            mediator,
-            realmPointer,
-            instance::class,
-            (primaryKey as KProperty1<T, Any?>).get(instance)
-        )
-    } ?: create(mediator, realmPointer, instance::class)
-    cache[instance] = target as RealmObjectInternal
-    // TODO OPTIMIZE We could set all properties at once with on C-API call
-    for (member: KMutableProperty1<T, Any?> in members) {
-        val targetValue = member.get(instance).let { sourceObject ->
-            // Check whether the source is a RealmObject, a primitive or a list
-            // In case of list ensure the values from the source are passed to the native list
-            if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
-                cache.getOrPut(sourceObject) {
-                    copyToRealm(mediator, realmPointer, sourceObject, cache)
-                }
-            } else if (sourceObject is RealmList<*>) {
-                processListMember(mediator, realmPointer, cache, member, target, sourceObject)
-            } else {
-                sourceObject
-            }
-        }
-        targetValue?.let {
-            // TODO OPTIMIZE Should we do a separate setter that allows the isDefault flag for sync
-            //  optimizations
-            member.set(target, it)
-        }
-    }
-    return target
 }
 
 @Suppress("LongParameterList")
