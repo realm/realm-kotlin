@@ -23,6 +23,7 @@ import io.realm.delete
 import io.realm.util.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import test.Sample
+import test.TestClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -46,6 +47,14 @@ class SampleTests {
     fun tearDown() {
         realm.close()
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun validateInternalGetters() {
+        val testClass = TestClass()
+        testClass.name = "ASDF"
+        assertEquals("TEST", testClass.name)
+        assertEquals("TEST", testClass.internalName())
     }
 
     @Test

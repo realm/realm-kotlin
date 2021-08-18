@@ -83,6 +83,15 @@ class GenerationExtensionTest {
     }
 
     @Test
+    fun `Sample compilation`() {
+        val inputs = Files("/internal-member-reference")
+        val result = compile(inputs)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        inputs.assertGeneratedIR()
+    }
+
+
+    @Test
     fun `RealmConfiguration Schema Argument Lowering`() {
         val inputs = Files("/schema")
         val result = compile(inputs)

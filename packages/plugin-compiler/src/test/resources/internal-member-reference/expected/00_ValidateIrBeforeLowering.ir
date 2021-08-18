@@ -1,0 +1,256 @@
+-- IR for <main> after Validate IR before lowering
+MODULE_FRAGMENT name:<main>
+  FILE fqName:internal-member-reference.input fileName:input/TestClass.kt
+    CLASS CLASS name:TestObject modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+      CONSTRUCTOR visibility:public <> () returnType:internal-member-reference.input.TestObject [primary]
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+          INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:TestObject modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.interop.RealmObjectInterop; io.realm.internal.RealmObjectInternal]'
+      PROPERTY name:name visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private
+          EXPRESSION_BODY
+            CONST String type=kotlin.String value="Child-default"
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-name> visibility:public modality:FINAL <> ($this:internal-member-reference.input.TestObject) returnType:kotlin.String?
+          correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:internal-member-reference.input.TestObject
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-name> (): kotlin.String? declared in internal-member-reference.input.TestObject'
+                CONST String type=kotlin.String value="TEST"
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-name> visibility:public modality:FINAL <> ($this:internal-member-reference.input.TestObject, <set-?>:kotlin.String?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:internal-member-reference.input.TestObject
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<set-name>' type=internal-member-reference.input.TestObject origin=null
+              value: GET_VAR '<set-?>: kotlin.String? declared in internal-member-reference.input.TestObject.<set-name>' type=kotlin.String? origin=null
+      FUN name:internalName visibility:public modality:FINAL <> ($this:internal-member-reference.input.TestObject) returnType:kotlin.String?
+        $this: VALUE_PARAMETER name:<this> type:internal-member-reference.input.TestObject
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun internalName (): kotlin.String? declared in internal-member-reference.input.TestObject'
+            CALL 'public final fun <get-name> (): kotlin.String? declared in internal-member-reference.input.TestObject' type=kotlin.String? origin=GET_PROPERTY
+              $this: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.internalName' type=internal-member-reference.input.TestObject origin=null
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
+        $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject.Companion
+        CONSTRUCTOR visibility:private <> () returnType:internal-member-reference.input.TestObject.Companion [primary]
+          BLOCK_BODY
+            DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
+        FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+          overridden:
+            public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+          VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+          overridden:
+            public open fun hashCode (): kotlin.Int declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+          overridden:
+            public open fun toString (): kotlin.String declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        FUN name:$realm$schema visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun $realm$schema (): io.realm.interop.Table declared in io.realm.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in internal-member-reference.input.TestObject.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.interop.Property>) [primary] declared in io.realm.interop.Table' type=io.realm.interop.Table origin=null
+                name: CONST String type=kotlin.String value="TestObject"
+                primaryKey: CONST Null type=kotlin.Nothing? value=null
+                flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.ClassFlag> origin=null
+                  <T>: io.realm.interop.ClassFlag
+                  elements: VARARG type=kotlin.Array<io.realm.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.interop.ClassFlag>
+                    GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_CLASS_NORMAL' type=io.realm.interop.ClassFlag
+                properties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.interop.Property> origin=null
+                  <T>: io.realm.interop.Property
+                  elements: VARARG type=kotlin.Array<io.realm.interop.Property> varargElementType=kotlin.collections.List<io.realm.interop.Property>
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.interop.PropertyType, collectionType: io.realm.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.interop.PropertyFlag>) [primary] declared in io.realm.interop.Property' type=io.realm.interop.Property origin=null
+                      name: CONST String type=kotlin.String value="name"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.interop.PropertyFlag> origin=null
+                        <T>: io.realm.interop.PropertyFlag
+                        elements: VARARG type=kotlin.Array<io.realm.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.interop.PropertyFlag>
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.interop.PropertyFlag
+        FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun $realm$newInstance (): kotlin.Any declared in io.realm.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in internal-member-reference.input.TestObject.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in internal-member-reference.input.TestObject' type=internal-member-reference.input.TestObject origin=null
+        PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>> visibility:private
+            EXPRESSION_BODY
+              CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>> origin=null
+                <T>: kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>
+                elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>>
+                  PROPERTY_REFERENCE 'public final name: kotlin.String? [var]' field=null getter='public final fun <get-name> (): kotlin.String? declared in internal-member-reference.input.TestObject' setter='public final fun <set-name> (<set-?>: kotlin.String?): kotlin.Unit declared in internal-member-reference.input.TestObject' type=kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?> origin=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$fields> visibility:public modality:FINAL <> ($this:internal-member-reference.input.TestObject.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>> declared in internal-member-reference.input.TestObject.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: internal-member-reference.input.TestObject.Companion declared in internal-member-reference.input.TestObject.Companion.<get-$realm$fields>' type=internal-member-reference.input.TestObject.Companion origin=null
+        PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?> visibility:private
+            EXPRESSION_BODY
+              CONST Null type=kotlin.Nothing? value=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$primaryKey> visibility:public modality:FINAL <> ($this:internal-member-reference.input.TestObject.Companion) returnType:kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?>
+            correspondingProperty: PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<*, *>? declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?> declared in internal-member-reference.input.TestObject.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<internal-member-reference.input.TestObject, kotlin.Any?> origin=null
+                  receiver: GET_VAR '<this>: internal-member-reference.input.TestObject.Companion declared in internal-member-reference.input.TestObject.Companion.<get-$realm$primaryKey>' type=internal-member-reference.input.TestObject.Companion origin=null
+      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+      FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject) returnType:io.realm.interop.NativePointer?
+          correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$ObjectPointer> (): io.realm.interop.NativePointer? declared in io.realm.interop.RealmObjectInterop
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$ObjectPointer> (): io.realm.interop.NativePointer? declared in internal-member-reference.input.TestObject'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private' type=io.realm.interop.NativePointer? origin=null
+                receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<get-$realm$ObjectPointer>' type=internal-member-reference.input.TestObject origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject, <set-?>:io.realm.interop.NativePointer?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.interop.NativePointer?): kotlin.Unit declared in io.realm.interop.RealmObjectInterop
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.interop.NativePointer?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.interop.NativePointer? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<set-$realm$ObjectPointer>' type=internal-member-reference.input.TestObject origin=null
+              value: GET_VAR '<set-?>: io.realm.interop.NativePointer? declared in internal-member-reference.input.TestObject.<set-$realm$ObjectPointer>' type=io.realm.interop.NativePointer? origin=null
+      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:io.realm.internal.RealmReference? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject) returnType:io.realm.internal.RealmReference?
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Owner> (): io.realm.internal.RealmReference? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): io.realm.internal.RealmReference? declared in internal-member-reference.input.TestObject'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:io.realm.internal.RealmReference? visibility:private' type=io.realm.internal.RealmReference? origin=null
+                receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<get-$realm$Owner>' type=internal-member-reference.input.TestObject origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject, <set-?>:io.realm.internal.RealmReference?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Owner> (<set-?>: io.realm.internal.RealmReference?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmReference?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:io.realm.internal.RealmReference? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<set-$realm$Owner>' type=internal-member-reference.input.TestObject origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.RealmReference? declared in internal-member-reference.input.TestObject.<set-$realm$Owner>' type=io.realm.internal.RealmReference? origin=null
+      PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$TableName> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject) returnType:kotlin.String?
+          correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$TableName> (): kotlin.String? declared in internal-member-reference.input.TestObject'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private' type=kotlin.String? origin=null
+                receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<get-$realm$TableName>' type=internal-member-reference.input.TestObject origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$TableName> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject, <set-?>:kotlin.String?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<set-$realm$TableName>' type=internal-member-reference.input.TestObject origin=null
+              value: GET_VAR '<set-?>: kotlin.String? declared in internal-member-reference.input.TestObject.<set-$realm$TableName>' type=kotlin.String? origin=null
+      PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private
+          EXPRESSION_BODY
+            CONST Boolean type=kotlin.Boolean value=false
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$IsManaged> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject) returnType:kotlin.Boolean
+          correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in internal-member-reference.input.TestObject'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private' type=kotlin.Boolean origin=null
+                receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<get-$realm$IsManaged>' type=internal-member-reference.input.TestObject origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$IsManaged> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject, <set-?>:kotlin.Boolean) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<set-$realm$IsManaged>' type=internal-member-reference.input.TestObject origin=null
+              value: GET_VAR '<set-?>: kotlin.Boolean declared in internal-member-reference.input.TestObject.<set-$realm$IsManaged>' type=kotlin.Boolean origin=null
+      PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Mediator type:io.realm.internal.Mediator? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Mediator> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject) returnType:io.realm.internal.Mediator?
+          correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Mediator> (): io.realm.internal.Mediator? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Mediator> (): io.realm.internal.Mediator? declared in internal-member-reference.input.TestObject'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Mediator type:io.realm.internal.Mediator? visibility:private' type=io.realm.internal.Mediator? origin=null
+                receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<get-$realm$Mediator>' type=internal-member-reference.input.TestObject origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Mediator> visibility:public modality:OPEN <> ($this:internal-member-reference.input.TestObject, <set-?>:io.realm.internal.Mediator?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Mediator> (<set-?>: io.realm.internal.Mediator?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:internal-member-reference.input.TestObject
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.Mediator?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Mediator type:io.realm.internal.Mediator? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.TestObject.<set-$realm$Mediator>' type=internal-member-reference.input.TestObject origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.Mediator? declared in internal-member-reference.input.TestObject.<set-$realm$Mediator>' type=io.realm.internal.Mediator? origin=null
+    FUN name:externalName visibility:public modality:FINAL <> (child:internal-member-reference.input.TestObject) returnType:kotlin.String?
+      VALUE_PARAMETER name:child index:0 type:internal-member-reference.input.TestObject
+      BLOCK_BODY
+        RETURN type=kotlin.Nothing from='public final fun externalName (child: internal-member-reference.input.TestObject): kotlin.String? declared in internal-member-reference.input'
+          CALL 'public final fun <get-name> (): kotlin.String? declared in internal-member-reference.input.TestObject' type=kotlin.String? origin=GET_PROPERTY
+            $this: GET_VAR 'child: internal-member-reference.input.TestObject declared in internal-member-reference.input.externalName' type=internal-member-reference.input.TestObject origin=null
+    FUN name:extendedName visibility:public modality:FINAL <> ($receiver:internal-member-reference.input.TestObject) returnType:kotlin.String?
+      $receiver: VALUE_PARAMETER name:<this> type:internal-member-reference.input.TestObject
+      BLOCK_BODY
+        RETURN type=kotlin.Nothing from='public final fun extendedName (): kotlin.String? declared in internal-member-reference.input'
+          CALL 'public final fun <get-name> (): kotlin.String? declared in internal-member-reference.input.TestObject' type=kotlin.String? origin=GET_PROPERTY
+            $this: GET_VAR '<this>: internal-member-reference.input.TestObject declared in internal-member-reference.input.extendedName' type=internal-member-reference.input.TestObject origin=null
