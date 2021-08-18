@@ -18,7 +18,6 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
-import io.realm.internal.RealmReference
 import io.realm.internal.WeakReference
 import io.realm.interop.NativePointer
 import io.realm.isManaged
@@ -85,37 +84,37 @@ class RealmTests {
 
     @Test
     fun initialVersion() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
     }
 
     @Test
     fun versionIncreaseOnWrite() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
         realm.writeBlocking { /* Do Nothing */ }
-        assertEquals(VersionId(3), realm.version)
+        assertEquals(VersionId(3), realm.version())
     }
 
     @Test
     fun versionDoesNotChangeWhenCancellingWrite() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
         realm.writeBlocking { cancelWrite() }
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
     }
 
     @Test
     fun versionThrowsIfRealmIsClosed() {
         realm.close()
-        assertFailsWith<IllegalStateException> { realm.version }
+        assertFailsWith<IllegalStateException> { realm.version() }
     }
 
     @Test
     fun versionInsideWriteIsLatest() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
         realm.writeBlocking {
-            assertEquals(INITIAL_VERSION, version)
+            assertEquals(INITIAL_VERSION, version())
             cancelWrite()
         }
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
     }
 
     @Test
@@ -397,17 +396,17 @@ class RealmTests {
         }
         realm.close()
         assertFailsWith<IllegalStateException> {
-            parent.version
+            parent.version()
         }
     }
 
     @Test
     fun closingIntermediateVersionsWhenNoLongerReferenced() {
-        assertEquals(0, realm.intermediateReferences.value.size)
+        assertEquals(0, realm.intermediateVersions.value.size)
         var parent: Parent? = realm.writeBlocking { copyToRealm(Parent()) }
-        assertEquals(1, realm.intermediateReferences.value.size)
+        assertEquals(1, realm.intermediateVersions.value.size)
         realm.writeBlocking { }
-        assertEquals(2, realm.intermediateReferences.value.size)
+        assertEquals(2, realm.intermediateVersions.value.size)
 
         // Clear reference
         parent = null
@@ -415,10 +414,11 @@ class RealmTests {
         triggerGC()
         // Close of intermediate version is currently only done when updating the realm after a write
         realm.writeBlocking { }
-        assertEquals(1, realm.intermediateReferences.value.size)
+        assertEquals(1, realm.intermediateVersions.value.size)
     }
 
-    private val Realm.intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>>
+    @Suppress("invisible_reference", "invisible_member")
+    private val Realm.intermediateVersions: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>
         get() {
             return (this as io.realm.internal.RealmImpl).intermediateReferences
         }

@@ -34,7 +34,7 @@ object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    fun <R> getValue(obj: RealmObjectInternal, col: String): Any? {
+    internal fun <R> getValue(obj: RealmObjectInternal, col: String): Any? {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
@@ -44,7 +44,7 @@ object RealmObjectHelper {
 
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmObject> getObject(
+    internal inline fun <reified R : RealmObject> getObject(
         obj: RealmObjectInternal,
         col: String,
     ): Any? {
@@ -67,7 +67,7 @@ object RealmObjectHelper {
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
-    inline fun <reified R> getList(
+    internal inline fun <reified R> getList(
         obj: RealmObjectInternal,
         col: String,
         isRealmObject: Boolean = false
@@ -90,7 +90,7 @@ object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
+    internal fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
@@ -104,7 +104,7 @@ object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmObjectInternal> setObject(
+    internal inline fun <reified R : RealmObjectInternal> setObject(
         obj: RealmObjectInternal,
         col: String,
         value: R?
@@ -116,7 +116,7 @@ object RealmObjectHelper {
         setValue(obj, col, newValue)
     }
 
-    fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
+    internal fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
         TODO()
     }
 }

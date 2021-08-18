@@ -2,6 +2,7 @@
 
 ### Breaking Changes
 * Moved `@PrimaryKey` annotation from `io.realm.PrimaryKey` to `io.realm.annotations.PrimaryKey`.
+* Changed `version` into method `version()` and moved it to `Versioned` interface.
 
 ### Enhancements
 * Add support for excluding properties from the Realm schema. This is done by either using JVM `@Transient` or the newly added `@io.realm.kotlin.Ignore` annotation. (Issue [#278](https://github.com/realm/realm-kotlin/issues/278)).

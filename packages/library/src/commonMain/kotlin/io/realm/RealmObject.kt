@@ -21,6 +21,7 @@ import io.realm.internal.MutableRealmImpl
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
 import io.realm.internal.link
+import io.realm.internal.realmObjectInternal
 import io.realm.interop.Link
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +30,8 @@ import kotlin.reflect.KClass
 /**
  * Marker interface to define a model (managed by Realm).
  */
+// FIXME Can we implement extensions method by adding Versioned or maybe public counter part of
+//  RealmLifeCycle
 interface RealmObject
 
 /**
@@ -40,31 +43,15 @@ interface RealmObject
  * @return true if the object is frozen, false otherwise.
  */
 public fun RealmObject.isFrozen(): Boolean {
-    val internalObject = this as RealmObjectInternal
-    internalObject.`$realm$ObjectPointer`?.let {
-        return RealmInterop.realm_is_frozen(it)
-    } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
+    return realmObjectInternal().isFrozen()
 }
 
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
-// TODO Should probably be a function as it can potentially change over time and can throw?
-public var RealmObject.version: VersionId
-    get() {
-        val internalObject = this as RealmObjectInternal
-        internalObject.`$realm$Owner`?.let {
-            // FIXME This check is required as realm_get_version_id doesn't throw if closed!? Core bug?
-            val dbPointer = it.dbPointer
-            if (RealmInterop.realm_is_closed(dbPointer)) {
-                throw IllegalStateException("Cannot access properties on closed realm")
-            }
-            return VersionId(RealmInterop.realm_get_version_id(dbPointer))
-        } ?: throw IllegalArgumentException("Cannot get version from an unmanaged object.")
-    }
-    private set(_) {
-        throw UnsupportedOperationException("Setter is required by the Kotlin Compiler, but should not be called directly")
-    }
+public fun RealmObject.version(): VersionId {
+    return realmObjectInternal().version()
+}
 
 /**
  * Deletes the RealmObject.
@@ -87,8 +74,7 @@ fun RealmObject.delete() {
  * Realm.
  */
 fun RealmObject.isManaged(): Boolean {
-    val internalObject = this as RealmObjectInternal
-    return internalObject.`$realm$IsManaged`
+    return realmObjectInternal().`$realm$IsManaged`
 }
 
 /**

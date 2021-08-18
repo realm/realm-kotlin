@@ -20,7 +20,6 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.VersionId
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -32,7 +31,7 @@ import kotlin.reflect.KClass
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 
-class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T> {
+internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T>, RealmLifeCycleHolder {
 
     private val mode: Mode
     private val realm: RealmReference
@@ -65,11 +64,8 @@ class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T> {
         }
     }
 
-    /**
-     * The current version of the data in this Realm.
-     */
-    override fun version(): VersionId {
-        return realm.owner.version
+    override fun realmLifeCycle(): RealmLifeCycle {
+        return realm
     }
 
     override val size: Int

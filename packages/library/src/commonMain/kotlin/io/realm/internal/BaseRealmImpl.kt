@@ -21,20 +21,19 @@ import io.realm.Cancellable
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
-public abstract class BaseRealmImpl internal constructor(
+internal abstract class BaseRealmImpl internal constructor(
     /**
      * Configuration used to configure this Realm instance.
      */
     override val configuration: RealmConfigurationImpl,
     dbPointer: NativePointer
-) : BaseRealm {
+) : BaseRealm, RealmLifeCycleHolder {
 
     private companion object {
         private const val observablesNotSupportedMessage = "Observing changes are not supported by this Realm."
@@ -55,12 +54,13 @@ public abstract class BaseRealmImpl internal constructor(
             throw UnsupportedOperationException("BaseRealm reference should never be updated")
         }
 
-    /**
-     * The current version of the data in this realm.
-     */
-    // TODO Could be abstracted into base implementation of RealmLifeCycle!?
-    override var version: VersionId = VersionId(0)
-        get() { return realmReference.version() }
+    override fun realmLifeCycle(): RealmLifeCycle {
+        return realmReference
+    }
+
+    override fun isClosed(): Boolean {
+        return super.isClosed()
+    }
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
@@ -147,16 +147,6 @@ public abstract class BaseRealmImpl internal constructor(
         val reference = realmReference
         reference.checkClosed()
         return RealmInterop.realm_get_num_versions(reference.dbPointer)
-    }
-
-    /**
-     * Check if this Realm has been closed or not. If the Realm has been closed, most methods
-     * will throw [IllegalStateException] if called.
-     *
-     * @return `true` if the Realm has been closed. `false` if not.
-     */
-    override fun isClosed(): Boolean {
-        return realmReference.isClosed()
     }
 
     // Not all sub classes of `BaseRealm` can be closed by users.

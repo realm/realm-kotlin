@@ -64,20 +64,20 @@ class RealmObjectTests : RealmLifeCycleTests {
 
     @Test
     override fun version() {
-        assertEquals(EXPECTED_VERSION, parent.version)
+        assertEquals(EXPECTED_VERSION, parent.version())
     }
 
     override fun version_throwsOnUnmanagedObject() {
         val unmanagedParent = Parent()
         assertFailsWith<IllegalArgumentException> {
-            unmanagedParent.version
+            unmanagedParent.version()
         }
     }
 
     @Test
     override fun version_throwsIfRealmIsClosed() {
         realm.close()
-        assertFailsWith<IllegalStateException> { parent.version }
+        assertFailsWith<IllegalStateException> { parent.version() }
     }
 
     @Test

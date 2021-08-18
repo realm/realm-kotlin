@@ -19,17 +19,11 @@ import kotlin.reflect.KClass
 /**
  * Base class for all Realm instances ([Realm] and [MutableRealm]).
  */
-interface BaseRealm {
+interface BaseRealm : Versioned {
     /**
      * Configuration used to configure this Realm instance.
      */
     val configuration: RealmConfiguration
-
-    /**
-     * The current version of the data in this realm.
-     */
-    // TODO Could be abstracted into base implementation of RealmLifeCycle!?
-    var version: VersionId
 
     /**
      * Returns the results of querying for all objects of a specific type.
