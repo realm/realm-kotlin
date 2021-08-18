@@ -10,6 +10,7 @@ import io.realm.util.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
 import test.list.RealmListContainer
 import kotlin.test.AfterTest
@@ -160,7 +161,7 @@ class RealmListNotificationsTests : NotificationTests {
                 val queriedContainer = objects
                     .first()
                 queriedContainer.objectListField
-                    .addAll(values.map { copyToRealm(it) })
+                    .addAll(values)
             }
             assertEquals(OBJECT_VALUES.size, channel1.receive().size)
             assertEquals(OBJECT_VALUES.size, channel2.receive().size)
@@ -192,11 +193,12 @@ class RealmListNotificationsTests : NotificationTests {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
             val values = OBJECT_VALUES.freeze()
-            val channel = Channel<RealmList<*>>(capacity = 1)
+            val channel1 = Channel<RealmList<*>>(capacity = 1)
+            val channel2 = Channel<Boolean>(capacity = 1)
             val managedContainer = realm.write {
                 RealmListContainer()
                     .apply {
-                        objectListField.addAll(values.map { copyToRealm(it) })
+                        objectListField.addAll(values)
                     }.let { container ->
                         copyToRealm(container)
                     }
@@ -204,22 +206,29 @@ class RealmListNotificationsTests : NotificationTests {
             val observer = async {
                 managedContainer.objectListField
                     .observe()
-                    .collect { flowList ->
-                        channel.send(flowList)
+                    .onCompletion {
+                        // Signal completion
+                        channel2.send(true)
+                    }.collect { flowList ->
+                        channel1.send(flowList)
                     }
             }
 
             // Assert container got populated correctly
-            val emittedList = channel.receive()
+            val emittedList = channel1.receive()
             assertNotNull(emittedList)
             assertEquals(OBJECT_VALUES.size, emittedList.size)
 
+            // Now delete owner
             realm.write {
                 delete(findLatest(managedContainer)!!)
             }
 
+            // Wait for flow completion
+            assertTrue(channel2.receive())
+
             observer.cancel()
-            channel.close()
+            channel1.close()
         }
     }
 

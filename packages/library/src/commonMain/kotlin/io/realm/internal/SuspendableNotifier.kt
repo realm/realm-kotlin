@@ -13,6 +13,7 @@ import io.realm.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
@@ -147,10 +148,14 @@ internal class SuspendableNotifier(
             withContext(dispatcher) {
                 ensureActive()
                 token.value = registerListChangedListener(list) { frozenList ->
-                    // Realm should already have been updated with the latest version
-                    // So `owner` should as a minimum be at the same version as the notification Realm.
-                    val result = trySend(frozenList)
-                    checkResult(result)
+                    if (frozenList == null) {
+                        close()
+                    } else {
+                        // Realm should already have been updated with the latest version
+                        // So `owner` should as a minimum be at the same version as the notification Realm.
+                        val result = trySend(frozenList)
+                        checkResult(result)
+                    }
                 }
             }
             awaitClose {
@@ -238,21 +243,21 @@ internal class SuspendableNotifier(
      */
     internal fun <T> registerListChangedListener(
         list: RealmList<T>,
-        callback: Callback<RealmList<T>>
+        callback: Callback<RealmList<T>?>
     ): Cancellable {
         val liveList = list.thaw(realm.realmReference)
         return registerChangedListener(
             liveComponentPointer = liveList.listPtr,
             notifyComponentUpdate = { frozenRealm ->
-                // Skip notifications when list is not valid
+                // Close channel when list is not valid
                 if (!liveList.isValid()) {
-                    return@registerChangedListener
+                    callback.onChange(null)
+                } else {
+                    // Notifications need to be delivered with the version they where created on, otherwise
+                    // the fine-grained notification data might be out of sync.
+                    val frozenList = liveList.freeze(frozenRealm)
+                    callback.onChange(frozenList)
                 }
-
-                // Notifications need to be delivered with the version they where created on, otherwise
-                // the fine-grained notification data might be out of sync.
-                val frozenList = liveList.freeze(frozenRealm)
-                callback.onChange(frozenList)
             },
             getToken = { listPtr, interopCallback ->
                 RealmInterop.realm_list_add_notification_callback(listPtr, interopCallback)
