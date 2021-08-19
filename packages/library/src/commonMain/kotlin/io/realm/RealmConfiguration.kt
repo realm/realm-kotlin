@@ -37,6 +37,8 @@ public data class LogConfiguration(
  * @see RealmConfiguration.Builder
  */
 interface RealmConfiguration {
+    // Public properties making up the RealmConfiguration
+    // TODO Add more elaborate KDoc for all of these
     /**
      * Path to the realm file.
      */

@@ -43,6 +43,12 @@ interface Realm : BaseRealm {
          */
         public const val ENCRYPTION_KEY_LENGTH = 64
 
+        /**
+         * Open a Realm instance. This instance grants access to an underlying Realm file defined by
+         * the provided [RealmConfiguration].
+         *
+         * @param configuration The RealmConfiguration used to open the Realm.
+         */
         public fun openBlocking(configuration: RealmConfiguration): Realm {
             return RealmImpl(configuration)
         }

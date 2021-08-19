@@ -41,63 +41,25 @@ public class RealmConfigurationImpl internal constructor(
     deleteRealmIfMigrationNeeded: Boolean,
     encryptionKey: ByteArray?,
 ) : RealmConfiguration {
-    // Public properties making up the RealmConfiguration
-    // TODO Add more elaborate KDoc for all of these
-    /**
-     * Path to the realm file.
-     */
+
     override val path: String
 
-    /**
-     * Filename of the realm file.
-     */
     override val name: String
 
-    /**
-     * The set of classes included in the schema for the realm.
-     */
     override val schema: Set<KClass<out RealmObject>>
 
-    /**
-     * The log configuration used for the realm instance.
-     */
     override val log: LogConfiguration
 
-    /**
-     * Maximum number of active versions.
-     *
-     * Holding references to objects from previous version of the data in the realm will also
-     * require keeping the data in the actual file. This can cause growth of the file. See
-     * [Builder.maxNumberOfActiveVersions] for details.
-     */
     override val maxNumberOfActiveVersions: Long
 
-    /**
-     * The coroutine dispatcher for internal handling of notification registration and delivery.
-     */
     override val notificationDispatcher: CoroutineDispatcher
 
-    /**
-     * The coroutine dispatcher used for all write operations.
-     */
     override val writeDispatcher: CoroutineDispatcher
 
-    /**
-     * The schema version.
-     */
     override val schemaVersion: Long
 
-    /**
-     * Flag indicating whether the realm will be deleted if the schema has changed in a way that
-     * requires schema migration.
-     */
     override val deleteRealmIfMigrationNeeded: Boolean
 
-    /**
-     * 64 byte key used to encrypt and decrypt the Realm file.
-     *
-     * @return null on unencrypted Realms.
-     */
     override val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
@@ -154,43 +116,4 @@ public class RealmConfigurationImpl internal constructor(
                     ?: error("$clazz not part of this configuration schema")
         }
     }
-
-    /**
-     * Short-hand for creating common variants of RealmConfigurations.
-     *
-     * @param path full path to the Realm file. If set, [RealmConfiguration.name] is ignored.
-     * @param name name of the Realm file being created if no [RealmConfiguration.path] is configured. Realm files are
-     *             placed in the default location for the platform. On Android this is in `getFilesDir()`
-     * @param schema set of classes that make up the schema for the Realm. Identified by their class literal `T::class`.
-     */
-    // This constructor is never used at runtime, all calls to it are being rewired by the Realm Compiler Plugin to call
-    // the internal secondary constructor with all schema classes mapped to their RealmCompanion.
-    public constructor(
-        path: String? = null,
-        name: String = Realm.DEFAULT_FILE_NAME,
-        schema: Set<KClass<out RealmObject>>
-    ) : this(path, name, mapOf()) // REPLACED_BY_IR
-
-    // Called by the compiler plugin, with a populated companion map.
-    // Default values should match what happens when calling `RealmConfiguration.Builder(schema = setOf(...)).build()`
-    internal constructor(
-        path: String? = null,
-        name: String = Realm.DEFAULT_FILE_NAME,
-        schema: Map<KClass<out RealmObject>, RealmObjectCompanion>
-    ) : this(
-        schema,
-        path,
-        name,
-        schema.keys,
-        LogConfiguration(
-            LogLevel.WARN,
-            listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-        ),
-        Long.MAX_VALUE,
-        singleThreadDispatcher(name),
-        singleThreadDispatcher(name),
-        0,
-        false,
-        null,
-    )
 }

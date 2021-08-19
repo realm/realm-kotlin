@@ -73,14 +73,7 @@ class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPoi
         }
     }
 
-    /**
-     * Open a Realm instance. This instance grants access to an underlying Realm file defined by
-     * the provided [RealmConfiguration].
-     *
-     * @param configuration The RealmConfiguration used to open the Realm.
-     */
-    // FIXME Figure out how to describe the constructor better
-    public constructor(configuration: RealmConfiguration) :
+    constructor(configuration: RealmConfiguration) :
         this(configuration as RealmConfigurationImpl, RealmInterop.realm_open(configuration.nativeConfig))
 
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {

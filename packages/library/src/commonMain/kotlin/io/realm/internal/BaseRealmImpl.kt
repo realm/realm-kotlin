@@ -29,9 +29,6 @@ import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
 public abstract class BaseRealmImpl internal constructor(
-    /**
-     * Configuration used to configure this Realm instance.
-     */
     override val configuration: RealmConfigurationImpl,
     dbPointer: NativePointer
 ) : BaseRealm {
@@ -55,9 +52,6 @@ public abstract class BaseRealmImpl internal constructor(
             throw UnsupportedOperationException("BaseRealm reference should never be updated")
         }
 
-    /**
-     * The current version of the data in this realm.
-     */
     // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     override var version: VersionId = VersionId(0)
         get() { return realmReference.version() }
@@ -68,16 +62,6 @@ public abstract class BaseRealmImpl internal constructor(
         log.info("Realm opened: ${configuration.path}")
     }
 
-    /**
-     * Returns the results of querying for all objects of a specific type.
-     *
-     * For a [Realm] instance this reflects the state of the realm at the invocation time, thus
-     * the results will not change on updates to the Realm. For a [MutableRealm] the result is live
-     * and will in fact reflect updates to the [MutableRealm].
-     *
-     * @param clazz The class of the objects to query for.
-     * @return The result of the query as of the time of invoking this method.
-     */
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         // Use same reference through out all operations to avoid locking
         val realmReference = this.realmReference
@@ -93,17 +77,6 @@ public abstract class BaseRealmImpl internal constructor(
             configuration.mediator
         )
     }
-    /**
-     * Returns the results of querying for all objects of a specific type.
-     *
-     * Convenience inline method to catch the reified class type of single argument variant of [objects].
-     *
-     * @param T The type of the objects to query for.
-     * @return The result of the query. Dependent of the type of the Realm this will either reflect
-     * for [Realm]: the state at invocation or for [MutableRealm] the latest updated state of the
-     * mutable realm.
-     */
-    inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
@@ -137,24 +110,12 @@ public abstract class BaseRealmImpl internal constructor(
         throw NotImplementedError(observablesNotSupportedMessage)
     }
 
-    /**
-     * Returns the current number of active versions in the Realm file. A large number of active versions can have
-     * a negative impact on the Realm file size on disk.
-     *
-     * @see [RealmConfiguration.Builder.maxNumberOfActiveVersions]
-     */
     override fun getNumberOfActiveVersions(): Long {
         val reference = realmReference
         reference.checkClosed()
         return RealmInterop.realm_get_num_versions(reference.dbPointer)
     }
 
-    /**
-     * Check if this Realm has been closed or not. If the Realm has been closed, most methods
-     * will throw [IllegalStateException] if called.
-     *
-     * @return `true` if the Realm has been closed. `false` if not.
-     */
     override fun isClosed(): Boolean {
         return realmReference.isClosed()
     }
