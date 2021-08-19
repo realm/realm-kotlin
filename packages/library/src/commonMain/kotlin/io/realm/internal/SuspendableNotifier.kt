@@ -248,7 +248,6 @@ internal class SuspendableNotifier(
         return registerChangedListener(
             liveComponentPointer = liveList.listPtr,
             notifyComponentUpdate = { frozenRealm ->
-                // Close channel when list is not valid
                 if (!liveList.isValid()) {
                     callback.onChange(null)
                 } else {

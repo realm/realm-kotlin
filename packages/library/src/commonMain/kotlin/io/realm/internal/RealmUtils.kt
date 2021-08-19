@@ -108,6 +108,7 @@ fun <T : RealmObject> create(
     }
 }
 
+@Suppress("NestedBlockDepth")
 fun <T> copyToRealm(
     mediator: Mediator,
     realmPointer: RealmReference,
