@@ -43,8 +43,7 @@ internal class SuspendableNotifier(
 
     companion object {
         val NO_OP_NOTIFICATION_TOKEN = object : Cancellable {
-            override fun cancel() { /* Do Nothing */
-            }
+            override fun cancel() { /* Do Nothing */ }
         }
     }
 
