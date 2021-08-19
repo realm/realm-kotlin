@@ -61,6 +61,17 @@ class SampleTests {
     }
 
     @Test
+    fun validateInternalGetterAndSetter() {
+        realm.writeBlocking {
+            val s = copyToRealm(Sample())
+            val value = "UPDATE"
+            s.stringFieldSetter(value)
+            assertEquals(value, s.stringField)
+            assertEquals(value, s.stringFieldGetter())
+        }
+    }
+
+    @Test
     fun updateOutsideTransactionThrows() {
         val s = "Hello, World!"
         val sample: Sample = realm.writeBlocking {
