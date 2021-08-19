@@ -52,4 +52,13 @@ class Sample : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = RealmList()
     var nullableFloatListField: RealmList<Float?> = RealmList()
     var nullableDoubleListField: RealmList<Double?> = RealmList()
+
+    // For verification that references inside class is also using our modified accessors and are
+    // not optimized to use the backing field directly.
+    fun stringFieldGetter(): String {
+        return stringField
+    }
+    fun stringFieldSetter(s: String) {
+        stringField = s
+    }
 }
