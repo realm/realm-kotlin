@@ -25,15 +25,5 @@ package io.realm.interop
 @Suppress("VariableNaming")
 interface RealmObjectInterop {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
-
-    // Reference to the public Realm instance and internal transaction to which the object belongs.
-    // FIXME Should be RealmReference but requires RealmObjectInterop and RealmReference to be in same module.
-    //  Remember to fix type for compiler generated field.
-    var `$realm$Owner`: Any?
     var `$realm$ObjectPointer`: NativePointer?
-    var `$realm$TableName`: String?
-    var `$realm$IsManaged`: Boolean
-    // FIXME Should be Mediator but requires RealmObjectInterop and Mediator to be in same module.
-    //  Remember to fix type for compiler generated field.
-    var `$realm$Mediator`: Any?
 }

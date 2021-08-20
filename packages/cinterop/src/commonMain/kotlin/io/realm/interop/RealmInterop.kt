@@ -107,6 +107,8 @@ expect object RealmInterop {
     fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T
     fun realm_list_clear(list: NativePointer)
     fun realm_list_erase(list: NativePointer, index: Long)
+    fun realm_list_freeze(liveList: NativePointer, frozenRealm: NativePointer): NativePointer
+    fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
@@ -134,4 +136,5 @@ expect object RealmInterop {
 
     fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer
     fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer
+    fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
 }

@@ -18,9 +18,11 @@ package io.realm
 
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
+import io.realm.internal.copyToRealm
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
@@ -39,8 +41,11 @@ import kotlin.reflect.KClass
  * [MutableRealm.copyToRealm] method.
  */
 class RealmList<E> private constructor(
-    delegate: MutableList<E>
+    private val delegate: RealmListApi<E>
 ) : MutableList<E> by delegate {
+
+    internal val listPtr: NativePointer
+        get() = delegate.listPtr
 
     /**
      * Constructs a RealmList in unmanaged mode.
@@ -56,11 +61,31 @@ class RealmList<E> private constructor(
     ) : this(ManagedListDelegate(listPtr, metadata))
 
     /**
+     * Observe changes to a RealmList. Follows the pattern of [Realm.addChangeListener].
+     */
+    fun observe(): Flow<RealmList<E>> = delegate.observe(this)
+
+    internal fun freeze(realm: RealmReference): RealmList<E> = delegate.freeze(realm)
+    internal fun thaw(realm: RealmReference): RealmList<E> = delegate.thaw(realm)
+
+    @Suppress("TooGenericExceptionCaught")
+    internal fun isValid(): Boolean {
+        // FIXME workaround until https://github.com/realm/realm-core/issues/4843 is done
+        try {
+            size
+        } catch (e: RuntimeException) {
+            if (e.message?.lowercase()?.contains("access to invalidated list object") == true) {
+                return false
+            }
+        }
+        return true
+    }
+
+    /**
      * Metadata needed to correctly instantiate a list operator. For internal use only.
      */
     data class OperatorMetadata(
         val clazz: KClass<*>,
-        val isRealmObject: Boolean,
         val mediator: Mediator,
         val realm: RealmReference
     )
@@ -92,26 +117,27 @@ class RealmList<E> private constructor(
                     Float::class,
                     Double::class,
                     String::class -> value
-                    else -> when {
-                        isRealmObject -> (value as Link).toRealmObject(
-                            clazz as KClass<out RealmObject>,
-                            mediator,
-                            realm
-                        )
-                        else -> throw IllegalArgumentException("Unsupported type '$clazz'.")
-                    }
+                    else -> (value as Link).toRealmObject(
+                        clazz as KClass<out RealmObject>,
+                        mediator,
+                        realm
+                    )
                 } as E
             }
         }
-
-        /**
-         * Checks if the Realm associated to this RealmList is still accessible, throwing an
-         * [IllegalStateException] if not.
-         */
-        fun checkRealmClosed() {
-            metadata.realm.checkClosed()
-        }
     }
+}
+
+/**
+ * Delegate interface for Realm-specific methods.
+ */
+internal interface RealmListApi<E> : MutableList<E> {
+
+    val listPtr: NativePointer
+
+    fun observe(list: RealmList<E>): Flow<RealmList<E>>
+    fun freeze(frozenRealm: RealmReference): RealmList<E>
+    fun thaw(liveRealm: RealmReference): RealmList<E>
 }
 
 /**
@@ -119,7 +145,20 @@ class RealmList<E> private constructor(
  */
 private class UnmanagedListDelegate<E>(
     list: MutableList<E> = mutableListOf()
-) : MutableList<E> by list
+) : MutableList<E> by list, RealmListApi<E> {
+
+    override val listPtr: NativePointer
+        get() = throw UnsupportedOperationException("Unmanaged lists don't have a native pointer.")
+
+    override fun observe(list: RealmList<E>): Flow<RealmList<E>> =
+        throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
+
+    override fun freeze(frozenRealm: RealmReference): RealmList<E> =
+        throw UnsupportedOperationException("Unmanaged lists cannot be frozen.")
+
+    override fun thaw(liveRealm: RealmReference): RealmList<E> =
+        throw UnsupportedOperationException("Unmanaged lists cannot be thawed.")
+}
 
 /**
  * Represents a managed [RealmList]. Its data will be persisted in Realm.
@@ -128,50 +167,75 @@ private class UnmanagedListDelegate<E>(
  * be used as a delegate since it implements [MutableList].
  */
 private class ManagedListDelegate<E>(
-    private val listPtr: NativePointer,
-    metadata: RealmList.OperatorMetadata
-) : AbstractMutableList<E>() {
+    override val listPtr: NativePointer,
+    private val metadata: RealmList.OperatorMetadata
+) : AbstractMutableList<E>(), RealmListApi<E> {
 
     private val operator = RealmList.Operator<E>(metadata)
 
     override val size: Int
         get() {
-            operator.checkRealmClosed()
+            metadata.realm.checkClosed()
             return RealmInterop.realm_list_size(listPtr).toInt()
         }
 
     override fun get(index: Int): E {
-        operator.checkRealmClosed()
+        metadata.realm.checkClosed()
         return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
     }
 
     override fun add(index: Int, element: E) {
-        operator.checkRealmClosed()
-        RealmInterop.realm_list_add(listPtr, index.toLong(), element)
+        metadata.realm.checkClosed()
+        RealmInterop.realm_list_add(
+            listPtr,
+            index.toLong(),
+            copyToRealm(metadata.mediator, metadata.realm, element)
+        )
     }
 
     // FIXME bug in AbstractMutableList.addAll native implementation:
     //  https://youtrack.jetbrains.com/issue/KT-47211
     //  Remove this method once the native implementation has a check for valid index
     override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        operator.checkRealmClosed()
+        metadata.realm.checkClosed()
         rangeCheckForAdd(index)
         return super.addAll(index, elements)
     }
 
     override fun clear() {
-        operator.checkRealmClosed()
+        metadata.realm.checkClosed()
         RealmInterop.realm_list_clear(listPtr)
     }
 
     override fun removeAt(index: Int): E = get(index).also {
-        operator.checkRealmClosed()
+        metadata.realm.checkClosed()
         RealmInterop.realm_list_erase(listPtr, index.toLong())
     }
 
     override fun set(index: Int, element: E): E {
-        operator.checkRealmClosed()
-        return operator.convert(RealmInterop.realm_list_set(listPtr, index.toLong(), element))
+        metadata.realm.checkClosed()
+        return operator.convert(
+            RealmInterop.realm_list_set(
+                listPtr,
+                index.toLong(),
+                copyToRealm(metadata.mediator, metadata.realm, element)
+            )
+        )
+    }
+
+    override fun observe(list: RealmList<E>): Flow<RealmList<E>> {
+        metadata.realm.checkClosed()
+        return metadata.realm.owner.registerListObserver(list)
+    }
+
+    override fun freeze(frozenRealm: RealmReference): RealmList<E> {
+        val frozenList = RealmInterop.realm_list_freeze(listPtr, frozenRealm.dbPointer)
+        return RealmList(frozenList, metadata.copy(realm = frozenRealm))
+    }
+
+    override fun thaw(liveRealm: RealmReference): RealmList<E> {
+        val liveList = RealmInterop.realm_list_thaw(listPtr, liveRealm.dbPointer)
+        return RealmList(liveList, metadata.copy(realm = liveRealm))
     }
 
     private fun rangeCheckForAdd(index: Int) {

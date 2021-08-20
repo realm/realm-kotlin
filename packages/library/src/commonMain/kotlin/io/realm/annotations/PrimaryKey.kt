@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.annotations
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.FIELD)

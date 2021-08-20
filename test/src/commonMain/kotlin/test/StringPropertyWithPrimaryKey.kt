@@ -16,8 +16,8 @@
 
 package test
 
-import io.realm.PrimaryKey
 import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
 import kotlin.random.Random
 import kotlin.random.nextULong
 
