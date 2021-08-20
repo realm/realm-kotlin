@@ -1,4 +1,4 @@
-## 0.5.1 (YYYY-MM-DD)
+## 0.6.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
