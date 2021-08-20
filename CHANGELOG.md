@@ -1,4 +1,4 @@
-## 0.5.0 (YYYY-MM-DD)
+## 0.5.0 (2021-08-20)
 
 ### Breaking Changes
 * Moved `@PrimaryKey` annotation from `io.realm.PrimaryKey` to `io.realm.annotations.PrimaryKey`.
