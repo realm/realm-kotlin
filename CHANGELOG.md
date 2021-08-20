@@ -13,9 +13,10 @@
 * Fix optimizations bypassing our custom getter and setter from within a class (Issue [#375](https://github.com/realm/realm-kotlin/issues/375)).
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
 
 ### Internal
+* Updated to Kotlin 1.5.21.
 * Updated Gradle to 7.1.1.
 * Updated Android Gradle Plugin to 4.1.0.
 * Updated to Android Build Tools 30.0.2. 
