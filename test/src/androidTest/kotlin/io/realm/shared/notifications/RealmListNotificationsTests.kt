@@ -4,9 +4,9 @@ import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmList
-import io.realm.internal.freeze
+import io.realm.internal.platform.freeze
 import io.realm.shared.OBJECT_VALUES
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect

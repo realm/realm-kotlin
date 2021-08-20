@@ -17,11 +17,12 @@
 package io.realm
 
 import io.realm.internal.Mediator
-import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.singleThreadDispatcher
+import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
@@ -137,7 +138,7 @@ public class RealmConfiguration private constructor(
 
     init {
         this.path = if (path == null || path.isEmpty()) {
-            val directory = PlatformHelper.appFilesDirectory()
+            val directory = appFilesDirectory()
             // FIXME Proper platform agnostic file separator: File.separator is not available for Kotlin/Native
             //  https://github.com/realm/realm-kotlin/issues/75
             "$directory/$name"
@@ -213,7 +214,7 @@ public class RealmConfiguration private constructor(
         schema.keys,
         LogConfiguration(
             LogLevel.WARN,
-            listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+            listOf(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
         ),
         Long.MAX_VALUE,
         singleThreadDispatcher(name),
@@ -388,7 +389,7 @@ public class RealmConfiguration private constructor(
         internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
-                allLoggers.add(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
             return RealmConfiguration(

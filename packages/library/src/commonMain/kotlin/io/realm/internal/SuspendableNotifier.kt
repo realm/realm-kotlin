@@ -8,6 +8,8 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.VersionId
+import io.realm.internal.platform.freeze
+import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.isValid

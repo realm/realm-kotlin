@@ -18,8 +18,8 @@ package io.realm
 import io.realm.internal.RealmReference
 import io.realm.internal.SuspendableNotifier
 import io.realm.internal.SuspendableWriter
-import io.realm.internal.WeakReference
-import io.realm.internal.runBlocking
+import io.realm.internal.platform.WeakReference
+import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
@@ -86,7 +86,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         /**
          * The required length for encryption keys used to encrypt Realm data.
          */
-        public const val ENCRYPTION_KEY_LENGTH = 64
+        public const val ENCRYPTION_KEY_LENGTH = io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
     }
 
     init {

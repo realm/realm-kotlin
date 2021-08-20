@@ -20,6 +20,8 @@ import io.realm.BaseRealm
 import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.VersionId
+import io.realm.internal.platform.runBlocking
+import io.realm.internal.platform.threadId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher

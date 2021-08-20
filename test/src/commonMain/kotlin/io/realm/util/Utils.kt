@@ -20,18 +20,7 @@ package io.realm.util
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectInternal
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-
-// Platform dependant helper methods
-expect object PlatformUtils {
-    fun createTempDir(): String
-    fun deleteTempDir(path: String)
-    @OptIn(ExperimentalTime::class)
-    fun sleep(duration: Duration)
-    fun threadId(): ULong
-    fun triggerGC()
-}
+import io.realm.test.platform.PlatformUtils
 
 // Platform independent helper methods
 object Utils {
