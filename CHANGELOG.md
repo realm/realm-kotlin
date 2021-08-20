@@ -1,4 +1,21 @@
-## 0.5.0 (YYYY-MM-DD)
+## 0.5.1 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+## 0.5.0 (2021-08-20)
 
 ### Breaking Changes
 * Moved `@PrimaryKey` annotation from `io.realm.PrimaryKey` to `io.realm.annotations.PrimaryKey`.
@@ -24,6 +41,25 @@
 * Updated to Android Build Tools 30.0.2.
 * Updated to targetSdk 30 for Android.
 * Now uses Java 11 to build the project.
+
+
+## 0.4.1 (2021-07-16)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
+* Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
 
 
 ## 0.4.0 (2021-07-13)
