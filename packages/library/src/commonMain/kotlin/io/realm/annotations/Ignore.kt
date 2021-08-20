@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.interop
+package io.realm.annotations
 
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FIELD)
+@MustBeDocumented
 /**
- * This interface is added by the compiler plugin to all [RealmObject] classes, it contains
- * internal properties of the model.
+ * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.
  *
- * This interface is not meant to be used externally (consider using [RealmObject] instead)
+ * Any field in a RealmObject class can have this annotation.
  */
-@Suppress("VariableNaming")
-interface RealmObjectInterop {
-    // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
-    var `$realm$ObjectPointer`: NativePointer?
-}
+annotation class Ignore

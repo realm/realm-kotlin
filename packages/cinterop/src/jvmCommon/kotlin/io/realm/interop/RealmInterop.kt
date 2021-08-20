@@ -16,6 +16,7 @@
 
 package io.realm.interop
 
+import io.realm.interop.RealmInterop.cptr
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
@@ -118,6 +119,20 @@ actual object RealmInterop {
 
     actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
         realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
+    }
+
+    actual fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray) {
+        realmc.realm_config_set_encryption_key(config.cptr(), encryptionKey, encryptionKey.size.toLong())
+    }
+
+    actual fun realm_config_get_encryption_key(config: NativePointer): ByteArray? {
+        val key = ByteArray(64)
+        val keyLength: Long = realmc.realm_config_get_encryption_key(config.cptr(), key)
+
+        if (keyLength == 64L) {
+            return key
+        }
+        return null
     }
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
@@ -295,6 +310,20 @@ actual object RealmInterop {
         realmc.realm_list_erase(list.cptr(), index)
     }
 
+    actual fun realm_list_freeze(
+        liveList: NativePointer,
+        frozenRealm: NativePointer
+    ): NativePointer {
+        return LongPointerWrapper(realmc.realm_list_freeze(liveList.cptr(), frozenRealm.cptr()))
+    }
+
+    actual fun realm_list_thaw(
+        frozenList: NativePointer,
+        liveRealm: NativePointer
+    ): NativePointer {
+        return LongPointerWrapper(realmc.realm_list_thaw(frozenList.cptr(), liveRealm.cptr()))
+    }
+
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
     private fun <T> to_realm_value(value: T): realm_value_t {
@@ -371,6 +400,23 @@ actual object RealmInterop {
         return LongPointerWrapper(
             realmc.register_results_notification_cb(
                 results.cptr(),
+                object : NotificationCallback {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                    }
+                }
+            ),
+            managed = false
+        )
+    }
+
+    actual fun realm_list_add_notification_callback(
+        list: NativePointer,
+        callback: Callback
+    ): NativePointer {
+        return LongPointerWrapper(
+            realmc.register_list_notification_cb(
+                list.cptr(),
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
                         callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147

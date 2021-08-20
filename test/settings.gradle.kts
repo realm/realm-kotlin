@@ -22,7 +22,6 @@ pluginManagement {
         jcenter()
         google()
         gradlePluginPortal()
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
     }
     resolutionStrategy {
         eachPlugin {
