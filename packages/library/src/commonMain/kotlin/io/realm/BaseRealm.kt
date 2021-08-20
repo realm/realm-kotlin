@@ -120,14 +120,17 @@ public abstract class BaseRealm internal constructor(
         throw NotImplementedError(observablesNotSupportedMessage)
     }
 
-    internal open fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
-        throw NotImplementedError(observablesNotSupportedMessage)
-    }
-    internal open fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+    internal open fun <T : RealmObject> registerResultsObserver(
+        results: RealmResults<T>
+    ): Flow<RealmResults<T>> {
         throw NotImplementedError(observablesNotSupportedMessage)
     }
 
     internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
+        throw NotImplementedError(observablesNotSupportedMessage)
+    }
+
+    internal open fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
         throw NotImplementedError(observablesNotSupportedMessage)
     }
 

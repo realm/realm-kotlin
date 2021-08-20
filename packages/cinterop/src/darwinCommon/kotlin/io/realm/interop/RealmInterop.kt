@@ -542,6 +542,21 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
+    actual fun realm_list_freeze(
+        liveList: NativePointer,
+        frozenRealm: NativePointer
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_list_freeze(liveList.cptr(), frozenRealm.cptr())
+        )
+    }
+
+    actual fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_list_thaw(frozenList.cptr(), liveRealm.cptr())
+        )
+    }
+
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
         val cvalue: realm_value_t = alloc()
         when (value) {
@@ -785,6 +800,47 @@ actual object RealmInterop {
         return CPointerWrapper(
             realm_wrapper.realm_results_add_notification_callback(
                 results.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                // Change callback
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                    try {
+                        userdata?.asStableRef<Callback>()?.get()?.onChange(
+                            CPointerWrapper(
+                                change,
+                                managed = false
+                            )
+                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                            ?: error("Notification callback data should never be null")
+                    } catch (e: Exception) {
+                        // TODO API-NOTIFICATION Consider catching errors and propagate to error
+                        //  callback like the C-API error callback below
+                        //  https://github.com/realm/realm-kotlin/issues/303
+                        e.printStackTrace()
+                    }
+                },
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                    // TODO Propagate errors to callback
+                    //  https://github.com/realm/realm-kotlin/issues/303
+                },
+                // C-API currently uses the realm's default scheduler no matter what passed here
+                null
+            ),
+            managed = false
+        )
+    }
+
+    actual fun realm_list_add_notification_callback(
+        list: NativePointer,
+        callback: Callback
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_list_add_notification_callback(
+                list.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
                 staticCFunction<COpaquePointer?, Unit> { userdata ->

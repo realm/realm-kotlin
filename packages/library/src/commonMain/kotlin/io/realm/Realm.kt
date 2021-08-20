@@ -198,12 +198,10 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         TODO()
     }
 
-    internal override fun <T : RealmObject> registerResultsObserver(results: RealmResults<T>): Flow<RealmResults<T>> {
+    internal override fun <T : RealmObject> registerResultsObserver(
+        results: RealmResults<T>
+    ): Flow<RealmResults<T>> {
         return notifier.resultsChanged(results)
-    }
-
-    internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
-        return notifier.listChanged(list)
     }
 
     internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
@@ -217,12 +215,22 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
         return notifier.registerResultsChangedListener(results, callback)
     }
 
-    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    internal override fun <T : RealmObject> registerListChangeListener(
+        list: List<T>,
+        callback: Callback<List<T>>
+    ): Cancellable {
         TODO("Not yet implemented")
     }
 
-    internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+    internal override fun <T : RealmObject> registerObjectChangeListener(
+        obj: T,
+        callback: Callback<T?>
+    ): Cancellable {
         TODO("Not yet implemented")
+    }
+
+    internal override fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
+        return notifier.listChanged(list)
     }
 
     private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
