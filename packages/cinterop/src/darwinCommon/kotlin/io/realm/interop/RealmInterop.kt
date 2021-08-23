@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import io.realm.interop.errors.RealmCoreError
+import io.realm.interop.errors.RealmCoreException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
@@ -76,11 +78,55 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val runtimeException = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
+            val id: Int = error.error.toInt()
+            val message: String? = error.message?.toKString()
+
             realm_clear_last_error()
+
             // FIXME Extract all error information and throw exceptions based on type
             //  https://github.com/realm/realm-kotlin/issues/70
-            throw runtimeException
+            when (error.error) {
+                // Non recoverable errors
+                realm_wrapper.RLM_ERR_OUT_OF_MEMORY,
+                realm_wrapper.RLM_ERR_MULTIPLE_SYNC_AGENTS,
+                realm_wrapper.RLM_ERR_ADDRESS_SPACE_EXHAUSTED,
+                realm_wrapper.RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED,
+                realm_wrapper.RLM_ERR_UNKNOWN,
+                realm_wrapper.RLM_ERR_OUT_OF_DISK_SPACE -> throw RealmCoreError(id, message)
+                // Recoverable errors
+                realm_wrapper.RLM_ERR_OTHER_EXCEPTION -> throw RuntimeException(RealmCoreException(id, message))
+                realm_wrapper.RLM_ERR_NOT_CLONABLE,
+                realm_wrapper.RLM_ERR_NOT_IN_A_TRANSACTION,
+                realm_wrapper.RLM_ERR_WRONG_THREAD,
+                realm_wrapper.RLM_ERR_INVALIDATED_OBJECT,
+                realm_wrapper.RLM_ERR_INVALID_PROPERTY,
+                realm_wrapper.RLM_ERR_MISSING_PROPERTY_VALUE,
+                realm_wrapper.RLM_ERR_PROPERTY_TYPE_MISMATCH,
+                realm_wrapper.RLM_ERR_MISSING_PRIMARY_KEY,
+                realm_wrapper.RLM_ERR_UNEXPECTED_PRIMARY_KEY,
+                realm_wrapper.RLM_ERR_WRONG_PRIMARY_KEY_TYPE,
+                realm_wrapper.RLM_ERR_LOGIC,
+                realm_wrapper.RLM_ERR_MODIFY_PRIMARY_KEY,
+                realm_wrapper.RLM_ERR_READ_ONLY_PROPERTY,
+                realm_wrapper.RLM_ERR_PROPERTY_NOT_NULLABLE,
+                realm_wrapper.RLM_ERR_INVALID_ARGUMENT,
+                realm_wrapper.RLM_ERR_NO_SUCH_TABLE,
+                realm_wrapper.RLM_ERR_NO_SUCH_OBJECT,
+                realm_wrapper.RLM_ERR_CROSS_TABLE_LINK_TARGET,
+                realm_wrapper.RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION,
+                realm_wrapper.RLM_ERR_KEY_NOT_FOUND,
+                realm_wrapper.RLM_ERR_COLUMN_NOT_FOUND,
+                realm_wrapper.RLM_ERR_COLUMN_ALREADY_EXISTS,
+                realm_wrapper.RLM_ERR_KEY_ALREADY_USED,
+                realm_wrapper.RLM_ERR_SERIALIZATION_ERROR,
+                realm_wrapper.RLM_ERR_INVALID_PATH_ERROR,
+                realm_wrapper.RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE,
+                realm_wrapper.RLM_ERR_INDEX_OUT_OF_BOUNDS,
+                realm_wrapper.RLM_ERR_INVALID_QUERY_STRING,
+                realm_wrapper.RLM_ERR_INVALID_QUERY -> throw RealmCoreException(id, message)
+                // Unknown errors
+                else -> throw RealmCoreException(id, message)
+            }
         }
     }
 }

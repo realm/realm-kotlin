@@ -81,7 +81,7 @@ class SampleTests {
             sample
         }
 
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<IllegalStateException> {
             sample.stringField = "ASDF"
         }
     }
