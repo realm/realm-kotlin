@@ -24,6 +24,7 @@ import java.nio.file.Files
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.test.BeforeTest
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -543,6 +544,27 @@ class CinteropTest {
         //  https://github.com/realm/realm-kotlin/issues/65
 
         realmc.realm_commit(realm)
+    }
+
+    /**
+     * Monitors for changes in Core defined types.
+     *
+     * This will force to add any missing element in cinterop common, and
+     * by extension into Kotlin native.
+     */
+    @Test
+    fun errorTypes_watchdog() {
+        // Collect ErrorTypes defined in Kotlin
+        val errorTypes = ErrorType::class.java.fields.map { it.name }
+
+        // Check all Core error types are defined in Kotlin
+        realm_errno_e::class.java.fields.forEach { field ->
+            assertContains(
+                errorTypes,
+                field.name,
+                "Missing ErrorType definition for core error type `${field.name}`"
+            )
+        }
     }
 
     @Test
