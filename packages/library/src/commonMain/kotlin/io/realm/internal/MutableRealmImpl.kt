@@ -71,7 +71,7 @@ class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
     }
 
-    override fun <T : RealmObject> findLatest(obj: T?): T? {
+    override fun <T : RealmObject> findLatest(obj: T): T? {
         return if (obj == null || !obj.isValid()) {
             null
         } else if (!obj.isManaged()) {

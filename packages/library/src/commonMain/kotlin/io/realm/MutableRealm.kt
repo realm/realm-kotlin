@@ -31,7 +31,7 @@ interface MutableRealm : BaseRealm {
      *
      * @throws IllegalArgumentException if called on an unmanaged object.
      */
-    fun <T : RealmObject> findLatest(obj: T?): T?
+    fun <T : RealmObject> findLatest(obj: T): T?
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.

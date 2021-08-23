@@ -81,7 +81,7 @@ class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T> {
     }
 
     @Suppress("SpreadOperator")
-    override fun query(query: String, vararg args: Any): RealmResultsImpl<T> {
+    override fun query(query: String, vararg args: Any?): RealmResultsImpl<T> {
         return fromQuery(
             realm,
             RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args),

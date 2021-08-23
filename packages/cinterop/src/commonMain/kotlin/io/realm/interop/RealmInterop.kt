@@ -109,7 +109,7 @@ expect object RealmInterop {
     fun realm_list_erase(list: NativePointer, index: Long)
 
     // query
-    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
+    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer
 
     fun realm_query_find_first(realm: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
