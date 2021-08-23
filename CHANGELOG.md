@@ -1,4 +1,4 @@
-## 0.5.0 (YYYY-MM-DD)
+## 0.6.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -7,7 +7,52 @@
 * None.
 
 ### Fixed
-* Throw exception when violating primary key uniqeness constraint when importing objects with `copyToRealm`.
+* None.
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+## 0.5.0 (2021-08-20)
+
+### Breaking Changes
+* Moved `@PrimaryKey` annotation from `io.realm.PrimaryKey` to `io.realm.annotations.PrimaryKey`.
+
+### Enhancements
+* Add support for excluding properties from the Realm schema. This is done by either using JVM `@Transient` or the newly added `@io.realm.kotlin.Ignore` annotation. (Issue [#278](https://github.com/realm/realm-kotlin/issues/278)).
+* Add support for encrypted Realms. Encryption can be enabled by passing a 64-byte encryption key to the configuration builder. (Issue [#227](https://github.com/realm/realm-kotlin/issues/227))
+* Add support for `RealmList` notifications using Kotlin `Flow`s. (Issue [#359](https://github.com/realm/realm-kotlin/issues/359))
+* Unmanaged `RealmObject`s can now be added directly to `RealmList`s without having to copy them to Realm beforehand.
+
+### Fixed
+* Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
+* Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
+* Fix optimizations bypassing our custom getter and setter from within a class (Issue [#375](https://github.com/realm/realm-kotlin/issues/375)).
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+
+### Internal
+* Updated to Kotlin 1.5.21.
+* Updated Gradle to 7.1.1.
+* Updated Android Gradle Plugin to 4.1.0.
+* Updated to Android Build Tools 30.0.2.
+* Updated to targetSdk 30 for Android.
+* Now uses Java 11 to build the project.
+
+
+## 0.4.1 (2021-07-16)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
 * Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
 
 ### Compatibility

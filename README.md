@@ -174,6 +174,7 @@ The public API of the SDK has not been finalized. Design discussions will happen
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
 - CMake 3.18.1. Can be installed through the Android SDK Manager.
+- Java 11.
 
 ## Commands to build from source
 
@@ -194,7 +195,7 @@ cd test
 
 # Using Snapshots
 
-If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/) (Browsing not available unless you have an account at https://oss.sonatype.org/)
+If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
 
 ```
 // Global build.gradle
@@ -275,6 +276,28 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 
 Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
 
+## Multiplatform source layout
+
+The multiplatform source hierarchy is structured like this:
+
+```
+- commonMain
+  ├── jvm
+  │   ├── androidMain
+  │   └── jvmMain
+  └── native
+      └── darwin
+          ├── ios
+          |   ├── iosArm64Main
+          |   └── iosX64Main
+          └── macosX64Main
+```
+
+All source sets ending with `Main` is platform specific source sets, while the others are intermediate source sets shared between multiple targets. Only exception is `commonMain` which is kept to follow the Kotlin MPP gradle convention.
+
+It is currently not possible to enable hierarchical setup due to various issues rendering the IDE unable to resolve common symbols, so for now we are just adding shared source sets to the individual platform specific targets they belong to. (Issues to track: https://youtrack.jetbrains.com/issue/KT-48153, https://youtrack.jetbrains.com/issue/KT-42466, https://youtrack.jetbrains.com/issue/KT-40975, see description of https://github.com/realm/realm-kotlin/pull/370 for details).
+
+All platform differentiated implementations are kept in `platform`-packages with their current package hierarchy, to make it easier to keep track of the level of platform differentiation.
 
 ## Writing Tests
 
@@ -286,23 +309,16 @@ Inside `tests/` there are 3 locations the files can be placed in:
 * `test/src/androidTest`
 * `test/src/macosTest`
 
-Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you run you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
+Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
 are using the following work-around:
 
-1) All "common" tests should be placed in the `test/src/androidtest/kotlin/io/realm/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commontTest`.
+1) All "common" tests should be placed in the `test/src/androidtest/kotlin/io/realm/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
 
 
-2) When adding a new test file to `androidTest` we need to re-create the symlinks for macOS. This can be done, using the following command on Mac:
-
-```
-cd test/src/macosTest/kotlin/io/realm/shared
-ln -sf ../../../../../androidTest/kotlin/io/realm/shared/* ./
-``` 
-
-3) Both the real test file and the symlink must be committed to Git.
+2) The `macosTest` shared tests would automatically be picked up from the `androidTests` as it is symlinked to `test/src/androidtest/kotlin/io/realm/shared`.
 
 
-4) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
+3) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
  
 
 All platform specific tests should be placed outside the `io.realm.shared` package, the default being `io.realm`.

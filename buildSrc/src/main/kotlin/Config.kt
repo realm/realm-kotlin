@@ -52,10 +52,15 @@ object Realm {
 object Versions {
     object Android {
         const val minSdk = 16
-        const val targetSdk = 29
-        const val compileSdkVersion = 29
-        const val buildToolsVersion = "29.0.2"
-        const val buildTools = "4.1.0"
+        const val targetSdk = 30
+        const val compileSdkVersion = 30
+        const val buildToolsVersion = "30.0.2"
+        // When updating buildTools, we also need to manually update the following files
+        // - examples/kmm-sample/settings.gradle.kts
+        // - packages/settings.gradle.kts
+        // Cannot upgrade past 4.1.0 due to https://issuetracker.google.com/issues/187134648
+        // Fix has not been released in lastest 7.1.0-alpha06.
+        const val buildTools = "4.1.0" //
         const val ndkVersion = "22.1.7171670"
     }
     const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
@@ -64,6 +69,8 @@ object Versions {
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
     const val atomicfu = "0.16.1" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
+    // Cannot upgrade past this due to https://stackoverflow.com/questions/67120904/cannot-properly-link-c-project-with-gradle-exception-during-working-with-exte
+    // Upgrading might be possible if we can bump Android Gradle Plugin, but that is blocked on another bug.
     const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
     const val coroutines = "1.5.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val detektPlugin = "1.17.1" // https://github.com/detekt/detekt
@@ -71,7 +78,7 @@ object Versions {
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
-    const val kotlin = "1.5.10" // https://github.com/JetBrains/kotlin
+    const val kotlin = "1.5.21" // https://github.com/JetBrains/kotlin
     const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "10.1.0" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.41.0" // https://github.com/pinterest/ktlint

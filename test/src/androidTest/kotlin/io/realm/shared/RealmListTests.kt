@@ -22,7 +22,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.TypeDescriptor
 import test.list.Level1
 import test.list.Level2
@@ -457,18 +457,6 @@ internal abstract class ManagedListTester<T>(
 ) : ManagedList, ListApiTester {
 
     /**
-     * We have to make sure we copy RealmObjects to the Realm before asserting anything. For generic
-     * types this is not needed.
-     */
-    abstract fun MutableRealm.copyToRealmIfNeeded(element: T): T
-
-    /**
-     * We have to make sure we copy RealmObjects to the Realm before asserting anything. For generic
-     * types this is not needed.
-     */
-    abstract fun MutableRealm.copyToRealmIfNeeded(elements: Collection<T>): Collection<T>
-
-    /**
      * Asserts content equality for two given objects. This is needed to evaluate the contents of
      * two RealmObjects.
      */
@@ -518,7 +506,7 @@ internal abstract class ManagedListTester<T>(
         errorCatcher {
             realm.writeBlocking {
                 val list = typeSafetyManager.createContainerAndGetList(this)
-                list.addAll(copyToRealmIfNeeded(dataSet))
+                list.addAll(dataSet)
                 assertions(list)
             }
         }
@@ -531,7 +519,7 @@ internal abstract class ManagedListTester<T>(
             val dataSet = typeSafetyManager.getInitialDataSet()
             realm.writeBlocking {
                 typeSafetyManager.createContainerAndGetList(this)
-                    .addAll(copyToRealmIfNeeded(dataSet))
+                    .addAll(dataSet)
             }
 
             val list = realm.objects<RealmListContainer>()
@@ -570,7 +558,7 @@ internal abstract class ManagedListTester<T>(
                 val list = typeSafetyManager.createContainerAndGetList(this)
                 dataSet.forEachIndexed { index, e ->
                     assertEquals(index, list.size)
-                    list.add(0, copyToRealmIfNeeded(e))
+                    list.add(0, e)
                     assertEquals(index + 1, list.size)
                     assertElementsAreEqual(e, list[0])
                 }
@@ -591,7 +579,7 @@ internal abstract class ManagedListTester<T>(
                 realm.close()
 
                 assertFailsWith<IllegalStateException> {
-                    list.add(0, copyToRealmIfNeeded(dataSet[0]))
+                    list.add(0, dataSet[0])
                 }
             }
         }
@@ -642,8 +630,8 @@ internal abstract class ManagedListTester<T>(
 
                 // Returns true when list changes - first add produces "1, 2, 3"
                 // Second add produces "1, 1, 2, 3, 2, 3"
-                assertTrue(list.addAll(0, copyToRealmIfNeeded(dataSet)))
-                assertTrue(list.addAll(1, copyToRealmIfNeeded(dataSet)))
+                assertTrue(list.addAll(0, dataSet))
+                assertTrue(list.addAll(1, dataSet))
 
                 assertions(list)
             }
@@ -661,7 +649,7 @@ internal abstract class ManagedListTester<T>(
                 realm.close()
 
                 assertFailsWith<IllegalStateException> {
-                    list.addAll(0, copyToRealmIfNeeded(dataSet))
+                    list.addAll(0, dataSet)
                 }
             }
         }
@@ -676,7 +664,7 @@ internal abstract class ManagedListTester<T>(
         errorCatcher {
             realm.writeBlocking {
                 val list = typeSafetyManager.createContainerAndGetList(this)
-                assertTrue(list.addAll(copyToRealmIfNeeded(dataSet)))
+                assertTrue(list.addAll(dataSet))
 
                 assertEquals(dataSet.size, list.size)
                 list.clear()
@@ -693,7 +681,7 @@ internal abstract class ManagedListTester<T>(
             val dataSet = typeSafetyManager.getInitialDataSet()
             realm.writeBlocking {
                 val list = typeSafetyManager.createContainerAndGetList(this)
-                list.addAll(copyToRealmIfNeeded(dataSet))
+                list.addAll(dataSet)
 
                 realm.close()
 
@@ -720,7 +708,7 @@ internal abstract class ManagedListTester<T>(
                     list.removeAt(0)
                 }
 
-                list.add(copyToRealmIfNeeded(dataSet[0]))
+                list.add(dataSet[0])
 
                 // Fails when using invalid indices
                 // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
@@ -745,7 +733,7 @@ internal abstract class ManagedListTester<T>(
             val dataSet = typeSafetyManager.getInitialDataSet()
             realm.writeBlocking {
                 val list = typeSafetyManager.createContainerAndGetList(this)
-                list.addAll(copyToRealmIfNeeded(dataSet))
+                list.addAll(dataSet)
 
                 realm.close()
 
@@ -767,20 +755,20 @@ internal abstract class ManagedListTester<T>(
                 val list = typeSafetyManager.createContainerAndGetList(this)
 
                 // Add something so that we can call set on an index
-                list.add(copyToRealmIfNeeded(dataSet[0]))
+                list.add(dataSet[0])
 
-                val previousElement = list.set(0, copyToRealmIfNeeded(dataSet[1]))
+                val previousElement = list.set(0, dataSet[1])
                 assertEquals(1, list.size)
                 assertElementsAreEqual(dataSet[0], previousElement)
 
                 // Fails when using invalid indices
                 // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
                 assertFailsWith<RuntimeException> {
-                    list[-1] = copyToRealmIfNeeded(dataSet[0])
+                    list[-1] = dataSet[0]
                 }
                 // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
                 assertFailsWith<RuntimeException> {
-                    list[123] = copyToRealmIfNeeded(dataSet[0])
+                    list[123] = dataSet[0]
                 }
 
                 assertions(list)
@@ -795,12 +783,12 @@ internal abstract class ManagedListTester<T>(
             val dataSet = typeSafetyManager.getInitialDataSet()
             realm.writeBlocking {
                 val list = typeSafetyManager.createContainerAndGetList(this)
-                list.addAll(copyToRealmIfNeeded(dataSet))
+                list.addAll(dataSet)
 
                 realm.close()
 
                 assertFailsWith<IllegalStateException> {
-                    list[0] = copyToRealmIfNeeded(dataSet[0])
+                    list[0] = dataSet[0]
                 }
             }
         }
@@ -845,9 +833,6 @@ internal class ManagedGenericListTester<T>(
     realm: Realm,
     typeSafetyManager: TypeSafetyManager<T>
 ) : ManagedListTester<T>(realm, typeSafetyManager) {
-
-    override fun MutableRealm.copyToRealmIfNeeded(element: T): T = element
-    override fun MutableRealm.copyToRealmIfNeeded(elements: Collection<T>): Collection<T> = elements
     override fun assertElementsAreEqual(expected: T, actual: T) = assertEquals(expected, actual)
 }
 
@@ -859,14 +844,6 @@ internal class ManagedRealmObjectListTester(
     realm: Realm,
     typeSafetyManager: TypeSafetyManager<RealmListContainer>
 ) : ManagedListTester<RealmListContainer>(realm, typeSafetyManager) {
-
-    override fun MutableRealm.copyToRealmIfNeeded(element: RealmListContainer): RealmListContainer =
-        copyToRealm(element)
-
-    override fun MutableRealm.copyToRealmIfNeeded(
-        elements: Collection<RealmListContainer>
-    ): Collection<RealmListContainer> = elements.map { copyToRealm(it) }
-
     override fun assertElementsAreEqual(expected: RealmListContainer, actual: RealmListContainer) =
         assertEquals(expected.stringField, actual.stringField)
 }

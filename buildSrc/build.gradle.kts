@@ -33,7 +33,6 @@ repositories {
     google()
     jcenter()
     gradlePluginPortal()
-    maven("https://dl.bintray.com/kotlin/kotlin-dev")
 }
 
 
@@ -41,7 +40,6 @@ repositories {
 buildscript {
     repositories {
         jcenter()
-        maven("https://dl.bintray.com/kotlin/kotlin-dev")
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")

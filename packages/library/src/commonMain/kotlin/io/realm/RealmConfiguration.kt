@@ -17,11 +17,12 @@
 package io.realm
 
 import io.realm.internal.Mediator
-import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.singleThreadDispatcher
+import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
@@ -68,6 +69,7 @@ public class RealmConfiguration private constructor(
     writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
     deleteRealmIfMigrationNeeded: Boolean,
+    encryptionKey: ByteArray?,
 ) {
     // Public properties making up the RealmConfiguration
     // TODO Add more elaborate KDoc for all of these
@@ -121,6 +123,13 @@ public class RealmConfiguration private constructor(
      */
     public val deleteRealmIfMigrationNeeded: Boolean
 
+    /**
+     * 64 byte key used to encrypt and decrypt the Realm file.
+     *
+     * @return null on unencrypted Realms.
+     */
+    public val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
+
     // Internal properties used by other Realm components, but does not make sense for the end user to know about
     internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     internal var mediator: Mediator
@@ -129,7 +138,7 @@ public class RealmConfiguration private constructor(
 
     init {
         this.path = if (path == null || path.isEmpty()) {
-            val directory = PlatformHelper.appFilesDirectory()
+            val directory = appFilesDirectory()
             // FIXME Proper platform agnostic file separator: File.separator is not available for Kotlin/Native
             //  https://github.com/realm/realm-kotlin/issues/75
             "$directory/$name"
@@ -159,6 +168,10 @@ public class RealmConfiguration private constructor(
 
         RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
         RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
+
+        encryptionKey?.let {
+            RealmInterop.realm_config_set_encryption_key(nativeConfig, it)
+        }
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal = (
@@ -201,13 +214,14 @@ public class RealmConfiguration private constructor(
         schema.keys,
         LogConfiguration(
             LogLevel.WARN,
-            listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+            listOf(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
         ),
         Long.MAX_VALUE,
         singleThreadDispatcher(name),
         singleThreadDispatcher(name),
         0,
-        false
+        false,
+        null,
     )
 
     /**
@@ -228,6 +242,7 @@ public class RealmConfiguration private constructor(
         private var writeDispatcher: CoroutineDispatcher? = null
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var schemaVersion: Long = 0
+        private var encryptionKey: ByteArray? = null
 
         /**
          * Sets the absolute path of the realm file.
@@ -340,6 +355,17 @@ public class RealmConfiguration private constructor(
             apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
 
         /**
+         * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file
+         * will be unencrypted.
+         *
+         * It is important that this key is created and stored securely. See [this link](https://docs.mongodb.com/realm/sdk/android/advanced-guides/encryption/) for suggestions on how to do that.
+         *
+         * @param encryptionKey 64-byte encryption key.
+         */
+        fun encryptionKey(encryptionKey: ByteArray) =
+            apply { this.encryptionKey = validateEncryptionKey(encryptionKey) }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -363,7 +389,7 @@ public class RealmConfiguration private constructor(
         internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
-                allLoggers.add(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
             return RealmConfiguration(
@@ -376,7 +402,8 @@ public class RealmConfiguration private constructor(
                 notificationDispatcher ?: singleThreadDispatcher(name),
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
-                deleteRealmIfMigrationNeeded
+                deleteRealmIfMigrationNeeded,
+                encryptionKey
             )
         }
 
@@ -385,6 +412,13 @@ public class RealmConfiguration private constructor(
                 throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
             }
             return schemaVersion
+        }
+
+        private fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
+            if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
+                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. The provided key was ${encryptionKey.size} bytes.")
+            }
+            return encryptionKey
         }
     }
 }

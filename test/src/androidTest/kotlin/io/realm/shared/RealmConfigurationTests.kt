@@ -17,18 +17,21 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.internal.PlatformHelper
-import io.realm.internal.runBlocking
+import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.TestLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
 import test.Sample
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RealmConfigurationTests {
@@ -37,14 +40,14 @@ class RealmConfigurationTests {
     fun defaultPath() {
         val config = RealmConfiguration(schema = setOf(Sample::class))
         assertEquals(
-            "${PlatformHelper.appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
             config.path
         )
 
         val configFromBuilder: RealmConfiguration =
             RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
         assertEquals(
-            "${PlatformHelper.appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
             configFromBuilder.path
         )
     }
@@ -240,5 +243,41 @@ class RealmConfigurationTests {
             .deleteRealmIfMigrationNeeded()
             .build()
         assertTrue(config.deleteRealmIfMigrationNeeded)
+    }
+
+    @Test
+    fun defaultEncryptionKey() {
+        val config = RealmConfiguration(schema = setOf(Sample::class))
+        assertNull(config.encryptionKey)
+    }
+
+    @Test
+    fun encryptionKey() {
+        val encryptionKey = Random.nextBytes(Realm.ENCRYPTION_KEY_LENGTH)
+
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .encryptionKey(encryptionKey)
+            .build()
+
+        // Validate that the key stored in core is the same that the one we provided
+        assertContentEquals(encryptionKey, config.encryptionKey)
+    }
+
+    @Test
+    fun wrongEncryptionKeyThrowsIllegalArgumentException() {
+        val builder = RealmConfiguration.Builder(schema = setOf(Sample::class))
+
+        assertFailsWithEncryptionKey(builder, 3)
+        assertFailsWithEncryptionKey(builder, 8)
+        assertFailsWithEncryptionKey(builder, 32)
+        assertFailsWithEncryptionKey(builder, 128)
+        assertFailsWithEncryptionKey(builder, 256)
+    }
+
+    private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {
+        val key = Random.nextBytes(keyLength)
+        assertFailsWith(IllegalArgumentException::class, "Encryption key with length $keyLength should not be valid") {
+            builder.encryptionKey(key)
+        }
     }
 }

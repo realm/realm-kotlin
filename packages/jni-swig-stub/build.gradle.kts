@@ -70,8 +70,6 @@ publishing {
 }
 
 tasks.create("cleanJvmWrapper") {
-    destroyables.register("$projectDir/src/main/java/io/realm/interop/gen/")
-    destroyables.register("$projectDir/src/jvmCommon/jni/realmc.cpp")
     doLast {
         delete(
             fileTree("$projectDir/src/main/java/io/realm/interop/").matching {
