@@ -403,11 +403,11 @@ class RealmTests {
 
     @Test
     fun closingIntermediateVersionsWhenNoLongerReferenced() {
-        assertEquals(0, realm.intermediateReferences.value.size)
+        assertEquals(0, intermediateReferences.value.size)
         var parent: Parent? = realm.writeBlocking { copyToRealm(Parent()) }
-        assertEquals(1, realm.intermediateReferences.value.size)
+        assertEquals(1, intermediateReferences.value.size)
         realm.writeBlocking { }
-        assertEquals(2, realm.intermediateReferences.value.size)
+        assertEquals(2, intermediateReferences.value.size)
 
         // Clear reference
         parent = null
@@ -415,11 +415,12 @@ class RealmTests {
         triggerGC()
         // Close of intermediate version is currently only done when updating the realm after a write
         realm.writeBlocking { }
-        assertEquals(1, realm.intermediateReferences.value.size)
+        assertEquals(1, intermediateReferences.value.size)
     }
 
-    private val Realm.intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>>
+    private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>>
         get() {
-            return (this as io.realm.internal.RealmImpl).intermediateReferences
+            @Suppress("invisible_member")
+            return (realm as io.realm.internal.RealmImpl).intermediateReferences
         }
 }
