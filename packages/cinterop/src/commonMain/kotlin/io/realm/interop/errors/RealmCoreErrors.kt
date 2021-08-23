@@ -1,19 +1,21 @@
 package io.realm.interop.errors
 
+import io.realm.interop.ErrorType
+
 /**
  * RealmCoreException represents any recoverable, non-fatal, Realm-Core exception.
  */
-class RealmCoreException(val id: Int, message: String?) : RuntimeException(message) {
+class RealmCoreException(val errorType: ErrorType, message: String?) : RuntimeException(message) {
     override fun toString(): String {
-        return "[$id]: $message"
+        return "[$errorType]: $message"
     }
 }
 
 /**
  * RealmCoreError represents any non-recoverable, fatal, Realm-Core exception.
  */
-class RealmCoreError(val id: Int, message: String?) : Error(message) {
+class RealmCoreError(val errorType: ErrorType, message: String?) : Error(message) {
     override fun toString(): String {
-        return "[$id]: $message"
+        return "[$errorType]: $message"
     }
 }

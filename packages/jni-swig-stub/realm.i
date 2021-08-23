@@ -102,11 +102,21 @@ bool realm_object_is_valid(const realm_object_t*);
         if (realm_get_last_error(&error)) {
             std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
-            // TODO API-SCHEMA Cache class lookup
-            // FIXME Extract all error information and throw exceptions based on type
-            //  https://github.com/realm/realm-kotlin/issues/70
-            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-            (jenv)->ThrowNew(clazz, message.c_str());
+
+            // Invoke ErrorType.asException() to retrieve an exception instance that
+            // maps to the core error.
+            jclass error_type_class = (jenv)->FindClass("io/realm/interop/ErrorType");
+            jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
+                                                 "asException",
+                                                 "(ILjava/lang/String;)Ljava/lang/Throwable;");
+            jstring error_message = (jenv)->NewStringUTF(message.c_str());
+
+            jobject exception = (jenv)->CallStaticObjectMethod(
+                    error_type_class,
+                    error_type_as_exception,
+                    jint(error.error),
+                    error_message);
+            (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
         }
     }
     *($1_type*)&jresult = result;
@@ -117,10 +127,21 @@ bool realm_object_is_valid(const realm_object_t*);
         if (realm_get_last_error(&error)) {
             std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
-            // TODO API-SCHEMA Cache class lookup
-            // FIXME Extract all error information and throw exceptions based on type
-            jclass clazz = (jenv)->FindClass("java/lang/RuntimeException");
-            (jenv)->ThrowNew(clazz, message.c_str());
+
+            // Invoke ErrorType.asException() to retrieve an exception instance that
+            // maps to the core error.
+            jclass error_type_class = (jenv)->FindClass("io/realm/interop/ErrorType");
+            jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
+                                                                     "asException",
+                                                                     "(ILjava/lang/String;)Ljava/lang/Throwable;");
+            jstring error_message = (jenv)->NewStringUTF(message.c_str());
+
+            jobject exception = (jenv)->CallStaticObjectMethod(
+                    error_type_class,
+                    error_type_as_exception,
+                    jint(error.error),
+            error_message);
+            (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
         }
     }
     jresult = (jboolean)result;
