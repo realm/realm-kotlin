@@ -37,6 +37,17 @@ import kotlin.test.assertTrue
 class RealmConfigurationTests {
 
     @Test
+    fun defaultConfig() {
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
+        assertEquals(
+            "${PlatformHelper.appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            config.path
+        )
+        assertEquals(Realm.DEFAULT_FILE_NAME, config.name)
+        assertEquals(setOf(Sample::class), config.schema)
+    }
+
+    @Test
     fun defaultPath() {
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
         assertEquals(

@@ -2,6 +2,9 @@
 
 ### Breaking Changes
 * Moved `@PrimaryKey` annotation from `io.realm.PrimaryKey` to `io.realm.annotations.PrimaryKey`.
+* Abstracted public API into interfaces. The interfaces have kept the name of the previous classes so only differences are:
+  - Opening a realm: `Realm(configuration)` has changed to `Realm.openBlocking(configuration)`
+  - Easy construction of simple configurations: `RealmConfiguration(schema = ...)` has changed to `RealmConfiguration.defaultConfig(schema = ...)`
 
 ### Enhancements
 * Add support for excluding properties from the Realm schema. This is done by either using JVM `@Transient` or the newly added `@io.realm.kotlin.Ignore` annotation. (Issue [#278](https://github.com/realm/realm-kotlin/issues/278)).

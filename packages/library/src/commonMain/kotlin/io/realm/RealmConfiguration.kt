@@ -96,6 +96,24 @@ interface RealmConfiguration {
      */
     val encryptionKey: ByteArray?
 
+    companion object {
+        /**
+         * Create a configuration using default values except for schema, path and name.
+         *
+         * @param path The full path of the realm file.
+         * @param name The filename of the realm file.
+         * @param schema The classes of the schema. The elements of the set must be direct class literals.
+         */
+        // Should always follow Builder constructor arguments
+        fun defaultConfig(
+            path: String? = null,
+            name: String = Realm.DEFAULT_FILE_NAME,
+            schema: Set<KClass<out RealmObject>>
+        ): RealmConfiguration {
+            REPLACED_BY_IR() // Will be replace by Builder(path, name, schame).build(companionMap)
+        }
+    }
+
     /**
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
      * using the [RealmConfiguration] constructor.

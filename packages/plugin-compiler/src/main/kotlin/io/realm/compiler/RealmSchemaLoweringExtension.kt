@@ -16,9 +16,10 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
 import io.realm.compiler.FqNames.REALM_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_CONFIGURATION_BUILDER
+import io.realm.compiler.Names.REALM_CONFIGURATION_BUILDER_BUILD
+import io.realm.compiler.Names.REALM_CONFIGURATION_DEFAULT_CONFIG
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrElement
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
-import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
@@ -70,72 +70,88 @@ import org.jetbrains.kotlin.name.Name
  */
 class RealmSchemaLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
+        val configurationBuilder =
+            pluginContext.lookupClassOrThrow(REALM_CONFIGURATION_BUILDER)
+        val internalBuilderConstructor: IrConstructorSymbol =
+            pluginContext.lookupConstructorInClass(REALM_CONFIGURATION_BUILDER) {
+                it.owner.isPrimary //&& (it.owner.valueParameters[2].type.classFqName == KOTLIN_COLLECTIONS_MAP)
+            }
+        val internalBuildFunction = configurationBuilder.functions.first {
+            it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
+        }
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
-                @Suppress("LongMethod", "MagicNumber")
-                override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
-                    if (REALM_CONFIGURATION == expression.symbol.owner.returnType.classFqName &&
-                        !expression.symbol.owner.isPrimary
-                    ) {
-                        // There exist 3 constructors in RealmConfiguration
-                        // 1) Primary private constructor accepting all builder fields.
-                        // 2) Public secondary constructor accepting a schema as a Set.
-                        // 3) Internal secondary constructor accept the map of <KClass, RealmCompanion>.
-                        // In this step we are finding calls to constructor(2) and transform it into calls
-                        // to constructor(3).
-                        val internalConstructor: IrConstructorSymbol =
-                            pluginContext.lookupConstructorInClass(REALM_CONFIGURATION) {
-                                !it.owner.isPrimary && (it.owner.valueParameters[2].type.classFqName == KOTLIN_COLLECTIONS_MAP)
-                            }
-                        return IrConstructorCallImpl(
-                            expression.startOffset, expression.endOffset,
-                            internalConstructor.owner.returnType,
-                            internalConstructor,
-                            typeArgumentsCount = 0,
-                            constructorTypeArgumentsCount = 0,
-                            valueArgumentsCount = 3,
-                        ).apply {
-                            // copy path/name arguments from the original constructor call
-                            putValueArgument(0, expression.getValueArgument(0))
-                            putValueArgument(1, expression.getValueArgument(1))
-
-                            // Transform the third argument (setOf<T::Class>) into a companion map
-                            val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
-                            val specifiedModels = mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
-                            findSchemaClassLiterals(schemaArgument, pluginContext, specifiedModels)
-                            val populatedCompanionMap = buildCompanionMap(specifiedModels, pluginContext)
-                            putValueArgument(2, populatedCompanionMap)
-                        }
-                    }
-                    return super.visitConstructorCall(expression)
-                }
-
                 override fun visitCall(expression: IrCall): IrExpression {
-                    if (expression.symbol.owner.name == Name.identifier("build") &&
+                    if (expression.symbol.owner.name == REALM_CONFIGURATION_BUILDER_BUILD &&
                         expression.type.classFqName == REALM_CONFIGURATION
                     ) {
+                        // Replaces `RealmConfiguration.Builder.build(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
                         // collect class references
-                        val specifiedModels = mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
+                        val specifiedModels =
+                            mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
                         findSchemaClassLiterals(expression, pluginContext, specifiedModels)
                         if (specifiedModels.isEmpty()) {
                             logError("Schema argument must be a non-empty vararg of class literal (T::class)")
                         } else {
                             // substitute build function with internal one taking the companion map as argument
-                            val internalBuildFunction = pluginContext.lookupClassOrThrow(REALM_CONFIGURATION_BUILDER).functions.first {
-                                it.name == Name.identifier("build") && it.valueParameters.size == 1
-                            }
                             return IrCallImpl(
-                                expression.startOffset, expression.endOffset,
-                                expression.type,
-                                internalBuildFunction.symbol,
+                                startOffset = expression.startOffset,
+                                endOffset = expression.endOffset,
+                                type = expression.type,
+                                symbol = internalBuildFunction.symbol,
                                 typeArgumentsCount = 0,
                                 valueArgumentsCount = 1,
                                 origin = null,
                                 superQualifierSymbol = null
                             ).apply {
-                                val populatedCompanionMap = buildCompanionMap(specifiedModels, pluginContext)
+                                val populatedCompanionMap =
+                                    buildCompanionMap(specifiedModels, pluginContext)
                                 putValueArgument(0, populatedCompanionMap)
                                 dispatchReceiver = expression.dispatchReceiver
+                            }
+                        }
+                    } else {
+                        if (expression.symbol.owner.name == REALM_CONFIGURATION_DEFAULT_CONFIG &&
+                            expression.type.classFqName == REALM_CONFIGURATION
+                        ) {
+                            // Replaces `RealmConfiguration.defaultConfig(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
+                            val apply = IrConstructorCallImpl(
+                                startOffset = expression.startOffset,
+                                endOffset = expression.endOffset,
+                                type = configurationBuilder.defaultType,
+                                symbol = internalBuilderConstructor,
+                                typeArgumentsCount = 0,
+                                constructorTypeArgumentsCount = 0,
+                                valueArgumentsCount = expression.valueArgumentsCount,
+                                origin = null,
+                            ).apply {
+                                // Copying adds an outer class receiver that causes troubles, so just add them one by one
+                                // copyTypeAndValueArgumentsFrom(expression)
+                                IntRange(0, expression.valueArgumentsCount - 1).forEach { i ->
+                                    putValueArgument(i, expression.getValueArgument(i))
+                                }
+                            }
+                            return IrCallImpl(
+                                startOffset = expression.startOffset,
+                                endOffset = expression.endOffset,
+                                type = expression.type,
+                                symbol = internalBuildFunction.symbol,
+                                typeArgumentsCount = 0,
+                                valueArgumentsCount = 1,
+                                origin = null,
+                            ).apply {
+                                val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
+                                val specifiedModels =
+                                    mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
+                                findSchemaClassLiterals(
+                                    schemaArgument,
+                                    pluginContext,
+                                    specifiedModels
+                                )
+                                val populatedCompanionMap =
+                                    buildCompanionMap(specifiedModels, pluginContext)
+                                putValueArgument(0, populatedCompanionMap)
+                                dispatchReceiver = apply
                             }
                         }
                     }
