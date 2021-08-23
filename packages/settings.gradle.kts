@@ -19,6 +19,7 @@ include("gradle-plugin")
 include("plugin-compiler")
 include("plugin-compiler-shaded")
 include("library")
+include("sync")
 include(":cinterop")
 include(":jni-swig-stub")
 
