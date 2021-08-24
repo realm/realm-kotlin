@@ -22,7 +22,7 @@ import io.realm.interop.ColumnKey
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.errors.RealmCoreException
+import io.realm.interop.errors.RealmCoreNotInATransactionException
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -106,7 +106,7 @@ object RealmObjectHelper {
         // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
         // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
         // info that might help users to understand the exception.
-        catch (exception: RealmCoreException) {
+        catch (exception: RealmCoreNotInATransactionException) {
             throw IllegalStateException(
                 "Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: changing Realm data can only be done from inside a transaction.",
                 exception
