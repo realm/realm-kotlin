@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -81,79 +80,62 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
         }
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
-                @Suppress("LongMethod", "ReturnCount")
                 override fun visitCall(expression: IrCall): IrExpression {
-                    if (expression.symbol.owner.name == REALM_CONFIGURATION_BUILDER_BUILD &&
+                    val name = expression.symbol.owner.name
+                    if (name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_DEFAULT_CONFIG) &&
                         expression.type.classFqName == REALM_CONFIGURATION
                     ) {
-                        // Replaces `RealmConfiguration.Builder.build(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
-                        // collect class references
                         val specifiedModels =
                             mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
-                        findSchemaClassLiterals(expression, pluginContext, specifiedModels)
-                        if (specifiedModels.isEmpty()) {
-                            logError("Schema argument must be a non-empty vararg of class literal (T::class)")
-                        } else {
-                            // substitute build function with internal one taking the companion map as argument
-                            return IrCallImpl(
-                                startOffset = expression.startOffset,
-                                endOffset = expression.endOffset,
-                                type = expression.type,
-                                symbol = internalBuildFunction.symbol,
-                                typeArgumentsCount = 0,
-                                valueArgumentsCount = 1,
-                                origin = null,
-                                superQualifierSymbol = null
-                            ).apply {
-                                val populatedCompanionMap =
-                                    buildCompanionMap(specifiedModels, pluginContext)
-                                putValueArgument(0, populatedCompanionMap)
-                                dispatchReceiver = expression.dispatchReceiver
+                        val (receiver, schemaArgument) = when (name) {
+                            // Replaces `RealmConfiguration.Builder.build()` with RealmConfiguration.Builder(...).build(companionMap)
+                            REALM_CONFIGURATION_BUILDER_BUILD -> {
+                                val builder = expression.dispatchReceiver
+                                val schemaArgument = expression
+                                builder to schemaArgument
+                            }
+                            // Replaces `RealmConfiguration.defaultConfig(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
+                            REALM_CONFIGURATION_DEFAULT_CONFIG -> {
+                                val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
+                                val builder = IrConstructorCallImpl(
+                                    startOffset = expression.startOffset,
+                                    endOffset = expression.endOffset,
+                                    type = configurationBuilder.defaultType,
+                                    symbol = configurationBuilderConstructor,
+                                    typeArgumentsCount = 0,
+                                    constructorTypeArgumentsCount = 0,
+                                    valueArgumentsCount = expression.valueArgumentsCount,
+                                    origin = null,
+                                ).apply {
+                                    // Copying adds an outer class receiver that causes troubles, so just add them one by one
+                                    // copyTypeAndValueArgumentsFrom(expression)
+                                    IntRange(0, expression.valueArgumentsCount - 1).forEach { i ->
+                                        putValueArgument(i, expression.getValueArgument(i))
+                                    }
+                                }
+                                builder to schemaArgument
+                            }
+                            else -> {
+                                // Should never happen as we have already guarded that
+                                // name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_DEFAULT_CONFIG)
+                                error("Cannot identify schema arguments from $name")
                             }
                         }
-                    } else {
-                        if (expression.symbol.owner.name == REALM_CONFIGURATION_DEFAULT_CONFIG &&
-                            expression.type.classFqName == REALM_CONFIGURATION
-                        ) {
-                            // Replaces `RealmConfiguration.defaultConfig(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
-                            val apply = IrConstructorCallImpl(
-                                startOffset = expression.startOffset,
-                                endOffset = expression.endOffset,
-                                type = configurationBuilder.defaultType,
-                                symbol = configurationBuilderConstructor,
-                                typeArgumentsCount = 0,
-                                constructorTypeArgumentsCount = 0,
-                                valueArgumentsCount = expression.valueArgumentsCount,
-                                origin = null,
-                            ).apply {
-                                // Copying adds an outer class receiver that causes troubles, so just add them one by one
-                                // copyTypeAndValueArgumentsFrom(expression)
-                                IntRange(0, expression.valueArgumentsCount - 1).forEach { i ->
-                                    putValueArgument(i, expression.getValueArgument(i))
-                                }
-                            }
-                            return IrCallImpl(
-                                startOffset = expression.startOffset,
-                                endOffset = expression.endOffset,
-                                type = expression.type,
-                                symbol = internalBuildFunction.symbol,
-                                typeArgumentsCount = 0,
-                                valueArgumentsCount = 1,
-                                origin = null,
-                            ).apply {
-                                val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
-                                val specifiedModels =
-                                    mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
-                                findSchemaClassLiterals(
-                                    schemaArgument,
-                                    pluginContext,
-                                    specifiedModels
-                                )
-                                val populatedCompanionMap =
-                                    buildCompanionMap(specifiedModels, pluginContext)
-                                putValueArgument(0, populatedCompanionMap)
-                                dispatchReceiver = apply
-                            }
+                        findSchemaClassLiterals(schemaArgument, pluginContext, specifiedModels)
+                        return IrCallImpl(
+                            startOffset = expression.startOffset,
+                            endOffset = expression.endOffset,
+                            type = expression.type,
+                            symbol = internalBuildFunction.symbol,
+                            typeArgumentsCount = 0,
+                            valueArgumentsCount = 1,
+                            origin = null,
+                            superQualifierSymbol = null
+                        ).apply {
+                            val populatedCompanionMap =
+                                buildCompanionMap(specifiedModels, pluginContext)
+                            putValueArgument(0, populatedCompanionMap)
+                            dispatchReceiver = receiver
                         }
                     }
                     return super.visitCall(expression)
@@ -186,6 +168,13 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
 fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPluginContext, specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>) {
     when (schemaArgument) {
         is IrCallImpl -> {
+            // This will iterate the full schemaArgument tree, which conveniently includes the
+            // receiver. This means that if will actually traverse the full tree of the full fluent
+            // specification. BUT, this also means that it won't collect anything if the receiver
+            // is a variable definition.
+            //    val builder = Builder().schema(MyType::class)
+            //    val config = builder.build()
+            //
             // no ARGUMENTS_REORDERING_FOR_CALL block was added by IR, CLASS_REFERENCE should
             // be available as children
             schemaArgument.acceptChildrenVoid(object :
@@ -249,16 +238,10 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             }
         }
         else -> {
-            logError("Schema argument must be a set of class literals, i.e. `setOf(MyClass::type)`. Supplied argument format not supported: ${schemaArgument?.dump()}")
+            // If we don't collect any models we just don't update the specifiedModels and will
+            // raise a uniform error when populating the companion map
         }
     }
-}
-
-private fun IrConstructorCallImpl.buildCompanionMap(
-    specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>,
-    pluginContext: IrPluginContext
-): IrCallImpl {
-    return populateCompanion(startOffset, endOffset, specifiedModels, pluginContext)
 }
 
 private fun IrCallImpl.buildCompanionMap(
@@ -278,7 +261,7 @@ private fun populateCompanion(
     if (specifiedModels.isEmpty()) {
         logError(
             "No schema was provided. It must be defined as a set of class literals (MyType::class) either through " +
-                "RealmConfiguration.Builder(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...).build().build(), " +
+                "RealmConfiguration.defaultConfig(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...)).build(), " +
                 "or RealmConfiguration.Builder().schema(...).build()."
         )
     }
