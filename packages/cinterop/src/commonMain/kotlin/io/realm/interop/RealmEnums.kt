@@ -18,6 +18,7 @@ package io.realm.interop
 
 import io.realm.interop.errors.RealmCoreError
 import io.realm.interop.errors.RealmCoreException
+import io.realm.interop.errors.RealmCoreOtherException
 
 // FIXME API-SCHEMA Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
@@ -119,7 +120,7 @@ fun errorTypeToThrowable(errorType: ErrorType, message: String?): Throwable {
         ErrorType.RLM_ERR_UNKNOWN,
         ErrorType.RLM_ERR_OUT_OF_DISK_SPACE -> RealmCoreError(errorType, message)
         // Recoverable errors
-        ErrorType.RLM_ERR_OTHER_EXCEPTION -> RealmCoreException(errorType, message)
+        ErrorType.RLM_ERR_OTHER_EXCEPTION -> RealmCoreOtherException(message)
         ErrorType.RLM_ERR_NOT_CLONABLE,
         ErrorType.RLM_ERR_NOT_IN_A_TRANSACTION,
         ErrorType.RLM_ERR_WRONG_THREAD,

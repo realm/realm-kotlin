@@ -35,3 +35,6 @@ class RealmCoreError(val errorType: ErrorType, message: String?) : Error(message
         return "[$errorType]: $message"
     }
 }
+
+// Realm-Core RLM_ERR_OTHER_EXCEPTION.
+class RealmCoreOtherException(message: String?) : RuntimeException(message)
