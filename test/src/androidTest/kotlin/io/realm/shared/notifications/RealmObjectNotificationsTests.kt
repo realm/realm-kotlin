@@ -107,13 +107,13 @@ class RealmObjectNotificationsTests : NotificationTests {
                     c2.trySend(it)
                 }
             }
-            obj.update {
-                stringField = "Bar"
-            }
             // First event should be the initial value
             assertEquals("Foo", c1.receive()!!.stringField)
             assertEquals("Foo", c2.receive()!!.stringField)
             // Second event should reflect the udpate
+            obj.update {
+                stringField = "Bar"
+            }
             assertEquals("Bar", c1.receive()!!.stringField)
             assertEquals("Bar", c2.receive()!!.stringField)
 
