@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * from [Realm.write] and [Realm.writeBlocking], which are frozen and remain tied to the resulting
  * version of the write-transaction.
  */
-interface MutableRealm : BaseRealm {
+interface MutableRealm : TypedRealm {
     /**
      * Get latest version of an object.
      *

@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
  *
  * @see RealmConfiguration
  */
-interface Realm : BaseRealm {
+interface Realm : TypedRealm {
 
     // FIXME Should this go to the end according to Kotlin conventions
     companion object {
