@@ -98,10 +98,6 @@ class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
     }
 
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        return super.objects(clazz)
-    }
-
     override fun <T : RealmObject> delete(obj: T) {
         // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
         val internalObject = obj as RealmObjectInternal

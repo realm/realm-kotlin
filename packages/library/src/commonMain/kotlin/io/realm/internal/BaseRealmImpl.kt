@@ -59,7 +59,7 @@ public abstract class BaseRealmImpl internal constructor(
         log.info("Realm opened: ${configuration.path}")
     }
 
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+    open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         // Use same reference through out all operations to avoid locking
         val realmReference = this.realmReference
         realmReference.checkClosed()

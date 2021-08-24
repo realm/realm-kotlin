@@ -74,10 +74,6 @@ class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPoi
     constructor(configuration: RealmConfiguration) :
         this(configuration as RealmConfigurationImpl, RealmInterop.realm_open(configuration.nativeConfig))
 
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        return super.objects(clazz)
-    }
-
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
         @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
