@@ -18,7 +18,6 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.VersionId
@@ -34,7 +33,7 @@ public abstract class BaseRealmImpl internal constructor(
 ) : BaseRealm {
 
     private companion object {
-        private const val observablesNotSupportedMessage = "Observing changes are not supported by this Realm."
+        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE = "Observing changes are not supported by this Realm."
     }
 
     /**
@@ -48,13 +47,11 @@ public abstract class BaseRealmImpl internal constructor(
      * taken not to spread operations over different references.
      */
     internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
-        set(_) {
-            throw UnsupportedOperationException("BaseRealm reference should never be updated")
-        }
+        set(_) = throw UnsupportedOperationException("BaseRealm reference should never be updated")
 
     // TODO Could be abstracted into base implementation of RealmLifeCycle!?
     override var version: VersionId = VersionId(0)
-        get() { return realmReference.version() }
+        get() = realmReference.version()
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
@@ -82,32 +79,32 @@ public abstract class BaseRealmImpl internal constructor(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerResultsObserver(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
     internal open fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     override fun getNumberOfActiveVersions(): Long {

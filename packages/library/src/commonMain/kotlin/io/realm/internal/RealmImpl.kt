@@ -44,9 +44,7 @@ class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPoi
      * underlying realm, care should be taken not to spread operations over different references.
      */
     internal override var realmReference: RealmReference
-        get() {
-            return updatableRealm.value
-        }
+        get() = updatableRealm.value
         set(value) {
             updatableRealm.value = value
         }

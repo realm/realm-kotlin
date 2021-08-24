@@ -17,13 +17,11 @@
 package io.realm.internal
 
 import io.realm.LogConfiguration
-import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
-import io.realm.log.LogLevel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 

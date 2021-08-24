@@ -72,15 +72,16 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         val configurationBuilder =
             pluginContext.lookupClassOrThrow(REALM_CONFIGURATION_BUILDER)
-        val internalBuilderConstructor: IrConstructorSymbol =
+        val configurationBuilderConstructor: IrConstructorSymbol =
             pluginContext.lookupConstructorInClass(REALM_CONFIGURATION_BUILDER) {
-                it.owner.isPrimary //&& (it.owner.valueParameters[2].type.classFqName == KOTLIN_COLLECTIONS_MAP)
+                it.owner.isPrimary
             }
         val internalBuildFunction = configurationBuilder.functions.first {
             it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
         }
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
+                @Suppress("LongMethod", "ReturnCount")
                 override fun visitCall(expression: IrCall): IrExpression {
                     if (expression.symbol.owner.name == REALM_CONFIGURATION_BUILDER_BUILD &&
                         expression.type.classFqName == REALM_CONFIGURATION
@@ -119,7 +120,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                                 startOffset = expression.startOffset,
                                 endOffset = expression.endOffset,
                                 type = configurationBuilder.defaultType,
-                                symbol = internalBuilderConstructor,
+                                symbol = configurationBuilderConstructor,
                                 typeArgumentsCount = 0,
                                 constructorTypeArgumentsCount = 0,
                                 valueArgumentsCount = expression.valueArgumentsCount,

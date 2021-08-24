@@ -24,7 +24,6 @@ import test.link.Child
 import test.link.Parent
 import kotlin.reflect.KClass
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -32,7 +31,7 @@ class SchemaTests {
 
     @Test
     fun defaultConfig() {
-        val config = RealmConfiguration.defaultConfig(schema=setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertEquals(setOf(Sample::class), config.schema)
         assertEquals<Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>>(
             mapOf(

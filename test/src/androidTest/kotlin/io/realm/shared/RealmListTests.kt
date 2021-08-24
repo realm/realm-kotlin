@@ -18,11 +18,11 @@ package io.realm.shared
 
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.objects
 import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.objects
 import io.realm.util.PlatformUtils
 import io.realm.util.TypeDescriptor
 import test.list.Level1
