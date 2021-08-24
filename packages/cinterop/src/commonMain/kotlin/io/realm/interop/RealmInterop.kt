@@ -16,7 +16,8 @@
 
 package io.realm.interop
 
-import io.realm.interop.errors.*
+import io.realm.interop.errors.RealmCoreException
+import io.realm.interop.errors.RealmCoreOtherException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 
