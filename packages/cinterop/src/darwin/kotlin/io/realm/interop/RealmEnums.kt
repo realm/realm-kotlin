@@ -118,13 +118,11 @@ actual enum class ErrorType(override val nativeValue: UInt) : NativeEnumerated {
 
     companion object {
         private val id2ErrorMap: Map<UInt, ErrorType> by lazy {
-            mapOf(
-                *values().map {
-                    it.nativeValue to it
-                }.toTypedArray()
-            )
+            values().map {
+                it.nativeValue to it
+            }.toMap()
         }
 
-        fun asException(id: UInt, message: String?): Throwable = errorTypeToException(id2ErrorMap[id]!!, message)
+        fun asThrowable(id: UInt, message: String?): Throwable = errorTypeToThrowable(id2ErrorMap[id]!!, message)
     }
 }

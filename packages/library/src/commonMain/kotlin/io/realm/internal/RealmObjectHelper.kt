@@ -23,7 +23,6 @@ import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.errors.RealmCoreException
-import io.realm.interop.errors.RealmCoreError
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -112,8 +111,6 @@ object RealmObjectHelper {
                 "Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: changing Realm data can only be done from inside a transaction.",
                 exception
             )
-        } catch (error: RealmCoreError) {
-            throw Error("Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: a fatal error occurred.", error)
         }
     }
 

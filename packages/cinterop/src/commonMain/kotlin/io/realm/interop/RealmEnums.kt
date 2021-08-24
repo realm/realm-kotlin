@@ -110,7 +110,7 @@ expect enum class ErrorType {
     RLM_ERR_CALLBACK;
 }
 
-fun errorTypeToException(errorType: ErrorType, message: String?): Throwable {
+fun errorTypeToThrowable(errorType: ErrorType, message: String?): Throwable {
     return when (errorType) {
         ErrorType.RLM_ERR_OUT_OF_MEMORY,
         ErrorType.RLM_ERR_MULTIPLE_SYNC_AGENTS,

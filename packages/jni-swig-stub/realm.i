@@ -103,11 +103,11 @@ bool realm_object_is_valid(const realm_object_t*);
             std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
 
-            // Invoke ErrorType.asException() to retrieve an exception instance that
+            // Invoke ErrorType.asThrowable() to retrieve an exception instance that
             // maps to the core error.
             jclass error_type_class = (jenv)->FindClass("io/realm/interop/ErrorType");
             jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
-                                                 "asException",
+                                                 "asThrowable",
                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;");
             jstring error_message = (jenv)->NewStringUTF(message.c_str());
 
@@ -128,11 +128,11 @@ bool realm_object_is_valid(const realm_object_t*);
             std::string message("[" + std::to_string(error.error) + "]: " + error.message);
             realm_clear_last_error();
 
-            // Invoke ErrorType.asException() to retrieve an exception instance that
+            // Invoke ErrorType.asThrowable() to retrieve an exception instance that
             // maps to the core error.
             jclass error_type_class = (jenv)->FindClass("io/realm/interop/ErrorType");
             jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
-                                                                     "asException",
+                                                                     "asThrowable",
                                                                      "(ILjava/lang/String;)Ljava/lang/Throwable;");
             jstring error_message = (jenv)->NewStringUTF(message.c_str());
 
