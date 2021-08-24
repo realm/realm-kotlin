@@ -16,9 +16,6 @@
 
 package io.realm.interop
 
-import io.realm.interop.errors.RealmCoreException
-import io.realm.interop.errors.RealmCoreOtherException
-
 // FIXME API-SCHEMA Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
     RLM_SCHEMA_MODE_AUTOMATIC,
@@ -108,48 +105,4 @@ expect enum class ErrorType {
     RLM_ERR_INVALID_QUERY_STRING,
     RLM_ERR_INVALID_QUERY,
     RLM_ERR_CALLBACK;
-}
-
-fun errorTypeToThrowable(errorType: ErrorType, message: String?): Throwable {
-    return when (errorType) {
-        ErrorType.RLM_ERR_NONE -> throw IllegalStateException("Cannot map error type $errorType.")
-        ErrorType.RLM_ERR_OTHER_EXCEPTION -> RealmCoreOtherException(message)
-        ErrorType.RLM_ERR_UNKNOWN,
-        ErrorType.RLM_ERR_OUT_OF_MEMORY,
-        ErrorType.RLM_ERR_NOT_CLONABLE,
-        ErrorType.RLM_ERR_NOT_IN_A_TRANSACTION,
-        ErrorType.RLM_ERR_WRONG_THREAD,
-        ErrorType.RLM_ERR_INVALIDATED_OBJECT,
-        ErrorType.RLM_ERR_INVALID_PROPERTY,
-        ErrorType.RLM_ERR_MISSING_PROPERTY_VALUE,
-        ErrorType.RLM_ERR_PROPERTY_TYPE_MISMATCH,
-        ErrorType.RLM_ERR_MISSING_PRIMARY_KEY,
-        ErrorType.RLM_ERR_UNEXPECTED_PRIMARY_KEY,
-        ErrorType.RLM_ERR_WRONG_PRIMARY_KEY_TYPE,
-        ErrorType.RLM_ERR_MODIFY_PRIMARY_KEY,
-        ErrorType.RLM_ERR_READ_ONLY_PROPERTY,
-        ErrorType.RLM_ERR_PROPERTY_NOT_NULLABLE,
-        ErrorType.RLM_ERR_INVALID_ARGUMENT,
-        ErrorType.RLM_ERR_LOGIC,
-        ErrorType.RLM_ERR_NO_SUCH_TABLE,
-        ErrorType.RLM_ERR_NO_SUCH_OBJECT,
-        ErrorType.RLM_ERR_CROSS_TABLE_LINK_TARGET,
-        ErrorType.RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION,
-        ErrorType.RLM_ERR_MULTIPLE_SYNC_AGENTS,
-        ErrorType.RLM_ERR_ADDRESS_SPACE_EXHAUSTED,
-        ErrorType.RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED,
-        ErrorType.RLM_ERR_OUT_OF_DISK_SPACE,
-        ErrorType.RLM_ERR_KEY_NOT_FOUND,
-        ErrorType.RLM_ERR_COLUMN_NOT_FOUND,
-        ErrorType.RLM_ERR_COLUMN_ALREADY_EXISTS,
-        ErrorType.RLM_ERR_KEY_ALREADY_USED,
-        ErrorType.RLM_ERR_SERIALIZATION_ERROR,
-        ErrorType.RLM_ERR_INVALID_PATH_ERROR,
-        ErrorType.RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE,
-        ErrorType.RLM_ERR_INDEX_OUT_OF_BOUNDS,
-        ErrorType.RLM_ERR_INVALID_QUERY_STRING,
-        ErrorType.RLM_ERR_INVALID_QUERY,
-        ErrorType.RLM_ERR_CALLBACK -> RealmCoreException(errorType, message)
-        else -> throw IllegalStateException("Error type $errorType not implemented.")
-    }
 }
