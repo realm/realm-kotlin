@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.internal.platform.appFilesDirectory
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
@@ -68,7 +69,7 @@ public class RealmConfigurationImpl internal constructor(
 
     init {
         this.path = if (path == null || path.isEmpty()) {
-            val directory = PlatformHelper.appFilesDirectory()
+            val directory = appFilesDirectory()
             // FIXME Proper platform agnostic file separator: File.separator is not available for Kotlin/Native
             //  https://github.com/realm/realm-kotlin/issues/75
             "$directory/$name"

@@ -41,18 +41,6 @@ repositories {
     google() // Android build needs com.android.tools.lint:lint-gradle:27.0.1
 }
 
-// TODO It is currently not possible to commonize user-defined libraries to use them across
-//  platforms. To get IDE recognition of such code that is not yet commonized, we selectively add
-//  the code only to one of the target platform's source set when 'idea.active' property
-//  it true. This allows the IDE to resolve the symbols while still building correctly for all
-//  platforms in other situations.
-//  https://youtrack.jetbrains.com/issue/KT-40975
-// TODO PROPOSAL Maybe make it possible to switch which platform the common parts are added to or
-//  somehow derive a `isMainHost` property as proposed in
-//  https://kotlinlang.org/docs/reference/mpp-publish-lib.html
-//  Currently just adding the common darwin parts to macos-target.
-val idea: Boolean = System.getProperty("idea.active") == "true"
-
 // CONFIGURATION is an env variable set by XCode or could be passed to the gradle task to force a certain build type
 //               * Example: to force build a release
 //               realm-kotlin/packages> CONFIGURATION=Release ./gradlew capiIosArm64
@@ -63,6 +51,175 @@ val isReleaseBuild: Boolean = (System.getenv("CONFIGURATION") ?: "RELEASE").equa
 
 val corePath = "external/core"
 val absoluteCorePath = "$rootDir/$corePath"
+
+fun includeBinaries(binaries: List<String>): List<String> {
+    return binaries.flatMap { listOf("-include-binary", it) }
+}
+val nativeLibraryIncludesMacosUniversalRelease = includeBinaries(
+    listOf(
+        "object-store/c_api/librealm-ffi-static.a",
+        "librealm.a",
+        "parser/librealm-parser.a",
+        "object-store/librealm-object-store.a"
+    ).map { "$absoluteCorePath/build-macos_universal/src/realm/" + it }
+)
+val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
+    listOf(
+        "object-store/c_api/librealm-ffi-static-dbg.a",
+        "librealm-dbg.a",
+        "parser/librealm-parser-dbg.a",
+        "object-store/librealm-object-store-dbg.a"
+    ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/" + it }
+)
+val releaseLibs = listOf(
+    "librealm-ffi-static.a",
+    "librealm.a",
+    "librealm-parser.a",
+    "librealm-object-store.a"
+)
+val debugLibs = listOf(
+    "librealm-ffi-static-dbg.a",
+    "librealm-dbg.a",
+    "librealm-parser-dbg.a",
+    "librealm-object-store-dbg.a"
+)
+val nativeLibraryIncludesIosArm64Debug =
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/" + it })
+val nativeLibraryIncludesIosArm64Release =
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-capi_ios_Arm64/lib/" + it })
+val nativeLibraryIncludesIosSimulatorUniversalDebug =
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator_universal-dbg/lib/" + it })
+val nativeLibraryIncludesIosSimulatorUniversalRelease =
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator_universal/lib/" + it })
+
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = Versions.jvmTarget
+        }
+    }
+    android("android") {
+        publishLibraryVariants("release", "debug")
+    }
+    // Cinterops seems sharable across architectures (x86_64/arm) with option of differentiation in
+    // the def, but not across platforms in the current target "hierarchy"
+    // (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
+    // FIXME MPP-BUILD Relative paths in def-file resolves differently dependent of task entry point.
+    //  https://youtrack.jetbrains.com/issue/KT-43439
+    ios {
+        compilations.getByName("main") {
+            cinterops.create("realm_wrapper") {
+                defFile = project.file("src/native/realm.def")
+                packageName = "realm_wrapper"
+                includeDirs("$absoluteCorePath/src/")
+            }
+            // Relative paths in def file depends are resolved differently dependent on execution
+            // location
+            // https://youtrack.jetbrains.com/issue/KT-43439
+            // https://github.com/JetBrains/kotlin-native/issues/2314
+            // ... and def file does not support using environment variables
+            // https://github.com/JetBrains/kotlin-native/issues/3631
+            // so resolving paths through gradle
+            kotlinOptions.freeCompilerArgs += if (this.konanTarget == KonanTarget.IOS_ARM64) {
+                if (isReleaseBuild) nativeLibraryIncludesIosArm64Release else nativeLibraryIncludesIosArm64Debug
+            } else {
+                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorUniversalRelease else nativeLibraryIncludesIosSimulatorUniversalDebug
+            }
+        }
+    }
+
+    macosX64("macos") {
+        compilations.getByName("main") {
+            cinterops.create("realm_wrapper") {
+                defFile = project.file("src/native/realm.def")
+                packageName = "realm_wrapper"
+                includeDirs("$absoluteCorePath/src/")
+            }
+            // Relative paths in def file depends are resolved differently dependent on execution
+            // location
+            // https://youtrack.jetbrains.com/issue/KT-43439
+            // https://github.com/JetBrains/kotlin-native/issues/2314
+            // ... and def file does not support using environment variables
+            // https://github.com/JetBrains/kotlin-native/issues/3631
+            // so resolving paths through gradle
+            kotlinOptions.freeCompilerArgs += if (isReleaseBuild) nativeLibraryIncludesMacosUniversalRelease else nativeLibraryIncludesMacosUniversalDebug
+        }
+    }
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+            }
+        }
+        // FIXME HIERARCHICAL-BUILD Rename to jvm
+        val jvm by creating {
+            dependsOn(commonMain)
+            kotlin.srcDir("src/jvm/kotlin")
+            dependencies {
+                api(project(":jni-swig-stub"))
+            }
+        }
+        val jvmMain by getting {
+            dependsOn(jvm)
+        }
+        val androidMain by getting {
+            dependsOn(jvm)
+        }
+        val androidTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+                implementation("junit:junit:${Versions.junit}")
+                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
+                implementation("androidx.test:runner:${Versions.androidxTest}")
+                implementation("androidx.test:rules:${Versions.androidxTest}")
+            }
+        }
+        val macosMain by getting {
+            // TODO HIERARCHICAL-BUILD From 1.5.30-M1 we should be able to commonize cinterops using
+            //  kotlin.mpp.enableCInteropCommonization=true (https://youtrack.jetbrains.com/issue/KT-40975)
+            //  This would also require us to enable hierarchical setup, which is currently blocked by
+            //  https://youtrack.jetbrains.com/issue/KT-48153
+            // FIXME HIERARCHICAL-BUILD Rename to nativeDarwin
+            kotlin.srcDir("src/darwin/kotlin")
+        }
+        val iosMain by getting {
+            // TODO HIERARCHICAL-BUILD From 1.5.30-M1 we should be able to commonize cinterops using
+            //  kotlin.mpp.enableCInteropCommonization=true (https://youtrack.jetbrains.com/issue/KT-40975)
+            //  This would also require us to enable hierarchical setup, which is currently blocked by
+            //  https://youtrack.jetbrains.com/issue/KT-48153
+            kotlin.srcDir("src/darwin/kotlin")
+        }
+        val macosTest by getting {
+            // FIXME HIERARCHICAL-BUILD Rename to nativeDarwinTest
+            kotlin.srcDir("src/darwinTest/kotlin")
+        }
+        val iosTest by getting {
+            kotlin.srcDir("src/darwinTest/kotlin")
+        }
+    }
+
+    targets.all {
+        compilations.all {
+            kotlinOptions {
+                freeCompilerArgs += listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
+            }
+        }
+    }
+
+    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
+    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+//    configure(listOf(targets["metadata"], jvm())) {
+//        mavenPublication {
+//            val targetPublication = this@mavenPublication
+//            tasks.withType<AbstractPublishToMaven>()
+//                .matching { it.publication == targetPublication }
+//                .all { onlyIf { findProperty("isMainHost") == "true" } }
+//        }
+//    }
+}
 
 android {
     compileSdk = Versions.Android.compileSdkVersion
@@ -100,7 +257,7 @@ android {
     externalNativeBuild {
         cmake {
             version = Versions.cmake
-            path = project.file("src/jvmCommon/CMakeLists.txt")
+            path = project.file("src/jvm/CMakeLists.txt")
         }
     }
     // To avoid
@@ -109,220 +266,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
-
-val nativeLibraryIncludesMacosUniversalRelease = listOf(
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal/src/realm/object-store/c_api/librealm-ffi-static.a",
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal/src/realm/librealm.a",
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal/src/realm/parser/librealm-parser.a",
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal/src/realm/object-store/librealm-object-store.a"
-)
-val nativeLibraryIncludesMacosUniversalDebug = listOf(
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/object-store/c_api/librealm-ffi-static-dbg.a",
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/librealm-dbg.a",
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/parser/librealm-parser-dbg.a",
-    "-include-binary",
-    "$absoluteCorePath/capi_macos_universal-dbg/src/realm/object-store/librealm-object-store-dbg.a"
-)
-val nativeLibraryIncludesIosArm64Debug = listOf(
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-ffi-static-dbg.a",
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-dbg.a",
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-parser-dbg.a",
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/librealm-object-store-dbg.a"
-)
-val nativeLibraryIncludesIosArm64Release = listOf(
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm-ffi-static.a",
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm.a",
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm-parser.a",
-    "-include-binary", "$absoluteCorePath/build-capi_ios_Arm64/lib/librealm-object-store.a"
-)
-val nativeLibraryIncludesIosSimulatorUniversalRelease = listOf(
-    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm-ffi-static.a",
-    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm.a",
-    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm-parser.a",
-    "-include-binary", "$absoluteCorePath/build-simulator_universal/lib/librealm-object-store.a"
-)
-val nativeLibraryIncludesIosSimulatorUniversalDebug = listOf(
-    "-include-binary",
-    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-ffi-static-dbg.a",
-    "-include-binary",
-    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-dbg.a",
-    "-include-binary",
-    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-parser-dbg.a",
-    "-include-binary",
-    "$absoluteCorePath/build-simulator_universal-dbg/lib/librealm-object-store-dbg.a"
-)
-
-kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = Versions.jvmTarget
-        }
-    }
-    android("android") {
-        publishLibraryVariants("release", "debug")
-    }
-    // Cinterops seems sharable across architectures (x86_64/arm) with option of differentiation in
-    // the def, but not across platforms in the current target  "hierarchy"
-    // (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
-    // FIXME MPP-BUILD If the native target is not specified fully (with architecture) the cinterop
-    //  symbols won't be recognized by the IDE which is pretty annoying. Maybe fixed by only adding
-    //  the source set to a single platform source set (see 'idea_active' definition in top of the
-    //  file).
-    // FIXME MPP-BUILD Relative paths in def-file resolves differently dependent of task entry point.
-    //  https://youtrack.jetbrains.com/issue/KT-43439
-    ios {
-        compilations.getByName("main") {
-            cinterops.create("realm_wrapper") {
-                defFile = project.file("src/nativeCommon/realm.def")
-                packageName = "realm_wrapper"
-                includeDirs("$absoluteCorePath/src/")
-            }
-            // Relative paths in def file depends are resolved differently dependent on execution
-            // location
-            // https://youtrack.jetbrains.com/issue/KT-43439
-            // https://github.com/JetBrains/kotlin-native/issues/2314
-            // ... and def file does not support using environment variables
-            // https://github.com/JetBrains/kotlin-native/issues/3631
-            // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += if (this.konanTarget == KonanTarget.IOS_ARM64) {
-                if (isReleaseBuild) nativeLibraryIncludesIosArm64Release else nativeLibraryIncludesIosArm64Debug
-            } else {
-                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorUniversalRelease else nativeLibraryIncludesIosSimulatorUniversalDebug
-            }
-        }
-    }
-
-    macosX64("macos") {
-        compilations.getByName("main") {
-            cinterops.create("realm_wrapper") {
-                defFile = project.file("src/nativeCommon/realm.def")
-                packageName = "realm_wrapper"
-                includeDirs("$absoluteCorePath/src/")
-            }
-            // Relative paths in def file depends are resolved differently dependent on execution
-            // location
-            // https://youtrack.jetbrains.com/issue/KT-43439
-            // https://github.com/JetBrains/kotlin-native/issues/2314
-            // ... and def file does not support using environment variables
-            // https://github.com/JetBrains/kotlin-native/issues/3631
-            // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += if (isReleaseBuild) nativeLibraryIncludesMacosUniversalRelease else nativeLibraryIncludesMacosUniversalDebug
-        }
-    }
-
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-            }
-        }
-
-        // FIXME MPP-BUILD Maybe not the best idea to have in separate source set, but ideally we
-        //  could reuse it for all JVM platform, seems like there are issues for the IDE to
-        //  recognize symbols using this approach, but maybe a general thing (also issues with
-        //  native cinterops)
-        val jvmCommon by creating {
-            dependsOn(commonMain)
-            // IDE does not resolve 'jni-swig-module'-symbols in 'src/jvmCommon/kotlin/' if source
-            // set is added here. Probably similar to issues around cinterop symbols not be
-            // resolveable when added to both macos and ios platform. Current work around is to
-            // add the common code explicitly to android and jvm source sets.
-            // kotlin.srcDir("src/jvmCommon/kotlin")
-            dependencies {
-                api(project(":jni-swig-stub"))
-            }
-        }
-
-        val androidMain by getting {
-            dependsOn(jvmCommon)
-            kotlin.srcDir("src/jvmCommon/kotlin")
-        }
-
-        val jvmMain by getting {
-            dependsOn(jvmCommon)
-            kotlin.srcDir("src/jvmCommon/kotlin")
-        }
-        val androidTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation(kotlin("test-junit"))
-                implementation("junit:junit:${Versions.junit}")
-                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
-                implementation("androidx.test:runner:${Versions.androidxTest}")
-                implementation("androidx.test:rules:${Versions.androidxTest}")
-            }
-        }
-
-        val darwinCommon by creating {
-            dependsOn(commonMain)
-            // Native symbols are not recognized correctly if platform is unknown when adding
-            // source sets, so add common sources explicitly in "macosMain" and "iosMain" instead
-        }
-
-        val macosMain by getting {
-            dependsOn(darwinCommon)
-            kotlin.srcDir("src/darwinCommon/kotlin")
-        }
-
-        val iosMain by getting {
-            dependsOn(darwinCommon)
-            // Only add common sources to one platform when in the IDE. See comment at 'idea'
-            // definition for full details.
-            if (!idea) {
-                kotlin.srcDir("src/darwinCommon/kotlin")
-            }
-        }
-
-        val darwinTest by creating {
-            dependsOn(darwinCommon)
-            // Native symbols are not recognized correctly if platform is unknown when adding
-            // source sets, so add common sources explicitly in "macosTest" and "iosTest" instead
-        }
-
-        val macosTest by getting {
-            dependsOn(darwinTest)
-            dependsOn(macosMain)
-            kotlin.srcDir("src/darwinTest/kotlin")
-        }
-
-        val iosTest by getting {
-            dependsOn(darwinTest)
-            dependsOn(iosMain)
-            // Only add common sources to one platform when in the IDE. See comment at 'idea'
-            // definition for full details.
-            if (!idea) {
-                kotlin.srcDir("src/darwinTest/kotlin")
-            }
-        }
-    }
-
-    targets.all {
-        compilations.all {
-            kotlinOptions {
-                freeCompilerArgs += listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
-            }
-        }
-    }
-
-    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
-    configure(listOf(targets["metadata"], jvm())) {
-        mavenPublication {
-            val targetPublication = this@mavenPublication
-            tasks.withType<AbstractPublishToMaven>()
-                .matching { it.publication == targetPublication }
-                .all { onlyIf { findProperty("isMainHost") == "true" } }
-        }
     }
 }
 
@@ -343,7 +286,7 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
-    val directory = "$absoluteCorePath/capi_macos_universal$buildTypeSuffix"
+    val directory = "$absoluteCorePath/build-macos_universal$buildTypeSuffix"
     doLast {
         exec {
             commandLine("mkdir", "-p", directory)

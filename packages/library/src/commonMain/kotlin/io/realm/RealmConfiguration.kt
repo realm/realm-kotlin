@@ -1,10 +1,26 @@
+/*
+ * Copyright 2020 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm
 
-import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.singleThreadDispatcher
+import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -42,22 +58,22 @@ interface RealmConfiguration {
     /**
      * Path to the realm file.
      */
-    val path: String
+    public val path: String
 
     /**
      * Filename of the realm file.
      */
-    val name: String
+    public val name: String
 
     /**
      * The set of classes included in the schema for the realm.
      */
-    val schema: Set<KClass<out Any>>
+    public val schema: Set<KClass<out RealmObject>>
 
     /**
      * The log configuration used for the realm instance.
      */
-    val log: LogConfiguration
+    public val log: LogConfiguration
 
     /**
      * Maximum number of active versions.
@@ -66,12 +82,12 @@ interface RealmConfiguration {
      * require keeping the data in the actual file. This can cause growth of the file. See
      * [Builder.maxNumberOfActiveVersions] for details.
      */
-    val maxNumberOfActiveVersions: Long
+    public val maxNumberOfActiveVersions: Long
 
     /**
      * The coroutine dispatcher for internal handling of notification registration and delivery.
      */
-    val notificationDispatcher: CoroutineDispatcher
+    public val notificationDispatcher: CoroutineDispatcher
 
     /**
      * The coroutine dispatcher used for all write operations.
@@ -279,7 +295,7 @@ interface RealmConfiguration {
         internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
-                allLoggers.add(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
             return RealmConfigurationImpl(

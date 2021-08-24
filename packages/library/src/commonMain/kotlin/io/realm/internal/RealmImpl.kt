@@ -5,7 +5,10 @@ import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.platform.WeakReference
+import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
@@ -109,7 +112,7 @@ class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPoi
         return notifier.resultsChanged(results)
     }
 
-    internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+    internal override fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
         return notifier.listChanged(list)
     }
 

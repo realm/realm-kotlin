@@ -18,6 +18,7 @@ package io.realm.internal
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.MutableRealm
+import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.interop.RealmInterop
 import io.realm.isFrozen
@@ -111,7 +112,7 @@ class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+    internal override fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
         throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
     }
 

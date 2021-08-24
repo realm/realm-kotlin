@@ -14,7 +14,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CALL 'public open fun nextLong (): kotlin.Long declared in java.util.Random' type=kotlin.Long origin=null
               $this: CONSTRUCTOR_CALL 'public constructor <init> () declared in java.util.Random' type=java.util.Random origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-id> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Long
+        FUN name:<get-id> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Long
           correspondingProperty: PROPERTY name:id visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -33,7 +33,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:id type:kotlin.Long visibility:private' type=kotlin.Long origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-id>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-id> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Long) returnType:kotlin.Unit
+        FUN name:<set-id> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Long) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:id visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long
@@ -101,7 +101,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private
           EXPRESSION_BODY
             CONST String type=kotlin.String value="Realm"
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-stringField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String?
+        FUN name:<get-stringField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String?
           correspondingProperty: PROPERTY name:stringField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -120,7 +120,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private' type=kotlin.String? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-stringField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.String?) returnType:kotlin.Unit
+        FUN name:<set-stringField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.String?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:stringField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
@@ -146,7 +146,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:byteField type:kotlin.Byte? visibility:private
           EXPRESSION_BODY
             CONST Byte type=kotlin.Byte value=10
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-byteField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Byte?
+        FUN name:<get-byteField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Byte?
           correspondingProperty: PROPERTY name:byteField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -166,7 +166,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:byteField type:kotlin.Byte? visibility:private' type=kotlin.Byte? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-byteField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Byte?) returnType:kotlin.Unit
+        FUN name:<set-byteField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Byte?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:byteField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Byte?
@@ -193,7 +193,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:charField type:kotlin.Char? visibility:private
           EXPRESSION_BODY
             CONST Char type=kotlin.Char value='a'
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-charField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Char?
+        FUN name:<get-charField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Char?
           correspondingProperty: PROPERTY name:charField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -213,7 +213,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:charField type:kotlin.Char? visibility:private' type=kotlin.Char? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-charField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-charField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Char?) returnType:kotlin.Unit
+        FUN name:<set-charField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Char?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:charField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Char?
@@ -240,7 +240,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:shortField type:kotlin.Short? visibility:private
           EXPRESSION_BODY
             CONST Short type=kotlin.Short value=17
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-shortField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Short?
+        FUN name:<get-shortField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Short?
           correspondingProperty: PROPERTY name:shortField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -260,7 +260,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:shortField type:kotlin.Short? visibility:private' type=kotlin.Short? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-shortField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-shortField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Short?) returnType:kotlin.Unit
+        FUN name:<set-shortField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Short?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:shortField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Short?
@@ -287,7 +287,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:intField type:kotlin.Int? visibility:private
           EXPRESSION_BODY
             CONST Int type=kotlin.Int value=42
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-intField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Int?
+        FUN name:<get-intField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Int?
           correspondingProperty: PROPERTY name:intField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -307,7 +307,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:intField type:kotlin.Int? visibility:private' type=kotlin.Int? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-intField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-intField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Int?) returnType:kotlin.Unit
+        FUN name:<set-intField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Int?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:intField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Int?
@@ -334,7 +334,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:longField type:kotlin.Long? visibility:private
           EXPRESSION_BODY
             CONST Long type=kotlin.Long value=256
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-longField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Long?
+        FUN name:<get-longField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Long?
           correspondingProperty: PROPERTY name:longField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -353,7 +353,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:longField type:kotlin.Long? visibility:private' type=kotlin.Long? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-longField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-longField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Long?) returnType:kotlin.Unit
+        FUN name:<set-longField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Long?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:longField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long?
@@ -379,7 +379,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:booleanField type:kotlin.Boolean? visibility:private
           EXPRESSION_BODY
             CONST Boolean type=kotlin.Boolean value=true
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-booleanField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Boolean?
+        FUN name:<get-booleanField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Boolean?
           correspondingProperty: PROPERTY name:booleanField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -398,7 +398,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:booleanField type:kotlin.Boolean? visibility:private' type=kotlin.Boolean? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-booleanField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-booleanField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Boolean?) returnType:kotlin.Unit
+        FUN name:<set-booleanField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Boolean?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:booleanField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean?
@@ -424,7 +424,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:floatField type:kotlin.Float? visibility:private
           EXPRESSION_BODY
             CONST Float type=kotlin.Float value=3.14
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-floatField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Float?
+        FUN name:<get-floatField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Float?
           correspondingProperty: PROPERTY name:floatField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -443,7 +443,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:floatField type:kotlin.Float? visibility:private' type=kotlin.Float? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-floatField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-floatField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Float?) returnType:kotlin.Unit
+        FUN name:<set-floatField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Float?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:floatField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Float?
@@ -469,7 +469,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:doubleField type:kotlin.Double? visibility:private
           EXPRESSION_BODY
             CONST Double type=kotlin.Double value=1.19840122
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-doubleField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Double?
+        FUN name:<get-doubleField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Double?
           correspondingProperty: PROPERTY name:doubleField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -488,7 +488,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:doubleField type:kotlin.Double? visibility:private' type=kotlin.Double? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-doubleField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-doubleField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Double?) returnType:kotlin.Unit
+        FUN name:<set-doubleField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.Double?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:doubleField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Double?
@@ -514,7 +514,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:child type:sample.input.Child? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-child> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:sample.input.Child?
+        FUN name:<get-child> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:sample.input.Child?
           correspondingProperty: PROPERTY name:child visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -533,7 +533,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:child type:sample.input.Child? visibility:private' type=sample.input.Child? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-child>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-child> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:sample.input.Child?) returnType:kotlin.Unit
+        FUN name:<set-child> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:sample.input.Child?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:child visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:sample.input.Child?
@@ -560,7 +560,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.String> origin=null
               <class: E>: kotlin.String
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-stringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.String>
+        FUN name:<get-stringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.String>
           correspondingProperty: PROPERTY name:stringListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -592,7 +592,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Byte> origin=null
               <class: E>: kotlin.Byte
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-byteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Byte>
+        FUN name:<get-byteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Byte>
           correspondingProperty: PROPERTY name:byteListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -624,7 +624,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Char> origin=null
               <class: E>: kotlin.Char
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-charListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Char>
+        FUN name:<get-charListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Char>
           correspondingProperty: PROPERTY name:charListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -656,7 +656,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Short> origin=null
               <class: E>: kotlin.Short
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-shortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Short>
+        FUN name:<get-shortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Short>
           correspondingProperty: PROPERTY name:shortListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -688,7 +688,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Int> origin=null
               <class: E>: kotlin.Int
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-intListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Int>
+        FUN name:<get-intListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Int>
           correspondingProperty: PROPERTY name:intListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -720,7 +720,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Long> origin=null
               <class: E>: kotlin.Long
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-longListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Long>
+        FUN name:<get-longListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Long>
           correspondingProperty: PROPERTY name:longListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -752,7 +752,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Boolean> origin=null
               <class: E>: kotlin.Boolean
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-booleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Boolean>
+        FUN name:<get-booleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Boolean>
           correspondingProperty: PROPERTY name:booleanListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -784,7 +784,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Float> origin=null
               <class: E>: kotlin.Float
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-floatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Float>
+        FUN name:<get-floatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Float>
           correspondingProperty: PROPERTY name:floatListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -816,7 +816,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Double> origin=null
               <class: E>: kotlin.Double
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-doubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Double>
+        FUN name:<get-doubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Double>
           correspondingProperty: PROPERTY name:doubleListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -848,7 +848,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<sample.input.Sample> origin=null
               <class: E>: sample.input.Sample
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-objectListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<sample.input.Sample>
+        FUN name:<get-objectListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<sample.input.Sample>
           correspondingProperty: PROPERTY name:objectListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -881,7 +881,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.String?> origin=null
               <class: E>: kotlin.String?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableStringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.String?>
+        FUN name:<get-nullableStringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.String?>
           correspondingProperty: PROPERTY name:nullableStringListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -913,7 +913,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Byte?> origin=null
               <class: E>: kotlin.Byte?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableByteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Byte?>
+        FUN name:<get-nullableByteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Byte?>
           correspondingProperty: PROPERTY name:nullableByteListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -945,7 +945,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Char?> origin=null
               <class: E>: kotlin.Char?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableCharListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Char?>
+        FUN name:<get-nullableCharListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Char?>
           correspondingProperty: PROPERTY name:nullableCharListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -977,7 +977,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Short?> origin=null
               <class: E>: kotlin.Short?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableShortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Short?>
+        FUN name:<get-nullableShortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Short?>
           correspondingProperty: PROPERTY name:nullableShortListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -1009,7 +1009,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Int?> origin=null
               <class: E>: kotlin.Int?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableIntListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Int?>
+        FUN name:<get-nullableIntListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Int?>
           correspondingProperty: PROPERTY name:nullableIntListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -1041,7 +1041,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Long?> origin=null
               <class: E>: kotlin.Long?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableLongListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Long?>
+        FUN name:<get-nullableLongListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Long?>
           correspondingProperty: PROPERTY name:nullableLongListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -1073,7 +1073,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Boolean?> origin=null
               <class: E>: kotlin.Boolean?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableBooleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Boolean?>
+        FUN name:<get-nullableBooleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Boolean?>
           correspondingProperty: PROPERTY name:nullableBooleanListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -1105,7 +1105,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Float?> origin=null
               <class: E>: kotlin.Float?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableFloatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Float?>
+        FUN name:<get-nullableFloatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Float?>
           correspondingProperty: PROPERTY name:nullableFloatListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -1137,7 +1137,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CONSTRUCTOR_CALL 'public constructor <init> () declared in io.realm.RealmList' type=io.realm.RealmList<kotlin.Double?> origin=null
               <class: E>: kotlin.Double?
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-nullableDoubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Double?>
+        FUN name:<get-nullableDoubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Double?>
           correspondingProperty: PROPERTY name:nullableDoubleListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
@@ -1729,7 +1729,7 @@ MODULE_FRAGMENT name:<main>
         FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private
           EXPRESSION_BODY
             CONST String type=kotlin.String value="Child-default"
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-name> visibility:public modality:FINAL <> ($this:sample.input.Child) returnType:kotlin.String?
+        FUN name:<get-name> visibility:public modality:FINAL <> ($this:sample.input.Child) returnType:kotlin.String?
           correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Child
           BLOCK_BODY
@@ -1748,7 +1748,7 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String? visibility:private' type=kotlin.String? origin=null
                       receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-name>' type=sample.input.Child origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-name> visibility:public modality:FINAL <> ($this:sample.input.Child, <set-?>:kotlin.String?) returnType:kotlin.Unit
+        FUN name:<set-name> visibility:public modality:FINAL <> ($this:sample.input.Child, <set-?>:kotlin.String?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:name visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Child
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?

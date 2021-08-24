@@ -18,7 +18,7 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import test.Sample
 import kotlin.random.Random
 import kotlin.test.AfterTest

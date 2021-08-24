@@ -18,7 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.objects
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import test.link.Child
 import test.link.Parent

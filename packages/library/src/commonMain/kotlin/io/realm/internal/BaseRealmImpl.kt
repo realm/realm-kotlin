@@ -18,6 +18,7 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
+import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.VersionId
@@ -99,7 +100,7 @@ public abstract class BaseRealmImpl internal constructor(
     internal open fun <T : RealmObject> registerResultsObserver(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
-    internal open fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+    internal open fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

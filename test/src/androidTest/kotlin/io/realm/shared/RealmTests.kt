@@ -19,12 +19,12 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.internal.RealmReference
-import io.realm.internal.WeakReference
+import io.realm.internal.platform.WeakReference
 import io.realm.interop.NativePointer
 import io.realm.isManaged
 import io.realm.objects
-import io.realm.util.PlatformUtils
-import io.realm.util.PlatformUtils.triggerGC
+import io.realm.test.platform.PlatformUtils
+import io.realm.test.platform.PlatformUtils.triggerGC
 import io.realm.util.Utils.createRandomString
 import io.realm.version
 import kotlinx.atomicfu.AtomicRef
