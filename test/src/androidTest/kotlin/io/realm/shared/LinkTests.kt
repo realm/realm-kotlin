@@ -18,7 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.objects
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import test.link.Child
 import test.link.Parent
@@ -37,7 +37,7 @@ class LinkTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class)).build()
+        val configuration = RealmConfiguration.defaultConfig(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
         realm = Realm.openBlocking(configuration)
     }
 

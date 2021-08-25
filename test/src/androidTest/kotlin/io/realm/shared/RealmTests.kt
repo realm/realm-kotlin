@@ -18,12 +18,12 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
-import io.realm.internal.WeakReference
+import io.realm.internal.platform.WeakReference
 import io.realm.interop.NativePointer
 import io.realm.isManaged
 import io.realm.objects
-import io.realm.util.PlatformUtils
-import io.realm.util.PlatformUtils.triggerGC
+import io.realm.test.platform.PlatformUtils
+import io.realm.test.platform.PlatformUtils.triggerGC
 import io.realm.util.Utils.createRandomString
 import io.realm.version
 import kotlinx.atomicfu.AtomicRef
@@ -402,11 +402,11 @@ class RealmTests {
 
     @Test
     fun closingIntermediateVersionsWhenNoLongerReferenced() {
-        assertEquals(0, realm.intermediateVersions.value.size)
+        assertEquals(0, intermediateReferences.value.size)
         var parent: Parent? = realm.writeBlocking { copyToRealm(Parent()) }
-        assertEquals(1, realm.intermediateVersions.value.size)
+        assertEquals(1, intermediateReferences.value.size)
         realm.writeBlocking { }
-        assertEquals(2, realm.intermediateVersions.value.size)
+        assertEquals(2, intermediateReferences.value.size)
 
         // Clear reference
         parent = null
@@ -414,12 +414,13 @@ class RealmTests {
         triggerGC()
         // Close of intermediate version is currently only done when updating the realm after a write
         realm.writeBlocking { }
-        assertEquals(1, realm.intermediateVersions.value.size)
+        assertEquals(1, intermediateReferences.value.size)
     }
 
-    @Suppress("invisible_reference", "invisible_member")
-    private val Realm.intermediateVersions: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>
+    @Suppress("invisible_reference")
+    private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>
         get() {
-            return (this as io.realm.internal.RealmImpl).intermediateReferences
+            @Suppress("invisible_member")
+            return (realm as io.realm.internal.RealmImpl).intermediateReferences
         }
 }

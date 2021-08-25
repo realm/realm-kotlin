@@ -4,7 +4,7 @@ import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.observe
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -107,11 +107,16 @@ class RealmObjectNotificationsTests : NotificationTests {
                     c2.trySend(it)
                 }
             }
+            // First event should be the initial value
+            assertEquals("Foo", c1.receive()!!.stringField)
+            assertEquals("Foo", c2.receive()!!.stringField)
+            // Second event should reflect the udpate
             obj.update {
                 stringField = "Bar"
             }
             assertEquals("Bar", c1.receive()!!.stringField)
             assertEquals("Bar", c2.receive()!!.stringField)
+
             observer1.cancel()
             obj.update {
                 stringField = "Baz"

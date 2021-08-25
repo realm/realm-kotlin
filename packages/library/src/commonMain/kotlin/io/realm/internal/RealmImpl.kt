@@ -5,8 +5,10 @@ import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.RealmResults
+import io.realm.internal.platform.WeakReference
+import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
@@ -21,7 +23,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPointer: NativePointer) :
@@ -44,9 +45,7 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
      * underlying realm, care should be taken not to spread operations over different references.
      */
     internal override var realmReference: RealmReference
-        get() {
-            return updatableRealm.value
-        }
+        get() = updatableRealm.value
         set(value) {
             updatableRealm.value = value
         }
@@ -73,19 +72,8 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         }
     }
 
-    /**
-     * Open a Realm instance. This instance grants access to an underlying Realm file defined by
-     * the provided [RealmConfiguration].
-     *
-     * @param configuration The RealmConfiguration used to open the Realm.
-     */
-    // FIXME Figure out how to describe the constructor better
-    public constructor(configuration: RealmConfiguration) :
+    constructor(configuration: RealmConfiguration) :
         this(configuration as RealmConfigurationImpl, RealmInterop.realm_open(configuration.nativeConfig))
-
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        return super.objects(clazz)
-    }
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
         @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
@@ -124,7 +112,7 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         return notifier.resultsChanged(results)
     }
 
-    internal override fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
+    internal override fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
         return notifier.listChanged(list)
     }
 

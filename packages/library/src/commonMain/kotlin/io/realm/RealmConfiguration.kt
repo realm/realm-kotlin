@@ -1,10 +1,26 @@
+/*
+ * Copyright 2020 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm
 
-import io.realm.internal.PlatformHelper
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.singleThreadDispatcher
+import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,25 +53,27 @@ public data class LogConfiguration(
  * @see RealmConfiguration.Builder
  */
 interface RealmConfiguration {
+    // Public properties making up the RealmConfiguration
+    // TODO Add more elaborate KDoc for all of these
     /**
      * Path to the realm file.
      */
-    val path: String
+    public val path: String
 
     /**
      * Filename of the realm file.
      */
-    val name: String
+    public val name: String
 
     /**
      * The set of classes included in the schema for the realm.
      */
-    val schema: Set<KClass<out Any>>
+    public val schema: Set<KClass<out RealmObject>>
 
     /**
      * The log configuration used for the realm instance.
      */
-    val log: LogConfiguration
+    public val log: LogConfiguration
 
     /**
      * Maximum number of active versions.
@@ -64,12 +82,12 @@ interface RealmConfiguration {
      * require keeping the data in the actual file. This can cause growth of the file. See
      * [Builder.maxNumberOfActiveVersions] for details.
      */
-    val maxNumberOfActiveVersions: Long
+    public val maxNumberOfActiveVersions: Long
 
     /**
      * The coroutine dispatcher for internal handling of notification registration and delivery.
      */
-    val notificationDispatcher: CoroutineDispatcher
+    public val notificationDispatcher: CoroutineDispatcher
 
     /**
      * The coroutine dispatcher used for all write operations.
@@ -93,6 +111,24 @@ interface RealmConfiguration {
      * @return null on unencrypted Realms.
      */
     val encryptionKey: ByteArray?
+
+    companion object {
+        /**
+         * Create a configuration using default values except for schema, path and name.
+         *
+         * @param path The full path of the realm file.
+         * @param name The filename of the realm file.
+         * @param schema The classes of the schema. The elements of the set must be direct class literals.
+         */
+        // Should always follow Builder constructor arguments
+        fun defaultConfig(
+            path: String? = null,
+            name: String = Realm.DEFAULT_FILE_NAME,
+            schema: Set<KClass<out RealmObject>>
+        ): RealmConfiguration {
+            REPLACED_BY_IR() // Will be replace by Builder(path, name, schame).build(companionMap)
+        }
+    }
 
     /**
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
@@ -259,7 +295,7 @@ interface RealmConfiguration {
         internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
-                allLoggers.add(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
             return RealmConfigurationImpl(

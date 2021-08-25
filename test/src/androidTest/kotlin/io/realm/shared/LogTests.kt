@@ -3,8 +3,8 @@ package io.realm.shared
 
 import io.realm.LogConfiguration
 import io.realm.Realm
-import io.realm.internal.PlatformHelper
 import io.realm.internal.RealmLog
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.log.LogLevel
 import io.realm.util.TestLogger
 import io.realm.util.Utils
@@ -26,7 +26,7 @@ class LogTests {
 
     @BeforeTest
     fun setUp() {
-        val loggers = listOf(PlatformHelper.createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+        val loggers = listOf(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
         log = RealmLog(configuration = LogConfiguration(LogLevel.ALL, loggers))
     }
 

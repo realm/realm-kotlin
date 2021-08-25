@@ -20,7 +20,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.delete
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import test.Sample
 import kotlin.test.AfterTest
@@ -57,6 +57,17 @@ class SampleTests {
             assertEquals("Realm", sample.stringField)
             sample.stringField = s
             assertEquals(s, sample.stringField)
+        }
+    }
+
+    @Test
+    fun validateInternalGetterAndSetter() {
+        realm.writeBlocking {
+            val s = copyToRealm(Sample())
+            val value = "UPDATE"
+            s.stringFieldSetter(value)
+            assertEquals(value, s.stringField)
+            assertEquals(value, s.stringFieldGetter())
         }
     }
 

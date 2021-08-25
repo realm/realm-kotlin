@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * from [Realm.write] and [Realm.writeBlocking], which are frozen and remain tied to the resulting
  * version of the write-transaction.
  */
-interface MutableRealm : BaseRealm {
+interface MutableRealm : TypedRealm {
     /**
      * Get latest version of an object.
      *
@@ -31,7 +31,7 @@ interface MutableRealm : BaseRealm {
      *
      * @throws IllegalArgumentException if called on an unmanaged object.
      */
-    fun <T : RealmObject> findLatest(obj: T?): T?
+    fun <T : RealmObject> findLatest(obj: T): T?
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.

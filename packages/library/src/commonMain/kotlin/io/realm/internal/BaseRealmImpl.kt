@@ -18,7 +18,7 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.RealmConfiguration
+import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.interop.NativePointer
@@ -28,15 +28,12 @@ import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
 internal abstract class BaseRealmImpl internal constructor(
-    /**
-     * Configuration used to configure this Realm instance.
-     */
     override val configuration: RealmConfigurationImpl,
     dbPointer: NativePointer
 ) : BaseRealm, RealmLifeCycleHolder {
 
     private companion object {
-        private const val observablesNotSupportedMessage = "Observing changes are not supported by this Realm."
+        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE = "Observing changes are not supported by this Realm."
     }
 
     /**
@@ -50,9 +47,7 @@ internal abstract class BaseRealmImpl internal constructor(
      * taken not to spread operations over different references.
      */
     internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
-        set(_) {
-            throw UnsupportedOperationException("BaseRealm reference should never be updated")
-        }
+        set(_) = throw UnsupportedOperationException("BaseRealm reference should never be updated")
 
     override fun realmLifeCycle(): RealmLifeCycle {
         return realmReference
@@ -68,17 +63,7 @@ internal abstract class BaseRealmImpl internal constructor(
         log.info("Realm opened: ${configuration.path}")
     }
 
-    /**
-     * Returns the results of querying for all objects of a specific type.
-     *
-     * For a [Realm] instance this reflects the state of the realm at the invocation time, thus
-     * the results will not change on updates to the Realm. For a [MutableRealm] the result is live
-     * and will in fact reflect updates to the [MutableRealm].
-     *
-     * @param clazz The class of the objects to query for.
-     * @return The result of the query as of the time of invoking this method.
-     */
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
+    open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
         // Use same reference through out all operations to avoid locking
         val realmReference = this.realmReference
         realmReference.checkClosed()
@@ -93,56 +78,39 @@ internal abstract class BaseRealmImpl internal constructor(
             configuration.mediator
         )
     }
-    /**
-     * Returns the results of querying for all objects of a specific type.
-     *
-     * Convenience inline method to catch the reified class type of single argument variant of [objects].
-     *
-     * @param T The type of the objects to query for.
-     * @return The result of the query. Dependent of the type of the Realm this will either reflect
-     * for [Realm]: the state at invocation or for [MutableRealm] the latest updated state of the
-     * mutable realm.
-     */
-    inline fun <reified T : RealmObject> objects(): RealmResults<T> { return objects(T::class) }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerResultsObserver(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
-    internal open fun <T : RealmObject> registerListObserver(list: List<T>): Flow<List<T>> {
-        throw NotImplementedError(observablesNotSupportedMessage)
+    internal open fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
-        throw NotImplementedError(observablesNotSupportedMessage)
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
-    /**
-     * Returns the current number of active versions in the Realm file. A large number of active versions can have
-     * a negative impact on the Realm file size on disk.
-     *
-     * @see [RealmConfiguration.Builder.maxNumberOfActiveVersions]
-     */
     override fun getNumberOfActiveVersions(): Long {
         val reference = realmReference
         reference.checkClosed()

@@ -30,6 +30,18 @@ import kotlin.test.assertTrue
 class SchemaTests {
 
     @Test
+    fun defaultConfig() {
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
+        assertEquals(setOf(Sample::class), config.schema)
+        assertEquals<Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>>(
+            mapOf(
+                Sample::class to (Sample as io.realm.internal.RealmObjectCompanion)
+            ),
+            config.companionMap
+        )
+    }
+
+    @Test
     fun usingNamedArgument() {
         val conf = RealmConfiguration.Builder(schema = setOf(Sample::class, Parent::class, Child::class)).build()
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)

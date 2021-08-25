@@ -79,23 +79,8 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
         return model as T
     }
 
-    /**
-     * Perform a query on the objects of this result using the Realm Query Language.
-     *
-     * See [these docs](https://docs.mongodb.com/realm-sdks/java/latest/io/realm/RealmQuery.html#rawPredicate-java.lang.String-java.lang.Object...-)
-     * for a description of the equivalent realm-java API and
-     * [these docs](https://docs.mongodb.com/realm-sdks/js/latest/tutorial-query-language.html)
-     * for a more detailed description of the actual Realm Query Language.
-     *
-     * Ex.:
-     *  `'color = "tan" AND name BEGINSWITH "B" SORT(name DESC) LIMIT(5)`
-     *
-     * @param query The query string to use for filtering and sort.
-     * @param args The query parameters.
-     * @return new result according to the query and query arguments.
-     */
     @Suppress("SpreadOperator")
-    override fun query(query: String, vararg args: Any): RealmResultsImpl<T> {
+    override fun query(query: String, vararg args: Any?): RealmResultsImpl<T> {
         return fromQuery(
             realm,
             RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args),
@@ -116,23 +101,11 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
         return realm.owner.registerResultsChangeListener(this, callback)
     }
 
-    /**
-     * Observe changes to the RealmResult. If there is any change to objects represented by the query
-     * backing the RealmResult, the flow will emit the updated RealmResult. The flow will continue
-     * running indefinitely until canceled.
-     *
-     * The change calculations will on on the thread represented by [RealmConfiguration.notificationDispatcher].
-     *
-     * @return a flow representing changes to the RealmResults.
-     */
     override fun observe(): Flow<RealmResultsImpl<T>> {
         realm.checkClosed()
         return realm.owner.registerResultsObserver(this)
     }
 
-    /**
-     * Delete all objects from this result from the realm.
-     */
     override fun delete() {
         // TODO OPTIMIZE Are there more efficient ways to do this? realm_query_delete_all is not
         //  available in C-API yet, but should probably await final query design

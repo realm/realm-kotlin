@@ -26,7 +26,7 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versioned {
      * @return new result according to the query and query arguments.
      */
     @Suppress("SpreadOperator")
-    override fun query(query: String, vararg args: Any): RealmResults<T>
+    override fun query(query: String, vararg args: Any?): RealmResults<T>
 
     /**
      * Observe changes to the RealmResult. If there is any change to objects represented by the query
