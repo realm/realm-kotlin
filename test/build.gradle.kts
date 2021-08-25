@@ -18,16 +18,12 @@ plugins {
     id("com.android.library") apply false
     id("realm-lint")
     `java-gradle-plugin`
-    id("realm-publisher")
 }
 
 allprojects {
     repositories {
         jcenter()
     }
-
-    version = Realm.version
-    group = Realm.group
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "${Versions.jvmTarget}"

@@ -203,6 +203,7 @@ internal object TypeDescriptor {
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> "List<$element>"
                 CollectionType.RLM_COLLECTION_TYPE_SET -> TODO()
                 CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> TODO()
+                else -> throw IllegalArgumentException("Wrong collection type: $collectionType")
             }
         }
 
@@ -248,7 +249,7 @@ internal object TypeDescriptor {
         }
     }
 
-    private fun elementType(type: KType) = when (collectionType(type)) {
+    private fun elementType(type: KType) = when (val collectionType = collectionType(type)) {
         CollectionType.RLM_COLLECTION_TYPE_NONE ->
             type
         CollectionType.RLM_COLLECTION_TYPE_SET,
@@ -256,5 +257,6 @@ internal object TypeDescriptor {
             type.arguments[0].type!!
         CollectionType.RLM_COLLECTION_TYPE_DICTIONARY ->
             type.arguments[1].type!!
+        else -> throw IllegalArgumentException("Wrong collection type: $collectionType")
     }
 }

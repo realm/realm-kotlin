@@ -17,10 +17,9 @@
 includeBuild("../packages")
 
 include("local")
+include("sync")
 
 pluginManagement {
-    plugins {
-    }
     repositories {
         gradlePluginPortal()
         google()

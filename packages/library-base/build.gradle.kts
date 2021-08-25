@@ -31,6 +31,11 @@ buildscript {
     }
 }
 apply(plugin = "kotlinx-atomicfu")
+// AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
+// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
+project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
+    transformJvm = false
+}
 
 repositories {
     google()
@@ -41,6 +46,12 @@ repositories {
 
 // Common Kotlin configuration
 kotlin {
+    jvm()
+    android("android") {
+        publishLibraryVariants("release", "debug")
+    }
+    ios()
+    macosX64("macos") {}
     sourceSets {
         commonMain {
             dependencies {
@@ -50,8 +61,6 @@ kotlin {
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
-                api(project(":library"))
-
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
@@ -62,6 +71,46 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
+        }
+        create("jvm") {
+            dependsOn(getByName("commonMain"))
+            kotlin.srcDir("src/jvm/kotlin")
+        }
+        getByName("jvmMain") {
+            dependsOn(getByName("jvm"))
+        }
+        getByName("androidMain") {
+            dependsOn(getByName("jvm"))
+            dependencies {
+                api(project(":cinterop"))
+                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
+            }
+        }
+        getByName("androidTest") {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+                implementation("junit:junit:${Versions.junit}")
+                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
+                implementation("androidx.test:runner:${Versions.androidxTest}")
+                implementation("androidx.test:rules:${Versions.androidxTest}")
+                implementation(kotlin("reflect:${Versions.kotlin}"))
+            }
+        }
+        getByName("macosMain") {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwin/kotlin")
+        }
+        getByName("iosArm64Main") {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwin/kotlin")
+            kotlin.srcDir("src/ios/kotlin")
+        }
+        getByName("iosX64Main") {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwin/kotlin")
+            kotlin.srcDir("src/ios/kotlin")
         }
     }
 
@@ -75,17 +124,6 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
-}
-
-// AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
-// ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
-project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
-    transformJvm = false
-}
-
-// JVM
-kotlin {
-    jvm()
 }
 
 // Android configuration
@@ -107,6 +145,9 @@ android {
                 }
             }
         }
+        ndk {
+            abiFilters += setOf("x86_64", "arm64-v8a")
+        }
     }
 
     buildTypes {
@@ -114,90 +155,12 @@ android {
             consumerProguardFiles("proguard-rules-consumer-common.pro")
         }
     }
-
-    dependencies {
-        implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
-    }
     // To avoid
     // Failed to transform kotlinx-coroutines-core-jvm-1.5.0-native-mt.jar ...
     // The dependency contains Java 8 bytecode. Please enable desugaring by adding the following to build.gradle
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
-
-kotlin {
-    android("android") {
-        publishLibraryVariants("release", "debug")
-    }
-    sourceSets {
-        getByName("androidMain") {
-            kotlin.srcDir("src/androidMain/kotlin")
-            dependencies {
-                api(project(":library"))
-                api(project(":cinterop"))
-            }
-        }
-
-        getByName("androidTest") {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation(kotlin("test-junit"))
-                implementation("junit:junit:${Versions.junit}")
-                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
-                implementation("androidx.test:runner:${Versions.androidxTest}")
-                implementation("androidx.test:rules:${Versions.androidxTest}")
-                implementation(kotlin("reflect:${Versions.kotlin}"))
-            }
-        }
-    }
-}
-
-kotlin {
-    sourceSets {
-        create("darwinCommon") {
-            dependsOn(getByName("commonMain"))
-        }
-    }
-}
-
-// IOS Configuration
-kotlin {
-    // For ARM, should be changed to iosArm32 or iosArm64
-    // For Linux, should be changed to e.g. linuxX64
-    // For MacOS, should be changed to e.g. macosX64
-    // For Windows, should be changed to e.g. mingwX64
-    ios()
-    sourceSets {
-        getByName("iosMain") {
-            dependsOn(getByName("darwinCommon"))
-        }
-        getByName("iosX64Main") {
-            dependsOn(getByName("iosMain"))
-        }
-        getByName("iosArm64Main") {
-            dependsOn(getByName("iosMain"))
-        }
-        getByName("iosTest") {
-        }
-    }
-}
-
-// Macos configuration
-kotlin {
-    // For ARM, should be changed to iosArm32 or iosArm64
-    // For Linux, should be changed to e.g. linuxX64
-    // For MacOS, should be changed to e.g. macosX64
-    // For Windows, should be changed to e.g. mingwX64
-    macosX64("macos") {}
-    sourceSets {
-        getByName("macosMain") {
-            dependsOn(getByName("darwinCommon"))
-        }
-        getByName("macosTest") {
-        }
     }
 }
 
@@ -218,8 +181,8 @@ kotlin {
 
 realmPublish {
     pom {
-        name = "Sync"
-        description = "Sync code for Realm Kotlin. This artifact is not " +
+        name = "Library"
+        description = "Library code for Realm Kotlin. This artifact is not " +
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
@@ -240,6 +203,11 @@ tasks.dokkaHtml.configure {
             jdkVersion.set(8)
         }
         val commonMain by getting {
+            includes.from(
+                "overview.md",
+                "src/commonMain/kotlin/io/realm/info.md",
+                "src/commonMain/kotlin/io/realm/log/info.md"
+            )
             sourceRoot("../runtime-api/src/commonMain/kotlin")
         }
     }
@@ -255,7 +223,7 @@ tasks.register("uploadDokka") {
 
         // Failsafe check, ensuring that we catch if the path ever changes, which it might since it is an
         // implementation detail of the Kotlin Gradle Plugin
-        val dokkaDir = File("$rootDir/library/build/dokka/html")
+        val dokkaDir = File("$rootDir/library-base/build/dokka/html")
         if (!dokkaDir.exists() || !dokkaDir.isDirectory || dokkaDir.listFiles().isEmpty()) {
             throw GradleException("Could not locate dir with dokka files in: ${dokkaDir.path}")
         }

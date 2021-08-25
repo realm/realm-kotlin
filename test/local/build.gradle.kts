@@ -40,7 +40,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
-                implementation("io.realm.kotlin:library:${Realm.version}")
+                implementation("io.realm.kotlin:library-base:${Realm.version}")
                 // FIXME API-SCHEMA We currently have some tests that verified injection of
                 //  interfaces, uses internal representation for property meta data, etc. Can
                 //  probably be replaced when schema information is exposed in the public API
