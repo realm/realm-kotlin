@@ -56,22 +56,21 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":library-base"))
-//                implementation(kotlin("stdlib-common"))
-//                implementation(kotlin("reflect"))
-//                // If runtimeapi is merged with cinterop then we will be exposing both to the users
-//                // Runtime holds annotations, etc. that has to be exposed to users
-//                // Cinterop does not hold anything required by users
-//                implementation(project(":cinterop"))
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-//                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+                implementation(kotlin("stdlib-common"))
+                implementation(kotlin("reflect"))
+                // If runtimeapi is merged with cinterop then we will be exposing both to the users
+                // Runtime holds annotations, etc. that has to be exposed to users
+                // Cinterop does not hold anything required by users
+                implementation(project(":cinterop"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
 
         commonTest {
             dependencies {
-                api(project(":library-base"))
-//                implementation(kotlin("test-common"))
-//                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
             }
         }
         create("jvm") {
@@ -84,22 +83,20 @@ kotlin {
         getByName("androidMain") {
             dependsOn(getByName("jvm"))
             dependencies {
-                api(project(":library-base"))
-//                api(project(":cinterop"))
-//                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
+                api(project(":cinterop"))
+                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
         getByName("androidTest") {
             dependencies {
-                api(project(":library-base"))
-//                implementation(kotlin("test"))
-//                implementation(kotlin("test-junit"))
-//                implementation("junit:junit:${Versions.junit}")
-//                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
-//                implementation("androidx.test:runner:${Versions.androidxTest}")
-//                implementation("androidx.test:rules:${Versions.androidxTest}")
-//                implementation(kotlin("reflect:${Versions.kotlin}"))
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+                implementation("junit:junit:${Versions.junit}")
+                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
+                implementation("androidx.test:runner:${Versions.androidxTest}")
+                implementation("androidx.test:rules:${Versions.androidxTest}")
+                implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
         getByName("macosMain") {
@@ -207,11 +204,6 @@ tasks.dokkaHtml.configure {
             jdkVersion.set(8)
         }
         val commonMain by getting {
-//            includes.from(
-//                "overview.md",
-//                "src/commonMain/kotlin/io/realm/info.md",
-//                "src/commonMain/kotlin/io/realm/log/info.md"
-//            )
             sourceRoot("../runtime-api/src/commonMain/kotlin")
         }
     }
