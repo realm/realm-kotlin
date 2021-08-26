@@ -17,7 +17,6 @@
 package io.realm.internal
 
 import io.realm.RealmObject
-import io.realm.VersionId
 import io.realm.isValid
 
 /**
@@ -40,7 +39,6 @@ internal interface RealmObjectInternal : RealmObject, RealmLifeCycleHolder, io.r
     override fun realmLifeCycle(): RealmLifeCycle {
         return `$realm$Owner` ?: UnmanagedLifeCycle
     }
-
 }
 
 internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {

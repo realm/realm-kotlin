@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.declarations.IrOverridableMember
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
@@ -65,18 +64,19 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // FIXME Generalize into receiver and list of Names
             val realmObjectInternalOverrides =
                 realmObjectInternalInterface.owner.declarations.filterIsInstance<IrSimpleFunction>() // IrOverridableMember
-                    .filter { it.name in setOf("isFrozen", "realmLifeCycle", "version").map{ Name.identifier(it) } }
-            for (fakeOverrideFunction in realmObjectInternalOverrides)
-            irClass.addFunction {
-                updateFrom(fakeOverrideFunction)
-                name = fakeOverrideFunction.name
-                returnType = fakeOverrideFunction.returnType
-                origin = IrDeclarationOrigin.FAKE_OVERRIDE
-                isFakeOverride = true
-            }.apply {
-                this.overriddenSymbols = listOf(fakeOverrideFunction.symbol)
-                dispatchReceiverParameter =
-                    realmObjectInternalInterface.owner.thisReceiver!!.copyTo(this)
+                    .filter { it.name in setOf("isFrozen", "realmLifeCycle", "version").map { Name.identifier(it) } }
+            for (fakeOverrideFunction in realmObjectInternalOverrides) {
+                irClass.addFunction {
+                    updateFrom(fakeOverrideFunction)
+                    name = fakeOverrideFunction.name
+                    returnType = fakeOverrideFunction.returnType
+                    origin = IrDeclarationOrigin.FAKE_OVERRIDE
+                    isFakeOverride = true
+                }.apply {
+                    this.overriddenSymbols = listOf(fakeOverrideFunction.symbol)
+                    dispatchReceiverParameter =
+                        realmObjectInternalInterface.owner.thisReceiver!!.copyTo(this)
+                }
             }
 
             // Add body for synthetic companion methods
