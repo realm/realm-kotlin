@@ -41,9 +41,6 @@ internal interface RealmObjectInternal : RealmObject, RealmLifeCycleHolder, io.r
         return `$realm$Owner` ?: UnmanagedLifeCycle
     }
 
-    override fun version(): VersionId {
-        return super<RealmLifeCycleHolder>.version()
-    }
 }
 
 internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {

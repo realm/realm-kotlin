@@ -23,13 +23,19 @@ import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower
+import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.IrOverridableMember
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.name.Name
 
 class RealmModelLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
@@ -42,8 +48,10 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
     override fun lower(irClass: IrClass) {
         if (irClass.hasRealmModelInterface) {
             // add super type RealmObjectInternal and RealmObjectInterop
-            val realmObjectInteropInterface: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTEROP_INTERFACE).symbol
-            val realmObjectInternalInterface: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE).symbol
+            val realmObjectInteropInterface: IrClassSymbol =
+                pluginContext.lookupClassOrThrow(REALM_OBJECT_INTEROP_INTERFACE).symbol
+            val realmObjectInternalInterface: IrClassSymbol =
+                pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE).symbol
             irClass.superTypes += realmObjectInteropInterface.defaultType
             irClass.superTypes += realmObjectInternalInterface.defaultType
 
@@ -53,6 +61,23 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
+
+            // FIXME Generalize into receiver and list of Names
+            val realmObjectInternalOverrides =
+                realmObjectInternalInterface.owner.declarations.filterIsInstance<IrSimpleFunction>() // IrOverridableMember
+                    .filter { it.name in setOf("isFrozen", "realmLifeCycle", "version").map{ Name.identifier(it) } }
+            for (fakeOverrideFunction in realmObjectInternalOverrides)
+            irClass.addFunction {
+                updateFrom(fakeOverrideFunction)
+                name = fakeOverrideFunction.name
+                returnType = fakeOverrideFunction.returnType
+                origin = IrDeclarationOrigin.FAKE_OVERRIDE
+                isFakeOverride = true
+            }.apply {
+                this.overriddenSymbols = listOf(fakeOverrideFunction.symbol)
+                dispatchReceiverParameter =
+                    realmObjectInternalInterface.owner.thisReceiver!!.copyTo(this)
+            }
 
             // Add body for synthetic companion methods
             val companion = irClass.companionObject() ?: error("RealmObject without companion")
