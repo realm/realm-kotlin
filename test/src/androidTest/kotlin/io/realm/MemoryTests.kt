@@ -21,8 +21,8 @@ import android.os.Process
 import android.text.format.Formatter
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import io.realm.util.PlatformUtils
-import io.realm.util.PlatformUtils.triggerGC
+import io.realm.test.platform.PlatformUtils
+import io.realm.test.platform.PlatformUtils.triggerGC
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -165,7 +165,7 @@ class MemoryTests {
     }
 
     private fun openRealmFromTmpDir(): Realm {
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        return Realm(configuration)
+        val configuration = RealmConfiguration.defaultConfig(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        return Realm.open(configuration)
     }
 }

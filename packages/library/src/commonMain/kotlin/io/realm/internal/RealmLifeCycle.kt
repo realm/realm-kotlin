@@ -17,12 +17,44 @@
 package io.realm.internal
 
 import io.realm.VersionId
+import io.realm.Versioned
 
 /**
  * A RealmLifeCycle exposes common methods to query the state of any Realm object.
  */
-internal interface RealmLifeCycle {
-    fun version(): VersionId
+internal interface RealmLifeCycle : Versioned {
     fun isFrozen(): Boolean
     fun isClosed(): Boolean
+}
+
+// Singleton instance acting as implementation for all unmanaged objects
+object UnmanagedLifeCycle : RealmLifeCycle {
+    override fun version(): VersionId {
+        throw IllegalArgumentException("Cannot access life cycle information on unmanaged object")
+    }
+
+    override fun isFrozen(): Boolean {
+        throw IllegalArgumentException("Cannot access life cycle information on unmanaged object")
+    }
+
+    override fun isClosed(): Boolean {
+        throw IllegalArgumentException("Cannot access life cycle information on unmanaged object")
+    }
+}
+
+// Default implementation for all objects that can provide a realmLifeCycle instance
+internal interface RealmLifeCycleHolder : RealmLifeCycle {
+    fun realmLifeCycle(): RealmLifeCycle
+
+    override fun version(): VersionId {
+        return realmLifeCycle().version()
+    }
+
+    override fun isFrozen(): Boolean {
+        return realmLifeCycle().isFrozen()
+    }
+
+    override fun isClosed(): Boolean {
+        return realmLifeCycle().isClosed()
+    }
 }

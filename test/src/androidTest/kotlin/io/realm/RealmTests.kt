@@ -15,7 +15,7 @@
  */
 package io.realm
 
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import kotlinx.coroutines.runBlocking
 import test.link.Child
@@ -34,7 +34,7 @@ class RealmTests {
     private lateinit var realm: Realm
 
     private val configuration: RealmConfiguration by lazy {
-        RealmConfiguration(
+        RealmConfiguration.defaultConfig(
             path = "$tmpDir/${createRandomString(16)}.realm",
             schema = setOf(Parent::class, Child::class)
         )
@@ -43,7 +43,7 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        realm = Realm(configuration)
+        realm = Realm.open(configuration)
     }
 
     @AfterTest

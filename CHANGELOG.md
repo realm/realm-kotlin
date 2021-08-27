@@ -1,4 +1,27 @@
-## 0.5.0 (YYYY-MM-DD)
+## 0.6.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* Abstracted public API into interfaces. The interfaces have kept the name of the previous classes so only differences are:
+  - Opening a realm: `Realm(configuration)` has changed to `Realm.openBlocking(configuration)`
+  - Easy construction of simple configurations: `RealmConfiguration(schema = ...)` has changed to `RealmConfiguration.defaultConfig(schema = ...)`
+* Make argument to `findLatest` non-nullable: `MutableRealm.findLatest(obj: T?): T?` has changed to `MutableRealm.findLatest(obj: T): T?`
+* Allow query arguments to be `null`: `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>` has change to `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any?): RealmResults<T>`
+* Moved `objects(KClass<T>)` and `<reified T> objects()` methods from `BaseRealm` to `TypedRealm`
+* Changed `RealmObject.version` into method `RealmObject.version()`.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+
+### Internal
+* None.
+
+## 0.5.0 (2021-08-20)
 
 ### Breaking Changes
 * Moved `@PrimaryKey` annotation from `io.realm.PrimaryKey` to `io.realm.annotations.PrimaryKey`.
@@ -12,16 +35,37 @@
 ### Fixed
 * Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
 * Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
+* Fix optimizations bypassing our custom getter and setter from within a class (Issue [#375](https://github.com/realm/realm-kotlin/issues/375)).
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
 
 ### Internal
+* Updated to Kotlin 1.5.21.
 * Updated Gradle to 7.1.1.
 * Updated Android Gradle Plugin to 4.1.0.
 * Updated to Android Build Tools 30.0.2.
 * Updated to targetSdk 30 for Android.
 * Now uses Java 11 to build the project.
+
+
+## 0.4.1 (2021-07-16)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Throw exception when violating primary key uniqueness constraint when importing objects with `copyToRealm`.
+* Fix crash caused by premature release of frozen versions (`java.lang.RuntimeException: [18]: Access to invalidated Results objects`)
+
+### Compatibility
+* This release is compatible with Kotlin 1.5.10 and Coroutines 1.5.0.
+
+### Internal
+* None.
 
 
 ## 0.4.0 (2021-07-13)

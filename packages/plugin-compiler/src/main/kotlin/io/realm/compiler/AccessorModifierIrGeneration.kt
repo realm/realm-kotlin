@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -353,113 +354,119 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         }
         val getter = property.getter
         val setter = property.setter
-        getter?.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
-            override fun visitReturn(expression: IrReturn): IrExpression {
-                return IrBlockBuilder(
-                    pluginContext,
-                    Scope(getter.symbol),
-                    expression.startOffset,
-                    expression.endOffset
-                ).irBlock {
-                    val receiver = getter.dispatchReceiverParameter!!
-                    val cinteropCall =
-                        irCall(
-                            callee = getFunction,
-                            origin = IrStatementOrigin.GET_PROPERTY
-                        ).also {
-                            it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
-                        }.apply {
-                            // TODO consider abstracting parameter addition
-                            putTypeArgument(0, type)
-                            putValueArgument(0, irGet(receiver))
-                            putValueArgument(1, irString(property.name.identifier))
+        getter?.apply {
+            origin = IrDeclarationOrigin.DEFINED
+            body?.transformChildrenVoid(object : IrElementTransformerVoid() {
+                override fun visitReturn(expression: IrReturn): IrExpression {
+                    return IrBlockBuilder(
+                        pluginContext,
+                        Scope(getter.symbol),
+                        expression.startOffset,
+                        expression.endOffset
+                    ).irBlock {
+                        val receiver = getter.dispatchReceiverParameter!!
+                        val cinteropCall =
+                            irCall(
+                                callee = getFunction,
+                                origin = IrStatementOrigin.GET_PROPERTY
+                            ).also {
+                                it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                            }.apply {
+                                // TODO consider abstracting parameter addition
+                                putTypeArgument(0, type)
+                                putValueArgument(0, irGet(receiver))
+                                putValueArgument(1, irString(property.name.identifier))
 
 //                            // Check if the collection type is a subclass of RealmObject
 //                            // If so, a flag needs to be added as a parameter
 //                            // This is due to Kotlin Native being unable to retrieve the related
 //                            // supertypes in runtime
 //                            if (collectionType != CollectionType.NONE) {
-//                                val supertypes = (type as IrSimpleType).classifier.descriptor
-//                                    .typeConstructor.supertypes
-//                                if (inheritsFromRealmObject(supertypes)) {
-//                                    putValueArgument(2, irBoolean(true))
-//                                }
-//                            }
-                        }
-
-                    val cinteropExpression = if (fromLongToType != null) {
-                        irCall(fromLongToType).also {
-                            it.dispatchReceiver = cinteropCall
-                        }
-                    } else {
-                        cinteropCall
-                    }
-                    +irReturn(
-                        irIfThenElse(
-                            getter.returnType,
-                            isManagedCall(receiver),
-                            // For managed property call C-Interop function
-                            cinteropExpression,
-                            // For unmanaged property call backing field value
-                            irGetField(irGet(receiver), backingField),
-                            origin = IrStatementOrigin.IF,
-                        )
-                    )
-                }
-            }
-        })
-
-        // Setter function is null when working with immutable properties
-        if (setFunction != null) {
-            setter?.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
-                override fun visitSetField(expression: IrSetField): IrExpression {
-                    return IrBlockBuilder(
-                        pluginContext,
-                        Scope(setter.symbol),
-                        expression.startOffset,
-                        expression.endOffset
-                    ).irBlock {
-                        val receiver = property.setter!!.dispatchReceiverParameter!!
-                        val cinteropCall =
-                            irCall(
-                                callee = setFunction,
-                                origin = IrStatementOrigin.GET_PROPERTY
-                            ).also {
-                                it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
-                            }.apply {
-                                if (type != null) {
-                                    putTypeArgument(0, type)
-                                }
-                                putValueArgument(0, irGet(receiver))
-                                putValueArgument(1, irString(property.name.identifier))
-                                val argumentExpression = if (functionTypeToLong != null) {
-                                    irCall(functionTypeToLong).also {
-                                        it.dispatchReceiver = irGet(setter.valueParameters.first())
-                                    }
-                                } else {
-                                    irGet(setter.valueParameters.first())
-                                }
-                                putValueArgument(2, argumentExpression)
+    //                                val supertypes = (type as IrSimpleType).classifier.descriptor
+    //                                    .typeConstructor.supertypes
+    //                                if (inheritsFromRealmObject(supertypes)) {
+    //                                    putValueArgument(2, irBoolean(true))
+    //                                }
+    //                            }
                             }
 
+                        val cinteropExpression = if (fromLongToType != null) {
+                            irCall(fromLongToType).also {
+                                it.dispatchReceiver = cinteropCall
+                            }
+                        } else {
+                            cinteropCall
+                        }
                         +irReturn(
                             irIfThenElse(
-                                pluginContext.irBuiltIns.unitType,
+                                getter.returnType,
                                 isManagedCall(receiver),
                                 // For managed property call C-Interop function
-                                cinteropCall,
-                                // For unmanaged property set backing field
-                                irSetField(
-                                    irGet(receiver),
-                                    backingField,
-                                    irGet(setter.valueParameters.first())
-                                ),
-                                origin = IrStatementOrigin.IF
+                                cinteropExpression,
+                                // For unmanaged property call backing field value
+                                irGetField(irGet(receiver), backingField),
+                                origin = IrStatementOrigin.IF,
                             )
                         )
                     }
                 }
             })
+        }
+
+        // Setter function is null when working with immutable properties
+        if (setFunction != null) {
+            setter?.apply {
+                origin = IrDeclarationOrigin.DEFINED
+                body?.transformChildrenVoid(object : IrElementTransformerVoid() {
+                    override fun visitSetField(expression: IrSetField): IrExpression {
+                        return IrBlockBuilder(
+                            pluginContext,
+                            Scope(setter.symbol),
+                            expression.startOffset,
+                            expression.endOffset
+                        ).irBlock {
+                            val receiver = property.setter!!.dispatchReceiverParameter!!
+                            val cinteropCall =
+                                irCall(
+                                    callee = setFunction,
+                                    origin = IrStatementOrigin.GET_PROPERTY
+                                ).also {
+                                    it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                                }.apply {
+                                    if (type != null) {
+                                        putTypeArgument(0, type)
+                                    }
+                                    putValueArgument(0, irGet(receiver))
+                                    putValueArgument(1, irString(property.name.identifier))
+                                    val argumentExpression = if (functionTypeToLong != null) {
+                                        irCall(functionTypeToLong).also {
+                                            it.dispatchReceiver = irGet(setter.valueParameters.first())
+                                        }
+                                    } else {
+                                        irGet(setter.valueParameters.first())
+                                    }
+                                    putValueArgument(2, argumentExpression)
+                                }
+
+                            +irReturn(
+                                irIfThenElse(
+                                    pluginContext.irBuiltIns.unitType,
+                                    isManagedCall(receiver),
+                                    // For managed property call C-Interop function
+                                    cinteropCall,
+                                    // For unmanaged property set backing field
+                                    irSetField(
+                                        irGet(receiver),
+                                        backingField,
+                                        irGet(setter.valueParameters.first())
+                                    ),
+                                    origin = IrStatementOrigin.IF
+                                )
+                            )
+                        }
+                    }
+                })
+            }
         }
     }
 

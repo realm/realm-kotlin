@@ -18,8 +18,8 @@ package io.realm.shared.notifications
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.internal.singleThreadDispatcher
-import io.realm.util.PlatformUtils
+import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils
 import kotlinx.coroutines.runBlocking
 import test.Sample
@@ -40,8 +40,8 @@ class SystemNotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        realm = Realm(configuration)
+            RealmConfiguration.defaultConfig(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
@@ -56,7 +56,7 @@ class SystemNotificationTests {
     @Test
     fun multipleSchedulersOnSameThread() {
         Utils.printlntid("main")
-        val baseRealm = Realm(configuration)
+        val baseRealm = Realm.open(configuration) as io.realm.internal.RealmImpl
         val dispatcher = singleThreadDispatcher("background")
         val writer1 = io.realm.internal.SuspendableWriter(baseRealm, dispatcher)
         val writer2 = io.realm.internal.SuspendableWriter(baseRealm, dispatcher)

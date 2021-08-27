@@ -17,9 +17,9 @@
 
 package io.realm
 
-import io.realm.util.PlatformUtils.createTempDir
-import io.realm.util.PlatformUtils.deleteTempDir
-import io.realm.util.PlatformUtils.triggerGC
+import io.realm.test.platform.PlatformUtils.createTempDir
+import io.realm.test.platform.PlatformUtils.deleteTempDir
+import io.realm.test.platform.PlatformUtils.triggerGC
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
@@ -140,8 +140,8 @@ class MemoryTests {
     }
 
     private fun openRealmFromTmpDir(): Realm {
-        val configuration = RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        return Realm(configuration)
+        val configuration = RealmConfiguration.defaultConfig(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        return Realm.open(configuration)
     }
 
     private fun runSystemCommand(cmd: String): String {

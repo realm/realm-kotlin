@@ -18,7 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.util.TypeDescriptor.rType
 import io.realm.util.Utils.createRandomString
@@ -64,7 +64,7 @@ class PrimaryKeyTests {
                     NoPrimaryKey::class
                 )
                 .build()
-        realm = Realm(configuration)
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
@@ -193,9 +193,10 @@ class PrimaryKeyTests {
             )
             .build()
 
-        val mediator = configuration.mediator
+//        @Suppress("invisible_reference", "invisible_member")
+        val mediator = (configuration as io.realm.internal.RealmConfigurationImpl).mediator
 
-        val realm = Realm(configuration)
+        val realm = Realm.open(configuration)
 
         realm.writeBlocking {
             val types = allPrimaryKeyFieldTypes.toMutableSet()

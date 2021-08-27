@@ -4,8 +4,8 @@ import io.realm.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
-import io.realm.internal.runBlocking
-import io.realm.util.PlatformUtils
+import io.realm.internal.platform.runBlocking
+import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
@@ -26,8 +26,8 @@ class RealmNotificationsTests : NotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        realm = Realm(configuration)
+            RealmConfiguration.defaultConfig(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
@@ -42,13 +42,13 @@ class RealmNotificationsTests : NotificationTests {
     override fun initialElement() {
         runBlocking {
             val c = Channel<Realm>(1)
-            val startingVersion = realm.version
+            val startingVersion = realm.version()
             val observer = async {
                 realm.observe().collect {
                     c.send(it)
                 }
             }
-            assertEquals(startingVersion, c.receive().version)
+            assertEquals(startingVersion, c.receive().version())
             observer.cancel()
             c.close()
         }
@@ -58,15 +58,15 @@ class RealmNotificationsTests : NotificationTests {
     override fun observe() {
         runBlocking {
             val c = Channel<Realm>(1)
-            val startingVersion = realm.version
+            val startingVersion = realm.version()
             val observer = async {
                 realm.observe().collect {
                     c.send(it)
                 }
             }
-            assertEquals(startingVersion, c.receive().version)
+            assertEquals(startingVersion, c.receive().version())
             realm.write { /* Do nothing */ }
-            c.receive().version.let { updatedVersion ->
+            c.receive().version().let { updatedVersion ->
                 assertEquals(VersionId(startingVersion.version + 1), updatedVersion)
             }
             observer.cancel()

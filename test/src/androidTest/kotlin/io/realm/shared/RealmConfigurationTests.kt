@@ -17,10 +17,10 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.internal.PlatformHelper
-import io.realm.internal.runBlocking
+import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
-import io.realm.util.PlatformUtils
+import io.realm.test.platform.PlatformUtils
 import io.realm.util.TestLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
@@ -37,17 +37,28 @@ import kotlin.test.assertTrue
 class RealmConfigurationTests {
 
     @Test
-    fun defaultPath() {
-        val config = RealmConfiguration(schema = setOf(Sample::class))
+    fun defaultConfig() {
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertEquals(
-            "${PlatformHelper.appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            config.path
+        )
+        assertEquals(Realm.DEFAULT_FILE_NAME, config.name)
+        assertEquals(setOf(Sample::class), config.schema)
+    }
+
+    @Test
+    fun defaultPath() {
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
+        assertEquals(
+            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
             config.path
         )
 
         val configFromBuilder: RealmConfiguration =
             RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
         assertEquals(
-            "${PlatformHelper.appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
             configFromBuilder.path
         )
     }
@@ -56,7 +67,7 @@ class RealmConfigurationTests {
     fun path() {
         val realmPath = "HowToGetPlatformPath/default.realm"
 
-        val config = RealmConfiguration(path = realmPath, schema = setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(path = realmPath, schema = setOf(Sample::class))
         assertEquals(realmPath, config.path)
 
         val configFromBuilder: RealmConfiguration =
@@ -69,7 +80,7 @@ class RealmConfigurationTests {
         val realmPath = "<HowToGetPlatformPath>/custom.realm"
         val realmName = "my.realm"
 
-        val config = RealmConfiguration(realmPath, realmName, setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(realmPath, realmName, setOf(Sample::class))
         assertEquals(realmPath, config.path)
         // Correct assert: assertEquals("custom.realm", config.name)
         assertEquals("my.realm", config.name) // Current result
@@ -83,7 +94,7 @@ class RealmConfigurationTests {
 
     @Test
     fun defaultName() {
-        val config = RealmConfiguration(schema = setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertEquals(Realm.DEFAULT_FILE_NAME, config.name)
         assertTrue(config.path.endsWith(Realm.DEFAULT_FILE_NAME))
 
@@ -97,7 +108,7 @@ class RealmConfigurationTests {
     fun name() {
         val realmName = "my.realm"
 
-        val config = RealmConfiguration(name = realmName, schema = setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(name = realmName, schema = setOf(Sample::class))
         assertEquals(realmName, config.name)
         assertTrue(config.path.endsWith(realmName))
 
@@ -150,7 +161,7 @@ class RealmConfigurationTests {
 
     @Test
     fun defaultMaxNumberOfActiveVersions() {
-        val config = RealmConfiguration(schema = setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertEquals(Long.MAX_VALUE, config.maxNumberOfActiveVersions)
     }
 
@@ -171,7 +182,7 @@ class RealmConfigurationTests {
 
     @Test
     fun notificationDispatcherRealmConfigurationDefault() {
-        val configuration = RealmConfiguration(schema = setOf(Sample::class))
+        val configuration = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertTrue(configuration.notificationDispatcher is CoroutineDispatcher)
     }
 
@@ -190,7 +201,7 @@ class RealmConfigurationTests {
 
     @Test
     fun writeDispatcherRealmConfigurationDefault() {
-        val configuration = RealmConfiguration(schema = setOf(Sample::class))
+        val configuration = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertTrue(configuration.writeDispatcher is CoroutineDispatcher)
     }
 
@@ -212,7 +223,7 @@ class RealmConfigurationTests {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
         val threadId: ULong = runBlocking(configuration.writeDispatcher) { PlatformUtils.threadId() }
-        val realm = Realm(configuration)
+        val realm = Realm.open(configuration)
         realm.writeBlocking {
             assertEquals(threadId, PlatformUtils.threadId())
         }
@@ -221,7 +232,7 @@ class RealmConfigurationTests {
 
     @Test
     fun defaultSchemaVersionNumber() {
-        val config = RealmConfiguration(schema = setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertEquals(0, config.schemaVersion)
     }
 
@@ -233,7 +244,7 @@ class RealmConfigurationTests {
 
     @Test
     fun defaultDeleteRealmIfMigrationNeeded() {
-        val config = RealmConfiguration(schema = setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertFalse(config.deleteRealmIfMigrationNeeded)
     }
 
@@ -247,7 +258,7 @@ class RealmConfigurationTests {
 
     @Test
     fun defaultEncryptionKey() {
-        val config = RealmConfiguration(schema = setOf(Sample::class))
+        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertNull(config.encryptionKey)
     }
 

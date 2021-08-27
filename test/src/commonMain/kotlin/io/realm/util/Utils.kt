@@ -19,19 +19,7 @@ package io.realm.util
 
 import io.realm.Realm
 import io.realm.RealmObject
-import io.realm.internal.RealmObjectInternal
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-
-// Platform dependant helper methods
-expect object PlatformUtils {
-    fun createTempDir(): String
-    fun deleteTempDir(path: String)
-    @OptIn(ExperimentalTime::class)
-    fun sleep(duration: Duration)
-    fun threadId(): ULong
-    fun triggerGC()
-}
+import io.realm.test.platform.PlatformUtils
 
 // Platform independent helper methods
 object Utils {
@@ -53,7 +41,8 @@ object Utils {
  * This method control its own write transaction, so cannot be called inside a write transaction
  */
 suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
-    val realm = ((this as RealmObjectInternal).`$realm$Owner`!!).owner as Realm
+    @Suppress("invisible_reference", "invisible_member")
+    val realm = ((this as io.realm.internal.RealmObjectInternal).`$realm$Owner`!!).owner as Realm
     return realm.write {
         val liveObject: T = findLatest(this@update)!!
         block(liveObject)
