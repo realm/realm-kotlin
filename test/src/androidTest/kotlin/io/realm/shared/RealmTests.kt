@@ -18,7 +18,6 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
-import io.realm.internal.RealmReference
 import io.realm.internal.platform.WeakReference
 import io.realm.interop.NativePointer
 import io.realm.isManaged
@@ -85,37 +84,37 @@ class RealmTests {
 
     @Test
     fun initialVersion() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
     }
 
     @Test
     fun versionIncreaseOnWrite() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
         realm.writeBlocking { /* Do Nothing */ }
-        assertEquals(VersionId(3), realm.version)
+        assertEquals(VersionId(3), realm.version())
     }
 
     @Test
     fun versionDoesNotChangeWhenCancellingWrite() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
         realm.writeBlocking { cancelWrite() }
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
     }
 
     @Test
     fun versionThrowsIfRealmIsClosed() {
         realm.close()
-        assertFailsWith<IllegalStateException> { realm.version }
+        assertFailsWith<IllegalStateException> { realm.version() }
     }
 
     @Test
     fun versionInsideWriteIsLatest() {
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
         realm.writeBlocking {
-            assertEquals(INITIAL_VERSION, version)
+            assertEquals(INITIAL_VERSION, version())
             cancelWrite()
         }
-        assertEquals(INITIAL_VERSION, realm.version)
+        assertEquals(INITIAL_VERSION, realm.version())
     }
 
     @Test
@@ -397,7 +396,7 @@ class RealmTests {
         }
         realm.close()
         assertFailsWith<IllegalStateException> {
-            parent.version
+            parent.version()
         }
     }
 
@@ -418,7 +417,8 @@ class RealmTests {
         assertEquals(1, intermediateReferences.value.size)
     }
 
-    private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>>
+    @Suppress("invisible_reference")
+    private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>
         get() {
             @Suppress("invisible_member")
             return (realm as io.realm.internal.RealmImpl).intermediateReferences

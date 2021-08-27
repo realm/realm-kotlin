@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmObjectInternal.manage(
+internal fun <T : RealmObject> RealmObjectInternal.manage(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
@@ -42,7 +42,7 @@ fun <T : RealmObject> RealmObjectInternal.manage(
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmObjectInternal.link(
+internal fun <T : RealmObject> RealmObjectInternal.link(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
@@ -63,7 +63,7 @@ fun <T : RealmObject> RealmObjectInternal.link(
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
+internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val mediator = `$realm$Mediator`!!

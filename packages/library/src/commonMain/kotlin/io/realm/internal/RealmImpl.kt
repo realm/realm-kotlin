@@ -25,7 +25,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
-class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPointer: NativePointer) :
+internal class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPointer: NativePointer) :
     BaseRealmImpl(configuration, dbPointer), Realm {
 
     internal val realmScope: CoroutineScope =
@@ -138,10 +138,10 @@ class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPoi
     private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
         realmPointerMutex.withLock {
             val newVersion = newRealmReference.version()
-            log.debug("Updating Realm version: $version -> $newVersion")
+            log.debug("Updating Realm version: ${version()} -> $newVersion")
             // If we advance to a newer version then we should keep track of the preceding one,
             // otherwise just track the new one directly.
-            val untrackedReference = if (newVersion >= version) {
+            val untrackedReference = if (newVersion >= version()) {
                 val previousRealmReference = realmReference
                 realmReference = newRealmReference
                 previousRealmReference

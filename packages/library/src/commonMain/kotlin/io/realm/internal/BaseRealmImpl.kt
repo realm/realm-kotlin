@@ -21,17 +21,16 @@ import io.realm.Cancellable
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
-public abstract class BaseRealmImpl internal constructor(
+internal abstract class BaseRealmImpl internal constructor(
     override val configuration: RealmConfigurationImpl,
     dbPointer: NativePointer
-) : BaseRealm {
+) : BaseRealm, RealmLifeCycleHolder {
 
     private companion object {
         private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE = "Observing changes are not supported by this Realm."
@@ -50,9 +49,13 @@ public abstract class BaseRealmImpl internal constructor(
     internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
         set(_) = throw UnsupportedOperationException("BaseRealm reference should never be updated")
 
-    // TODO Could be abstracted into base implementation of RealmLifeCycle!?
-    override var version: VersionId = VersionId(0)
-        get() = realmReference.version()
+    override fun realmLifeCycle(): RealmLifeCycle {
+        return realmReference
+    }
+
+    override fun isClosed(): Boolean {
+        return super.isClosed()
+    }
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
@@ -112,10 +115,6 @@ public abstract class BaseRealmImpl internal constructor(
         val reference = realmReference
         reference.checkClosed()
         return RealmInterop.realm_get_num_versions(reference.dbPointer)
-    }
-
-    override fun isClosed(): Boolean {
-        return realmReference.isClosed()
     }
 
     // Not all sub classes of `BaseRealm` can be closed by users.

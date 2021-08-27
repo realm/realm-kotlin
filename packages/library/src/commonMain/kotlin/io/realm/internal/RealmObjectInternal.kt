@@ -27,7 +27,7 @@ import io.realm.isValid
  * [RealmObject].
  */
 @Suppress("VariableNaming")
-interface RealmObjectInternal : RealmObject, io.realm.interop.RealmObjectInterop {
+internal interface RealmObjectInternal : RealmObject, RealmLifeCycleHolder, io.realm.interop.RealmObjectInterop {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
@@ -35,9 +35,19 @@ interface RealmObjectInternal : RealmObject, io.realm.interop.RealmObjectInterop
     var `$realm$TableName`: String?
     var `$realm$IsManaged`: Boolean
     var `$realm$Mediator`: Mediator?
+
+    // Any methods added to this interface, needs to be fake overridden on the user classes by
+    // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
+    override fun realmLifeCycle(): RealmLifeCycle {
+        return `$realm$Owner` ?: UnmanagedLifeCycle
+    }
 }
 
-fun RealmObjectInternal.checkValid() {
+internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {
+    return this as RealmObjectInternal
+}
+
+internal fun RealmObjectInternal.checkValid() {
     if (!this.isValid()) {
         throw IllegalStateException("Cannot perform this operation on an invalid/deleted object")
     }

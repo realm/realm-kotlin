@@ -40,6 +40,7 @@ import kotlin.reflect.KClass
  * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
  * [MutableRealm.copyToRealm] method.
  */
+// FIXME Implement Versioned, RealmLifeCycle or what ever suits
 class RealmList<E> private constructor(
     private val delegate: RealmListApi<E>
 ) : MutableList<E> by delegate {
@@ -55,7 +56,7 @@ class RealmList<E> private constructor(
     /**
      * Constructs a RealmList in managed mode. For internal use only.
      */
-    constructor(
+    internal constructor(
         listPtr: NativePointer,
         metadata: OperatorMetadata
     ) : this(ManagedListDelegate(listPtr, metadata))
@@ -84,7 +85,7 @@ class RealmList<E> private constructor(
     /**
      * Metadata needed to correctly instantiate a list operator. For internal use only.
      */
-    data class OperatorMetadata(
+    internal data class OperatorMetadata(
         val clazz: KClass<*>,
         val mediator: Mediator,
         val realm: RealmReference
