@@ -20,7 +20,7 @@ import io.realm.internal.Freezable
 import io.realm.internal.Mediator
 import io.realm.internal.NativeComponent
 import io.realm.internal.RealmReference
-import io.realm.internal.copyToRealmIfNeeded
+import io.realm.internal.copyToRealm
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -78,7 +78,7 @@ internal class ManagedRealmList<E>(
         RealmInterop.realm_list_add(
             nativePointer,
             index.toLong(),
-            copyToRealmIfNeeded(metadata.mediator, metadata.realm, element)
+            copyToRealm(metadata.mediator, metadata.realm, element)
         )
     }
 
@@ -107,7 +107,7 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_set(
                 nativePointer,
                 index.toLong(),
-                copyToRealmIfNeeded(metadata.mediator, metadata.realm, element)
+                copyToRealm(metadata.mediator, metadata.realm, element)
             )
         )
     }
