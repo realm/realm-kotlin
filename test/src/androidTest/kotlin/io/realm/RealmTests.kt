@@ -34,16 +34,16 @@ class RealmTests {
     private lateinit var realm: Realm
 
     private val configuration: RealmConfiguration by lazy {
-        RealmConfiguration.Builder(
+        RealmConfiguration.defaultConfig(
             path = "$tmpDir/${createRandomString(16)}.realm",
             schema = setOf(Parent::class, Child::class)
-        ).build()
+        )
     }
 
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
     }
 
     @AfterTest

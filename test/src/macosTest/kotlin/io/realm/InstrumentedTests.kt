@@ -60,7 +60,7 @@ class InstrumentedTests {
             realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
-            val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+            val configuration = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
             @Suppress("invisible_member")
             realmModel.`$realm$Owner` = RealmReference(object : BaseRealmImpl(configuration as RealmConfigurationImpl, realmPointer) {}, realmPointer)
             realmModel.`$realm$TableName` = "Sample"

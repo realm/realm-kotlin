@@ -56,10 +56,10 @@ class EncryptionTests {
             .build()
 
         // Initializes an encrypted Realm
-        Realm.openBlocking(encryptedConf).close()
+        Realm.open(encryptedConf).close()
 
         // Should be possible to reopen an encrypted Realm
-        Realm.openBlocking(encryptedConf).close()
+        Realm.open(encryptedConf).close()
     }
 
     @Test
@@ -74,14 +74,14 @@ class EncryptionTests {
             )
             .encryptionKey(actualKey)
             .build()
-        Realm.openBlocking(encryptedConf).close()
+        Realm.open(encryptedConf).close()
 
         // Assert fails with no encryption key
         assertFailsWith(RuntimeException::class, "Encrypted Realm should not be openable with no encryption key") {
             val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .path("$tmpDir/default.realm")
                 .build()
-            Realm.openBlocking(conf)
+            Realm.open(conf)
         }
 
         // Assert fails with wrong encryption key
@@ -92,7 +92,7 @@ class EncryptionTests {
                 .encryptionKey(randomKey)
                 .build()
 
-            Realm.openBlocking(conf)
+            Realm.open(conf)
         }
     }
 
@@ -105,7 +105,7 @@ class EncryptionTests {
                 schema = setOf(Sample::class)
             )
             .build()
-        Realm.openBlocking(unencryptedConf).close()
+        Realm.open(unencryptedConf).close()
 
         // Assert fails opening with encryption key
         val randomKey = Random.nextBytes(64)
@@ -115,7 +115,7 @@ class EncryptionTests {
                 .encryptionKey(randomKey)
                 .build()
 
-            Realm.openBlocking(conf)
+            Realm.open(conf)
         }
     }
 }

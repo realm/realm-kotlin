@@ -25,7 +25,7 @@ class RealmConfigurationTests {
     fun testDispatcherAsWriteDispatcher() {
         val dispatcher = TestCoroutineDispatcher()
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
-        val realm = Realm.openBlocking(configuration)
+        val realm = Realm.open(configuration)
         realm.writeBlocking {
             copyToRealm(Sample())
         }

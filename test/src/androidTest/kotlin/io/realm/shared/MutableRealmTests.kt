@@ -37,11 +37,11 @@ class MutableRealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(
+        configuration = RealmConfiguration.defaultConfig(
             path = "$tmpDir/${createRandomString(16)}.realm",
             schema = setOf(Parent::class, Child::class, StringPropertyWithPrimaryKey::class)
-        ).build()
-        realm = Realm.openBlocking(configuration)
+        )
+        realm = Realm.open(configuration)
     }
 
     @AfterTest

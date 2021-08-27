@@ -49,7 +49,7 @@ interface Realm : TypedRealm {
          *
          * @param configuration The RealmConfiguration used to open the Realm.
          */
-        public fun openBlocking(configuration: RealmConfiguration): Realm {
+        public fun open(configuration: RealmConfiguration): Realm {
             return RealmImpl(configuration)
         }
     }

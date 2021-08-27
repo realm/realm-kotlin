@@ -43,16 +43,16 @@ class SchemaTests {
 
     @Test
     fun usingNamedArgument() {
-        val conf = RealmConfiguration.Builder(schema = setOf(Sample::class, Parent::class, Child::class)).build()
+        val conf = RealmConfiguration.defaultConfig(schema = setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
     @Test
     fun usingPositionalArgument() {
-        val conf = RealmConfiguration.Builder(
+        val conf = RealmConfiguration.defaultConfig(
             "default", "path",
             setOf(Sample::class, Parent::class, Child::class)
-        ).build()
+        )
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
@@ -71,14 +71,14 @@ class SchemaTests {
     @Test
     fun usingSingleClassAsNamed() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+        val conf = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 
     @Test
     fun usingSingleClassAsPositional() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration.Builder("name", "path", setOf(Sample::class)).build()
+        val conf = RealmConfiguration.defaultConfig("name", "path", setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 

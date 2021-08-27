@@ -51,11 +51,11 @@ class RealmListTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(
+        val configuration = RealmConfiguration.defaultConfig(
             path = "$tmpDir/default.realm",
             schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class)
-        ).build()
-        realm = Realm.openBlocking(configuration)
+        )
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
@@ -235,11 +235,11 @@ class RealmListTests {
         assertEquals(1, list.size)
     }
 
-    private fun getCloseableRealm(): Realm = RealmConfiguration.Builder(
+    private fun getCloseableRealm(): Realm = RealmConfiguration.defaultConfig(
         path = "$tmpDir/closeable.realm",
         schema = setOf(RealmListContainer::class)
-    ).build().let {
-        Realm.openBlocking(it)
+    ).let {
+        Realm.open(it)
     }
 
     // TODO investigate how to add properties/values directly so that it works for multiplatform

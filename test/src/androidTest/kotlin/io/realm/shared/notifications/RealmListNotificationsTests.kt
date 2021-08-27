@@ -32,11 +32,11 @@ class RealmListNotificationsTests : NotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration.Builder(
+            RealmConfiguration.defaultConfig(
                 path = "$tmpDir/default.realm",
                 schema = setOf(RealmListContainer::class)
-            ).build()
-        realm = Realm.openBlocking(configuration)
+            )
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
