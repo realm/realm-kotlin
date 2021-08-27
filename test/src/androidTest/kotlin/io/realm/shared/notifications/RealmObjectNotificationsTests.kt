@@ -31,8 +31,8 @@ class RealmObjectNotificationsTests : NotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
-        realm = Realm(configuration)
+            RealmConfiguration.defaultConfig(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
@@ -107,11 +107,16 @@ class RealmObjectNotificationsTests : NotificationTests {
                     c2.trySend(it)
                 }
             }
+            // First event should be the initial value
+            assertEquals("Foo", c1.receive()!!.stringField)
+            assertEquals("Foo", c2.receive()!!.stringField)
+            // Second event should reflect the udpate
             obj.update {
                 stringField = "Bar"
             }
             assertEquals("Bar", c1.receive()!!.stringField)
             assertEquals("Bar", c2.receive()!!.stringField)
+
             observer1.cancel()
             obj.update {
                 stringField = "Baz"

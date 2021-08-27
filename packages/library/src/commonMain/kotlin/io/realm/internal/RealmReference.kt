@@ -1,6 +1,5 @@
 package io.realm.internal
 
-import io.realm.BaseRealm
 import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -24,7 +23,7 @@ import io.realm.interop.RealmInterop
  * C++ SharedRealm is closed when the RealmReference is no longer referenced by the [Realm].
  */
 data class RealmReference(
-    val owner: BaseRealm,
+    val owner: BaseRealmImpl,
     val dbPointer: NativePointer
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
 ) : RealmLifeCycle {

@@ -104,7 +104,7 @@ class GenerationExtensionTest {
         class B : RealmObject
         
         val classes = setOf(A::class, B::class, C::class)
-        val configuration = RealmConfiguration(schema = classes)
+        val configuration = RealmConfiguration.Builder(schema = classes).build()
                 """.trimIndent()
             )
         )
@@ -123,7 +123,7 @@ class GenerationExtensionTest {
         
         val arr = arrayOf(A::class, B::class)
         val configuration =
-            RealmConfiguration(schema = arr.toSet())
+            RealmConfiguration.Builder(schema = arr.toSet()).build()
                 """.trimIndent()
             )
         )

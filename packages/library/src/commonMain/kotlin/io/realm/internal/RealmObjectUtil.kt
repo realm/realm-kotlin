@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.BaseRealm
 import io.realm.RealmObject
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -85,7 +84,7 @@ fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T? {
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealmImpl): T? {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val mediator = `$realm$Mediator`!!
