@@ -19,6 +19,9 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_IS_FROZEN
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_VERSION
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -61,21 +64,29 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
 
-            // FIXME Generalize into receiver and list of Names
-            val realmObjectInternalOverrides =
-                realmObjectInternalInterface.owner.declarations.filterIsInstance<IrSimpleFunction>() // IrOverridableMember
-                    .filter { it.name in setOf("isFrozen", "realmLifeCycle", "version").map { Name.identifier(it) } }
-            for (fakeOverrideFunction in realmObjectInternalOverrides) {
-                irClass.addFunction {
-                    updateFrom(fakeOverrideFunction)
-                    name = fakeOverrideFunction.name
-                    returnType = fakeOverrideFunction.returnType
-                    origin = IrDeclarationOrigin.FAKE_OVERRIDE
-                    isFakeOverride = true
-                }.apply {
-                    this.overriddenSymbols = listOf(fakeOverrideFunction.symbol)
-                    dispatchReceiverParameter =
-                        realmObjectInternalInterface.owner.thisReceiver!!.copyTo(this)
+            // RealmObjectInternal overrides
+            val overrides = setOf(
+                realmObjectInternalInterface to setOf(
+                    REALM_OBJECT_INTERNAL_IS_FROZEN,
+                    REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE,
+                    REALM_OBJECT_INTERNAL_VERSION
+                )
+            )
+            for ((receiver, functions) in overrides) {
+                val overrides = receiver.owner.declarations.filterIsInstance<IrSimpleFunction>()
+                    .filter { it.name in functions }
+                for (override in overrides) {
+                    irClass.addFunction {
+                        updateFrom(override)
+                        name = override.name
+                        returnType = override.returnType
+                        origin = IrDeclarationOrigin.FAKE_OVERRIDE
+                        isFakeOverride = true
+                    }.apply {
+                        this.overriddenSymbols = listOf(override.symbol)
+                        dispatchReceiverParameter =
+                            receiver.owner.thisReceiver!!.copyTo(this)
+                    }
                 }
             }
 

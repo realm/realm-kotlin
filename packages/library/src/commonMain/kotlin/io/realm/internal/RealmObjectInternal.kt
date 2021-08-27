@@ -36,6 +36,8 @@ internal interface RealmObjectInternal : RealmObject, RealmLifeCycleHolder, io.r
     var `$realm$IsManaged`: Boolean
     var `$realm$Mediator`: Mediator?
 
+    // Any methods added to this interface, needs to be fake overridden on the user classes by
+    // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
     override fun realmLifeCycle(): RealmLifeCycle {
         return `$realm$Owner` ?: UnmanagedLifeCycle
     }

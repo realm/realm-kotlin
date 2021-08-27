@@ -54,9 +54,12 @@ internal object Names {
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
 
-    //
+    // Function names
     val REALM_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
     val REALM_CONFIGURATION_DEFAULT_CONFIG = Name.identifier("defaultConfig")
+    val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
+    val REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE = Name.identifier("realmLifeCycle")
+    val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
 }
 
 internal object FqNames {
