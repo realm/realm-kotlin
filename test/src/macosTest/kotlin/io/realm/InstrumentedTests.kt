@@ -59,9 +59,8 @@ class InstrumentedTests {
             realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
-            val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-            val owner = object : io.realm.internal.BaseRealmImpl(configuration as RealmConfigurationImpl, realmPointer) {}
-            realmModel.`$realm$Owner` = io.realm.internal.RealmReference(owner, realmPointer)
+            val configuration = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
+            realmModel.`$realm$Owner` = io.realm.internal.RealmReference(object : io.realm.internal.BaseRealmImpl(configuration as RealmConfigurationImpl, realmPointer) {}, realmPointer)
             realmModel.`$realm$TableName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)

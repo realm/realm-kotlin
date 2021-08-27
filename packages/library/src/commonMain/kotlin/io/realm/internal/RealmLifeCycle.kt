@@ -22,8 +22,6 @@ import io.realm.Versioned
 /**
  * A RealmLifeCycle exposes common methods to query the state of any Realm object.
  */
-// FIXME Should we have a public interface with a subset of these or split even further into
-//  Closeable, etc.
 internal interface RealmLifeCycle : Versioned {
     fun isFrozen(): Boolean
     fun isClosed(): Boolean

@@ -38,7 +38,7 @@ class LinkTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.defaultConfig(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
     }
 
     @AfterTest

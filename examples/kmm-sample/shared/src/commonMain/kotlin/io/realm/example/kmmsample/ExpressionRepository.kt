@@ -25,7 +25,7 @@ class ExpressionRepository {
 
     val realm: Realm by lazy {
         val configuration = RealmConfiguration.defaultConfig(schema = setOf(Expression::class))
-        Realm.openBlocking(configuration)
+        Realm.open(configuration)
     }
 
     fun addExpression(expression: String): Expression {

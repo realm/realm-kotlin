@@ -71,7 +71,7 @@ class RealmTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = configuration
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
@@ -134,10 +134,10 @@ class RealmTests {
             path = "$tmpDir/exceed-versions.realm",
             schema = setOf(Parent::class, Child::class)
         ).maxNumberOfActiveVersions(1).build()
-        realm = Realm.openBlocking(config)
+        realm = Realm.open(config)
         // Pin the version, so when starting a new transaction on the first Realm,
         // we don't release older versions.
-        val otherRealm = Realm.openBlocking(config)
+        val otherRealm = Realm.open(config)
 
         try {
             // FIXME Should be IllegalStateException
@@ -227,7 +227,7 @@ class RealmTests {
         // Ensure that all writes are actually committed
         realm.close()
         assertTrue(realm.isClosed())
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
         assertEquals(10, realm.objects(Parent::class).size)
     }
 
@@ -267,7 +267,7 @@ class RealmTests {
         realm.close()
         assertTrue(realm.isClosed())
 
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
         assertEquals(1, realm.objects(Parent::class).size)
     }
 
@@ -289,7 +289,7 @@ class RealmTests {
         writeStarted.lock()
         realm.close()
         assert(write.await() is RuntimeException)
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
         assertEquals(0, realm.objects<Parent>().size)
     }
 
@@ -326,7 +326,7 @@ class RealmTests {
         // Ensure that write is not committed
         realm.close()
         assertTrue(realm.isClosed())
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
         // This assertion doesn't hold on MacOS as all code executes on the same thread as the
         // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in
@@ -360,7 +360,7 @@ class RealmTests {
         // Ensure that only one write is actually committed
         realm.close()
         assertTrue(realm.isClosed())
-        realm = Realm.openBlocking(configuration)
+        realm = Realm.open(configuration)
         // This assertion doesn't hold on MacOS as all code executes on the same thread as the
         // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in

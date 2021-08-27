@@ -26,18 +26,19 @@ import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower
-import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.name.Name
+
+private val realmObjectInternalOverrides = setOf(
+    REALM_OBJECT_INTERNAL_IS_FROZEN,
+    REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE,
+    REALM_OBJECT_INTERNAL_VERSION
+)
 
 class RealmModelLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
@@ -65,30 +66,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
 
             // RealmObjectInternal overrides
-            val overrides = setOf(
-                realmObjectInternalInterface to setOf(
-                    REALM_OBJECT_INTERNAL_IS_FROZEN,
-                    REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE,
-                    REALM_OBJECT_INTERNAL_VERSION
-                )
-            )
-            for ((receiver, functions) in overrides) {
-                val overrides = receiver.owner.declarations.filterIsInstance<IrSimpleFunction>()
-                    .filter { it.name in functions }
-                for (override in overrides) {
-                    irClass.addFunction {
-                        updateFrom(override)
-                        name = override.name
-                        returnType = override.returnType
-                        origin = IrDeclarationOrigin.FAKE_OVERRIDE
-                        isFakeOverride = true
-                    }.apply {
-                        this.overriddenSymbols = listOf(override.symbol)
-                        dispatchReceiverParameter =
-                            receiver.owner.thisReceiver!!.copyTo(this)
-                    }
-                }
-            }
+            irClass.addFakeOverrides(realmObjectInternalInterface, realmObjectInternalOverrides)
 
             // Add body for synthetic companion methods
             val companion = irClass.companionObject() ?: error("RealmObject without companion")

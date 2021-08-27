@@ -41,8 +41,8 @@ class InstrumentedTests {
     @Before
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class)).build()
-        realm = Realm.openBlocking(configuration)
+        val configuration = RealmConfiguration.defaultConfig(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Sample::class))
+        realm = Realm.open(configuration)
     }
 
     @After
