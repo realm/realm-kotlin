@@ -22,8 +22,8 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.realmListOf
 import io.realm.objects
+import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.TypeDescriptor
 import test.list.Level1

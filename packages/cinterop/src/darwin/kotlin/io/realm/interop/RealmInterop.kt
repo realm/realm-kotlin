@@ -564,6 +564,7 @@ actual object RealmInterop {
         )
     }
 
+    @Suppress("ComplexMethod")
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
         val cvalue: realm_value_t = alloc()
         when (value) {

@@ -17,9 +17,9 @@
 
 package test
 
-import io.realm.realmListOf
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.realmListOf
 
 class Sample : RealmObject {
     var stringField: String = "Realm"

@@ -17,9 +17,9 @@
 
 package test.list
 
-import io.realm.realmListOf
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.realmListOf
 import kotlin.reflect.KMutableProperty1
 
 class RealmListContainer : RealmObject {
