@@ -39,7 +39,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     val nativePointer: NativePointer,
     val metadata: ListOperatorMetadata
-) : AbstractMutableList<E>(), RealmList<E>, Freezable<RealmList<E>> {
+) : AbstractMutableList<E>(), RealmList<E> {
 
     private val operator = ListOperator<E>(metadata)
 
@@ -180,6 +180,5 @@ internal fun <T> managedRealmList(
     metadata: ListOperatorMetadata
 ): RealmList<T> = ManagedRealmList(listPointer, metadata)
 
-
 internal fun <T> Array<out T>.asRealmList(): RealmList<T> =
-    UnmanagedRealmList<T>().apply { addAll(this) }
+    UnmanagedRealmList<T>().apply { addAll(this@asRealmList) }
