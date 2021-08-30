@@ -40,7 +40,7 @@ interface RealmList<E> : MutableList<E> {
 }
 
 /**
- * Instantiates a [RealmList] in **unmanaged** mode.
+ * Instantiates an **unmanaged** [RealmList].
  */
 fun <T> realmListOf(vararg elements: T): RealmList<T> =
     if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()

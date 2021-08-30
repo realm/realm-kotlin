@@ -259,11 +259,7 @@ internal class SuspendableNotifier(
                 } else {
                     // Notifications need to be delivered with the version they where created on, otherwise
                     // the fine-grained notification data might be out of sync.
-                    val frozenListPointer = RealmInterop.realm_list_freeze(
-                        liveListDelegate.nativePointer,
-                        frozenRealm.dbPointer
-                    )
-                    val frozenList = liveListDelegate.freeze(frozenListPointer, frozenRealm)
+                    val frozenList = liveListDelegate.freeze(liveListDelegate.nativePointer, frozenRealm)
                     callback.onChange(frozenList)
                 }
             },
