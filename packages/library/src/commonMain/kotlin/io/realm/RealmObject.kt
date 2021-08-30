@@ -30,8 +30,6 @@ import kotlin.reflect.KClass
 /**
  * Marker interface to define a model (managed by Realm).
  */
-// FIXME Can we implement extensions method by adding Versioned or maybe public counter part of
-//  RealmLifeCycle
 interface RealmObject
 
 /**

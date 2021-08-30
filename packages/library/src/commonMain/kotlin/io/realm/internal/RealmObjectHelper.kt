@@ -16,14 +16,12 @@
 
 package io.realm.internal
 
-import io.realm.ListOperatorMetadata
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.interop.ColumnKey
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.managedRealmList
 import kotlin.reflect.KClass
 
 object RealmObjectHelper {

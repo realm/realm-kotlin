@@ -24,7 +24,6 @@ import kotlin.reflect.KClass
  *
  * @see RealmConfiguration
  */
-// FIXME Observable
 interface Realm : TypedRealm {
 
     // FIXME Should this go to the end according to Kotlin conventions

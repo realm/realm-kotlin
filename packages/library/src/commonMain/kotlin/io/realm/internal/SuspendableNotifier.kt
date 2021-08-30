@@ -2,8 +2,6 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.ManagedRealmList
-import io.realm.Realm
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.VersionId
@@ -14,7 +12,6 @@ import io.realm.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
@@ -263,10 +260,10 @@ internal class SuspendableNotifier(
                     // Notifications need to be delivered with the version they where created on, otherwise
                     // the fine-grained notification data might be out of sync.
                     val frozenListPointer = RealmInterop.realm_list_freeze(
-                    liveListDelegate.nativePointer,
-                    frozenRealm.dbPointer
-                )
-                val frozenList = liveListDelegate.freeze(frozenListPointer, frozenRealm)
+                        liveListDelegate.nativePointer,
+                        frozenRealm.dbPointer
+                    )
+                    val frozenList = liveListDelegate.freeze(frozenListPointer, frozenRealm)
                     callback.onChange(frozenList)
                 }
             },
