@@ -44,3 +44,17 @@ interface RealmList<E> : MutableList<E> {
  */
 fun <T> realmListOf(vararg elements: T): RealmList<T> =
     if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()
+
+/**
+ * Instantiates an **unmanaged** [RealmList] containing all the elements of this iterable.
+ */
+fun <T> Iterable<T>.toRealmList(): RealmList<T> {
+    if (this is Collection) {
+        return when (size) {
+            0 -> UnmanagedRealmList()
+            1 -> realmListOf(if (this is List) get(0) else iterator().next())
+            else -> UnmanagedRealmList<T>().apply { addAll(this@toRealmList) }
+        }
+    }
+    return UnmanagedRealmList<T>().apply { addAll(this@toRealmList) }
+}

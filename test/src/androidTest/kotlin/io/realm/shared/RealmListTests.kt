@@ -25,6 +25,7 @@ import io.realm.RealmResults
 import io.realm.objects
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
+import io.realm.toRealmList
 import io.realm.util.TypeDescriptor
 import test.list.Level1
 import test.list.Level2
@@ -69,9 +70,29 @@ class RealmListTests {
     }
 
     @Test
-    fun realmListInitializer() {
-        val sample = RealmListContainer().apply { this.stringListField = realmListOf("1", "2") }
-        assertContentEquals(listOf("1", "2"), sample.stringListField)
+    fun realmListInitializer_realmListOf() {
+        val realmListFromArgsEmpty: RealmList<String> = realmListOf<String>()
+        assertTrue(realmListFromArgsEmpty.isEmpty())
+
+        val realmListFromArgs: RealmList<String> = realmListOf("1", "2")
+        assertContentEquals(listOf("1", "2"), realmListFromArgs)
+    }
+
+    @Test
+    fun realmListInitializer_toRealmList() {
+        val realmListFromEmptyCollection = emptyList<String>().toRealmList()
+        assertTrue(realmListFromEmptyCollection.isEmpty())
+
+        val realmListFromSingleElementList = listOf<String>("1").toRealmList()
+        assertContentEquals(listOf("1"), realmListFromSingleElementList)
+        val realmListFromSingleElementSet = setOf<String>("1").toRealmList()
+        assertContentEquals(listOf("1"), realmListFromSingleElementList)
+
+        val realmListFromMultiElementCollection = setOf<String>("1", "2").toRealmList()
+        assertContentEquals(listOf("1", "2"), realmListFromMultiElementCollection)
+
+        val realmListFromIterator = IntRange(0, 2).toRealmList()
+        assertContentEquals(listOf(0, 1, 2), realmListFromIterator)
     }
 
     @Test
