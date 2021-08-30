@@ -558,7 +558,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:stringListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringListField type:io.realm.RealmList<kotlin.String> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.String> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.String> origin=null
               <T>: kotlin.String
         FUN name:<get-stringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.String>
           correspondingProperty: PROPERTY name:stringListField visibility:public modality:FINAL [var]
@@ -590,7 +590,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:byteListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:byteListField type:io.realm.RealmList<kotlin.Byte> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Byte> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Byte> origin=null
               <T>: kotlin.Byte
         FUN name:<get-byteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Byte>
           correspondingProperty: PROPERTY name:byteListField visibility:public modality:FINAL [var]
@@ -622,7 +622,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:charListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:charListField type:io.realm.RealmList<kotlin.Char> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Char> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Char> origin=null
               <T>: kotlin.Char
         FUN name:<get-charListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Char>
           correspondingProperty: PROPERTY name:charListField visibility:public modality:FINAL [var]
@@ -654,7 +654,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:shortListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:shortListField type:io.realm.RealmList<kotlin.Short> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Short> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Short> origin=null
               <T>: kotlin.Short
         FUN name:<get-shortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Short>
           correspondingProperty: PROPERTY name:shortListField visibility:public modality:FINAL [var]
@@ -686,7 +686,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:intListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:intListField type:io.realm.RealmList<kotlin.Int> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Int> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Int> origin=null
               <T>: kotlin.Int
         FUN name:<get-intListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Int>
           correspondingProperty: PROPERTY name:intListField visibility:public modality:FINAL [var]
@@ -718,7 +718,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:longListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:longListField type:io.realm.RealmList<kotlin.Long> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Long> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Long> origin=null
               <T>: kotlin.Long
         FUN name:<get-longListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Long>
           correspondingProperty: PROPERTY name:longListField visibility:public modality:FINAL [var]
@@ -750,7 +750,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:booleanListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:booleanListField type:io.realm.RealmList<kotlin.Boolean> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Boolean> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Boolean> origin=null
               <T>: kotlin.Boolean
         FUN name:<get-booleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Boolean>
           correspondingProperty: PROPERTY name:booleanListField visibility:public modality:FINAL [var]
@@ -782,7 +782,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:floatListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:floatListField type:io.realm.RealmList<kotlin.Float> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Float> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Float> origin=null
               <T>: kotlin.Float
         FUN name:<get-floatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Float>
           correspondingProperty: PROPERTY name:floatListField visibility:public modality:FINAL [var]
@@ -814,7 +814,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:doubleListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:doubleListField type:io.realm.RealmList<kotlin.Double> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Double> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Double> origin=null
               <T>: kotlin.Double
         FUN name:<get-doubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Double>
           correspondingProperty: PROPERTY name:doubleListField visibility:public modality:FINAL [var]
@@ -846,7 +846,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:objectListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectListField type:io.realm.RealmList<sample.input.Sample> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<sample.input.Sample> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<sample.input.Sample> origin=null
               <T>: sample.input.Sample
         FUN name:<get-objectListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<sample.input.Sample>
           correspondingProperty: PROPERTY name:objectListField visibility:public modality:FINAL [var]
@@ -878,7 +878,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableStringListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableStringListField type:io.realm.RealmList<kotlin.String?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.String?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.String?> origin=null
               <T>: kotlin.String?
         FUN name:<get-nullableStringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.String?>
           correspondingProperty: PROPERTY name:nullableStringListField visibility:public modality:FINAL [var]
@@ -910,7 +910,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableByteListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableByteListField type:io.realm.RealmList<kotlin.Byte?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Byte?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Byte?> origin=null
               <T>: kotlin.Byte?
         FUN name:<get-nullableByteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Byte?>
           correspondingProperty: PROPERTY name:nullableByteListField visibility:public modality:FINAL [var]
@@ -942,7 +942,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableCharListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableCharListField type:io.realm.RealmList<kotlin.Char?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Char?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Char?> origin=null
               <T>: kotlin.Char?
         FUN name:<get-nullableCharListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Char?>
           correspondingProperty: PROPERTY name:nullableCharListField visibility:public modality:FINAL [var]
@@ -974,7 +974,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableShortListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableShortListField type:io.realm.RealmList<kotlin.Short?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Short?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Short?> origin=null
               <T>: kotlin.Short?
         FUN name:<get-nullableShortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Short?>
           correspondingProperty: PROPERTY name:nullableShortListField visibility:public modality:FINAL [var]
@@ -1006,7 +1006,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableIntListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableIntListField type:io.realm.RealmList<kotlin.Int?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Int?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Int?> origin=null
               <T>: kotlin.Int?
         FUN name:<get-nullableIntListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Int?>
           correspondingProperty: PROPERTY name:nullableIntListField visibility:public modality:FINAL [var]
@@ -1038,7 +1038,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableLongListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableLongListField type:io.realm.RealmList<kotlin.Long?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Long?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Long?> origin=null
               <T>: kotlin.Long?
         FUN name:<get-nullableLongListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Long?>
           correspondingProperty: PROPERTY name:nullableLongListField visibility:public modality:FINAL [var]
@@ -1070,7 +1070,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableBooleanListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableBooleanListField type:io.realm.RealmList<kotlin.Boolean?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Boolean?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Boolean?> origin=null
               <T>: kotlin.Boolean?
         FUN name:<get-nullableBooleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Boolean?>
           correspondingProperty: PROPERTY name:nullableBooleanListField visibility:public modality:FINAL [var]
@@ -1102,7 +1102,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableFloatListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableFloatListField type:io.realm.RealmList<kotlin.Float?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Float?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Float?> origin=null
               <T>: kotlin.Float?
         FUN name:<get-nullableFloatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Float?>
           correspondingProperty: PROPERTY name:nullableFloatListField visibility:public modality:FINAL [var]
@@ -1134,7 +1134,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableDoubleListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableDoubleListField type:io.realm.RealmList<kotlin.Double?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmListOf <T> (): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Double?> origin=null
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<kotlin.Double?> origin=null
               <T>: kotlin.Double?
         FUN name:<get-nullableDoubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<kotlin.Double?>
           correspondingProperty: PROPERTY name:nullableDoubleListField visibility:public modality:FINAL [var]
