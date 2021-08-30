@@ -100,7 +100,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
+            std::string message(error.message);
             realm_clear_last_error();
 
             // Invoke ErrorType.asThrowable() to retrieve an exception instance that
@@ -125,7 +125,7 @@ bool realm_object_is_valid(const realm_object_t*);
     if (!result) {
         realm_error_t error;
         if (realm_get_last_error(&error)) {
-            std::string message("[" + std::to_string(error.error) + "]: " + error.message);
+            std::string message(error.message);
             realm_clear_last_error();
 
             // Invoke ErrorType.asThrowable() to retrieve an exception instance that

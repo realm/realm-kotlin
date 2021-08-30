@@ -17,7 +17,6 @@
 package io.realm.interop
 
 import io.realm.interop.errors.RealmCoreException
-import io.realm.interop.errors.RealmCoreOtherException
 
 // FIXME API-SCHEMA Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
@@ -113,7 +112,7 @@ expect enum class ErrorType {
 fun errorTypeToThrowable(errorType: ErrorType, message: String?): Throwable {
     return when (errorType) {
         ErrorType.RLM_ERR_NONE -> throw IllegalStateException("Cannot map error type $errorType.")
-        ErrorType.RLM_ERR_OTHER_EXCEPTION -> RealmCoreOtherException(message)
+        ErrorType.RLM_ERR_OTHER_EXCEPTION,
         ErrorType.RLM_ERR_UNKNOWN,
         ErrorType.RLM_ERR_OUT_OF_MEMORY,
         ErrorType.RLM_ERR_NOT_CLONABLE,

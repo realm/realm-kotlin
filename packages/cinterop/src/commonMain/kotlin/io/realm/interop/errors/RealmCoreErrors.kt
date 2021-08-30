@@ -21,11 +21,4 @@ import io.realm.interop.ErrorType
 /**
  * Generic representation of a Realm-Core exception.
  */
-class RealmCoreException(val errorType: ErrorType, message: String?) : RuntimeException(message) {
-    override fun toString(): String {
-        return "[$errorType]: $message"
-    }
-}
-
-// Realm-Core RLM_ERR_OTHER_EXCEPTION.
-class RealmCoreOtherException(message: String?) : RuntimeException(message)
+class RealmCoreException(val type: ErrorType, message: String?) : Exception("[$type] $message")
