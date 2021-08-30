@@ -18,10 +18,10 @@ package io.realm.internal
 
 import io.realm.BaseRealm
 import io.realm.RealmObject
+import io.realm.interop.ErrorType
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.ErrorType
 import io.realm.interop.errors.RealmCoreException
 import kotlin.reflect.KClass
 
