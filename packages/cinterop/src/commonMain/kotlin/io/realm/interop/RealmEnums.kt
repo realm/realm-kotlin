@@ -16,43 +16,8 @@
 
 package io.realm.interop
 
-import io.realm.interop.errors.RealmCoreAddressSpaceExhaustedException
-import io.realm.interop.errors.RealmCoreCallbackException
-import io.realm.interop.errors.RealmCoreColumnAlreadyExistsException
-import io.realm.interop.errors.RealmCoreColumnNotFoundException
-import io.realm.interop.errors.RealmCoreCrossTableLinkTargetException
-import io.realm.interop.errors.RealmCoreDuplicatePrimaryKeyValueException
-import io.realm.interop.errors.RealmCoreIndexOutOfBoundsException
-import io.realm.interop.errors.RealmCoreInvalidArgumentException
-import io.realm.interop.errors.RealmCoreInvalidPathErrorException
-import io.realm.interop.errors.RealmCoreInvalidPropertyException
-import io.realm.interop.errors.RealmCoreInvalidQueryException
-import io.realm.interop.errors.RealmCoreInvalidQueryStringException
-import io.realm.interop.errors.RealmCoreInvalidatedObjectException
-import io.realm.interop.errors.RealmCoreKeyAlreadyUsedException
-import io.realm.interop.errors.RealmCoreKeyNotFoundException
-import io.realm.interop.errors.RealmCoreLogicException
-import io.realm.interop.errors.RealmCoreMaximumFileSizeExceededException
-import io.realm.interop.errors.RealmCoreMissingPrimaryKeyException
-import io.realm.interop.errors.RealmCoreMissingPropertyValueException
-import io.realm.interop.errors.RealmCoreModifyPrimaryKeyException
-import io.realm.interop.errors.RealmCoreMultipleSyncAgentsException
-import io.realm.interop.errors.RealmCoreNoSuchObjectException
-import io.realm.interop.errors.RealmCoreNoSuchTableException
-import io.realm.interop.errors.RealmCoreNotClonableException
-import io.realm.interop.errors.RealmCoreNotInATransactionException
+import io.realm.interop.errors.RealmCoreException
 import io.realm.interop.errors.RealmCoreOtherException
-import io.realm.interop.errors.RealmCoreOutOfDiskSpaceException
-import io.realm.interop.errors.RealmCoreOutOfMemoryException
-import io.realm.interop.errors.RealmCorePropertyNotNullableException
-import io.realm.interop.errors.RealmCorePropertyTypeMismatchException
-import io.realm.interop.errors.RealmCoreReadOnlyPropertyException
-import io.realm.interop.errors.RealmCoreSerializationErrorException
-import io.realm.interop.errors.RealmCoreUnexpectedPrimaryKeyException
-import io.realm.interop.errors.RealmCoreUnknownException
-import io.realm.interop.errors.RealmCoreUnsupportedFileFormatVersionException
-import io.realm.interop.errors.RealmCoreWrongPrimaryKeyTypeException
-import io.realm.interop.errors.RealmCoreWrongThreadException
 
 // FIXME API-SCHEMA Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
@@ -145,50 +110,46 @@ expect enum class ErrorType {
     RLM_ERR_CALLBACK;
 }
 
-/**
- * Maps core error types to their Kotlin exception representations.
- */
-@Suppress("ComplexMethod")
 fun errorTypeToThrowable(errorType: ErrorType, message: String?): Throwable {
     return when (errorType) {
         ErrorType.RLM_ERR_NONE -> throw IllegalStateException("Cannot map error type $errorType.")
-        ErrorType.RLM_ERR_UNKNOWN -> RealmCoreUnknownException(message)
         ErrorType.RLM_ERR_OTHER_EXCEPTION -> RealmCoreOtherException(message)
-        ErrorType.RLM_ERR_OUT_OF_MEMORY -> RealmCoreOutOfMemoryException(message)
-        ErrorType.RLM_ERR_NOT_CLONABLE -> RealmCoreNotClonableException(message)
-        ErrorType.RLM_ERR_NOT_IN_A_TRANSACTION -> RealmCoreNotInATransactionException(message)
-        ErrorType.RLM_ERR_WRONG_THREAD -> RealmCoreWrongThreadException(message)
-        ErrorType.RLM_ERR_INVALIDATED_OBJECT -> RealmCoreInvalidatedObjectException(message)
-        ErrorType.RLM_ERR_INVALID_PROPERTY -> RealmCoreInvalidPropertyException(message)
-        ErrorType.RLM_ERR_MISSING_PROPERTY_VALUE -> RealmCoreMissingPropertyValueException(message)
-        ErrorType.RLM_ERR_PROPERTY_TYPE_MISMATCH -> RealmCorePropertyTypeMismatchException(message)
-        ErrorType.RLM_ERR_MISSING_PRIMARY_KEY -> RealmCoreMissingPrimaryKeyException(message)
-        ErrorType.RLM_ERR_UNEXPECTED_PRIMARY_KEY -> RealmCoreUnexpectedPrimaryKeyException(message)
-        ErrorType.RLM_ERR_WRONG_PRIMARY_KEY_TYPE -> RealmCoreWrongPrimaryKeyTypeException(message)
-        ErrorType.RLM_ERR_MODIFY_PRIMARY_KEY -> RealmCoreModifyPrimaryKeyException(message)
-        ErrorType.RLM_ERR_READ_ONLY_PROPERTY -> RealmCoreReadOnlyPropertyException(message)
-        ErrorType.RLM_ERR_PROPERTY_NOT_NULLABLE -> RealmCorePropertyNotNullableException(message)
-        ErrorType.RLM_ERR_INVALID_ARGUMENT -> RealmCoreInvalidArgumentException(message)
-        ErrorType.RLM_ERR_LOGIC -> RealmCoreLogicException(message)
-        ErrorType.RLM_ERR_NO_SUCH_TABLE -> RealmCoreNoSuchTableException(message)
-        ErrorType.RLM_ERR_NO_SUCH_OBJECT -> RealmCoreNoSuchObjectException(message)
-        ErrorType.RLM_ERR_CROSS_TABLE_LINK_TARGET -> RealmCoreCrossTableLinkTargetException(message)
-        ErrorType.RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION -> RealmCoreUnsupportedFileFormatVersionException(message)
-        ErrorType.RLM_ERR_MULTIPLE_SYNC_AGENTS -> RealmCoreMultipleSyncAgentsException(message)
-        ErrorType.RLM_ERR_ADDRESS_SPACE_EXHAUSTED -> RealmCoreAddressSpaceExhaustedException(message)
-        ErrorType.RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED -> RealmCoreMaximumFileSizeExceededException(message)
-        ErrorType.RLM_ERR_OUT_OF_DISK_SPACE -> RealmCoreOutOfDiskSpaceException(message)
-        ErrorType.RLM_ERR_KEY_NOT_FOUND -> RealmCoreKeyNotFoundException(message)
-        ErrorType.RLM_ERR_COLUMN_NOT_FOUND -> RealmCoreColumnNotFoundException(message)
-        ErrorType.RLM_ERR_COLUMN_ALREADY_EXISTS -> RealmCoreColumnAlreadyExistsException(message)
-        ErrorType.RLM_ERR_KEY_ALREADY_USED -> RealmCoreKeyAlreadyUsedException(message)
-        ErrorType.RLM_ERR_SERIALIZATION_ERROR -> RealmCoreSerializationErrorException(message)
-        ErrorType.RLM_ERR_INVALID_PATH_ERROR -> RealmCoreInvalidPathErrorException(message)
-        ErrorType.RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE -> RealmCoreDuplicatePrimaryKeyValueException(message)
-        ErrorType.RLM_ERR_INDEX_OUT_OF_BOUNDS -> RealmCoreIndexOutOfBoundsException(message)
-        ErrorType.RLM_ERR_INVALID_QUERY_STRING -> RealmCoreInvalidQueryStringException(message)
-        ErrorType.RLM_ERR_INVALID_QUERY -> RealmCoreInvalidQueryException(message)
-        ErrorType.RLM_ERR_CALLBACK -> RealmCoreCallbackException(message)
+        ErrorType.RLM_ERR_UNKNOWN,
+        ErrorType.RLM_ERR_OUT_OF_MEMORY,
+        ErrorType.RLM_ERR_NOT_CLONABLE,
+        ErrorType.RLM_ERR_NOT_IN_A_TRANSACTION,
+        ErrorType.RLM_ERR_WRONG_THREAD,
+        ErrorType.RLM_ERR_INVALIDATED_OBJECT,
+        ErrorType.RLM_ERR_INVALID_PROPERTY,
+        ErrorType.RLM_ERR_MISSING_PROPERTY_VALUE,
+        ErrorType.RLM_ERR_PROPERTY_TYPE_MISMATCH,
+        ErrorType.RLM_ERR_MISSING_PRIMARY_KEY,
+        ErrorType.RLM_ERR_UNEXPECTED_PRIMARY_KEY,
+        ErrorType.RLM_ERR_WRONG_PRIMARY_KEY_TYPE,
+        ErrorType.RLM_ERR_MODIFY_PRIMARY_KEY,
+        ErrorType.RLM_ERR_READ_ONLY_PROPERTY,
+        ErrorType.RLM_ERR_PROPERTY_NOT_NULLABLE,
+        ErrorType.RLM_ERR_INVALID_ARGUMENT,
+        ErrorType.RLM_ERR_LOGIC,
+        ErrorType.RLM_ERR_NO_SUCH_TABLE,
+        ErrorType.RLM_ERR_NO_SUCH_OBJECT,
+        ErrorType.RLM_ERR_CROSS_TABLE_LINK_TARGET,
+        ErrorType.RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION,
+        ErrorType.RLM_ERR_MULTIPLE_SYNC_AGENTS,
+        ErrorType.RLM_ERR_ADDRESS_SPACE_EXHAUSTED,
+        ErrorType.RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED,
+        ErrorType.RLM_ERR_OUT_OF_DISK_SPACE,
+        ErrorType.RLM_ERR_KEY_NOT_FOUND,
+        ErrorType.RLM_ERR_COLUMN_NOT_FOUND,
+        ErrorType.RLM_ERR_COLUMN_ALREADY_EXISTS,
+        ErrorType.RLM_ERR_KEY_ALREADY_USED,
+        ErrorType.RLM_ERR_SERIALIZATION_ERROR,
+        ErrorType.RLM_ERR_INVALID_PATH_ERROR,
+        ErrorType.RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE,
+        ErrorType.RLM_ERR_INDEX_OUT_OF_BOUNDS,
+        ErrorType.RLM_ERR_INVALID_QUERY_STRING,
+        ErrorType.RLM_ERR_INVALID_QUERY,
+        ErrorType.RLM_ERR_CALLBACK -> RealmCoreException(errorType, message)
         else -> throw IllegalStateException("Error type $errorType not implemented.")
     }
 }
