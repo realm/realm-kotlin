@@ -108,7 +108,7 @@ object RealmObjectHelper {
         // info that might help users to understand the exception.
         catch (exception: RealmCoreNotInATransactionException) {
             throw IllegalStateException(
-                "Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: changing Realm data can only be done from inside a transaction.",
+                "Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
             )
         }
