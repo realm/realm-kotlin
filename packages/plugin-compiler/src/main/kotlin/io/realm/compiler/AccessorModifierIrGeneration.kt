@@ -376,18 +376,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 putTypeArgument(0, type)
                                 putValueArgument(0, irGet(receiver))
                                 putValueArgument(1, irString(property.name.identifier))
-
-//                            // Check if the collection type is a subclass of RealmObject
-//                            // If so, a flag needs to be added as a parameter
-//                            // This is due to Kotlin Native being unable to retrieve the related
-//                            // supertypes in runtime
-//                            if (collectionType != CollectionType.NONE) {
-    //                                val supertypes = (type as IrSimpleType).classifier.descriptor
-    //                                    .typeConstructor.supertypes
-    //                                if (inheritsFromRealmObject(supertypes)) {
-    //                                    putValueArgument(2, irBoolean(true))
-    //                                }
-    //                            }
                             }
 
                         val cinteropExpression = if (fromLongToType != null) {
