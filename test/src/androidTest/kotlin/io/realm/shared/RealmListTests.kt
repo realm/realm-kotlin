@@ -497,7 +497,6 @@ internal abstract class ManagedListTester<T>(
                 list[123]
             }
 
-
             dataSet.forEachIndexed { index, t ->
                 assertElementsAreEqual(t, list[index])
             }
@@ -564,7 +563,7 @@ internal abstract class ManagedListTester<T>(
             }
         }
 
-        assertListAndCleanup { list -> assertions(list)}
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     override fun addWithIndexFailsIfClosed(realm: Realm) {

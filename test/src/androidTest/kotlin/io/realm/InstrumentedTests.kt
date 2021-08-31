@@ -20,7 +20,6 @@ package io.realm
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.platform.RealmInitializer
-import io.realm.interop.errors.RealmCoreException
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import org.junit.After

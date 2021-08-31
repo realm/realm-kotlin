@@ -87,7 +87,6 @@ class EncryptionTests {
                 }
             }
 
-
         // Assert fails with wrong encryption key
         val randomKey = Random.nextBytes(64)
         RealmConfiguration.Builder(schema = setOf(Sample::class))

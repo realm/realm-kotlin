@@ -16,8 +16,6 @@
 
 package io.realm.interop
 
-import io.realm.interop.errors.RealmCoreException
-
 // FIXME API-SCHEMA Should probably be somewhere else...maybe in runtime-api?
 expect enum class SchemaMode {
     RLM_SCHEMA_MODE_AUTOMATIC,

@@ -116,14 +116,14 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     // FIXME Figure out how to describe the constructor better
     public constructor(configuration: RealmConfiguration) :
-            this(
-                configuration,
-                try {
-                    RealmInterop.realm_open(configuration.nativeConfig)
-                } catch (exception: RealmCoreException) {
-                    throw coreErrorToThrowable("Could not open Realm with the given configuration", exception)
-                }
-            )
+        this(
+            configuration,
+            try {
+                RealmInterop.realm_open(configuration.nativeConfig)
+            } catch (exception: RealmCoreException) {
+                throw coreErrorToThrowable("Could not open Realm with the given configuration", exception)
+            }
+        )
 
     /**
      * Returns the results of querying for all objects of a specific type.

@@ -16,8 +16,6 @@
 
 package io.realm
 
-import io.realm.errors.RealmError
-import io.realm.errors.RealmPrimaryKeyConstraintException
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
 import io.realm.internal.copyToRealm
@@ -25,7 +23,6 @@ import io.realm.internal.coreErrorToThrowable
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.ErrorType
 import io.realm.interop.errors.RealmCoreException
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass

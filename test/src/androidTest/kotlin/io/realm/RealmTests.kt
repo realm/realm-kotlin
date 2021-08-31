@@ -15,7 +15,6 @@
  */
 package io.realm
 
-import io.realm.interop.errors.RealmCoreException
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import kotlinx.coroutines.runBlocking
