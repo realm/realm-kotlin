@@ -35,7 +35,6 @@ class RealmListNotificationsTests : NotificationTests {
             RealmConfiguration.defaultConfig(
                 path = "$tmpDir/default.realm",
                 schema = setOf(RealmListContainer::class)
-
             )
         realm = Realm.open(configuration)
     }
