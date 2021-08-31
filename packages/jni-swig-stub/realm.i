@@ -96,53 +96,41 @@ return $jnicall;
 // we have a distinction (type map, etc.) in the C API that we can use for targeting the type map.
 bool realm_object_is_valid(const realm_object_t*);
 
+%{
+void throw_as_java_exception(JNIEnv *jenv) {
+    realm_error_t error;
+    if (realm_get_last_error(&error)) {
+        std::string message(error.message);
+        realm_clear_last_error();
+
+        // Invoke ErrorType.asThrowable() to retrieve an exception instance that
+        // maps to the core error.
+        static jclass error_type_class = (jenv)->FindClass("io/realm/interop/ErrorType");
+        static jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
+                                                                      "asThrowable",
+                                                                      "(ILjava/lang/String;)Ljava/lang/Throwable;");
+        jstring error_message = (jenv)->NewStringUTF(message.c_str());
+
+        jobject exception = (jenv)->CallStaticObjectMethod(
+                error_type_class,
+                error_type_as_exception,
+                jint(error.error),
+                error_message);
+        (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
+    }
+}
+%}
+
 %typemap(out) SWIGTYPE* {
     if (!result) {
-        realm_error_t error;
-        if (realm_get_last_error(&error)) {
-            std::string message(error.message);
-            realm_clear_last_error();
-
-            // Invoke ErrorType.asThrowable() to retrieve an exception instance that
-            // maps to the core error.
-            jclass error_type_class = (jenv)->FindClass("io/realm/interop/ErrorType");
-            jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
-                                                 "asThrowable",
-                                                 "(ILjava/lang/String;)Ljava/lang/Throwable;");
-            jstring error_message = (jenv)->NewStringUTF(message.c_str());
-
-            jobject exception = (jenv)->CallStaticObjectMethod(
-                    error_type_class,
-                    error_type_as_exception,
-                    jint(error.error),
-                    error_message);
-            (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
-        }
+        throw_as_java_exception(jenv);
     }
     *($1_type*)&jresult = result;
 }
+
 %typemap(out) bool {
     if (!result) {
-        realm_error_t error;
-        if (realm_get_last_error(&error)) {
-            std::string message(error.message);
-            realm_clear_last_error();
-
-            // Invoke ErrorType.asThrowable() to retrieve an exception instance that
-            // maps to the core error.
-            jclass error_type_class = (jenv)->FindClass("io/realm/interop/ErrorType");
-            jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
-                                                                     "asThrowable",
-                                                                     "(ILjava/lang/String;)Ljava/lang/Throwable;");
-            jstring error_message = (jenv)->NewStringUTF(message.c_str());
-
-            jobject exception = (jenv)->CallStaticObjectMethod(
-                    error_type_class,
-                    error_type_as_exception,
-                    jint(error.error),
-            error_message);
-            (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
-        }
+        throw_as_java_exception(jenv);
     }
     jresult = (jboolean)result;
 }

@@ -24,7 +24,6 @@ import java.nio.file.Files
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.test.BeforeTest
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -554,16 +553,29 @@ class CinteropTest {
      */
     @Test
     fun errorTypes_watchdog() {
-        // Collect ErrorTypes defined in Kotlin
-        val errorTypes = ErrorType::class.java.fields.map { it.name }
+        // Collect ErrorTypes defined in Kotlin and Core
+        val javaErrorTypeMap: Map<String, Int> = ErrorType::class.java.fields
+            .filter { it.name != "Companion" }
+            .map {
+                val errorType = it.get(null) as ErrorType
+                it.name to errorType.nativeValue
+            }
+            .toMap()
 
-        // Check all Core error types are defined in Kotlin
-        realm_errno_e::class.java.fields.forEach { field ->
-            assertContains(
-                errorTypes,
-                field.name,
-                "Missing ErrorType definition for core error type `${field.name}`"
-            )
+        val coreErrorTypeMap = realm_errno_e::class.java.fields
+            .map {
+                it.name to it.getInt(null)
+            }
+            .toMap()
+
+        javaErrorTypeMap.entries.forEach { javaEntry ->
+            assertTrue(coreErrorTypeMap.containsKey(javaEntry.key), "Missing ErrorType Core definition for `${javaEntry.key}`")
+            assertEquals(coreErrorTypeMap[javaEntry.key], javaEntry.value, "ErrorType enum value mismatch: core[${coreErrorTypeMap[javaEntry.key]}] - java[${javaEntry.value}]")
+        }
+
+        coreErrorTypeMap.entries.forEach { coreEntry ->
+            assertTrue(javaErrorTypeMap.containsKey(coreEntry.key), "Missing ErrorType Java definition for `${coreEntry.key}`")
+            assertEquals(javaErrorTypeMap[coreEntry.key], coreEntry.value, "ErrorType enum value mismatch: java[${javaErrorTypeMap[coreEntry.key]}] - core[${coreEntry.value}]")
         }
     }
 

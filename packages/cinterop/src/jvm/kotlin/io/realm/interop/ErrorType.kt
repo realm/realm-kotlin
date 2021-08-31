@@ -16,6 +16,8 @@
 
 package io.realm.interop
 
+import io.realm.interop.errors.RealmCoreException
+
 // FIXME API-INTERNAL Compiler does not pick up the actual if not in a separate file, so not
 //  following RealmEnums.kt structure, but might have to move anyway, so keeping the structure
 //  unaligned for now.
@@ -67,6 +69,7 @@ actual enum class ErrorType(override val nativeValue: Int) : NativeEnumerated {
         }
 
         @JvmStatic
-        fun asThrowable(id: Int, message: String?): Throwable = errorTypeToThrowable(id2ErrorMap[id]!!, message)
+        fun asThrowable(id: Int, message: String?): Throwable =
+            RealmCoreException(if (id2ErrorMap.containsKey(id)) id2ErrorMap[id] else RLM_ERR_UNKNOWN, message)
     }
 }

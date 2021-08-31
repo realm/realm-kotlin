@@ -16,6 +16,7 @@
 
 package io.realm.interop
 
+import io.realm.interop.errors.RealmCoreException
 import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_schema_mode_e
 
@@ -123,6 +124,7 @@ actual enum class ErrorType(override val nativeValue: UInt) : NativeEnumerated {
             }.toMap()
         }
 
-        fun asThrowable(id: UInt, message: String?): Throwable = errorTypeToThrowable(id2ErrorMap[id]!!, message)
+        fun asThrowable(id: UInt, message: String?): Throwable =
+            RealmCoreException(if (id2ErrorMap.containsKey(id)) id2ErrorMap[id] else RLM_ERR_UNKNOWN, message)
     }
 }

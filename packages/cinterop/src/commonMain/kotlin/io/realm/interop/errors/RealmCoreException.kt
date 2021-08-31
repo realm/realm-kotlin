@@ -21,4 +21,4 @@ import io.realm.interop.ErrorType
 /**
  * Generic representation of a Realm-Core exception.
  */
-class RealmCoreException(val type: ErrorType, message: String?) : Exception("[$type] $message")
+class RealmCoreException(val type: ErrorType?, message: String?) : Exception("[$type] $message")
