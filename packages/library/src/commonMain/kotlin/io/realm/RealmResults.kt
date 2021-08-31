@@ -19,6 +19,7 @@ package io.realm
 import io.realm.internal.Mediator
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
+import io.realm.internal.coreErrorToThrowable
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -113,7 +114,7 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
                 schema,
             )
         } catch (exception: RealmCoreException) {
-            throw catchCoreErrors("Invalid syntax for query `$query`", exception)
+            throw coreErrorToThrowable("Invalid syntax for query `$query`", exception)
         }
     }
 

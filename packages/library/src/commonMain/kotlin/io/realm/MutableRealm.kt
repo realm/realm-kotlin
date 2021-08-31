@@ -16,6 +16,7 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.coreErrorToThrowable
 import io.realm.internal.thaw
 import io.realm.interop.RealmInterop
 import io.realm.interop.errors.RealmCoreException
@@ -71,7 +72,7 @@ class MutableRealm : BaseRealm {
         try {
             RealmInterop.realm_begin_write(realmReference.dbPointer)
         } catch (exception: RealmCoreException) {
-            throw catchCoreErrors("Cannot begin a write transaction", exception)
+            throw coreErrorToThrowable("Cannot begin a write transaction", exception)
         }
     }
 
@@ -124,7 +125,7 @@ class MutableRealm : BaseRealm {
         try {
             RealmInterop.realm_rollback(realmReference.dbPointer)
         } catch (exception: RealmCoreException) {
-            throw catchCoreErrors("Cannot cancel the write transaction", exception)
+            throw coreErrorToThrowable("Cannot cancel the write transaction", exception)
         }
     }
 
