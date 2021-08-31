@@ -18,6 +18,8 @@ package io.realm
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.thaw
 import io.realm.interop.RealmInterop
+import io.realm.notifications.Callback
+import io.realm.notifications.Cancellable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass

@@ -22,6 +22,9 @@ import io.realm.internal.RealmReference
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.RealmInterop
+import io.realm.notifications.Callback
+import io.realm.notifications.Cancellable
+import io.realm.notifications.ObjectChange
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -128,11 +131,16 @@ internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<
  *
  * @return a flow representing changes to the object.
  */
-public fun <T : RealmObject> T.observe(): Flow<T> {
+public fun <T : RealmObject> T.observe(): Flow<ObjectChange<T>> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$Owner`!!).owner.registerObjectObserver(this as T)
+    TODO()
+//    return (internalObject.`$realm$Owner`!!).owner.registerObjectObserver(this as T)
+}
+
+public fun <T : RealmObject> T.addChangeListener(callback: Callback<ObjectChange<T>>): Cancellable {
+    TODO()
 }
 
 private fun RealmObject.checkNotificationsAvailable() {

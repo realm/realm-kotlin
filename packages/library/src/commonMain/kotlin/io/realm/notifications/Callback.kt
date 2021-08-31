@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.realm
+package io.realm.notifications
 
 /**
- * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
+ * A `callback` interface to receive notifications about updates to Realm backed objects and
+ * collections.
+ *
+ * @see [Realm.addChangeListener]
+ * @see [RealmObject.addChangeListener]
+ * @see [RealmResults.addChangeListener]
+ * @see [RealmList.addChangeListener]
+ * @see [RealmChange]
+ * @see [ObjectChange]
+ * @see [ListChange]
+ * @see [SetChange]
+ * @see [MapChange]
  */
-internal interface Cancellable {
-    fun cancel()
+fun interface Callback<T> {
+    fun onChange(change: T?, error: Throwable?)
 }

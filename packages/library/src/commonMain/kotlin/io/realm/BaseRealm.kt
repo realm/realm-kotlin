@@ -19,6 +19,8 @@ import io.realm.internal.RealmLog
 import io.realm.internal.RealmReference
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.notifications.Callback
+import io.realm.notifications.Cancellable
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 

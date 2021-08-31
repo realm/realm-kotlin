@@ -23,6 +23,9 @@ import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.notifications.Callback
+import io.realm.notifications.Cancellable
+import io.realm.notifications.ListChange
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -119,9 +122,10 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
      *
      * Follows the pattern of [Realm.addChangeListener]
      */
-    internal fun addChangeListener(callback: Callback<RealmResults<T>>): Cancellable {
+    fun addChangeListener(callback: Callback<ListChange<RealmResults<T>>>): Cancellable {
         realm.checkClosed()
-        return realm.owner.registerResultsChangeListener(this, callback)
+        TODO()
+        // return realm.owner.registerResultsChangeListener(this, callback)
     }
 
     /**
@@ -133,9 +137,9 @@ class RealmResults<T : RealmObject> : AbstractList<T>, Queryable<T> {
      *
      * @return a flow representing changes to the RealmResults.
      */
-    fun observe(): Flow<RealmResults<T>> {
+    fun observe(): Flow<ListChange<RealmResults<T>>> {
         realm.checkClosed()
-        return realm.owner.registerResultsObserver(this)
+        TODO() // return realm.owner.registerResultsObserver(this)
     }
 
     /**

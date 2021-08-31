@@ -22,6 +22,8 @@ import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.notifications.Callback
+import io.realm.notifications.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope

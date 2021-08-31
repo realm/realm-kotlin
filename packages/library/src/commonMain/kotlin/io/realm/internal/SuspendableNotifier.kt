@@ -1,8 +1,8 @@
 package io.realm.internal
 
 import io.realm.BaseRealm
-import io.realm.Callback
-import io.realm.Cancellable
+import io.realm.notifications.Callback
+import io.realm.notifications.Cancellable
 import io.realm.Realm
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -15,7 +15,6 @@ import io.realm.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
