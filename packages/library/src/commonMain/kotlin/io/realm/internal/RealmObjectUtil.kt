@@ -107,7 +107,7 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T
         // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
         //  catching that and returning null. Only treat unknown null pointers as non-existing objects
         //  to avoid handling unintended situations here.
-        if (exception.type == ErrorType.RLM_ERR_UNKNOWN) {
+        if (exception.type == ErrorType.RLM_ERR_OTHER_EXCEPTION) {
             return null
         }
         throw exception

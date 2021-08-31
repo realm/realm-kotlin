@@ -136,8 +136,7 @@ class RealmTests {
         val otherRealm = Realm(config)
 
         try {
-            // FIXME Should be IllegalStateException
-            assertFailsWith<RuntimeException> { realm.writeBlocking { } }
+            assertFailsWith<IllegalStateException> { realm.writeBlocking { } }
         } finally {
             otherRealm.close()
         }
@@ -272,7 +271,7 @@ class RealmTests {
     fun closeCausesOngoingWriteToThrow() = runBlocking {
         val writeStarted = Mutex(true)
         val write = async {
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IllegalStateException> {
                 realm.write {
                     writeStarted.unlock()
                     copyToRealm(Parent())
@@ -294,7 +293,7 @@ class RealmTests {
     fun writeAfterCloseThrows() = runBlocking {
         realm.close()
         assertTrue(realm.isClosed())
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<IllegalStateException> {
             realm.write {
                 copyToRealm(Child())
             }

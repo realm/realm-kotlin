@@ -19,7 +19,10 @@ package io.realm.internal
 
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.catchCoreErrors
+import io.realm.errors.RealmPrimaryKeyConstraintException
 import io.realm.interop.RealmInterop
+import io.realm.interop.errors.RealmCoreException
 import io.realm.isManaged
 import io.realm.isValid
 import kotlin.reflect.KClass
@@ -63,7 +66,7 @@ fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KC
         // FIXME Throw proper exception
         //  https://github.com/realm/realm-kotlin/issues/70
         @Suppress("TooGenericExceptionThrown")
-        throw RuntimeException("Failed to create object of type '$objectType'", e)
+        throw IllegalArgumentException("Failed to create object of type '$objectType'", e)
     }
 }
 
@@ -88,10 +91,7 @@ fun <T : RealmObject> create(
         val existingPrimaryKeyObject =
             RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
         existingPrimaryKeyObject?.let {
-            // FIXME Throw proper exception
-            //  https://github.com/realm/realm-kotlin/issues/70
-            @Suppress("TooGenericExceptionThrown")
-            throw RuntimeException("Cannot create object with existing primary key")
+            throw RealmPrimaryKeyConstraintException("Cannot create object with existing primary key")
         }
         val managedModel = mediator.createInstanceOf(type)
         return managedModel.manage(
@@ -100,11 +100,8 @@ fun <T : RealmObject> create(
             type,
             RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
         )
-    } catch (e: RuntimeException) {
-        // FIXME Throw proper exception
-        //  https://github.com/realm/realm-kotlin/issues/70
-        @Suppress("TooGenericExceptionThrown")
-        throw RuntimeException("Failed to create object of type '$objectType'", e)
+    } catch (e: RealmCoreException) {
+        throw catchCoreErrors("Failed to create object of type '$objectType'", e)
     }
 }
 

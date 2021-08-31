@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.delete
+import io.realm.interop.errors.RealmCoreException
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import test.Sample
@@ -123,10 +124,7 @@ class SampleTests {
     @Test
     fun query_parseErrorThrows() {
         val objects: RealmResults<Sample> = realm.objects(Sample::class)
-        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
-        //  in realm-java ;)
-        //  https://github.com/realm/realm-kotlin/issues/70
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<IllegalArgumentException> {
             objects.query("name == str")
         }
     }

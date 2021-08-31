@@ -16,12 +16,16 @@
 
 package io.realm
 
+import io.realm.errors.RealmError
+import io.realm.errors.RealmPrimaryKeyConstraintException
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
 import io.realm.internal.copyToRealm
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.interop.ErrorType
+import io.realm.interop.errors.RealmCoreException
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -181,16 +185,24 @@ private class ManagedListDelegate<E>(
 
     override fun get(index: Int): E {
         metadata.realm.checkClosed()
-        return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
+        try {
+            return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
+        } catch (exception: RealmCoreException) {
+            throw catchCoreErrors("Cannot get list element at index $index", exception)
+        }
     }
 
     override fun add(index: Int, element: E) {
         metadata.realm.checkClosed()
-        RealmInterop.realm_list_add(
-            listPtr,
-            index.toLong(),
-            copyToRealm(metadata.mediator, metadata.realm, element)
-        )
+        try {
+            RealmInterop.realm_list_add(
+                listPtr,
+                index.toLong(),
+                copyToRealm(metadata.mediator, metadata.realm, element)
+            )
+        } catch (exception: RealmCoreException) {
+            throw catchCoreErrors("Cannot add list element at index $index", exception)
+        }
     }
 
     // FIXME bug in AbstractMutableList.addAll native implementation:
@@ -209,18 +221,26 @@ private class ManagedListDelegate<E>(
 
     override fun removeAt(index: Int): E = get(index).also {
         metadata.realm.checkClosed()
-        RealmInterop.realm_list_erase(listPtr, index.toLong())
+        try {
+            RealmInterop.realm_list_erase(listPtr, index.toLong())
+        } catch (exception: RealmCoreException) {
+            throw catchCoreErrors("Cannot remove list element at index $index", exception)
+        }
     }
 
     override fun set(index: Int, element: E): E {
         metadata.realm.checkClosed()
-        return operator.convert(
-            RealmInterop.realm_list_set(
-                listPtr,
-                index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, element)
+        try {
+            return operator.convert(
+                RealmInterop.realm_list_set(
+                    listPtr,
+                    index.toLong(),
+                    copyToRealm(metadata.mediator, metadata.realm, element)
+                )
             )
-        )
+        } catch (exception: RealmCoreException) {
+            throw catchCoreErrors("Cannot set list element at index $index", exception)
+        }
     }
 
     override fun observe(list: RealmList<E>): Flow<RealmList<E>> {
@@ -242,5 +262,48 @@ private class ManagedListDelegate<E>(
         if (index < 0 || index > size) {
             throw IndexOutOfBoundsException("Index: '$index', Size: '$size'")
         }
+    }
+}
+
+fun catchCoreErrors(message: String, cause: RealmCoreException): Throwable {
+    return when (cause.type) {
+        ErrorType.RLM_ERR_OUT_OF_MEMORY,
+        ErrorType.RLM_ERR_MULTIPLE_SYNC_AGENTS,
+        ErrorType.RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION,
+        ErrorType.RLM_ERR_ADDRESS_SPACE_EXHAUSTED,
+        ErrorType.RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED,
+        ErrorType.RLM_ERR_OUT_OF_DISK_SPACE,
+        ErrorType.RLM_ERR_INVALID_PATH_ERROR -> RealmError(message, cause)
+        ErrorType.RLM_ERR_MISSING_PRIMARY_KEY,
+        ErrorType.RLM_ERR_UNEXPECTED_PRIMARY_KEY,
+        ErrorType.RLM_ERR_WRONG_PRIMARY_KEY_TYPE,
+        ErrorType.RLM_ERR_MODIFY_PRIMARY_KEY,
+        ErrorType.RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE -> RealmPrimaryKeyConstraintException(message, cause)
+        ErrorType.RLM_ERR_INDEX_OUT_OF_BOUNDS -> IndexOutOfBoundsException(message)
+        ErrorType.RLM_ERR_NOT_IN_A_TRANSACTION,
+        ErrorType.RLM_ERR_LOGIC -> IllegalStateException(message, cause)
+        ErrorType.RLM_ERR_INVALID_ARGUMENT,
+        ErrorType.RLM_ERR_INVALID_QUERY_STRING,
+        ErrorType.RLM_ERR_OTHER_EXCEPTION,
+        ErrorType.RLM_ERR_INVALID_QUERY -> IllegalArgumentException(message, cause)
+//        ErrorType.RLM_ERR_UNKNOWN ->
+//        ErrorType.RLM_ERR_NOT_CLONABLE ->
+//        ErrorType.RLM_ERR_WRONG_THREAD ->
+//        ErrorType.RLM_ERR_INVALIDATED_OBJECT ->
+//        ErrorType.RLM_ERR_INVALID_PROPERTY ->
+//        ErrorType.RLM_ERR_MISSING_PROPERTY_VALUE ->
+//        ErrorType.RLM_ERR_PROPERTY_TYPE_MISMATCH ->
+//        ErrorType.RLM_ERR_READ_ONLY_PROPERTY ->
+//        ErrorType.RLM_ERR_PROPERTY_NOT_NULLABLE ->
+//        ErrorType.RLM_ERR_NO_SUCH_TABLE ->
+//        ErrorType.RLM_ERR_NO_SUCH_OBJECT ->
+//        ErrorType.RLM_ERR_CROSS_TABLE_LINK_TARGET ->
+//        ErrorType.RLM_ERR_KEY_NOT_FOUND ->
+//        ErrorType.RLM_ERR_COLUMN_NOT_FOUND ->
+//        ErrorType.RLM_ERR_COLUMN_ALREADY_EXISTS ->
+//        ErrorType.RLM_ERR_KEY_ALREADY_USED ->
+//        ErrorType.RLM_ERR_SERIALIZATION_ERROR ->
+//        ErrorType.RLM_ERR_CALLBACK ->
+        else -> RuntimeException(message, cause)
     }
 }

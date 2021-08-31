@@ -20,6 +20,7 @@ package io.realm
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.internal.platform.RealmInitializer
+import io.realm.interop.errors.RealmCoreException
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.Utils.createRandomString
 import org.junit.After
@@ -92,10 +93,7 @@ class InstrumentedTests {
     @Test
     fun query_parseErrorThrows() {
         val objects: RealmResults<Sample> = realm.objects(Sample::class)
-        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
-        //  in realm-java ;)
-        //  https://github.com/realm/realm-kotlin/issues/70
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<IllegalArgumentException> {
             objects.query("name == str")
         }
     }

@@ -168,7 +168,7 @@ class ImportTests {
 
         // Verify that we cannot update the managed clone outside a transaction (it is in fact managed)
         assertTrue(managedChild.isManaged())
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<IllegalStateException> {
             managedChild.name = "bar"
         }
     }

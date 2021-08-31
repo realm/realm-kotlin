@@ -18,6 +18,7 @@ package io.realm.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.errors.RealmPrimaryKeyConstraintException
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.util.TypeDescriptor.rType
@@ -95,7 +96,7 @@ class PrimaryKeyTests {
         realm.writeBlocking {
             val obj = PrimaryKeyString().apply { primaryKey = PRIMARY_KEY }
             copyToRealm(obj)
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<RealmPrimaryKeyConstraintException> {
                 copyToRealm(obj)
             }
         }
@@ -108,7 +109,7 @@ class PrimaryKeyTests {
         realm.writeBlocking {
             val obj = PrimaryKeyStringNullable().apply { primaryKey = null }
             copyToRealm(obj)
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<RealmPrimaryKeyConstraintException> {
                 copyToRealm(obj)
             }
         }
@@ -127,7 +128,7 @@ class PrimaryKeyTests {
         realm.writeBlocking {
             val first = copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
             val second = copyToRealm(PrimaryKeyString().apply { primaryKey = "Other key" })
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<RealmPrimaryKeyConstraintException> {
                 second.primaryKey = PRIMARY_KEY
             }
         }

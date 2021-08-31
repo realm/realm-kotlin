@@ -18,6 +18,7 @@ package io.realm.interop
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.realm.interop.errors.RealmCoreException
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.file.Files
@@ -91,11 +92,12 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2_renamed_col, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2_renamed_col, 1)
 
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreException> {
             realmc.realm_open(config_2_renamed_col)
         }.run {
+            assertEquals(ErrorType.RLM_ERR_LOGIC, type)
             assertEquals(
-                "[18]: Migration is required due to the following errors:\n" +
+                "[RLM_ERR_LOGIC]: Migration is required due to the following errors:\n" +
                     "- Property 'foo.int' has been removed.\n" +
                     "- Property 'foo.int_renamed' has been added.",
                 message
@@ -117,11 +119,11 @@ class CinteropTest {
             assertEquals(0, count.value)
 
             // old column was removed
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<RealmCoreException> {
                 realmc.realm_query_parse(realm, foo_class, "int == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 })
             }.run {
                 assertEquals(
-                    "[36]: 'foo' has no property: 'int'",
+                    "[RLM_ERR_INVALID_QUERY]: 'foo' has no property: 'int'",
                     message
                 )
             }
@@ -143,11 +145,11 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2, 2)
 
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreException> {
             realmc.realm_open(config_2)
         }.run {
             assertEquals(
-                "[18]: Migration is required due to the following errors:\n" +
+                "[RLM_ERR_LOGIC]: Migration is required due to the following errors:\n" +
                     "- Property 'foo.newColumn' has been added.",
                 message
             )
@@ -179,11 +181,11 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_3, 3)
 
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreException> {
             realmc.realm_open(config_3)
         }.run {
             assertEquals(
-                "[18]: Migration is required due to the following errors:\n" +
+                "[RLM_ERR_LOGIC]: Migration is required due to the following errors:\n" +
                     "- Property 'foo.int_renamed' has been removed.",
                 message
             )
@@ -483,7 +485,7 @@ class CinteropTest {
 
         // Missing primary key
         val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreException> {
             val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
         }
         realmc.realm_commit(realm)

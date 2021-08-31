@@ -18,6 +18,7 @@ package io.realm
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.thaw
 import io.realm.interop.RealmInterop
+import io.realm.interop.errors.RealmCoreException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -67,7 +68,11 @@ class MutableRealm : BaseRealm {
         super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     internal fun beginTransaction() {
-        RealmInterop.realm_begin_write(realmReference.dbPointer)
+        try {
+            RealmInterop.realm_begin_write(realmReference.dbPointer)
+        } catch (exception: RealmCoreException) {
+            throw catchCoreErrors("Cannot begin a write transaction", exception)
+        }
     }
 
     internal fun commitTransaction() {
@@ -116,7 +121,11 @@ class MutableRealm : BaseRealm {
      * Cancel the write. Any changes will not be persisted to disk.
      */
     public fun cancelWrite() {
-        RealmInterop.realm_rollback(realmReference.dbPointer)
+        try {
+            RealmInterop.realm_rollback(realmReference.dbPointer)
+        } catch (exception: RealmCoreException) {
+            throw catchCoreErrors("Cannot cancel the write transaction", exception)
+        }
     }
 
     /**

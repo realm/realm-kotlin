@@ -22,6 +22,7 @@ import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.interop.errors.RealmCoreException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -114,7 +115,14 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
      */
     // FIXME Figure out how to describe the constructor better
     public constructor(configuration: RealmConfiguration) :
-        this(configuration, RealmInterop.realm_open(configuration.nativeConfig))
+            this(
+                configuration,
+                try {
+                    RealmInterop.realm_open(configuration.nativeConfig)
+                } catch (exception: RealmCoreException) {
+                    throw catchCoreErrors("Could not open Realm with the given configuration", exception)
+                }
+            )
 
     /**
      * Returns the results of querying for all objects of a specific type.

@@ -396,7 +396,7 @@ actual object RealmInterop {
                 )
             )
             if (!found.value) {
-                throw RuntimeException("Class \"$name\" not found")
+                throw IllegalArgumentException("Class \"$name\" not found")
             }
             return ClassKey(classInfo.key.toLong())
         }
