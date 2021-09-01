@@ -549,36 +549,21 @@ class CinteropTest {
 
     /**
      * Monitors for changes in Core defined types.
-     *
-     * This will force to add any missing element in cinterop common, and
-     * by extension into Kotlin native.
      */
     @Test
     fun errorTypes_watchdog() {
-        // Collect ErrorTypes defined in Kotlin and Core
-        val javaErrorTypeMap: Map<String, Int> = ErrorType::class.java.fields
-            .filter { it.name != "Companion" }
-            .map {
-                val errorType = it.get(null) as ErrorType
-                it.name to errorType.nativeValue
-            }
-            .toMap()
+        val coreErrorNativeValues = realm_errno_e::class.java.fields
+            .map { it.getInt(null) }
+            .toIntArray()
 
-        val coreErrorTypeMap = realm_errno_e::class.java.fields
-            .map {
-                it.name to it.getInt(null)
-            }
-            .toMap()
+        val mappedKotlinClasses = coreErrorNativeValues
+            .map { nativeValue -> coreErrorAsThrowable(nativeValue, null)::class }
+            .toSet()
 
-        javaErrorTypeMap.entries.forEach { javaEntry ->
-            assertTrue(coreErrorTypeMap.containsKey(javaEntry.key), "Missing ErrorType Core definition for `${javaEntry.key}`")
-            assertEquals(coreErrorTypeMap[javaEntry.key], javaEntry.value, "ErrorType enum value mismatch: core[${coreErrorTypeMap[javaEntry.key]}] - java[${javaEntry.value}]")
-        }
-
-        coreErrorTypeMap.entries.forEach { coreEntry ->
-            assertTrue(javaErrorTypeMap.containsKey(coreEntry.key), "Missing ErrorType Java definition for `${coreEntry.key}`")
-            assertEquals(javaErrorTypeMap[coreEntry.key], coreEntry.value, "ErrorType enum value mismatch: java[${javaErrorTypeMap[coreEntry.key]}] - core[${coreEntry.value}]")
-        }
+        // Validate we have a different exception defined for each core native value.
+        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
+        // Validate that there is an error defined for each exception.
+        assertEquals(RealmCoreException::class.sealedSubclasses.size, coreErrorNativeValues.size)
     }
 
     @Test

@@ -18,11 +18,10 @@ package io.realm.internal
 
 import io.realm.BaseRealm
 import io.realm.RealmObject
-import io.realm.interop.ErrorType
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
+import io.realm.interop.RealmCoreUnknownException
 import io.realm.interop.RealmInterop
-import io.realm.interop.errors.RealmCoreException
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
@@ -103,13 +102,10 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T
                 thawedObject
             )
         }
-    } catch (exception: RealmCoreException) {
+    } catch (exception: RealmCoreUnknownException) {
         // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
         //  catching that and returning null. Only treat unknown null pointers as non-existing objects
         //  to avoid handling unintended situations here.
-        if (exception.type == ErrorType.RLM_ERR_OTHER_EXCEPTION) {
-            return null
-        }
-        throw exception
+        return null
     }
 }
