@@ -21,10 +21,12 @@ import io.realm.interop.CollectionType
 import io.realm.interop.Property
 import io.realm.interop.PropertyFlag
 import io.realm.interop.PropertyType
+import io.realm.interop.RealmCoreException
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.interop.SchemaValidationMode
 import io.realm.interop.Table
+import io.realm.interop.coreErrorAsThrowable
 import io.realm.interop.set
 import io.realm.interop.toKString
 import kotlinx.cinterop.BooleanVar
@@ -217,6 +219,24 @@ class CinteropTest {
             r = s.toKString()
         }
         assertEquals(value, r)
+    }
+
+    /**
+     * Monitors for changes in Core defined types.
+     *
+     * Because Darwin does not support reflection we cannot check if there are exceptions
+     * with no matching core error, as we do on JVM tests.
+     */
+    @Test
+    fun errorTypes_watchdog() {
+        val coreErrorNativeValues = realm_wrapper.realm_errno.values()
+
+        val mappedKotlinClasses = coreErrorNativeValues
+            .map { nativeValue -> coreErrorAsThrowable(nativeValue.value, null)::class }
+            .toSet()
+
+        // Validate we have a different exception defined for each core native value.
+        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
     }
 }
 

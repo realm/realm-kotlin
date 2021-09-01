@@ -80,7 +80,7 @@ private fun throwOnError() {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
             val message: String? = error.message?.toKString()
-            val exception = ErrorType.asThrowable(error.error, message)
+            val exception = coreErrorAsThrowable(error.error, message)
 
             realm_clear_last_error()
             throw exception

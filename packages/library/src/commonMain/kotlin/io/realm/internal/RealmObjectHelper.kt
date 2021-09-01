@@ -22,7 +22,7 @@ import io.realm.interop.ColumnKey
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.errors.RealmCoreException
+import io.realm.interop.RealmCoreException
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
