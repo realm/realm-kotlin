@@ -94,17 +94,15 @@ pipeline {
         stage('Tests Macos') {
             when { expression { runTests } }
             steps {
-                testAndCollect("packages",  "macosTest")
-                testAndCollect("test/base", "macosTest")
-                testAndCollect("test/sync", "macosTest")
+                testAndCollect("packages", "macosTest")
+                testAndCollect("test",     "macosTest")
             }
         }
         stage('Tests Android') {
             when { expression { runTests } }
             steps {
-                testAndCollect("packages",  "connectedAndroidTest")
-                testAndCollect("test/base", "connectedAndroidTest")
-                testAndCollect("test/sync", "connectedAndroidTest")
+                testAndCollect("packages", "connectedAndroidTest")
+                testAndCollect("test",     "connectedAndroidTest")
             }
         }
         stage('Tests JVM (compiler only)') {
