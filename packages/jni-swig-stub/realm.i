@@ -103,7 +103,7 @@ void throw_as_java_exception(JNIEnv *jenv) {
         std::string message(error.message);
         realm_clear_last_error();
 
-        // Invoke ErrorType.asThrowable() to retrieve an exception instance that
+        // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
         // maps to the core error.
         static jclass error_type_class = (jenv)->FindClass("io/realm/interop/CoreErrorUtils");
         static jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
