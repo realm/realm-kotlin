@@ -62,6 +62,21 @@ kotlin {
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
+
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}") {
+                    version { strictly(Versions.coroutines) }
+                }
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
+
+                implementation("io.ktor:ktor-client-core:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
+
+                implementation("ch.qos.logback:logback-classic:${Versions.logback}")
+
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
@@ -86,6 +101,8 @@ kotlin {
                 api(project(":cinterop"))
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
+
+                implementation("io.ktor:ktor-client-android:${Versions.ktor}")
             }
         }
         getByName("androidTest") {
@@ -102,16 +119,31 @@ kotlin {
         getByName("macosMain") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
+
+            // Observe this ktor dependency cannot be abstracted away with the ios ones
+            dependencies {
+                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+            }
         }
         getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
+
+            // FIXME move to shared ios source set
+            dependencies {
+                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+            }
         }
         getByName("iosX64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
+
+            // FIXME move to shared ios source set
+            dependencies {
+                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+            }
         }
     }
 
