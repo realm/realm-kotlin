@@ -13,6 +13,11 @@
     *;
 }
 
+# Utils to convert core errors into Kotlin exceptions
+-keep class io.realm.interop.CoreErrorUtils {
+    *;
+}
+
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt
 #-keepattributes LineNumberTable,SourceFile

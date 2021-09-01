@@ -19,31 +19,31 @@ package io.realm.interop
 /**
  * Generic representation of a Realm-Core exception.
  */
-sealed class RealmCoreException(message: String?): Exception(message)
+sealed class RealmCoreException(message: String?) : Exception(message)
 
 // RLM_ERR_NONE
-class RealmCoreNoneException(message: String?): RealmCoreException(message)
+class RealmCoreNoneException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_UNKNOWN
-class RealmCoreUnknownException(message: String?): RealmCoreException(message)
+class RealmCoreUnknownException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_OTHER_EXCEPTION
-class RealmCoreOtherException(message: String?): RealmCoreException(message)
+class RealmCoreOtherException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_OUT_OF_MEMORY
-class RealmCoreOutOfMemoryException(message: String?): RealmCoreException(message)
+class RealmCoreOutOfMemoryException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_NOT_CLONABLE
-class RealmCoreNotClonableException(message: String?): RealmCoreException(message)
+class RealmCoreNotClonableException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_NOT_IN_A_TRANSACTION
-class RealmCoreNotInATransactionException(message: String?): RealmCoreException(message)
+class RealmCoreNotInATransactionException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_WRONG_THREAD
-class RealmCoreWrongThreadException(message: String?): RealmCoreException(message)
+class RealmCoreWrongThreadException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_INVALIDATED_OBJECT
-class RealmCoreInvalidatedObjectException(message: String?): RealmCoreException(message)
+class RealmCoreInvalidatedObjectException(message: String?) : RealmCoreException(message)
 
 // Core error RLM_ERR_INVALID_PROPERTY
 class RealmCoreInvalidPropertyException(message: String?) : RealmCoreException(message)

@@ -547,9 +547,6 @@ class CinteropTest {
 
     /**
      * Monitors for changes in Core defined types.
-     *
-     * This will force to add any missing element in cinterop common, and
-     * by extension into Kotlin native.
      */
     @Test
     fun errorTypes_watchdog() {

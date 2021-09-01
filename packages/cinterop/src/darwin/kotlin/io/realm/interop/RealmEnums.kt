@@ -16,7 +16,6 @@
 
 package io.realm.interop
 
-import io.realm.interop.RealmCoreException
 import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_schema_mode_e
 
@@ -75,45 +74,4 @@ actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeE
     RLM_SCHEMA_VALIDATION_BASIC(realm_wrapper.RLM_SCHEMA_VALIDATION_BASIC),
     RLM_SCHEMA_VALIDATION_SYNC(realm_wrapper.RLM_SCHEMA_VALIDATION_SYNC),
     RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_wrapper.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),
-}
-
-actual enum class ErrorType(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_ERR_NONE(realm_wrapper.realm_errno.RLM_ERR_NONE.value),
-    RLM_ERR_UNKNOWN(realm_wrapper.realm_errno.RLM_ERR_UNKNOWN.value),
-    RLM_ERR_OTHER_EXCEPTION(realm_wrapper.realm_errno.RLM_ERR_OTHER_EXCEPTION.value),
-    RLM_ERR_OUT_OF_MEMORY(realm_wrapper.realm_errno.RLM_ERR_OUT_OF_MEMORY.value),
-    RLM_ERR_NOT_CLONABLE(realm_wrapper.realm_errno.RLM_ERR_NOT_CLONABLE.value),
-    RLM_ERR_NOT_IN_A_TRANSACTION(realm_wrapper.realm_errno.RLM_ERR_NOT_IN_A_TRANSACTION.value),
-    RLM_ERR_WRONG_THREAD(realm_wrapper.realm_errno.RLM_ERR_WRONG_THREAD.value),
-    RLM_ERR_INVALIDATED_OBJECT(realm_wrapper.realm_errno.RLM_ERR_INVALIDATED_OBJECT.value),
-    RLM_ERR_INVALID_PROPERTY(realm_wrapper.realm_errno.RLM_ERR_INVALID_PROPERTY.value),
-    RLM_ERR_MISSING_PROPERTY_VALUE(realm_wrapper.realm_errno.RLM_ERR_MISSING_PROPERTY_VALUE.value),
-    RLM_ERR_PROPERTY_TYPE_MISMATCH(realm_wrapper.realm_errno.RLM_ERR_PROPERTY_TYPE_MISMATCH.value),
-    RLM_ERR_MISSING_PRIMARY_KEY(realm_wrapper.realm_errno.RLM_ERR_MISSING_PRIMARY_KEY.value),
-    RLM_ERR_UNEXPECTED_PRIMARY_KEY(realm_wrapper.realm_errno.RLM_ERR_UNEXPECTED_PRIMARY_KEY.value),
-    RLM_ERR_WRONG_PRIMARY_KEY_TYPE(realm_wrapper.realm_errno.RLM_ERR_WRONG_PRIMARY_KEY_TYPE.value),
-    RLM_ERR_MODIFY_PRIMARY_KEY(realm_wrapper.realm_errno.RLM_ERR_MODIFY_PRIMARY_KEY.value),
-    RLM_ERR_READ_ONLY_PROPERTY(realm_wrapper.realm_errno.RLM_ERR_READ_ONLY_PROPERTY.value),
-    RLM_ERR_PROPERTY_NOT_NULLABLE(realm_wrapper.realm_errno.RLM_ERR_PROPERTY_NOT_NULLABLE.value),
-    RLM_ERR_INVALID_ARGUMENT(realm_wrapper.realm_errno.RLM_ERR_INVALID_ARGUMENT.value),
-    RLM_ERR_LOGIC(realm_wrapper.realm_errno.RLM_ERR_LOGIC.value),
-    RLM_ERR_NO_SUCH_TABLE(realm_wrapper.realm_errno.RLM_ERR_NO_SUCH_TABLE.value),
-    RLM_ERR_NO_SUCH_OBJECT(realm_wrapper.realm_errno.RLM_ERR_NO_SUCH_OBJECT.value),
-    RLM_ERR_CROSS_TABLE_LINK_TARGET(realm_wrapper.realm_errno.RLM_ERR_CROSS_TABLE_LINK_TARGET.value),
-    RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION(realm_wrapper.realm_errno.RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION.value),
-    RLM_ERR_MULTIPLE_SYNC_AGENTS(realm_wrapper.realm_errno.RLM_ERR_MULTIPLE_SYNC_AGENTS.value),
-    RLM_ERR_ADDRESS_SPACE_EXHAUSTED(realm_wrapper.realm_errno.RLM_ERR_ADDRESS_SPACE_EXHAUSTED.value),
-    RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED(realm_wrapper.realm_errno.RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED.value),
-    RLM_ERR_OUT_OF_DISK_SPACE(realm_wrapper.realm_errno.RLM_ERR_OUT_OF_DISK_SPACE.value),
-    RLM_ERR_KEY_NOT_FOUND(realm_wrapper.realm_errno.RLM_ERR_KEY_NOT_FOUND.value),
-    RLM_ERR_COLUMN_NOT_FOUND(realm_wrapper.realm_errno.RLM_ERR_COLUMN_NOT_FOUND.value),
-    RLM_ERR_COLUMN_ALREADY_EXISTS(realm_wrapper.realm_errno.RLM_ERR_COLUMN_ALREADY_EXISTS.value),
-    RLM_ERR_KEY_ALREADY_USED(realm_wrapper.realm_errno.RLM_ERR_KEY_ALREADY_USED.value),
-    RLM_ERR_SERIALIZATION_ERROR(realm_wrapper.realm_errno.RLM_ERR_SERIALIZATION_ERROR.value),
-    RLM_ERR_INVALID_PATH_ERROR(realm_wrapper.realm_errno.RLM_ERR_INVALID_PATH_ERROR.value),
-    RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE(realm_wrapper.realm_errno.RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE.value),
-    RLM_ERR_INDEX_OUT_OF_BOUNDS(realm_wrapper.realm_errno.RLM_ERR_INDEX_OUT_OF_BOUNDS.value),
-    RLM_ERR_INVALID_QUERY_STRING(realm_wrapper.realm_errno.RLM_ERR_INVALID_QUERY_STRING.value),
-    RLM_ERR_INVALID_QUERY(realm_wrapper.realm_errno.RLM_ERR_INVALID_QUERY.value),
-    RLM_ERR_CALLBACK(realm_wrapper.realm_errno.RLM_ERR_CALLBACK.value);
 }

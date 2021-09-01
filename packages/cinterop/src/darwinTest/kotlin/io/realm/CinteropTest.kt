@@ -21,7 +21,6 @@ import io.realm.interop.CollectionType
 import io.realm.interop.Property
 import io.realm.interop.PropertyFlag
 import io.realm.interop.PropertyType
-import io.realm.interop.RealmCoreException
 import io.realm.interop.RealmInterop
 import io.realm.interop.SchemaMode
 import io.realm.interop.SchemaValidationMode
@@ -232,7 +231,7 @@ class CinteropTest {
         val coreErrorNativeValues = realm_wrapper.realm_errno.values()
 
         val mappedKotlinClasses = coreErrorNativeValues
-            .map { nativeValue -> coreErrorAsThrowable(nativeValue.value, null)::class }
+            .map { nativeValue -> coreErrorAsThrowable(nativeValue, null)::class }
             .toSet()
 
         // Validate we have a different exception defined for each core native value.
@@ -257,6 +256,6 @@ fun assertNoError() {
     error.useContents {
         assertEquals(0, kind.code)
         assertNull(message)
-        assertEquals(0.toUInt(), this.error)
+        assertEquals(realm_wrapper.realm_errno.RLM_ERR_NONE, this.error)
     }
 }
