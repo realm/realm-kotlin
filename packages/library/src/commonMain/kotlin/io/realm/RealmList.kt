@@ -19,10 +19,11 @@ package io.realm
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
 import io.realm.internal.copyToRealm
-import io.realm.internal.coreErrorToThrowable
+import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmCoreException
+import io.realm.interop.RealmCoreInvalidatedObjectException
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -70,15 +71,12 @@ class RealmList<E> private constructor(
     internal fun freeze(realm: RealmReference): RealmList<E> = delegate.freeze(realm)
     internal fun thaw(realm: RealmReference): RealmList<E> = delegate.thaw(realm)
 
-    @Suppress("TooGenericExceptionCaught")
     internal fun isValid(): Boolean {
         // FIXME workaround until https://github.com/realm/realm-core/issues/4843 is done
         try {
             size
-        } catch (e: RuntimeException) {
-            if (e.message?.lowercase()?.contains("access to invalidated list object") == true) {
-                return false
-            }
+        } catch (e: RealmCoreInvalidatedObjectException) {
+            return false
         }
         return true
     }
@@ -186,7 +184,7 @@ private class ManagedListDelegate<E>(
         try {
             return operator.convert(RealmInterop.realm_list_get(listPtr, index.toLong()))
         } catch (exception: RealmCoreException) {
-            throw coreErrorToThrowable("Cannot get list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Cannot get list element at index $index", exception)
         }
     }
 
@@ -199,7 +197,7 @@ private class ManagedListDelegate<E>(
                 copyToRealm(metadata.mediator, metadata.realm, element)
             )
         } catch (exception: RealmCoreException) {
-            throw coreErrorToThrowable("Cannot add list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Cannot add list element at index $index", exception)
         }
     }
 
@@ -222,7 +220,7 @@ private class ManagedListDelegate<E>(
         try {
             RealmInterop.realm_list_erase(listPtr, index.toLong())
         } catch (exception: RealmCoreException) {
-            throw coreErrorToThrowable("Cannot remove list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Cannot remove list element at index $index", exception)
         }
     }
 
@@ -237,7 +235,7 @@ private class ManagedListDelegate<E>(
                 )
             )
         } catch (exception: RealmCoreException) {
-            throw coreErrorToThrowable("Cannot set list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Cannot set list element at index $index", exception)
         }
     }
 

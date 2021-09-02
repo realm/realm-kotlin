@@ -18,7 +18,7 @@ package io.realm
 import io.realm.internal.RealmReference
 import io.realm.internal.SuspendableNotifier
 import io.realm.internal.SuspendableWriter
-import io.realm.internal.coreErrorToThrowable
+import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
@@ -121,7 +121,7 @@ class Realm private constructor(configuration: RealmConfiguration, dbPointer: Na
             try {
                 RealmInterop.realm_open(configuration.nativeConfig)
             } catch (exception: RealmCoreException) {
-                throw coreErrorToThrowable("Could not open Realm with the given configuration", exception)
+                throw genericRealmCoreExceptionHandler("Could not open Realm with the given configuration", exception)
             }
         )
 

@@ -74,7 +74,7 @@ import kotlin.reflect.KProperty1
 @Suppress("FunctionNaming")
 internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
-            "Has the `realm-kotlin` Gradle plugin been applied to the project?"
+        "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
 
 internal fun checkRealmClosed(realm: RealmReference) {
@@ -100,11 +100,8 @@ fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KC
             type,
             RealmInterop.realm_object_create(realm.dbPointer, key)
         )
-    } catch (e: RuntimeException) {
-        // FIXME Throw proper exception
-        //  https://github.com/realm/realm-kotlin/issues/70
-        @Suppress("TooGenericExceptionThrown")
-        throw IllegalArgumentException("Failed to create object of type '$objectType'", e)
+    } catch (e: RealmCoreException) {
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
 }
 
@@ -139,7 +136,7 @@ fun <T : RealmObject> create(
             RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
         )
     } catch (e: RealmCoreException) {
-        throw coreErrorToThrowable("Failed to create object of type '$objectType'", e)
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
 }
 
@@ -239,7 +236,7 @@ private fun <T : RealmObject> processListMember(
     return list
 }
 
-fun coreErrorToThrowable(message: String, cause: RealmCoreException): Throwable {
+fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
     return when (cause) {
         is RealmCoreOutOfMemoryException,
         is RealmCoreUnsupportedFileFormatVersionException,
