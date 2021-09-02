@@ -95,7 +95,7 @@ class CinteropTest {
             realmc.realm_open(config_2_renamed_col)
         }.run {
             assertEquals(
-                "[RLM_ERR_LOGIC]: Migration is required due to the following errors:\n" +
+                "Migration is required due to the following errors:\n" +
                     "- Property 'foo.int' has been removed.\n" +
                     "- Property 'foo.int_renamed' has been added.",
                 message
@@ -121,7 +121,7 @@ class CinteropTest {
                 realmc.realm_query_parse(realm, foo_class, "int == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 })
             }.run {
                 assertEquals(
-                    "[RLM_ERR_INVALID_QUERY]: 'foo' has no property: 'int'",
+                    "'foo' has no property: 'int'",
                     message
                 )
             }
@@ -147,7 +147,7 @@ class CinteropTest {
             realmc.realm_open(config_2)
         }.run {
             assertEquals(
-                "[RLM_ERR_LOGIC]: Migration is required due to the following errors:\n" +
+                "Migration is required due to the following errors:\n" +
                     "- Property 'foo.newColumn' has been added.",
                 message
             )
@@ -183,7 +183,7 @@ class CinteropTest {
             realmc.realm_open(config_3)
         }.run {
             assertEquals(
-                "[RLM_ERR_LOGIC]: Migration is required due to the following errors:\n" +
+                "Migration is required due to the following errors:\n" +
                     "- Property 'foo.int_renamed' has been removed.",
                 message
             )
