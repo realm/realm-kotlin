@@ -22,7 +22,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.interop.errors.RealmCoreException
+import io.realm.interop.RealmCoreException
 import io.realm.test.platform.PlatformUtils
 import io.realm.util.TypeDescriptor
 import test.list.Level1

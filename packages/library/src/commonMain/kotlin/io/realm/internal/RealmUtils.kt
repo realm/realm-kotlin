@@ -21,9 +21,46 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.errors.RealmError
 import io.realm.errors.RealmPrimaryKeyConstraintException
-import io.realm.interop.ErrorType
+import io.realm.interop.RealmCoreAddressSpaceExhaustedException
+import io.realm.interop.RealmCoreCallbackException
+import io.realm.interop.RealmCoreColumnAlreadyExistsException
+import io.realm.interop.RealmCoreColumnNotFoundException
+import io.realm.interop.RealmCoreCrossTableLinkTargetException
+import io.realm.interop.RealmCoreDuplicatePrimaryKeyValueException
+import io.realm.interop.RealmCoreException
+import io.realm.interop.RealmCoreIndexOutOfBoundsException
+import io.realm.interop.RealmCoreInvalidArgumentException
+import io.realm.interop.RealmCoreInvalidPathErrorException
+import io.realm.interop.RealmCoreInvalidPropertyException
+import io.realm.interop.RealmCoreInvalidQueryException
+import io.realm.interop.RealmCoreInvalidQueryStringException
+import io.realm.interop.RealmCoreInvalidatedObjectException
+import io.realm.interop.RealmCoreKeyAlreadyUsedException
+import io.realm.interop.RealmCoreKeyNotFoundException
+import io.realm.interop.RealmCoreLogicException
+import io.realm.interop.RealmCoreMaximumFileSizeExceededException
+import io.realm.interop.RealmCoreMissingPrimaryKeyException
+import io.realm.interop.RealmCoreMissingPropertyValueException
+import io.realm.interop.RealmCoreModifyPrimaryKeyException
+import io.realm.interop.RealmCoreMultipleSyncAgentsException
+import io.realm.interop.RealmCoreNoSuchObjectException
+import io.realm.interop.RealmCoreNoSuchTableException
+import io.realm.interop.RealmCoreNoneException
+import io.realm.interop.RealmCoreNotClonableException
+import io.realm.interop.RealmCoreNotInATransactionException
+import io.realm.interop.RealmCoreOtherException
+import io.realm.interop.RealmCoreOutOfDiskSpaceException
+import io.realm.interop.RealmCoreOutOfMemoryException
+import io.realm.interop.RealmCorePropertyNotNullableException
+import io.realm.interop.RealmCorePropertyTypeMismatchException
+import io.realm.interop.RealmCoreReadOnlyPropertyException
+import io.realm.interop.RealmCoreSerializationErrorException
+import io.realm.interop.RealmCoreUnexpectedPrimaryKeyException
+import io.realm.interop.RealmCoreUnknownException
+import io.realm.interop.RealmCoreUnsupportedFileFormatVersionException
+import io.realm.interop.RealmCoreWrongPrimaryKeyTypeException
+import io.realm.interop.RealmCoreWrongThreadException
 import io.realm.interop.RealmInterop
-import io.realm.interop.errors.RealmCoreException
 import io.realm.isManaged
 import io.realm.isValid
 import kotlin.reflect.KClass
@@ -37,7 +74,7 @@ import kotlin.reflect.KProperty1
 @Suppress("FunctionNaming")
 internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
-        "Has the `realm-kotlin` Gradle plugin been applied to the project?"
+            "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
 
 internal fun checkRealmClosed(realm: RealmReference) {
@@ -203,44 +240,44 @@ private fun <T : RealmObject> processListMember(
 }
 
 fun coreErrorToThrowable(message: String, cause: RealmCoreException): Throwable {
-    return when (cause.type) {
-        ErrorType.RLM_ERR_OUT_OF_MEMORY,
-        ErrorType.RLM_ERR_MULTIPLE_SYNC_AGENTS,
-        ErrorType.RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION,
-        ErrorType.RLM_ERR_ADDRESS_SPACE_EXHAUSTED,
-        ErrorType.RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED,
-        ErrorType.RLM_ERR_OUT_OF_DISK_SPACE,
-        ErrorType.RLM_ERR_INVALID_PATH_ERROR -> RealmError(message, cause)
-        ErrorType.RLM_ERR_MISSING_PRIMARY_KEY,
-        ErrorType.RLM_ERR_UNEXPECTED_PRIMARY_KEY,
-        ErrorType.RLM_ERR_WRONG_PRIMARY_KEY_TYPE,
-        ErrorType.RLM_ERR_MODIFY_PRIMARY_KEY,
-        ErrorType.RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE -> RealmPrimaryKeyConstraintException(message, cause)
-        ErrorType.RLM_ERR_INDEX_OUT_OF_BOUNDS -> IndexOutOfBoundsException(message)
-        ErrorType.RLM_ERR_INVALID_ARGUMENT,
-        ErrorType.RLM_ERR_INVALID_QUERY_STRING,
-        ErrorType.RLM_ERR_OTHER_EXCEPTION,
-        ErrorType.RLM_ERR_INVALID_QUERY -> IllegalArgumentException(message, cause)
-        ErrorType.RLM_ERR_NOT_IN_A_TRANSACTION,
-        ErrorType.RLM_ERR_LOGIC -> IllegalStateException(message, cause)
-//        ErrorType.RLM_ERR_NOT_CLONABLE ->
-//        ErrorType.RLM_ERR_WRONG_THREAD ->
-//        ErrorType.RLM_ERR_INVALIDATED_OBJECT ->
-//        ErrorType.RLM_ERR_INVALID_PROPERTY ->
-//        ErrorType.RLM_ERR_MISSING_PROPERTY_VALUE ->
-//        ErrorType.RLM_ERR_PROPERTY_TYPE_MISMATCH ->
-//        ErrorType.RLM_ERR_READ_ONLY_PROPERTY ->
-//        ErrorType.RLM_ERR_PROPERTY_NOT_NULLABLE ->
-//        ErrorType.RLM_ERR_NO_SUCH_TABLE ->
-//        ErrorType.RLM_ERR_NO_SUCH_OBJECT ->
-//        ErrorType.RLM_ERR_CROSS_TABLE_LINK_TARGET ->
-//        ErrorType.RLM_ERR_KEY_NOT_FOUND ->
-//        ErrorType.RLM_ERR_COLUMN_NOT_FOUND ->
-//        ErrorType.RLM_ERR_COLUMN_ALREADY_EXISTS ->
-//        ErrorType.RLM_ERR_KEY_ALREADY_USED ->
-//        ErrorType.RLM_ERR_SERIALIZATION_ERROR ->
-//        ErrorType.RLM_ERR_UNKNOWN ->
-//        ErrorType.RLM_ERR_CALLBACK ->
-        else -> RuntimeException(message, cause)
+    return when (cause) {
+        is RealmCoreOutOfMemoryException,
+        is RealmCoreUnsupportedFileFormatVersionException,
+        is RealmCoreInvalidPathErrorException,
+        is RealmCoreMultipleSyncAgentsException,
+        is RealmCoreAddressSpaceExhaustedException,
+        is RealmCoreMaximumFileSizeExceededException,
+        is RealmCoreOutOfDiskSpaceException -> RealmError(message, cause)
+        is RealmCoreMissingPrimaryKeyException,
+        is RealmCoreUnexpectedPrimaryKeyException,
+        is RealmCoreWrongPrimaryKeyTypeException,
+        is RealmCoreModifyPrimaryKeyException,
+        is RealmCoreDuplicatePrimaryKeyValueException -> RealmPrimaryKeyConstraintException(message, cause)
+        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException(message)
+        is RealmCoreInvalidArgumentException,
+        is RealmCoreInvalidQueryStringException,
+        is RealmCoreOtherException,
+        is RealmCoreInvalidQueryException -> IllegalArgumentException(message, cause)
+        is RealmCoreNotInATransactionException,
+        is RealmCoreLogicException -> IllegalStateException(message, cause)
+        is RealmCoreNoneException,
+        is RealmCoreUnknownException,
+        is RealmCoreNotClonableException,
+        is RealmCoreWrongThreadException,
+        is RealmCoreInvalidatedObjectException,
+        is RealmCoreInvalidPropertyException,
+        is RealmCoreMissingPropertyValueException,
+        is RealmCorePropertyTypeMismatchException,
+        is RealmCoreReadOnlyPropertyException,
+        is RealmCorePropertyNotNullableException,
+        is RealmCoreNoSuchTableException,
+        is RealmCoreNoSuchObjectException,
+        is RealmCoreCrossTableLinkTargetException,
+        is RealmCoreKeyNotFoundException,
+        is RealmCoreColumnNotFoundException,
+        is RealmCoreColumnAlreadyExistsException,
+        is RealmCoreKeyAlreadyUsedException,
+        is RealmCoreSerializationErrorException,
+        is RealmCoreCallbackException -> RuntimeException(message, cause)
     }
 }

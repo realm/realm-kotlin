@@ -18,7 +18,6 @@ package io.realm.interop
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import io.realm.interop.errors.RealmCoreException
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.file.Files
@@ -92,10 +91,9 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2_renamed_col, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2_renamed_col, 1)
 
-        assertFailsWith<RealmCoreException> {
+        assertFailsWith<RealmCoreLogicException> {
             realmc.realm_open(config_2_renamed_col)
         }.run {
-            assertEquals(ErrorType.RLM_ERR_LOGIC, type)
             assertEquals(
                 "[RLM_ERR_LOGIC]: Migration is required due to the following errors:\n" +
                     "- Property 'foo.int' has been removed.\n" +
@@ -119,7 +117,7 @@ class CinteropTest {
             assertEquals(0, count.value)
 
             // old column was removed
-            assertFailsWith<RealmCoreException> {
+            assertFailsWith<RealmCoreInvalidQueryException> {
                 realmc.realm_query_parse(realm, foo_class, "int == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 })
             }.run {
                 assertEquals(
@@ -145,7 +143,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2, 2)
 
-        assertFailsWith<RealmCoreException> {
+        assertFailsWith<RealmCoreLogicException> {
             realmc.realm_open(config_2)
         }.run {
             assertEquals(
@@ -181,7 +179,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_3, 3)
 
-        assertFailsWith<RealmCoreException> {
+        assertFailsWith<RealmCoreLogicException> {
             realmc.realm_open(config_3)
         }.run {
             assertEquals(
@@ -485,7 +483,7 @@ class CinteropTest {
 
         // Missing primary key
         val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
-        assertFailsWith<RealmCoreException> {
+        assertFailsWith<RealmCoreMissingPrimaryKeyException> {
             val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
         }
         realmc.realm_commit(realm)
@@ -557,7 +555,7 @@ class CinteropTest {
             .toIntArray()
 
         val mappedKotlinClasses = coreErrorNativeValues
-            .map { nativeValue -> coreErrorAsThrowable(nativeValue, null)::class }
+            .map { nativeValue -> CoreErrorUtils.coreErrorAsThrowable(nativeValue, null)::class }
             .toSet()
 
         // Validate we have a different exception defined for each core native value.

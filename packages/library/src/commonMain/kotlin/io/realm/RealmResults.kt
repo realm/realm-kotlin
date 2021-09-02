@@ -23,8 +23,8 @@ import io.realm.internal.coreErrorToThrowable
 import io.realm.internal.link
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
+import io.realm.interop.RealmCoreException
 import io.realm.interop.RealmInterop
-import io.realm.interop.errors.RealmCoreException
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 

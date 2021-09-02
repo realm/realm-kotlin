@@ -18,8 +18,8 @@ package io.realm
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.coreErrorToThrowable
 import io.realm.internal.thaw
+import io.realm.interop.RealmCoreException
 import io.realm.interop.RealmInterop
-import io.realm.interop.errors.RealmCoreException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
