@@ -18,6 +18,7 @@ package io.realm.mongodb.sync
 
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
@@ -157,7 +158,7 @@ class KtorNetworkTransport(
         // freezes captured objects too, see:
         // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
         val frozenTimeout = timeoutMs.freeze()
-        return HttpClient {
+        return HttpClient(CIO) {
             // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
             install(JsonFeature) {
                 serializer = KotlinxSerializer(Json)
