@@ -64,6 +64,7 @@ kotlin {
                 implementation(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+                implementation("org.mongodb:bson:${Versions.bson}")
             }
         }
 

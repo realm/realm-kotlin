@@ -69,6 +69,7 @@ object Versions {
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
     const val atomicfu = "0.16.1" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
+    const val bson = "4.3.1" // https://search.maven.org/artifact/org.mongodb/bson
     // Cannot upgrade past this due to https://stackoverflow.com/questions/67120904/cannot-properly-link-c-project-with-gradle-exception-during-working-with-exte
     // Upgrading might be possible if we can bump Android Gradle Plugin, but that is blocked on another bug.
     const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
