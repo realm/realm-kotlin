@@ -167,6 +167,21 @@ struct realm_size_t {
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
 
+// Enable passing output argument pointers as long[]
+%apply int64_t[] {void **};
+// Type map for int64_t has an erroneous cast, don't know how to fix it except with this
+%typemap(in) void** ( jlong *jarr ){
+    // Original
+    // if (!SWIG_JavaArrayInLonglong(jenv, &jarr3, (long long **)&arg3, jarg3)) return 0;
+    if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return 0;
+}
+%typemap(argout) void** {
+    // Original
+    // SWIG_JavaArrayArgoutLonglong(jenv, jarr3, (long long *)arg3, jarg3);
+    SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long *)$1, $input);
+}
+%apply void** {realm_object_t **, realm_list_t **};
+
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"
 %javaconst(1);

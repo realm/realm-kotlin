@@ -247,6 +247,7 @@ internal class SuspendableNotifier(
         callback: Callback<RealmList<T>?>
     ): Cancellable {
         val liveList = list.thaw(realm.realmReference)
+            ?: throw RuntimeException("Cannot register for notifications on deleted list")
         return registerChangedListener(
             liveComponentPointer = liveList.listPtr,
             notifyComponentUpdate = { frozenRealm ->

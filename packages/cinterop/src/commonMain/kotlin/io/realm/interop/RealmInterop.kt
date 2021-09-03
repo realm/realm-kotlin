@@ -108,7 +108,7 @@ expect object RealmInterop {
     fun realm_list_clear(list: NativePointer)
     fun realm_list_erase(list: NativePointer, index: Long)
     fun realm_list_freeze(liveList: NativePointer, frozenRealm: NativePointer): NativePointer
-    fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer
+    fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer?
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer

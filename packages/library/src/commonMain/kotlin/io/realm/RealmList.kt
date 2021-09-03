@@ -66,7 +66,7 @@ class RealmList<E> private constructor(
     fun observe(): Flow<RealmList<E>> = delegate.observe(this)
 
     internal fun freeze(realm: RealmReference): RealmList<E> = delegate.freeze(realm)
-    internal fun thaw(realm: RealmReference): RealmList<E> = delegate.thaw(realm)
+    internal fun thaw(realm: RealmReference): RealmList<E>? = delegate.thaw(realm)
 
     @Suppress("TooGenericExceptionCaught")
     internal fun isValid(): Boolean {
@@ -74,7 +74,9 @@ class RealmList<E> private constructor(
         try {
             size
         } catch (e: RuntimeException) {
-            if (e.message?.lowercase()?.contains("access to invalidated list object") == true) {
+            // FIXME Should just the appropriate exception
+            //  https://github.com/realm/realm-kotlin/pull/388
+            if (e.message?.lowercase()?.contains("[7]: access to invalidated") == true) {
                 return false
             }
         }
@@ -137,7 +139,7 @@ internal interface RealmListApi<E> : MutableList<E> {
 
     fun observe(list: RealmList<E>): Flow<RealmList<E>>
     fun freeze(frozenRealm: RealmReference): RealmList<E>
-    fun thaw(liveRealm: RealmReference): RealmList<E>
+    fun thaw(liveRealm: RealmReference): RealmList<E>?
 }
 
 /**
@@ -233,9 +235,10 @@ private class ManagedListDelegate<E>(
         return RealmList(frozenList, metadata.copy(realm = frozenRealm))
     }
 
-    override fun thaw(liveRealm: RealmReference): RealmList<E> {
-        val liveList = RealmInterop.realm_list_thaw(listPtr, liveRealm.dbPointer)
-        return RealmList(liveList, metadata.copy(realm = liveRealm))
+    override fun thaw(liveRealm: RealmReference): RealmList<E>? {
+        return RealmInterop.realm_list_thaw(listPtr, liveRealm.dbPointer)?.run {
+            RealmList(this, metadata.copy(realm = liveRealm))
+        }
     }
 
     private fun rangeCheckForAdd(index: Int) {

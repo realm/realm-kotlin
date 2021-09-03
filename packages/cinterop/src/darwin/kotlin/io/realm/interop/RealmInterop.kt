@@ -63,6 +63,8 @@ import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
 import realm_wrapper.realm_link_t
+import realm_wrapper.realm_list_t
+import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
@@ -431,7 +433,15 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
-        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
+        memScoped {
+            val objectPointer = allocArray<CPointerVar<realm_object_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr(), objectPointer)
+            )
+            return objectPointer[0]?.let {
+                return CPointerWrapper(it)
+            }
+        }
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -555,10 +565,16 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_list_thaw(frozenList.cptr(), liveRealm.cptr())
-        )
+    actual fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer? {
+        memScoped {
+            val listPointer = allocArray<CPointerVar<realm_list_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_list_thaw(frozenList.cptr(), liveRealm.cptr(), listPointer)
+            )
+            return listPointer[0]?.let {
+                CPointerWrapper(it)
+            }
+        }
     }
 
     @Suppress("ComplexMethod")

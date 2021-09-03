@@ -19,7 +19,6 @@
 package io.realm.interop
 
 import io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.interop.RealmInterop.cptr
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
@@ -223,7 +222,13 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
-        return LongPointerWrapper(realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
+        val objectPointer = longArrayOf(0)
+        realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr(), objectPointer)
+        return if (objectPointer[0] != 0L) {
+            LongPointerWrapper(objectPointer[0])
+        } else {
+            null
+        }
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
@@ -324,8 +329,14 @@ actual object RealmInterop {
     actual fun realm_list_thaw(
         frozenList: NativePointer,
         liveRealm: NativePointer
-    ): NativePointer {
-        return LongPointerWrapper(realmc.realm_list_thaw(frozenList.cptr(), liveRealm.cptr()))
+    ): NativePointer? {
+        val listPointer = longArrayOf(0)
+        realmc.realm_list_thaw(frozenList.cptr(), liveRealm.cptr(), listPointer)
+        return if (listPointer[0] != 0L) {
+            LongPointerWrapper(listPointer[0])
+        } else {
+            null
+        }
     }
 
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
