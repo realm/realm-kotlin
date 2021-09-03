@@ -48,7 +48,6 @@ kotlin {
                 // Our current compiler plugin tests only runs on JVM, so makes sense to keep them
                 // for now, but ideally they should go to the compiler plugin tests.
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
-                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
 

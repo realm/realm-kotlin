@@ -216,37 +216,6 @@ struct realm_size_t {
 %ignore "realm_results_snapshot";
 
 // Sync methods not implemented yet
-//%ignore "realm_http_transport_new";
-//%ignore "realm_app_credentials_new_anonymous";
-//%ignore "realm_app_credentials_new_facebook";
-//%ignore "realm_app_credentials_new_google";
-//%ignore "realm_app_credentials_new_apple";
-//%ignore "realm_app_credentials_new_custom";
-//%ignore "realm_app_credentials_new_username_password";
-//%ignore "realm_app_credentials_new_function";
-//%ignore "realm_app_credentials_new_user_api_key";
-//%ignore "realm_app_credentials_new_server_api_key";
-//%ignore "realm_auth_credentials_get_provider";
-//%ignore "realm_app_config_new";
-//%ignore "realm_app_config_set_base_url";
-//%ignore "realm_app_config_set_local_app_name";
-//%ignore "realm_app_config_set_local_app_version";
-//%ignore "realm_app_config_set_default_request_timeout";
-//%ignore "realm_app_config_set_platform";
-//%ignore "realm_app_config_set_platform_version";
-//%ignore "realm_app_config_set_sdk_version";
-//%ignore "realm_logger_new";
-//%ignore "realm_app_get_cached";
-//%ignore "realm_app_get_app_id";
-//%ignore "realm_app_get_current_user";
-//%ignore "realm_app_get_all_users";
-//%ignore "realm_app_log_in_with_credentials";
-//%ignore "realm_app_log_out_current_user";
-//%ignore "realm_app_refresh_custom_data";
-//%ignore "realm_app_log_out";
-//%ignore "realm_app_link_user";
-//%ignore "realm_app_switch_user";
-//%ignore "realm_app_remove_user";
 %ignore "realm_sync_config_new";
 %ignore "realm_sync_config_set_session_stop_policy";
 %ignore "realm_sync_config_set_error_handler";
@@ -255,7 +224,6 @@ struct realm_size_t {
 %ignore "realm_sync_config_set_ssl_trust_certificate_path";
 %ignore "realm_sync_config_set_ssl_verify_callback";
 %ignore "realm_sync_config_set_cancel_waits_on_nonfatal_error";
-//%ignore "realm_app_new";
 %ignore "realm_sync_config_set_authorization_header_name";
 %ignore "realm_sync_config_set_custom_http_header";
 %ignore "realm_sync_config_set_recovery_directory_path";
