@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.annotations
 
-import io.realm.interop.Table
-import kotlin.reflect.KMutableProperty1
-
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$indexedProps`: List<KMutableProperty1<*, *>>?
-    val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): Table
-    fun `$realm$newInstance`(): Any
-}
+@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.FIELD)
+@MustBeDocumented
+/**
+ * Annotation marking a field as indexed.
+ *
+ * Multiple fields in a RealmObject class can have this annotation.
+ *
+ * This annotation applies to the following primitive types: String, Byte, Char,
+ * Short, Int and Long, as well as their nullable variants.
+ */
+annotation class Indexed

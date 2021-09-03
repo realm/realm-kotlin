@@ -61,7 +61,7 @@ object Versions {
         // Cannot upgrade past 4.1.0 due to https://issuetracker.google.com/issues/187134648
         // Fix has not been released in lastest 7.1.0-alpha06.
         const val buildTools = "4.1.0" //
-        const val ndkVersion = "22.1.7171670"
+        const val ndkVersion = "21.1.6352462"// "22.1.7171670"
     }
     const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3-beta02" // https://maven.google.com/web/index.html#androidx.test.ext:junit
