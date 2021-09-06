@@ -51,7 +51,7 @@ class RealmListTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.defaultConfig(
+        val configuration = RealmConfiguration.with(
             path = "$tmpDir/default.realm",
             schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class)
         )
@@ -235,7 +235,7 @@ class RealmListTests {
         assertEquals(1, list.size)
     }
 
-    private fun getCloseableRealm(): Realm = RealmConfiguration.defaultConfig(
+    private fun getCloseableRealm(): Realm = RealmConfiguration.with(
         path = "$tmpDir/closeable.realm",
         schema = setOf(RealmListContainer::class)
     ).let {

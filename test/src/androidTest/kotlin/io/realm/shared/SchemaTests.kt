@@ -30,8 +30,8 @@ import kotlin.test.assertTrue
 class SchemaTests {
 
     @Test
-    fun defaultConfig() {
-        val config = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
+    fun with() {
+        val config = RealmConfiguration.with(schema = setOf(Sample::class))
         assertEquals(setOf(Sample::class), config.schema)
         assertEquals<Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>>(
             mapOf(
@@ -43,13 +43,13 @@ class SchemaTests {
 
     @Test
     fun usingNamedArgument() {
-        val conf = RealmConfiguration.defaultConfig(schema = setOf(Sample::class, Parent::class, Child::class))
+        val conf = RealmConfiguration.with(schema = setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
     @Test
     fun usingPositionalArgument() {
-        val conf = RealmConfiguration.defaultConfig(
+        val conf = RealmConfiguration.with(
             "default", "path",
             setOf(Sample::class, Parent::class, Child::class)
         )
@@ -71,14 +71,14 @@ class SchemaTests {
     @Test
     fun usingSingleClassAsNamed() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration.defaultConfig(schema = setOf(Sample::class))
+        val conf = RealmConfiguration.with(schema = setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 
     @Test
     fun usingSingleClassAsPositional() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration.defaultConfig("name", "path", setOf(Sample::class))
+        val conf = RealmConfiguration.with("name", "path", setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 

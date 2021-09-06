@@ -2,8 +2,8 @@
 
 ### Breaking Changes
 * Abstracted public API into interfaces. The interfaces have kept the name of the previous classes so only differences are:
-  - Opening a realm: `Realm(configuration)` has changed to `Realm.openBlocking(configuration)`
-  - Easy construction of simple configurations: `RealmConfiguration(schema = ...)` has changed to `RealmConfiguration.defaultConfig(schema = ...)`
+  - Opening a realm: `Realm(configuration)` has changed to `Realm.open(configuration)`
+  - Easy construction of simple configurations: `RealmConfiguration(schema = ...)` has changed to `RealmConfiguration.with(schema = ...)`
 * Make argument to `findLatest` non-nullable: `MutableRealm.findLatest(obj: T?): T?` has changed to `MutableRealm.findLatest(obj: T): T?`
 * Allow query arguments to be `null`: `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>` has change to `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any?): RealmResults<T>`
 * Moved `objects(KClass<T>)` and `<reified T> objects()` methods from `BaseRealm` to `TypedRealm`

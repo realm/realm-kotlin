@@ -121,7 +121,7 @@ interface RealmConfiguration {
          * @param schema The classes of the schema. The elements of the set must be direct class literals.
          */
         // Should always follow Builder constructor arguments
-        fun defaultConfig(
+        fun with(
             path: String? = null,
             name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>>
