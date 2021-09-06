@@ -66,7 +66,6 @@ internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
     val REALM_NATIVE_POINTER = FqName("io.realm.interop.NativePointer")
     val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmObjectInternal")
-    val REALM_OBJECT_INTEROP_INTERFACE = FqName("io.realm.interop.RealmObjectInterop")
     val REALM_MODULE_ANNOTATION = FqName("io.realm.RealmModule")
     val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
