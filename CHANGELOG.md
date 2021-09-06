@@ -1,6 +1,7 @@
 ## 0.6.0 (YYYY-MM-DD)
 
 ### Breaking Changes
+* Rename library dependency from `io.realm.kotlin:library:<VERSION>` to `io.realm.kotlin:library-base:<VERSION>`
 * Abstracted public API into interfaces. The interfaces have kept the name of the previous classes so only differences are:
   - Opening a realm: `Realm(configuration)` has changed to `Realm.open(configuration)`
   - Easy construction of simple configurations: `RealmConfiguration(schema = ...)` has changed to `RealmConfiguration.with(schema = ...)`

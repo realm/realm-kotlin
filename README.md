@@ -42,7 +42,7 @@ kotlin {
   sourceSets {
       val commonMain by getting {
           dependencies {
-              implementation("io.realm.kotlin:library:<VERSION>")
+              implementation("io.realm.kotlin:library-base:<VERSION>")
           }
       }
 }
@@ -52,7 +52,7 @@ kotlin {
 
 ```Gradle
 dependencies {
-    compileOnly("io.realm.kotlin:library:<VERSION>")
+    compileOnly("io.realm.kotlin:library-base:<VERSION>")
 }
 ```
 ## Define model
