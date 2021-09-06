@@ -24,7 +24,7 @@ import kotlin.test.Test
  */
 // TODO If we add methods to retrieve instances that implements this interface we could probably
 //  just have default implementations of the various test methods here.
-interface RealmLifeCycleTests {
+interface RealmStateTest {
     @Test
     fun version()
 

@@ -31,7 +31,7 @@ import kotlin.reflect.KClass
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 
-internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T>, RealmLifeCycleHolder {
+internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T>, RealmStateHolder {
 
     private val mode: Mode
     private val realm: RealmReference
@@ -64,7 +64,7 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
         }
     }
 
-    override fun realmLifeCycle(): RealmLifeCycle {
+    override fun realmState(): RealmState {
         return realm
     }
 

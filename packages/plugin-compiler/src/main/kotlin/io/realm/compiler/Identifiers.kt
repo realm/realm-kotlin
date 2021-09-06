@@ -58,7 +58,7 @@ internal object Names {
     val REALM_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
     val REALM_CONFIGURATION_WITH = Name.identifier("with")
     val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
-    val REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE = Name.identifier("realmLifeCycle")
+    val REALM_OBJECT_INTERNAL_REALM_STATE = Name.identifier("realmState")
     val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
 }
 

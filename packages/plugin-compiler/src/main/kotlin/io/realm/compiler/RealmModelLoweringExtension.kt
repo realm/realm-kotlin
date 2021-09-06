@@ -19,7 +19,7 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_IS_FROZEN
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REALM_STATE
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_VERSION
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.ir.util.parentAsClass
 
 private val realmObjectInternalOverrides = setOf(
     REALM_OBJECT_INTERNAL_IS_FROZEN,
-    REALM_OBJECT_INTERNAL_REALML_LIFE_CYCLE,
+    REALM_OBJECT_INTERNAL_REALM_STATE,
     REALM_OBJECT_INTERNAL_VERSION
 )
 

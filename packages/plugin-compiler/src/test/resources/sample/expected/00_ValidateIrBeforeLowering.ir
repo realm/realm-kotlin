@@ -1723,9 +1723,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:realmLifeCycle visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmLifeCycle [fake_override]
+      FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
         overridden:
-          public open fun realmLifeCycle (): io.realm.internal.RealmLifeCycle declared in io.realm.internal.RealmObjectInternal
+          public open fun realmState (): io.realm.internal.RealmState declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
         overridden:
@@ -1996,9 +1996,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:realmLifeCycle visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmLifeCycle [fake_override]
+      FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
         overridden:
-          public open fun realmLifeCycle (): io.realm.internal.RealmLifeCycle declared in io.realm.internal.RealmObjectInternal
+          public open fun realmState (): io.realm.internal.RealmState declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
         overridden:
