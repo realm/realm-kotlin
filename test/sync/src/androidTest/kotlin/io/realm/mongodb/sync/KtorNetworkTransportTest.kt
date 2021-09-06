@@ -37,8 +37,8 @@ internal class KtorNetworkTransportTest {
     @BeforeTest
     fun setUp() {
         transport = KtorNetworkTransport(
-            dispatcher = getDispatcher(),
-            timeoutMs = 5000
+            timeoutMs = 5000,
+            dispatcher = getDispatcher()
         )
     }
 

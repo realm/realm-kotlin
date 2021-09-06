@@ -57,8 +57,8 @@ internal interface NetworkTransport {
 class KtorNetworkTransport(
     override val authorizationHeaderName: String? = null,
     override val customHeaders: Map<String, String> = mapOf(),
-    private val dispatcher: CoroutineDispatcher,
     private val timeoutMs: Long,
+    private val dispatcher: CoroutineDispatcher,
 ) : NetworkTransport {
 
     private val client: HttpClient = getClient()

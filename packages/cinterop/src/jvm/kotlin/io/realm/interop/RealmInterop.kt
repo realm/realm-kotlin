@@ -431,6 +431,39 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncConfig.cptr()))
+    }
+
+    private fun register_login_cb(app: Long, credentials: Long, loginCallback: LoginCallback): Long {
+        TODO("Stub - implement in realm.i")
+    }
+
+    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback) {
+        // TODO error handling for callback, producing Kotlin's Result?
+        /*realmc.*/register_login_cb(
+            app.cptr(),
+            credentials.cptr(),
+            object : LoginCallback {
+                override fun onLoggedIn(userPointer: Long) {
+                    callback.onChange(LongPointerWrapper(userPointer))
+                }
+            }
+        )
+    }
+
+    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
+        TODO()
+    }
+
+    actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_username_password(username, password))
+    }
+
+    actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
+        TODO()
+    }
+
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = booleanArrayOf(false)
         val classInfo = realm_class_info_t()

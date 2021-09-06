@@ -880,6 +880,26 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer): NativePointer {
+        TODO()
+    }
+
+    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback) {
+        TODO()
+    }
+
+    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
+        TODO()
+    }
+
+    actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
+        TODO()
+    }
+
+    actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
+        TODO()
+    }
+
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()
