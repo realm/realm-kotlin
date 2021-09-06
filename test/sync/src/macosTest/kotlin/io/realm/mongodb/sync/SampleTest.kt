@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-plugins {
-    id("com.android.library") apply false
-    id("realm-lint")
-    `java-gradle-plugin`
-}
+package io.realm.mongodb.sync
 
-allprojects {
-    repositories {
-        jcenter()
-    }
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "${Versions.jvmTarget}"
+internal class SampleTest {
+
+    @Test
+    fun sample() {
+        assertEquals(4, 2 + 2)
     }
 }

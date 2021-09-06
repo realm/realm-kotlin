@@ -18,7 +18,8 @@ rootProject.name = "realm-kotlin"
 include("gradle-plugin")
 include("plugin-compiler")
 include("plugin-compiler-shaded")
-include("library")
+include("library-base")
+include("library-sync")
 include(":cinterop")
 include(":jni-swig-stub")
 

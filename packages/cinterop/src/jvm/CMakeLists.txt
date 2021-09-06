@@ -7,7 +7,7 @@ set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 # Build Realm Core
 # Set option flags for Core.
 # See https://github.com/realm/realm-core/blob/master/CMakeLists.txt#L174 for the full list.
-set(REALM_ENABLE_SYNC OFF)
+set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("realm-core" EXCLUDE_FROM_ALL)
 
