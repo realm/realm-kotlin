@@ -44,7 +44,7 @@ class MigrationTests {
     @Test
     fun automaticMigrationAddingNewClasses() {
         val path = "$tmpDir/default.realm"
-        RealmConfiguration.defaultConfig(
+        RealmConfiguration.with(
             path = path,
             schema = setOf(Sample::class)
         ).also {
@@ -56,7 +56,7 @@ class MigrationTests {
             }
         }
 
-        RealmConfiguration.defaultConfig(
+        RealmConfiguration.with(
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class)
         ).also {
@@ -79,7 +79,7 @@ class MigrationTests {
     fun automaticMigrationRemovingClasses() {
         val path = "$tmpDir/default.realm"
 
-        RealmConfiguration.defaultConfig(
+        RealmConfiguration.with(
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class)
         ).also {
@@ -91,7 +91,7 @@ class MigrationTests {
             }
         }
 
-        RealmConfiguration.defaultConfig(
+        RealmConfiguration.with(
             path = path,
             schema = setOf(Parent::class, Child::class)
         ).also {
@@ -107,7 +107,7 @@ class MigrationTests {
     @Test
     fun resetFileShouldNotDeleteWhenAddingClass() {
         val path = "$tmpDir/default.realm"
-        RealmConfiguration.defaultConfig(
+        RealmConfiguration.with(
             path = path,
             schema = setOf(Sample::class),
         ).also {
@@ -136,7 +136,7 @@ class MigrationTests {
     @Test
     fun resetFileShouldNotDeleteWhenRemovingClass() {
         val path = "$tmpDir/default.realm"
-        RealmConfiguration.defaultConfig(
+        RealmConfiguration.with(
             path = path,
             schema = setOf(Sample::class, Parent::class, Child::class),
         ).also {

@@ -19,7 +19,7 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.REALM_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_CONFIGURATION_BUILDER
 import io.realm.compiler.Names.REALM_CONFIGURATION_BUILDER_BUILD
-import io.realm.compiler.Names.REALM_CONFIGURATION_DEFAULT_CONFIG
+import io.realm.compiler.Names.REALM_CONFIGURATION_WITH
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrElement
@@ -82,7 +82,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
                 override fun visitCall(expression: IrCall): IrExpression {
                     val name = expression.symbol.owner.name
-                    if (name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_DEFAULT_CONFIG) &&
+                    if (name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH) &&
                         expression.type.classFqName == REALM_CONFIGURATION
                     ) {
                         val specifiedModels =
@@ -94,8 +94,8 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                                 val schemaArgument = expression
                                 builder to schemaArgument
                             }
-                            // Replaces `RealmConfiguration.defaultConfig(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
-                            REALM_CONFIGURATION_DEFAULT_CONFIG -> {
+                            // Replaces `RealmConfiguration.with(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
+                            REALM_CONFIGURATION_WITH -> {
                                 val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
                                 val builder = IrConstructorCallImpl(
                                     startOffset = expression.startOffset,
@@ -261,7 +261,7 @@ private fun populateCompanion(
     if (specifiedModels.isEmpty()) {
         logError(
             "No schema was provided. It must be defined as a set of class literals (MyType::class) either through " +
-                "RealmConfiguration.defaultConfig(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...)).build(), " +
+                "RealmConfiguration.with(schema = setOf(...)), RealmConfiguration.Builder(schema = setOf(...)).build(), " +
                 "or RealmConfiguration.Builder().schema(...).build()."
         )
     }
