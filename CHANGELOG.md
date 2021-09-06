@@ -1,7 +1,7 @@
 ## 0.6.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Rename library dependency from `io.realm.kotlin:library:<VERSION>` to `io.realm.kotlin:library-base:<VERSION>`
 
 ### Enhancements
 * None.
