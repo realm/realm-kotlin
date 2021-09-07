@@ -18,7 +18,7 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_FLAG
 import io.realm.compiler.FqNames.COLLECTION_TYPE
-import io.realm.compiler.FqNames.INDEXED_ANNOTATION
+import io.realm.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
@@ -37,9 +37,9 @@ import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
+import io.realm.compiler.Names.PROPERTY_FLAG_INDEX
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
-import io.realm.compiler.Names.PROPERTY_FLAG_INDEXED
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
@@ -326,7 +326,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         ?: error("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                val isIndexed = backingField.hasAnnotation(INDEXED_ANNOTATION)
+                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
 
                                 val propertyFlags = mutableListOf<Name>()
                                 if (nullable) {
@@ -336,7 +336,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     propertyFlags.add(PROPERTY_FLAG_PRIMARY_KEY)
                                 }
                                 if (isIndexed) {
-                                    propertyFlags.add(PROPERTY_FLAG_INDEXED)
+                                    propertyFlags.add(PROPERTY_FLAG_INDEX)
                                 }
                                 val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
                                     setOf(
@@ -358,7 +358,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 }
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(
-                                        "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
                                     )
                                 }
 

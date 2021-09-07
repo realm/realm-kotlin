@@ -27,4 +27,4 @@ package io.realm.annotations
  * This annotation applies to the following primitive types: String, Byte, Char,
  * Short, Int and Long, as well as their nullable variants.
  */
-annotation class Indexed
+annotation class Index

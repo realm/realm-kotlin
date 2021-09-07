@@ -100,7 +100,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:stringField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private
           annotations:
-            Indexed
+            Index
           EXPRESSION_BODY
             CONST String type=kotlin.String value="Realm"
         FUN name:<get-stringField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String?
@@ -288,7 +288,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:intField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:intField type:kotlin.Int? visibility:private
           annotations:
-            Indexed
+            Index
           EXPRESSION_BODY
             CONST Int type=kotlin.Int value=42
         FUN name:<get-intField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Int?

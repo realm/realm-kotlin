@@ -26,9 +26,9 @@ import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class IndexedTests {
+class IndexTests {
     @Test
-    fun `indexed supportness`() {
+    fun `index supportness`() {
         // TODO Consider placing these in PropertyDescriptor.kt for reuse
         val defaults = mapOf<KClassifier, Any>(
             Boolean::class to true,
@@ -59,10 +59,10 @@ class IndexedTests {
                     """
                         import io.realm.RealmObject
                         import io.realm.RealmConfiguration
-                        import io.realm.annotations.Indexed
+                        import io.realm.annotations.Index
 
                         class A : RealmObject {
-                            @Indexed
+                            @Index
                             var indexedKey: $kotlinLiteral = $default
                         }
 
