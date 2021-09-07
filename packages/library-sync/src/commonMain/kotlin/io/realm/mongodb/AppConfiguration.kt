@@ -19,6 +19,7 @@ package io.realm.mongodb
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.mongodb.internal.KtorNetworkTransport
+import io.realm.mongodb.internal.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -38,11 +39,13 @@ internal class AppConfigurationImpl(
     override val dispatcher: CoroutineDispatcher,
 ) : AppConfiguration {
 
-    override val nativePointer: NativePointer =
-        RealmInterop.realm_app_config_new(appId) {
-            KtorNetworkTransport(
-                timeoutMs = 5000,
-                dispatcher = dispatcher
-            )
-        }
+    private val networkTransport: NetworkTransport = KtorNetworkTransport(
+        timeoutMs = 5000,
+        dispatcher = dispatcher
+    )
+
+    override val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
+        appId = appId,
+        networkTransportFactory = { networkTransport }
+    )
 }

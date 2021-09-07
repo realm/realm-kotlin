@@ -22,6 +22,7 @@ import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import io.realm.mongodb.internal.KtorNetworkTransport
 import io.realm.mongodb.internal.NetworkTransport
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 
@@ -37,14 +38,25 @@ interface App {
     suspend fun login(credentials: Credentials): Result<User>
 
     companion object {
+
+        /**
+         * TODO
+         */
         fun create(
             configuration: AppConfiguration,
             syncConfiguration: SyncConfiguration
         ): App = AppImpl(configuration, syncConfiguration)
 
-        fun create(appId: String): App = AppImpl(
+        /**
+         * TODO
+         */
+        fun create(
+            appId: String,
+            dispatcher: CoroutineDispatcher
+        ): App = AppImpl(
             appConfiguration = AppConfigurationImpl(
-                appId
+                appId = appId,
+                dispatcher = dispatcher
             ),
             syncConfiguration = null // TODO
         )
@@ -84,10 +96,10 @@ private class AppImpl(
             .also { channel.close() }
     }
 
-    fun getNetworkTransport(): NetworkTransport {
-        return KtorNetworkTransport(
-            timeoutMs = 5000,
-            dispatcher = Dispatchers.Default    // TODO extract from app config
-        )
-    }
+//    fun getNetworkTransport(): NetworkTransport {
+//        return KtorNetworkTransport(
+//            timeoutMs = 5000,
+//            dispatcher = Dispatchers.Default    // TODO extract from app config
+//        )
+//    }
 }

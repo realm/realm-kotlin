@@ -453,7 +453,13 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
-        return LongPointerWrapper(realmc.new_app_config(appId, networkTransportFactory))
+        val config = realmc.new_app_config(appId, networkTransportFactory)
+
+        // TODO parameterize?
+        realmc.realm_app_config_set_platform(config, "kotlin")
+        realmc.realm_app_config_set_platform_version(config, "PLATFORM_VERSION")
+        realmc.realm_app_config_set_sdk_version(config, "SDK_VERSION")
+        return LongPointerWrapper(config)
     }
 
     actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
