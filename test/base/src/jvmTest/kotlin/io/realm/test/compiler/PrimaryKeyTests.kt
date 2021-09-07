@@ -67,7 +67,7 @@ class PrimaryKeyTests {
                         }
 
                         val configuration =
-                            RealmConfiguration(schema = setOf(A::class))
+                            RealmConfiguration.with(schema = setOf(A::class))
                     """.trimIndent()
                 )
             )
@@ -99,7 +99,7 @@ class PrimaryKeyTests {
                     }
 
                     val configuration =
-                        RealmConfiguration(schema = setOf(A::class))
+                        RealmConfiguration.with(schema = setOf(A::class))
                 """.trimIndent()
             )
         )

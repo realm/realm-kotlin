@@ -19,12 +19,12 @@ package io.realm
 import kotlin.test.Test
 
 /**
- * All objects that are tied to a Realm (or implements RealmLifeCycle) should test for all the
+ * All objects that are tied to a Realm (or implements RealmState) should test for all the
  * standard life cycle operations.
  */
 // TODO If we add methods to retrieve instances that implements this interface we could probably
 //  just have default implementations of the various test methods here.
-interface RealmLifeCycleTests {
+interface RealmStateTest {
     @Test
     fun version()
 

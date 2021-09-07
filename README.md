@@ -76,11 +76,11 @@ class Dog : RealmObject {
 Define a _RealmConfiguration_ with the database schema, then open the Realm using it.
 
 ```Kotlin
-val configuration = RealmConfiguration(schema = setOf(Person::class, Dog::class))
+val configuration = RealmConfiguration.with(schema = setOf(Person::class, Dog::class))
 ```
 
 ```Kotlin
-val realm = Realm(configuration)
+val realm = Realm.open(configuration)
 ```
 
 
