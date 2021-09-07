@@ -44,7 +44,9 @@ internal interface NetworkTransport {
         method: String,
         url: String,
         headers: Map<String, String>,
-        body: String
+        body: String,
+        timeoutMs: Long,
+        usesRefreshToken: Boolean
     ): Response
 }
 

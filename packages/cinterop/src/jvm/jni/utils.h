@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef TEST_REALM_API_HELPERS_H
-#define TEST_REALM_API_HELPERS_H
+#ifndef TEST_UTILS_H
+#define TEST_UTILS_H
 
-#include "realm.h"
+#include <realm/string_data.hpp>
 #include "env_utils.h"
-#include "utils.h"
 
-realm_notification_token_t *
-register_results_notification_cb(realm_results_t *results, jobject callback);
+jstring to_jstring(JNIEnv* env, realm::StringData str);
 
-realm_notification_token_t *
-register_list_notification_cb(realm_list_t *list, jobject callback);
-
-realm_notification_token_t *
-register_object_notification_cb(realm_object_t *object, jobject callback);
-
-realm_app_config_t *
-new_app_config(const char* app_id, jobject app_instance);
-
-
-#endif //TEST_REALM_API_HELPERS_H
+#endif //TEST_UTILS_H

@@ -137,18 +137,58 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
  * 3. Perform request
  * 4. Transform JVM request to core request
  */
-realm_http_request_func_t network_request_lambda_function = [] (void* userdata, // Network transport
-                                        const realm_http_request_t,             // Request
-                                        void* completion_data,                  // Call backs
-                                        realm_http_completion_func_t completion_callback)
-{
+realm_http_request_func_t network_request_lambda_function = [](void *userdata, // Network transport
+                                                               const realm_http_request_t request,             // Request
+                                                               void *completion_data,                  // Call backs
+                                                               realm_http_completion_func_t completion_callback) {
     auto jenv = get_env(true);
 
-    // Called to perform an actual request
+    // Initialize pointer to JVM class and me
     jobject network_transport = static_cast<jobject>(userdata);
-    // Call network transport with realm_http_request_t
+    static jclass network_transport_class = jenv->FindClass("io/realm/mongodb/sync/NetworkTransport");
+    static jmethodID m_send_request_method = jenv->GetMethodID(
+            network_transport_class,
+            "sendRequest",
+            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;JZ)Lio/realm/mongodb/sync/Response;"
+            );
 
-    // transform JVM response -> realm_http_response_t
+    std::string method;
+    switch(request.method) {
+        case realm_http_method::RLM_HTTP_METHOD_GET: method = "get"; break;
+        case realm_http_method::RLM_HTTP_METHOD_POST: method = "post"; break;
+        case realm_http_method::RLM_HTTP_METHOD_PATCH: method = "patch"; break;
+        case realm_http_method::RLM_HTTP_METHOD_PUT: method = "put"; break;
+        case realm_http_method::RLM_HTTP_METHOD_DELETE: method = "delete"; break;
+    }
+
+    // Create headers
+    static jclass mapClass = jenv->FindClass("java/util/HashMap");
+    static jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
+    static jmethodID put_method = jenv->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+    size_t map_size = request.num_headers;
+    jobject request_headers = jenv->NewObject(mapClass, init, (jsize) map_size);
+    for (int i = 0; i < map_size; i++) {
+        realm_http_header_t header_pair = request.headers[i];
+
+        jstring key = to_jstring(jenv, header_pair.name);
+        jstring value = to_jstring(jenv, header_pair.value);
+        jenv->CallObjectMethod(request_headers, put_method, key, value);
+        jenv->DeleteLocalRef(key);
+        jenv->DeleteLocalRef(value);
+    }
+
+    jobject jresponse = jenv->CallObjectMethod(network_transport,
+                m_send_request_method,
+                to_jstring(jenv, method),
+                to_jstring(jenv, request.url),
+                request_headers,
+                to_jstring(jenv, request.body),
+                static_cast<jlong>(request.timeout_ms),
+                jboolean(request.uses_refresh_token)
+        );
+
+    // TODO: transform JVM response -> realm_http_response_t
     realm_http_response_t response{}; // Fill up with the JVM response data
 
     // Notify response ready
@@ -161,33 +201,34 @@ realm_http_request_func_t network_request_lambda_function = [] (void* userdata, 
  * 1. Cast userdata to the network transport factory
  * 2. Create a global reference for the network transport
  */
-realm_http_transport_factory_func_t new_network_transport_lambda_function = [] (void* userdata) // transport generator
+realm_http_transport_factory_func_t new_network_transport_lambda_function = [](void *userdata) // transport generator
 {
     auto jenv = get_env(true);
     jobject app_ref = static_cast<jobject>(userdata);
 
     // TODO: Replace with proper classes and methods
-    static jclass app_class = jenv->FindClass("io/realm/App");
-    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "getNetworkTransport", "()Lio/realm/mongodb/sync/NetworkTransport;");
+    static jclass app_class = jenv->FindClass("kotlin/jvm/functions/Function0");
+    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "invoke", "()Ljava/lang/Object;");
     jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
 
     return realm_http_transport_new(jenv->NewGlobalRef(network_transport),
-                                    [] (void* userdata)
-                                    {
+                                    [](void *userdata) {
                                         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                     },
                                     network_request_lambda_function);
 };
 
 realm_app_config_t *
-new_app_config(const char* app_id, jobject network_factory) {
+new_app_config(const char *app_id, jobject network_factory) {
     auto jenv = get_env();
 
     return realm_app_config_new(app_id,
                                 new_network_transport_lambda_function,
                                 static_cast<jobject>(jenv->NewGlobalRef(network_factory)), // keep app reference
                                 [](void *userdata) {
-                                    get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata)); // free app reference
+                                    get_env(true)->DeleteGlobalRef(
+                                            static_cast<jobject>(userdata)); // free app reference
                                 }
     );
 }
+
