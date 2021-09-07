@@ -22,6 +22,7 @@ import io.realm.interop.ColumnKey
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.reflect.KClass
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -69,20 +70,38 @@ object RealmObjectHelper {
     // Return type should be RealmList<R?> but causes compilation errors for native
     internal inline fun <reified R> getList(
         obj: RealmObjectInternal,
-        col: String,
-        isRealmObject: Boolean = false
+        col: String
     ): RealmList<Any?> {
-        val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
+        val realm: RealmReference =
+            obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key: ColumnKey = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
+        val key: ColumnKey =
+            RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
+        val clazz: KClass<*> = R::class
+        val mediator: Mediator = obj.`$realm$Mediator`!!
 
-        return RealmList(
+        // Cannot call managedRealmList directly from an inline function
+        return getManagedRealmList(listPtr, clazz, mediator, realm)
+    }
+
+    /**
+     * Helper function that returns a managed list. This is needed due to the restriction of inline
+     * functions not being able to access non-public API methods - managedRealmList is `internal`
+     * and therefore it cannot be called from `getList`
+     */
+    internal fun getManagedRealmList(
+        listPtr: NativePointer,
+        clazz: KClass<*>,
+        mediator: Mediator,
+        realm: RealmReference
+    ): RealmList<Any?> {
+        return managedRealmList(
             listPtr,
-            RealmList.OperatorMetadata(
-                clazz = R::class,
-                mediator = obj.`$realm$Mediator`!!,
-                realm = obj.`$realm$Owner`!!
+            ListOperatorMetadata(
+                clazz = clazz,
+                mediator = mediator,
+                realm = realm
             )
         )
     }

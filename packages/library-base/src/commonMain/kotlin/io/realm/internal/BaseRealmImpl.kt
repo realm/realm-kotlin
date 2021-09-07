@@ -103,7 +103,7 @@ internal abstract class BaseRealmImpl internal constructor(
     internal open fun <T : RealmObject> registerResultsObserver(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
-    internal open fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
+    internal open fun <T> registerListObserver(list: ManagedRealmList<T>): Flow<RealmList<T>> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

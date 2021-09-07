@@ -112,7 +112,7 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         return notifier.resultsChanged(results)
     }
 
-    internal override fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
+    internal override fun <T> registerListObserver(list: ManagedRealmList<T>): Flow<RealmList<T>> {
         return notifier.listChanged(list)
     }
 

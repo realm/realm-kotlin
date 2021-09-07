@@ -112,7 +112,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T> registerListObserver(list: RealmList<T>): Flow<RealmList<T>> {
+    internal override fun <T> registerListObserver(list: ManagedRealmList<T>): Flow<RealmList<T>> {
         throw IllegalStateException("Changes to RealmList cannot be observed during a write.")
     }
 

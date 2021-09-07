@@ -130,45 +130,49 @@ class ListTests {
 }
 
 private val NON_NULLABLE_LIST_CODE = """
+import io.realm.realmListOf
 import io.realm.RealmList
 import io.realm.RealmObject
 
 import java.lang.Exception
 
 class NonNullableList : RealmObject {
-    var nonNullableList: RealmList<%s> = RealmList()
+    var nonNullableList: RealmList<%s> = realmListOf()
 }
 """.trimIndent()
 
 private val NULLABLE_LIST_CODE = """
+import io.realm.realmListOf
 import io.realm.RealmList
 import io.realm.RealmObject
 
 import java.lang.Exception
 
 class NullableList : RealmObject {
-    var nullableList: RealmList<%s>? = RealmList()
+    var nullableList: RealmList<%s>? = realmListOf()
 }
 """.trimIndent()
 
 private val NULLABLE_TYPE_CODE = """
+import io.realm.realmListOf
 import io.realm.RealmList
 import io.realm.RealmObject
 
 import java.lang.Exception
 
 class NullableTypeList : RealmObject {
-    var nullableList: RealmList<%s?> = RealmList()
+    var nullableList: RealmList<%s?> = realmListOf()
 }
 """.trimIndent()
 
 private val STAR_PROJECTION = """
+import io.realm.realmListOf
 import io.realm.RealmList
 import io.realm.RealmObject
 
 import java.lang.Exception
 
 class NullableTypeList : RealmObject {
-    var list: RealmList<*> = RealmList<String>()
+    var list: RealmList<*> = realmListOf<String>()
 }
 """.trimIndent()
