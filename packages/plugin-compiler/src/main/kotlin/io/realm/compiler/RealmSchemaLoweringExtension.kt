@@ -82,8 +82,8 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
                 override fun visitCall(expression: IrCall): IrExpression {
                     val name = expression.symbol.owner.name
-                    if (name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH) &&
-                        expression.type.classFqName == REALM_CONFIGURATION
+                    if (expression.type.classFqName == REALM_CONFIGURATION &&
+                        name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
                     ) {
                         val specifiedModels =
                             mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
@@ -91,8 +91,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             // Replaces `RealmConfiguration.Builder.build()` with RealmConfiguration.Builder(...).build(companionMap)
                             REALM_CONFIGURATION_BUILDER_BUILD -> {
                                 val builder = expression.dispatchReceiver
-                                val schemaArgument = expression
-                                builder to schemaArgument
+                                builder to expression
                             }
                             // Replaces `RealmConfiguration.with(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
                             REALM_CONFIGURATION_WITH -> {

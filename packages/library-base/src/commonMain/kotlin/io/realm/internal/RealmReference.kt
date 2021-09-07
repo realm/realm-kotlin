@@ -26,7 +26,7 @@ internal data class RealmReference(
     val owner: BaseRealmImpl,
     val dbPointer: NativePointer
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
-) : RealmLifeCycle {
+) : RealmState {
 
     override fun version(): VersionId {
         checkClosed()
