@@ -15,6 +15,7 @@
  */
 
 #include "realm_api_helpers.h"
+#include <vector>
 
 using namespace realm::jni_util;
 
@@ -143,7 +144,7 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
                                                                realm_http_completion_func_t completion_callback) {
     auto jenv = get_env(true);
 
-    // Initialize pointer to JVM class and me
+    // Initialize pointer to JVM class and methods
     jobject network_transport = static_cast<jobject>(userdata);
     static jclass network_transport_class = jenv->FindClass("io/realm/mongodb/sync/NetworkTransport");
     static jmethodID m_send_request_method = jenv->GetMethodID(
@@ -152,6 +153,7 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
             "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;JZ)Lio/realm/mongodb/sync/Response;"
             );
 
+    // Prepare request fields to be consumable by JVM
     std::string method;
     switch(request.method) {
         case realm_http_method::RLM_HTTP_METHOD_GET: method = "get"; break;
@@ -161,7 +163,6 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
         case realm_http_method::RLM_HTTP_METHOD_DELETE: method = "delete"; break;
     }
 
-    // Create headers
     static jclass mapClass = jenv->FindClass("java/util/HashMap");
     static jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
     static jmethodID put_method = jenv->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
@@ -178,6 +179,7 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
         jenv->DeleteLocalRef(value);
     }
 
+    // Send request and retrieve JVM response
     jobject jresponse = jenv->CallObjectMethod(network_transport,
                 m_send_request_method,
                 to_jstring(jenv, method),
@@ -188,11 +190,39 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
                 jboolean(request.uses_refresh_token)
         );
 
-    // TODO: transform JVM response -> realm_http_response_t
-    realm_http_response_t response{}; // Fill up with the JVM response data
+    // Prepare references to JVM response field accessors
+    static jclass response_class = jenv->FindClass("io/realm/mongodb/sync/Response");
+    static jmethodID get_http_code_method = jenv->GetMethodID(response_class, "getHttpResponseCode", "()I");
+    static jmethodID get_custom_code_method = jenv->GetMethodID(response_class, "getCustomResponseCode", "()I");
+    static jmethodID get_headers_method = jenv->GetMethodID(response_class, "getHeaders", "()Ljava/util/Map;");
+    static jmethodID get_body_method = jenv->GetMethodID(response_class, "getBody", "()Ljava/lang/String;");
+
+    // Extract JVM response fields
+    jint http_code = jenv->CallIntMethod(jresponse, get_http_code_method);
+    jint custom_code = jenv->CallIntMethod(jresponse, get_custom_code_method);
+    JStringAccessor java_body(jenv, (jstring) jenv->CallObjectMethod(jresponse, get_body_method), true);
+    std::string body = java_body;
+
+    JObjectArrayAccessor<JStringAccessor, jstring> java_headers(jenv, static_cast<jobjectArray>(jenv->CallObjectMethod(jresponse, get_headers_method)));
+    auto response_headers = std::vector<realm_http_header_t>();
+    for (int i = 0; i < java_headers.size(); i = i + 2) {
+        JStringAccessor key = java_headers[i];
+        JStringAccessor value = java_headers[i+1];
+        response_headers.push_back({std::string(key).c_str(), std::string(value).c_str()});
+    }
+
+    // transform JVM response -> realm_http_response_t
+    realm_http_response_t response {
+            .status_code = http_code,
+            .custom_status_code = custom_code,
+            .headers = response_headers.data(),
+            .num_headers = response_headers.size(),
+            .body = body.c_str(),
+            .body_size = body.size(),
+    };
 
     // Notify response ready
-    completion_callback(completion_data, std::move(response));
+    completion_callback(completion_data, response);
 };
 
 /**
@@ -206,7 +236,7 @@ realm_http_transport_factory_func_t new_network_transport_lambda_function = [](v
     auto jenv = get_env(true);
     jobject app_ref = static_cast<jobject>(userdata);
 
-    // TODO: Replace with proper classes and methods
+    // Use Kotlin lambda to access the network transport
     static jclass app_class = jenv->FindClass("kotlin/jvm/functions/Function0");
     static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "invoke", "()Ljava/lang/Object;");
     jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
