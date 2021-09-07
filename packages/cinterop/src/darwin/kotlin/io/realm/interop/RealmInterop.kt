@@ -880,7 +880,8 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer): NativePointer {
+    // TODO sync config shouldn't be null
+    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer?): NativePointer {
         TODO()
     }
 
@@ -888,7 +889,7 @@ actual object RealmInterop {
         TODO()
     }
 
-    actual fun realm_app_config_new(appId: String, networkTransportFactory: Any): NativePointer {
+    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
         TODO()
     }
 

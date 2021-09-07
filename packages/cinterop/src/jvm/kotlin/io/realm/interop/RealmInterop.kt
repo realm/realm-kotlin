@@ -430,8 +430,9 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncConfig.cptr()))
+    // TODO sync config shouldn't be null
+    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer?): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncConfig?.cptr() ?: 0))
     }
 
     private fun register_login_cb(app: Long, credentials: Long, loginCallback: LoginCallback): Long {
@@ -451,7 +452,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_app_config_new(appId: String, networkTransportFactory: Any): NativePointer {
+    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
         return LongPointerWrapper(realmc.new_app_config(appId, networkTransportFactory))
     }
 

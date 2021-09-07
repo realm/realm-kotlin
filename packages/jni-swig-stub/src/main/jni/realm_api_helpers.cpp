@@ -167,7 +167,7 @@ realm_http_transport_factory_func_t new_network_transport_lambda_function = [] (
 
     // TODO: Replace with proper classes and methods
     static jclass app_class = jenv->FindClass("io/realm/mongodb/AppImpl");
-    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "getNetworkTransport", "()Lio/realm/mongodb/sync/NetworkTransport;");
+    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "getNetworkTransport", "()Lio/realm/mongodb/internal/NetworkTransport;");
     jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
 
     return realm_http_transport_new(jenv->NewGlobalRef(network_transport),

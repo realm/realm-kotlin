@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb.sync
+package io.realm.mongodb.internal
 
 import io.ktor.client.*
 import io.ktor.client.call.*

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb.sync
+package io.realm.mongodb.internal
 
+import io.realm.mongodb.sync.getDispatcher
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

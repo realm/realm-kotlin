@@ -20,8 +20,8 @@ import io.realm.internal.platform.runBlocking
 import io.realm.interop.Callback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.mongodb.sync.KtorNetworkTransport
-import io.realm.mongodb.sync.NetworkTransport
+import io.realm.mongodb.internal.KtorNetworkTransport
+import io.realm.mongodb.internal.NetworkTransport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 
@@ -31,7 +31,7 @@ import kotlinx.coroutines.channels.Channel
 interface App {
 
     val appConfiguration: AppConfiguration
-    val syncConfiguration: SyncConfiguration
+    val syncConfiguration: SyncConfiguration?
     val nativePointer: NativePointer
 
     suspend fun login(credentials: Credentials): Result<User>
@@ -42,7 +42,12 @@ interface App {
             syncConfiguration: SyncConfiguration
         ): App = AppImpl(configuration, syncConfiguration)
 
-        fun create(appId: String): App = TODO()
+        fun create(appId: String): App = AppImpl(
+            appConfiguration = AppConfigurationImpl(
+                appId
+            ),
+            syncConfiguration = null // TODO
+        )
     }
 }
 
@@ -51,12 +56,12 @@ interface App {
  */
 private class AppImpl(
     override val appConfiguration: AppConfiguration,
-    override val syncConfiguration: SyncConfiguration
+    override val syncConfiguration: SyncConfiguration? = null // TODO
 ) : App {
 
     override val nativePointer: NativePointer = RealmInterop.realm_app_new(
         appConfiguration.nativePointer,
-        syncConfiguration.nativePointer
+        syncConfiguration?.nativePointer
     )
 
     override suspend fun login(credentials: Credentials): Result<User> {

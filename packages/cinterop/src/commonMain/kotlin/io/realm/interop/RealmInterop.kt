@@ -139,11 +139,11 @@ expect object RealmInterop {
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
 
     // App
-    fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer): NativePointer
+    fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer?): NativePointer // TODO sync config shouldn't be null
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback)
 
     // AppConfig
-    fun realm_app_config_new(appId: String, networkTransportFactory: Any): NativePointer
+    fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer
 
     // Credentials
     fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer
