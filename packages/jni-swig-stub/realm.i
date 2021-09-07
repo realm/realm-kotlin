@@ -4,8 +4,6 @@
 #include "realm.h"
 #include <cstring>
 #include <string>
-#include "env_utils.h"
-#include "jvm_network_transport.hpp"
 #include "realm_api_helpers.h"
 %}
 
