@@ -1,6 +1,18 @@
-//
-// Created by Clemente Tort Barbero on 6/9/21.
-//
+/*
+ * Copyright 2021 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "realm_api_helpers.h"
 
@@ -117,46 +129,64 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
     );
 }
 
+/**
+ * Perform a network request on JVM
+ *
+ * 1. Cast userdata to the network transport
+ * 2. Transform core request to JVM request
+ * 3. Perform request
+ * 4. Transform JVM request to core request
+ */
+realm_http_request_func_t network_request_lambda_function = [] (void* userdata, // Network transport
+                                        const realm_http_request_t,             // Request
+                                        void* completion_data,                  // Response
+                                        realm_http_completion_func_t completion_callback)
+{
+    auto jenv = get_env(true);
+
+    // Called to perform an actual request
+    jobject network_transport = static_cast<jobject>(userdata);
+    // Call network transport with realm_http_request_t
+
+    // transform JVM response -> realm_http_response_t
+    realm_http_response_t response{}; // ???
+    // Notify response ready
+    completion_callback(userdata, std::move(response));
+};
+
+/**
+ * Provides access to the network transport to core
+ *
+ * 1. Cast userdata to the network transport factory
+ * 2. Create a global reference for the network transport
+ */
+realm_http_transport_factory_func_t new_network_transport_lambda_function = [] (void* userdata) // transport generator
+{
+    auto jenv = get_env(true);
+    jobject app_ref = static_cast<jobject>(userdata);
+
+    // TODO: Replace with proper classes and methods
+    static jclass app_class = jenv->FindClass("io/realm/mongodb/AppImpl");
+    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "getNetworkTransport", "()Lio/realm/mongodb/sync/NetworkTransport;");
+    jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
+
+    return realm_http_transport_new(jenv->NewGlobalRef(network_transport),
+                                    [] (void* userdata)
+                                    {
+                                        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                    },
+                                    network_request_lambda_function);
+};
+
 realm_app_config_t *
 new_app_config(const char* app_id, jobject app_instance) {
     auto jenv = get_env();
 
     return realm_app_config_new(app_id,
-                                [] (void* userdata) // transport generator
-                                {
-                                    // Called when Core requires to access the App's network transport
-                                    auto jenv = get_env(true);
-                                    jobject app_ref = static_cast<jobject>(userdata);
-                                    // TODO: Replace with proper classes
-                                    static jclass app_class = jenv->FindClass("io/realm/mongodb/AppImpl");
-                                    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "getNetworkTransport", "()Lio/realm/mongodb/sync/NetworkTransport;");
-                                    jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
-
-                                    return realm_http_transport_new(network_transport, //ktornetwork
-                                                                    [] (void* userdata)
-                                                                    {
-                                                                        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-                                                                    },
-                                                                    // realm_http_request_func_t
-                                                                    [] (void* userdata,             // Network transport
-                                                                        const realm_http_request_t, // Request
-                                                                        void* completion_data,      // Response
-                                                                        realm_http_completion_func_t completion_callback)
-                                                                    {
-                                                                        // Called to perform an actual request
-                                                                        jobject network_transport = static_cast<jobject>(userdata);
-                                                                        // Call network transport with realm_http_request_t
-
-                                                                        // transform JVM response -> realm_http_response_t
-//                                                                        auto response = static_cast<realm_http_response*>(completion_data);
-//                                                                        const realm_http_response_t response = {};
-                                                                        // Notify response ready
-//                                                                        realm_http_completion_func_t({});
-                                                                    });
-                                },
-                                static_cast<jobject>(jenv->NewGlobalRef(app_instance)), // hold app reference
-                                [](void *userdata) { // free app reference
-                                    get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                new_network_transport_lambda_function,
+                                static_cast<jobject>(jenv->NewGlobalRef(app_instance)), // keep app reference
+                                [](void *userdata) {
+                                    get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata)); // free app reference
                                 }
     );
 }
