@@ -17,7 +17,7 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmLifeCycleTests
+import io.realm.RealmStateTest
 import io.realm.VersionId
 import io.realm.isFrozen
 import io.realm.isValid
@@ -35,7 +35,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class RealmObjectTests : RealmLifeCycleTests {
+class RealmObjectTests : RealmStateTest {
 
     companion object {
         // Expected version after writing Parent to Realm
@@ -119,7 +119,7 @@ class RealmObjectTests : RealmLifeCycleTests {
         }
     }
 
-    // FIXME RealmObject doesn't actually implement RealmLifeCycle yet
+    // FIXME RealmObject doesn't actually implement RealmState yet
     @Ignore
     override fun isClosed() {
         TODO("Not yet implemented")

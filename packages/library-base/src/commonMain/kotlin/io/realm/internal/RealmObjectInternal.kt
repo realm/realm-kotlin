@@ -27,7 +27,7 @@ import io.realm.isValid
  * [RealmObject].
  */
 @Suppress("VariableNaming")
-internal interface RealmObjectInternal : RealmObject, RealmLifeCycleHolder, io.realm.interop.RealmObjectInterop {
+internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.interop.RealmObjectInterop {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
@@ -38,8 +38,8 @@ internal interface RealmObjectInternal : RealmObject, RealmLifeCycleHolder, io.r
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
-    override fun realmLifeCycle(): RealmLifeCycle {
-        return `$realm$Owner` ?: UnmanagedLifeCycle
+    override fun realmState(): RealmState {
+        return `$realm$Owner` ?: UnmanagedState
     }
 }
 

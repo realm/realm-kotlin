@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 internal abstract class BaseRealmImpl internal constructor(
     override val configuration: RealmConfigurationImpl,
     dbPointer: NativePointer
-) : BaseRealm, RealmLifeCycleHolder {
+) : BaseRealm, RealmStateHolder {
 
     private companion object {
         private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE = "Observing changes are not supported by this Realm."
@@ -49,7 +49,7 @@ internal abstract class BaseRealmImpl internal constructor(
     internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
         set(_) = throw UnsupportedOperationException("BaseRealm reference should never be updated")
 
-    override fun realmLifeCycle(): RealmLifeCycle {
+    override fun realmState(): RealmState {
         return realmReference
     }
 
