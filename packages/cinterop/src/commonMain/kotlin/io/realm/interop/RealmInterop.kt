@@ -111,7 +111,7 @@ expect object RealmInterop {
     fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer
 
     // query
-    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer
+    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer
 
     fun realm_query_find_first(realm: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer

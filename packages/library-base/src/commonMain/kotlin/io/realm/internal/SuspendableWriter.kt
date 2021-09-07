@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.BaseRealm
 import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.VersionId
@@ -41,12 +40,12 @@ import kotlinx.coroutines.withContext
  * @param configuration
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
-class SuspendableWriter(private val owner: BaseRealm, val dispatcher: CoroutineDispatcher) {
+internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
 
     private val tid: ULong
     // Must only be accessed from the dispatchers thread
-    private val realm: MutableRealm by lazy {
-        MutableRealm(owner.configuration, dispatcher)
+    private val realm: MutableRealmImpl by lazy {
+        MutableRealmImpl(owner.configuration, dispatcher)
     }
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)

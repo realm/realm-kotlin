@@ -22,6 +22,7 @@ import io.realm.interop.ColumnKey
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import kotlin.reflect.KClass
 
 object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
@@ -34,7 +35,7 @@ object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    fun <R> getValue(obj: RealmObjectInternal, col: String): Any? {
+    internal fun <R> getValue(obj: RealmObjectInternal, col: String): Any? {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
@@ -44,7 +45,7 @@ object RealmObjectHelper {
 
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmObject> getObject(
+    internal inline fun <reified R : RealmObject> getObject(
         obj: RealmObjectInternal,
         col: String,
     ): Any? {
@@ -67,29 +68,47 @@ object RealmObjectHelper {
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
-    inline fun <reified R> getList(
+    internal inline fun <reified R> getList(
         obj: RealmObjectInternal,
-        col: String,
-        isRealmObject: Boolean = false
+        col: String
     ): RealmList<Any?> {
-        val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
+        val realm: RealmReference =
+            obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key: ColumnKey = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
+        val key: ColumnKey =
+            RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
+        val clazz: KClass<*> = R::class
+        val mediator: Mediator = obj.`$realm$Mediator`!!
 
-        return RealmList(
+        // Cannot call managedRealmList directly from an inline function
+        return getManagedRealmList(listPtr, clazz, mediator, realm)
+    }
+
+    /**
+     * Helper function that returns a managed list. This is needed due to the restriction of inline
+     * functions not being able to access non-public API methods - managedRealmList is `internal`
+     * and therefore it cannot be called from `getList`
+     */
+    internal fun getManagedRealmList(
+        listPtr: NativePointer,
+        clazz: KClass<*>,
+        mediator: Mediator,
+        realm: RealmReference
+    ): RealmList<Any?> {
+        return managedRealmList(
             listPtr,
-            RealmList.OperatorMetadata(
-                clazz = R::class,
-                mediator = obj.`$realm$Mediator`!!,
-                realm = obj.`$realm$Owner`!!
+            ListOperatorMetadata(
+                clazz = clazz,
+                mediator = mediator,
+                realm = realm
             )
         )
     }
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
+    internal fun <R> setValue(obj: RealmObjectInternal, col: String, value: R) {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
@@ -103,7 +122,7 @@ object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline fun <reified R : RealmObjectInternal> setObject(
+    internal inline fun <reified R : RealmObjectInternal> setObject(
         obj: RealmObjectInternal,
         col: String,
         value: R?
@@ -115,7 +134,7 @@ object RealmObjectHelper {
         setValue(obj, col, newValue)
     }
 
-    fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
+    internal fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
         TODO()
     }
 }

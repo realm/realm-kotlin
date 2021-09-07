@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.BaseRealm
 import io.realm.RealmObject
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
@@ -25,7 +24,7 @@ import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
 // We could inline this
-fun <T : RealmObject> RealmObjectInternal.manage(
+internal fun <T : RealmObject> RealmObjectInternal.manage(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
@@ -43,7 +42,7 @@ fun <T : RealmObject> RealmObjectInternal.manage(
 }
 
 // TODO API-INTERNAL
-fun <T : RealmObject> RealmObjectInternal.link(
+internal fun <T : RealmObject> RealmObjectInternal.link(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
@@ -64,7 +63,7 @@ fun <T : RealmObject> RealmObjectInternal.link(
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
+internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val mediator = `$realm$Mediator`!!
@@ -85,7 +84,7 @@ fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T? {
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealmImpl): T? {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val mediator = `$realm$Mediator`!!

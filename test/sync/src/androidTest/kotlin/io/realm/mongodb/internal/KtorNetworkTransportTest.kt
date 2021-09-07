@@ -61,7 +61,8 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 headers,
-                body
+                body,
+                true
             )
             println("------------> METHOD: $method")
             assertEquals(200, response.httpResponseCode)
@@ -85,7 +86,8 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 headers,
-                body
+                body,
+                true
             )
             assertEquals(500, response.httpResponseCode)
             assertEquals(0, response.customResponseCode)
@@ -110,7 +112,8 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 headers,
-                body
+                body,
+                true
             )
             assertEquals(200, response.httpResponseCode)
             assertEquals(0, response.customResponseCode)

@@ -20,8 +20,7 @@ package io.realm
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
-import io.realm.internal.RealmObjectInternal
-import io.realm.internal.RealmReference
+import io.realm.internal.RealmConfigurationImpl
 import io.realm.interop.NativePointer
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
@@ -41,12 +40,14 @@ class InstrumentedTests {
     //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
     //  test is needed at all at this level
     class CPointerWrapper(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer
+
     @Test
+    @Suppress("invisible_reference", "invisible_member")
     fun testRealmObjectInternalPropertiesGenerated() {
         val p = Sample()
 
         @Suppress("CAST_NEVER_SUCCEEDS")
-        val realmModel: RealmObjectInternal = p as? RealmObjectInternal
+        val realmModel: io.realm.internal.RealmObjectInternal = p as? io.realm.internal.RealmObjectInternal
             ?: error("Supertype RealmObjectInternal was not added to Sample class")
 
         memScoped {
@@ -58,9 +59,8 @@ class InstrumentedTests {
             realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
-            val configuration = RealmConfiguration(schema = setOf(Sample::class))
-            @Suppress("invisible_member")
-            realmModel.`$realm$Owner` = RealmReference(object : BaseRealm(configuration, realmPointer) {}, realmPointer)
+            val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
+            realmModel.`$realm$Owner` = io.realm.internal.RealmReference(object : io.realm.internal.BaseRealmImpl(configuration as RealmConfigurationImpl, realmPointer) {}, realmPointer)
             realmModel.`$realm$TableName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)

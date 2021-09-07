@@ -17,7 +17,7 @@ package io.realm.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmLifeCycleTests
+import io.realm.RealmStateTest
 import io.realm.VersionId
 import io.realm.isFrozen
 import io.realm.isValid
@@ -35,7 +35,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class RealmObjectTests : RealmLifeCycleTests {
+class RealmObjectTests : RealmStateTest {
 
     companion object {
         // Expected version after writing Parent to Realm
@@ -49,8 +49,8 @@ class RealmObjectTests : RealmLifeCycleTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
-        realm = Realm(configuration)
+        val configuration = RealmConfiguration.with(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
+        realm = Realm.open(configuration)
         parent = realm.writeBlocking { copyToRealm(Parent()) }
     }
 
@@ -64,20 +64,20 @@ class RealmObjectTests : RealmLifeCycleTests {
 
     @Test
     override fun version() {
-        assertEquals(EXPECTED_VERSION, parent.version)
+        assertEquals(EXPECTED_VERSION, parent.version())
     }
 
     override fun version_throwsOnUnmanagedObject() {
         val unmanagedParent = Parent()
         assertFailsWith<IllegalArgumentException> {
-            unmanagedParent.version
+            unmanagedParent.version()
         }
     }
 
     @Test
     override fun version_throwsIfRealmIsClosed() {
         realm.close()
-        assertFailsWith<IllegalStateException> { parent.version }
+        assertFailsWith<IllegalStateException> { parent.version() }
     }
 
     @Test
@@ -119,7 +119,7 @@ class RealmObjectTests : RealmLifeCycleTests {
         }
     }
 
-    // FIXME RealmObject doesn't actually implement RealmLifeCycle yet
+    // FIXME RealmObject doesn't actually implement RealmState yet
     @Ignore
     override fun isClosed() {
         TODO("Not yet implemented")

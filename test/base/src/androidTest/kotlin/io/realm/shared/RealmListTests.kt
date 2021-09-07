@@ -22,7 +22,10 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.objects
+import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
+import io.realm.toRealmList
 import io.realm.util.TypeDescriptor
 import test.list.Level1
 import test.list.Level2
@@ -34,6 +37,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -50,11 +54,11 @@ class RealmListTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration(
+        val configuration = RealmConfiguration.with(
             path = "$tmpDir/default.realm",
             schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class)
         )
-        realm = Realm(configuration)
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
@@ -63,6 +67,32 @@ class RealmListTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun realmListInitializer_realmListOf() {
+        val realmListFromArgsEmpty: RealmList<String> = realmListOf<String>()
+        assertTrue(realmListFromArgsEmpty.isEmpty())
+
+        val realmListFromArgs: RealmList<String> = realmListOf("1", "2")
+        assertContentEquals(listOf("1", "2"), realmListFromArgs)
+    }
+
+    @Test
+    fun realmListInitializer_toRealmList() {
+        val realmListFromEmptyCollection = emptyList<String>().toRealmList()
+        assertTrue(realmListFromEmptyCollection.isEmpty())
+
+        val realmListFromSingleElementList = listOf<String>("1").toRealmList()
+        assertContentEquals(listOf("1"), realmListFromSingleElementList)
+        val realmListFromSingleElementSet = setOf<String>("1").toRealmList()
+        assertContentEquals(listOf("1"), realmListFromSingleElementList)
+
+        val realmListFromMultiElementCollection = setOf<String>("1", "2").toRealmList()
+        assertContentEquals(listOf("1", "2"), realmListFromMultiElementCollection)
+
+        val realmListFromIterator = IntRange(0, 2).toRealmList()
+        assertContentEquals(listOf(0, 1, 2), realmListFromIterator)
     }
 
     @Test
@@ -228,17 +258,17 @@ class RealmListTests {
     @Test
     fun unmanaged() {
         // No need to be exhaustive here, just checking delegation works
-        val list = RealmList<RealmListContainer>()
+        val list = realmListOf<RealmListContainer>()
         assertTrue(list.isEmpty())
         list.add(RealmListContainer().apply { stringField = "Dummy" })
         assertEquals(1, list.size)
     }
 
-    private fun getCloseableRealm(): Realm = RealmConfiguration(
+    private fun getCloseableRealm(): Realm = RealmConfiguration.with(
         path = "$tmpDir/closeable.realm",
         schema = setOf(RealmListContainer::class)
     ).let {
-        Realm(it)
+        Realm.open(it)
     }
 
     // TODO investigate how to add properties/values directly so that it works for multiplatform

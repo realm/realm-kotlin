@@ -45,7 +45,6 @@ internal interface NetworkTransport {
         url: String,
         headers: Map<String, String>,
         body: String,
-        timeoutMs: Long,
         usesRefreshToken: Boolean
     ): Response
 }
@@ -69,7 +68,8 @@ class KtorNetworkTransport(
         method: String,
         url: String,
         headers: Map<String, String>,
-        body: String
+        body: String,
+        usesRefreshToken: Boolean
     ): Response {
         try {
             return runBlocking(dispatcher) {
