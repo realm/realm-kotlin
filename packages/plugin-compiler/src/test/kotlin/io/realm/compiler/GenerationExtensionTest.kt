@@ -20,7 +20,6 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.RealmObjectInternal
 import io.realm.interop.ClassFlag
 import io.realm.interop.NativePointer
 import io.realm.interop.PropertyType
@@ -104,7 +103,7 @@ class GenerationExtensionTest {
         class B : RealmObject
         
         val classes = setOf(A::class, B::class, C::class)
-        val configuration = RealmConfiguration(schema = classes)
+        val configuration = RealmConfiguration.Builder(schema = classes).build()
                 """.trimIndent()
             )
         )
@@ -123,7 +122,7 @@ class GenerationExtensionTest {
         
         val arr = arrayOf(A::class, B::class)
         val configuration =
-            RealmConfiguration(schema = arr.toSet())
+            RealmConfiguration.Builder(schema = arr.toSet()).build()
                 """.trimIndent()
             )
         )
@@ -132,6 +131,7 @@ class GenerationExtensionTest {
     }
 
     @Test
+    @Suppress("invisible_member", "invisible_reference")
     fun `implement RealmObjectInternal and generate internal properties`() {
         val inputs = Files("/sample")
 
@@ -143,7 +143,7 @@ class GenerationExtensionTest {
         val sampleModel = kClazz.newInstance()!!
 
         assertTrue(sampleModel is RealmObject)
-        assertTrue(sampleModel is RealmObjectInternal)
+        assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         // Accessing getters/setters
         sampleModel.`$realm$IsManaged` = true
@@ -242,6 +242,7 @@ class GenerationExtensionTest {
     }
 
     @Test
+    @Suppress("invisible_member", "invisible_reference")
     fun `modify accessors to call cinterop`() {
         val inputs = Files("/sample")
 
@@ -254,7 +255,7 @@ class GenerationExtensionTest {
         val nameProperty = sampleModel::class.members.find { it.name == "stringField" }
             ?: fail("Couldn't find property name of class Sample")
         assertTrue(nameProperty is KMutableProperty<*>)
-        assertTrue(sampleModel is RealmObjectInternal)
+        assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         // In un-managed mode return only the backing field
         sampleModel.`$realm$IsManaged` = false

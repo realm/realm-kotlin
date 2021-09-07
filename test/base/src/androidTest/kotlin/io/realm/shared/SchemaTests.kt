@@ -30,14 +30,26 @@ import kotlin.test.assertTrue
 class SchemaTests {
 
     @Test
+    fun with() {
+        val config = RealmConfiguration.with(schema = setOf(Sample::class))
+        assertEquals(setOf(Sample::class), config.schema)
+        assertEquals<Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>>(
+            mapOf(
+                Sample::class to (Sample as io.realm.internal.RealmObjectCompanion)
+            ),
+            config.companionMap
+        )
+    }
+
+    @Test
     fun usingNamedArgument() {
-        val conf = RealmConfiguration(schema = setOf(Sample::class, Parent::class, Child::class))
+        val conf = RealmConfiguration.with(schema = setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
     @Test
     fun usingPositionalArgument() {
-        val conf = RealmConfiguration(
+        val conf = RealmConfiguration.with(
             "default", "path",
             setOf(Sample::class, Parent::class, Child::class)
         )
@@ -59,27 +71,32 @@ class SchemaTests {
     @Test
     fun usingSingleClassAsNamed() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration(schema = setOf(Sample::class))
+        val conf = RealmConfiguration.with(schema = setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 
     @Test
     fun usingSingleClassAsPositional() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration("name", "path", setOf(Sample::class))
+        val conf = RealmConfiguration.with("name", "path", setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 
-    @Suppress("invisible_member")
     private fun assertValidCompanionMap(conf: RealmConfiguration, vararg schema: KClass<out RealmObject>) {
-        assertEquals(schema.size, conf.mapOfKClassWithCompanion.size)
+        assertEquals(schema.size, conf.companionMap.size)
         for (clazz in schema) {
-            assertTrue(conf.mapOfKClassWithCompanion.containsKey(clazz))
+            assertTrue(conf.companionMap.containsKey(clazz))
             // make sure we can instantiate
-            val table: Table = conf.mapOfKClassWithCompanion[clazz]!!.`$realm$schema`()
-            val newInstance: Any = conf.mapOfKClassWithCompanion[clazz]!!.`$realm$newInstance`()
+            val table: Table = conf.companionMap[clazz]!!.`$realm$schema`()
+            val newInstance: Any = conf.companionMap[clazz]!!.`$realm$newInstance`()
             assertEquals(clazz.simpleName, table.name)
             assertTrue(newInstance::class == clazz)
         }
     }
+
+    private val RealmConfiguration.companionMap: Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>
+        get() {
+            @Suppress("invisible_member")
+            return (this as io.realm.internal.RealmConfigurationImpl).mapOfKClassWithCompanion
+        }
 }

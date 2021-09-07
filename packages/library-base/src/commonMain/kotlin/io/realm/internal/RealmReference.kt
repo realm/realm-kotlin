@@ -1,6 +1,5 @@
 package io.realm.internal
 
-import io.realm.BaseRealm
 import io.realm.VersionId
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
@@ -23,11 +22,11 @@ import io.realm.interop.RealmInterop
  * NOTE: There should never be multiple RealmReferences with the same `dbPointer` as the underlying
  * C++ SharedRealm is closed when the RealmReference is no longer referenced by the [Realm].
  */
-data class RealmReference(
-    val owner: BaseRealm,
+internal data class RealmReference(
+    val owner: BaseRealmImpl,
     val dbPointer: NativePointer
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
-) : RealmLifeCycle {
+) : RealmState {
 
     override fun version(): VersionId {
         checkClosed()
