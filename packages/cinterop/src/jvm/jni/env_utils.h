@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+#ifndef TEST_ENV_UTILS_H
+#define TEST_ENV_UTILS_H
 
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+#include <jni.h>
+#include <cstring>
+#include <string>
 
-/**
- * TODO
- */
-interface AppConfiguration {
-    val appId: String
-    val nativePointer: NativePointer
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved);
+
+namespace realm {
+    namespace jni_util {
+        JNIEnv * get_env(bool attach_if_needed = false);
+    }
 }
 
-/**
- * TODO
- */
-internal class AppConfigurationImpl(
-    override val appId: String,
-    appInstance: App
-) : AppConfiguration {
-
-    override val nativePointer: NativePointer =
-        RealmInterop.realm_app_config_new(appId, appInstance.nativePointer)
-}
+#endif //TEST_ENV_UTILS_H

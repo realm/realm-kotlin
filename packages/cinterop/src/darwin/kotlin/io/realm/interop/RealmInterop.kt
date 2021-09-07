@@ -888,7 +888,7 @@ actual object RealmInterop {
         TODO()
     }
 
-    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
+    actual fun realm_app_config_new(appId: String, networkTransportFactory: Any): NativePointer {
         TODO()
     }
 

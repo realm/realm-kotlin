@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 project(RealmKotlin)
 set(CAPI "${CMAKE_SOURCE_DIR}/../../../external/core/")
-set(CAPI_BUILD "${CAPI}/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
+set(CAPI_BUILD "${CAPI}build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
 set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 
 # Build Realm Core
@@ -11,6 +11,18 @@ set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("realm-core" EXCLUDE_FROM_ALL)
 
+include_directories(${CAPI_BUILD}/src jni)
+
+file(GLOB jni_SRC
+        "jni/env_utils.cpp"
+        "jni/realm_api_helpers.cpp"
+        )
+
 # Create shared FFI library that is consumed by the C-Interop layer.
-add_library(realmc SHARED ${SWIG_JNI}/realmc.cpp)
+add_library(realmc SHARED
+        ${SWIG_JNI}/realmc.cpp
+        ${SWIG_JNI}/realm_api_helpers.cpp
+        ${jni_SRC}
+        )
+
 target_link_libraries(realmc log android RealmFFI)

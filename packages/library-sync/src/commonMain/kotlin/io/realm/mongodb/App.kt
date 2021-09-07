@@ -20,6 +20,9 @@ import io.realm.internal.platform.runBlocking
 import io.realm.interop.Callback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.mongodb.sync.KtorNetworkTransport
+import io.realm.mongodb.sync.NetworkTransport
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 
 /**
@@ -74,5 +77,12 @@ private class AppImpl(
 
         return channel.receive()
             .also { channel.close() }
+    }
+
+    fun getNetworkTransport(): NetworkTransport {
+        return KtorNetworkTransport(
+            timeoutMs = 5000,
+            dispatcher = Dispatchers.Default    // TODO extract from app config
+        )
     }
 }

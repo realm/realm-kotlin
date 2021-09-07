@@ -19,7 +19,6 @@
 package io.realm.interop
 
 import io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.interop.RealmInterop.cptr
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
@@ -452,8 +451,8 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
-        TODO()
+    actual fun realm_app_config_new(appId: String, networkTransportFactory: Any): NativePointer {
+        return LongPointerWrapper(realmc.new_app_config(appId, networkTransportFactory))
     }
 
     actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {

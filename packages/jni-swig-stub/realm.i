@@ -4,6 +4,7 @@
 #include "realm.h"
 #include <cstring>
 #include <string>
+#include "realm_api_helpers.h"
 %}
 
 // FIXME MEMORY Verify finalizers, etc.
@@ -14,37 +15,6 @@
 %include "typemaps.i"
 %include "stdint.i"
 %include "arrays_java.i"
-
-// caching JNIEnv
-%{
-static JavaVM *cached_jvm = 0;
-
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
-    cached_jvm = jvm;
-    return JNI_VERSION_1_2;
-}
-
-namespace realm {
-namespace jni_util {
-    static JNIEnv * get_env(bool attach_if_needed = false) {
-        JNIEnv *env;
-        jint rc = cached_jvm->GetEnv((void **)&env, JNI_VERSION_1_2);
-        if (rc == JNI_EDETACHED) {
-            if (attach_if_needed) {
-                jint ret = cached_jvm->AttachCurrentThread(&env, nullptr);
-                if (ret != JNI_OK) throw std::runtime_error("Could not attach JVM on thread ");
-            } else {
-                throw std::runtime_error("current thread not attached");
-            }
-        }
-        if (rc == JNI_EVERSION)
-            throw std::runtime_error("jni version not supported");
-        return env;
-    }
-}
-}
-
-%}
 
 // We do not want to use BigInteger for uintt64_t as we are not expecting overflows
 %apply int64_t {uint64_t};
@@ -250,120 +220,5 @@ struct realm_size_t {
 #define __attribute__(x)
 
 %include "realm.h"
+%include "src/main/jni/realm_api_helpers.h"
 
-%inline %{
-realm_notification_token_t *
-register_results_notification_cb(realm_results_t *results, jobject callback) {
-    using namespace realm::jni_util;
-    auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
-
-    return realm_results_add_notification_callback(
-        results,
-        // Use the callback as user data
-        static_cast<jobject>(get_env()->NewGlobalRef(callback)),
-        [](void *userdata) {
-            get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-        },
-        // change callback
-        [](void *userdata, const realm_collection_changes_t *changes) {
-            // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
-            //  like the C-API error callback below
-            //  https://github.com/realm/realm-kotlin/issues/303
-            auto jenv = get_env(true);
-            if (jenv->ExceptionCheck()) {
-                jenv->ExceptionDescribe();
-                throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-            }
-            jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                 on_change_method,
-                                 reinterpret_cast<jlong>(changes));
-        },
-        []( void *userdata,
-        const realm_async_error_t *async_error) {
-            // TODO Propagate errors to callback
-            //  https://github.com/realm/realm-kotlin/issues/303
-        },
-        // C-API currently uses the realm's default scheduler no matter what passed here
-        NULL
-    );
-}
-
-realm_notification_token_t *
-register_list_notification_cb(realm_list_t *list, jobject callback) {
-    using namespace realm::jni_util;
-    auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
-
-    return realm_list_add_notification_callback(
-        list,
-        // Use the callback as user data
-        static_cast<jobject>(get_env()->NewGlobalRef(callback)),
-        [](void *userdata) {
-            get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-        },
-        // change callback
-        [](void *userdata, const realm_collection_changes_t *changes) {
-            // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
-            //  like the C-API error callback below
-            //  https://github.com/realm/realm-kotlin/issues/303
-            auto jenv = get_env(true);
-            if (jenv->ExceptionCheck()) {
-                jenv->ExceptionDescribe();
-                throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-            }
-            jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                 on_change_method,
-                                 reinterpret_cast<jlong>(changes));
-        },
-        []( void *userdata,
-        const realm_async_error_t *async_error) {
-            // TODO Propagate errors to callback
-            //  https://github.com/realm/realm-kotlin/issues/303
-        },
-        // C-API currently uses the realm's default scheduler no matter what passed here
-        NULL
-    );
-}
-
-realm_notification_token_t *
-register_object_notification_cb(realm_object_t *object, jobject callback) {
-    using namespace realm::jni_util;
-    auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
-
-    return realm_object_add_notification_callback(
-        object,
-        // Use the callback as user data
-        static_cast<jobject>(get_env()->NewGlobalRef(callback)),
-        [](void *userdata) {
-            get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-        },
-        // change callback
-        [](void *userdata, const realm_object_changes_t *changes) {
-            // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
-            //  like the C-API error callback below
-            //  https://github.com/realm/realm-kotlin/issues/303
-            auto jenv = get_env(true);
-            if (jenv->ExceptionCheck()) {
-                jenv->ExceptionDescribe();
-                throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-            }
-            jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                 on_change_method,
-                                 reinterpret_cast<jlong>(changes));
-        },
-        []( void *userdata,
-        const realm_async_error_t *async_error) {
-            // TODO Propagate errors to callback
-            //  https://github.com/realm/realm-kotlin/issues/303
-        },
-        // C-API currently uses the realm's default scheduler no matter what passed here
-        NULL
-    );
-}
-
-%}
