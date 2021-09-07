@@ -139,7 +139,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
  */
 realm_http_request_func_t network_request_lambda_function = [] (void* userdata, // Network transport
                                         const realm_http_request_t,             // Request
-                                        void* completion_data,                  // Response
+                                        void* completion_data,                  // Call backs
                                         realm_http_completion_func_t completion_callback)
 {
     auto jenv = get_env(true);
@@ -149,9 +149,10 @@ realm_http_request_func_t network_request_lambda_function = [] (void* userdata, 
     // Call network transport with realm_http_request_t
 
     // transform JVM response -> realm_http_response_t
-    realm_http_response_t response{}; // ???
+    realm_http_response_t response{}; // Fill up with the JVM response data
+
     // Notify response ready
-    completion_callback(userdata, std::move(response));
+    completion_callback(completion_data, std::move(response));
 };
 
 /**
@@ -179,12 +180,12 @@ realm_http_transport_factory_func_t new_network_transport_lambda_function = [] (
 };
 
 realm_app_config_t *
-new_app_config(const char* app_id, jobject app_instance) {
+new_app_config(const char* app_id, jobject network_factory) {
     auto jenv = get_env();
 
     return realm_app_config_new(app_id,
                                 new_network_transport_lambda_function,
-                                static_cast<jobject>(jenv->NewGlobalRef(app_instance)), // keep app reference
+                                static_cast<jobject>(jenv->NewGlobalRef(network_factory)), // keep app reference
                                 [](void *userdata) {
                                     get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata)); // free app reference
                                 }
