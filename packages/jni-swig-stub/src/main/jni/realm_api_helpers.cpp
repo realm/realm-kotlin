@@ -46,8 +46,8 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                                      on_change_method,
                                      reinterpret_cast<jlong>(changes));
             },
-            []( void *userdata,
-                const realm_async_error_t *async_error) {
+            [](void *userdata,
+               const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
             },
@@ -83,8 +83,8 @@ register_list_notification_cb(realm_list_t *list, jobject callback) {
                                      on_change_method,
                                      reinterpret_cast<jlong>(changes));
             },
-            []( void *userdata,
-                const realm_async_error_t *async_error) {
+            [](void *userdata,
+               const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
             },
@@ -120,8 +120,8 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
                                      on_change_method,
                                      reinterpret_cast<jlong>(changes));
             },
-            []( void *userdata,
-                const realm_async_error_t *async_error) {
+            [](void *userdata,
+               const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
             },
@@ -151,21 +151,32 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
             network_transport_class,
             "sendRequest",
             "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;JZ)Lio/realm/mongodb/sync/Response;"
-            );
+    );
 
     // Prepare request fields to be consumable by JVM
     std::string method;
-    switch(request.method) {
-        case realm_http_method::RLM_HTTP_METHOD_GET: method = "get"; break;
-        case realm_http_method::RLM_HTTP_METHOD_POST: method = "post"; break;
-        case realm_http_method::RLM_HTTP_METHOD_PATCH: method = "patch"; break;
-        case realm_http_method::RLM_HTTP_METHOD_PUT: method = "put"; break;
-        case realm_http_method::RLM_HTTP_METHOD_DELETE: method = "delete"; break;
+    switch (request.method) {
+        case realm_http_method::RLM_HTTP_METHOD_GET:
+            method = "get";
+            break;
+        case realm_http_method::RLM_HTTP_METHOD_POST:
+            method = "post";
+            break;
+        case realm_http_method::RLM_HTTP_METHOD_PATCH:
+            method = "patch";
+            break;
+        case realm_http_method::RLM_HTTP_METHOD_PUT:
+            method = "put";
+            break;
+        case realm_http_method::RLM_HTTP_METHOD_DELETE:
+            method = "delete";
+            break;
     }
 
     static jclass mapClass = jenv->FindClass("java/util/HashMap");
     static jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
-    static jmethodID put_method = jenv->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    static jmethodID put_method = jenv->GetMethodID(mapClass, "put",
+                                                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     size_t map_size = request.num_headers;
     jobject request_headers = jenv->NewObject(mapClass, init, (jsize) map_size);
@@ -181,14 +192,14 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
 
     // Send request and retrieve JVM response
     jobject jresponse = jenv->CallObjectMethod(network_transport,
-                m_send_request_method,
-                to_jstring(jenv, method),
-                to_jstring(jenv, request.url),
-                request_headers,
-                to_jstring(jenv, request.body),
-                static_cast<jlong>(request.timeout_ms),
-                jboolean(request.uses_refresh_token)
-        );
+                                               m_send_request_method,
+                                               to_jstring(jenv, method),
+                                               to_jstring(jenv, request.url),
+                                               request_headers,
+                                               to_jstring(jenv, request.body),
+                                               static_cast<jlong>(request.timeout_ms),
+                                               jboolean(request.uses_refresh_token)
+    );
 
     // Prepare references to JVM response field accessors
     static jclass response_class = jenv->FindClass("io/realm/mongodb/sync/Response");
@@ -203,16 +214,17 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
     JStringAccessor java_body(jenv, (jstring) jenv->CallObjectMethod(jresponse, get_body_method), true);
     std::string body = java_body;
 
-    JObjectArrayAccessor<JStringAccessor, jstring> java_headers(jenv, static_cast<jobjectArray>(jenv->CallObjectMethod(jresponse, get_headers_method)));
+    JObjectArrayAccessor <JStringAccessor, jstring> java_headers(jenv, static_cast<jobjectArray>(jenv->CallObjectMethod(
+            jresponse, get_headers_method)));
     auto response_headers = std::vector<realm_http_header_t>();
     for (int i = 0; i < java_headers.size(); i = i + 2) {
         JStringAccessor key = java_headers[i];
-        JStringAccessor value = java_headers[i+1];
+        JStringAccessor value = java_headers[i + 1];
         response_headers.push_back({std::string(key).c_str(), std::string(value).c_str()});
     }
 
     // transform JVM response -> realm_http_response_t
-    realm_http_response_t response {
+    realm_http_response_t response{
             .status_code = http_code,
             .custom_status_code = custom_code,
             .headers = response_headers.data(),
