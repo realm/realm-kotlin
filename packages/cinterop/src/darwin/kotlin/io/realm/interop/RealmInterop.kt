@@ -121,8 +121,11 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     return this
 }
 
-fun realm_value_t.set(memScope: MemScope, value: Any): realm_value_t {
+fun realm_value_t.set(memScope: MemScope, value: Any?): realm_value_t {
     when (value) {
+        null -> {
+            type = realm_value_type.RLM_TYPE_NULL
+        }
         is String -> {
             type = realm_value_type.RLM_TYPE_STRING
             string.set(memScope, value)
@@ -631,7 +634,7 @@ actual object RealmInterop {
         realm: NativePointer,
         table: String,
         query: String,
-        vararg args: Any
+        vararg args: Any?
     ): NativePointer {
         memScoped {
             val count = args.size

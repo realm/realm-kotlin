@@ -42,7 +42,7 @@ kotlin {
   sourceSets {
       val commonMain by getting {
           dependencies {
-              implementation("io.realm.kotlin:library:<VERSION>")
+              implementation("io.realm.kotlin:library-base:<VERSION>")
           }
       }
 }
@@ -52,7 +52,7 @@ kotlin {
 
 ```Gradle
 dependencies {
-    compileOnly("io.realm.kotlin:library:<VERSION>")
+    compileOnly("io.realm.kotlin:library-base:<VERSION>")
 }
 ```
 ## Define model
@@ -76,11 +76,11 @@ class Dog : RealmObject {
 Define a _RealmConfiguration_ with the database schema, then open the Realm using it.
 
 ```Kotlin
-val configuration = RealmConfiguration(schema = setOf(Person::class, Dog::class))
+val configuration = RealmConfiguration.with(schema = setOf(Person::class, Dog::class))
 ```
 
 ```Kotlin
-val realm = Realm(configuration)
+val realm = Realm.open(configuration)
 ```
 
 

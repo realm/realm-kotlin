@@ -53,13 +53,19 @@ internal object Names {
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
+
+    // Function names
+    val REALM_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
+    val REALM_CONFIGURATION_WITH = Name.identifier("with")
+    val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
+    val REALM_OBJECT_INTERNAL_REALM_STATE = Name.identifier("realmState")
+    val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
 }
 
 internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
     val REALM_NATIVE_POINTER = FqName("io.realm.interop.NativePointer")
     val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmObjectInternal")
-    val REALM_OBJECT_INTEROP_INTERFACE = FqName("io.realm.interop.RealmObjectInterop")
     val REALM_MODULE_ANNOTATION = FqName("io.realm.RealmModule")
     val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
@@ -67,6 +73,7 @@ internal object FqNames {
     val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
+    val REALM_CONFIGURATION_IMPL = FqName("io.realm.internal.RealmConfigurationImpl")
     val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
