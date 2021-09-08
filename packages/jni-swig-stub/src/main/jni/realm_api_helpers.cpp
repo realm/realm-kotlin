@@ -175,11 +175,11 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
 
     // Initialize pointer to JVM class and methods
     jobject network_transport = static_cast<jobject>(userdata);
-    static jclass network_transport_class = jenv->FindClass("io/realm/mongodb/internal/NetworkTransport");
+    static jclass network_transport_class = jenv->FindClass("io/realm/interop/NetworkTransport");
     static jmethodID m_send_request_method = jenv->GetMethodID(
             network_transport_class,
             "sendRequest",
-            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/mongodb/internal/Response;"
+            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/interop/Response;"
     );
 
     // Prepare request fields to be consumable by JVM
@@ -231,7 +231,7 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
     );
 
     // Prepare references to JVM response field accessors
-    static jclass response_class = jenv->FindClass("io/realm/mongodb/internal/Response");
+    static jclass response_class = jenv->FindClass("io/realm/interop/Response");
     static jmethodID get_http_code_method = jenv->GetMethodID(response_class, "getHttpResponseCode", "()I");
     static jmethodID get_custom_code_method = jenv->GetMethodID(response_class, "getCustomResponseCode", "()I");
     static jmethodID get_headers_method = jenv->GetMethodID(response_class, "getHeaders", "()Ljava/util/Map;");
