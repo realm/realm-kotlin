@@ -79,7 +79,7 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val message: String? = error.message?.toKString()
+            val message = "[${error.error}]: ${error.message?.toKString()}"
             val exception = coreErrorAsThrowable(error.error, message)
 
             realm_clear_last_error()
