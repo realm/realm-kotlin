@@ -35,10 +35,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
-    testImplementation(project(":library"))
     // Have to be mentioned explicitly as it is not an api dependency of library
     testImplementation(project(":cinterop"))
-    testImplementation(project(":library"))
+    testImplementation(project(":library-base"))
+    testImplementation(project(":library-sync"))
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
