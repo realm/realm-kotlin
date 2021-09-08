@@ -84,6 +84,7 @@ object Versions {
     const val ktlintVersion = "0.41.0" // https://github.com/pinterest/ktlint
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
+    const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
 }
 
 // Could be actual Dependency objects

@@ -451,7 +451,7 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any): NativePointer {
+    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer {
         val count = args.size
         val classKey = classInfo(realm, table).key
         val cArgs = realmc.new_valueArray(count)

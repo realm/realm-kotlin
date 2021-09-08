@@ -42,21 +42,21 @@ node_label = 'osx_kotlin'
 // building native code. To work around this, we force the workspace to mirror the git path.
 // This has two side-effects: 1) It isn't possible to use this JenkinsFile on a worker with multiple
 // executors. At least not if we want to support building multipe versions of the same P
-workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}" 
+workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
 pipeline {
-    agent { 
+    agent {
         node {
             label node_label
             customWorkspace workspacePath
         }
      }
     // The Gradle cache is re-used between stages, in order to avoid builds interleave,
-    // and potentially corrupt each others cache, we grab a global lock for the entire 
+    // and potentially corrupt each others cache, we grab a global lock for the entire
     // build.
     options {
         lock resource: 'kotlin_build_lock'
-        timeout(time: 15, activity: true, unit: 'MINUTES') 
+        timeout(time: 15, activity: true, unit: 'MINUTES')
     }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
@@ -223,13 +223,15 @@ def runStaticAnalysis() {
                 mkdir /tmp/detekt
                 rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
                 rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
-                rsync -a --delete --ignore-errors packages/library/build/reports/ktlint/ /tmp/ktlint/library/ || true
+                rsync -a --delete --ignore-errors packages/library-base/build/reports/ktlint/ /tmp/ktlint/library-base/ || true
+                rsync -a --delete --ignore-errors packages/library-sync/build/reports/ktlint/ /tmp/ktlint/library-sync/ || true
                 rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
                 rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/ktlint/ /tmp/ktlint/runtime-api/ || true
                 rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
                 rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
-                rsync -a --delete --ignore-errors packages/library/build/reports/detekt/ /tmp/detekt/library/ || true
+                rsync -a --delete --ignore-errors packages/library-base/build/reports/detekt/ /tmp/detekt/library-base/ || true
+                rsync -a --delete --ignore-errors packages/library-sync/build/reports/detekt/ /tmp/detekt/library-sync/ || true
                 rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
                 rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
