@@ -19,7 +19,6 @@
 package io.realm.interop
 
 import io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.interop.RealmInterop.register_login_cb
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
@@ -461,14 +460,24 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
+    actual fun realm_app_config_new(
+        appId: String,
+        networkTransportFactory: () -> Any,
+        baseUrl: String?
+    ): NativePointer {
         val config = realmc.new_app_config(appId, networkTransportFactory)
 
-        // TODO parameterize?
+        baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
+
+        // TODO parameterize
         realmc.realm_app_config_set_platform(config, "kotlin")
         realmc.realm_app_config_set_platform_version(config, "PLATFORM_VERSION")
         realmc.realm_app_config_set_sdk_version(config, "SDK_VERSION")
         return LongPointerWrapper(config)
+    }
+
+    actual fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String) {
+        realmc.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
     actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {

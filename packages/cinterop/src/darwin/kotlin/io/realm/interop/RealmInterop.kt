@@ -895,7 +895,15 @@ actual object RealmInterop {
         TODO()
     }
 
-    actual fun realm_app_config_new(appId: String, networkTransportFactory: () -> Any): NativePointer {
+    actual fun realm_app_config_new(
+        appId: String,
+        networkTransportFactory: () -> Any,
+        baseUrl: String?
+    ): NativePointer {
+        TODO()
+    }
+
+    actual fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String) {
         TODO()
     }
 

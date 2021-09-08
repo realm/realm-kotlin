@@ -40,15 +40,15 @@ interface App {
         /**
          * TODO
          */
-        fun create(
+        suspend fun create(
             configuration: AppConfiguration,
-            syncConfiguration: SyncConfiguration
+            syncConfiguration: SyncConfiguration? = null
         ): App = AppImpl(configuration, syncConfiguration)
 
         /**
          * TODO
          */
-        fun create(
+        suspend fun create(
             appId: String,
             dispatcher: CoroutineDispatcher
         ): App = AppImpl(

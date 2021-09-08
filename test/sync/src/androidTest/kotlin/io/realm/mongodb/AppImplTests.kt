@@ -8,8 +8,9 @@ class AppImplTests {
 
     @Test
     fun kajshd() {
-        val app = App.create("APP_ID", Dispatchers.IO)
         runBlocking {
+            val app =
+                App.create(appConfigurationOf("APP_ID", "http://127.0.0.1:9090", Dispatchers.IO))
             app.login(EmailPassword("asdsa", "aksjdha"))
         }
         val kjahsdk = 0

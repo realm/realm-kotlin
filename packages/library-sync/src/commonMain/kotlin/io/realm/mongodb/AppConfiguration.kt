@@ -22,13 +22,24 @@ import io.realm.mongodb.internal.KtorNetworkTransport
 import io.realm.mongodb.internal.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 
+private const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
+
 /**
  * TODO
  */
 interface AppConfiguration {
     val appId: String
+    val baseUrl: String
     val dispatcher: CoroutineDispatcher
     val nativePointer: NativePointer
+}
+
+fun appConfigurationOf(
+    appId: String,
+    baseUrl: String,
+    dispatcher: CoroutineDispatcher
+): AppConfiguration {
+    return AppConfigurationImpl(appId, baseUrl, dispatcher)
 }
 
 /**
@@ -36,7 +47,8 @@ interface AppConfiguration {
  */
 internal class AppConfigurationImpl(
     override val appId: String,
-    override val dispatcher: CoroutineDispatcher,
+    override val baseUrl: String = DEFAULT_BASE_URL,
+    override val dispatcher: CoroutineDispatcher
 ) : AppConfiguration {
 
     private val networkTransport: NetworkTransport = KtorNetworkTransport(
@@ -46,6 +58,7 @@ internal class AppConfigurationImpl(
 
     override val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
+        baseUrl = baseUrl,
         networkTransportFactory = { networkTransport }
     )
 }
