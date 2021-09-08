@@ -95,16 +95,6 @@ public fun RealmObject.isValid(): Boolean {
 }
 
 /**
- * FIXME Hidden until we can add proper support
- */
-internal fun <T : RealmObject> RealmObject.addChangeListener(callback: Callback<T?>): Cancellable {
-    checkNotificationsAvailable()
-    val realm = ((this as RealmObjectInternal).`$realm$Owner`!!).owner
-    @Suppress("UNCHECKED_CAST")
-    return realm.registerObjectChangeListener(this as T, callback)
-}
-
-/**
  * Observe changes to a Realm object. Any change to the object, will cause the flow to emit the updated
  * object. If the observed object is deleted from the Realm, the flow will complete, otherwise it will
  * continue running until canceled.
@@ -117,7 +107,7 @@ public fun <T : RealmObject> T.observe(): Flow<T> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$Owner`!!).owner.registerObjectObserver(this as T)
+    return (internalObject.`$realm$Owner`!!).owner.registerObserver(this) as Flow<T>
 }
 
 private fun RealmObject.checkNotificationsAvailable() {
