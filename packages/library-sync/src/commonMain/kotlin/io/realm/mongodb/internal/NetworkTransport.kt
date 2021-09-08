@@ -31,24 +31,8 @@ import io.realm.internal.platform.runBlocking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
-
-/**
- * TODO
- */
-internal interface NetworkTransport {
-
-    val authorizationHeaderName: String?
-    val customHeaders: Map<String, String>
-
-    fun sendRequest(
-        method: String,
-        url: String,
-        headers: Map<String, String>,
-        body: String,
-        usesRefreshToken: Boolean
-    ): Response
-}
-
+import io.realm.interop.NetworkTransport
+import io.realm.interop.Response
 //@SharedImmutable
 //internal expect val SyncDispatcher: CoroutineDispatcher
 
@@ -208,14 +192,4 @@ class KtorNetworkTransport(
         ): Response = Response(responseStatusCode, 0, responseHeaders, responseBody)
     }
 }
-
-/**
- * TODO
- */
-data class Response(
-    val httpResponseCode: Int,
-    val customResponseCode: Int,
-    val headers: Map<String, String>,
-    val body: String
-)
 

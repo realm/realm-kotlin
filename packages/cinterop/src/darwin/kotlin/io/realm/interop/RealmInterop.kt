@@ -62,6 +62,7 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_http_header_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
@@ -859,7 +860,7 @@ actual object RealmInterop {
                         ?: error("Notification callback data should never be null")
                 },
                 // Change callback
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                staticCFunction { userdata, change ->
                     try {
                         userdata?.asStableRef<Callback>()?.get()?.onChange(
                             CPointerWrapper(
@@ -900,7 +901,65 @@ actual object RealmInterop {
         networkTransportFactory: () -> Any,
         baseUrl: String?
     ): NativePointer {
-        TODO()
+        return CPointerWrapper(
+            realm_wrapper.realm_app_config_new(
+                appId,
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<() -> NetworkTransport>()?.get()?.invoke()?.let { networkTransport ->
+                        realm_wrapper.realm_http_transport_new(
+                        StableRef.create(networkTransport).asCPointer(),
+                        staticCFunction { userdata ->
+                            userdata?.asStableRef<NetworkTransport>()?.dispose()
+                                ?: error("Network transport should never be null")
+                        },
+                        staticCFunction { userdata, request, completionData, callback ->
+                            userdata?.asStableRef<NetworkTransport>()?.get()?.let { networkTransport ->
+                                request.useContents {
+                                    val headerMap = mutableMapOf<String, String>()
+                                    for (i in 0..num_headers.toInt()) {
+                                        headers?.get(i)?.apply {
+                                            headerMap[name.toString()] = value.toString()
+                                        }
+                                    }
+
+                                    val response = networkTransport.sendRequest(
+                                        method = method.toString(),
+                                        url = url.toString(),
+                                        headers = headerMap,
+                                        body = body.toString(),
+                                        usesRefreshToken = uses_refresh_token
+                                    )
+                                    memScoped {
+                                        val headersSize = response.headers.entries.size
+                                        val cResponseHeaders = allocArray<realm_http_header_t>(headersSize)
+
+                                        response.headers.entries.forEachIndexed { i, entry ->
+                                            cResponseHeaders[i].apply {
+                                                name = entry.key.cstr.getPointer(memScope)
+                                                value = entry.value.cstr.getPointer(memScope)
+                                            }
+                                        }
+                                        callback?.invoke(completionData, cValue {
+                                            body = response.body.cstr.getPointer(memScope)
+                                            body_size = response.body.length.toULong()
+                                            custom_status_code = response.customResponseCode
+                                            status_code = response.httpResponseCode
+                                            num_headers = response.headers.entries.size.toULong()
+                                            headers = cResponseHeaders
+                                        })
+                                    }
+                                }
+                            }
+                        })
+                    }
+                },
+                StableRef.create(networkTransportFactory).asCPointer(),
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<() -> NetworkTransport>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+            )
+        )
     }
 
     actual fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String) {

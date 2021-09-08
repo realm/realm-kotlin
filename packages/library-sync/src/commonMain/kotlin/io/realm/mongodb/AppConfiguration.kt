@@ -18,8 +18,8 @@ package io.realm.mongodb
 
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.interop.NetworkTransport
 import io.realm.mongodb.internal.KtorNetworkTransport
-import io.realm.mongodb.internal.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 
 private const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
