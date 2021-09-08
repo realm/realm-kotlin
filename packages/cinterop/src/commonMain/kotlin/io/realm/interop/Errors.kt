@@ -23,114 +23,77 @@ sealed class RealmCoreException(message: String?) : Exception(message)
 
 // RLM_ERR_NONE
 class RealmCoreNoneException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_UNKNOWN
+// RLM_ERR_UNKNOWN
 class RealmCoreUnknownException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_OTHER_EXCEPTION
+// RLM_ERR_OTHER_EXCEPTION
 class RealmCoreOtherException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_OUT_OF_MEMORY
+// RLM_ERR_OUT_OF_MEMORY
 class RealmCoreOutOfMemoryException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_NOT_CLONABLE
+// RLM_ERR_NOT_CLONABLE
 class RealmCoreNotClonableException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_NOT_IN_A_TRANSACTION
+// RLM_ERR_NOT_IN_A_TRANSACTION
 class RealmCoreNotInATransactionException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_WRONG_THREAD
+// RLM_ERR_WRONG_THREAD
 class RealmCoreWrongThreadException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_INVALIDATED_OBJECT
+// RLM_ERR_INVALIDATED_OBJECT
 class RealmCoreInvalidatedObjectException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_INVALID_PROPERTY
+// RLM_ERR_INVALID_PROPERTY
 class RealmCoreInvalidPropertyException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_MISSING_PROPERTY_VALUE
+// RLM_ERR_MISSING_PROPERTY_VALUE
 class RealmCoreMissingPropertyValueException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_PROPERTY_TYPE_MISMATCH
+// RLM_ERR_PROPERTY_TYPE_MISMATCH
 class RealmCorePropertyTypeMismatchException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_MISSING_PRIMARY_KEY
+// RLM_ERR_MISSING_PRIMARY_KEY
 class RealmCoreMissingPrimaryKeyException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_UNEXPECTED_PRIMARY_KEY
+// RLM_ERR_UNEXPECTED_PRIMARY_KEY
 class RealmCoreUnexpectedPrimaryKeyException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_WRONG_PRIMARY_KEY_TYPE
+// RLM_ERR_WRONG_PRIMARY_KEY_TYPE
 class RealmCoreWrongPrimaryKeyTypeException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_MODIFY_PRIMARY_KEY
+// RLM_ERR_MODIFY_PRIMARY_KEY
 class RealmCoreModifyPrimaryKeyException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_READ_ONLY_PROPERTY
+// RLM_ERR_READ_ONLY_PROPERTY
 class RealmCoreReadOnlyPropertyException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_PROPERTY_NOT_NULLABLE
+// RLM_ERR_PROPERTY_NOT_NULLABLE
 class RealmCorePropertyNotNullableException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_INVALID_ARGUMENT
+// RLM_ERR_INVALID_ARGUMENT
 class RealmCoreInvalidArgumentException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_LOGIC
+// RLM_ERR_LOGIC
 class RealmCoreLogicException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_NO_SUCH_TABLE
+// RLM_ERR_NO_SUCH_TABLE
 class RealmCoreNoSuchTableException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_NO_SUCH_OBJECT
+// RLM_ERR_NO_SUCH_OBJECT
 class RealmCoreNoSuchObjectException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_CROSS_TABLE_LINK_TARGET
+// RLM_ERR_CROSS_TABLE_LINK_TARGET
 class RealmCoreCrossTableLinkTargetException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION
+// RLM_ERR_UNSUPPORTED_FILE_FORMAT_VERSION
 class RealmCoreUnsupportedFileFormatVersionException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_MULTIPLE_SYNC_AGENTS
+// RLM_ERR_MULTIPLE_SYNC_AGENTS
 class RealmCoreMultipleSyncAgentsException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_ADDRESS_SPACE_EXHAUSTED
+// RLM_ERR_ADDRESS_SPACE_EXHAUSTED
 class RealmCoreAddressSpaceExhaustedException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED
+// RLM_ERR_MAXIMUM_FILE_SIZE_EXCEEDED
 class RealmCoreMaximumFileSizeExceededException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_OUT_OF_DISK_SPACE
+// RLM_ERR_OUT_OF_DISK_SPACE
 class RealmCoreOutOfDiskSpaceException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_KEY_NOT_FOUND
+// RLM_ERR_KEY_NOT_FOUND
 class RealmCoreKeyNotFoundException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_COLUMN_NOT_FOUND
+// RLM_ERR_COLUMN_NOT_FOUND
 class RealmCoreColumnNotFoundException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_COLUMN_ALREADY_EXISTS
+// RLM_ERR_COLUMN_ALREADY_EXISTS
 class RealmCoreColumnAlreadyExistsException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_KEY_ALREADY_USED
+// RLM_ERR_KEY_ALREADY_USED
 class RealmCoreKeyAlreadyUsedException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_SERIALIZATION_ERROR
+// RLM_ERR_SERIALIZATION_ERROR
 class RealmCoreSerializationErrorException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_INVALID_PATH_ERROR
+// RLM_ERR_INVALID_PATH_ERROR
 class RealmCoreInvalidPathErrorException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE
+// RLM_ERR_DUPLICATE_PRIMARY_KEY_VALUE
 class RealmCoreDuplicatePrimaryKeyValueException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_INDEX_OUT_OF_BOUNDS
+// RLM_ERR_INDEX_OUT_OF_BOUNDS
 class RealmCoreIndexOutOfBoundsException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_INVALID_QUERY_STRING
+// RLM_ERR_INVALID_QUERY_STRING
 class RealmCoreInvalidQueryStringException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_INVALID_QUERY
+// RLM_ERR_INVALID_QUERY
 class RealmCoreInvalidQueryException(message: String?) : RealmCoreException(message)
-
-// Core error RLM_ERR_CALLBACK
+// RLM_ERR_CALLBACK
 class RealmCoreCallbackException(message: String?) : RealmCoreException(message)
