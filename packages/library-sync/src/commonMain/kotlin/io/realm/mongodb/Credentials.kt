@@ -24,11 +24,11 @@ import io.realm.interop.RealmInterop
  */
 sealed class Credentials(val id: String) {
 
-    val nativePointer: NativePointer = getPointer()
-
-    private fun getPointer(): NativePointer = when (this) {
-        is EmailPassword ->
-            RealmInterop.realm_app_credentials_new_username_password(email, password)
+    val nativePointer: NativePointer by lazy {
+        when (this) {
+            is EmailPassword ->
+                RealmInterop.realm_app_credentials_new_username_password(email, password)
+        }
     }
 }
 

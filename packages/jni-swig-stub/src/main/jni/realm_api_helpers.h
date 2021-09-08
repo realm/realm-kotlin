@@ -33,5 +33,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback);
 realm_app_config_t *
 new_app_config(const char* app_id, jobject app_instance);
 
+void
+register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback);
 
 #endif //TEST_REALM_API_HELPERS_H

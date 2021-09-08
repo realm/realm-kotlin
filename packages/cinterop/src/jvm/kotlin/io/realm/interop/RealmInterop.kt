@@ -19,6 +19,7 @@
 package io.realm.interop
 
 import io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.interop.RealmInterop.register_login_cb
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
@@ -26,6 +27,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
+
+//@Suppress("FunctionOnlyReturningConstant")
+//actual fun appFilesDirectory(): String = "."
 
 /**
  * JVM/Android interop implementation.
@@ -431,8 +435,13 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer?): NativePointer {
-        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncConfig?.cptr() ?: 0))
+    actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
+        val syncClientConfig = realmc.realm_sync_client_config_new()
+        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
+
+        // TODO add metadata mode to config
+        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED)
+        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig))
     }
 
     private fun register_login_cb(app: Long, credentials: Long, loginCallback: LoginCallback): Long {
@@ -441,7 +450,7 @@ actual object RealmInterop {
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback) {
         // TODO error handling for callback, producing Kotlin's Result?
-        /*realmc.*/register_login_cb(
+        realmc.register_login_cb(
             app.cptr(),
             credentials.cptr(),
             object : LoginCallback {

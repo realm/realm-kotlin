@@ -16,14 +16,12 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.interop.Callback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.mongodb.internal.KtorNetworkTransport
-import io.realm.mongodb.internal.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 
 /**
@@ -71,10 +69,11 @@ private class AppImpl(
     override val syncConfiguration: SyncConfiguration? = null // TODO
 ) : App {
 
-    override val nativePointer: NativePointer = RealmInterop.realm_app_new(
-        appConfiguration.nativePointer,
-        syncConfiguration?.nativePointer
-    )
+    override val nativePointer: NativePointer =
+        RealmInterop.realm_app_new(
+            appConfig = appConfiguration.nativePointer,
+            basePath = appFilesDirectory()
+        )
 
     override suspend fun login(credentials: Credentials): Result<User> {
         // TODO is this the right way?
@@ -95,11 +94,4 @@ private class AppImpl(
         return channel.receive()
             .also { channel.close() }
     }
-
-//    fun getNetworkTransport(): NetworkTransport {
-//        return KtorNetworkTransport(
-//            timeoutMs = 5000,
-//            dispatcher = Dispatchers.Default    // TODO extract from app config
-//        )
-//    }
 }

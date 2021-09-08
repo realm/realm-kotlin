@@ -75,6 +75,9 @@ import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
+//@Suppress("FunctionOnlyReturningConstant")
+//actual fun appFilesDirectory(): String = "."
+
 private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
@@ -884,7 +887,7 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer?): NativePointer {
+    actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
         TODO()
     }
 

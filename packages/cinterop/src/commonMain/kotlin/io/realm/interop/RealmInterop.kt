@@ -29,6 +29,8 @@ value class ClassKey(val key: Long)
 @JvmInline
 value class ColumnKey(val key: Long)
 
+//expect fun appFilesDirectory(): String
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
@@ -139,7 +141,7 @@ expect object RealmInterop {
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
 
     // App
-    fun realm_app_new(appConfig: NativePointer, syncConfig: NativePointer?): NativePointer // TODO sync config shouldn't be null
+    fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer // TODO sync config shouldn't be null
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback)
 
     // AppConfig
