@@ -63,7 +63,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         try {
             RealmInterop.realm_begin_write(realmReference.dbPointer)
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot begin a write transaction", exception)
+            throw genericRealmCoreExceptionHandler("Cannot begin the write transaction", exception)
         }
     }
 

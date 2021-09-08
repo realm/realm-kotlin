@@ -56,7 +56,7 @@ internal class ManagedRealmList<E>(
         try {
             return operator.convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot get list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Could not get element at list index $index", exception)
         }
     }
 
@@ -69,7 +69,7 @@ internal class ManagedRealmList<E>(
                 copyToRealm(metadata.mediator, metadata.realm, element)
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot add list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
         }
     }
 
@@ -92,7 +92,7 @@ internal class ManagedRealmList<E>(
         try {
             RealmInterop.realm_list_erase(nativePointer, index.toLong())
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot remove list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Could not remove element at list index $index", exception)
         }
     }
 
@@ -107,7 +107,7 @@ internal class ManagedRealmList<E>(
                 )
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot set list element at index $index", exception)
+            throw genericRealmCoreExceptionHandler("Could not set list element at list index $index", exception)
         }
     }
 
