@@ -107,7 +107,7 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         TODO()
     }
 
-    override fun <T > registerObserver(t: Observable<T>): Flow<T> {
+    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
         return notifier.registerObserver(t)
     }
 

@@ -49,7 +49,7 @@ internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm
         return `$realm$Owner` ?: UnmanagedState
     }
 
-    override fun freeze(frozenRealm: RealmReference):RealmObjectInternal {
+    override fun freeze(frozenRealm: RealmReference): RealmObjectInternal {
         @Suppress("UNCHECKED_CAST")
         val type: KClass<RealmObjectInternal> = this::class as KClass<RealmObjectInternal>
         val mediator = `$realm$Mediator`!!
