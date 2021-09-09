@@ -18,8 +18,8 @@ package io.realm.test.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
-import io.realm.internal.platform.WeakReference
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.platform.WeakReference
 import io.realm.isManaged
 import io.realm.objects
 import io.realm.test.platform.PlatformUtils

@@ -17,10 +17,10 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.test.RealmStateTest
 import io.realm.VersionId
 import io.realm.isFrozen
 import io.realm.isValid
+import io.realm.test.RealmStateTest
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.createRandomString
 import io.realm.version

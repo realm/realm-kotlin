@@ -19,10 +19,10 @@ package io.realm.internal
 import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.VersionId
-import io.realm.internal.platform.runBlocking
-import io.realm.internal.platform.threadId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.runBlocking
+import io.realm.internal.platform.threadId
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex

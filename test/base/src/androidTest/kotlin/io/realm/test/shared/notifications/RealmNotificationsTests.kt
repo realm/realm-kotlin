@@ -16,11 +16,11 @@
 
 package io.realm.test.shared.notifications
 
-import io.realm.test.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.internal.platform.runBlocking
+import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel

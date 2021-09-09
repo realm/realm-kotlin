@@ -16,13 +16,13 @@
 
 package io.realm.test.shared.notifications
 
-import io.realm.test.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.internal.platform.freeze
-import io.realm.test.shared.OBJECT_VALUES
+import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.shared.OBJECT_VALUES
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect

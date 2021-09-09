@@ -16,10 +16,10 @@
 
 package io.realm.test.shared.notifications
 
-import io.realm.test.NotificationTests
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.observe
+import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.update
 import kotlinx.coroutines.async
