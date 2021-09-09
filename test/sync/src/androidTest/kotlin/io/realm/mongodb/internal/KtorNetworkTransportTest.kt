@@ -16,6 +16,7 @@
 
 package io.realm.mongodb.internal
 
+import io.realm.interop.Response
 import io.realm.mongodb.sync.getDispatcher
 import kotlin.test.BeforeTest
 import kotlin.test.Test
