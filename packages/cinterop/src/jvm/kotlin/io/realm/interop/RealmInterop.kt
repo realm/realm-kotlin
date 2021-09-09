@@ -443,10 +443,6 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig))
     }
 
-    private fun register_login_cb(app: Long, credentials: Long, loginCallback: LoginCallback): Long {
-        TODO("Stub - implement in realm.i")
-    }
-
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback) {
         // TODO error handling for callback, producing Kotlin's Result?
         realmc.register_login_cb(
@@ -473,6 +469,7 @@ actual object RealmInterop {
         realmc.realm_app_config_set_platform(config, "kotlin")
         realmc.realm_app_config_set_platform_version(config, "PLATFORM_VERSION")
         realmc.realm_app_config_set_sdk_version(config, "SDK_VERSION")
+        realmc.realm_app_config_set_local_app_version(config, "APP_VERSION")
         return LongPointerWrapper(config)
     }
 

@@ -14,6 +14,7 @@ class AppImplTests {
 
     @Test
     fun kajshd() {
+        // Send request directly to the local server to get the actual app ID
         val applicationId = KtorNetworkTransport(
             timeoutMs = 5000,
             dispatcher = singleThreadDispatcher("transport dispatcher")
@@ -32,7 +33,14 @@ class AppImplTests {
 
         val app = App.create(appConfigurationOf(applicationId, BASE_URL, Dispatchers.IO))
         runBlocking {
-            app.login(EmailPassword("asdsa", "aksjdha"))
+            try {
+                // Create user first
+                val user: User = app.login(EmailPassword("asdf@asdf.com", "asdfasdf"))
+                    .getOrThrow()
+                val kajhsdkjh = 0
+            } catch (e: Exception) {
+                val kjhasd = 0
+            }
         }
         val kjahsdk = 0
     }
