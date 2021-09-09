@@ -41,7 +41,7 @@ interface Realm : TypedRealm {
         /**
          * The required length for encryption keys used to encrypt Realm data.
          */
-        public const val ENCRYPTION_KEY_LENGTH = io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
+        public const val ENCRYPTION_KEY_LENGTH = io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 
         /**
          * Open a Realm instance. This instance grants access to an underlying Realm file defined by

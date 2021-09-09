@@ -7,8 +7,8 @@ import io.realm.RealmObject
 import io.realm.VersionId
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
@@ -283,11 +283,11 @@ internal class SuspendableNotifier(
         notifyComponentUpdate: (frozenRealm: RealmReference) -> Unit,
         getToken: (
             liveComponentPointer: NativePointer,
-            interopCallback: io.realm.interop.Callback
+            interopCallback: io.realm.internal.interop.Callback
         ) -> NativePointer,
         callback: Callback<T>
     ): NotificationToken<Callback<T>> {
-        val interopCallback = object : io.realm.interop.Callback {
+        val interopCallback = object : io.realm.internal.interop.Callback {
             override fun onChange(change: NativePointer) {
                 // FIXME How to make sure the Realm isn't closed when handling this?
 

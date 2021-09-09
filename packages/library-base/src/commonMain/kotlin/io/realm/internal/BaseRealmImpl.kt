@@ -21,8 +21,8 @@ import io.realm.Cancellable
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 

@@ -20,9 +20,9 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.interop.Link
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.Link
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 

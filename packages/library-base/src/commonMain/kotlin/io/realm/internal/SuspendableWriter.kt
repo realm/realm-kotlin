@@ -21,8 +21,8 @@ import io.realm.RealmObject
 import io.realm.VersionId
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex

@@ -17,9 +17,9 @@
 package io.realm.internal
 
 import io.realm.RealmObject
-import io.realm.interop.Link
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.Link
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL

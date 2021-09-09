@@ -19,7 +19,7 @@ package io.realm.internal
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.RealmInterop
 import io.realm.isManaged
 import io.realm.isValid
 import kotlin.reflect.KClass

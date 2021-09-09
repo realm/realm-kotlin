@@ -255,7 +255,7 @@ realm_notification_token_t *
 register_results_notification_cb(realm_results_t *results, jobject callback) {
     using namespace realm::jni_util;
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_results_add_notification_callback(
@@ -293,7 +293,7 @@ realm_notification_token_t *
 register_list_notification_cb(realm_list_t *list, jobject callback) {
     using namespace realm::jni_util;
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_list_add_notification_callback(
@@ -331,7 +331,7 @@ realm_notification_token_t *
 register_object_notification_cb(realm_object_t *object, jobject callback) {
     using namespace realm::jni_util;
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_object_add_notification_callback(

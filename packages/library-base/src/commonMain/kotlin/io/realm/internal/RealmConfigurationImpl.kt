@@ -20,9 +20,9 @@ import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
-import io.realm.interop.SchemaMode
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.SchemaMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
