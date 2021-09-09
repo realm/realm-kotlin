@@ -40,13 +40,16 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
@@ -63,8 +66,11 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_http_completion_func_t
 import realm_wrapper.realm_http_header_t
 import realm_wrapper.realm_http_method
+import realm_wrapper.realm_http_request_t
+import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
@@ -917,6 +923,61 @@ actual object RealmInterop {
         )
     }
 
+    private val newRequestLambda = staticCFunction<COpaquePointer?,
+            CValue<realm_http_request_t>,
+            COpaquePointer?,
+            realm_http_completion_func_t?,
+            Unit>
+    { userdata, request, completionData, callback ->
+        userdata?.asStableRef<NetworkTransport>()?.get()?.let { networkTransport ->
+            request.useContents {
+                val headerMap = mutableMapOf<String, String>()
+                for (i in 0 until num_headers.toInt()) {
+                    headers?.get(i)?.apply {
+                        headerMap[name!!.toKString()] = value!!.toKString()
+                    }
+                }
+
+                val response = networkTransport.sendRequest(
+                    method = when (method) {
+                        realm_http_method.RLM_HTTP_METHOD_GET -> NetworkTransport.GET
+                        realm_http_method.RLM_HTTP_METHOD_POST -> NetworkTransport.POST
+                        realm_http_method.RLM_HTTP_METHOD_PATCH -> NetworkTransport.PATCH
+                        realm_http_method.RLM_HTTP_METHOD_PUT -> NetworkTransport.PUT
+                        realm_http_method.RLM_HTTP_METHOD_DELETE -> NetworkTransport.DELETE
+                    },
+                    url = url!!.toKString(),
+                    headers = headerMap,
+                    body = body!!.toKString(),
+                    usesRefreshToken = uses_refresh_token
+                )
+
+                memScoped {
+                    val headersSize = response.headers.entries.size
+                    val cResponseHeaders = allocArray<realm_http_header_t>(headersSize)
+
+                    response.headers.entries.forEachIndexed { i, entry ->
+                        cResponseHeaders[i].apply {
+                            name = entry.key.cstr.getPointer(memScope)
+                            value = entry.value.cstr.getPointer(memScope)
+                        }
+                    }
+
+                    val cResponse = cValue<realm_http_response_t> {
+                        body = response.body.cstr.getPointer(memScope)
+                        body_size = response.body.cstr.getBytes().size.toULong()
+                        custom_status_code = response.customResponseCode
+                        status_code = response.httpResponseCode
+                        num_headers = response.headers.entries.size.toULong()
+                        headers = cResponseHeaders
+                    }
+
+                    callback?.invoke(completionData, cResponse.ptr)
+                }
+            }
+        }
+    }
+
     actual fun realm_app_config_new(
         appId: String,
         networkTransportFactory: () -> Any,
@@ -928,57 +989,13 @@ actual object RealmInterop {
                 staticCFunction { userdata ->
                     userdata?.asStableRef<() -> NetworkTransport>()?.get()?.invoke()?.let { networkTransport ->
                         realm_wrapper.realm_http_transport_new(
-                        StableRef.create(networkTransport).asCPointer(),
-                        staticCFunction { userdata ->
-                            userdata?.asStableRef<NetworkTransport>()?.dispose()
-                                ?: error("Network transport should never be null")
-                        },
-                        staticCFunction { userdata, request, completionData, callback ->
-                            userdata?.asStableRef<NetworkTransport>()?.get()?.let { networkTransport ->
-                                request.useContents {
-                                    val headerMap = mutableMapOf<String, String>()
-                                    for (i in 0..num_headers.toInt()) {
-                                        headers?.get(i)?.apply {
-                                            headerMap[name!!.toKString()] = value!!.toKString()
-                                        }
-                                    }
-
-                                    val response = networkTransport.sendRequest(
-                                        method = when(method) {
-                                            realm_http_method.RLM_HTTP_METHOD_GET -> "get"
-                                            realm_http_method.RLM_HTTP_METHOD_POST -> "post"
-                                            realm_http_method.RLM_HTTP_METHOD_PATCH -> "patch"
-                                            realm_http_method.RLM_HTTP_METHOD_PUT -> "put"
-                                            realm_http_method.RLM_HTTP_METHOD_DELETE -> "delete"
-                                        },
-                                        url = url!!.toKString(),
-                                        headers = headerMap,
-                                        body = body!!.toKString(),
-                                        usesRefreshToken = uses_refresh_token
-                                    )
-                                    
-                                    memScoped {
-                                        val headersSize = response.headers.entries.size
-                                        val cResponseHeaders = allocArray<realm_http_header_t>(headersSize)
-
-                                        response.headers.entries.forEachIndexed { i, entry ->
-                                            cResponseHeaders[i].apply {
-                                                name = entry.key.cstr.getPointer(memScope)
-                                                value = entry.value.cstr.getPointer(memScope)
-                                            }
-                                        }
-                                        callback?.invoke(completionData, cValue {
-                                            body = response.body.cstr.getPointer(memScope)
-                                            body_size = response.body.length.toULong()
-                                            custom_status_code = response.customResponseCode
-                                            status_code = response.httpResponseCode
-                                            num_headers = response.headers.entries.size.toULong()
-                                            headers = cResponseHeaders
-                                        })
-                                    }
-                                }
-                            }
-                        })
+                            StableRef.create(networkTransport).asCPointer(),
+                            staticCFunction { userdata ->
+                                userdata?.asStableRef<NetworkTransport>()?.dispose()
+                                    ?: error("Network transport should never be null")
+                            },
+                            newRequestLambda
+                        )
                     }
                 },
                 StableRef.create(networkTransportFactory).asCPointer(),

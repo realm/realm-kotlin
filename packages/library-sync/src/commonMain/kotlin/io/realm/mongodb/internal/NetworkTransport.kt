@@ -147,9 +147,9 @@ class KtorNetworkTransport(
         val frozenTimeout = timeoutMs.freeze()
         return HttpClient(CIO) {
             // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
-            install(JsonFeature) {
-                serializer = KotlinxSerializer(Json)
-            }
+//            install(JsonFeature) {
+//                serializer = KotlinxSerializer(Json)
+//            }
 
             install(HttpTimeout) {
                 connectTimeoutMillis = frozenTimeout

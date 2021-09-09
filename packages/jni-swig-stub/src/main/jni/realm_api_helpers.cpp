@@ -273,7 +273,7 @@ static void network_request_lambda_function(void *userdata, // Network transport
     };
 
     // Notify response ready
-    completion_callback(completion_data, response);
+    completion_callback(completion_data, &response);
 };
 
 /**

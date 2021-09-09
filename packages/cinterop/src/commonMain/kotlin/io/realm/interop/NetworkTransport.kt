@@ -2,6 +2,14 @@ package io.realm.interop
 
 interface NetworkTransport {
 
+    companion object {
+        const val GET = "get"
+        const val POST = "post"
+        const val PATCH = "patch"
+        const val PUT = "put"
+        const val DELETE = "delete"
+    }
+
     val authorizationHeaderName: String?
     val customHeaders: Map<String, String>
 
