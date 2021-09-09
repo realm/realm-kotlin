@@ -40,7 +40,7 @@ interface App {
         /**
          * TODO
          */
-        suspend fun create(
+        fun create(
             configuration: AppConfiguration,
             syncConfiguration: SyncConfiguration? = null
         ): App = AppImpl(configuration, syncConfiguration)
@@ -48,7 +48,7 @@ interface App {
         /**
          * TODO
          */
-        suspend fun create(
+        fun create(
             appId: String,
             dispatcher: CoroutineDispatcher
         ): App = AppImpl(
