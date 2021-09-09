@@ -167,10 +167,11 @@ void register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, j
  * 3. Perform request
  * 4. Transform JVM request to core request
  */
-realm_http_request_func_t network_request_lambda_function = [](void *userdata, // Network transport
-                                                               const realm_http_request_t request,             // Request
-                                                               void *completion_data,                  // Call backs
-                                                               realm_http_completion_func_t completion_callback) {
+
+static void network_request_lambda_function(void *userdata, // Network transport
+                                            const realm_http_request_t request, // Request
+                                            void *completion_data,// Call backs
+                                            realm_http_completion_func_t completion_callback) {
     auto jenv = get_env(true);
 
     // Initialize pointer to JVM class and methods
@@ -226,7 +227,6 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
                                                to_jstring(jenv, request.url),
                                                request_headers,
                                                to_jstring(jenv, request.body),
-//                                               static_cast<jlong>(request.timeout_ms),
                                                jboolean(request.uses_refresh_token)
     );
 
@@ -234,7 +234,7 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
     static jclass response_class = jenv->FindClass("io/realm/interop/Response");
     static jmethodID get_http_code_method = jenv->GetMethodID(response_class, "getHttpResponseCode", "()I");
     static jmethodID get_custom_code_method = jenv->GetMethodID(response_class, "getCustomResponseCode", "()I");
-    static jmethodID get_headers_method = jenv->GetMethodID(response_class, "getHeaders", "()Ljava/util/Map;");
+    static jmethodID get_headers_method = jenv->GetMethodID(response_class, "getJNIFriendlyHeaders", "()[Ljava/lang/String;");
     static jmethodID get_body_method = jenv->GetMethodID(response_class, "getBody", "()Ljava/lang/String;");
 
     // Extract JVM response fields
@@ -245,11 +245,21 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
 
     JObjectArrayAccessor <JStringAccessor, jstring> java_headers(jenv, static_cast<jobjectArray>(jenv->CallObjectMethod(
             jresponse, get_headers_method)));
-    auto response_headers = std::vector<realm_http_header_t>();
+    auto headerKeyValueStrings = std::vector<std::string>();
     for (int i = 0; i < java_headers.size(); i = i + 2) {
         JStringAccessor key = java_headers[i];
         JStringAccessor value = java_headers[i + 1];
-        response_headers.push_back({std::string(key).c_str(), std::string(value).c_str()});
+        headerKeyValueStrings.push_back(std::move(key));
+        headerKeyValueStrings.push_back(std::move(value));
+    }
+
+    auto response_headers = std::vector<realm_http_header_t>();
+    for (int i = 0; i < headerKeyValueStrings.size(); i = i + 2) {
+        realm_http_header header = {
+                .name = headerKeyValueStrings[i].c_str(),
+                .value = headerKeyValueStrings[i + 1].c_str()
+        };
+        response_headers.push_back(header);
     }
 
     // transform JVM response -> realm_http_response_t
@@ -272,8 +282,7 @@ realm_http_request_func_t network_request_lambda_function = [](void *userdata, /
  * 1. Cast userdata to the network transport factory
  * 2. Create a global reference for the network transport
  */
-realm_http_transport_factory_func_t new_network_transport_lambda_function = [](void *userdata) // transport generator
-{
+static realm_http_transport_t* new_network_transport_lambda_function(void *userdata) {
     auto jenv = get_env(true);
     jobject app_ref = static_cast<jobject>(userdata);
 
@@ -286,15 +295,15 @@ realm_http_transport_factory_func_t new_network_transport_lambda_function = [](v
                                     [](void *userdata) {
                                         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                     },
-                                    network_request_lambda_function);
-};
+                                    &network_request_lambda_function);
+}
 
 realm_app_config_t *
 new_app_config(const char *app_id, jobject network_factory) {
     auto jenv = get_env();
 
     return realm_app_config_new(app_id,
-                                new_network_transport_lambda_function,
+                                &new_network_transport_lambda_function,
                                 static_cast<jobject>(jenv->NewGlobalRef(network_factory)), // keep app reference
                                 [](void *userdata) {
                                     get_env(true)->DeleteGlobalRef(

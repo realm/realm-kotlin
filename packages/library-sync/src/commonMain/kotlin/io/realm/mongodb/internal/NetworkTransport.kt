@@ -33,6 +33,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
 import io.realm.interop.NetworkTransport
 import io.realm.interop.Response
+
 //@SharedImmutable
 //internal expect val SyncDispatcher: CoroutineDispatcher
 
@@ -192,4 +193,3 @@ class KtorNetworkTransport(
         ): Response = Response(responseStatusCode, 0, responseHeaders, responseBody)
     }
 }
-
