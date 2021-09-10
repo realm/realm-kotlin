@@ -35,7 +35,7 @@ interface App {
          */
         fun create(
             configuration: AppConfiguration,
-        ): App = AppImpl(configuration)
+        ): App = AppImpl(configuration as AppConfigurationImpl)
 
         /**
          * TODO

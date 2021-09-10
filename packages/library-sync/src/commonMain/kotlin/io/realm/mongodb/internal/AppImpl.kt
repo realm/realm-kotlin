@@ -17,18 +17,23 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.interop.Callback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
+import io.realm.interop.OperationCallback
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 internal class AppImpl(
-    override val configuration: AppConfiguration,
+    configuration: AppConfigurationImpl,
 ) : App {
+
+    override val configuration: AppConfigurationImpl = configuration
 
     val nativePointer: NativePointer =
         RealmInterop.realm_app_new(
@@ -38,13 +43,17 @@ internal class AppImpl(
 
     override suspend fun login(credentials: Credentials): Result<User> {
         return RealmInterop.runCatching {
-            suspendCancellableCoroutine<User> {
+            suspendCoroutine { continuation ->
                 realm_app_log_in_with_credentials(
                     nativePointer,
                     credentials.nativePointer,
-                    object : Callback {
-                        override fun onChange(change: NativePointer) {
-                            it.resumeWith(Result.success(UserImpl(change)))
+                    object : OperationCallback {
+                        override fun onSuccess(pointer: NativePointer) {
+                            continuation.resume(UserImpl(pointer))
+                        }
+
+                        override fun onError(throwable: Throwable) {
+                            continuation.resumeWithException(throwable)
                         }
                     }
                 )

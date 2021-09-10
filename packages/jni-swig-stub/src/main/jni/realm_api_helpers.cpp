@@ -132,24 +132,42 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
 
 void register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/LoginCallback");
-    static jmethodID on_logged_in_method = jenv->GetMethodID(notification_class, "onLoggedIn", "(J)V");
+    static jclass notification_class = jenv->FindClass("io/realm/interop/OperationCallback");
+    static jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess", "(Lio/realm/interop/NativePointer;)V");
+    static jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError", "(Ljava/lang/Throwable;)V");
 
     realm_app_log_in_with_credentials(
             app,
             credentials,
             [](void* userdata, realm_user_t* user, realm_error_t* error) {
-                // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
-                //  like the C-API error callback below
-                //  https://github.com/realm/realm-kotlin/issues/303
                 auto jenv = get_env(true);
+
                 if (jenv->ExceptionCheck()) {
-                    jenv->ExceptionDescribe();
-                    throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                                         on_error_method,
+                                         jenv->ExceptionOccurred());
+                } else if (error) {
+                    static jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
+                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(Ljava/lang/String;)V");
+
+                    std::string message("[" + std::to_string(error->error) + "]: " +
+                                        (error->message ? std::string(error->message) : ""));
+
+                    jobject throwable = jenv->NewObject(exception_class, exception_constructor, jenv->NewStringUTF(message.c_str()));
+
+                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                                         on_error_method,
+                                         throwable);
+                } else {
+                    static jclass exception_class = jenv->FindClass("io/realm/interop/LongPointerWrapper");
+                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
+
+                    jobject pointer = jenv->NewObject(exception_class, exception_constructor, reinterpret_cast<jlong>(user), false);
+
+                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                                         on_success_method,
+                                         pointer);
                 }
-                jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                     on_logged_in_method,
-                                     reinterpret_cast<jlong>(user));
             },
             // Use the callback as user data
             static_cast<jobject>(get_env()->NewGlobalRef(callback)),
@@ -176,11 +194,11 @@ static void network_request_lambda_function(void *userdata, // Network transport
 
     // Initialize pointer to JVM class and methods
     jobject network_transport = static_cast<jobject>(userdata);
-    static jclass network_transport_class = jenv->FindClass("io/realm/mongodb/internal/NetworkTransport");
+    static jclass network_transport_class = jenv->FindClass("io/realm/interop/NetworkTransport");
     static jmethodID m_send_request_method = jenv->GetMethodID(
             network_transport_class,
             "sendRequest",
-            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/mongodb/internal/Response;"
+            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/interop/Response;"
     );
 
     // Prepare request fields to be consumable by JVM
@@ -231,7 +249,7 @@ static void network_request_lambda_function(void *userdata, // Network transport
     );
 
     // Prepare references to JVM response field accessors
-    static jclass response_class = jenv->FindClass("io/realm/mongodb/internal/Response");
+    static jclass response_class = jenv->FindClass("io/realm/interop/Response");
     static jmethodID get_http_code_method = jenv->GetMethodID(response_class, "getHttpResponseCode", "()I");
     static jmethodID get_custom_code_method = jenv->GetMethodID(response_class, "getCustomResponseCode", "()I");
     static jmethodID get_headers_method = jenv->GetMethodID(response_class, "getJNIFriendlyHeaders", "()[Ljava/lang/String;");
@@ -273,6 +291,7 @@ static void network_request_lambda_function(void *userdata, // Network transport
     };
 
     // Notify response ready
+    // Copying?
     completion_callback(completion_data, response);
 };
 

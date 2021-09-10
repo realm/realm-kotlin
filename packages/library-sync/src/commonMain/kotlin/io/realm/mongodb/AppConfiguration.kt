@@ -19,6 +19,7 @@ package io.realm.mongodb
 import io.realm.interop.NativePointer
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
+import io.realm.internal.platform.singleThreadDispatcher
 
 /**
  * TODO

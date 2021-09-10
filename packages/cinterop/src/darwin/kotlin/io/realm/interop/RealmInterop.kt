@@ -40,6 +40,7 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
@@ -62,6 +63,11 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
+import realm_wrapper.realm_http_completion_func_t
+import realm_wrapper.realm_http_header_t
+import realm_wrapper.realm_http_method
+import realm_wrapper.realm_http_request_t
+import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
@@ -79,14 +85,16 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val runtimeException = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
+            val exception = toKException(error)
             realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             //  https://github.com/realm/realm-kotlin/issues/70
-            throw runtimeException
+            throw exception
         }
     }
 }
+
+private fun toKException(error: realm_error_t): Throwable = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
 
 private fun checkedBooleanResult(boolean: Boolean): Boolean {
     if (!boolean) throwOnError(); return boolean
@@ -856,7 +864,7 @@ actual object RealmInterop {
                         ?: error("Notification callback data should never be null")
                 },
                 // Change callback
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                staticCFunction { userdata, change ->
                     try {
                         userdata?.asStableRef<Callback>()?.get()?.onChange(
                             CPointerWrapper(
@@ -885,11 +893,88 @@ actual object RealmInterop {
 
     // TODO sync config shouldn't be null
     actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
-        TODO()
+        println("Hello world")
+        val syncClientConfig = realm_wrapper.realm_sync_client_config_new()
+        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
+
+        // TODO add metadata mode to config
+        realm_wrapper.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED)
+        return CPointerWrapper(realm_wrapper.realm_app_new(appConfig.cptr(), syncClientConfig))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback) {
-        TODO()
+    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: OperationCallback) {
+        realm_wrapper.realm_app_log_in_with_credentials(
+            app.cptr(),
+            credentials.cptr(),
+            staticCFunction { userdata, user, error ->
+                userdata?.asStableRef<OperationCallback>()?.get()?.let { callback ->
+                    error?.let {
+                        callback.onError(toKException(error.pointed))
+                    }
+                    callback.onSuccess(CPointerWrapper(user))
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                userdata?.asStableRef<Callback>()?.dispose()
+                    ?: error("Login callback data should never be null")
+            }
+        )
+    }
+
+    private val newRequestLambda = staticCFunction<COpaquePointer?,
+            CValue<realm_http_request_t>,
+            COpaquePointer?,
+            realm_http_completion_func_t?,
+            Unit>
+    { userdata, request, completionData, callback ->
+        userdata?.asStableRef<NetworkTransport>()?.get()?.let { networkTransport ->
+            request.useContents {
+                val headerMap = mutableMapOf<String, String>()
+                for (i in 0 until num_headers.toInt()) {
+                    headers?.get(i)?.apply {
+                        headerMap[name!!.toKString()] = value!!.toKString()
+                    }
+                }
+
+                val response = networkTransport.sendRequest(
+                    method = when (method) {
+                        realm_http_method.RLM_HTTP_METHOD_GET -> NetworkTransport.GET
+                        realm_http_method.RLM_HTTP_METHOD_POST -> NetworkTransport.POST
+                        realm_http_method.RLM_HTTP_METHOD_PATCH -> NetworkTransport.PATCH
+                        realm_http_method.RLM_HTTP_METHOD_PUT -> NetworkTransport.PUT
+                        realm_http_method.RLM_HTTP_METHOD_DELETE -> NetworkTransport.DELETE
+                    },
+                    url = url!!.toKString(),
+                    headers = headerMap,
+                    body = body!!.toKString(),
+                    usesRefreshToken = uses_refresh_token
+                )
+
+                memScoped {
+                    val headersSize = response.headers.entries.size
+                    val cResponseHeaders = allocArray<realm_http_header_t>(headersSize)
+
+                    response.headers.entries.forEachIndexed { i, entry ->
+                        cResponseHeaders[i].apply {
+                            name = entry.key.cstr.getPointer(memScope)
+                            value = entry.value.cstr.getPointer(memScope)
+                        }
+                    }
+
+                    val cResponse = cValue<realm_http_response_t> {
+                        body = response.body.cstr.getPointer(memScope)
+                        body_size = response.body.cstr.getBytes().size.toULong()
+                        custom_status_code = response.customResponseCode
+                        status_code = response.httpResponseCode
+                        num_headers = response.headers.entries.size.toULong()
+                        headers = cResponseHeaders
+                    }
+                    // Copying?
+                    callback?.invoke(completionData, cResponse)
+                }
+            }
+        }
     }
 
     actual fun realm_app_config_new(
@@ -897,15 +982,43 @@ actual object RealmInterop {
         networkTransportFactory: () -> Any,
         baseUrl: String?
     ): NativePointer {
-        TODO()
+        val appConfig =
+            realm_wrapper.realm_app_config_new(
+                appId,
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<() -> NetworkTransport>()?.get()?.invoke()?.let { networkTransport ->
+                        realm_wrapper.realm_http_transport_new(
+                            StableRef.create(networkTransport).asCPointer(),
+                            staticCFunction { userdata ->
+                                userdata?.asStableRef<NetworkTransport>()?.dispose()
+                                    ?: error("Network transport should never be null")
+                            },
+                            newRequestLambda
+                        )
+                    }
+                },
+                StableRef.create(networkTransportFactory).asCPointer(),
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<() -> NetworkTransport>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+            )
+
+        realm_wrapper.realm_app_config_set_platform(appConfig, "kotlin")
+        realm_wrapper.realm_app_config_set_platform_version(appConfig, "PLATFORM_VERSION")
+        realm_wrapper.realm_app_config_set_sdk_version(appConfig, "SDK_VERSION")
+        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
+        baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
+
+        return CPointerWrapper(appConfig)
     }
 
     actual fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String) {
-        TODO()
+        realm_wrapper.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
     actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
-        TODO()
+        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_username_password(username, password))
     }
 
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {

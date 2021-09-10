@@ -24,6 +24,8 @@ import io.ktor.client.features.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.realm.interop.NetworkTransport
+import io.realm.interop.Response
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import kotlinx.coroutines.CancellationException
