@@ -1008,6 +1008,7 @@ actual object RealmInterop {
         realm_wrapper.realm_app_config_set_platform(appConfig, "kotlin")
         realm_wrapper.realm_app_config_set_platform_version(appConfig, "PLATFORM_VERSION")
         realm_wrapper.realm_app_config_set_sdk_version(appConfig, "SDK_VERSION")
+        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
         return CPointerWrapper(appConfig)

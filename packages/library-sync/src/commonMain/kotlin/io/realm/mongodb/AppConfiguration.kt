@@ -21,6 +21,7 @@ import io.realm.interop.RealmInterop
 import io.realm.interop.NetworkTransport
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
+import io.realm.internal.platform.singleThreadDispatcher
 
 private const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
 

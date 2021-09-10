@@ -17,14 +17,12 @@
 package io.realm.mongodb
 
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.internal.platform.runBlocking
 import io.realm.interop.Callback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * TODO
@@ -78,28 +76,18 @@ private class AppImpl(
         )
 
     override suspend fun login(credentials: Credentials): Result<User> {
-        // TODO is this the right way?
-        return withContext(appConfiguration.dispatcher) {
-            val channel = Channel<Result<User>>(1)
-
-            async {
-                RealmInterop.realm_app_log_in_with_credentials(
+        return RealmInterop.runCatching {
+            suspendCoroutine { continuation ->
+                realm_app_log_in_with_credentials(
                     nativePointer,
                     credentials.nativePointer,
                     object : Callback {
                         override fun onChange(change: NativePointer) {
-                            runBlocking {
-                                channel.send(Result.success(UserImpl(change)))
-                            }
+                            continuation.resume(UserImpl(change))
                         }
                     }
                 )
             }
-
-            channel.receive()
-                .also {
-                    channel.close()
-                }
         }
     }
 }

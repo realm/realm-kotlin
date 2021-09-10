@@ -3,6 +3,8 @@ package io.realm.mongodb
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 
@@ -12,11 +14,13 @@ const val BASE_URL = "http://127.0.0.1:9090"
 
 class AppImplTests {
 
+    @ExperimentalCoroutinesApi
     @Test
     fun kajshd() {
+        // Send request directly to the local server to get the actual app ID
         val applicationId = KtorNetworkTransport(
             timeoutMs = 5000,
-            dispatcher = singleThreadDispatcher("transport dispatcher")
+            dispatcher = Dispatchers.Default
         ).sendRequest(
             "get",
             "http://127.0.0.1:8888/$TEST_APP_1",
@@ -29,10 +33,18 @@ class AppImplTests {
                 else -> throw IllegalStateException(response.toString())
             }
         }
-        println("Start app")
+
         val app = App.create(appConfigurationOf(applicationId, BASE_URL, Dispatchers.Default))
         runBlocking {
-            app.login(EmailPassword("asdsa", "aksjdha"))
+            val b = "hello"
+            try {
+                // Create user first
+                val user: User = app.login(EmailPassword("asdf@asdf.com", "asdfasdf"))
+                    .getOrThrow()
+                val kajhsdkjh = 0
+            } catch (e: Exception) {
+                val kjhasd = 0
+            }
         }
         val kjahsdk = 0
     }
