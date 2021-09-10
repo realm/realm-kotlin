@@ -39,6 +39,7 @@ class AppImplTests {
                     .getOrThrow()
                 val kajhsdkjh = 0
             } catch (e: Exception) {
+                e.printStackTrace()
                 val kjhasd = 0
             }
         }

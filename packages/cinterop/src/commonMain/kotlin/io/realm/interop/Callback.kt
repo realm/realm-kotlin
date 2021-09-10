@@ -19,3 +19,9 @@ package io.realm.interop
 interface Callback {
     fun onChange(change: NativePointer)
 }
+
+interface OperationCallback {
+    fun onSuccess(pointer: NativePointer)
+
+    fun onError(throwable: Throwable)
+}

@@ -17,11 +17,12 @@
 package io.realm.mongodb
 
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.interop.Callback
+import io.realm.interop.OperationCallback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 /**
@@ -81,9 +82,13 @@ private class AppImpl(
                 realm_app_log_in_with_credentials(
                     nativePointer,
                     credentials.nativePointer,
-                    object : Callback {
-                        override fun onChange(change: NativePointer) {
-                            continuation.resume(UserImpl(change))
+                    object : OperationCallback {
+                        override fun onSuccess(pointer: NativePointer) {
+                            continuation.resume(UserImpl(pointer))
+                        }
+
+                        override fun onError(throwable: Throwable) {
+                            continuation.resumeWithException(throwable)
                         }
                     }
                 )

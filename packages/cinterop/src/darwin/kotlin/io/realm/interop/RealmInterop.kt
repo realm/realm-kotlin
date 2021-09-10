@@ -40,16 +40,13 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
-import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
@@ -91,14 +88,16 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val runtimeException = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
+            val exception = toKException(error)
             realm_clear_last_error()
             // FIXME Extract all error information and throw exceptions based on type
             //  https://github.com/realm/realm-kotlin/issues/70
-            throw runtimeException
+            throw exception
         }
     }
 }
+
+private fun toKException(error: realm_error_t): Throwable = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
 
 private fun checkedBooleanResult(boolean: Boolean): Boolean {
     if (!boolean) throwOnError(); return boolean
@@ -906,14 +905,17 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_new(appConfig.cptr(), syncClientConfig))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: Callback) {
+    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: OperationCallback) {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
             staticCFunction { userdata, user, error ->
-                // TODO: do something with error
-                error?.pointed
-                userdata?.asStableRef<Callback>()?.get()?.onChange(CPointerWrapper(user))
+                userdata?.asStableRef<OperationCallback>()?.get()?.let { callback ->
+                    error?.let {
+                        callback.onError(toKException(error.pointed))
+                    }
+                    callback.onSuccess(CPointerWrapper(user))
+                }
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->

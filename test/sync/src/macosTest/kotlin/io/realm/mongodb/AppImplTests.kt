@@ -36,16 +36,13 @@ class AppImplTests {
 
         val app = App.create(appConfigurationOf(applicationId, BASE_URL, Dispatchers.Default))
         runBlocking {
-            val b = "hello"
             try {
                 // Create user first
                 val user: User = app.login(EmailPassword("asdf@asdf.com", "asdfasdf"))
                     .getOrThrow()
-                val kajhsdkjh = 0
             } catch (e: Exception) {
-                val kjhasd = 0
+                e.printStackTrace()
             }
         }
-        val kjahsdk = 0
     }
 }
