@@ -29,8 +29,6 @@ value class ClassKey(val key: Long)
 @JvmInline
 value class ColumnKey(val key: Long)
 
-//expect fun appFilesDirectory(): String
-
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
