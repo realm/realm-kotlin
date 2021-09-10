@@ -24,6 +24,7 @@ import io.realm.interop.RealmInterop
  */
 sealed class Credentials(val id: String) {
 
+    // FIXME Internalize. Hmm, implementation of sealed classes must be in same package
     val nativePointer: NativePointer by lazy {
         when (this) {
             is EmailPassword ->

@@ -33,7 +33,7 @@ internal class AppConfigurationImpl(
         dispatcher = networkTransportDispatcher
     )
 
-    override val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
+    val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
         networkTransportFactory = { networkTransport }

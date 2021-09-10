@@ -27,7 +27,6 @@ interface AppConfiguration {
     val appId: String
     val baseUrl: String
     val networkTransportDispatcher: CoroutineDispatcher
-    val nativePointer: NativePointer
 
     companion object {
         const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
