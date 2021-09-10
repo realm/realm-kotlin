@@ -41,7 +41,7 @@ import io.realm.interop.Response
  * TODO
  */
 class KtorNetworkTransport(
-    override val authorizationHeaderName: String? = null,
+    override val authorizationHeaderName: String = "Authorization",
     override val customHeaders: Map<String, String> = mapOf(),
     private val timeoutMs: Long,
     private val dispatcher: CoroutineDispatcher,
@@ -66,20 +66,33 @@ class KtorNetworkTransport(
                         }
 
                         // 2. Then replace default authorization header with custom one if present
-                        headers.toMutableMap().also { receivedHeaders ->
-                            val authorizationHeaderValue =
-                                headers[DEFAULT_AUTHORIZATION_HEADER_NAME]
-                            if (authorizationHeaderValue != null && DEFAULT_AUTHORIZATION_HEADER_NAME != authorizationHeaderName) {
-                                receivedHeaders.remove(DEFAULT_AUTHORIZATION_HEADER_NAME)
-                                receivedHeaders[authorizationHeaderName!!] =
-                                    authorizationHeaderValue
-                            }
+                        headers
+//                            .filter {
+//                                // Ignore Content-Type header as it's handled by the engine
+//                                it.key != HttpHeaders.ContentType
+//                            }
+                            .toMutableMap().also { receivedHeaders ->
+                                val authorizationHeaderValue =
+                                    headers[DEFAULT_AUTHORIZATION_HEADER_NAME]
 
-                            // 3. Finally add all headers defined by Object Store
-                            receivedHeaders.forEach {
-                                append(it.key, it.value)
+                                if (authorizationHeaderValue != null &&
+                                    authorizationHeaderName != DEFAULT_AUTHORIZATION_HEADER_NAME
+                                ) {
+                                    receivedHeaders.remove(DEFAULT_AUTHORIZATION_HEADER_NAME)
+                                    receivedHeaders[authorizationHeaderName] =
+                                        authorizationHeaderValue
+                                }
+
+                                // 3. Finally add all headers defined by Object Store
+                                receivedHeaders.forEach {
+                                    if (method != "get"
+                                        || !url.contains("profile")
+                                        || it.key != HttpHeaders.ContentType
+                                    ) {
+                                        append(it.key, it.value)
+                                    }
+                                }
                             }
-                        }
                     }
 
                     addBody(method, body)
@@ -157,7 +170,7 @@ class KtorNetworkTransport(
                 socketTimeoutMillis = frozenTimeout
             }
 
-            // TODO figure out logging and obduscating sensitive info
+            // TODO figure out logging and obfuscating sensitive info
             install(Logging) {
                 logger = Logger.DEFAULT
                 level = LogLevel.BODY

@@ -22,7 +22,9 @@ import io.realm.interop.Callback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withContext
 
 /**
  * TODO
@@ -77,21 +79,27 @@ private class AppImpl(
 
     override suspend fun login(credentials: Credentials): Result<User> {
         // TODO is this the right way?
-        val channel = Channel<Result<User>>()
+        return withContext(appConfiguration.dispatcher) {
+            val channel = Channel<Result<User>>(1)
 
-        RealmInterop.realm_app_log_in_with_credentials(
-            nativePointer,
-            credentials.nativePointer,
-            object : Callback {
-                override fun onChange(change: NativePointer) {
-                    runBlocking {
-                        channel.send(Result.success(UserImpl(change)))
+            async {
+                RealmInterop.realm_app_log_in_with_credentials(
+                    nativePointer,
+                    credentials.nativePointer,
+                    object : Callback {
+                        override fun onChange(change: NativePointer) {
+                            runBlocking {
+                                channel.send(Result.success(UserImpl(change)))
+                            }
+                        }
                     }
-                }
+                )
             }
-        )
 
-        return channel.receive()
-            .also { channel.close() }
+            channel.receive()
+                .also {
+                    channel.close()
+                }
+        }
     }
 }
