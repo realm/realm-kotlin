@@ -1,1 +1,0 @@
-/Users/eduardo.lopez/git/realm-kotlin/test/sync/src/androidTest/kotlin/io/realm/mongodb/internal/KtorNetworkTransportTest.kt

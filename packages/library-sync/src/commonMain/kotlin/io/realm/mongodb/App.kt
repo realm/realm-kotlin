@@ -16,36 +16,26 @@
 
 package io.realm.mongodb
 
-import io.realm.internal.platform.appFilesDirectory
-import io.realm.internal.platform.runBlocking
-import io.realm.interop.Callback
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.mongodb.internal.AppConfigurationImpl
+import io.realm.mongodb.internal.AppImpl
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
 
 /**
  * TODO
  */
 interface App {
 
-    val appConfiguration: AppConfiguration
-    val syncConfiguration: SyncConfiguration?
-    val nativePointer: NativePointer
+    val configuration: AppConfiguration
 
     suspend fun login(credentials: Credentials): Result<User>
 
     companion object {
-
         /**
          * TODO
          */
         fun create(
             configuration: AppConfiguration,
-            syncConfiguration: SyncConfiguration? = null
-        ): App = AppImpl(configuration, syncConfiguration)
+        ): App = AppImpl(configuration)
 
         /**
          * TODO
@@ -54,52 +44,11 @@ interface App {
             appId: String,
             dispatcher: CoroutineDispatcher
         ): App = AppImpl(
-            appConfiguration = AppConfigurationImpl(
+            configuration = AppConfigurationImpl(
                 appId = appId,
-                dispatcher = dispatcher
+                networkTransportDispatcher = dispatcher
             ),
-            syncConfiguration = null // TODO
         )
     }
 }
 
-/**
- * TODO
- */
-private class AppImpl(
-    override val appConfiguration: AppConfiguration,
-    override val syncConfiguration: SyncConfiguration? = null // TODO
-) : App {
-
-    override val nativePointer: NativePointer =
-        RealmInterop.realm_app_new(
-            appConfig = appConfiguration.nativePointer,
-            basePath = appFilesDirectory()
-        )
-
-    override suspend fun login(credentials: Credentials): Result<User> {
-        // TODO is this the right way?
-        return withContext(appConfiguration.dispatcher) {
-            val channel = Channel<Result<User>>(1)
-
-            async {
-                RealmInterop.realm_app_log_in_with_credentials(
-                    nativePointer,
-                    credentials.nativePointer,
-                    object : Callback {
-                        override fun onChange(change: NativePointer) {
-                            runBlocking {
-                                channel.send(Result.success(UserImpl(change)))
-                            }
-                        }
-                    }
-                )
-            }
-
-            channel.receive()
-                .also {
-                    channel.close()
-                }
-        }
-    }
-}

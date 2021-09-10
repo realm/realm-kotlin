@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb.sync
+package io.realm.mongodb.internal
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import io.realm.interop.NativePointer
+import io.realm.mongodb.User
 
-internal class SampleTest {
+internal class UserImpl(
+    override val nativePointer: NativePointer
+) : User {
 
-    @Test
-    fun sample() {
-        assertEquals(4, 2 + 2)
-    }
 }

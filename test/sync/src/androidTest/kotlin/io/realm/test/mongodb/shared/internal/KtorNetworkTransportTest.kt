@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb.internal
+package io.realm.test.mongodb.shared.internal
 
-import io.realm.mongodb.sync.getDispatcher
+import io.realm.mongodb.internal.KtorNetworkTransport
+import io.realm.mongodb.internal.Response
+import io.realm.internal.platform.singleThreadDispatcher
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,7 +41,7 @@ internal class KtorNetworkTransportTest {
     fun setUp() {
         transport = KtorNetworkTransport(
             timeoutMs = 5000,
-            dispatcher = getDispatcher()
+            dispatcher = singleThreadDispatcher("ktor-test")
         )
     }
 
@@ -52,15 +54,11 @@ internal class KtorNetworkTransportTest {
         //  1 get (success), 2 post (success), 3 patch (success), 4 put (error)
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
-            val headers = mapOf(
-                Pair("Content-Type", "application/json;charset=utf-8"),
-                Pair("Accept", "application/json")
-            )
 
             val response = transport.sendRequest(
                 method.nativeKey,
                 url,
-                headers,
+                mapOf(),
                 body,
                 true
             )
@@ -77,15 +75,11 @@ internal class KtorNetworkTransportTest {
         val url = "$BASE_URL/okhttp?success=false"
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
-            val headers = mapOf(
-                Pair("Content-Type", "application/json;charset=utf-8"),
-                Pair("Accept", "application/json")
-            )
 
             val response = transport.sendRequest(
                 method.nativeKey,
                 url,
-                headers,
+                mapOf(),
                 body,
                 true
             )
@@ -103,15 +97,11 @@ internal class KtorNetworkTransportTest {
         val url = "$BASE_URL/okhttp?success=true"
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "Boom!"
-            val headers = mapOf(
-                Pair("Content-Type", "application/json;charset=utf-8"),
-                Pair("Accept", "application/json")
-            )
 
             val response: Response = transport.sendRequest(
                 method.nativeKey,
                 url,
-                headers,
+                mapOf(),
                 body,
                 true
             )

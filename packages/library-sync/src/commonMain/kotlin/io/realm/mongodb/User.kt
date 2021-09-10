@@ -22,8 +22,3 @@ interface User {
     val nativePointer: NativePointer
 }
 
-internal class UserImpl(
-    override val nativePointer: NativePointer
-) : User {
-
-}

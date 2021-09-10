@@ -75,9 +75,6 @@ import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
-//@Suppress("FunctionOnlyReturningConstant")
-//actual fun appFilesDirectory(): String = "."
-
 private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()

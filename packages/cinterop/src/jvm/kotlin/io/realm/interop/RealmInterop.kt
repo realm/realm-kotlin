@@ -27,9 +27,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
 
-//@Suppress("FunctionOnlyReturningConstant")
-//actual fun appFilesDirectory(): String = "."
-
 /**
  * JVM/Android interop implementation.
  *
