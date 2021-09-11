@@ -15,6 +15,10 @@
  */
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import java.nio.file.Paths
+import java.nio.file.Path
+import java.security.MessageDigest
+import java.nio.file.Files
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -61,7 +65,7 @@ val nativeLibraryIncludesMacosUniversalRelease = includeBinaries(
         "librealm.a",
         "parser/librealm-parser.a",
         "object-store/librealm-object-store.a"
-    ).map { "$absoluteCorePath/build-macos_universal/src/realm/" + it }
+    ).map { "$absoluteCorePath/build-macos_universal/src/realm/$it" }
 )
 val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
     listOf(
@@ -69,7 +73,7 @@ val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
         "librealm-dbg.a",
         "parser/librealm-parser-dbg.a",
         "object-store/librealm-object-store-dbg.a"
-    ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/" + it }
+    ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/$it" }
 )
 val releaseLibs = listOf(
     "librealm-ffi-static.a",
@@ -84,13 +88,13 @@ val debugLibs = listOf(
     "librealm-object-store-dbg.a"
 )
 val nativeLibraryIncludesIosArm64Debug =
-    includeBinaries(debugLibs.map { "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/" + it })
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/$it" })
 val nativeLibraryIncludesIosArm64Release =
-    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-capi_ios_Arm64/lib/" + it })
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-capi_ios_Arm64/lib/$it" })
 val nativeLibraryIncludesIosSimulatorUniversalDebug =
-    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator_universal-dbg/lib/" + it })
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator_universal-dbg/lib/$it" })
 val nativeLibraryIncludesIosSimulatorUniversalRelease =
-    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator_universal/lib/" + it })
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator_universal/lib/$it" })
 
 kotlin {
     jvm {
@@ -290,6 +294,84 @@ val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(releaseBuild = isReleaseBuild)
 }
 
+val buildJVMSharedLibs by tasks.registering {
+    buildSharedLibrariesForJVM()
+}
+
+fun Task.buildSharedLibrariesForJVM() {
+    group = "Build"
+    description = "Compile dynamic libraries loaded by the JVM fat jar for supported platforms."
+    val directory = "$buildDir/jvm_fat_jar_libs"
+    doLast {
+        exec {
+            commandLine("mkdir", "-p", directory)
+        }
+        exec {
+            workingDir(project.file(directory))
+            commandLine(
+                "cmake",
+                project.file("src/jvmMain/")
+            )
+        }
+        exec {
+            workingDir(project.file(directory))
+            commandLine("cmake", "--build", ".", "-j8")
+        }
+
+        // copy files (macos)
+        exec {
+            commandLine("mkdir", "-p", project.file("src/jvmMain/resources/jni/macos"))
+        }
+        File("$directory/core/src/realm/object-store/c_api/librealm-ffi.dylib")
+            .copyTo(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"), overwrite = true)
+        File("$directory/librealmc.dylib")
+            .copyTo(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"), overwrite = true)
+
+        // TODO add Windows and Linux
+
+        // build hash file
+        genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
+    }
+
+    outputs.file(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"))
+    outputs.file(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"))
+    outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
+}
+
+
+fun genHashFile(platform: String, prefix: String, suffix: String) {
+    val resourceDir = project.file("src/jvmMain/resources/jni").absolutePath
+    val libFFI: Path =  Paths.get(resourceDir, platform, "${prefix}realm-ffi${suffix}")
+    val libRealmc: Path =  Paths.get(resourceDir, platform, "${prefix}realmc${suffix}")
+
+    // the orders matters, this will be loaded in the reverse order (i.e 'realm-ffi' first then 'realmc')
+    val macosHashes = """
+            realm-ffi ${sha1(libFFI)}
+            realmc ${sha1(libRealmc)}
+
+            """.trimIndent()
+
+    Paths.get(resourceDir, "macos", "dynamic_libraries.properties").also {
+        Files.writeString(it, macosHashes)
+    }
+}
+
+fun sha1(file: Path): String {
+    val digest = MessageDigest.getInstance("SHA-1")
+    Files.newInputStream(file).use {
+        val buf = ByteArray(16384)  // 16k
+        while (true) {
+            val bytes = it.read(buf)
+            if (bytes > 0) {
+                digest.update(buf, 0, bytes)
+            } else {
+                break
+            }
+        }
+        return digest.digest().joinToString("", transform = { "%02x".format(it) })
+    }
+}
+
 fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
@@ -434,6 +516,10 @@ tasks.named("cinteropRealm_wrapperIosArm64") {
 
 tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(capiMacosUniversal)
+}
+
+tasks.named("jvmMainClasses") {
+    dependsOn(buildJVMSharedLibs)
 }
 
 realmPublish {

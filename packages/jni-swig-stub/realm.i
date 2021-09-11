@@ -4,6 +4,7 @@
 #include "realm.h"
 #include <cstring>
 #include <string>
+#include <thread>
 %}
 
 // FIXME MEMORY Verify finalizers, etc.
@@ -31,7 +32,12 @@ namespace jni_util {
         jint rc = cached_jvm->GetEnv((void **)&env, JNI_VERSION_1_2);
         if (rc == JNI_EDETACHED) {
             if (attach_if_needed) {
-                jint ret = cached_jvm->AttachCurrentThread(&env, nullptr);
+                #if defined(__ANDROID__)
+                    JNIEnv **jenv = &env;
+                #else
+                    void **jenv = (void **)&env;
+                #endif
+                jint ret = cached_jvm->AttachCurrentThread(jenv, nullptr);
                 if (ret != JNI_OK) throw std::runtime_error("Could not attach JVM on thread ");
             } else {
                 throw std::runtime_error("current thread not attached");
@@ -333,6 +339,92 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
         // C-API currently uses the realm's default scheduler no matter what passed here
         NULL
     );
+}
+
+inline void jni_check_exception(JNIEnv* jenv = realm::jni_util::get_env()) {
+    if (jenv->ExceptionCheck()) {
+        jenv->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java.");
+    }
+}
+
+class CustomJVMScheduler{
+    public:
+        CustomJVMScheduler(jobject dispatchScheduler) {
+            JNIEnv *jenv = realm::jni_util::get_env();
+            jclass jvm_scheduler_class = jenv->FindClass("io/realm/interop/JVMScheduler");
+            m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(JJ)V");
+            m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
+        }
+
+        ~CustomJVMScheduler() {
+            realm::jni_util::get_env()->DeleteGlobalRef(m_jvm_dispatch_scheduler);
+        }
+
+        realm_scheduler_t* build() {
+            return realm_scheduler_new(
+                    this /*void* userdata*/,
+            [](
+            void *userdata) { /*realm_free_userdata_func_t*/ //TODO this doesn't seem to be invoked (maybe on closing the Realm)
+                delete reinterpret_cast<CustomJVMScheduler * >(userdata);
+            },
+            [](void *userdata) { /*realm_scheduler_notify_func_t notify*/
+                reinterpret_cast<CustomJVMScheduler * >(userdata)->notify();
+            },
+            [](void *userdata) -> bool
+            { /*realm_scheduler_is_on_thread_func_t is_on_thread*/
+                return reinterpret_cast<CustomJVMScheduler * >(userdata)->is_on_thread();
+            },
+            [](const void *userdata1,
+            const void *userdata2) -> bool
+            {/*realm_scheduler_is_same_as_func_t*/
+                bool is_same_as = (userdata1 == userdata2);
+                return is_same_as;
+            },
+            [](void *userdata) -> bool
+            {/*realm_scheduler_can_deliver_notifications_func_t can_deliver_notifications*/
+                return true;
+            },
+            [](void *userdata,
+            void *callback_userdata,
+                    realm_free_userdata_func_t /* TODO finds out what's this freeing */,
+            realm_scheduler_notify_func_t
+            core_notif_function) {/*realm_scheduler_set_notify_callback_func_t set_notify_callback*/
+                auto scheduler = reinterpret_cast<CustomJVMScheduler * >(userdata);
+                scheduler->m_callback_userdata = callback_userdata;
+                scheduler->m_core_notif_function = core_notif_function;
+            });
+        }
+
+    private:
+        std::thread::id m_id = std::this_thread::get_id();
+        jmethodID m_notify_method;
+        jobject m_jvm_dispatch_scheduler;
+        void* m_callback_userdata;
+        realm_scheduler_notify_func_t m_core_notif_function;
+
+        void notify() {
+            auto jenv = realm::jni_util::get_env(true);
+            jni_check_exception(jenv);
+            jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
+                                 reinterpret_cast<jlong>(m_core_notif_function),
+                                 reinterpret_cast<jlong>(m_callback_userdata));
+        }
+
+        bool is_on_thread() {
+            return m_id == std::this_thread::get_id();
+        }
+};
+
+void register_realm_scheduler(jlong config_ptr, jobject dispatchScheduler) {
+    CustomJVMScheduler * jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
+    realm_scheduler_t *scheduler = jvmScheduler->build();
+    realm_config_set_scheduler(reinterpret_cast<realm_config_t * >(config_ptr), scheduler);
+}
+
+void invoke_core_notify_callback(jlong core_notif_function, jlong callback_userdata) {
+    realm_scheduler_notify_func_t notify =  reinterpret_cast<realm_scheduler_notify_func_t>(core_notif_function);
+    notify(reinterpret_cast<void*>(callback_userdata));
 }
 
 %}
