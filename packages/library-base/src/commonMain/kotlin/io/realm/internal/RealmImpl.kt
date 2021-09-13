@@ -7,10 +7,10 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope

@@ -27,7 +27,7 @@ import io.realm.isValid
  * [RealmObject].
  */
 @Suppress("VariableNaming")
-internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.interop.RealmObjectInterop {
+internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
