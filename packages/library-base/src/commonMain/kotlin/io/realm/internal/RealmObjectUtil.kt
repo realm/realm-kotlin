@@ -65,18 +65,7 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
  */
 internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
     @Suppress("UNCHECKED_CAST")
-    val type: KClass<T> = this::class as KClass<T>
-    val mediator = `$realm$Mediator`!!
-    val managedModel = mediator.createInstanceOf(type)
-    return managedModel.manage(
-        frozenRealm!!,
-        mediator,
-        type,
-        RealmInterop.realm_object_freeze(
-            `$realm$ObjectPointer`!!,
-            frozenRealm.dbPointer
-        )
-    )
+    return this.freeze(frozenRealm) as T
 }
 
 /**
@@ -86,28 +75,5 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  */
 internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealmImpl): T? {
     @Suppress("UNCHECKED_CAST")
-    val type: KClass<T> = this::class as KClass<T>
-    val mediator = `$realm$Mediator`!!
-    val managedModel = mediator.createInstanceOf(type)
-    val dbPointer = liveRealm.realmReference.dbPointer
-    @Suppress("TooGenericExceptionCaught")
-    try {
-        return RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)!!.let { thawedObject ->
-            managedModel.manage(
-                liveRealm.realmReference,
-                mediator,
-                type,
-                thawedObject
-            )
-        }
-    } catch (e: Exception) {
-        // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
-        //  catching that and returning null. Only treat unknown null pointers as non-existing objects
-        //  to avoid handling unintended situations here.
-        if (e.message?.startsWith("[2]: null") ?: false) {
-            return null
-        } else {
-            throw e
-        }
-    }
+    return this.thaw(liveRealm.realmReference)?.let { it as T }
 }

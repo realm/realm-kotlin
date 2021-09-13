@@ -91,7 +91,6 @@ internal class SuspendableNotifier(
     }
 
     internal fun <T> registerObserver(observable: Observable<T>): Flow<T> {
-        println("registerObserver")
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {

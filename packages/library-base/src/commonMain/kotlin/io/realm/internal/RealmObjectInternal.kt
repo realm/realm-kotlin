@@ -55,7 +55,7 @@ internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
         return managedModel.manage(
-            frozenRealm!!,
+            frozenRealm,
             mediator,
             type,
             RealmInterop.realm_object_freeze(
@@ -73,10 +73,9 @@ internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm
         val dbPointer = liveRealm.dbPointer
         @Suppress("TooGenericExceptionCaught")
         try {
-            val realmObjectThaw: NativePointer? =
-                RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)
-            val realmObjectThaw1: NativePointer = realmObjectThaw!!
-            val let: RealmObjectInternal = realmObjectThaw1.let { thawedObject: NativePointer ->
+            val realmObjectThaw: NativePointer =
+                RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)!!
+            val let: RealmObjectInternal = realmObjectThaw.let { thawedObject: NativePointer ->
                 managedModel.manage(
                     liveRealm,
                     mediator,
