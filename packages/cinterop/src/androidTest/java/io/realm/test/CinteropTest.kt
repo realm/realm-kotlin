@@ -18,6 +18,18 @@ package io.realm.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.realm.internal.interop.realm_class_flags_e
+import io.realm.internal.interop.realm_class_info_t
+import io.realm.internal.interop.realm_collection_type_e
+import io.realm.internal.interop.realm_property_flags_e
+import io.realm.internal.interop.realm_property_info_t
+import io.realm.internal.interop.realm_property_type_e
+import io.realm.internal.interop.realm_schema_mode_e
+import io.realm.internal.interop.realm_schema_validation_mode_e
+import io.realm.internal.interop.realm_size_t
+import io.realm.internal.interop.realm_value_t
+import io.realm.internal.interop.realm_value_type_e
+import io.realm.internal.interop.realmc
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.file.Files
