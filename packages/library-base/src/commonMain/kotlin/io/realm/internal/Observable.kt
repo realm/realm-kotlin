@@ -15,8 +15,8 @@
 
 package io.realm.internal
 
-import io.realm.interop.Callback
-import io.realm.interop.NativePointer
+import io.realm.internal.interop.Callback
+import io.realm.internal.interop.NativePointer
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow

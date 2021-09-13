@@ -16,16 +16,11 @@
 
 package io.realm
 
-import io.realm.internal.Mediator
 import io.realm.internal.MutableRealmImpl
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.RealmReference
-import io.realm.internal.link
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
-import io.realm.interop.Link
-import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
-import kotlin.reflect.KClass
 
 /**
  * Marker interface to define a model (managed by Realm).
@@ -122,16 +117,4 @@ private fun RealmObject.checkNotificationsAvailable() {
     if (!isValid()) {
         throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
     }
-}
-
-/**
- * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
- */
-internal fun <T : RealmObject> Link.toRealmObject(
-    clazz: KClass<T>,
-    mediator: Mediator,
-    realm: RealmReference
-): T {
-    return mediator.createInstanceOf(clazz)
-        .link(realm, mediator, clazz, this)
 }

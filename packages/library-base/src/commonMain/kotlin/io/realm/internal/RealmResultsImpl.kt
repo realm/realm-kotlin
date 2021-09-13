@@ -18,9 +18,9 @@ package io.realm.internal
 
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.interop.Link
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.Link
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -120,7 +120,7 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
         return fromResults(realm, liveResultPtr, clazz, schema)
     }
 
-    override fun registerForNotification(callback: io.realm.interop.Callback): NativePointer {
+    override fun registerForNotification(callback: io.realm.internal.interop.Callback): NativePointer {
         return RealmInterop.realm_results_add_notification_callback(result, callback)
     }
 

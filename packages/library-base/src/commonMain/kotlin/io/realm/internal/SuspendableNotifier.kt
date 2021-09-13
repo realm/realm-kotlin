@@ -3,10 +3,10 @@ package io.realm.internal
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.VersionId
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
@@ -98,8 +98,8 @@ internal class SuspendableNotifier(
                 val liveRef: Observable<T> =
                     observable.thaw(realm.realmReference)
                         ?: error("Cannot listen for changes on a deleted reference")
-                val interopCallback: io.realm.interop.Callback =
-                    object : io.realm.interop.Callback {
+                val interopCallback: io.realm.internal.interop.Callback =
+                    object : io.realm.internal.interop.Callback {
                         override fun onChange(change: NativePointer) {
                             // FIXME How to make sure the Realm isn't closed when handling this?
 
@@ -116,7 +116,7 @@ internal class SuspendableNotifier(
                             liveRef.emitFrozenUpdate(frozenRealm, change, this@callbackFlow)
                                 ?.let { checkResult(it) }
                         }
-                    }.freeze<io.realm.interop.Callback>() // Freeze to allow cleaning up on another thread
+                    }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
                 val newToken =
                     NotificationToken<Callback<T>>(
                         // FIXME What is this callback for anyway?

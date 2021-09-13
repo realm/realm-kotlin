@@ -17,9 +17,9 @@
 package io.realm.internal
 
 import io.realm.RealmObject
-import io.realm.interop.Link
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.Link
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
@@ -76,4 +76,16 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
 internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealmImpl): T? {
     @Suppress("UNCHECKED_CAST")
     return this.thaw(liveRealm.realmReference)?.let { it as T }
+}
+
+/**
+ * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
+ */
+internal fun <T : RealmObject> Link.toRealmObject(
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realm: RealmReference
+): T {
+    return mediator.createInstanceOf(clazz)
+        .link(realm, mediator, clazz, this)
 }

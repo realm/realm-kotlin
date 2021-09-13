@@ -18,10 +18,10 @@ package io.realm.internal
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.interop.ColumnKey
-import io.realm.interop.Link
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.ColumnKey
+import io.realm.internal.interop.Link
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import kotlin.reflect.KClass
 
 object RealmObjectHelper {
