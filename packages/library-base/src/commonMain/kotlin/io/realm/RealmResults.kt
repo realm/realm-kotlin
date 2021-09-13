@@ -24,6 +24,8 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versioned {
      * @param query The query string to use for filtering and sort.
      * @param args The query parameters.
      * @return new result according to the query and query arguments.
+     *
+     * @throws IllegalArgumentException on invalid queries.
      */
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any?): RealmResults<T>

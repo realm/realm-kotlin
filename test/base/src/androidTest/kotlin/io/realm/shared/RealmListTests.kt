@@ -22,7 +22,6 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.interop.RealmCoreException
 import io.realm.objects
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
@@ -369,7 +368,7 @@ internal interface ListApiTester {
     fun errorCatcher(block: () -> Unit) {
         try {
             block()
-        } catch (e: RealmCoreException) {
+        } catch (e: AssertionError) {
             throw AssertionError("'${toString()}' failed - ${e.message}")
         }
     }

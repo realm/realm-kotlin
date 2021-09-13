@@ -19,8 +19,6 @@ package io.realm.internal
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.errors.RealmError
-import io.realm.errors.RealmPrimaryKeyConstraintException
 import io.realm.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.interop.RealmCoreCallbackException
 import io.realm.interop.RealmCoreColumnAlreadyExistsException
@@ -126,7 +124,7 @@ internal fun <T : RealmObject> create(
         val existingPrimaryKeyObject =
             RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
         existingPrimaryKeyObject?.let {
-            throw RealmPrimaryKeyConstraintException("Cannot create object with existing primary key")
+            throw IllegalArgumentException("Cannot create object with existing primary key")
         }
         val managedModel = mediator.createInstanceOf(type)
         return managedModel.manage(
@@ -244,17 +242,17 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreMultipleSyncAgentsException,
         is RealmCoreAddressSpaceExhaustedException,
         is RealmCoreMaximumFileSizeExceededException,
-        is RealmCoreOutOfDiskSpaceException -> RealmError(message, cause)
-        is RealmCoreMissingPrimaryKeyException,
-        is RealmCoreUnexpectedPrimaryKeyException,
-        is RealmCoreWrongPrimaryKeyTypeException,
-        is RealmCoreModifyPrimaryKeyException,
-        is RealmCoreDuplicatePrimaryKeyValueException -> RealmPrimaryKeyConstraintException(message, cause)
+        is RealmCoreOutOfDiskSpaceException -> Error(message, cause)
         is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException(message)
         is RealmCoreInvalidArgumentException,
         is RealmCoreInvalidQueryStringException,
         is RealmCoreOtherException,
-        is RealmCoreInvalidQueryException -> IllegalArgumentException(message, cause)
+        is RealmCoreInvalidQueryException,
+        is RealmCoreMissingPrimaryKeyException,
+        is RealmCoreUnexpectedPrimaryKeyException,
+        is RealmCoreWrongPrimaryKeyTypeException,
+        is RealmCoreModifyPrimaryKeyException,
+        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException(message, cause)
         is RealmCoreNotInATransactionException,
         is RealmCoreLogicException -> IllegalStateException(message, cause)
         is RealmCoreNoneException,
