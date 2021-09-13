@@ -183,7 +183,7 @@ void register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, j
  * 1. Cast userdata to the network transport
  * 2. Transform core request to JVM request
  * 3. Perform request
- * 4. Transform JVM request to core request
+ * 4. Transform JVM response to core respone
  */
 
 static void network_request_lambda_function(void *userdata, // Network transport

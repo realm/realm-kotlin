@@ -16,10 +16,11 @@
 
 package io.realm.test.mongodb.shared.internal
 
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.interop.Response
 import io.realm.mongodb.internal.KtorNetworkTransport
-import io.realm.internal.platform.singleThreadDispatcher
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -49,9 +50,6 @@ internal class KtorNetworkTransportTest {
     fun requestSuccessful() {
         val url = "$BASE_URL/okhttp?success=true"
 
-        // FIXME test fails on native due to method ordering, e.g.:
-        //  1 put (success), 2 put (error)
-        //  1 get (success), 2 post (success), 3 patch (success), 4 put (error)
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
@@ -62,11 +60,9 @@ internal class KtorNetworkTransportTest {
                 body,
                 true
             )
-            println("------------> METHOD: $method")
             assertEquals(200, response.httpResponseCode)
             assertEquals(0, response.customResponseCode)
             assertEquals("${method.name}-success", response.body)
-            println("------------> METHOD: $method SUCCESSFUL")
         }
     }
 

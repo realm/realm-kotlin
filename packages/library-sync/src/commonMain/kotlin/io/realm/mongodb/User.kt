@@ -16,9 +16,8 @@
 
 package io.realm.mongodb
 
-import io.realm.interop.NativePointer
-
-interface User {
-    val nativePointer: NativePointer
-}
+/**
+ * TODO
+ */
+interface User
 

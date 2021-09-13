@@ -16,23 +16,43 @@
 
 package io.realm.mongodb.internal
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.features.*
-import io.ktor.client.features.logging.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.realm.interop.NetworkTransport
-import io.realm.interop.Response
+import io.ktor.client.HttpClient
+import io.ktor.client.call.receive
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.features.HttpTimeout
+import io.ktor.client.features.ServerResponseException
+import io.ktor.client.features.logging.DEFAULT
+import io.ktor.client.features.logging.LogLevel
+import io.ktor.client.features.logging.Logger
+import io.ktor.client.features.logging.Logging
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.headers
+import io.ktor.client.request.patch
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
+import io.realm.interop.NetworkTransport
+import io.realm.interop.Response
+import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlin.collections.Map
+import kotlin.collections.MutableMap
+import kotlin.collections.forEach
+import kotlin.collections.mapOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.toMutableMap
 
 class KtorNetworkTransport(
-    override val authorizationHeaderName: String = "Authorization",
+    override val authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME,
     override val customHeaders: Map<String, String> = mapOf(),
     private val timeoutMs: Long,
     private val dispatcher: CoroutineDispatcher,
@@ -58,10 +78,6 @@ class KtorNetworkTransport(
 
                         // 2. Then replace default authorization header with custom one if present
                         headers
-//                            .filter {
-//                                // Ignore Content-Type header as it's handled by the engine
-//                                it.key != HttpHeaders.ContentType
-//                            }
                             .toMutableMap().also { receivedHeaders ->
                                 val authorizationHeaderValue =
                                     headers[DEFAULT_AUTHORIZATION_HEADER_NAME]
@@ -125,7 +141,7 @@ class KtorNetworkTransport(
         val responseBody = response.receive<String>()
         val responseStatusCode = response.status.value
         val responseHeaders = parseHeaders(response.headers)
-        return httpResponse(responseStatusCode, responseHeaders, responseBody)
+        return createHttpResponse(responseStatusCode, responseHeaders, responseBody)
     }
 
     private fun HttpRequestBuilder.addBody(method: String, body: String) {
@@ -151,9 +167,6 @@ class KtorNetworkTransport(
         val frozenTimeout = timeoutMs.freeze()
         return HttpClient(CIO) {
             // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
-//            install(JsonFeature) {
-//                serializer = KotlinxSerializer(Json)
-//            }
 
             install(HttpTimeout) {
                 connectTimeoutMillis = frozenTimeout
@@ -176,21 +189,18 @@ class KtorNetworkTransport(
     private fun parseHeaders(headers: Headers): Map<String, String> {
         val parsedHeaders: MutableMap<String, String> = mutableMapOf()
         for (key in headers.names()) {
-            parsedHeaders[key] = requireNotNull(headers[key]) { "Headeer '$key' cannot be null" }
+            parsedHeaders[key] = requireNotNull(headers[key]) { "Header '$key' cannot be null" }
         }
         return parsedHeaders
     }
 
     companion object {
-
-        const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
-
         // Custom error codes. These must not match any HTTP response error codes
         const val ERROR_IO = 1000
         const val ERROR_INTERRUPTED = 1001
         const val ERROR_UNKNOWN = 1002
 
-        private fun httpResponse(
+        private fun createHttpResponse(
             responseStatusCode: Int,
             responseHeaders: Map<String, String>,
             responseBody: String

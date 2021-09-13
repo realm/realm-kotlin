@@ -16,10 +16,8 @@
 
 package io.realm.mongodb
 
-import io.realm.interop.NativePointer
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
-import io.realm.internal.platform.singleThreadDispatcher
 
 /**
  * TODO
@@ -30,7 +28,15 @@ interface AppConfiguration {
     val networkTransportDispatcher: CoroutineDispatcher
 
     companion object {
+        /**
+         * TODO
+         */
         const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
+
+        /**
+         * TODO
+         */
+        const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
     }
 }
 

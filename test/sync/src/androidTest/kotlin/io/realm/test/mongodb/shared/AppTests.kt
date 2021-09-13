@@ -54,9 +54,7 @@ class AppTests {
         val app = App.create(configuration)
 
         runBlocking {
-            app.login(EmailPassword("asdf@asdf.com", "asdfasdf"))
-                .onSuccess { it: User -> }
-                .onFailure {  }
+            app.login(EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
         }
     }
 }

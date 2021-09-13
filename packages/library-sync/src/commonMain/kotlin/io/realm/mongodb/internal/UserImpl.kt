@@ -20,7 +20,7 @@ import io.realm.interop.NativePointer
 import io.realm.mongodb.User
 
 internal class UserImpl(
-    override val nativePointer: NativePointer
+    val nativePointer: NativePointer
 ) : User {
 
 }
