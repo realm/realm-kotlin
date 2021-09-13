@@ -17,6 +17,7 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.entities.Sample
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
@@ -24,7 +25,6 @@ import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
-import test.Sample
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertContentEquals

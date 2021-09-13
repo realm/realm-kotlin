@@ -22,13 +22,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import io.realm.entities.Sample
 import io.realm.internal.platform.RealmInitializer
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.createRandomString
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
-import test.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

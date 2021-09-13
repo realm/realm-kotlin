@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package test.link
+package io.realm.entities
 
 import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
+import kotlin.random.Random
+import kotlin.random.nextULong
 
-class Parent : RealmObject {
-    var name: String = "N.N."
-    var child: Child? = null
+class StringPropertyWithPrimaryKey : RealmObject {
+    @PrimaryKey
+    var id: String = Random.nextULong().toString()
+    var value: String? = null
 }

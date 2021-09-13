@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.primarykey
+package io.realm.entities.primarykey
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey

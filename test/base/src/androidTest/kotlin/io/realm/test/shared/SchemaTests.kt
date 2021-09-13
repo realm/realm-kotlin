@@ -17,10 +17,10 @@ package io.realm.test.shared
 
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.entities.Sample
+import io.realm.entities.link.Child
+import io.realm.entities.link.Parent
 import io.realm.internal.interop.Table
-import test.Sample
-import test.link.Child
-import test.link.Parent
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -19,9 +19,9 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.delete
+import io.realm.entities.Sample
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.createRandomString
-import test.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

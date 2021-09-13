@@ -18,6 +18,8 @@ package io.realm.test.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
+import io.realm.entities.link.Child
+import io.realm.entities.link.Parent
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.WeakReference
 import io.realm.isManaged
@@ -35,8 +37,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
-import test.link.Child
-import test.link.Parent
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

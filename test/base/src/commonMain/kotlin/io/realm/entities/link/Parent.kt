@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package test
+package io.realm.entities.link
 
 import io.realm.RealmObject
 
-class Nullability : RealmObject {
-    // TODO Need to test for all types, but requires more thought on how to structure tests to ensure
-    //  that we break all tests when introducing new types, etc.
-    //  https://github.com/realm/realm-kotlin/issues/133
-    var stringNullable: String? = null
-    var stringNonNullable: String = ""
+class Parent : RealmObject {
+    var name: String = "N.N."
+    var child: Child? = null
 }

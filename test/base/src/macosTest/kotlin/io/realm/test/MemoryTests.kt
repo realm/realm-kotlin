@@ -29,7 +29,7 @@ import platform.posix.NULL
 import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
-import test.Sample
+import io.realm.entities.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

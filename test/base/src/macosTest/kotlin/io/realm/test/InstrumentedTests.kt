@@ -29,7 +29,7 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toLong
-import test.Sample
+import io.realm.entities.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

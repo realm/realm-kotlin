@@ -18,9 +18,9 @@ package io.realm.test
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.entities.Sample
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import org.junit.Test
-import test.Sample
 
 class RealmConfigurationTests {
     @Test

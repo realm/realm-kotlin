@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package test
+package io.realm.entities
 
 import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
-import kotlin.random.Random
-import kotlin.random.nextULong
 
-class StringPropertyWithPrimaryKey : RealmObject {
-    @PrimaryKey
-    var id: String = Random.nextULong().toString()
-    var value: String? = null
+class Nullability : RealmObject {
+    // TODO Need to test for all types, but requires more thought on how to structure tests to ensure
+    //  that we break all tests when introducing new types, etc.
+    //  https://github.com/realm/realm-kotlin/issues/133
+    var stringNullable: String? = null
+    var stringNonNullable: String = ""
 }

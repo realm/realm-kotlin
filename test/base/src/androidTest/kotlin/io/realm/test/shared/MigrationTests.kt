@@ -18,10 +18,10 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.entities.Sample
+import io.realm.entities.link.Child
+import io.realm.entities.link.Parent
 import io.realm.test.platform.PlatformUtils
-import test.Sample
-import test.link.Child
-import test.link.Parent
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

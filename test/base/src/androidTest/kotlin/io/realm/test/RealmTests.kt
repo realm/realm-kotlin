@@ -17,11 +17,11 @@ package io.realm.test
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.entities.link.Child
+import io.realm.entities.link.Parent
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.createRandomString
 import kotlinx.coroutines.runBlocking
-import test.link.Child
-import test.link.Parent
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

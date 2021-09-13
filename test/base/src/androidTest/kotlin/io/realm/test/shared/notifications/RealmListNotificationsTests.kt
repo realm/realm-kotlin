@@ -19,6 +19,7 @@ package io.realm.test.shared.notifications
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmList
+import io.realm.entities.list.RealmListContainer
 import io.realm.internal.platform.freeze
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
@@ -28,7 +29,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
-import test.list.RealmListContainer
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

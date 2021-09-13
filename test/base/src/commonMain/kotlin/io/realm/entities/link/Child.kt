@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.link
+package io.realm.entities.link
 
 import io.realm.RealmObject
 

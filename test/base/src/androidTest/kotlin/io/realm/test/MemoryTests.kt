@@ -22,13 +22,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.entities.Sample
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.PlatformUtils.triggerGC
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import test.Sample
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.io.path.ExperimentalPathApi

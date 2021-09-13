@@ -18,14 +18,14 @@ package io.realm.test.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.VersionId
+import io.realm.entities.link.Child
+import io.realm.entities.link.Parent
 import io.realm.isFrozen
 import io.realm.isValid
 import io.realm.test.RealmStateTest
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.createRandomString
 import io.realm.version
-import test.link.Child
-import test.link.Parent
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

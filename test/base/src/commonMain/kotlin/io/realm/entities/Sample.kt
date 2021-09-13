@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package test
+package io.realm.entities
 
 import io.realm.RealmList
 import io.realm.RealmObject
