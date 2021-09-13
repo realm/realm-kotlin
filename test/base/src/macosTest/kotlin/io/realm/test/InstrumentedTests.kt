@@ -20,6 +20,7 @@ package io.realm.test
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
 import io.realm.RealmConfiguration
+import io.realm.entities.Sample
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.interop.NativePointer
 import kotlinx.cinterop.COpaquePointerVar
@@ -29,7 +30,6 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toLong
-import io.realm.entities.Sample
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

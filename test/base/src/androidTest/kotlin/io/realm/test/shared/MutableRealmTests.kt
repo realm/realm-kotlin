@@ -17,12 +17,12 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.objects
-import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.Utils.createRandomString
 import io.realm.entities.StringPropertyWithPrimaryKey
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
+import io.realm.objects
+import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.Utils.createRandomString
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

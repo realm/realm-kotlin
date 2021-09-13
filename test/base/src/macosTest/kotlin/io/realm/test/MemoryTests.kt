@@ -18,6 +18,7 @@ package io.realm.test
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.entities.Sample
 import io.realm.test.platform.PlatformUtils.createTempDir
 import io.realm.test.platform.PlatformUtils.deleteTempDir
 import io.realm.test.platform.PlatformUtils.triggerGC
@@ -29,7 +30,6 @@ import platform.posix.NULL
 import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
-import io.realm.entities.Sample
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
