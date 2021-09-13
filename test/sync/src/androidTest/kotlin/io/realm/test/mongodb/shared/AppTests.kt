@@ -50,12 +50,9 @@ class AppTests {
             }
         }
 
-        println("App config")
         val configuration: AppConfiguration = appConfigurationOf(applicationId, BASE_URL, singleThreadDispatcher("asdf"))
-        println("App create")
         val app = App.create(configuration)
 
-        println("Login")
         runBlocking {
             app.login(EmailPassword("asdf@asdf.com", "asdfasdf"))
                 .onSuccess { it: User -> }

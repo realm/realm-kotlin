@@ -893,7 +893,6 @@ actual object RealmInterop {
 
     // TODO sync config shouldn't be null
     actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
-        println("Hello world")
         val syncClientConfig = realm_wrapper.realm_sync_client_config_new()
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
 
@@ -907,18 +906,15 @@ actual object RealmInterop {
             app.cptr(),
             credentials.cptr(),
             staticCFunction { userdata, user, error ->
-                userdata?.asStableRef<OperationCallback>()?.get()?.let { callback ->
-                    error?.let {
-                        callback.onError(toKException(error.pointed))
-                    }
+                val callback = safeUserData<OperationCallback>(userdata)
+                if (error == null) {
                     callback.onSuccess(CPointerWrapper(user))
+                } else {
+                    callback.onError(toKException(error.pointed))
                 }
             },
             StableRef.create(callback).asCPointer(),
-            staticCFunction { userdata ->
-                userdata?.asStableRef<Callback>()?.dispose()
-                    ?: error("Login callback data should never be null")
-            }
+            staticCFunction { userdata -> disposeUserData<Callback>(userdata) }
         )
     }
 
@@ -928,7 +924,7 @@ actual object RealmInterop {
             realm_http_completion_func_t?,
             Unit>
     { userdata, request, completionData, callback ->
-        userdata?.asStableRef<NetworkTransport>()?.get()?.let { networkTransport ->
+        safeUserData<NetworkTransport>(userdata).let { networkTransport ->
             request.useContents {
                 val headerMap = mutableMapOf<String, String>()
                 for (i in 0 until num_headers.toInt()) {
@@ -986,28 +982,30 @@ actual object RealmInterop {
             realm_wrapper.realm_app_config_new(
                 appId,
                 staticCFunction { userdata ->
-                    userdata?.asStableRef<() -> NetworkTransport>()?.get()?.invoke()?.let { networkTransport ->
+                    val networkTransportFactory = safeUserData<() -> NetworkTransport>(userdata)
+                    networkTransportFactory.invoke().let { networkTransport ->
                         realm_wrapper.realm_http_transport_new(
                             StableRef.create(networkTransport).asCPointer(),
-                            staticCFunction { userdata ->
-                                userdata?.asStableRef<NetworkTransport>()?.dispose()
-                                    ?: error("Network transport should never be null")
+                            staticCFunction { userdata: CPointer<out CPointed>? ->
+                                disposeUserData<NetworkTransport>(userdata)
                             },
                             newRequestLambda
                         )
                     }
                 },
                 StableRef.create(networkTransportFactory).asCPointer(),
-                staticCFunction { userdata ->
-                    userdata?.asStableRef<() -> NetworkTransport>()?.dispose()
-                        ?: error("Notification callback data should never be null")
-                },
+                staticCFunction { userdata -> disposeUserData<() -> NetworkTransport>(userdata) },
             )
 
+        // TODO Fill in appropriate meta data
+        //  https://github.com/realm/realm-kotlin/issues/449
         realm_wrapper.realm_app_config_set_platform(appConfig, "kotlin")
         realm_wrapper.realm_app_config_set_platform_version(appConfig, "PLATFORM_VERSION")
         realm_wrapper.realm_app_config_set_sdk_version(appConfig, "SDK_VERSION")
+        // TODO Fill in appropriate app meta data
+        //  https://github.com/realm/realm-kotlin/issues/407
         realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
+
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
         return CPointerWrapper(appConfig)
@@ -1175,6 +1173,19 @@ actual object RealmInterop {
         }
     }
 }
+
+private inline fun <reified T : Any> stableUserData(userdata: COpaquePointer?) =
+    userdata?.asStableRef<T>()
+        ?: error("User data (${T::class.simpleName}) should never be null")
+
+private inline fun <reified T : Any> safeUserData(userdata: COpaquePointer?) =
+    stableUserData<T>(userdata).get()
+
+private inline fun <reified T : Any> disposeUserData(userdata: COpaquePointer?) {
+    stableUserData<T>(userdata).dispose()
+}
+
+
 
 // Development debugging methods
 // TODO Consider consolidating into platform abstract methods!?
