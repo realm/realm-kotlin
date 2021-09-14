@@ -81,7 +81,6 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-@Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
@@ -103,7 +102,6 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
     }
 }
 
-@Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
 internal fun <T : RealmObject> create(
     mediator: Mediator,
     realm: RealmReference,

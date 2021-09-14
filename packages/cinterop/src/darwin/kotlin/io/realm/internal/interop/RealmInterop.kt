@@ -12,7 +12,7 @@
  * limitations under the License.
  *
  */
-// TODO https://github.com/realm/realm-kotlin/issues/70
+// TODO https://github.com/realm/realm-kotlin/issues/303
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
 
 package io.realm.internal.interop

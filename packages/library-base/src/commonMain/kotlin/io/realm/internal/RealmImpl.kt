@@ -86,7 +86,6 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         )
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
-        @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
             val (nativePointer, versionId, result) = this.writer.write(block)
             // Update the user facing Realm before returning the result.
@@ -95,8 +94,11 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
             // to detect it and update the user Realm.
             updateRealmPointer(RealmReference(this, nativePointer))
             return result
-        } catch (e: Exception) {
-            throw e
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler(
+                "Could not execute the write transaction",
+                exception
+            )
         }
     }
 
