@@ -18,7 +18,6 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.interop.NativePointer
@@ -79,6 +78,10 @@ internal abstract class BaseRealmImpl internal constructor(
         )
     }
 
+    internal open fun <T> registerObserver(t: Observable<T>): Flow<T> {
+        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
+    }
+
     internal open fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
@@ -97,17 +100,6 @@ internal abstract class BaseRealmImpl internal constructor(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {
-        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
-    }
-
-    internal open fun <T : RealmObject> registerResultsObserver(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
-        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
-    }
-    internal open fun <T> registerListObserver(list: ManagedRealmList<T>): Flow<RealmList<T>> {
-        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
-    }
-
-    internal open fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

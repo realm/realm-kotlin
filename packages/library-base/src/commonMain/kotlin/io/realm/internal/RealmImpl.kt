@@ -5,7 +5,6 @@ import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -108,23 +107,15 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         TODO()
     }
 
-    internal override fun <T : RealmObject> registerResultsObserver(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
-        return notifier.resultsChanged(results)
-    }
-
-    internal override fun <T> registerListObserver(list: ManagedRealmList<T>): Flow<RealmList<T>> {
-        return notifier.listChanged(list)
-    }
-
-    internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
-        return notifier.objectChanged(obj)
+    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
+        return notifier.registerObserver(t)
     }
 
     internal override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
-        return notifier.registerResultsChangedListener(results, callback)
+        TODO("Not yet implemented")
     }
 
     internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {

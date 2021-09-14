@@ -26,6 +26,8 @@ import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+// Cannot trigger these from within the IDE due to https://youtrack.jetbrains.com/issue/KT-46195
+// Execute the tests from the CLI with `./gradlew jvmTest`
 class PrimaryKeyTests {
     @Test
     fun `primary key supportness`() {
