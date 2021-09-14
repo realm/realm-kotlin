@@ -140,7 +140,7 @@ expect object RealmInterop {
 
     // App
     fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer // TODO sync config shouldn't be null
-    fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: OperationCallback)
+    fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
 
     // AppConfig
     fun realm_app_config_new(

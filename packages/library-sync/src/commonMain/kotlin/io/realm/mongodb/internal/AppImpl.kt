@@ -19,7 +19,7 @@ package io.realm.mongodb.internal
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.OperationCallback
+import io.realm.interop.CinteopCallback
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
@@ -47,7 +47,7 @@ internal class AppImpl(
                 realm_app_log_in_with_credentials(
                     nativePointer,
                     credentials.nativePointer,
-                    object : OperationCallback {
+                    object : CinteropCallback {
                         override fun onSuccess(pointer: NativePointer) {
                             continuation.resume(UserImpl(pointer))
                         }

@@ -132,7 +132,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
 
 void register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/OperationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/interop/CinteropCallback");
     static jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess", "(Lio/realm/interop/NativePointer;)V");
     static jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError", "(Ljava/lang/Throwable;)V");
 

@@ -16,12 +16,12 @@
 
 package io.realm.interop
 
+// TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
 interface Callback {
     fun onChange(change: NativePointer)
 }
 
-interface OperationCallback {
+interface CinteropCallback {
     fun onSuccess(pointer: NativePointer)
-
     fun onError(throwable: Throwable)
 }

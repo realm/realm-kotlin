@@ -440,7 +440,7 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: OperationCallback) {
+    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
         // TODO error handling for callback, producing Kotlin's Result?
         realmc.register_login_cb(
             app.cptr(),

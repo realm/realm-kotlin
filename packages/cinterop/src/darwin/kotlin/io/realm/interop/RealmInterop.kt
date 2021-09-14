@@ -901,12 +901,12 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_new(appConfig.cptr(), syncClientConfig))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: OperationCallback) {
+    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
             staticCFunction { userdata, user, error ->
-                val callback = safeUserData<OperationCallback>(userdata)
+                val callback = safeUserData<CinteropCallback>(userdata)
                 if (error == null) {
                     callback.onSuccess(CPointerWrapper(user))
                 } else {
@@ -919,10 +919,10 @@ actual object RealmInterop {
     }
 
     private val newRequestLambda = staticCFunction<COpaquePointer?,
-            CValue<realm_http_request_t>,
-            COpaquePointer?,
-            realm_http_completion_func_t?,
-            Unit>
+        CValue<realm_http_request_t>,
+        COpaquePointer?,
+        realm_http_completion_func_t?,
+        Unit>
     { userdata, request, completionData, callback ->
         safeUserData<NetworkTransport>(userdata).let { networkTransport ->
             request.useContents {
@@ -930,7 +930,7 @@ actual object RealmInterop {
                 for (i in 0 until num_headers.toInt()) {
                     headers?.get(i)?.apply {
                         headerMap[name!!.toKString()] = value!!.toKString()
-                    }
+                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
                 }
 
                 val response = networkTransport.sendRequest(
@@ -967,7 +967,7 @@ actual object RealmInterop {
                         headers = cResponseHeaders
                     }
                     // Copying?
-                    callback?.invoke(completionData, cResponse)
+                    callback?.invoke(completionData, cResponse) ?: error("Callback should never be null")
                 }
             }
         }
