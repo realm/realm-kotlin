@@ -18,11 +18,11 @@ package io.realm.internal
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.internal.interop.RealmCoreException
-import io.realm.internal.interop.RealmCoreInvalidatedObjectException
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmCoreInvalidatedObjectException
 import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel

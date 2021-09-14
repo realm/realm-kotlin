@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmCoreOtherException
 import io.realm.internal.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.coroutines.channels.ChannelResult
@@ -84,15 +85,11 @@ internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm
                 )
             }
             return let
-        } catch (e: Exception) {
+        } catch (e: RealmCoreOtherException) {
             // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
             //  catching that and returning null. Only treat unknown null pointers as non-existing objects
             //  to avoid handling unintended situations here.
-            if (e.message?.startsWith("[2]: null") ?: false) {
-                return null
-            } else {
-                throw e
-            }
+            return null
         }
     }
 
