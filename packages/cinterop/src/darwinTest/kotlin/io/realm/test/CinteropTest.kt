@@ -25,6 +25,7 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.SchemaValidationMode
 import io.realm.internal.interop.Table
+import io.realm.internal.interop.coreErrorAsThrowable
 import io.realm.internal.interop.set
 import io.realm.internal.interop.toKString
 import kotlinx.cinterop.BooleanVar
