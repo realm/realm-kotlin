@@ -38,8 +38,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.interop.NetworkTransport
-import io.realm.interop.Response
+import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.interop.sync.Response
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher

@@ -27,6 +27,11 @@ interface App {
 
     val configuration: AppConfiguration
 
+    /**
+     * TODO
+     */
+    // FIXME Reevaluate Result api to surface App errors more explicitly
+    //  https://github.com/realm/realm-kotlin/pull/447#discussion_r707344044
     suspend fun login(credentials: Credentials): Result<User>
 
     companion object {
@@ -36,19 +41,6 @@ interface App {
         fun create(
             configuration: AppConfiguration,
         ): App = AppImpl(configuration as AppConfigurationImpl)
-
-        /**
-         * TODO
-         */
-        fun create(
-            appId: String,
-            dispatcher: CoroutineDispatcher
-        ): App = AppImpl(
-            configuration = AppConfigurationImpl(
-                appId = appId,
-                networkTransportDispatcher = dispatcher
-            ),
-        )
     }
 }
 

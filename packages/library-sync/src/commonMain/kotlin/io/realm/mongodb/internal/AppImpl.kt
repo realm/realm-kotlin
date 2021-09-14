@@ -17,14 +17,12 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.interop.CinteropCallback
 import io.realm.interop.NativePointer
 import io.realm.interop.RealmInterop
-import io.realm.interop.CinteopCallback
 import io.realm.mongodb.App
-import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine

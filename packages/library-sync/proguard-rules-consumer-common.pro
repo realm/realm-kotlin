@@ -1,14 +1,10 @@
 # Add sync-related proguard exceptions here
 
--keep class io.realm.internal.interop.CinteropCallback {
+-keep class io.realm.internal.interop.sync.NetworkTransport {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.NetworkTransport {
-    # TODO OPTIMIZE Only keep actually required symbols
-    *;
-}
--keep class io.realm.internal.interop.Response {
+-keep class io.realm.internal.interop.sync.Response {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }

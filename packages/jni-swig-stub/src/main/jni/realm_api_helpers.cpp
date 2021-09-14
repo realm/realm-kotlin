@@ -19,6 +19,8 @@
 
 using namespace realm::jni_util;
 
+// TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
+//  changes as realm_collection_changes_t.
 realm_notification_token_t *
 register_results_notification_cb(realm_results_t *results, jobject callback) {
     auto jenv = get_env();
@@ -56,6 +58,8 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
     );
 }
 
+// TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
+//  changes as realm_collection_changes_t.
 realm_notification_token_t *
 register_list_notification_cb(realm_list_t *list, jobject callback) {
     auto jenv = get_env();
@@ -139,6 +143,8 @@ void register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, j
     realm_app_log_in_with_credentials(
             app,
             credentials,
+            // FIXME Refactor into generic handling of network requests, like
+            //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
             [](void* userdata, realm_user_t* user, realm_error_t* error) {
                 auto jenv = get_env(true);
 
@@ -194,11 +200,11 @@ static void network_request_lambda_function(void *userdata, // Network transport
 
     // Initialize pointer to JVM class and methods
     jobject network_transport = static_cast<jobject>(userdata);
-    static jclass network_transport_class = jenv->FindClass("io/realm/interop/NetworkTransport");
+    static jclass network_transport_class = jenv->FindClass("io/realm/internal/interop/sync/NetworkTransport");
     static jmethodID m_send_request_method = jenv->GetMethodID(
             network_transport_class,
             "sendRequest",
-            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/interop/Response;"
+            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/internal/interop/sync/Response;"
     );
 
     // Prepare request fields to be consumable by JVM

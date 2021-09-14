@@ -22,6 +22,8 @@ import io.realm.interop.RealmInterop
 /**
  * TODO
  */
+// FIXME Revisit API
+//  https://github.com/realm/realm-kotlin/pull/447#discussion_r707345579
 sealed class Credentials(val id: String) {
 
     // FIXME Internalize. Hmm, implementation of sealed classes must be in same package

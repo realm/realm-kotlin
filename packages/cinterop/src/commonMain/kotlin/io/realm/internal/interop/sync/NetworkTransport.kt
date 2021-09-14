@@ -1,4 +1,4 @@
-package io.realm.interop
+package io.realm.internal.interop.sync
 
 interface NetworkTransport {
 

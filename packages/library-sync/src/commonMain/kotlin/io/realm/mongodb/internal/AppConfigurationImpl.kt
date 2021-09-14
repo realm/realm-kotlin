@@ -28,7 +28,7 @@ internal class AppConfigurationImpl(
     override val networkTransportDispatcher: CoroutineDispatcher
 ) : AppConfiguration {
 
-    private val networkTransport: io.realm.interop.NetworkTransport = KtorNetworkTransport(
+    private val networkTransport: io.realm.internal.interop.sync.NetworkTransport = KtorNetworkTransport(
         timeoutMs = 5000,
         dispatcher = networkTransportDispatcher
     )

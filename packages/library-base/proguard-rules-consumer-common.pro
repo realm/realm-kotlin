@@ -12,6 +12,9 @@
 -keep class io.realm.interop.NotificationCallback {
     *;
 }
+-keep class io.realm.interop.CinteropCallback {
+    *;
+}
 
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt

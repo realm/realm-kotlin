@@ -17,7 +17,7 @@
 package io.realm.test.mongodb.shared.internal
 
 import io.realm.internal.platform.singleThreadDispatcher
-import io.realm.interop.Response
+import io.realm.internal.interop.sync.Response
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -107,27 +107,11 @@ internal class KtorNetworkTransportTest {
         }
     }
 
-//    @Test
-//    fun requestInterrupted() {
-//        val url = "$BASE_URL/okhttp?success=true"
-//        for (method in HTTPMethod.values()) {
-//            val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
-//            val headers = mapOf(
-//                Pair("Content-Type", "application/json;charset=utf-8"),
-//                Pair("Accept", "application/json")
-//            )
-//
-//            PlatformUtils.interrupt()
-//
-//            val response: Response = transport.sendRequest(
-//                method.nativeKey,
-//                url,
-//                headers,
-//                body
-//            )
-//            assertEquals(0, response.httpResponseCode)
-//            assertEquals(ERROR_IO, response.customResponseCode)
-//            assertTrue(response.body.contains("interrupted"))
-//        }
-//    }
+    @Test
+    @Ignore
+    // TODO Need to ensure errors from network layers are propagated. Could be done by
+    //  interrupting like on Java (OkHttpNetworkTransportTests.requestInterrupted), but could maybe
+    //  be simpler without need to send signals in a platform agnostic way
+    fun errorPropagation() {
+    }
 }
