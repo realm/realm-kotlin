@@ -11,8 +11,7 @@ set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("realm-core" EXCLUDE_FROM_ALL)
 
-# -DREALM_ANDROID -DREALM_HAVE_CONFIG -DPIC -fdata-sections -pthread -frtti -fvisibility=hidden -fsigned-char -fno-stack-protector -std=c++17
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${REALM_COMMON_CXX_FLAGS} -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 include_directories(${CAPI_BUILD}/src jni)
 
@@ -22,10 +21,14 @@ file(GLOB jni_SRC
         "jni/utils.cpp"
         )
 
-# Create shared FFI library that is consumed by the C-Interop layer.
-add_library(realmc SHARED
+file(GLOB swig_SRC
         ${SWIG_JNI}/realmc.cpp
         ${SWIG_JNI}/realm_api_helpers.cpp
+        )
+
+# Create shared FFI library that is consumed by the C-Interop layer.
+add_library(realmc SHARED
+        ${swig_SRC}
         ${jni_SRC}
         )
 

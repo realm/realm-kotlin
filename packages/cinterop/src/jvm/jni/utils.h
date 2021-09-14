@@ -22,6 +22,8 @@
 #include <realm/table.hpp>
 #include "env_utils.h"
 
+using namespace realm;
+
 jstring to_jstring(JNIEnv* env, realm::StringData str);
 
 class JStringAccessor {
@@ -46,13 +48,9 @@ public:
             return realm::StringData();
         }
         else if (m_size > max_string_size) {
-            // TODO: Throw an actual exception
-            throw 20;
-//            THROW_JAVA_EXCEPTION(
-//                    m_env, realm::_impl::JavaExceptionDef::IllegalArgument,
-//                    realm::util::format(
-//                            "The length of 'String' value in UTF8 encoding is %1 which exceeds the max string length %2.",
-//                            m_size, max_string_size));
+            throw util::runtime_error(realm::util::format(
+                            "The length of 'String' value in UTF8 encoding is %1 which exceeds the max string length %2.",
+                            m_size, max_string_size));
         }
         else {
             return realm::StringData(m_data.get(), m_size);

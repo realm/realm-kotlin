@@ -77,10 +77,8 @@ tasks.create("cleanJvmWrapper") {
                 exclude("LongPointerWrapper.java") // not generated
             }
         )
-        delete(fileTree("$projectDir/src/main/jni/").matching {
-            include("*")
-            exclude("realm_api_helpers.*") // not generated
-        })
+        delete(file("$projectDir/src/main/jni/realmc.cpp"))
+        delete(file("$projectDir/src/main/jni/realmc.h"))
     }
 }
 
