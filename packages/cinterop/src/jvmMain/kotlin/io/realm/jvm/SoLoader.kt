@@ -22,6 +22,7 @@ import java.security.MessageDigest
 import java.util.Collections
 import java.util.Enumeration
 import java.util.LinkedList
+import java.util.Locale
 import java.util.Properties
 
 /**
