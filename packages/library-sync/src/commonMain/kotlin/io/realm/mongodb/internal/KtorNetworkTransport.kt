@@ -68,6 +68,8 @@ class KtorNetworkTransport(
         usesRefreshToken: Boolean
     ): Response {
         try {
+            // FIXME Ensure background jobs does not block user/main thread
+            //  https://github.com/realm/realm-kotlin/issues/450
             return runBlocking(dispatcher) {
                 val requestBuilderBlock: HttpRequestBuilder.() -> Unit = {
                     headers {

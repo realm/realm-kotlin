@@ -34,6 +34,7 @@ class AppTests {
     @Test
     fun login() {
         // Send request directly to the local server to get the actual app ID
+        // TODO Wrap test app setup as in
         val applicationId = KtorNetworkTransport(
             timeoutMs = 5000,
             dispatcher = singleThreadDispatcher("transport dispatcher")

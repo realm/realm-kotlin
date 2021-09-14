@@ -41,6 +41,8 @@ interface AppConfiguration {
 }
 
 // TODO Create full blown builder for this
+// FIXME Initialize with proper multithreaded dispatcher
+//  https://github.com/realm/realm-kotlin/issues/450
 fun appConfigurationOf(
     appId: String,
     baseUrl: String,
