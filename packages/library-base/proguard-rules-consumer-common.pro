@@ -9,7 +9,7 @@
 }
 
 # Notification callback
--keep class io.realm.interop.NotificationCallback {
+-keep class io.realm.internal.interop.NotificationCallback {
     *;
 }
 

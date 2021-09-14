@@ -32,8 +32,14 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.name.Name
 
 private val realmObjectInternalOverrides = setOf(
+    // FIXME Define the constannts in Identifiers.kt
+    Name.identifier("freeze"),
+    Name.identifier("thaw"),
+    Name.identifier("registerForNotification"),
+    Name.identifier("emitFrozenUpdate"),
     REALM_OBJECT_INTERNAL_IS_FROZEN,
     REALM_OBJECT_INTERNAL_REALM_STATE,
     REALM_OBJECT_INTERNAL_VERSION

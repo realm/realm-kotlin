@@ -64,7 +64,7 @@ internal object Names {
 
 internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
-    val REALM_NATIVE_POINTER = FqName("io.realm.interop.NativePointer")
+    val REALM_NATIVE_POINTER = FqName("io.realm.internal.interop.NativePointer")
     val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmObjectInternal")
     val REALM_MODULE_ANNOTATION = FqName("io.realm.RealmModule")
     val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
@@ -85,12 +85,12 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
     // Schema related types
-    val TABLE = FqName("io.realm.interop.Table")
-    val CLASS_FLAG = FqName("io.realm.interop.ClassFlag")
-    val PROPERTY = FqName("io.realm.interop.Property")
-    val PROPERTY_TYPE = FqName("io.realm.interop.PropertyType")
-    val COLLECTION_TYPE = FqName("io.realm.interop.CollectionType")
-    val PROPERTY_FLAG = FqName("io.realm.interop.PropertyFlag")
+    val TABLE = FqName("io.realm.internal.interop.Table")
+    val CLASS_FLAG = FqName("io.realm.internal.interop.ClassFlag")
+    val PROPERTY = FqName("io.realm.internal.interop.Property")
+    val PROPERTY_TYPE = FqName("io.realm.internal.interop.PropertyType")
+    val COLLECTION_TYPE = FqName("io.realm.internal.interop.CollectionType")
+    val PROPERTY_FLAG = FqName("io.realm.internal.interop.PropertyFlag")
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.annotations.PrimaryKey")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")

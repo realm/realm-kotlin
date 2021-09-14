@@ -1,8 +1,8 @@
 package io.realm.internal
 
 import io.realm.VersionId
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 
 /**
  * A _Realm Reference_ that links a specific Kotlin BaseRealm instance with an underlying C++

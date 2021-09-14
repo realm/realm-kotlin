@@ -16,14 +16,14 @@
 
 package io.realm.internal
 
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.interop.Link
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmCoreException
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.Link
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmInterop
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -32,7 +32,7 @@ import kotlin.reflect.KClass
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 
-internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T>, RealmStateHolder {
+internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T>, RealmStateHolder, Observable<RealmResultsImpl<T>> {
 
     private val mode: Mode
     private val realm: RealmReference
@@ -94,21 +94,9 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
         }
     }
 
-    /**
-     * FIXME Hidden until we can add proper support
-     *
-     * Observe changes to a Realm result.
-     *
-     * Follows the pattern of [Realm.addChangeListener]
-     */
-    internal fun addChangeListener(callback: Callback<RealmResultsImpl<T>>): Cancellable {
-        realm.checkClosed()
-        return realm.owner.registerResultsChangeListener(this, callback)
-    }
-
     override fun observe(): Flow<RealmResultsImpl<T>> {
         realm.checkClosed()
-        return realm.owner.registerResultsObserver(this)
+        return realm.owner.registerObserver(this)
     }
 
     override fun delete() {
@@ -122,7 +110,7 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
      * Returns a frozen copy of this query result. If it is already frozen, the same instance
      * is returned.
      */
-    internal fun freeze(realm: RealmReference): RealmResultsImpl<T> {
+    override fun freeze(realm: RealmReference): RealmResultsImpl<T> {
         val frozenDbPointer = realm.dbPointer
         val frozenResults = RealmInterop.realm_results_freeze(result, frozenDbPointer)
         return fromResults(realm, frozenResults, clazz, schema)
@@ -131,9 +119,22 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
     /**
      * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
      */
-    internal fun thaw(realm: RealmReference): RealmResultsImpl<T> {
+    override fun thaw(realm: RealmReference): RealmResultsImpl<T> {
         val liveDbPointer = realm.dbPointer
         val liveResultPtr = RealmInterop.realm_results_thaw(result, liveDbPointer)
         return fromResults(realm, liveResultPtr, clazz, schema)
+    }
+
+    override fun registerForNotification(callback: io.realm.internal.interop.Callback): NativePointer {
+        return RealmInterop.realm_results_add_notification_callback(result, callback)
+    }
+
+    override fun emitFrozenUpdate(
+        frozenRealm: RealmReference,
+        change: NativePointer,
+        channel: SendChannel<RealmResultsImpl<T>>
+    ): ChannelResult<Unit>? {
+        val frozenResult = freeze(frozenRealm)
+        return channel.trySend(frozenResult)
     }
 }

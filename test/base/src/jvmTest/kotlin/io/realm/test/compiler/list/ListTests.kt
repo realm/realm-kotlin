@@ -19,13 +19,15 @@ package io.realm.test.compiler.list
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
-import io.realm.util.CompilerTest.compileFromSource
-import io.realm.util.TypeDescriptor
+import io.realm.test.util.Compiler.compileFromSource
+import io.realm.test.util.TypeDescriptor
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+// Cannot trigger these from within the IDE due to https://youtrack.jetbrains.com/issue/KT-46195
+// Execute the tests from the CLI with `./gradlew jvmTest`
 class ListTests {
 
     private val supportedPrimitiveTypes = TypeDescriptor.classifiers.keys.filter {
