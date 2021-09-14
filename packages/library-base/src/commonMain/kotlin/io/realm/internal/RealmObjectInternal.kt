@@ -106,15 +106,11 @@ internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm
         @Suppress("TooGenericExceptionCaught")
         val f: RealmObjectInternal? = try {
             this.freeze(frozenRealm)
-        } catch (e: RuntimeException) {
+        } catch (e: RealmCoreOtherException) {
             // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
             //  catching that and returning null. Only treat unknown null pointers as non-existing objects
             //  to avoid handling unintended situations here.
-            if (e.message?.startsWith("[2]: null") ?: false) {
-                null
-            } else {
-                throw e
-            }
+            null
         }
         return if (f == null) {
             channel.close()
