@@ -15,10 +15,10 @@
  */
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import java.nio.file.Paths
-import java.nio.file.Path
-import java.security.MessageDigest
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.security.MessageDigest
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -222,10 +222,10 @@ kotlin {
     /***
      * Uncommenting below will cause the aritifact to not be published for cinterop-jvm coordinate:
      * > Task :cinterop:publishJvmPublicationToMavenLocal SKIPPED
-    Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Starting
-    Skipping task ':cinterop:publishJvmPublicationToMavenLocal' as task onlyIf is false.
-    Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Finished
-    :cinterop:publishJvmPublicationToMavenLocal (Thread[Execution worker for ':',5,main]) completed. Took 0.0 secs.
+     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Starting
+     Skipping task ':cinterop:publishJvmPublicationToMavenLocal' as task onlyIf is false.
+     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Finished
+     :cinterop:publishJvmPublicationToMavenLocal (Thread[Execution worker for ':',5,main]) completed. Took 0.0 secs.
      */
 //    configure(listOf(targets["metadata"], jvm())) {
 //        mavenPublication {
@@ -342,18 +342,17 @@ fun Task.buildSharedLibrariesForJVM() {
     outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
 }
 
-
 fun genHashFile(platform: String, prefix: String, suffix: String) {
     val resourceDir = project.file("src/jvmMain/resources/jni").absolutePath
-    val libFFI: Path =  Paths.get(resourceDir, platform, "${prefix}realm-ffi${suffix}")
-    val libRealmc: Path =  Paths.get(resourceDir, platform, "${prefix}realmc${suffix}")
+    val libFFI: Path = Paths.get(resourceDir, platform, "${prefix}realm-ffi$suffix")
+    val libRealmc: Path = Paths.get(resourceDir, platform, "${prefix}realmc$suffix")
 
     // the orders matters, this will be loaded in the reverse order (i.e 'realm-ffi' first then 'realmc')
     val macosHashes = """
             realm-ffi ${sha1(libFFI)}
             realmc ${sha1(libRealmc)}
 
-            """.trimIndent()
+    """.trimIndent()
 
     Paths.get(resourceDir, "macos", "dynamic_libraries.properties").also {
         Files.writeString(it, macosHashes)
@@ -363,7 +362,7 @@ fun genHashFile(platform: String, prefix: String, suffix: String) {
 fun sha1(file: Path): String {
     val digest = MessageDigest.getInstance("SHA-1")
     Files.newInputStream(file).use {
-        val buf = ByteArray(16384)  // 16k
+        val buf = ByteArray(16384) // 16k
         while (true) {
             val bytes = it.read(buf)
             if (bytes > 0) {

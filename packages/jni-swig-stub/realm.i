@@ -376,14 +376,14 @@ inline void jni_check_exception(JNIEnv* jenv = realm::jni_util::get_env()) {
 class CustomJVMScheduler{
     public:
         CustomJVMScheduler(jobject dispatchScheduler) {
-            JNIEnv *jenv = realm::jni_util::get_env();
+            JNIEnv *jenv = realm::jni_util::get_env(true);
             jclass jvm_scheduler_class = jenv->FindClass("io/realm/interop/JVMScheduler");
             m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(JJ)V");
             m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
         }
 
         ~CustomJVMScheduler() {
-            realm::jni_util::get_env()->DeleteGlobalRef(m_jvm_dispatch_scheduler);
+            realm::jni_util::get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
         }
 
         realm_scheduler_t* build() {

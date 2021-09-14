@@ -153,9 +153,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
-        if (dispatcher != null) {
+        if (!isAndroid() && dispatcher != null) {
             // create a custom Scheduler for JVM
-           realmc.register_realm_scheduler((config as LongPointerWrapper).ptr, JVMScheduler(dispatcher))
+            realmc.register_realm_scheduler((config as LongPointerWrapper).ptr, JVMScheduler(dispatcher))
         }
         val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
         // Ensure that we can read version information, etc.
@@ -556,7 +556,7 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
 
     fun notifyCore(coreNotificationFunctionPointer: Long, callbackUserdataPointer: Long) {
         val function: suspend CoroutineScope.() -> Unit = {
-            realmc.invokeCoreNotifyCallback(coreNotificationFunctionPointer, callbackUserdataPointer)
+            realmc.invoke_core_notify_callback(coreNotificationFunctionPointer, callbackUserdataPointer)
         }
         scope.launch(
             scope.coroutineContext,

@@ -19,7 +19,10 @@ package io.realm.jvm
 import java.io.File
 import java.nio.file.Files
 import java.security.MessageDigest
-import java.util.*
+import java.util.Collections
+import java.util.Enumeration
+import java.util.LinkedList
+import java.util.Properties
 
 /**
  * Load the C++ dynamic libraries from a the fat Jar.
@@ -61,7 +64,7 @@ class SoLoader {
             validHashOrThrow(libraryInstallationLocation, expectedHash)
         }
         @Suppress("UnsafeDynamicallyLoadedCode")
-        //System.loadLibrary does not accept a full path to the lib (needs to be in the current Java paths)
+        // System.loadLibrary does not accept a full path to the lib (needs to be in the current Java paths)
         System.load(libraryInstallationLocation.absolutePath)
     }
 
@@ -79,13 +82,13 @@ class SoLoader {
     private fun defaultAbsolutePath(libraryName: String, libraryHash: String): File {
         return File(
             platform.defaultSystemLocation + File.separator +
-                    libraryHash + File.separator +
-                    (platform.prefix + libraryName + "." + platform.suffix)
+                libraryHash + File.separator +
+                (platform.prefix + libraryName + "." + platform.suffix)
         )
     }
 
     private fun libPathInsideJar(libraryName: String) =
-        "${platform.shortName}/${platform.prefix}${libraryName}.${platform.suffix}"
+        "${platform.shortName}/${platform.prefix}$libraryName.${platform.suffix}"
 
     private fun unpackAndInstall(libraryName: String, absolutePath: File, expectedHash: String) {
         absolutePath.parentFile.mkdirs()
@@ -150,8 +153,10 @@ private enum class Platform(
         shortName = "/jni/win",
         prefix = "",
         suffix = "dll",
-        defaultSystemLocation = (System.getenv("LOCALAPPDATA")
-            ?: "${System.getProperty("user.home")}/AppData/Local") + "/io-realm-kotlin/"
+        defaultSystemLocation = (
+            System.getenv("LOCALAPPDATA")
+                ?: "${System.getProperty("user.home")}/AppData/Local"
+            ) + "/io-realm-kotlin/"
     );
 
     companion object {
