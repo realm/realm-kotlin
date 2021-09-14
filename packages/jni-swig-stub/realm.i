@@ -177,11 +177,6 @@ struct realm_size_t {
 %include "enumtypeunsafe.swg"
 %javaconst(1);
 
-// Make swig types package private (as opposed to public by default) to ensure that we don't expose
-// types outside the package
-%typemap(javaclassmodifiers) SWIGTYPE "class";
-%typemap(javaclassmodifiers) NotificationCallback "public class";
-%typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
 // FIXME OPTIMIZE Support getting/setting multiple attributes. Ignored for now due to incorrect
 //  type cast in Swig-generated wrapper for "const realm_property_key_t*" which is not cast
@@ -221,6 +216,36 @@ struct realm_size_t {
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
 
+// Sync methods not implemented yet
+%ignore "realm_sync_config_new";
+%ignore "realm_sync_config_set_session_stop_policy";
+%ignore "realm_sync_config_set_error_handler";
+%ignore "realm_sync_config_set_realm_encryption_key";
+%ignore "realm_sync_config_set_client_validate_ssl";
+%ignore "realm_sync_config_set_ssl_trust_certificate_path";
+%ignore "realm_sync_config_set_ssl_verify_callback";
+%ignore "realm_sync_config_set_cancel_waits_on_nonfatal_error";
+%ignore "realm_sync_config_set_authorization_header_name";
+%ignore "realm_sync_config_set_custom_http_header";
+%ignore "realm_sync_config_set_recovery_directory_path";
+%ignore "realm_sync_config_set_resync_mode";
+%ignore "realm_sync_client_config_new";
+%ignore "realm_sync_client_config_set_base_file_path";
+%ignore "realm_sync_client_config_set_metadata_mode";
+%ignore "realm_sync_client_config_set_encryption_key";
+%ignore "realm_sync_client_config_set_reset_metadata_on_error";
+%ignore "realm_sync_client_config_set_logger_factory";
+%ignore "realm_sync_client_config_set_log_level";
+%ignore "realm_sync_client_config_set_reconnect_mode";
+%ignore "realm_sync_client_config_set_multiplex_sessions";
+%ignore "realm_sync_client_config_set_user_agent_binding_info";
+%ignore "realm_sync_client_config_set_user_agent_application_info";
+%ignore "realm_sync_client_config_set_connect_timeout";
+%ignore "realm_sync_client_config_set_connection_linger_time";
+%ignore "realm_sync_client_config_set_ping_keepalive_period";
+%ignore "realm_sync_client_config_set_pong_keepalive_period";
+%ignore "realm_sync_client_config_set_fast_reconnect_limit";
+
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)
 
@@ -231,7 +256,7 @@ realm_notification_token_t *
 register_results_notification_cb(realm_results_t *results, jobject callback) {
     using namespace realm::jni_util;
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_results_add_notification_callback(
@@ -269,7 +294,7 @@ realm_notification_token_t *
 register_list_notification_cb(realm_list_t *list, jobject callback) {
     using namespace realm::jni_util;
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_list_add_notification_callback(
@@ -307,7 +332,7 @@ realm_notification_token_t *
 register_object_notification_cb(realm_object_t *object, jobject callback) {
     using namespace realm::jni_util;
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_object_add_notification_callback(

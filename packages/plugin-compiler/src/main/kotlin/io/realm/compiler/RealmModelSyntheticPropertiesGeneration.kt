@@ -26,7 +26,6 @@ import io.realm.compiler.FqNames.REALM_MEDIATOR_INTERFACE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
-import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
 import io.realm.compiler.FqNames.REALM_REFERENCE
 import io.realm.compiler.FqNames.TABLE
 import io.realm.compiler.Names.CLASS_FLAG_NORMAL
@@ -93,11 +92,10 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 /**
  * Helper to assisting in modifying classes marked with the [RealmObject] interface according to our
  * needs:
- * - Adding the internal properties of [io.realm.interop.RealmObjectInterop]
+ * - Adding the internal properties of [io.realm.internal.interop.RealmObjectInterop]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
-    private val realmModelInteropInterface: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTEROP_INTERFACE)
     private val realmModelInternalInterface: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val nullableNativePointerInterface =
         pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
@@ -134,7 +132,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addVariableProperty(realmModelInteropInterface, OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
+            addVariableProperty(realmModelInternalInterface, OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
             addVariableProperty(realmModelInternalInterface, REALM_OWNER, realmReferenceClass.defaultType.makeNullable(), ::irNull)
             addVariableProperty(
                 realmModelInternalInterface,
