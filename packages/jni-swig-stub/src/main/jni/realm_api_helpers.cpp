@@ -315,6 +315,8 @@ static void network_request_lambda_function(void *userdata, // Network transport
     } catch (std::runtime_error &e) {
         // Runtime exception while processing the request/response
         realm_http_response_t response_error;
+        // FIXME: validate we propagate the custom codes as an actual exception to the user
+        // see: https://github.com/realm/realm-kotlin/issues/451
         response_error.custom_status_code = -4;
         response_error.num_headers = 0;
         response_error.body_size = 0;

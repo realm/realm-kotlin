@@ -123,18 +123,18 @@ class KtorNetworkTransport(
                     // 500s are thrown as ServerResponseException
                     processHttpResponse(e.response)
                 } catch (e: CancellationException) {
-                    println("EXCEPTION 1: $e")
-                    println("MESSAGE 1: ${e.message}")
+                    // FIXME: validate we propagate the custom codes as an actual exception to the user
+                    // see: https://github.com/realm/realm-kotlin/issues/451
                     Response(-1, -1, mapOf(), "")
                 } catch (e: Exception) {
-                    println("EXCEPTION 2: $e")
-                    println("MESSAGE 2: ${e.message}")
+                    // FIXME: validate we propagate the custom codes as an actual exception to the user
+                    // see: https://github.com/realm/realm-kotlin/issues/451
                     Response(-2, -2, mapOf(), "")
                 }
             }
         } catch (e: Exception) {
-            println("EXCEPTION 3: $e")
-            println("MESSAGE 3: ${e.message}")
+            // FIXME: validate we propagate the custom codes as an actual exception to the user
+            // see: https://github.com/realm/realm-kotlin/issues/451
             return Response(-3, -3, mapOf(), "")
         }
     }
