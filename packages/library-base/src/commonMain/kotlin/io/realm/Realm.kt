@@ -48,6 +48,8 @@ interface Realm : TypedRealm {
          * the provided [RealmConfiguration].
          *
          * @param configuration The RealmConfiguration used to open the Realm.
+         *
+         * @throws IllegalArgumentException on invalid Realm configurations.
          */
         public fun open(configuration: RealmConfiguration): Realm {
             return RealmImpl(configuration)

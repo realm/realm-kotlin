@@ -10,6 +10,8 @@
 * Allow query arguments to be `null`: `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>` has change to `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any?): RealmResults<T>`
 * Moved `objects(KClass<T>)` and `<reified T> objects()` methods from `BaseRealm` to `TypedRealm`
 * Changed `RealmObject.version` into method `RealmObject.version()`.
+* Replaced `RuntimeException`s by the explicit exceptions: `IllegalArgumentException`, `IllegalStateException` and `IndexOutOfBoundsException`.
+* Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
 
 ### Enhancements
 * None.

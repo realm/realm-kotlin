@@ -20,6 +20,8 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
+import io.realm.interop.RealmCoreException
+import io.realm.interop.RealmCoreInvalidatedObjectException
 import io.realm.interop.RealmInterop
 import io.realm.toRealmObject
 import kotlinx.coroutines.flow.Flow
@@ -51,16 +53,24 @@ internal class ManagedRealmList<E>(
 
     override fun get(index: Int): E {
         metadata.realm.checkClosed()
-        return operator.convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
+        try {
+            return operator.convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler("Could not get element at list index $index", exception)
+        }
     }
 
     override fun add(index: Int, element: E) {
         metadata.realm.checkClosed()
-        RealmInterop.realm_list_add(
-            nativePointer,
-            index.toLong(),
-            copyToRealm(metadata.mediator, metadata.realm, element)
-        )
+        try {
+            RealmInterop.realm_list_add(
+                nativePointer,
+                index.toLong(),
+                copyToRealm(metadata.mediator, metadata.realm, element)
+            )
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
+        }
     }
 
     // FIXME bug in AbstractMutableList.addAll native implementation:
@@ -79,18 +89,26 @@ internal class ManagedRealmList<E>(
 
     override fun removeAt(index: Int): E = get(index).also {
         metadata.realm.checkClosed()
-        RealmInterop.realm_list_erase(nativePointer, index.toLong())
+        try {
+            RealmInterop.realm_list_erase(nativePointer, index.toLong())
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler("Could not remove element at list index $index", exception)
+        }
     }
 
     override fun set(index: Int, element: E): E {
         metadata.realm.checkClosed()
-        return operator.convert(
-            RealmInterop.realm_list_set(
-                nativePointer,
-                index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, element)
+        try {
+            return operator.convert(
+                RealmInterop.realm_list_set(
+                    nativePointer,
+                    index.toLong(),
+                    copyToRealm(metadata.mediator, metadata.realm, element)
+                )
             )
-        )
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler("Could not set list element at list index $index", exception)
+        }
     }
 
     override fun observe(): Flow<RealmList<E>> {
@@ -112,10 +130,8 @@ internal class ManagedRealmList<E>(
         // FIXME workaround until https://github.com/realm/realm-core/issues/4843 is done
         try {
             size
-        } catch (e: RuntimeException) {
-            if (e.message?.lowercase()?.contains("access to invalidated list object") == true) {
-                return false
-            }
+        } catch (e: RealmCoreInvalidatedObjectException) {
+            return false
         }
         return true
     }

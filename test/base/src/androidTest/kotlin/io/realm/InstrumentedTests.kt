@@ -92,10 +92,7 @@ class InstrumentedTests {
     @Test
     fun query_parseErrorThrows() {
         val objects: RealmResults<Sample> = realm.objects(Sample::class)
-        // FIXME Need appropriate error for syntax errors. Avoid UnsupportedOperationExecption as
-        //  in realm-java ;)
-        //  https://github.com/realm/realm-kotlin/issues/70
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<IllegalArgumentException> {
             objects.query("name == str")
         }
     }

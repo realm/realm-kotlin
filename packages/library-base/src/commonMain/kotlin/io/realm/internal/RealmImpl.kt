@@ -10,6 +10,7 @@ import io.realm.RealmObject
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
 import io.realm.interop.NativePointer
+import io.realm.interop.RealmCoreException
 import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -73,7 +74,17 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
     }
 
     constructor(configuration: RealmConfiguration) :
-        this(configuration as RealmConfigurationImpl, RealmInterop.realm_open(configuration.nativeConfig))
+        this(
+            configuration as RealmConfigurationImpl,
+            try {
+                RealmInterop.realm_open(configuration.nativeConfig)
+            } catch (exception: RealmCoreException) {
+                throw genericRealmCoreExceptionHandler(
+                    "Could not open Realm with the given configuration",
+                    exception
+                )
+            }
+        )
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
         @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70

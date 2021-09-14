@@ -74,8 +74,7 @@ class MutableRealmTests {
     fun cancellingWriteTwiceThrows() {
         realm.writeBlocking {
             cancelWrite()
-            // FIXME Should be IllegalStateException
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IllegalStateException> {
                 cancelWrite()
             }
         }

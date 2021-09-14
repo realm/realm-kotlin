@@ -22,6 +22,7 @@ import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.interop.Link
 import io.realm.interop.NativePointer
+import io.realm.interop.RealmCoreException
 import io.realm.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -81,12 +82,16 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
 
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any?): RealmResultsImpl<T> {
-        return fromQuery(
-            realm,
-            RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args),
-            clazz,
-            schema,
-        )
+        try {
+            return fromQuery(
+                realm,
+                RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args),
+                clazz,
+                schema,
+            )
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler("Invalid syntax for query `$query`", exception)
+        }
     }
 
     /**

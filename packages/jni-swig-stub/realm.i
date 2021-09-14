@@ -105,7 +105,7 @@ void throw_as_java_exception(JNIEnv *jenv) {
 
         // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
         // maps to the core error.
-        static jclass error_type_class = (jenv)->FindClass("io/realm/interop/CoreErrorUtils");
+        jclass error_type_class = (jenv)->FindClass("io/realm/interop/CoreErrorUtils");
         static jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
                                                                       "coreErrorAsThrowable",
                                                                       "(ILjava/lang/String;)Ljava/lang/Throwable;");

@@ -60,7 +60,7 @@ class RealmTests {
     fun writeBlockingInsideWriteThrows() {
         runBlocking {
             realm.write {
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IllegalStateException> {
                     realm.writeBlocking { }
                 }
             }
@@ -71,7 +71,7 @@ class RealmTests {
     @Test
     fun writeBlockIngInsideWriteBlockingThrows() {
         realm.writeBlocking {
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IllegalStateException> {
                 realm.writeBlocking { }
             }
         }
