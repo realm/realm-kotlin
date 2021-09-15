@@ -23,11 +23,13 @@ import io.realm.mongodb.EmailPassword
 import io.realm.mongodb.appConfigurationOf
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.runBlocking
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 const val TEST_APP_1 = "testapp1" // Id for the default test app
 const val BASE_URL = "http://127.0.0.1:9090"
 
+@Ignore
 class AppTests {
 
     @Test
