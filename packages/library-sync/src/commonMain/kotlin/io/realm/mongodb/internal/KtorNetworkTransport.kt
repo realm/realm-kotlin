@@ -83,7 +83,10 @@ class KtorNetworkTransport(
 
                         // 2. Then add all headers received from OS
                         headers.forEach { (key, value) ->
-                            append(it.key, it.value)
+                            // It is not allowed to set content type on gets https://github.com/ktorio/ktor/issues/1127
+                            if (method != "get" || key != HttpHeaders.ContentType ) {
+                                append(key, value)
+                            }
                         }
 
                         // 3. Finally, if we have a non-default auth header name, replace the OS
