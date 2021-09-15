@@ -24,7 +24,7 @@ using namespace realm::jni_util;
 realm_notification_token_t *
 register_results_notification_cb(realm_results_t *results, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_results_add_notification_callback(
@@ -63,7 +63,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
 realm_notification_token_t *
 register_list_notification_cb(realm_list_t *list, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_list_add_notification_callback(
@@ -100,7 +100,7 @@ register_list_notification_cb(realm_list_t *list, jobject callback) {
 realm_notification_token_t *
 register_object_notification_cb(realm_object_t *object, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_object_add_notification_callback(
@@ -136,9 +136,9 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/interop/CinteropCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/CinteropCallback");
     static jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess",
-                                                           "(Lio/realm/interop/NativePointer;)V");
+                                                           "(Lio/realm/internal/interop/NativePointer;)V");
     static jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError", "(Ljava/lang/Throwable;)V");
 
     realm_app_log_in_with_credentials(
@@ -168,7 +168,7 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                                          on_error_method,
                                          throwable);
                 } else {
-                    static jclass exception_class = jenv->FindClass("io/realm/interop/LongPointerWrapper");
+                    static jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
 
                     jobject pointer = jenv->NewObject(exception_class, exception_constructor,

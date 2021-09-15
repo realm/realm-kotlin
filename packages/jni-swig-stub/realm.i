@@ -142,11 +142,6 @@ struct realm_size_t {
 %include "enumtypeunsafe.swg"
 %javaconst(1);
 
-// Make swig types package private (as opposed to public by default) to ensure that we don't expose
-// types outside the package
-%typemap(javaclassmodifiers) SWIGTYPE "class";
-%typemap(javaclassmodifiers) NotificationCallback "public class";
-%typemap(javaclassmodifiers) enum SWIGTYPE "final class";
 
 // FIXME OPTIMIZE Support getting/setting multiple attributes. Ignored for now due to incorrect
 //  type cast in Swig-generated wrapper for "const realm_property_key_t*" which is not cast

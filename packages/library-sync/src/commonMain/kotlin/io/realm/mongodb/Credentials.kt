@@ -16,8 +16,8 @@
 
 package io.realm.mongodb
 
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 
 /**
  * TODO

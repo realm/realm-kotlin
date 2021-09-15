@@ -16,7 +16,7 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.interop.NativePointer
+import io.realm.internal.interop.NativePointer
 import io.realm.mongodb.User
 
 internal class UserImpl(

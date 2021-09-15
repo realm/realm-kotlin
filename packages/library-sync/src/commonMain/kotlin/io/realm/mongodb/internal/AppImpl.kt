@@ -17,9 +17,9 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.interop.CinteropCallback
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User

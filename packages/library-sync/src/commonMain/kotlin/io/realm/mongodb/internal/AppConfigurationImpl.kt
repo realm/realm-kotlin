@@ -16,8 +16,8 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
