@@ -113,6 +113,7 @@ internal class KtorNetworkTransportTest {
     // TODO Need to ensure errors from network layers are propagated. Could be done by
     //  interrupting like on Java (OkHttpNetworkTransportTests.requestInterrupted), but could maybe
     //  be simpler without need to send signals in a platform agnostic way
+    //  https://github.com/realm/realm-kotlin/issues/451
     fun errorPropagation() {
     }
 }
