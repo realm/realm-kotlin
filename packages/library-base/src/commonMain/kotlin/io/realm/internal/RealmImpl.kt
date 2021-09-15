@@ -7,6 +7,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
@@ -72,10 +73,19 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
     }
 
     constructor(configuration: RealmConfiguration) :
-        this(configuration as RealmConfigurationImpl, RealmInterop.realm_open(configuration.nativeConfig))
+        this(
+            configuration as RealmConfigurationImpl,
+            try {
+                RealmInterop.realm_open(configuration.nativeConfig)
+            } catch (exception: RealmCoreException) {
+                throw genericRealmCoreExceptionHandler(
+                    "Could not open Realm with the given configuration",
+                    exception
+                )
+            }
+        )
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
-        @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
             val (nativePointer, versionId, result) = this.writer.write(block)
             // Update the user facing Realm before returning the result.
@@ -84,8 +94,11 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
             // to detect it and update the user Realm.
             updateRealmPointer(RealmReference(this, nativePointer))
             return result
-        } catch (e: Exception) {
-            throw e
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler(
+                "Could not execute the write transaction",
+                exception
+            )
         }
     }
 

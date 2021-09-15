@@ -23,6 +23,7 @@ import realm_wrapper.realm_schema_mode_e
 interface NativeEnum<T : Enum<T>> {
     val nativeValue: Enum<T>
 }
+
 // Interfaces to hold C API enumerated constant from cinterop
 interface NativeEnumerated {
     val nativeValue: UInt
