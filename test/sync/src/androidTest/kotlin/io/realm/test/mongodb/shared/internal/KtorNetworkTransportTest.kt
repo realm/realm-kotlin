@@ -16,8 +16,8 @@
 
 package io.realm.test.mongodb.shared.internal
 
-import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

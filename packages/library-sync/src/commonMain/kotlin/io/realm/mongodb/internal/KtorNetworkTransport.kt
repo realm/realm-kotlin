@@ -20,7 +20,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.receive
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.ServerResponseException
-import io.ktor.client.features.logging.DEFAULT
 import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.features.logging.Logger
 import io.ktor.client.features.logging.Logging
@@ -36,21 +35,15 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.utils.io.errors.IOException
-import io.realm.internal.platform.freeze
-import io.realm.internal.platform.runBlocking
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
 import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.freeze
+import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlin.collections.Map
-import kotlin.collections.MutableMap
-import kotlin.collections.forEach
-import kotlin.collections.mapOf
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
-import kotlin.collections.toMutableMap
 
 class KtorNetworkTransport(
     override val authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME,
@@ -63,6 +56,7 @@ class KtorNetworkTransport(
 
     private val client: HttpClient = getClient()
 
+    @Suppress("ComplexMethod", "TooGenericExceptionCaught")
     override fun sendRequest(
         method: String,
         url: String,
@@ -84,7 +78,7 @@ class KtorNetworkTransport(
                         // 2. Then add all headers received from OS
                         headers.forEach { (key, value) ->
                             // It is not allowed to set content type on gets https://github.com/ktorio/ktor/issues/1127
-                            if (method != "get" || key != HttpHeaders.ContentType ) {
+                            if (method != "get" || key != HttpHeaders.ContentType) {
                                 append(key, value)
                             }
                         }
@@ -122,18 +116,18 @@ class KtorNetworkTransport(
                 } catch (e: IOException) {
                     Response(0, ERROR_IO, mapOf(), e.toString())
                 } catch (e: CancellationException) {
-                    // FIXME: validate we propagate the custom codes as an actual exception to the user
-                    // see: https://github.com/realm/realm-kotlin/issues/451
+                    // FIXME Validate we propagate the custom codes as an actual exception to the user
+                    //  https://github.com/realm/realm-kotlin/issues/451
                     Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
                 } catch (e: Exception) {
-                    // FIXME: validate we propagate the custom codes as an actual exception to the user
-                    // see: https://github.com/realm/realm-kotlin/issues/451
+                    // FIXME Validate we propagate the custom codes as an actual exception to the user
+                    //  https://github.com/realm/realm-kotlin/issues/451
                     Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
                 }
             }
         } catch (e: Exception) {
-            // FIXME: validate we propagate the custom codes as an actual exception to the user
-            // see: https://github.com/realm/realm-kotlin/issues/451
+            // FIXME Validate we propagate the custom codes as an actual exception to the user
+            //  https://github.com/realm/realm-kotlin/issues/451
             return Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
         }
     }
@@ -180,7 +174,7 @@ class KtorNetworkTransport(
             // TODO figure out logging and obfuscating sensitive info
             //  https://github.com/realm/realm-kotlin/issues/410
             install(Logging) {
-                logger = object: Logger {
+                logger = object : Logger {
                     // TODO Hook up with AppConfiguration/RealmConfiguration logger
                     private val logger = createDefaultSystemLogger("realm-http")
                     override fun log(message: String) {

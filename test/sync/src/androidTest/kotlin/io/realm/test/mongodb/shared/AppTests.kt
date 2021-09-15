@@ -20,13 +20,12 @@ import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.EmailPassword
-import io.realm.mongodb.User
 import io.realm.mongodb.appConfigurationOf
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 
-const val TEST_APP_1 = "testapp1"       // Id for the default test app
+const val TEST_APP_1 = "testapp1" // Id for the default test app
 const val BASE_URL = "http://127.0.0.1:9090"
 
 class AppTests {

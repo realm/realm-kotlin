@@ -20,4 +20,3 @@ package io.realm.mongodb
  * TODO
  */
 interface User
-

@@ -1186,8 +1186,6 @@ private inline fun <reified T : Any> disposeUserData(userdata: COpaquePointer?) 
     stableUserData<T>(userdata).dispose()
 }
 
-
-
 // Development debugging methods
 // TODO Consider consolidating into platform abstract methods!?
 // private inline fun printlntid(s: String) = printlnWithTid(s)

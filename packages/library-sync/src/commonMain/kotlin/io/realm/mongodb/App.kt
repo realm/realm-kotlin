@@ -18,7 +18,6 @@ package io.realm.mongodb
 
 import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.AppImpl
-import kotlinx.coroutines.CoroutineDispatcher
 
 /**
  * TODO
@@ -43,4 +42,3 @@ interface App {
         ): App = AppImpl(configuration as AppConfigurationImpl)
     }
 }
-

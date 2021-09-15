@@ -50,4 +50,3 @@ fun appConfigurationOf(
 ): AppConfiguration {
     return AppConfigurationImpl(appId, baseUrl, dispatcher)
 }
-
