@@ -43,7 +43,7 @@ class IndexTests {
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
-            //  types as primary keys
+            //  types as having an index
             if (type.collectionType != CollectionType.RLM_COLLECTION_TYPE_NONE) {
                 continue
             }
@@ -72,7 +72,7 @@ class IndexTests {
                 )
             )
             if (type.isIndexingSupported) {
-                assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, type.toString())
+                assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
             } else {
                 assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, type.toString())
                 assertTrue(result.messages.contains("but must be of type"))
