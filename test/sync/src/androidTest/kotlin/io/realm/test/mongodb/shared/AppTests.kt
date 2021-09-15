@@ -34,7 +34,8 @@ class AppTests {
     @Test
     fun login() {
         // Send request directly to the local server to get the actual app ID
-        // TODO Wrap test app setup as in
+        // TODO Wrap test app setup as in Realm Java
+        //  https://github.com/realm/realm-kotlin/pull/447#discussion_r707350138
         val applicationId = KtorNetworkTransport(
             timeoutMs = 5000,
             dispatcher = singleThreadDispatcher("transport dispatcher")

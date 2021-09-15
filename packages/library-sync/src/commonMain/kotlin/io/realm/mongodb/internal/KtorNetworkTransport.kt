@@ -18,7 +18,6 @@ package io.realm.mongodb.internal
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.receive
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.ServerResponseException
 import io.ktor.client.features.logging.DEFAULT
@@ -36,10 +35,12 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.utils.io.errors.IOException
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -54,6 +55,8 @@ import kotlin.collections.toMutableMap
 class KtorNetworkTransport(
     override val authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME,
     override val customHeaders: Map<String, String> = mapOf(),
+    // FIXME Rework timeout to take a Duration instead
+    //  https://github.com/realm/realm-kotlin/issues/408
     private val timeoutMs: Long,
     private val dispatcher: CoroutineDispatcher,
 ) : NetworkTransport {
@@ -78,30 +81,21 @@ class KtorNetworkTransport(
                             append(it.key, it.value)
                         }
 
-                        // 2. Then replace default authorization header with custom one if present
-                        headers
-                            .toMutableMap().also { receivedHeaders ->
-                                val authorizationHeaderValue =
-                                    headers[DEFAULT_AUTHORIZATION_HEADER_NAME]
+                        // 2. Then add all headers received from OS
+                        headers.forEach { (key, value) ->
+                            append(it.key, it.value)
+                        }
 
-                                if (authorizationHeaderValue != null &&
-                                    authorizationHeaderName != DEFAULT_AUTHORIZATION_HEADER_NAME
-                                ) {
-                                    receivedHeaders.remove(DEFAULT_AUTHORIZATION_HEADER_NAME)
-                                    receivedHeaders[authorizationHeaderName] =
-                                        authorizationHeaderValue
-                                }
-
-                                // 3. Finally add all headers defined by Object Store
-                                receivedHeaders.forEach {
-                                    if (method != "get"
-                                        || !url.contains("profile")
-                                        || it.key != HttpHeaders.ContentType
-                                    ) {
-                                        append(it.key, it.value)
-                                    }
-                                }
+                        // 3. Finally, if we have a non-default auth header name, replace the OS
+                        // default with the custom one
+                        if (authorizationHeaderName != DEFAULT_AUTHORIZATION_HEADER_NAME &&
+                            contains(DEFAULT_AUTHORIZATION_HEADER_NAME)
+                        ) {
+                            this[DEFAULT_AUTHORIZATION_HEADER_NAME]?.let { originalAuthValue ->
+                                this[authorizationHeaderName] = originalAuthValue
                             }
+                            this.remove(DEFAULT_AUTHORIZATION_HEADER_NAME)
+                        }
                     }
 
                     addBody(method, body)
@@ -122,20 +116,22 @@ class KtorNetworkTransport(
                 } catch (e: ServerResponseException) {
                     // 500s are thrown as ServerResponseException
                     processHttpResponse(e.response)
+                } catch (e: IOException) {
+                    Response(0, ERROR_IO, mapOf(), e.toString())
                 } catch (e: CancellationException) {
                     // FIXME: validate we propagate the custom codes as an actual exception to the user
                     // see: https://github.com/realm/realm-kotlin/issues/451
-                    Response(-1, -1, mapOf(), "")
+                    Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
                 } catch (e: Exception) {
                     // FIXME: validate we propagate the custom codes as an actual exception to the user
                     // see: https://github.com/realm/realm-kotlin/issues/451
-                    Response(-2, -2, mapOf(), "")
+                    Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
                 }
             }
         } catch (e: Exception) {
             // FIXME: validate we propagate the custom codes as an actual exception to the user
             // see: https://github.com/realm/realm-kotlin/issues/451
-            return Response(-3, -3, mapOf(), "")
+            return Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
         }
     }
 
@@ -167,7 +163,9 @@ class KtorNetworkTransport(
         // freezes captured objects too, see:
         // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
         val frozenTimeout = timeoutMs.freeze()
-        return HttpClient(CIO) {
+        // TODO We probably need to fix the clients, so ktor does not automatically override with
+        //  another client if people update the runtime available ones through other dependencies
+        return HttpClient() {
             // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
 
             install(HttpTimeout) {
@@ -177,8 +175,15 @@ class KtorNetworkTransport(
             }
 
             // TODO figure out logging and obfuscating sensitive info
+            //  https://github.com/realm/realm-kotlin/issues/410
             install(Logging) {
-                logger = Logger.DEFAULT
+                logger = object: Logger {
+                    // TODO Hook up with AppConfiguration/RealmConfiguration logger
+                    private val logger = createDefaultSystemLogger("realm-http")
+                    override fun log(message: String) {
+                        logger.log(io.realm.log.LogLevel.DEBUG, throwable = null, message = message)
+                    }
+                }
                 level = LogLevel.BODY
             }
 

@@ -71,11 +71,8 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
 
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
-
-                implementation("ch.qos.logback:logback-classic:${Versions.logback}")
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
@@ -91,6 +88,9 @@ kotlin {
         create("jvm") {
             dependsOn(getByName("commonMain"))
             kotlin.srcDir("src/jvm/kotlin")
+            dependencies {
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+            }
         }
         getByName("jvmMain") {
             dependsOn(getByName("jvm"))
@@ -101,8 +101,6 @@ kotlin {
                 api(project(":cinterop"))
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
-
-                implementation("io.ktor:ktor-client-android:${Versions.ktor}")
             }
         }
         getByName("androidTest") {
@@ -122,7 +120,12 @@ kotlin {
 
             // Observe this ktor dependency cannot be abstracted away with the ios ones
             dependencies {
-                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+                // TODO According to https://ktor.io/docs/http-client-engines.html#desktop we should
+                //  use ktor-client-curl for desktop, but the KtorNetworkTransportTest fails with
+                //  a trace that looks like some operations are interleaved. Test works with CIO
+                //  even though it is only listed as an option for JVM/Android!?
+                //implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
             }
         }
         getByName("iosArm64Main") {

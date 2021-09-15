@@ -29,6 +29,9 @@ internal class AppConfigurationImpl(
 ) : AppConfiguration {
 
     private val networkTransport: io.realm.internal.interop.sync.NetworkTransport = KtorNetworkTransport(
+        // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
+        //  constant in AppConfiguration.Companion
+        //  https://github.com/realm/realm-kotlin/issues/408
         timeoutMs = 5000,
         dispatcher = networkTransportDispatcher
     )
