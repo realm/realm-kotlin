@@ -67,7 +67,7 @@ class IndexTests {
                         }
 
                         val configuration =
-                            RealmConfiguration(schema = setOf(A::class))
+                            RealmConfiguration.with(schema = setOf(A::class))
                     """.trimIndent()
                 )
             )
@@ -78,5 +78,30 @@ class IndexTests {
                 assertTrue(result.messages.contains("but must be of type"))
             }
         }
+    }
+
+    @Test
+    fun `index_collection_unsupported`() {
+        val result = compileFromSource(
+            plugins = listOf(io.realm.compiler.Registrar()),
+            source = SourceFile.kotlin(
+                "indexing_collections.kt",
+                """
+                        import io.realm.RealmObject
+                        import io.realm.RealmConfiguration
+                        import io.realm.annotations.Index
+
+                        class A : RealmObject {
+                            @Index
+                            var indexedKey: RealmList<Char> = realmListOf()
+                        }
+
+                        val configuration =
+                            RealmConfiguration.with(schema = setOf(A::class))
+                    """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
+
     }
 }
