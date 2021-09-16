@@ -26,7 +26,6 @@ import io.realm.isManaged
 import io.realm.objects
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.PlatformUtils.triggerGC
-import io.realm.test.util.Utils.createRandomString
 import io.realm.version
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.Job

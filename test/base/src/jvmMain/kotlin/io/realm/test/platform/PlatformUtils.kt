@@ -38,6 +38,7 @@ actual object PlatformUtils {
 
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()
 
+    @Suppress("ExplicitGarbageCollectionCall")
     actual fun triggerGC() {
         for (i in 1..30) {
             allocGarbage(0)
