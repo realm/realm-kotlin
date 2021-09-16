@@ -34,6 +34,12 @@ version = null
 runTests = true
 isReleaseBranch = releaseBranches.contains(currentBranch)
 
+// References to Docker containers holding the MongoDB Test server and infrastructure for
+// controlling it.
+mongoDbRealmContainer = null
+mongoDbRealmCommandServerContainer = null
+
+
 // Mac CI dedicated machine
 node_label = 'osx_kotlin'
 
@@ -74,72 +80,77 @@ pipeline {
                 runScm()
             }
         }
-        stage('Build') {
-            steps {
-                runBuild()
-            }
-        }
-        stage('Static Analysis') {
+//         stage('Build') {
+//             steps {
+//                 runBuild()
+//             }
+//         }
+//         stage('Static Analysis') {
+//             when { expression { runTests } }
+//             steps {
+//                 runStaticAnalysis()
+//             }
+//         }
+//         stage('Tests Compiler Plugin') {
+//             when { expression { runTests } }
+//             steps {
+//                 runCompilerPluginTest()
+//             }
+//         }
+//         stage('Tests Macos - Unit Tests') {
+//             when { expression { runTests } }
+//             steps {
+//                 testAndCollect("packages", "macosTest")
+//             }
+//         }
+        stage('Tests Macos - Integration Tests') {
             when { expression { runTests } }
             steps {
-                runStaticAnalysis()
+                testWithServer("test", "macosTest")
             }
         }
-        stage('Tests Compiler Plugin') {
-            when { expression { runTests } }
-            steps {
-                runCompilerPluginTest()
-            }
-        }
-        stage('Tests Macos') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "macosTest")
-                testAndCollect("test",     "macosTest")
-            }
-        }
-        stage('Tests Android') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "connectedAndroidTest")
-                testAndCollect("test",     "connectedAndroidTest")
-            }
-        }
-        stage('Tests JVM (compiler only)') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-            }
-        }
-        stage('Tests Android Sample App') {
-            when { expression { runTests } }
-            steps {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    runMonkey()
-                }
-            }
-        }
-        stage('Build Android on Java 8') {
-            when { expression { runTests } }
-            environment {
-                JAVA_HOME="${JAVA_8}"
-            }
-            steps {
-                runBuildAndroidApp()
-            }
-        }
-        stage('Publish SNAPSHOT to Maven Central') {
-            when { expression { shouldPublishSnapshot(version) } }
-            steps {
-                runPublishSnapshotToMavenCentral()
-            }
-        }
-        stage('Publish Release to Maven Central') {
-            when { expression { publishBuild } }
-            steps {
-                runPublishReleaseOnMavenCentral()
-            }
-        }
+//         stage('Tests Android') {
+//             when { expression { runTests } }
+//             steps {
+//                 testAndCollect("packages", "connectedAndroidTest")
+//                 testAndCollect("test",     "connectedAndroidTest")
+//             }
+//         }
+//         stage('Tests JVM (compiler only)') {
+//             when { expression { runTests } }
+//             steps {
+//                 testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+//             }
+//         }
+//         stage('Tests Android Sample App') {
+//             when { expression { runTests } }
+//             steps {
+//                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+//                     runMonkey()
+//                 }
+//             }
+//         }
+//         stage('Build Android on Java 8') {
+//             when { expression { runTests } }
+//             environment {
+//                 JAVA_HOME="${JAVA_8}"
+//             }
+//             steps {
+//                 runBuildAndroidApp()
+//             }
+//         }
+//         stage('Publish SNAPSHOT to Maven Central') {
+//             when { expression { shouldPublishSnapshot(version) } }
+//             steps {
+//                 runPublishSnapshotToMavenCentral()
+//             }
+//         }
+//         stage('Publish Release to Maven Central') {
+//             when { expression { publishBuild } }
+//             steps {
+//                 runPublishReleaseOnMavenCentral()
+//             }
+//         }
     }
     post {
         failure {
@@ -294,6 +305,46 @@ def runCompilerPluginTest() {
     }
 }
 
+def testWithServer(dir, task) {
+    buildEnv = buildDockerEnv("ci/realm-kotlin:master", push: currentBranch == currentBranch)
+    def props = readProperties file: 'dependencies.list'
+    echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
+    def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
+    docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
+      mdbRealmImage.pull()
+    }
+    def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
+
+    // Prepare Docker containers used by Instrumentation tests
+    // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
+    def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
+    sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
+    sh "docker network create ${dockerNetworkId}"
+    mongoDbRealmContainer = mdbRealmImage.run("--network ${dockerNetworkId} -v$tempDir:/apps")
+    mongoDbRealmCommandServerContainer = commandServerEnv.run("--network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
+    sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
+
+    try {
+        echo "RUNNING TESTS"
+        sh "curl -i http://127.0.0.1:8888/testapp1"
+    } catch (err) {
+        // We assume that creating these containers and the docker network can be considered an atomic operation.
+        if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
+            archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
+            mongoDbRealmContainer.stop()
+            mongoDbRealmCommandServerContainer.stop()
+            sh "docker network rm ${dockerNetworkId}"
+        }
+    }
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        sh """
+            pushd $dir
+            ./gradlew $task --info --stacktrace --no-daemon
+            popd
+        """
+        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
+    }
+}
 
 def testAndCollect(dir, task) {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
@@ -376,4 +427,30 @@ boolean shouldPublishSnapshot(version) {
         return false
     }
     return true
+}
+
+def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContainerId) {
+    sh "docker logs ${commandServerContainerId} > ./command-server.log"
+    zip([
+        'zipFile': 'command-server-log.zip',
+        'archive': true,
+        'glob' : 'command-server.log'
+    ])
+    sh 'rm command-server.log'
+
+    sh "docker cp ${mongoDbRealmContainerId}:/var/log/stitch.log ./stitch.log"
+    zip([
+        'zipFile': 'stitchlog.zip',
+        'archive': true,
+        'glob' : 'stitch.log'
+    ])
+    sh 'rm stitch.log'
+
+    sh "docker cp ${mongoDbRealmContainerId}:/var/log/mongodb.log ./mongodb.log"
+    zip([
+        'zipFile': 'mongodb.zip',
+        'archive': true,
+        'glob' : 'mongodb.log'
+    ])
+    sh 'rm mongodb.log'
 }
