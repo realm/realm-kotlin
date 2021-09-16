@@ -44,7 +44,7 @@ import io.realm.internal.freeze as freezeTyped
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
     private val tid: ULong
     private val realmInitializer = lazy {
-                MutableRealmImpl(owner.configuration, dispatcher)
+        MutableRealmImpl(owner.configuration, dispatcher)
     }
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealmImpl by realmInitializer
@@ -152,5 +152,4 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             }
         }
     }
-
 }
