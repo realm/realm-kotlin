@@ -35,6 +35,8 @@ interface MutableRealm : TypedRealm {
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
+     *
+     * @throws IllegalStateException if the write transaction was already cancelled.
      */
     fun cancelWrite()
 
@@ -48,7 +50,7 @@ interface MutableRealm : TypedRealm {
      * @param instance The object to create a copy from.
      * @return The managed version of the `instance`.
      *
-     * @throws RuntimeException if the class has a primary key field and an object with the same
+     * @throws IllegalArgumentException if the class has a primary key field and an object with the same
      * primary key already exists.
      */
     fun <T : RealmObject> copyToRealm(instance: T): T

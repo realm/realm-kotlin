@@ -19,6 +19,7 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.RealmObject
+import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.isFrozen
 import io.realm.isManaged
@@ -58,7 +59,11 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     internal fun beginTransaction() {
-        RealmInterop.realm_begin_write(realmReference.dbPointer)
+        try {
+            RealmInterop.realm_begin_write(realmReference.dbPointer)
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler("Cannot begin the write transaction", exception)
+        }
     }
 
     internal fun commitTransaction() {
@@ -89,7 +94,11 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     }
 
     override fun cancelWrite() {
-        RealmInterop.realm_rollback(realmReference.dbPointer)
+        try {
+            RealmInterop.realm_rollback(realmReference.dbPointer)
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler("Cannot cancel the write transaction", exception)
+        }
     }
 
     override fun <T : RealmObject> copyToRealm(instance: T): T {

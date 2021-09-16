@@ -12,7 +12,7 @@
  * limitations under the License.
  *
  */
-// TODO https://github.com/realm/realm-kotlin/issues/70
+// TODO https://github.com/realm/realm-kotlin/issues/303
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
 
 package io.realm.internal.interop
@@ -78,11 +78,11 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val runtimeException = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
+            val message = "[${error.error}]: ${error.message?.toKString()}"
+            val exception = coreErrorAsThrowable(error.error, message)
+
             realm_clear_last_error()
-            // FIXME Extract all error information and throw exceptions based on type
-            //  https://github.com/realm/realm-kotlin/issues/70
-            throw runtimeException
+            throw exception
         }
     }
 }
@@ -398,7 +398,7 @@ actual object RealmInterop {
                 )
             )
             if (!found.value) {
-                throw RuntimeException("Class \"$name\" not found")
+                throw IllegalArgumentException("Class \"$name\" not found")
             }
             return ClassKey(classInfo.key.toLong())
         }

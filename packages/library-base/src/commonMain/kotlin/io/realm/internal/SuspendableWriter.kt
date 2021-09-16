@@ -60,7 +60,6 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         return withContext(dispatcher) {
             var result: R
 
-            @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
             transactionMutex.withLock {
                 try {
                     realm.beginTransaction()
@@ -70,7 +69,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                     if (!shouldClose.value && realm.isInTransaction()) {
                         realm.commitTransaction()
                     }
-                } catch (e: Exception) {
+                } catch (e: IllegalStateException) {
                     if (realm.isInTransaction()) {
                         realm.cancelWrite()
                     }

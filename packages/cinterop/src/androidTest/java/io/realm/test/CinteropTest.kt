@@ -18,9 +18,15 @@ package io.realm.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.realm.internal.interop.CoreErrorUtils
+import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmCoreInvalidQueryException
+import io.realm.internal.interop.RealmCoreLogicException
+import io.realm.internal.interop.RealmCoreMissingPrimaryKeyException
 import io.realm.internal.interop.realm_class_flags_e
 import io.realm.internal.interop.realm_class_info_t
 import io.realm.internal.interop.realm_collection_type_e
+import io.realm.internal.interop.realm_errno_e
 import io.realm.internal.interop.realm_property_flags_e
 import io.realm.internal.interop.realm_property_info_t
 import io.realm.internal.interop.realm_property_type_e
@@ -103,7 +109,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2_renamed_col, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2_renamed_col, 1)
 
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreLogicException> {
             realmc.realm_open(config_2_renamed_col)
         }.run {
             assertEquals(
@@ -129,7 +135,7 @@ class CinteropTest {
             assertEquals(0, count.value)
 
             // old column was removed
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<RealmCoreInvalidQueryException> {
                 realmc.realm_query_parse(realm, foo_class, "int == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 })
             }.run {
                 assertEquals(
@@ -155,7 +161,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2, 2)
 
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreLogicException> {
             realmc.realm_open(config_2)
         }.run {
             assertEquals(
@@ -191,7 +197,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_3, 3)
 
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreLogicException> {
             realmc.realm_open(config_3)
         }.run {
             assertEquals(
@@ -495,7 +501,7 @@ class CinteropTest {
 
         // Missing primary key
         val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
-        assertFailsWith<RuntimeException> {
+        assertFailsWith<RealmCoreMissingPrimaryKeyException> {
             val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
         }
         realmc.realm_commit(realm)
@@ -555,6 +561,25 @@ class CinteropTest {
         //  https://github.com/realm/realm-kotlin/issues/65
 
         realmc.realm_commit(realm)
+    }
+
+    /**
+     * Monitors for changes in Core defined types.
+     */
+    @Test
+    fun errorTypes_watchdog() {
+        val coreErrorNativeValues = realm_errno_e::class.java.fields
+            .map { it.getInt(null) }
+            .toIntArray()
+
+        val mappedKotlinClasses = coreErrorNativeValues
+            .map { nativeValue -> CoreErrorUtils.coreErrorAsThrowable(nativeValue, null)::class }
+            .toSet()
+
+        // Validate we have a different exception defined for each core native value.
+        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
+        // Validate that there is an error defined for each exception.
+        assertEquals(RealmCoreException::class.sealedSubclasses.size, coreErrorNativeValues.size)
     }
 
     @Test

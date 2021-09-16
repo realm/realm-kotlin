@@ -177,6 +177,7 @@ kotlin {
         }
         val androidTest by getting {
             dependencies {
+                implementation(kotlin("reflect"))
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
                 implementation("junit:junit:${Versions.junit}")
