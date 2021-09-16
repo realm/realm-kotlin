@@ -26,7 +26,7 @@ import java.util.Locale
 import java.util.Properties
 
 /**
- * Load the C++ dynamic libraries from a the fat Jar.
+ * Load the C++ dynamic libraries from the fat Jar.
  * The fat Jar contains three platforms (Win, Linux and Mac) the loader detects the host platform
  * then extract and install the libraries in the same order specified in the 'dynamic_libraries.properties' file.
  *
@@ -42,7 +42,7 @@ class SoLoader {
     }
 
     fun load() {
-        // load the libraries in the reverse order of dependency specified in 'dynamic_libraries.properties'
+        // load the libraries in the order of dependency specified in 'dynamic_libraries.properties'
         for (lib in libs) {
             load(libraryName = lib.first, expectedHash = lib.second)
         }
@@ -51,12 +51,12 @@ class SoLoader {
     private fun load(libraryName: String, expectedHash: String) {
         // load the embedded .so file located inside the Jar file.
         // unpacking the file is skipped if the hash of the file is already installed.
-        // instead, the on disk file will be loaded.
+        // instead, the on-disk file will be loaded.
 
-        // for each SO file
+        // for each SO file:
         // check if the library is already installed in the default platform location
         // path should be <default user lib dir>/io.realm.kotlin/hash/librealmffi.so
-        // if the full path exists (and the on disk hash matches) then load it otherwise unpack and load it.
+        // if the full path exists (and the on-disk hash matches) then load it otherwise unpack and load it.
         val libraryInstallationLocation: File = defaultAbsolutePath(libraryName, expectedHash)
         if (!libraryInstallationLocation.exists()) {
             unpackAndInstall(libraryName, libraryInstallationLocation, expectedHash)
@@ -164,7 +164,7 @@ private enum class Platform(
         fun currentOS(): Platform {
             val os = System.getProperty("os.name").lowercase(Locale.getDefault())
             return when {
-                os.contains("jni/win") -> {
+                os.contains("win") -> {
                     WINDOWS
                 }
                 os.contains("nix") || os.contains("nux") || os.contains("aix") -> {
@@ -182,7 +182,7 @@ private enum class Platform(
 private const val BUFFER_SIZE = 16384 // 16k
 
 // Preserve the insertion orders for the keys in order to load
-// the dynamic libraries in the reverse order specified in the property file.
+// the dynamic libraries in the same order specified in the property file.
 private class OrderedProperties : Properties() {
     private val orderedKeys = LinkedList<Any>()
 

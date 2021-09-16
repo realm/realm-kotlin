@@ -60,7 +60,7 @@ class RealmTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
-    private lateinit var  configuration: RealmConfiguration
+    private lateinit var configuration: RealmConfiguration
 
     @BeforeTest
     fun setup() {

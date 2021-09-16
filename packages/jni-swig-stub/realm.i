@@ -460,7 +460,7 @@ void register_realm_scheduler(jlong config_ptr, jobject dispatchScheduler) {
 }
 
 void invoke_core_notify_callback(jlong core_notif_function, jlong callback_userdata) {
-    realm_scheduler_notify_func_t notify =  reinterpret_cast<realm_scheduler_notify_func_t>(core_notif_function);
+    realm_scheduler_notify_func_t notify = reinterpret_cast<realm_scheduler_notify_func_t>(core_notif_function);
     notify(reinterpret_cast<void*>(callback_userdata));
 }
 

@@ -61,7 +61,7 @@ kotlin {
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
 
-                // NOTE: scope needs to be API since 'implementation' will produce a PM with 'runtime' scope
+                // NOTE: scope needs to be API since 'implementation' will produce a POM with 'runtime' scope
                 //       causing the compiler plugin to fail to lookup classes from the 'cinterop' package
                 api(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")

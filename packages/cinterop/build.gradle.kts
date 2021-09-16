@@ -348,7 +348,7 @@ fun genHashFile(platform: String, prefix: String, suffix: String) {
     val libFFI: Path = Paths.get(resourceDir, platform, "${prefix}realm-ffi$suffix")
     val libRealmc: Path = Paths.get(resourceDir, platform, "${prefix}realmc$suffix")
 
-    // the orders matters, this will be loaded in the reverse order (i.e 'realm-ffi' first then 'realmc')
+    // the order matters (i.e 'realm-ffi' first then 'realmc')
     val macosHashes = """
             realm-ffi ${sha1(libFFI)}
             realmc ${sha1(libRealmc)}
