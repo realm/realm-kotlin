@@ -29,6 +29,9 @@ import kotlin.test.Test
 const val TEST_APP_1 = "testapp1" // Id for the default test app
 const val BASE_URL = "http://127.0.0.1:9090"
 
+// Cannot run on CI yet, as it requires sync server to be started with
+// tools/sync_test_server/start_server.sh and manual creation of a user "asdf@asdf.com"/"asdfasdf"
+// through the web ui
 @Ignore
 class AppTests {
 

@@ -26,6 +26,8 @@ import kotlin.test.assertEquals
 
 private const val BASE_URL = "http://127.0.0.1:8888" // URL to command server
 
+// Cannot run on CI yet, as it requires sync server to be started with
+// tools/sync_test_server/start_server.sh
 @Ignore
 internal class KtorNetworkTransportTest {
 
