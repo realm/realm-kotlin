@@ -12,6 +12,9 @@
 -keep class io.realm.internal.interop.NotificationCallback {
     *;
 }
+-keep class io.realm.internal.interop.CinteropCallback {
+    *;
+}
 
 # Utils to convert core errors into Kotlin exceptions
 -keep class io.realm.interop.CoreErrorUtils {

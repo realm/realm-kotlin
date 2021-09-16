@@ -15,4 +15,9 @@
   ~ limitations under the License.
   -->
 
-<manifest package="io.realm.mongodb.sync" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.realm.mongodb">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+</manifest>
