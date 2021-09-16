@@ -22,6 +22,7 @@ plugins {
     id("com.android.library")
     id("io.realm.kotlin")
     id("realm-lint")
+    kotlin("plugin.serialization") version "1.5.21"
 }
 
 repositories {
@@ -48,6 +49,11 @@ kotlin {
                 // Our current compiler plugin tests only runs on JVM, so makes sense to keep them
                 // for now, but ideally they should go to the compiler plugin tests.
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
+
+                // For server admin
+                implementation("io.ktor:ktor-client-core:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
             }
         }
 
