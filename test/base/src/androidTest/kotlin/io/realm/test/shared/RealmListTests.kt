@@ -519,12 +519,10 @@ internal abstract class ManagedListTester<T>(
         val dataSet = typeSafetyManager.getInitialDataSet()
         val assertions = { list: RealmList<T> ->
             // Fails when using invalid indices
-            // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IndexOutOfBoundsException> {
                 list[-1]
             }
-            // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IndexOutOfBoundsException> {
                 list[123]
             }
 
@@ -571,14 +569,11 @@ internal abstract class ManagedListTester<T>(
             dataSet.reversed().forEachIndexed { index, e ->
                 assertElementsAreEqual(e, list[index])
             }
-
             // Fails when using invalid indices
-            // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IndexOutOfBoundsException> {
                 list.add(-1, typeSafetyManager.getInitialDataSet()[0])
             }
-            // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IndexOutOfBoundsException> {
                 list.add(123, typeSafetyManager.getInitialDataSet()[0])
             }
         }
@@ -630,12 +625,10 @@ internal abstract class ManagedListTester<T>(
             }
 
             // Fails when using invalid indices
-            // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IndexOutOfBoundsException> {
                 list.addAll(-1, dataSet)
             }
-            // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-            assertFailsWith<RuntimeException> {
+            assertFailsWith<IndexOutOfBoundsException> {
                 list.addAll(123, dataSet)
             }
         }
@@ -646,12 +639,10 @@ internal abstract class ManagedListTester<T>(
                 val list = typeSafetyManager.createContainerAndGetList(this)
 
                 // Fails when using wrong indices
-                // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IndexOutOfBoundsException> {
                     list.addAll(-1, listOf())
                 }
-                // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IndexOutOfBoundsException> {
                     list.addAll(123, listOf())
                 }
 
@@ -733,20 +724,17 @@ internal abstract class ManagedListTester<T>(
                 val list = typeSafetyManager.createContainerAndGetList(this)
 
                 // Fails when using invalid indices
-                // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IndexOutOfBoundsException> {
                     list.removeAt(0)
                 }
 
                 list.add(dataSet[0])
 
                 // Fails when using invalid indices
-                // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IndexOutOfBoundsException> {
                     list.removeAt(-1)
                 }
-                // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IndexOutOfBoundsException> {
                     list.removeAt(123)
                 }
 
@@ -792,12 +780,10 @@ internal abstract class ManagedListTester<T>(
                 assertElementsAreEqual(dataSet[0], previousElement)
 
                 // Fails when using invalid indices
-                // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IndexOutOfBoundsException> {
                     list[-1] = dataSet[0]
                 }
-                // TODO should be IndexOutOfBoundsException - see https://github.com/realm/realm-kotlin/issues/70
-                assertFailsWith<RuntimeException> {
+                assertFailsWith<IndexOutOfBoundsException> {
                     list[123] = dataSet[0]
                 }
 
@@ -826,16 +812,16 @@ internal abstract class ManagedListTester<T>(
 
     // Retrieves the list again but this time from Realm to check the getter is called correctly
     private fun assertListAndCleanup(assertion: (RealmList<T>) -> Unit) {
-        val container = realm.objects<RealmListContainer>().first()
-        val list = typeSafetyManager.getList(container)
-
-        // Assert
-        errorCatcher {
-            assertion(list)
-        }
-
-        // Clean up
         realm.writeBlocking {
+            val container = this.objects<RealmListContainer>().first()
+            val list = typeSafetyManager.getList(container)
+
+            // Assert
+            errorCatcher {
+                assertion(list)
+            }
+
+            // Clean up
             delete(findLatest(container)!!)
         }
     }

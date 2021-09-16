@@ -21,6 +21,7 @@ import io.realm.RealmObject
 import io.realm.internal.interop.ColumnKey
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import kotlin.reflect.KClass
 
@@ -118,7 +119,18 @@ object RealmObjectHelper {
         //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
         //  only. This relates to the overall concern of having a generic path for getter/setter
         //  instead of generating a typed path for each type.
-        RealmInterop.realm_set_value(o, key, value, false)
+        try {
+            RealmInterop.realm_set_value(o, key, value, false)
+        }
+        // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
+        // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
+        // info that might help users to understand the exception.
+        catch (exception: RealmCoreException) {
+            throw IllegalStateException(
+                "Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                exception
+            )
+        }
     }
 
     @Suppress("unused") // Called from generated code

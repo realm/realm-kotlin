@@ -27,7 +27,6 @@ import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.PlatformUtils.triggerGC
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.BufferedReader
@@ -36,7 +35,6 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
-@Ignore
 class MemoryTests {
 
     lateinit var tmpDir: String

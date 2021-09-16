@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
  * A RealmList has two modes: `managed` and `unmanaged`. In `managed` mode all objects are persisted
  * inside a Realm whereas in `unmanaged` mode it works as a normal [MutableList].
  *
+ *
  * Only Realm can create managed RealmLists. Managed RealmLists will automatically update their
  * content whenever the underlying Realm is updated. Said content can only be accessed using the
  * getter of a [RealmObject].

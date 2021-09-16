@@ -19,6 +19,45 @@ package io.realm.internal
 
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
+import io.realm.internal.interop.RealmCoreCallbackException
+import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
+import io.realm.internal.interop.RealmCoreColumnNotFoundException
+import io.realm.internal.interop.RealmCoreCrossTableLinkTargetException
+import io.realm.internal.interop.RealmCoreDuplicatePrimaryKeyValueException
+import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
+import io.realm.internal.interop.RealmCoreInvalidArgumentException
+import io.realm.internal.interop.RealmCoreInvalidPathErrorException
+import io.realm.internal.interop.RealmCoreInvalidPropertyException
+import io.realm.internal.interop.RealmCoreInvalidQueryException
+import io.realm.internal.interop.RealmCoreInvalidQueryStringException
+import io.realm.internal.interop.RealmCoreInvalidatedObjectException
+import io.realm.internal.interop.RealmCoreKeyAlreadyUsedException
+import io.realm.internal.interop.RealmCoreKeyNotFoundException
+import io.realm.internal.interop.RealmCoreLogicException
+import io.realm.internal.interop.RealmCoreMaximumFileSizeExceededException
+import io.realm.internal.interop.RealmCoreMissingPrimaryKeyException
+import io.realm.internal.interop.RealmCoreMissingPropertyValueException
+import io.realm.internal.interop.RealmCoreModifyPrimaryKeyException
+import io.realm.internal.interop.RealmCoreMultipleSyncAgentsException
+import io.realm.internal.interop.RealmCoreNoSuchObjectException
+import io.realm.internal.interop.RealmCoreNoSuchTableException
+import io.realm.internal.interop.RealmCoreNoneException
+import io.realm.internal.interop.RealmCoreNotClonableException
+import io.realm.internal.interop.RealmCoreNotInATransactionException
+import io.realm.internal.interop.RealmCoreOtherException
+import io.realm.internal.interop.RealmCoreOutOfDiskSpaceException
+import io.realm.internal.interop.RealmCoreOutOfMemoryException
+import io.realm.internal.interop.RealmCorePropertyNotNullableException
+import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
+import io.realm.internal.interop.RealmCoreReadOnlyPropertyException
+import io.realm.internal.interop.RealmCoreSerializationErrorException
+import io.realm.internal.interop.RealmCoreUnexpectedPrimaryKeyException
+import io.realm.internal.interop.RealmCoreUnknownException
+import io.realm.internal.interop.RealmCoreUnsupportedFileFormatVersionException
+import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
+import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
 import io.realm.isManaged
 import io.realm.isValid
@@ -42,7 +81,6 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-@Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
@@ -59,15 +97,11 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
             type,
             RealmInterop.realm_object_create(realm.dbPointer, key)
         )
-    } catch (e: RuntimeException) {
-        // FIXME Throw proper exception
-        //  https://github.com/realm/realm-kotlin/issues/70
-        @Suppress("TooGenericExceptionThrown")
-        throw RuntimeException("Failed to create object of type '$objectType'", e)
+    } catch (e: RealmCoreException) {
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
 }
 
-@Suppress("TooGenericExceptionCaught") // Remove when errors are properly typed in https://github.com/realm/realm-kotlin/issues/70
 internal fun <T : RealmObject> create(
     mediator: Mediator,
     realm: RealmReference,
@@ -88,10 +122,7 @@ internal fun <T : RealmObject> create(
         val existingPrimaryKeyObject =
             RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
         existingPrimaryKeyObject?.let {
-            // FIXME Throw proper exception
-            //  https://github.com/realm/realm-kotlin/issues/70
-            @Suppress("TooGenericExceptionThrown")
-            throw RuntimeException("Cannot create object with existing primary key")
+            throw IllegalArgumentException("Cannot create object with existing primary key")
         }
         val managedModel = mediator.createInstanceOf(type)
         return managedModel.manage(
@@ -100,11 +131,8 @@ internal fun <T : RealmObject> create(
             type,
             RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
         )
-    } catch (e: RuntimeException) {
-        // FIXME Throw proper exception
-        //  https://github.com/realm/realm-kotlin/issues/70
-        @Suppress("TooGenericExceptionThrown")
-        throw RuntimeException("Failed to create object of type '$objectType'", e)
+    } catch (e: RealmCoreException) {
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
 }
 
@@ -202,4 +230,47 @@ private fun <T : RealmObject> processListMember(
         }
     }
     return list
+}
+
+fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
+    return when (cause) {
+        is RealmCoreOutOfMemoryException,
+        is RealmCoreUnsupportedFileFormatVersionException,
+        is RealmCoreInvalidPathErrorException,
+        is RealmCoreMultipleSyncAgentsException,
+        is RealmCoreAddressSpaceExhaustedException,
+        is RealmCoreMaximumFileSizeExceededException,
+        is RealmCoreOutOfDiskSpaceException -> Error(message, cause)
+        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException(message)
+        is RealmCoreInvalidArgumentException,
+        is RealmCoreInvalidQueryStringException,
+        is RealmCoreOtherException,
+        is RealmCoreInvalidQueryException,
+        is RealmCoreMissingPrimaryKeyException,
+        is RealmCoreUnexpectedPrimaryKeyException,
+        is RealmCoreWrongPrimaryKeyTypeException,
+        is RealmCoreModifyPrimaryKeyException,
+        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException(message, cause)
+        is RealmCoreNotInATransactionException,
+        is RealmCoreLogicException -> IllegalStateException(message, cause)
+        is RealmCoreNoneException,
+        is RealmCoreUnknownException,
+        is RealmCoreNotClonableException,
+        is RealmCoreWrongThreadException,
+        is RealmCoreInvalidatedObjectException,
+        is RealmCoreInvalidPropertyException,
+        is RealmCoreMissingPropertyValueException,
+        is RealmCorePropertyTypeMismatchException,
+        is RealmCoreReadOnlyPropertyException,
+        is RealmCorePropertyNotNullableException,
+        is RealmCoreNoSuchTableException,
+        is RealmCoreNoSuchObjectException,
+        is RealmCoreCrossTableLinkTargetException,
+        is RealmCoreKeyNotFoundException,
+        is RealmCoreColumnNotFoundException,
+        is RealmCoreColumnAlreadyExistsException,
+        is RealmCoreKeyAlreadyUsedException,
+        is RealmCoreSerializationErrorException,
+        is RealmCoreCallbackException -> RuntimeException(message, cause)
+    }
 }

@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// TODO https://github.com/realm/realm-kotlin/issues/70
-@file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
 
 package io.realm.internal.interop
 
@@ -231,7 +229,7 @@ actual object RealmInterop {
         val found = booleanArrayOf(false)
         realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
         if (!found[0]) {
-            throw RuntimeException("Cannot find class: '$name")
+            throw IllegalArgumentException("Cannot find class: '$name")
         }
         return ClassKey(info.key)
     }
@@ -487,7 +485,7 @@ actual object RealmInterop {
         val classInfo = realm_class_info_t()
         realmc.realm_find_class((realm as LongPointerWrapper).ptr, table, found, classInfo)
         if (!found[0]) {
-            throw RuntimeException("Cannot find class: '$table")
+            throw IllegalArgumentException("Cannot find class: '$table")
         }
         return classInfo
     }
@@ -497,7 +495,7 @@ actual object RealmInterop {
         val pinfo = realm_property_info_t()
         realmc.realm_find_property((realm as LongPointerWrapper).ptr, classInfo.key, col, found, pinfo)
         if (!found[0]) {
-            throw RuntimeException("Cannot find property: '$col' in '$classInfo.name'")
+            throw IllegalArgumentException("Cannot find property: '$col' in '$classInfo.name'")
         }
         return pinfo
     }

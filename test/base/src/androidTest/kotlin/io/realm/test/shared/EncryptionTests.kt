@@ -77,23 +77,26 @@ class EncryptionTests {
         Realm.open(encryptedConf).close()
 
         // Assert fails with no encryption key
-        assertFailsWith(RuntimeException::class, "Encrypted Realm should not be openable with no encryption key") {
-            val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .path("$tmpDir/default.realm")
-                .build()
-            Realm.open(conf)
-        }
+        RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path("$tmpDir/default.realm")
+            .build()
+            .let { conf ->
+                assertFailsWith(IllegalArgumentException::class, "Encrypted Realm should not be openable with no encryption key") {
+                    Realm.open(conf)
+                }
+            }
 
         // Assert fails with wrong encryption key
         val randomKey = Random.nextBytes(64)
-        assertFailsWith(RuntimeException::class, "Encrypted Realm should not be openable with a wrong encryption key") {
-            val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .path("$tmpDir/default.realm")
-                .encryptionKey(randomKey)
-                .build()
-
-            Realm.open(conf)
-        }
+        RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path("$tmpDir/default.realm")
+            .encryptionKey(randomKey)
+            .build()
+            .let { conf ->
+                assertFailsWith(IllegalArgumentException::class, "Encrypted Realm should not be openable with a wrong encryption key") {
+                    Realm.open(conf)
+                }
+            }
     }
 
     @Test
@@ -109,13 +112,14 @@ class EncryptionTests {
 
         // Assert fails opening with encryption key
         val randomKey = Random.nextBytes(64)
-        assertFailsWith(RuntimeException::class, "Unencrypted Realm should not be openable with an encryption key") {
-            val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .path("$tmpDir/default.realm")
-                .encryptionKey(randomKey)
-                .build()
-
-            Realm.open(conf)
-        }
+        RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path("$tmpDir/default.realm")
+            .encryptionKey(randomKey)
+            .build()
+            .let { conf ->
+                assertFailsWith(IllegalArgumentException::class, "Unencrypted Realm should not be openable with an encryption key") {
+                    Realm.open(conf)
+                }
+            }
     }
 }
