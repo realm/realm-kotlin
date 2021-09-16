@@ -41,7 +41,7 @@ mongoDbRealmCommandServerContainer = null
 
 
 // Mac CI dedicated machine
-node_label = 'osx_kotlin'
+node_label = 'kotlin_machine_test' //'osx_kotlin'
 
 // When having multiple executors available, Jenkins might append @2/@3/etc. to workspace folders in order
 // to allow multiple parallel builds on the same branch. Unfortunately this breaks Ninja and thus us
