@@ -82,7 +82,9 @@ object Versions {
     const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlintPlugin = "10.1.0" // https://github.com/jlleitschuh/ktlint-gradle
     const val ktlintVersion = "0.41.0" // https://github.com/pinterest/ktlint
+    const val ktor = "1.6.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
+    const val serialization = "1.2.1" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
 }

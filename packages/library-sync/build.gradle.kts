@@ -62,6 +62,18 @@ kotlin {
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
                 implementation(project(":cinterop"))
+
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}") {
+                    version { strictly(Versions.coroutines) }
+                }
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
+
+                implementation("io.ktor:ktor-client-core:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
+
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
@@ -76,6 +88,9 @@ kotlin {
         create("jvm") {
             dependsOn(getByName("commonMain"))
             kotlin.srcDir("src/jvm/kotlin")
+            dependencies {
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+            }
         }
         getByName("jvmMain") {
             dependsOn(getByName("jvm"))
@@ -102,16 +117,36 @@ kotlin {
         getByName("macosMain") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
+
+            // Observe this ktor dependency cannot be abstracted away with the ios ones
+            dependencies {
+                // TODO According to https://ktor.io/docs/http-client-engines.html#desktop we should
+                //  use ktor-client-curl for desktop, but the KtorNetworkTransportTest fails with
+                //  a trace that looks like some operations are interleaved. Test works with CIO
+                //  even though it is only listed as an option for JVM/Android!?
+                // implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+            }
         }
         getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
+
+            // FIXME move to shared ios source set
+            dependencies {
+                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+            }
         }
         getByName("iosX64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
+
+            // FIXME move to shared ios source set
+            dependencies {
+                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+            }
         }
     }
 
