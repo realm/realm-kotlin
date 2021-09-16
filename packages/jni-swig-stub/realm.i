@@ -377,7 +377,7 @@ class CustomJVMScheduler{
     public:
         CustomJVMScheduler(jobject dispatchScheduler) {
             JNIEnv *jenv = realm::jni_util::get_env(true);
-            jclass jvm_scheduler_class = jenv->FindClass("io/realm/interop/JVMScheduler");
+            jclass jvm_scheduler_class = jenv->FindClass("io/realm/internal/interop/JVMScheduler");
             m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(JJ)V");
             m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
         }
@@ -403,8 +403,7 @@ class CustomJVMScheduler{
             [](const void *userdata1,
             const void *userdata2) -> bool
             {/*realm_scheduler_is_same_as_func_t*/
-                bool is_same_as = (userdata1 == userdata2);
-                return is_same_as;
+                return  (userdata1 == userdata2);
             },
             [](void *userdata) -> bool
             {/*realm_scheduler_can_deliver_notifications_func_t can_deliver_notifications*/
@@ -416,13 +415,17 @@ class CustomJVMScheduler{
             realm_scheduler_notify_func_t
             core_notif_function) {/*realm_scheduler_set_notify_callback_func_t set_notify_callback*/
                 auto scheduler = reinterpret_cast<CustomJVMScheduler * >(userdata);
+                // it's important to set the thread id here and not when constructing since the RealmConfiguration
+                // could be reused to open a Realm (previously closed) in a new thread. Setting it in the ctor will
+                // keep the old thread id cached which will inevitably causes a "[6]: Realm accessed from incorrect thread" exception
+                scheduler->m_id = std::this_thread::get_id();
                 scheduler->m_callback_userdata = callback_userdata;
                 scheduler->m_core_notif_function = core_notif_function;
             });
         }
 
     private:
-        std::thread::id m_id = std::this_thread::get_id();
+        std::thread::id m_id;
         jmethodID m_notify_method;
         jobject m_jvm_dispatch_scheduler;
         void* m_callback_userdata;

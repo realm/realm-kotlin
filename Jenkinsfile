@@ -105,10 +105,11 @@ pipeline {
                 testAndCollect("test",     "connectedAndroidTest")
             }
         }
-        stage('Tests JVM (compiler only)') {
+        stage('Tests JVM') {
             when { expression { runTests } }
             steps {
                 testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+                testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
             }
         }
         stage('Tests Android Sample App') {

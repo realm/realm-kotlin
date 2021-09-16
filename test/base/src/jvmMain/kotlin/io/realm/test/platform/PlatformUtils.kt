@@ -16,16 +16,19 @@
 
 package io.realm.test.platform
 
+import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     actual fun createTempDir(): String {
-        TODO("Not yet implemented")
+        return Files.createTempDirectory("jvm_tests").absolutePathString()
     }
 
     actual fun deleteTempDir(path: String) {
-        TODO()
+        File(path).deleteRecursively()
     }
 
     @OptIn(ExperimentalTime::class)
@@ -36,6 +39,33 @@ actual object PlatformUtils {
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()
 
     actual fun triggerGC() {
-        TODO()
+        for (i in 1..30) {
+            allocGarbage(0)
+            Thread.sleep(100)
+            System.gc()
+            System.runFinalization()
+        }
+        Thread.sleep(5000) // 5 seconds to give the GC some time to process
+    }
+
+    // Allocs as much garbage as we can. Pass maxSize = 0 to use all available memory in the process.
+    private fun allocGarbage(garbageSize: Int): ByteArray {
+        var garbageSize = garbageSize
+        if (garbageSize == 0) {
+            val maxMemory = Runtime.getRuntime().maxMemory()
+            val totalMemory = Runtime.getRuntime().totalMemory()
+            garbageSize = (maxMemory - totalMemory).toInt() / 10 * 9
+        }
+        var garbage = ByteArray(0)
+        try {
+            if (garbageSize > 0) {
+                garbage = ByteArray(garbageSize)
+                garbage[0] = 1
+                garbage[garbage.size - 1] = 1
+            }
+        } catch (oom: OutOfMemoryError) {
+            return allocGarbage(garbageSize / 10 * 9)
+        }
+        return garbage
     }
 }

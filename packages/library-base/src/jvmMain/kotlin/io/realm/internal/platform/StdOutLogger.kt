@@ -39,7 +39,7 @@ internal class StdOutLogger(override val tag: String = "REALM") : RealmLogger {
             message = getStackTraceString(throwable)
         } else {
             if (args.isNotEmpty()) {
-                message = formatMessage(message, args)
+                message = formatMessage(message, *args)
             }
             if (throwable != null) {
                 message += "\n" + getStackTraceString(throwable)
@@ -49,7 +49,7 @@ internal class StdOutLogger(override val tag: String = "REALM") : RealmLogger {
     }
 
     private fun formatMessage(message: String, vararg args: Any?): String {
-        return message.format(args)
+        return message.format(*args)
     }
 
     private fun getStackTraceString(t: Throwable): String {

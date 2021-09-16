@@ -12,7 +12,7 @@
 * Changed `RealmObject.version` into method `RealmObject.version()`.
 
 ### Enhancements
-* None.
+* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) (currently only macos).
 
 ### Fixed
 * None.
