@@ -461,3 +461,7 @@ def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContai
     ])
     sh 'rm mongodb.log'
 }
+
+def runCommand(String command){
+  return sh(script: command, returnStdout: true).trim()
+}
