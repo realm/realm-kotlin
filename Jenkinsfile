@@ -40,7 +40,6 @@ dockerNetworkId = UUID.randomUUID().toString()
 mongoDbRealmContainer = null
 mongoDbRealmCommandServerContainer = null
 
-
 // Mac CI dedicated machine
 node_label = 'kotlin_machine_test' //'osx_kotlin'
 
@@ -48,7 +47,7 @@ node_label = 'kotlin_machine_test' //'osx_kotlin'
 // to allow multiple parallel builds on the same branch. Unfortunately this breaks Ninja and thus us
 // building native code. To work around this, we force the workspace to mirror the git path.
 // This has two side-effects: 1) It isn't possible to use this JenkinsFile on a worker with multiple
-// executors. At least not if we want to support building multipe versions of the same P
+// executors. At least not if we want to support building multiple versions of the same PR.
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
 pipeline {
@@ -104,17 +103,16 @@ pipeline {
                 testAndCollect("packages", "macosTest")
             }
         }
-        stage('Tests Macos - Integration Tests') {
-            when { expression { runTests } }
-            steps {
-                testWithServer("test", "macosTest")
-            }
-        }
-        stage('Tests Android') {
+        stage('Tests Android - Unit Tests') {
             when { expression { runTests } }
             steps {
                 testAndCollect("packages", "connectedAndroidTest")
-                testAndCollect("test",     "connectedAndroidTest")
+            }
+        }
+        stage('Integration Tests') {
+            when { expression { runTests } }
+            steps {
+                testWithServer("test", ["macosTest", "connectedAndroidTest"])
             }
         }
         stage('Tests JVM (compiler only)') {
@@ -306,7 +304,7 @@ def runCompilerPluginTest() {
     }
 }
 
-def testWithServer(dir, task) {
+def testWithServer(dir, tasks) {
     // Work-around for https://github.com/docker/docker-credential-helpers/issues/82
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'realm-kotlin-ci-password', variable: 'PASSWORD'],
@@ -333,7 +331,9 @@ def testWithServer(dir, task) {
     sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
     try {
-        testAndCollect("test", "macosTest")
+        tasks.each { task ->
+            testAndCollect(dir, task)
+        }
     } finally {
         // We assume that creating these containers and the docker network can be considered an atomic operation.
         if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
