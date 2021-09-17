@@ -328,12 +328,15 @@ def testWithServer(dir, task) {
     def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
     sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
     sh "docker network create ${dockerNetworkId}"
-    mongoDbRealmContainer = mdbRealmImage.run("--network ${dockerNetworkId} -v$tempDir:/apps")
-    mongoDbRealmCommandServerContainer = commandServerEnv.run("--network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
+//     mongoDbRealmContainer = mdbRealmImage.run("--network ${dockerNetworkId} -v$tempDir:/apps")
+    mongoDbRealmContainer = mdbRealmImage.run("--network host -v$tempDir:/apps")
+//    mongoDbRealmCommandServerContainer = commandServerEnv.run("--network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
+    mongoDbRealmCommandServerContainer = commandServerEnv.run("--network host -v$tempDir:/apps")
     sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
     try {
-        testAndCollect(dir, task)
+        echo "RUNNING TESTS"
+        sh "curl -i http://127.0.0.1:8888/testapp1"
     } finally {
         // We assume that creating these containers and the docker network can be considered an atomic operation.
         if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
