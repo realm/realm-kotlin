@@ -86,72 +86,72 @@ pipeline {
                 runBuild()
             }
         }
-//         stage('Static Analysis') {
-//             when { expression { runTests } }
-//             steps {
-//                 runStaticAnalysis()
-//             }
-//         }
-//         stage('Tests Compiler Plugin') {
-//             when { expression { runTests } }
-//             steps {
-//                 runCompilerPluginTest()
-//             }
-//         }
-//         stage('Tests Macos - Unit Tests') {
-//             when { expression { runTests } }
-//             steps {
-//                 testAndCollect("packages", "macosTest")
-//             }
-//         }
+        stage('Static Analysis') {
+            when { expression { runTests } }
+            steps {
+                runStaticAnalysis()
+            }
+        }
+        stage('Tests Compiler Plugin') {
+            when { expression { runTests } }
+            steps {
+                runCompilerPluginTest()
+            }
+        }
+        stage('Tests Macos - Unit Tests') {
+            when { expression { runTests } }
+            steps {
+                testAndCollect("packages", "macosTest")
+            }
+        }
         stage('Tests Macos - Integration Tests') {
             when { expression { runTests } }
             steps {
                 testWithServer("test", "macosTest")
             }
         }
-//         stage('Tests Android') {
-//             when { expression { runTests } }
-//             steps {
-//                 testAndCollect("packages", "connectedAndroidTest")
-//                 testAndCollect("test",     "connectedAndroidTest")
-//             }
-//         }
-//         stage('Tests JVM (compiler only)') {
-//             when { expression { runTests } }
-//             steps {
-//                 testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-//             }
-//         }
-//         stage('Tests Android Sample App') {
-//             when { expression { runTests } }
-//             steps {
-//                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-//                     runMonkey()
-//                 }
-//             }
-//         }
-//         stage('Build Android on Java 8') {
-//             when { expression { runTests } }
-//             environment {
-//                 JAVA_HOME="${JAVA_8}"
-//             }
-//             steps {
-//                 runBuildAndroidApp()
-//             }
-//         }
-//         stage('Publish SNAPSHOT to Maven Central') {
-//             when { expression { shouldPublishSnapshot(version) } }
-//             steps {
-//                 runPublishSnapshotToMavenCentral()
-//             }
-//         }
-//         stage('Publish Release to Maven Central') {
-//             when { expression { publishBuild } }
-//             steps {
-//                 runPublishReleaseOnMavenCentral()
-//             }
-//         }
+        stage('Tests Android') {
+            when { expression { runTests } }
+            steps {
+                testAndCollect("packages", "connectedAndroidTest")
+                testAndCollect("test",     "connectedAndroidTest")
+            }
+        }
+        stage('Tests JVM (compiler only)') {
+            when { expression { runTests } }
+            steps {
+                testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+            }
+        }
+        stage('Tests Android Sample App') {
+            when { expression { runTests } }
+            steps {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    runMonkey()
+                }
+            }
+        }
+        stage('Build Android on Java 8') {
+            when { expression { runTests } }
+            environment {
+                JAVA_HOME="${JAVA_8}"
+            }
+            steps {
+                runBuildAndroidApp()
+            }
+        }
+        stage('Publish SNAPSHOT to Maven Central') {
+            when { expression { shouldPublishSnapshot(version) } }
+            steps {
+                runPublishSnapshotToMavenCentral()
+            }
+        }
+        stage('Publish Release to Maven Central') {
+            when { expression { publishBuild } }
+            steps {
+                runPublishReleaseOnMavenCentral()
+            }
+        }
     }
     post {
         failure {
