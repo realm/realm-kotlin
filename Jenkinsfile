@@ -327,9 +327,12 @@ def testWithServer(dir, task) {
     // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
     def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
     sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
+
+    // FIXME Using named containers mean that we cannot run on CI machines with multiple executors
     sh "docker network create ${dockerNetworkId}"
-    mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
-    mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
+    mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 --name mongodb-realm")
+    mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps  --name mongodb-realm-command-server mongodb-realm-command-server")
+
     sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
     try {
