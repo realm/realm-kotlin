@@ -334,7 +334,7 @@ def testWithServer(dir, task) {
 
     try {
         testAndCollect(dir, task)
-    } catch (err) {
+    } finally {
         // We assume that creating these containers and the docker network can be considered an atomic operation.
         if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
             archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
