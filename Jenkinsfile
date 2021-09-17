@@ -433,29 +433,29 @@ boolean shouldPublishSnapshot(version) {
 
 def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContainerId) {
     sh "docker logs ${commandServerContainerId} > ./command-server.log"
+    sh 'rm command-server-log.zip'
     zip([
         'zipFile': 'command-server-log.zip',
         'archive': true,
-        'overwrite': true,
-        'glob' : 'command-server.log'
+        'glob': 'command-server.log'
     ])
     sh 'rm command-server.log'
 
     sh "docker cp ${mongoDbRealmContainerId}:/var/log/stitch.log ./stitch.log"
+    sh 'rm stitchlog.zip'
     zip([
         'zipFile': 'stitchlog.zip',
         'archive': true,
-        'overwrite': true,
-        'glob' : 'stitch.log'
+        'glob': 'stitch.log'
     ])
     sh 'rm stitch.log'
 
     sh "docker cp ${mongoDbRealmContainerId}:/var/log/mongodb.log ./mongodb.log"
+    sh 'rm mongodb.zip'
     zip([
         'zipFile': 'mongodb.zip',
         'archive': true,
-        'overwrite': true,
-        'glob' : 'mongodb.log'
+        'glob': 'mongodb.log'
     ])
     sh 'rm mongodb.log'
 }
