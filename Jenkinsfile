@@ -36,6 +36,7 @@ isReleaseBranch = releaseBranches.contains(currentBranch)
 
 // References to Docker containers holding the MongoDB Test server and infrastructure for
 // controlling it.
+dockerNetworkId = UUID.randomUUID().toString()
 mongoDbRealmContainer = null
 mongoDbRealmCommandServerContainer = null
 
