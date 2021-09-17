@@ -81,11 +81,11 @@ pipeline {
                 runScm()
             }
         }
-//         stage('Build') {
-//             steps {
-//                 runBuild()
-//             }
-//         }
+        stage('Build') {
+            steps {
+                runBuild()
+            }
+        }
 //         stage('Static Analysis') {
 //             when { expression { runTests } }
 //             steps {
@@ -172,8 +172,8 @@ def runScm() {
             branches         : scm.branches,
             gitTool          : 'native git',
             extensions       : scm.extensions + [
-                    [$class: 'WipeWorkspace'],
-                    [$class: 'CleanCheckout'],
+//                     [$class: 'WipeWorkspace'],
+//                     [$class: 'CleanCheckout'],
                     [$class: 'SubmoduleOption', recursiveSubmodules: true]
             ],
             userRemoteConfigs: scm.userRemoteConfigs
@@ -328,7 +328,6 @@ def testWithServer(dir, task) {
     def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
     sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
 
-    // FIXME Using named containers mean that we cannot run on CI machines with multiple executors
     sh "docker network create ${dockerNetworkId}"
     mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
     mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
@@ -336,15 +335,14 @@ def testWithServer(dir, task) {
     sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
     try {
-        echo "RUNNING TESTS"
-        sh "curl -i http://127.0.0.1:8888/testapp1"
+        testAndCollect("test", "macosTest")
     } finally {
         // We assume that creating these containers and the docker network can be considered an atomic operation.
         if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
             archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
             mongoDbRealmContainer.stop()
             mongoDbRealmCommandServerContainer.stop()
-//             sh "docker network rm ${dockerNetworkId}"
+            sh "docker network rm ${dockerNetworkId}"
         }
     }
 }
