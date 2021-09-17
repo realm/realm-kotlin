@@ -313,7 +313,7 @@ def testWithServer(dir, task) {
         sh "security -v unlock-keychain -p $PASSWORD"
     }
 
-    buildEnv = buildDockerEnv("ci/realm-kotlin:master", push: currentBranch == currentBranch)
+    buildEnv = buildDockerEnv("ci/realm-java:master", push: currentBranch == currentBranch)
     def props = readProperties file: 'dependencies.list'
     echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
     def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
