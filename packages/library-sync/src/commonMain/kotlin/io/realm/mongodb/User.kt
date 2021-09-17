@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.test.mongodb.sync
+package io.realm.mongodb
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-
-internal class SampleTest {
-
-    @Test
-    fun sample() {
-        assertEquals(4, 2 + 2)
-    }
-}
+/**
+ * TODO
+ */
+interface User
