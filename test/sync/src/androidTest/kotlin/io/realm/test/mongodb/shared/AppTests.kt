@@ -25,6 +25,7 @@ import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 const val TEST_APP_1 = "testapp1" // Id for the default test app
 const val BASE_URL = "http://127.0.0.1:9090"
@@ -54,7 +55,7 @@ class AppTests {
                 else -> throw IllegalStateException(response.toString())
             }
         }
-        assertTrue(application.startsWith("testapp1"))
+        assertTrue(applicationId.startsWith("testapp1"))
 //        val configuration: AppConfiguration = appConfigurationOf(applicationId, BASE_URL, singleThreadDispatcher("asdf"))
 //        val app = App.create(configuration)
 //
