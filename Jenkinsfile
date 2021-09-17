@@ -306,11 +306,6 @@ def runCompilerPluginTest() {
 }
 
 def testWithServer(dir, task) {
-    buildEnv = buildDockerEnv("ci/realm-kotlin:master", push: currentBranch == currentBranch)
-    def props = readProperties file: 'dependencies.list'
-    echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
-    def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
-
     // Work-around for https://github.com/docker/docker-credential-helpers/issues/82
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'realm-kotlin-ci-password', variable: 'PASSWORD'],
@@ -318,6 +313,10 @@ def testWithServer(dir, task) {
         sh "security -v unlock-keychain -p $PASSWORD"
     }
 
+    buildEnv = buildDockerEnv("ci/realm-kotlin:master", push: currentBranch == currentBranch)
+    def props = readProperties file: 'dependencies.list'
+    echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
+    def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
     docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
       mdbRealmImage.pull()
     }
