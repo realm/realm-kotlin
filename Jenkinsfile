@@ -81,11 +81,11 @@ pipeline {
                 runScm()
             }
         }
-        stage('Build') {
-            steps {
-                runBuild()
-            }
-        }
+//         stage('Build') {
+//             steps {
+//                 runBuild()
+//             }
+//         }
 //         stage('Static Analysis') {
 //             when { expression { runTests } }
 //             steps {
