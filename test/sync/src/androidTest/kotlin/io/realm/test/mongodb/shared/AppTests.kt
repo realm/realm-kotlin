@@ -19,11 +19,10 @@ package io.realm.test.mongodb.shared
 import io.realm.mongodb.App
 import io.realm.mongodb.EmailPassword
 import io.realm.test.mongodb.TestApp
-import io.realm.test.mongodb.admin.ServerAdmin
+import io.realm.test.mongodb.asTestApp
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 // Cannot run on CI yet, as it requires sync server to be started with
@@ -32,18 +31,16 @@ import kotlin.test.Test
 class AppTests {
 
     lateinit var app: App
-    lateinit var admin: ServerAdmin
 
     @BeforeTest
     fun setup() {
         app = TestApp()
-        admin = ServerAdmin(app)
-        admin.createUser("asdf@asdf.com", "asdfasdf")
+        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
     }
 
     @AfterTest
     fun teaddown() {
-        admin.deleteAllUsers()
+        app.asTestApp.close()
     }
 
     @Test

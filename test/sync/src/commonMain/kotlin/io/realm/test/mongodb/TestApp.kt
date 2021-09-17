@@ -17,10 +17,14 @@
 @file:Suppress("invisible_member", "invisible_reference")
 package io.realm.test.mongodb
 
+import io.ktor.client.request.get
+import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.App
 import io.realm.mongodb.appConfigurationOf
-import io.realm.mongodb.internal.KtorNetworkTransport
+import io.realm.test.mongodb.util.AdminApi
+import io.realm.test.mongodb.util.AdminApiImpl
+import io.realm.test.mongodb.util.defaultClient
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -33,29 +37,23 @@ const val TEST_APP_1 = "testapp1"       // Id for the default test app
 // TODO Find appropriate configuration options
 class TestApp(
     appName: String = TEST_APP_1,
-    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher")
-) : App by App.create(appConfigurationOf(getAppId(appName, dispatcher), BASE_URL, dispatcher)) {
+    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
+    appId: String = getAppId(appName)
+) : App by App.create(appConfigurationOf(appId, BASE_URL, dispatcher)), AdminApi by AdminApiImpl(appId) {
+
+    fun close() {
+        deleteAllUsers()
+    }
 
     companion object {
-        private fun getAppId(appName: String, dispatcher: CoroutineDispatcher): String {
-            val networkTransport: io.realm.internal.interop.sync.NetworkTransport =
-                KtorNetworkTransport(
-                    timeoutMs = 5000,
-                    dispatcher = dispatcher
-                )
-            return networkTransport
-                .sendRequest(
-                    "get",
-                    "http://127.0.0.1:8888/$TEST_APP_1",
-                    mapOf(),
-                    "",
-                    true
-                ).let { response ->
-                    when (response.httpResponseCode) {
-                        200 -> response.body
-                        else -> throw IllegalStateException(response.toString())
-                    }
-                }
+        private fun getAppId(appName: String): String {
+            val client =  defaultClient("test-app-initializer")
+            return runBlocking {
+                client.get("http://127.0.0.1:8888/$appName")
+            }
         }
     }
 }
+
+val App.asTestApp : TestApp
+    get() = this as TestApp
