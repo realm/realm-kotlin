@@ -81,11 +81,11 @@ pipeline {
                 runScm()
             }
         }
-//         stage('Build') {
-//             steps {
-//                 runBuild()
-//             }
-//         }
+        stage('Build') {
+            steps {
+                runBuild()
+            }
+        }
 //         stage('Static Analysis') {
 //             when { expression { runTests } }
 //             steps {
@@ -314,7 +314,7 @@ def testWithServer(dir, task) {
         sh "security -v unlock-keychain -p $PASSWORD"
     }
 
-//     buildEnv = buildDockerEnv("ci/realm-java:master", push: currentBranch == 'master-do-not-cache')
+    // Build Docker image with MongoDB Realm Test Server infrastructure
     def props = readProperties file: 'dependencies.list'
     echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
     def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
@@ -333,8 +333,7 @@ def testWithServer(dir, task) {
     sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
     try {
-        echo "RUNNING TESTS"
-        sh "curl -i http://127.0.0.1:8888/testapp1"
+        testAndCollect(dir, task)
     } catch (err) {
         // We assume that creating these containers and the docker network can be considered an atomic operation.
         if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
@@ -343,14 +342,6 @@ def testWithServer(dir, task) {
             mongoDbRealmCommandServerContainer.stop()
             sh "docker network rm ${dockerNetworkId}"
         }
-    }
-    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-        sh """
-            pushd $dir
-            ./gradlew $task --info --stacktrace --no-daemon
-            popd
-        """
-        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
     }
 }
 
