@@ -327,7 +327,7 @@ def testWithServer(dir, task) {
     // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
     def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
     sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
-    sh "docker network create ${dockerNetworkId}"
+//     sh "docker network create ${dockerNetworkId}"
 //     mongoDbRealmContainer = mdbRealmImage.run("--network ${dockerNetworkId} -v$tempDir:/apps")
     mongoDbRealmContainer = mdbRealmImage.run("--network host -v$tempDir:/apps")
 //    mongoDbRealmCommandServerContainer = commandServerEnv.run("--network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
@@ -343,7 +343,7 @@ def testWithServer(dir, task) {
             archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
             mongoDbRealmContainer.stop()
             mongoDbRealmCommandServerContainer.stop()
-            sh "docker network rm ${dockerNetworkId}"
+//             sh "docker network rm ${dockerNetworkId}"
         }
     }
 }
