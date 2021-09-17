@@ -327,11 +327,9 @@ def testWithServer(dir, task) {
     // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
     def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
     sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
-//     sh "docker network create ${dockerNetworkId}"
-//     mongoDbRealmContainer = mdbRealmImage.run("--network ${dockerNetworkId} -v$tempDir:/apps")
-    mongoDbRealmContainer = mdbRealmImage.run("--network host -v$tempDir:/apps")
-//    mongoDbRealmCommandServerContainer = commandServerEnv.run("--network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
-    mongoDbRealmCommandServerContainer = commandServerEnv.run("--network host -v$tempDir:/apps")
+    sh "docker network create ${dockerNetworkId}"
+    mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
+    mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
     sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
     try {
