@@ -32,7 +32,6 @@ const val BASE_URL = "http://127.0.0.1:9090"
 // Cannot run on CI yet, as it requires sync server to be started with
 // tools/sync_test_server/start_server.sh and manual creation of a user "asdf@asdf.com"/"asdfasdf"
 // through the web ui
-@Ignore
 class AppTests {
 
     @Test
@@ -55,12 +54,12 @@ class AppTests {
                 else -> throw IllegalStateException(response.toString())
             }
         }
-
-        val configuration: AppConfiguration = appConfigurationOf(applicationId, BASE_URL, singleThreadDispatcher("asdf"))
-        val app = App.create(configuration)
-
-        runBlocking {
-            app.login(EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
-        }
+        assertTrue(application.startsWith("testapp1"))
+//        val configuration: AppConfiguration = appConfigurationOf(applicationId, BASE_URL, singleThreadDispatcher("asdf"))
+//        val app = App.create(configuration)
+//
+//        runBlocking {
+//            app.login(EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
+//        }
     }
 }
