@@ -310,6 +310,14 @@ def testWithServer(dir, task) {
     def props = readProperties file: 'dependencies.list'
     echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
     def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
+
+    // Work-around for https://github.com/docker/docker-credential-helpers/issues/82
+    withCredentials([
+            [$class: 'StringBinding', credentialsId: 'realm-kotlin-ci-password', variable: 'PASSWORD'],
+    ]) {
+        sh "security -v unlock-keychain -p $PASSWORD"
+    }
+
     docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
       mdbRealmImage.pull()
     }
