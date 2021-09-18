@@ -206,7 +206,7 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew clean assemble ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew assemble ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
@@ -293,7 +293,7 @@ def runCompilerPluginTest() {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
         sh """
             cd packages
-            ./gradlew --no-daemon clean :plugin-compiler:test --info --stacktrace
+            ./gradlew --no-daemon :plugin-compiler:test --info --stacktrace
         """
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
