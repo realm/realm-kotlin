@@ -41,7 +41,7 @@ mongoDbRealmContainer = null
 mongoDbRealmCommandServerContainer = null
 
 // Mac CI dedicated machine
-node_label = 'kotlin_machine_test' //'osx_kotlin'
+node_label = 'osx_kotlin'
 
 // When having multiple executors available, Jenkins might append @2/@3/etc. to workspace folders in order
 // to allow multiple parallel builds on the same branch. Unfortunately this breaks Ninja and thus us
@@ -170,8 +170,8 @@ def runScm() {
             branches         : scm.branches,
             gitTool          : 'native git',
             extensions       : scm.extensions + [
-//                     [$class: 'WipeWorkspace'],
-//                     [$class: 'CleanCheckout'],
+                    [$class: 'WipeWorkspace'],
+                    [$class: 'CleanCheckout'],
                     [$class: 'SubmoduleOption', recursiveSubmodules: true]
             ],
             userRemoteConfigs: scm.userRemoteConfigs
