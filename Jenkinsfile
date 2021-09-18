@@ -246,11 +246,13 @@ def runStaticAnalysis() {
                 rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''
+        sh 'rm ktlint.zip || true'
         zip([
                 'zipFile': 'ktlint.zip',
                 'archive': true,
                 'dir'    : '/tmp/ktlint'
         ])
+        sh 'rm detekt.zip || true'
         zip([
                 'zipFile': 'detekt.zip',
                 'archive': true,
@@ -433,7 +435,7 @@ boolean shouldPublishSnapshot(version) {
 
 def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContainerId) {
     sh "docker logs ${commandServerContainerId} > ./command-server.log"
-    sh 'rm command-server-log.zip'
+    sh 'rm command-server-log.zip || true'
     zip([
         'zipFile': 'command-server-log.zip',
         'archive': true,
@@ -442,7 +444,7 @@ def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContai
     sh 'rm command-server.log'
 
     sh "docker cp ${mongoDbRealmContainerId}:/var/log/stitch.log ./stitch.log"
-    sh 'rm stitchlog.zip'
+    sh 'rm stitchlog.zip || true'
     zip([
         'zipFile': 'stitchlog.zip',
         'archive': true,
@@ -451,7 +453,7 @@ def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContai
     sh 'rm stitch.log'
 
     sh "docker cp ${mongoDbRealmContainerId}:/var/log/mongodb.log ./mongodb.log"
-    sh 'rm mongodb.zip'
+    sh 'rm mongodb.zip || true'
     zip([
         'zipFile': 'mongodb.zip',
         'archive': true,
