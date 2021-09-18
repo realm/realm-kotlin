@@ -155,15 +155,21 @@ pipeline {
 }
 
 def runScm() {
+    def repoExtensions = [
+        [$class: 'SubmoduleOption', recursiveSubmodules: true]
+    ]
+    if (isReleaseBranch) {
+        repoExtensions += [          
+            [$class: 'WipeWorkspace'],
+            [$class: 'CleanCheckout'],
+        ]       
+    }
+    echo repoExtensions
     checkout([
             $class           : 'GitSCM',
             branches         : scm.branches,
             gitTool          : 'native git',
-            extensions       : scm.extensions + [
-                    [$class: 'WipeWorkspace'],
-                    [$class: 'CleanCheckout'],
-                    [$class: 'SubmoduleOption', recursiveSubmodules: true]
-            ],
+            extensions       : scm.extensions + repoExtensions,
             userRemoteConfigs: scm.userRemoteConfigs
     ])
 
