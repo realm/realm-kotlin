@@ -419,7 +419,11 @@ def startEmulatorInBgIfNeeded() {
     def command = '$ANDROID_SDK_ROOT/platform-tools/adb shell pidof com.android.phone'
     def returnStatus = sh(returnStatus: true, script: command)
     if (returnStatus != 0) {
+        // Changing the name of the emulator image requires that this emulator image is
+        // present on both atlanta_host13 and atlanta_host14.
         sh '/usr/local/Cellar/daemonize/1.7.8/sbin/daemonize  -E JENKINS_NODE_COOKIE=dontKillMe  $ANDROID_SDK_ROOT/emulator/emulator -avd Pixel_2_API_30_x86_64 -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098'
+    } else {
+        throw
     }
 }
 
