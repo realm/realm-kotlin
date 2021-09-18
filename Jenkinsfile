@@ -164,7 +164,6 @@ def runScm() {
             [$class: 'CleanCheckout'],
         ]       
     }
-    echo repoExtensions
     checkout([
             $class           : 'GitSCM',
             branches         : scm.branches,
