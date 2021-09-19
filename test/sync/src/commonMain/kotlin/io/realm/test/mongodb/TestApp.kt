@@ -15,6 +15,7 @@
  */
 
 @file:Suppress("invisible_member", "invisible_reference")
+
 package io.realm.test.mongodb
 
 import io.ktor.client.request.get
@@ -37,23 +38,21 @@ const val TEST_APP_1 = "testapp1"       // Id for the default test app
 // TODO Find appropriate configuration options
 class TestApp(
     appName: String = TEST_APP_1,
-    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    appId: String = getAppId(appName)
-) : App by App.create(appConfigurationOf(appId, BASE_URL, dispatcher)), AdminApi by AdminApiImpl(appId) {
+    val dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
+    appId: String = runBlocking(dispatcher) { getAppId(appName) }
+) : App by App.create(appConfigurationOf(appId, BASE_URL, dispatcher)),
+    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(appId, dispatcher) }) {
 
     fun close() {
         deleteAllUsers()
     }
 
     companion object {
-        private fun getAppId(appName: String): String {
-            val client =  defaultClient("test-app-initializer")
-            return runBlocking {
-                client.get("http://127.0.0.1:8888/$appName")
-            }
+        suspend fun getAppId(appName: String): String {
+            return defaultClient("test-app-initializer").get("http://127.0.0.1:8888/$appName")
         }
     }
 }
 
-val App.asTestApp : TestApp
+val App.asTestApp: TestApp
     get() = this as TestApp

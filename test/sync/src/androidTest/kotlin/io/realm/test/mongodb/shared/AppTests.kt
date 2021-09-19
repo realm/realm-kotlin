@@ -39,8 +39,10 @@ class AppTests {
     }
 
     @AfterTest
-    fun teaddown() {
-        app.asTestApp.close()
+    fun teadDown() {
+        if (this::app.isInitialized) {
+            app.asTestApp.close()
+        }
     }
 
     @Test
