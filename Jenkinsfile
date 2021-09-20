@@ -57,7 +57,22 @@ pipeline {
             customWorkspace workspacePath
         }
      }
-    options {
+     options {
+        // In Realm Java, we had to lock the entire build as sharing the global Gradle
+        // cache was causing issues. We never discovered the root cause, but 
+        // https://github.com/gradle/gradle/issues/851 seems to indicate that the problem
+        // is when running builds inside Docker containers that share a host .gradle 
+        // folder.
+        // 
+        // This isn't the case for Kotlin, so it seems safe to remove the lock.
+        // Locking is furthermore complicated by the fact that there doesn't seem an
+        // easy way to grap a node-lock for pipeline syntax builds.
+        // https://stackoverflow.com/a/44758361/1389357.
+        //
+        // So in summary, removing the lock should work fine. I'm mostly keeping this 
+        // description in case we run into problems down the line.
+
+        // lock resource: 'kotlin_build_lock' 
         timeout(time: 15, activity: true, unit: 'MINUTES')
     }
     environment {
@@ -71,91 +86,81 @@ pipeline {
           JAVA_HOME="${JAVA_11}"
     }
     stages {
-        stage('CI Run') {
-            options {
-                // The Gradle cache is re-used between stages, in order to avoid builds interleave,
-                // and potentially corrupt each others cache, we grab a node lock for the entire
-                // build. 
-                lock resource: "${env.NODE_NAME}-kotlin_build_lock"
+        stage('SCM') {
+            steps {
+                runScm()
             }
-            stages {
-                stage('SCM') {
-                    steps {
-                        runScm()
-                    }
-                }
-                stage('Build') {
-                    steps {
-                        runBuild()
-                    }
-                }
-                stage('Static Analysis') {
-                    when { expression { runTests } }
-                    steps {
-                        runStaticAnalysis()
-                    }
-                }
-                stage('Tests Compiler Plugin') {
-                    when { expression { runTests } }
-                    steps {
-                        runCompilerPluginTest()
-                    }
-                }
-                stage('Tests Macos - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("packages", "macosTest")
-                    }
-                }
-                stage('Tests Android - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("packages", "connectedAndroidTest")
-                    }
-                }
-                stage('Integration Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer("test", ["macosTest", "connectedAndroidTest"])
-                    }
-                }
-                stage('Tests JVM (compiler only)') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-                    }
-                }
-                stage('Tests Android Sample App') {
-                    when { expression { runTests } }
-                    steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            runMonkey()
-                        }
-                    }
-                }
-                stage('Build Android on Java 8') {
-                    when { expression { runTests } }
-                    environment {
-                        JAVA_HOME="${JAVA_8}"
-                    }
-                    steps {
-                        runBuildAndroidApp()
-                    }
-                }
-                stage('Publish SNAPSHOT to Maven Central') {
-                    when { expression { shouldPublishSnapshot(version) } }
-                    steps {
-                        runPublishSnapshotToMavenCentral()
-                    }
-                }
-                stage('Publish Release to Maven Central') {
-                    when { expression { publishBuild } }
-                    steps {
-                        runPublishReleaseOnMavenCentral()
-                    }
+        }
+        stage('Build') {
+            steps {
+                runBuild()
+            }
+        }
+        stage('Static Analysis') {
+            when { expression { runTests } }
+            steps {
+                runStaticAnalysis()
+            }
+        }
+        stage('Tests Compiler Plugin') {
+            when { expression { runTests } }
+            steps {
+                runCompilerPluginTest()
+            }
+        }
+        stage('Tests Macos - Unit Tests') {
+            when { expression { runTests } }
+            steps {
+                testAndCollect("packages", "macosTest")
+            }
+        }
+        stage('Tests Android - Unit Tests') {
+            when { expression { runTests } }
+            steps {
+                testAndCollect("packages", "connectedAndroidTest")
+            }
+        }
+        stage('Integration Tests') {
+            when { expression { runTests } }
+            steps {
+                testWithServer("test", ["macosTest", "connectedAndroidTest"])
+            }
+        }
+        stage('Tests JVM (compiler only)') {
+            when { expression { runTests } }
+            steps {
+                testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+            }
+        }
+        stage('Tests Android Sample App') {
+            when { expression { runTests } }
+            steps {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    runMonkey()
                 }
             }
-        }    
+        }
+        stage('Build Android on Java 8') {
+            when { expression { runTests } }
+            environment {
+                JAVA_HOME="${JAVA_8}"
+            }
+            steps {
+                runBuildAndroidApp()
+            }
+        }
+        stage('Publish SNAPSHOT to Maven Central') {
+            when { expression { shouldPublishSnapshot(version) } }
+            steps {
+                runPublishSnapshotToMavenCentral()
+            }
+        }
+        stage('Publish Release to Maven Central') {
+            when { expression { publishBuild } }
+            steps {
+                runPublishReleaseOnMavenCentral()
+            }
+        }
     }
     post {
         failure {
