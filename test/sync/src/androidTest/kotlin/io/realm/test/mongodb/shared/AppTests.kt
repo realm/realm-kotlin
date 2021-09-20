@@ -19,6 +19,7 @@ package io.realm.test.mongodb.shared
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.Credentials
 import io.realm.mongodb.EmailPassword
 import io.realm.mongodb.appConfigurationOf
 import io.realm.mongodb.internal.KtorNetworkTransport
@@ -60,7 +61,7 @@ class AppTests {
         val app = App.create(configuration)
 
         runBlocking {
-            app.login(EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
+            app.login(Credentials.EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
         }
     }
 }
