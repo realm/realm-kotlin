@@ -333,6 +333,11 @@ def testWithServer(dir, tasks) {
         mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
         sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
+        // Techinically this is only needed for Android, but since all tests are 
+        // executed on same host and tasks are grouped in same stage we just do it 
+        // here
+        forwardAdbPorts()
+
         tasks.each { task ->
             testAndCollect(dir, task)
         }
@@ -348,6 +353,15 @@ def testWithServer(dir, tasks) {
             }
         }
     }
+}
+
+def forwardAdbPorts() {
+    sh """
+        adb reverse tcp:9080 tcp:9080
+        adb reverse tcp:9443 tcp:9443
+        adb reverse tcp:8888 tcp:8888
+        adb reverse tcp:9090 tcp:9090
+    """
 }
 
 def testAndCollect(dir, task) {
@@ -425,12 +439,6 @@ def startEmulatorInBgIfNeeded() {
         // Changing the name of the emulator image requires that this emulator image is
         // present on both atlanta_host13 and atlanta_host14.
         sh '/usr/local/Cellar/daemonize/1.7.8/sbin/daemonize  -E JENKINS_NODE_COOKIE=dontKillMe  $ANDROID_SDK_ROOT/emulator/emulator -avd Pixel_2_API_30_x86_64 -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098'
-        sh """
-            adb reverse tcp:9080 tcp:9080
-            adb reverse tcp:9443 tcp:9443
-            adb reverse tcp:8888 tcp:8888
-            adb reverse tcp:9090 tcp:9090
-        """
     }
 }
 
