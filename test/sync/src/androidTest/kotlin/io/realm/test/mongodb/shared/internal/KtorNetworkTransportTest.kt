@@ -20,7 +20,6 @@ import io.realm.internal.interop.sync.Response
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -28,7 +27,6 @@ private const val BASE_URL = "http://127.0.0.1:8888" // URL to command server
 
 // Cannot run on CI yet, as it requires sync server to be started with
 // tools/sync_test_server/start_server.sh
-@Ignore
 internal class KtorNetworkTransportTest {
 
     private lateinit var transport: KtorNetworkTransport
