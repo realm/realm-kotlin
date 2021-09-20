@@ -98,10 +98,9 @@ class IndexTests {
 
                         val configuration =
                             RealmConfiguration.with(schema = setOf(A::class))
-                    """.trimIndent()
+                """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
-
     }
 }
