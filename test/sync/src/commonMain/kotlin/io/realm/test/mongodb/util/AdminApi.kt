@@ -97,7 +97,7 @@ open class AdminApiImpl internal constructor(
             client = defaultClient("realm-http-admin-authorized") {
                 defaultRequest {
                     headers {
-                        append("Authorization", "Bearer ${accessToken}")
+                        append("Authorization", "Bearer $accessToken")
                     }
                 }
             }
@@ -106,12 +106,11 @@ open class AdminApiImpl internal constructor(
                 .roles.first().group_id
 
             // Get app id
-            appId =
-                client.typedRequest<JsonArray>(Get, "$baseUrl/groups/$groupId/apps")
-                    .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
-                        "_id"
-                    )?.jsonPrimitive?.content
-                    ?: error("App ${appName} not found")
+            appId = client.typedRequest<JsonArray>(Get, "$baseUrl/groups/$groupId/apps")
+                .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
+                    "_id"
+                )?.jsonPrimitive?.content
+                ?: error("App $appName not found")
         }
     }
 

@@ -33,12 +33,12 @@ import kotlinx.coroutines.CoroutineDispatcher
  * for testing.
  */
 const val BASE_URL = "http://127.0.0.1:9090"
-const val TEST_APP_1 = "testapp1"       // Id for the default test app
+const val TEST_APP_1 = "testapp1" // Id for the default test app
 
 // TODO Find appropriate configuration options
 class TestApp(
     appName: String = TEST_APP_1,
-    val dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
+    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     appId: String = runBlocking(dispatcher) { getAppId(appName) }
 ) : App by App.create(appConfigurationOf(appId, BASE_URL, dispatcher)),
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(appId, dispatcher) }) {

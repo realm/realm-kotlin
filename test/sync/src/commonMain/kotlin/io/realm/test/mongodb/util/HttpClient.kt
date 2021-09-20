@@ -47,11 +47,13 @@ fun defaultClient(name: String, block: HttpClientConfig<*>.() -> Unit = {}): Htt
         }
 
         install(JsonFeature) {
-            serializer = KotlinxSerializer(Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
+            serializer = KotlinxSerializer(
+                Json {
+                    prettyPrint = true
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                }
+            )
         }
 
         // TODO figure out logging and obfuscating sensitive info

@@ -23,6 +23,7 @@ import io.realm.test.mongodb.asTestApp
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 // Cannot run on CI yet, as it requires sync server to be started with
