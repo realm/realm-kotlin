@@ -34,6 +34,12 @@ version = null
 runTests = true
 isReleaseBranch = releaseBranches.contains(currentBranch)
 
+// References to Docker containers holding the MongoDB Test server and infrastructure for
+// controlling it.
+dockerNetworkId = UUID.randomUUID().toString()
+mongoDbRealmContainer = null
+mongoDbRealmCommandServerContainer = null
+
 // Mac CI dedicated machine
 node_label = 'osx_kotlin'
 
@@ -41,7 +47,7 @@ node_label = 'osx_kotlin'
 // to allow multiple parallel builds on the same branch. Unfortunately this breaks Ninja and thus us
 // building native code. To work around this, we force the workspace to mirror the git path.
 // This has two side-effects: 1) It isn't possible to use this JenkinsFile on a worker with multiple
-// executors. At least not if we want to support building multipe versions of the same P
+// executors. At least not if we want to support building multiple versions of the same PR.
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
 pipeline {
@@ -91,18 +97,22 @@ pipeline {
                 runCompilerPluginTest()
             }
         }
-        stage('Tests Macos') {
+        stage('Tests Macos - Unit Tests') {
             when { expression { runTests } }
             steps {
                 testAndCollect("packages", "macosTest")
-                testAndCollect("test",     "macosTest")
             }
         }
-        stage('Tests Android') {
+        stage('Tests Android - Unit Tests') {
             when { expression { runTests } }
             steps {
                 testAndCollect("packages", "connectedAndroidTest")
-                testAndCollect("test",     "connectedAndroidTest")
+            }
+        }
+        stage('Integration Tests') {
+            when { expression { runTests } }
+            steps {
+                testWithServer("test", ["macosTest", "connectedAndroidTest"])
             }
         }
         stage('Tests JVM (compiler only)') {
@@ -236,11 +246,13 @@ def runStaticAnalysis() {
                 rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
                 rsync -a --delete --ignore-errors packages/runtime-api/build/reports/detekt/ /tmp/detekt/runtime-api/ || true
             '''
+        sh 'rm ktlint.zip || true'
         zip([
                 'zipFile': 'ktlint.zip',
                 'archive': true,
                 'dir'    : '/tmp/ktlint'
         ])
+        sh 'rm detekt.zip || true'
         zip([
                 'zipFile': 'detekt.zip',
                 'archive': true,
@@ -294,6 +306,49 @@ def runCompilerPluginTest() {
     }
 }
 
+def testWithServer(dir, tasks) {
+    // Work-around for https://github.com/docker/docker-credential-helpers/issues/82
+    withCredentials([
+            [$class: 'StringBinding', credentialsId: 'realm-kotlin-ci-password', variable: 'PASSWORD'],
+    ]) {
+        sh "security -v unlock-keychain -p $PASSWORD"
+    }
+
+    try {
+        // Prepare Docker containers with MongoDB Realm Test Server infrastructure for
+        // integration tests.
+        // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
+        def props = readProperties file: 'dependencies.list'
+        echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
+        def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
+        docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
+          mdbRealmImage.pull()
+        }
+        def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
+        def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
+        sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
+
+        sh "docker network create ${dockerNetworkId}"
+        mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
+        mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
+        sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
+
+        tasks.each { task ->
+            testAndCollect(dir, task)
+        }
+    } finally {
+        // We assume that creating these containers and the docker network can be considered an atomic operation.
+        if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
+            try {
+                archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
+            } finally {
+                mongoDbRealmContainer.stop()
+                mongoDbRealmCommandServerContainer.stop()
+                sh "docker network rm ${dockerNetworkId}"
+            }
+        }
+    }
+}
 
 def testAndCollect(dir, task) {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
@@ -364,6 +419,8 @@ def startEmulatorInBgIfNeeded() {
     def command = '$ANDROID_SDK_ROOT/platform-tools/adb shell pidof com.android.phone'
     def returnStatus = sh(returnStatus: true, script: command)
     if (returnStatus != 0) {
+        // Changing the name of the emulator image requires that this emulator image is
+        // present on both atlanta_host13 and atlanta_host14.
         sh '/usr/local/Cellar/daemonize/1.7.8/sbin/daemonize  -E JENKINS_NODE_COOKIE=dontKillMe  $ANDROID_SDK_ROOT/emulator/emulator -avd Pixel_2_API_30_x86_64 -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098'
     }
 }
@@ -376,4 +433,37 @@ boolean shouldPublishSnapshot(version) {
         return false
     }
     return true
+}
+
+def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContainerId) {
+    sh "docker logs ${commandServerContainerId} > ./command-server.log"
+    sh 'rm command-server-log.zip || true'
+    zip([
+        'zipFile': 'command-server-log.zip',
+        'archive': true,
+        'glob': 'command-server.log'
+    ])
+    sh 'rm command-server.log'
+
+    sh "docker cp ${mongoDbRealmContainerId}:/var/log/stitch.log ./stitch.log"
+    sh 'rm stitchlog.zip || true'
+    zip([
+        'zipFile': 'stitchlog.zip',
+        'archive': true,
+        'glob': 'stitch.log'
+    ])
+    sh 'rm stitch.log'
+
+    sh "docker cp ${mongoDbRealmContainerId}:/var/log/mongodb.log ./mongodb.log"
+    sh 'rm mongodb.zip || true'
+    zip([
+        'zipFile': 'mongodb.zip',
+        'archive': true,
+        'glob': 'mongodb.log'
+    ])
+    sh 'rm mongodb.log'
+}
+
+def runCommand(String command){
+  return sh(script: command, returnStdout: true).trim()
 }
