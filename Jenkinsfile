@@ -357,10 +357,10 @@ def testWithServer(dir, tasks) {
 
 def forwardAdbPorts() {
     sh """
-        adb reverse tcp:9080 tcp:9080
-        adb reverse tcp:9443 tcp:9443
-        adb reverse tcp:8888 tcp:8888
-        adb reverse tcp:9090 tcp:9090
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9080 tcp:9080
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9443 tcp:9443
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:8888 tcp:8888
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9090 tcp:9090
     """
 }
 
