@@ -58,10 +58,10 @@ pipeline {
         }
      }
     // The Gradle cache is re-used between stages, in order to avoid builds interleave,
-    // and potentially corrupt each others cache, we grab a global lock for the entire
-    // build.
+    // and potentially corrupt each others cache, we grab a node lock for the entire
+    // build. 
     options {
-        lock resource: 'kotlin_build_lock'
+        lock resource: "${env.NODE_NAME}-kotlin_build_lock"
         timeout(time: 15, activity: true, unit: 'MINUTES')
     }
     environment {
