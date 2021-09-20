@@ -41,7 +41,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 
-private const val baseUrl = "http://127.0.0.1:9090/api/admin/v3.0"
+private const val ADMIN_PATH = "/api/admin/v3.0"
 
 /**
  * Wrapper around MongoDB Realm Server Admin functions needed for tests.
@@ -57,9 +57,11 @@ interface AdminApi {
 }
 
 open class AdminApiImpl internal constructor(
+    baseUrl: String,
     private val appName: String,
     val dispatcher: CoroutineDispatcher
 ) : AdminApi {
+    private val url = baseUrl + ADMIN_PATH
     private lateinit var loginResponse: LoginResponse
     private lateinit var client: HttpClient
     private lateinit var groupId: String
@@ -86,7 +88,7 @@ open class AdminApiImpl internal constructor(
             loginResponse =
                 defaultClient("realm-http-admin-unauthorized").typedRequest<LoginResponse>(
                     HttpMethod.Post,
-                    "$baseUrl/auth/providers/local-userpass/login"
+                    "$url/auth/providers/local-userpass/login"
                 ) {
                     contentType(ContentType.Application.Json)
                     body = mapOf("username" to "unique_user@domain.com", "password" to "password")
@@ -102,11 +104,11 @@ open class AdminApiImpl internal constructor(
                 }
             }
             // Collect app group id
-            groupId = client.typedRequest<Profile>(Get, "$baseUrl/auth/profile")
+            groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
 
             // Get app id
-            appId = client.typedRequest<JsonArray>(Get, "$baseUrl/groups/$groupId/apps")
+            appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content
@@ -117,7 +119,7 @@ open class AdminApiImpl internal constructor(
     // Method to create remote user until we have proper EmailAuthProvider
     override fun createUser(email: String, password: String) {
         runBlocking(dispatcher) {
-            client.post<Unit>("$baseUrl/groups/$groupId/apps/$appId/users") {
+            client.post<Unit>("$url/groups/$groupId/apps/$appId/users") {
                 contentType(ContentType.Application.Json)
                 body = mapOf("email" to email, "password" to password)
             }
@@ -137,7 +139,7 @@ open class AdminApiImpl internal constructor(
             val pendingUsers =
                 client.typedRequest<JsonArray>(
                     Get,
-                    "$baseUrl/groups/$groupId/apps/$appId/user_registrations/pending_users"
+                    "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
                 )
             for (pendingUser in pendingUsers) {
                 val loginTypes = pendingUser.jsonObject["login_ids"]!!.jsonArray
@@ -145,7 +147,7 @@ open class AdminApiImpl internal constructor(
                     .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                     .map {
                         client.delete<Unit>(
-                            "$baseUrl/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                            "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                         )
                     }
             }
@@ -156,10 +158,10 @@ open class AdminApiImpl internal constructor(
         runBlocking(dispatcher) {
             val users = client.typedRequest<JsonArray>(
                 Get,
-                "$baseUrl/groups/$groupId/apps/$appId/users"
+                "$url/groups/$groupId/apps/$appId/users"
             )
             users.map {
-                client.delete<Unit>("$baseUrl/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+                client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
             }
         }
     }

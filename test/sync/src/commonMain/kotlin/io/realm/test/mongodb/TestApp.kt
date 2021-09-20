@@ -28,20 +28,21 @@ import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
 import kotlinx.coroutines.CoroutineDispatcher
 
-/**
- * This class wraps various methods making it easier to create an App that can be used
- * for testing.
- */
-const val BASE_URL = "http://127.0.0.1:9090"
+const val BASE_CMD_SRV_URL = "http://127.0.0.1:8888"
+const val BASE_APP_SRV_URL = "http://127.0.0.1:9090"
 const val TEST_APP_1 = "testapp1" // Id for the default test app
 
+/**
+ * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
+ * used for testing.
+ */
 // TODO Find appropriate configuration options
 class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     appId: String = runBlocking(dispatcher) { getAppId(appName) }
-) : App by App.create(appConfigurationOf(appId, BASE_URL, dispatcher)),
-    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(appId, dispatcher) }) {
+) : App by App.create(appConfigurationOf(appId, BASE_APP_SRV_URL, dispatcher)),
+    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(BASE_APP_SRV_URL, appId, dispatcher) }) {
 
     fun close() {
         deleteAllUsers()
@@ -49,7 +50,7 @@ class TestApp(
 
     companion object {
         suspend fun getAppId(appName: String): String {
-            return defaultClient("test-app-initializer").get("http://127.0.0.1:8888/$appName")
+            return defaultClient("test-app-initializer").get("$BASE_CMD_SRV_URL/$appName")
         }
     }
 }
