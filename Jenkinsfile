@@ -314,25 +314,25 @@ def testWithServer(dir, tasks) {
         sh "security -v unlock-keychain -p $PASSWORD"
     }
 
-    // Prepare Docker containers with MongoDB Realm Test Server infrastructure for
-    // integration tests.
-    // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
-    def props = readProperties file: 'dependencies.list'
-    echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
-    def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
-    docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
-      mdbRealmImage.pull()
-    }
-    def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
-    def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
-    sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
-
-    sh "docker network create ${dockerNetworkId}"
-    mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
-    mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
-    sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
-
     try {
+        // Prepare Docker containers with MongoDB Realm Test Server infrastructure for
+        // integration tests.
+        // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
+        def props = readProperties file: 'dependencies.list'
+        echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
+        def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
+        docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
+          mdbRealmImage.pull()
+        }
+        def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
+        def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
+        sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
+
+        sh "docker network create ${dockerNetworkId}"
+        mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
+        mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
+        sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
+
         tasks.each { task ->
             testAndCollect(dir, task)
         }
