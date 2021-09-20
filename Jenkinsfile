@@ -51,12 +51,7 @@ node_label = 'osx_kotlin'
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
 pipeline {
-    agent {
-        node {
-            label node_label
-            customWorkspace workspacePath
-        }
-     }
+     agent none
      options {
         // In Realm Java, we had to lock the entire build as sharing the global Gradle
         // cache was causing issues. We never discovered the root cause, but 
@@ -86,81 +81,95 @@ pipeline {
           JAVA_HOME="${JAVA_11}"
     }
     stages {
-        stage('SCM') {
-            steps {
-                runScm()
-            }
-        }
-        stage('Build') {
-            steps {
-                runBuild()
-            }
-        }
-        stage('Static Analysis') {
-            when { expression { runTests } }
-            steps {
-                runStaticAnalysis()
-            }
-        }
-        stage('Tests Compiler Plugin') {
-            when { expression { runTests } }
-            steps {
-                runCompilerPluginTest()
-            }
-        }
-        stage('Tests Macos - Unit Tests') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "macosTest")
-            }
-        }
-        stage('Tests Android - Unit Tests') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "connectedAndroidTest")
-            }
-        }
-        stage('Integration Tests') {
-            when { expression { runTests } }
-            steps {
-                testWithServer("test", ["macosTest", "connectedAndroidTest"])
-            }
-        }
-        stage('Tests JVM (compiler only)') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-            }
-        }
-        stage('Tests Android Sample App') {
-            when { expression { runTests } }
-            steps {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    runMonkey()
+        stage('Prepare CI') {
+            // Force all stages to use the same node, so we can take advantage
+            // of the gradle cache between steps, otherwise Jenkins are free
+            // to move a stage to a different node.
+            agent {
+                node {
+                    label node_label
+                    customWorkspace workspacePath
+                }
+             }
+            stages {
+                stage('SCM') {
+                    steps {
+                        runScm()
+                    }
+                }
+                stage('Build') {
+                    steps {
+                        runBuild()
+                    }
+                }
+                stage('Static Analysis') {
+                    when { expression { runTests } }
+                    steps {
+                        runStaticAnalysis()
+                    }
+                }
+                stage('Tests Compiler Plugin') {
+                    when { expression { runTests } }
+                    steps {
+                        runCompilerPluginTest()
+                    }
+                }
+                stage('Tests Macos - Unit Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("packages", "macosTest")
+                    }
+                }
+                stage('Tests Android - Unit Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("packages", "connectedAndroidTest")
+                    }
+                }
+                stage('Integration Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer("test", ["macosTest", "connectedAndroidTest"])
+                    }
+                }
+                stage('Tests JVM (compiler only)') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+                    }
+                }
+                stage('Tests Android Sample App') {
+                    when { expression { runTests } }
+                    steps {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            runMonkey()
+                        }
+                    }
+                }
+                stage('Build Android on Java 8') {
+                    when { expression { runTests } }
+                    environment {
+                        JAVA_HOME="${JAVA_8}"
+                    }
+                    steps {
+                        runBuildAndroidApp()
+                    }
+                }
+                stage('Publish SNAPSHOT to Maven Central') {
+                    when { expression { shouldPublishSnapshot(version) } }
+                    steps {
+                        runPublishSnapshotToMavenCentral()
+                    }
+                }
+                stage('Publish Release to Maven Central') {
+                    when { expression { publishBuild } }
+                    steps {
+                        runPublishReleaseOnMavenCentral()
+                    }
                 }
             }
         }
-        stage('Build Android on Java 8') {
-            when { expression { runTests } }
-            environment {
-                JAVA_HOME="${JAVA_8}"
-            }
-            steps {
-                runBuildAndroidApp()
-            }
-        }
-        stage('Publish SNAPSHOT to Maven Central') {
-            when { expression { shouldPublishSnapshot(version) } }
-            steps {
-                runPublishSnapshotToMavenCentral()
-            }
-        }
-        stage('Publish Release to Maven Central') {
-            when { expression { publishBuild } }
-            steps {
-                runPublishReleaseOnMavenCentral()
-            }
-        }
+
     }
     post {
         failure {
