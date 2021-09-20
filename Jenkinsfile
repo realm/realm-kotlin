@@ -352,12 +352,15 @@ def testWithServer(dir, tasks) {
 
 def testAndCollect(dir, task) {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-        sh """
-            pushd $dir
-            ./gradlew $task --info --stacktrace --no-daemon
-            popd
-        """
-        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
+        try {
+            sh """
+                pushd $dir
+                ./gradlew $task --info --stacktrace --no-daemon
+                popd
+            """
+        } finally {
+            step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
+        }
     }
 }
 
