@@ -57,11 +57,7 @@ pipeline {
             customWorkspace workspacePath
         }
      }
-    // The Gradle cache is re-used between stages, in order to avoid builds interleave,
-    // and potentially corrupt each others cache, we grab a node lock for the entire
-    // build. 
     options {
-        lock resource: "${env.NODE_NAME}-kotlin_build_lock"
         timeout(time: 15, activity: true, unit: 'MINUTES')
     }
     environment {
@@ -75,81 +71,91 @@ pipeline {
           JAVA_HOME="${JAVA_11}"
     }
     stages {
-        stage('SCM') {
-            steps {
-                runScm()
+        stage('CI Run') {
+            options {
+                // The Gradle cache is re-used between stages, in order to avoid builds interleave,
+                // and potentially corrupt each others cache, we grab a node lock for the entire
+                // build. 
+                lock resource: "${env.NODE_NAME}-kotlin_build_lock"
             }
-        }
-        stage('Build') {
-            steps {
-                runBuild()
-            }
-        }
-        stage('Static Analysis') {
-            when { expression { runTests } }
-            steps {
-                runStaticAnalysis()
-            }
-        }
-        stage('Tests Compiler Plugin') {
-            when { expression { runTests } }
-            steps {
-                runCompilerPluginTest()
-            }
-        }
-        stage('Tests Macos - Unit Tests') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "macosTest")
-            }
-        }
-        stage('Tests Android - Unit Tests') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "connectedAndroidTest")
-            }
-        }
-        stage('Integration Tests') {
-            when { expression { runTests } }
-            steps {
-                testWithServer("test", ["macosTest", "connectedAndroidTest"])
-            }
-        }
-        stage('Tests JVM (compiler only)') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-            }
-        }
-        stage('Tests Android Sample App') {
-            when { expression { runTests } }
-            steps {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    runMonkey()
+            stages {
+                stage('SCM') {
+                    steps {
+                        runScm()
+                    }
+                }
+                stage('Build') {
+                    steps {
+                        runBuild()
+                    }
+                }
+                stage('Static Analysis') {
+                    when { expression { runTests } }
+                    steps {
+                        runStaticAnalysis()
+                    }
+                }
+                stage('Tests Compiler Plugin') {
+                    when { expression { runTests } }
+                    steps {
+                        runCompilerPluginTest()
+                    }
+                }
+                stage('Tests Macos - Unit Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("packages", "macosTest")
+                    }
+                }
+                stage('Tests Android - Unit Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("packages", "connectedAndroidTest")
+                    }
+                }
+                stage('Integration Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer("test", ["macosTest", "connectedAndroidTest"])
+                    }
+                }
+                stage('Tests JVM (compiler only)') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+                    }
+                }
+                stage('Tests Android Sample App') {
+                    when { expression { runTests } }
+                    steps {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            runMonkey()
+                        }
+                    }
+                }
+                stage('Build Android on Java 8') {
+                    when { expression { runTests } }
+                    environment {
+                        JAVA_HOME="${JAVA_8}"
+                    }
+                    steps {
+                        runBuildAndroidApp()
+                    }
+                }
+                stage('Publish SNAPSHOT to Maven Central') {
+                    when { expression { shouldPublishSnapshot(version) } }
+                    steps {
+                        runPublishSnapshotToMavenCentral()
+                    }
+                }
+                stage('Publish Release to Maven Central') {
+                    when { expression { publishBuild } }
+                    steps {
+                        runPublishReleaseOnMavenCentral()
+                    }
                 }
             }
-        }
-        stage('Build Android on Java 8') {
-            when { expression { runTests } }
-            environment {
-                JAVA_HOME="${JAVA_8}"
-            }
-            steps {
-                runBuildAndroidApp()
-            }
-        }
-        stage('Publish SNAPSHOT to Maven Central') {
-            when { expression { shouldPublishSnapshot(version) } }
-            steps {
-                runPublishSnapshotToMavenCentral()
-            }
-        }
-        stage('Publish Release to Maven Central') {
-            when { expression { publishBuild } }
-            steps {
-                runPublishReleaseOnMavenCentral()
-            }
-        }
+        }    
     }
     post {
         failure {
