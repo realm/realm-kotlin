@@ -22,7 +22,7 @@ plugins {
     id("com.android.library")
     id("io.realm.kotlin")
     id("realm-lint")
-    kotlin("plugin.serialization") version "1.5.21"
+    kotlin("plugin.serialization") version Versions.kotlin
 }
 
 repositories {

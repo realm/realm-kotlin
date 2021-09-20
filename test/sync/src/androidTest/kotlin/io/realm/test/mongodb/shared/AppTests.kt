@@ -25,8 +25,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
-// Cannot run on CI yet, as it requires sync server to be started with
-// tools/sync_test_server/start_server.sh
 class AppTests {
 
     lateinit var app: App
