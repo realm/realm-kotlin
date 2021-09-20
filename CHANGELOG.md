@@ -12,7 +12,7 @@
 * Changed `RealmObject.version` into method `RealmObject.version()`.
 
 ### Enhancements
-* None.
+* Added support for marking a field as indexed with `@Index`
 
 ### Fixed
 * None.
