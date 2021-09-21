@@ -17,35 +17,26 @@
 package io.realm.mongodb
 
 import io.realm.mongodb.internal.CredentialImpl
-import io.realm.mongodb.internal.ProviderImpl
+import io.realm.mongodb.internal.Provider
 
 /**
  * TODO
  */
-sealed interface Credentials {
-    sealed interface Provider {
-        val id: String
+interface Credentials {
+
+    companion object {
+        /**
+         * TODO
+         */
+        fun anynomous(): Credentials {
+            return CredentialImpl(Provider.ANONYMOUS, CredentialImpl.anonymous())
+        }
+
+        /**
+         * TODO
+         */
+        fun emailPassword(email: String, password: String): Credentials {
+            return CredentialImpl(Provider.EMAIL_PASSWORD, CredentialImpl.emailPassword(email, password))
+        }
     }
-    class ANONYMOUS : Provider, ProviderImpl("anonymous")
-    class EMAIL_PASSWORD : Provider, ProviderImpl("local-userpass")
-
-    val provider: Provider
-
-    class Anonymous() : Credentials, CredentialImpl(ANONYMOUS(), anonymous())
-    class EmailPassword(val email: String, val password: String) : Credentials, CredentialImpl(EMAIL_PASSWORD(), emailPassword(email, password))
 }
-
-/**
- * TODO
- */
-//class EmailPassword(val email: String, val password: String) : Credentials, CredentialImpl<EmailPassword>()
-
-
-//class Anonymous : Credentials("anon-user")
-//    class ApiKey : Credentials("api-key")
-//    class Apple : Credentials("oauth2-apple")
-//    class CustomFunction : Credentials("custom-function")
-//    class Facebook : Credentials("oauth2-facebook")
-//    class Google : Credentials("oauth2-google")
-//    class Jwt : Credentials("jwt")
-//    class Unknown : Credentials("")

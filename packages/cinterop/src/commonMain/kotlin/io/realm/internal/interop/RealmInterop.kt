@@ -151,6 +151,7 @@ expect object RealmInterop {
     fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String)
 
     // Credentials
+    fun realm_app_credentials_new_anonymous(): NativePointer
     fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer
 
     // Sync config

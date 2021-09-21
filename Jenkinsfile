@@ -333,6 +333,11 @@ def testWithServer(dir, tasks) {
         mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
         sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
+        // Techinically this is only needed for Android, but since all tests are 
+        // executed on same host and tasks are grouped in same stage we just do it 
+        // here
+        forwardAdbPorts()
+
         tasks.each { task ->
             testAndCollect(dir, task)
         }
@@ -350,14 +355,26 @@ def testWithServer(dir, tasks) {
     }
 }
 
+def forwardAdbPorts() {
+    sh """
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9080 tcp:9080
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9443 tcp:9443
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:8888 tcp:8888
+        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9090 tcp:9090
+    """
+}
+
 def testAndCollect(dir, task) {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
-        sh """
-            pushd $dir
-            ./gradlew $task --info --stacktrace --no-daemon
-            popd
-        """
-        step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
+        try {
+            sh """
+                pushd $dir
+                ./gradlew $task --info --stacktrace --no-daemon
+                popd
+            """
+        } finally {
+            step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
+        }
     }
 }
 

@@ -472,6 +472,10 @@ actual object RealmInterop {
         realmc.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
+    actual fun realm_app_credentials_new_anonymous(): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_anonymous())
+    }
+
     actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_username_password(username, password))
     }

@@ -20,15 +20,21 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.mongodb.Credentials
 
-open class ProviderImpl(val id: String)
+internal open class CredentialImpl(
+    val provider: Provider,
+    internal val nativePointer: NativePointer
+) : Credentials {
 
-open class CredentialImpl(val provider: Credentials.Provider, private val nativePointer: NativePointer) {
     companion object {
         internal fun anonymous(): NativePointer {
-            TODO()
+            return RealmInterop.realm_app_credentials_new_anonymous()
         }
+
         internal fun emailPassword(email: String, password: String): NativePointer {
-            return RealmInterop.realm_app_credentials_new_username_password(email, password)
+            return RealmInterop.realm_app_credentials_new_username_password(
+                io.realm.internal.util.Validation.checkEmpty(email, "email"),
+                io.realm.internal.util.Validation.checkEmpty(password, "password")
+            )
         }
     }
 }
