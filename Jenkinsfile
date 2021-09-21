@@ -80,9 +80,9 @@ pipeline {
           JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
           JAVA_HOME="${JAVA_11}"
           CCACHE_CPP2=true
-          CCACHE_COMPILERCHECK=content
-          CC="ccache clang"
-          CXX="ccache clang++"
+          CCACHE_COMPILERCHECK='content'
+          CC='ccache clang'
+          CXX='ccache clang++'
     }
     stages {
         stage('Prepare CI') {
