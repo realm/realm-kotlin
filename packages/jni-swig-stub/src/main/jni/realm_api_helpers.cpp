@@ -135,27 +135,30 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
 }
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
-    auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/CinteropCallback");
-    static jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess",
-                                                           "(Lio/realm/internal/interop/NativePointer;)V");
-    static jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError", "(Ljava/lang/Throwable;)V");
-
     realm_app_log_in_with_credentials(
             app,
             credentials,
             // FIXME Refactor into generic handling of network requests, like
             //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
             [](void *userdata, realm_user_t *user, realm_error_t *error) {
+                // TODO Investigate why method look ups in callbacks seems to need to be non-static
+                //  to avoid throwing
+                //  "JNI DETECTED ERROR IN APPLICATION: use of deleted local reference 0x55"
+                //  or similar
                 auto jenv = get_env(true);
+                jclass notification_class = jenv->FindClass("io/realm/internal/interop/CinteropCallback");
+                jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess",
+                                                                "(Lio/realm/internal/interop/NativePointer;)V");
+                jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError", "(Ljava/lang/Throwable;)V");
 
                 if (jenv->ExceptionCheck()) {
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,
                                          jenv->ExceptionOccurred());
                 } else if (error) {
-                    static jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
+                    // TODO Investigate why method look ups in callbacks seems to need to be non-static
+                    jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
+                    jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
                                                                                "(Ljava/lang/String;)V");
 
                     std::string message("[" + std::to_string(error->error) + "]: " +
@@ -168,8 +171,9 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                                          on_error_method,
                                          throwable);
                 } else {
-                    static jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
+                    // TODO Investigate why method look ups in callbacks seems to need to be non-static
+                    jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
+                    jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
 
                     jobject pointer = jenv->NewObject(exception_class, exception_constructor,
                                                       reinterpret_cast<jlong>(user), false);
@@ -216,10 +220,11 @@ static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_tran
             break;
     }
 
-    static jclass mapClass = jenv->FindClass("java/util/HashMap");
-    static jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
-    static jmethodID put_method = jenv->GetMethodID(mapClass, "put",
-                                                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    // TODO Investigate why method look ups in callbacks seems to need to be non-static
+    jclass mapClass = jenv->FindClass("java/util/HashMap");
+    jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
+    jmethodID put_method = jenv->GetMethodID(mapClass, "put",
+                                             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     size_t map_size = request.num_headers;
     jobject request_headers = jenv->NewObject(mapClass, init, (jsize) map_size);

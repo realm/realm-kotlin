@@ -21,7 +21,6 @@ import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import kotlinx.coroutines.runBlocking
-import org.junit.Ignore
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -34,7 +33,6 @@ class AppTests {
     @BeforeTest
     fun setup() {
         app = TestApp()
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
     }
 
     @AfterTest
@@ -47,7 +45,6 @@ class AppTests {
     // TODO Minimal subset of login tests. Migrate AppTest from realm-java, when full API is in
     //  place
     // TODO Exhaustive test on io.realm.mongodb.internal.Provider
-    @Ignore // FIXME Tests crashes when doing multiple logins
     @Test
     fun loginAnonymous() {
         runBlocking {
@@ -57,6 +54,8 @@ class AppTests {
 
     @Test
     fun loginEmailPassword() {
+        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
+        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
         runBlocking {
             app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
         }
@@ -69,7 +68,6 @@ class AppTests {
         }
     }
 
-    @Ignore // FIXME Tests crashes when doing multiple logins
     @Test
     fun loginInvalidUserThrows() {
         val credentials = Credentials.emailPassword("foo", "bar")
