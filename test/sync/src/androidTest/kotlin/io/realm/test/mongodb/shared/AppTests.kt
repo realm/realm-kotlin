@@ -27,9 +27,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
-const val TEST_APP_1 = "testapp1" // Id for the default test app
-const val BASE_URL = "http://127.0.0.1:9090"
-
 class AppTests {
 
     lateinit var app: App
