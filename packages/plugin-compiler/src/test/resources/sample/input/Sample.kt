@@ -21,6 +21,7 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import io.realm.annotations.Ignore
+import io.realm.annotations.Index
 import java.util.*
 
 class Sample : RealmObject {
@@ -35,10 +36,12 @@ class Sample : RealmObject {
     var transientString: String = ""
 
     // Primitive types
+    @Index
     var stringField: String? = "Realm"
     var byteField: Byte? = 0xA
     var charField: Char? = 'a'
     var shortField: Short? = 17
+    @Index
     var intField: Int? = 42
     var longField: Long? = 256
     var booleanField: Boolean? = true
