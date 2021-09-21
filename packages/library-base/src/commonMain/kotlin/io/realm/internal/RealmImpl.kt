@@ -5,12 +5,12 @@ import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
-import io.realm.interop.NativePointer
-import io.realm.interop.RealmInterop
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -73,10 +73,19 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
     }
 
     constructor(configuration: RealmConfiguration) :
-        this(configuration as RealmConfigurationImpl, RealmInterop.realm_open(configuration.nativeConfig))
+        this(
+            configuration as RealmConfigurationImpl,
+            try {
+                RealmInterop.realm_open(configuration.nativeConfig)
+            } catch (exception: RealmCoreException) {
+                throw genericRealmCoreExceptionHandler(
+                    "Could not open Realm with the given configuration",
+                    exception
+                )
+            }
+        )
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
-        @Suppress("TooGenericExceptionCaught") // FIXME https://github.com/realm/realm-kotlin/issues/70
         try {
             val (nativePointer, versionId, result) = this.writer.write(block)
             // Update the user facing Realm before returning the result.
@@ -85,8 +94,11 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
             // to detect it and update the user Realm.
             updateRealmPointer(RealmReference(this, nativePointer))
             return result
-        } catch (e: Exception) {
-            throw e
+        } catch (exception: RealmCoreException) {
+            throw genericRealmCoreExceptionHandler(
+                "Could not execute the write transaction",
+                exception
+            )
         }
     }
 
@@ -108,23 +120,15 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         TODO()
     }
 
-    internal override fun <T : RealmObject> registerResultsObserver(results: RealmResultsImpl<T>): Flow<RealmResultsImpl<T>> {
-        return notifier.resultsChanged(results)
-    }
-
-    internal override fun <T> registerListObserver(list: ManagedRealmList<T>): Flow<RealmList<T>> {
-        return notifier.listChanged(list)
-    }
-
-    internal override fun <T : RealmObject> registerObjectObserver(obj: T): Flow<T> {
-        return notifier.objectChanged(obj)
+    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
+        return notifier.registerObserver(t)
     }
 
     internal override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
-        return notifier.registerResultsChangedListener(results, callback)
+        TODO("Not yet implemented")
     }
 
     internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
