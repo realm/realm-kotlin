@@ -32,7 +32,7 @@ interface Credentials {
         /**
          * TODO
          */
-        fun anynomous(): Credentials {
+        fun anonymous(): Credentials {
             return CredentialImpl(AuthenticationProvider.ANONYMOUS, CredentialImpl.anonymous())
         }
 

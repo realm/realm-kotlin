@@ -17,6 +17,7 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.mongodb.App
+import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -48,7 +49,7 @@ class AppTests {
     @Test
     fun loginAnonymous() {
         runBlocking {
-            app.login(Credentials.anynomous()).getOrThrow()
+            app.login(Credentials.anonymous()).getOrThrow()
         }
     }
 
@@ -64,7 +65,9 @@ class AppTests {
     @Test
     fun loginNonCredentialImplThrows() {
         runBlocking {
-            assertFailsWith<IllegalArgumentException> { app.login(object : Credentials {}) }
+            assertFailsWith<IllegalArgumentException> { app.login(object : Credentials {
+                override val authenticationProvider: AuthenticationProvider = AuthenticationProvider.ANONYMOUS
+            }) }
         }
     }
 
