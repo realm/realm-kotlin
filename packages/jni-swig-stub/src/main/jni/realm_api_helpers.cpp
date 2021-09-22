@@ -135,30 +135,33 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
 }
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
+    auto jenv = get_env();
+    // TODO OPTIMIZE Makes multiple lookups of CinteropCallback, but at least only once when
+    //  initializing static variables
+    //  https://github.com/realm/realm-kotlin/issues/460
+    static jmethodID on_success_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
+                                                "onSuccess",
+                                                "(Lio/realm/internal/interop/NativePointer;)V");
+    static jmethodID on_error_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
+                                              "onError", "(Ljava/lang/Throwable;)V");
+
     realm_app_log_in_with_credentials(
             app,
             credentials,
             // FIXME Refactor into generic handling of network requests, like
             //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
             [](void *userdata, realm_user_t *user, realm_error_t *error) {
-                // TODO Investigate why method look ups in callbacks seems to need to be non-static
-                //  to avoid throwing
-                //  "JNI DETECTED ERROR IN APPLICATION: use of deleted local reference 0x55"
-                //  or similar
                 auto jenv = get_env(true);
-                jclass notification_class = jenv->FindClass("io/realm/internal/interop/CinteropCallback");
-                jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess",
-                                                                "(Lio/realm/internal/interop/NativePointer;)V");
-                jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError", "(Ljava/lang/Throwable;)V");
 
                 if (jenv->ExceptionCheck()) {
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,
                                          jenv->ExceptionOccurred());
                 } else if (error) {
-                    // TODO Investigate why method look ups in callbacks seems to need to be non-static
+                    // TODO OPTIMIZE Make central global reference table of classes
+                    //  https://github.com/realm/realm-kotlin/issues/460
                     jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
-                    jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
+                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
                                                                                "(Ljava/lang/String;)V");
 
                     std::string message("[" + std::to_string(error->error) + "]: " +
@@ -171,9 +174,10 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                                          on_error_method,
                                          throwable);
                 } else {
-                    // TODO Investigate why method look ups in callbacks seems to need to be non-static
+                    // TODO OPTIMIZE Make central global reference table of classes
+                    //  https://github.com/realm/realm-kotlin/issues/460
                     jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
-                    jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
+                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
 
                     jobject pointer = jenv->NewObject(exception_class, exception_constructor,
                                                       reinterpret_cast<jlong>(user), false);
@@ -192,10 +196,8 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
 }
 
 static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
-    static jclass network_transport_class = jenv->FindClass("io/realm/internal/interop/sync/NetworkTransport");
-
-    static jmethodID m_send_request_method = jenv->GetMethodID(
-            network_transport_class,
+    static jmethodID m_send_request_method = lookup(jenv,
+            "io/realm/internal/interop/sync/NetworkTransport",
             "sendRequest",
             "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/internal/interop/sync/Response;"
     );
@@ -220,10 +222,11 @@ static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_tran
             break;
     }
 
-    // TODO Investigate why method look ups in callbacks seems to need to be non-static
+    // TODO OPTIMIZE Make central global reference table of classes
+    //  https://github.com/realm/realm-kotlin/issues/460
     jclass mapClass = jenv->FindClass("java/util/HashMap");
-    jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
-    jmethodID put_method = jenv->GetMethodID(mapClass, "put",
+    static jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
+    static jmethodID put_method = jenv->GetMethodID(mapClass, "put",
                                              "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     size_t map_size = request.num_headers;
@@ -341,8 +344,7 @@ static realm_http_transport_t *new_network_transport_lambda_function(void *userd
     jobject app_ref = static_cast<jobject>(userdata);
 
     // Use Kotlin lambda to access the network transport
-    static jclass app_class = jenv->FindClass("kotlin/jvm/functions/Function0");
-    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "invoke", "()Ljava/lang/Object;");
+    static jmethodID get_network_transport_method = lookup(jenv, "kotlin/jvm/functions/Function0", "invoke", "()Ljava/lang/Object;");
     jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
 
     return realm_http_transport_new(jenv->NewGlobalRef(network_transport),

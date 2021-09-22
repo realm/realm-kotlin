@@ -26,6 +26,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved);
 namespace realm {
     namespace jni_util {
         JNIEnv * get_env(bool attach_if_needed = false);
+
+        // TODO Migrate java_method.{hpp,cpp} realm-java or implement similar caching mechanism to
+        //  hold global references to classes and look up methods
+        jmethodID lookup(JNIEnv *jenv, const char *class_name, const char *method_name,
+                         const char *signature);
     }
 }
 
