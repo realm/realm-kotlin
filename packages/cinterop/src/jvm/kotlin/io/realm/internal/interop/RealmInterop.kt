@@ -45,7 +45,7 @@ actual object RealmInterop {
         if (isAndroid()) {
             System.loadLibrary("realmc")
         } else {
-            // otherwise locate using reflection the dependency SoLoader and call load
+            // otherwise locate, using reflection, the dependency SoLoader and call load
             // (calling SoLoader directly will create a circular dependency with `jvmMain`)
             val classToLoad = Class.forName("io.realm.jvm.SoLoader")
             val instance = classToLoad.newInstance()
