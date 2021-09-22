@@ -14,33 +14,32 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb.internal
+package io.realm.mongodb
+
+import io.realm.internal.interop.sync.AuthProvider
 
 /**
- * This enum contains the list of identity providers supported by MongoDB Realm.
- * All of these except [.EMAIL_PASSWORD] must be enabled manually on MongoDB Realm to
- * work.
+ * This enum contains the list of authentication providers supported by MongoDB Realm.
+ *
+ * The authentication provider must be enabled in MongoDB Realm App to work.
  *
  * @see [Authentication Providers](https://docs.mongodb.com/realm/authentication/providers/)
  */
-internal enum class Provider(id: String) {
-    ANONYMOUS("anon-user"),
+enum class AuthenticationProvider(id: io.realm.internal.interop.sync.AuthProvider) {
+    ANONYMOUS(AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS),
     // API_KEY("api-key"),  // same value as API_KEY as per OS specifications
     // APPLE("oauth2-apple"),
     // CUSTOM_FUNCTION("custom-function"),
-    EMAIL_PASSWORD("local-userpass"),
+    EMAIL_PASSWORD(AuthProvider.RLM_AUTH_PROVIDER_USERNAME_PASSWORD),
     // FACEBOOK("oauth2-facebook"),
     // GOOGLE("oauth2-google"),
     // JWT("jwt"),
-    UNKNOWN(""),
+    // UNKNOWN(""),
     ;
 
-    /**
-     * Return the string presentation of this identity provider.
-     */
-    val id = id
+    internal val id: io.realm.internal.interop.sync.AuthProvider = id
 
-    companion object {
+    internal companion object {
         /**
          * Create the identity provider from the ID string returned by MongoDB Realm.
          *
@@ -48,13 +47,13 @@ internal enum class Provider(id: String) {
          * @return the enum representing the provider or [.UNKNOWN] if no matching provider
          * was found.
          */
-        fun fromId(id: String): Provider {
+        internal fun fromId(id: AuthProvider): AuthenticationProvider {
             for (value in values()) {
                 if (value.id == id) {
                     return value
                 }
             }
-            return UNKNOWN
+            error("Unknown authentication provider: $id")
         }
     }
 }

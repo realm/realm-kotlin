@@ -16,6 +16,9 @@
 
 package io.realm.internal.util
 
+/**
+ * Collection of validation methods to ensure uniform input validation.
+ */
 object Validation {
     fun illegalArgument(message: String): Nothing = throw IllegalArgumentException(message)
 

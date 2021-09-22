@@ -17,26 +17,30 @@
 package io.realm.mongodb
 
 import io.realm.mongodb.internal.CredentialImpl
-import io.realm.mongodb.internal.Provider
 
 /**
  * TODO
  */
 interface Credentials {
 
+    val authenticationProvider: AuthenticationProvider
+
+    // TODO Consider adding asJson() like in Realm Java
+    // fun asJson(): String
+
     companion object {
         /**
          * TODO
          */
         fun anynomous(): Credentials {
-            return CredentialImpl(Provider.ANONYMOUS, CredentialImpl.anonymous())
+            return CredentialImpl(AuthenticationProvider.ANONYMOUS, CredentialImpl.anonymous())
         }
 
         /**
          * TODO
          */
         fun emailPassword(email: String, password: String): Credentials {
-            return CredentialImpl(Provider.EMAIL_PASSWORD, CredentialImpl.emailPassword(email, password))
+            return CredentialImpl(AuthenticationProvider.EMAIL_PASSWORD, CredentialImpl.emailPassword(email, password))
         }
     }
 }
