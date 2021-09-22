@@ -17,6 +17,6 @@
 package io.realm.internal.interop
 
 // Interface to hold C API enumerated constant reference by SWIG constant
-interface NativeEnumerated {
-    val nativeValue: Int
+interface NativeEnumerated<T : Enum<T>> {
+    val nativeEnum: T
 }

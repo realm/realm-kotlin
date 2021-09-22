@@ -16,7 +16,8 @@
 
 package io.realm.internal.interop
 
-actual enum class SchemaValidationMode(override val nativeValue: Int) : NativeEnumerated {
+actual enum class SchemaValidationMode(override val nativeEnum: realm_schema_validation_mode_e) :
+    NativeEnumerated<realm_schema_validation_mode_e> {
     RLM_SCHEMA_VALIDATION_BASIC(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC),
     RLM_SCHEMA_VALIDATION_SYNC(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_SYNC),
     RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),

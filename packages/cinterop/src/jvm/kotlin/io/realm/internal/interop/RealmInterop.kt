@@ -76,7 +76,7 @@ actual object RealmInterop {
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = INVALID_CLASS_KEY
-                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue }
+                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeEnum }
             }
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
@@ -84,12 +84,12 @@ actual object RealmInterop {
                 val cproperty = realm_property_info_t().apply {
                     name = property.name
                     public_name = property.publicName
-                    type = property.type.nativeValue
-                    collection_type = property.collectionType.nativeValue
+                    type = property.type.nativeEnum
+                    collection_type = property.collectionType.nativeEnum
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
                     key = INVALID_PROPERTY_KEY
-                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue }
+                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeEnum }
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
             }
@@ -108,7 +108,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
-        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode.nativeValue)
+        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode)
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
@@ -164,7 +164,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
-        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeValue.toLong())
+        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeEnum)
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {

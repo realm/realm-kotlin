@@ -148,7 +148,7 @@ struct realm_size_t {
 %apply int8_t[] {uint8_t *out_key};
 
 // Just generate constants for the enum and pass them back and forth as integers
-%include "enumtypeunsafe.swg"
+%include "enums.swg"
 %javaconst(1);
 
 

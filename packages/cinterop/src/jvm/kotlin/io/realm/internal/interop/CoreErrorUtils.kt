@@ -20,7 +20,8 @@ object CoreErrorUtils {
     @JvmStatic
     @Suppress("ComplexMethod")
     fun coreErrorAsThrowable(nativeValue: Int, message: String?): Throwable {
-        return when (nativeValue) {
+        val nativeEnum = realm_errno_e.swigToEnum(nativeValue)
+        return when (nativeEnum) {
             realm_errno_e.RLM_ERR_NONE -> RealmCoreNoneException(message)
             realm_errno_e.RLM_ERR_UNKNOWN -> RealmCoreUnknownException(message)
             realm_errno_e.RLM_ERR_OTHER_EXCEPTION -> RealmCoreOtherException(message)
