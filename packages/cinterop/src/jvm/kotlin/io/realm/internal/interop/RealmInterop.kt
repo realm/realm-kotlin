@@ -76,7 +76,7 @@ actual object RealmInterop {
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = INVALID_CLASS_KEY
-                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeEnum }
+                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeEnum.swigValue() }
             }
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
@@ -89,7 +89,7 @@ actual object RealmInterop {
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
                     key = INVALID_PROPERTY_KEY
-                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeEnum }
+                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeEnum.swigValue() }
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
             }
@@ -108,7 +108,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
-        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode)
+        realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode.nativeEnum)
     }
 
     actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
@@ -164,7 +164,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
-        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeEnum)
+        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeEnum.swigValue().toLong())
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
