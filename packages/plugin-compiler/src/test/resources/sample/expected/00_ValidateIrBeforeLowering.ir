@@ -99,6 +99,8 @@ MODULE_FRAGMENT name:<main>
               value: GET_VAR '<set-?>: kotlin.String declared in sample.input.Sample.<set-transientString>' type=kotlin.String origin=null
       PROPERTY name:stringField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private
+          annotations:
+            Index
           EXPRESSION_BODY
             CONST String type=kotlin.String value="Realm"
         FUN name:<get-stringField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String?
@@ -285,6 +287,8 @@ MODULE_FRAGMENT name:<main>
                       value: GET_VAR '<set-?>: kotlin.Short? declared in sample.input.Sample.<set-shortField>' type=kotlin.Short? origin=null
       PROPERTY name:intField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:intField type:kotlin.Int? visibility:private
+          annotations:
+            Index
           EXPRESSION_BODY
             CONST Int type=kotlin.Int value=42
         FUN name:<get-intField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.Int?
@@ -1227,6 +1231,7 @@ MODULE_FRAGMENT name:<main>
                         <T>: io.realm.internal.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.internal.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.internal.interop.PropertyFlag>
                           GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.internal.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_INDEXED' type=io.realm.internal.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.internal.interop.PropertyFlag>) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="byteField"
                       publicName: CONST String type=kotlin.String value=""
@@ -1271,6 +1276,7 @@ MODULE_FRAGMENT name:<main>
                         <T>: io.realm.internal.interop.PropertyFlag
                         elements: VARARG type=kotlin.Array<io.realm.internal.interop.PropertyFlag> varargElementType=kotlin.collections.Set<io.realm.internal.interop.PropertyFlag>
                           GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_NULLABLE' type=io.realm.internal.interop.PropertyFlag
+                          GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_INDEXED' type=io.realm.internal.interop.PropertyFlag
                     CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, flags: kotlin.collections.Set<io.realm.internal.interop.PropertyFlag>) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="longField"
                       publicName: CONST String type=kotlin.String value=""

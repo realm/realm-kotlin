@@ -49,7 +49,7 @@ internal object Names {
     val PROPERTY_FLAG_NORMAL = Name.identifier("RLM_PROPERTY_NORMAL")
     val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
     val PROPERTY_FLAG_PRIMARY_KEY = Name.identifier("RLM_PROPERTY_PRIMARY_KEY")
-    val PROPERTY_FLAG_INDEXED = Name.identifier("RLM_PROPERTY_INDEXED")
+    val PROPERTY_FLAG_INDEX = Name.identifier("RLM_PROPERTY_INDEXED")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
@@ -92,6 +92,7 @@ internal object FqNames {
     val COLLECTION_TYPE = FqName("io.realm.internal.interop.CollectionType")
     val PROPERTY_FLAG = FqName("io.realm.internal.interop.PropertyFlag")
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.annotations.PrimaryKey")
+    val INDEX_ANNOTATION = FqName("io.realm.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     // Realm data types

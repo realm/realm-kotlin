@@ -33,6 +33,7 @@ internal object TypeDescriptor {
         val nonNullable: Boolean, // TODO this doesn't contain enough info for lists
         val listSupport: Boolean,
         val primaryKeySupport: Boolean,
+        val indexSupport: Boolean,
         val canBeNull: Set<CollectionType>, // favor using this over "nullable"
         val canBeNotNull: Set<CollectionType> // favor using this over "nonNullable"
     ) {
@@ -42,6 +43,7 @@ internal object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             primaryKeySupport = true,
+            indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
@@ -51,6 +53,7 @@ internal object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             primaryKeySupport = false,
+            indexSupport = false,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
@@ -60,6 +63,7 @@ internal object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             primaryKeySupport = true,
+            indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
@@ -69,6 +73,7 @@ internal object TypeDescriptor {
             nonNullable = false,
             listSupport = true,
             primaryKeySupport = false,
+            indexSupport = false,
             canBeNull = nullabilityForAll.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
             },
@@ -80,6 +85,7 @@ internal object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             primaryKeySupport = false,
+            indexSupport = false,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
@@ -89,6 +95,7 @@ internal object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             primaryKeySupport = false,
+            indexSupport = false,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         );
@@ -192,6 +199,8 @@ internal object TypeDescriptor {
     ) {
         val isPrimaryKeySupported: Boolean =
             collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
+        val isIndexingSupported: Boolean =
+            collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.indexSupport
 
         // Utility method to generate Kotlin code for the specific field
         fun toKotlinLiteral(): String {

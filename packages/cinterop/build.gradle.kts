@@ -265,6 +265,8 @@ android {
         externalNativeBuild {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
+                arguments("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
+                arguments("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
                 targets.add("realmc")
             }
         }
@@ -390,6 +392,8 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
             commandLine(
                 "cmake",
                 "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/macosx.toolchain.cmake",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=1",
@@ -423,6 +427,8 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
             workingDir(project.file(directory))
             commandLine(
                 "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_INSTALL_PREFIX=.",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
@@ -468,6 +474,8 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
             commandLine(
                 "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
                 "-DREALM_ENABLE_SYNC=1",
