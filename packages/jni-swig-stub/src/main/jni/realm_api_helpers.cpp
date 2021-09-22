@@ -135,31 +135,30 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
     );
 }
 
-inline void jni_check_exception(JNIEnv* jenv = realm::jni_util::get_env()) {
+inline void jni_check_exception(JNIEnv* jenv = get_env()) {
     if (jenv->ExceptionCheck()) {
         jenv->ExceptionDescribe();
         throw std::runtime_error("An unexpected Error was thrown from Java.");
     }
 }
 
-class CustomJVMScheduler{
+class CustomJVMScheduler {
 public:
     CustomJVMScheduler(jobject dispatchScheduler) {
-        JNIEnv *jenv = realm::jni_util::get_env(true);
+        JNIEnv *jenv = get_env();
         jclass jvm_scheduler_class = jenv->FindClass("io/realm/internal/interop/JVMScheduler");
         m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(JJ)V");
         m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
     }
 
     ~CustomJVMScheduler() {
-        realm::jni_util::get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
+        get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
     }
 
     realm_scheduler_t* build() {
         return realm_scheduler_new(
                 this /*void* userdata*/,
-                [](
-                        void *userdata) { /*realm_free_userdata_func_t*/ //TODO this doesn't seem to be invoked (maybe on closing the Realm)
+                [](void *userdata) { /*realm_free_userdata_func_t*/ //TODO this doesn't seem to be invoked (maybe on closing the Realm)
                     delete reinterpret_cast<CustomJVMScheduler * >(userdata);
                 },
                 [](void *userdata) { /*realm_scheduler_notify_func_t notify*/
@@ -201,7 +200,7 @@ private:
     realm_scheduler_notify_func_t m_core_notif_function;
 
     void notify() {
-        auto jenv = realm::jni_util::get_env(true);
+        auto jenv = get_env(true);
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
                              reinterpret_cast<jlong>(m_core_notif_function),
@@ -213,15 +212,24 @@ private:
     }
 };
 
-void register_realm_scheduler(jlong config_ptr, jobject dispatchScheduler) {
+// Note: using jlong here will create a linker issue
+// Undefined symbols for architecture x86_64:
+//  "invoke_core_notify_callback(long long, long long)", referenced from:
+//      _Java_io_realm_internal_interop_realmcJNI_invoke_1core_1notify_1callback in realmc.cpp.o
+//ld: symbol(s) not found for architecture x86_64
+//
+// I suspect this could be related to the fact that jni.h defines jlong differently between Android (typedef int64_t)
+// and JVM which is a (typedef long long) resulting in a different signature of the method that could be found by the linker.
+void invoke_core_notify_callback(int64_t core_notif_function, int64_t callback_userdata) {
+    realm_scheduler_notify_func_t notify = reinterpret_cast<realm_scheduler_notify_func_t>(core_notif_function);
+    // callback_userdata is a weak reference to Realm. that `WeakRealmNotifier::bind_to_scheduler` will use to invoke realm.notify()
+    notify(reinterpret_cast<void*>(callback_userdata));
+}
+
+void register_realm_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
     CustomJVMScheduler * jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
     realm_scheduler_t *scheduler = jvmScheduler->build();
     realm_config_set_scheduler(reinterpret_cast<realm_config_t * >(config_ptr), scheduler);
-}
-
-void invoke_core_notify_callback(jlong core_notif_function, jlong callback_userdata) {
-    realm_scheduler_notify_func_t notify = reinterpret_cast<realm_scheduler_notify_func_t>(core_notif_function);
-    notify(reinterpret_cast<void*>(callback_userdata));
 }
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {

@@ -148,7 +148,7 @@ private enum class Platform(
         shortName = "/jni/linux",
         prefix = "lib",
         suffix = "so",
-        defaultSystemLocation = "${System.getProperty("user.home")}/.cache/io-realm.kotlin/"
+        defaultSystemLocation = "${System.getProperty("user.home")}/.cache/io.realm.kotlin/"
     ),
     WINDOWS(
         shortName = "/jni/win",

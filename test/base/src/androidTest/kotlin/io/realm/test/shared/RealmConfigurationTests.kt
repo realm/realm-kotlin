@@ -193,6 +193,7 @@ class RealmConfigurationTests {
     }
 
     @Test
+    @Suppress("invisible_member")
     fun notificationDispatcherRealmConfigurationBuilder() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).notificationDispatcher(dispatcher).build()
@@ -212,6 +213,7 @@ class RealmConfigurationTests {
     }
 
     @Test
+    @Suppress("invisible_member")
     fun writeDispatcherRealmConfigurationBuilder() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
@@ -219,6 +221,7 @@ class RealmConfigurationTests {
     }
 
     @Test
+    @Suppress("invisible_member")
     fun writesExecutesOnWriteDispatcher() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()

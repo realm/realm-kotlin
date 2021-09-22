@@ -86,11 +86,15 @@ interface RealmConfiguration {
 
     /**
      * The coroutine dispatcher for internal handling of notification registration and delivery.
+     * Note: this needs to be a single thread based dispatcher in order for the JVM custom scheduler to work properly.
+     *       [kotlinx.coroutines.test.TestCoroutineDispatcher] is not supported.
      */
     public val notificationDispatcher: CoroutineDispatcher
 
     /**
      * The coroutine dispatcher used for all write operations.
+     * Note: this needs to be a single thread based dispatcher in order for the JVM custom scheduler to work properly.
+     *      [kotlinx.coroutines.test.TestCoroutineDispatcher] is not supported.
      */
     public val writeDispatcher: CoroutineDispatcher
 
@@ -224,7 +228,7 @@ interface RealmConfiguration {
          * @param dispatcher Dispatcher on which writes are run. It is required to be backed by a
          * single thread only.
          */
-        public fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
+        internal fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.notificationDispatcher = dispatcher
         }
 
@@ -241,7 +245,7 @@ interface RealmConfiguration {
          * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
          * by a single thread only.
          */
-        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
+        internal fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.writeDispatcher = dispatcher
         }
 

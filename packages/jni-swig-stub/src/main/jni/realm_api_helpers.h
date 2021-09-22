@@ -33,9 +33,9 @@ register_object_notification_cb(realm_object_t *object, jobject callback);
 realm_app_config_t *
 new_app_config(const char* app_id, jobject app_instance);
 
-void register_realm_scheduler(jlong config_ptr, jobject dispatchScheduler);
+void register_realm_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 
-void invoke_core_notify_callback(jlong core_notif_function, jlong callback_userdata);
+void invoke_core_notify_callback(int64_t core_notif_function, int64_t callback_userdata);
 
 void
 register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback);
