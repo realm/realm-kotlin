@@ -30,6 +30,9 @@ repositories {
 dependencies {
     compileOnly(kotlin("gradle-plugin"))
     compileOnly("com.android.tools.build:gradle:${Versions.Android.buildTools}")
+    // JAX-B dependencies for JDK 9+ (this is not available in JVM env 'java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter'
+    // and it was removed in Java 11 https://stackoverflow.com/a/43574427
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
 }
 
 val mavenPublicationName = "gradlePlugin"
