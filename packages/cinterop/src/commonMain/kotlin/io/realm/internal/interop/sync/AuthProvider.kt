@@ -16,6 +16,7 @@
 
 package io.realm.internal.interop.sync
 
+@Suppress("filename")
 expect enum class AuthProvider {
     RLM_AUTH_PROVIDER_ANONYMOUS,
     RLM_AUTH_PROVIDER_FACEBOOK,

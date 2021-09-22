@@ -65,9 +65,12 @@ class AppTests {
     @Test
     fun loginNonCredentialImplThrows() {
         runBlocking {
-            assertFailsWith<IllegalArgumentException> { app.login(object : Credentials {
-                override val authenticationProvider: AuthenticationProvider = AuthenticationProvider.ANONYMOUS
-            }) }
+            assertFailsWith<IllegalArgumentException> {
+                app.login(object : Credentials {
+                    override val authenticationProvider: AuthenticationProvider =
+                        AuthenticationProvider.ANONYMOUS
+                })
+            }
         }
     }
 

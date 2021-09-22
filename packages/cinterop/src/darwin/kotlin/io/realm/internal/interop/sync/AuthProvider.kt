@@ -18,7 +18,8 @@ package io.realm.internal.interop.sync
 
 import realm_wrapper.realm_auth_provider_e
 
-actual enum class AuthProvider(override val nativeValue: realm_auth_provider_e): io.realm.internal.interop.NativeEnum<realm_auth_provider_e> {
+actual enum class AuthProvider(override val nativeValue: realm_auth_provider_e) :
+    io.realm.internal.interop.NativeEnum<realm_auth_provider_e> {
     RLM_AUTH_PROVIDER_ANONYMOUS(realm_auth_provider_e.RLM_AUTH_PROVIDER_ANONYMOUS),
     RLM_AUTH_PROVIDER_FACEBOOK(realm_auth_provider_e.RLM_AUTH_PROVIDER_FACEBOOK),
     RLM_AUTH_PROVIDER_GOOGLE(realm_auth_provider_e.RLM_AUTH_PROVIDER_GOOGLE),

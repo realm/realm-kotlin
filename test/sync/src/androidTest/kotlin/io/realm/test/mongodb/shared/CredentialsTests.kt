@@ -29,6 +29,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
+@Suppress("ForbiddenComment")
 class CredentialsTests {
 
     private lateinit var app: App

@@ -18,8 +18,8 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.mongodb.Credentials
 import io.realm.mongodb.AuthenticationProvider
+import io.realm.mongodb.Credentials
 
 internal open class CredentialImpl(
     authenticationProvider: AuthenticationProvider,
@@ -27,13 +27,16 @@ internal open class CredentialImpl(
 ) : Credentials {
 
     override val authenticationProvider: AuthenticationProvider = authenticationProvider
-    get() {
-        return if (field == AuthenticationProvider.fromId(RealmInterop.realm_auth_credentials_get_provider(nativePointer))) {
-            field
-        } else {
-            error("Underlying authentication provider differs from local one")
+        get() {
+            return if (field == AuthenticationProvider.fromId(
+                    RealmInterop.realm_auth_credentials_get_provider(nativePointer)
+                )
+            ) {
+                field
+            } else {
+                error("Underlying authentication provider differs from local one")
+            }
         }
-    }
 
     companion object {
         internal fun anonymous(): NativePointer {
