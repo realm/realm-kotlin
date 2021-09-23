@@ -16,19 +16,26 @@
 
 package io.realm.mongodb
 
+import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.internal.REPLACED_BY_IR
+import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.PartitionValue
+import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
 
 /**
  * TODO
  */
-interface SyncConfiguration/* : RealmConfiguration */ {
+interface SyncConfiguration : RealmConfiguration {
 
     /**
      * TODO
@@ -38,7 +45,7 @@ interface SyncConfiguration/* : RealmConfiguration */ {
     /**
      * TODO
      */
-    val partitionValue: PartitionValue
+    val partitionValue: PartitionValue?
 
     companion object {
         fun defaultConfig(
@@ -46,8 +53,7 @@ interface SyncConfiguration/* : RealmConfiguration */ {
             partitionValue: Int,
             schema: Set<KClass<out RealmObject>>
         ): SyncConfiguration {
-            return Builder(schema = schema, user = user, partitionValue = partitionValue)
-                .buildSync()
+            TODO("REPLACED_BY_IR")
         }
 
         fun defaultConfig(
@@ -55,8 +61,7 @@ interface SyncConfiguration/* : RealmConfiguration */ {
             partitionValue: Long,
             schema: Set<KClass<out RealmObject>>
         ): SyncConfiguration {
-            return Builder(schema = schema, user = user, partitionValue = partitionValue)
-                .buildSync()
+            TODO("REPLACED_BY_IR")
         }
 
         fun defaultConfig(
@@ -64,8 +69,7 @@ interface SyncConfiguration/* : RealmConfiguration */ {
             partitionValue: String,
             schema: Set<KClass<out RealmObject>>
         ): SyncConfiguration {
-            return Builder(schema = schema, user = user, partitionValue = partitionValue)
-                .buildSync()
+            TODO("REPLACED_BY_IR")
         }
     }
 
@@ -78,7 +82,7 @@ interface SyncConfiguration/* : RealmConfiguration */ {
         schema: Set<KClass<out RealmObject>>,
         private var user: User,
         private var partitionValue: PartitionValue
-    ) : RealmConfiguration.Builder(path, name, schema) {
+    ) : RealmConfiguration.SharedBuilder<Builder>(path, name, schema) {
 
         constructor(
             path: String? = null,
@@ -104,53 +108,46 @@ interface SyncConfiguration/* : RealmConfiguration */ {
             partitionValue: String
         ) : this(path, name, schema, user, PartitionValue(partitionValue))
 
-//        /**
-//         * Creates the SyncConfiguration based on the builder properties.
-//         *
-//         * @return the created SyncConfiguration.
-//         */
-//        // TODO missing compiler plugin logic
-//        fun buildConfig(): SyncConfiguration {
-//            val message = "This code should have been replaced by the Realm Compiler Plugin. " +
-//                    "Has the `realm-kotlin` Gradle plugin been applied to the project?"
-//            throw AssertionError(message)
-//        }
-
-        // TODO for testing, remove
-        fun buildSync(): SyncConfiguration {
-            return SyncConfigurationImpl(partitionValue, user as UserImpl)
+        /**
+         * Creates the RealmConfiguration based on the builder properties.
+         *
+         * @return the created RealmConfiguration.
+         */
+        override fun build(): SyncConfiguration {
+            REPLACED_BY_IR()
         }
 
-//        // Called from the compiler plugin
-//        internal fun buildSync(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): SyncConfiguration {
-//            val allLoggers = mutableListOf<RealmLogger>()
-//            if (!removeSystemLogger) {
-//                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-//            }
-//            allLoggers.addAll(userLoggers)
-//            val localConfiguration = RealmConfigurationImpl(
-//                companionMap,
-//                path,
-//                name,
-//                schema,
-//                LogConfiguration(logLevel, allLoggers),
-//                maxNumberOfActiveVersions,
-//                notificationDispatcher ?: singleThreadDispatcher(name),
-//                writeDispatcher ?: singleThreadDispatcher(name),
-//                schemaVersion,
-//                deleteRealmIfMigrationNeeded,
-//                encryptionKey,
-//            )
-//            return SyncConfigurationImpl(localConfiguration, partitionValue, user as UserImpl)
-//        }
+        override fun build(
+            companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
+        ): SyncConfiguration {
+            val allLoggers = mutableListOf<RealmLogger>()
+            if (!removeSystemLogger) {
+                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+            }
+            allLoggers.addAll(userLoggers)
+            val localConfiguration = RealmConfigurationImpl(
+                companionMap,
+                path,
+                name,
+                schema,
+                LogConfiguration(logLevel, allLoggers),
+                maxNumberOfActiveVersions,
+                notificationDispatcher ?: singleThreadDispatcher(name),
+                writeDispatcher ?: singleThreadDispatcher(name),
+                schemaVersion,
+                deleteRealmIfMigrationNeeded,
+                encryptionKey,
+            )
+            return SyncConfigurationImpl(localConfiguration, partitionValue, user as UserImpl)
+        }
     }
 }
 
 internal class SyncConfigurationImpl(
-//    localConfiguration: RealmConfigurationImpl,
+    localConfiguration: RealmConfigurationImpl,
     override val partitionValue: PartitionValue,
     userImpl: UserImpl,
-) : /*RealmConfiguration by localConfiguration,*/ SyncConfiguration {
+) : RealmConfiguration by localConfiguration, SyncConfiguration {
 
     override val user: User
 

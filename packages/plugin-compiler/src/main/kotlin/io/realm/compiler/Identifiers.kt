@@ -73,8 +73,10 @@ internal object FqNames {
     val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
+    val REALM_SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
     val REALM_CONFIGURATION_IMPL = FqName("io.realm.internal.RealmConfigurationImpl")
     val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
+    val REALM_SYNC_CONFIGURATION_BUILDER = FqName("io.realm.mongodb.SyncConfiguration.Builder")
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
     val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")

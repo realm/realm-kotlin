@@ -70,7 +70,7 @@ import kotlin.reflect.KProperty1
  * replaced by the Compiler Plugin.
  */
 @Suppress("FunctionNaming")
-internal inline fun REPLACED_BY_IR(
+inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)

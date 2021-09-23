@@ -17,6 +17,7 @@
 package sample.input
 
 import io.realm.realmListOf
+import io.realm.mongodb.SyncConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
@@ -78,3 +79,8 @@ class Sample : RealmObject {
 class Child : RealmObject {
     var name: String? = "Child-default"
 }
+
+val configuration = SyncConfiguration.Builder(
+    schema = setOf(Child::class),
+    partitionValue = "ASDF"
+).build()

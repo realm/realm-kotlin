@@ -18,6 +18,7 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.REALM_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_CONFIGURATION_BUILDER
+import io.realm.compiler.FqNames.REALM_SYNC_CONFIGURATION
 import io.realm.compiler.Names.REALM_CONFIGURATION_BUILDER_BUILD
 import io.realm.compiler.Names.REALM_CONFIGURATION_WITH
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -82,9 +83,13 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
                 override fun visitCall(expression: IrCall): IrExpression {
                     val name = expression.symbol.owner.name
-                    if (expression.type.classFqName == REALM_CONFIGURATION &&
+                    if ((expression.type.classFqName == REALM_CONFIGURATION
+                                || expression.type.classFqName == REALM_SYNC_CONFIGURATION) &&
                         name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
                     ) {
+//                    if (expression.type.classFqName == REALM_CONFIGURATION &&
+//                        name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
+//                    ) {
                         val specifiedModels =
                             mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
                         val (receiver, schemaArgument) = when (name) {
