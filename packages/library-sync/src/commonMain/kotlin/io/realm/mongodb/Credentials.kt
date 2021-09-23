@@ -33,14 +33,14 @@ interface Credentials {
          * TODO
          */
         fun anonymous(): Credentials {
-            return CredentialImpl(AuthenticationProvider.ANONYMOUS, CredentialImpl.anonymous())
+            return CredentialImpl(CredentialImpl.anonymous())
         }
 
         /**
          * TODO
          */
         fun emailPassword(email: String, password: String): Credentials {
-            return CredentialImpl(AuthenticationProvider.EMAIL_PASSWORD, CredentialImpl.emailPassword(email, password))
+            return CredentialImpl(CredentialImpl.emailPassword(email, password))
         }
     }
 }

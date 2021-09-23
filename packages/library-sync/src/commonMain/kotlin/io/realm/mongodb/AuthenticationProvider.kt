@@ -38,22 +38,4 @@ enum class AuthenticationProvider(id: io.realm.internal.interop.sync.AuthProvide
     ;
 
     internal val id: io.realm.internal.interop.sync.AuthProvider = id
-
-    internal companion object {
-        /**
-         * Create the identity provider from the ID string returned by MongoDB Realm.
-         *
-         * @param id the string identifier for the provider
-         * @return the enum representing the provider or [.UNKNOWN] if no matching provider
-         * was found.
-         */
-        internal fun fromId(id: AuthProvider): AuthenticationProvider {
-            for (value in values()) {
-                if (value.id == id) {
-                    return value
-                }
-            }
-            error("Unknown authentication provider: $id")
-        }
-    }
 }

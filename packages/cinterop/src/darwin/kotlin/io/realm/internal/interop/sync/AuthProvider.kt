@@ -28,8 +28,7 @@ actual enum class AuthProvider(override val nativeValue: realm_auth_provider_e) 
     RLM_AUTH_PROVIDER_USERNAME_PASSWORD(realm_auth_provider_e.RLM_AUTH_PROVIDER_USERNAME_PASSWORD),
     RLM_AUTH_PROVIDER_FUNCTION(realm_auth_provider_e.RLM_AUTH_PROVIDER_FUNCTION),
     RLM_AUTH_PROVIDER_USER_API_KEY(realm_auth_provider_e.RLM_AUTH_PROVIDER_USER_API_KEY),
-    RLM_AUTH_PROVIDER_SERVER_API_KEY(realm_auth_provider_e.RLM_AUTH_PROVIDER_SERVER_API_KEY),
-    ;
+    RLM_AUTH_PROVIDER_SERVER_API_KEY(realm_auth_provider_e.RLM_AUTH_PROVIDER_SERVER_API_KEY);
 
     companion object {
         // TODO Optimize

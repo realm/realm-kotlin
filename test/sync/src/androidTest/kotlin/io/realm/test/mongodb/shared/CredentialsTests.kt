@@ -42,10 +42,23 @@ class CredentialsTests {
     }
 
     @Test
-    fun anonymous() {
+    fun allCredentials() {
+        for (value in AuthenticationProvider.values()) {
+            val credentials = when (value) {
+                AuthenticationProvider.ANONYMOUS ->
+                    anonymous()
+                AuthenticationProvider.EMAIL_PASSWORD ->
+                    emailPassword()
+                else -> error("Untested credentials type: $value")
+            }
+            assertEquals(value, credentials.authenticationProvider)
+        }
+    }
+
+    fun anonymous(): Credentials {
         val creds = Credentials.anonymous()
-        assertEquals(AuthenticationProvider.ANONYMOUS, creds.authenticationProvider)
         // assertTrue(creds.asJson().contains("anon-user")) // Treat the JSON as an opaque value.
+        return creds
     }
 
 //    @Test
@@ -92,15 +105,14 @@ class CredentialsTests {
 //        assertFailsWith<IllegalArgumentException> { Credentials.customFunction(null) }
 //    }
 
-    @Test
-    fun emailPassword() {
+    fun emailPassword(): Credentials {
         val creds = Credentials.emailPassword("foo@bar.com", "secret")
-        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, creds.authenticationProvider)
         // TODO Do we need exposure of the json representation? If so, then we need exposure of it
         //  in the C-API as well
         // Treat the JSON as a largely opaque value.
         // assertTrue(creds.asJson().contains("foo@bar.com"))
         // assertTrue(creds.asJson().contains("secret"))
+        return creds
     }
 
     @Test

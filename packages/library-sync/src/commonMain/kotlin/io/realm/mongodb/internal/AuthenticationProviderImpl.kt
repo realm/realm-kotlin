@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop.sync
+package io.realm.mongodb.internal
 
-expect enum class AuthProvider {
-    RLM_AUTH_PROVIDER_ANONYMOUS,
-    RLM_AUTH_PROVIDER_FACEBOOK,
-    RLM_AUTH_PROVIDER_GOOGLE,
-    RLM_AUTH_PROVIDER_APPLE,
-    RLM_AUTH_PROVIDER_CUSTOM,
-    RLM_AUTH_PROVIDER_USERNAME_PASSWORD,
-    RLM_AUTH_PROVIDER_FUNCTION,
-    RLM_AUTH_PROVIDER_USER_API_KEY,
-    RLM_AUTH_PROVIDER_SERVER_API_KEY,
+import io.realm.internal.interop.sync.AuthProvider
+import io.realm.mongodb.AuthenticationProvider
+
+internal class AuthenticationProviderImpl private constructor() {
+    internal companion object {
+        internal fun fromId(id: AuthProvider): AuthenticationProvider {
+            for (value in AuthenticationProvider.values()) {
+                if (value.id == id) {
+                    return value
+                }
+            }
+            error("Unknown authentication provider: $id")
+        }
+    }
 }
