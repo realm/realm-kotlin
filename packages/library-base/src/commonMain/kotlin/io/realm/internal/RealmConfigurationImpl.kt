@@ -27,7 +27,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
-public class RealmConfigurationImpl internal constructor(
+public class RealmConfigurationImpl constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,

@@ -11,6 +11,11 @@ import kotlin.coroutines.EmptyCoroutineContext
 expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
 
 /**
+ * Returns a default multithread dispatcher used by Sync.
+ */
+expect fun multiThreadDispatcher(size: Int = 3): CoroutineDispatcher
+
+/**
  * Runs a new coroutine and **blocks** the current thread _interruptibly_ until its completion.
  *
  * This just exposes a common runBlocking for our supported platforms, as this is not available in

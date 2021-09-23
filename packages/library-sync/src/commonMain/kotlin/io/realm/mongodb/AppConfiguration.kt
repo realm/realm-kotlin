@@ -16,6 +16,7 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.platform.multiThreadDispatcher
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -23,30 +24,43 @@ import kotlinx.coroutines.CoroutineDispatcher
  * TODO
  */
 interface AppConfiguration {
+
     val appId: String
     val baseUrl: String
     val networkTransportDispatcher: CoroutineDispatcher
 
     companion object {
-        /**
-         * TODO
-         */
         const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
-
-        /**
-         * TODO
-         */
         const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
     }
-}
 
-// TODO Create full blown builder for this
-// FIXME Initialize with proper multithreaded dispatcher
-//  https://github.com/realm/realm-kotlin/issues/450
-fun appConfigurationOf(
-    appId: String,
-    baseUrl: String,
-    dispatcher: CoroutineDispatcher
-): AppConfiguration {
-    return AppConfigurationImpl(appId, baseUrl, dispatcher)
+    /**
+     * TODO
+     */
+    class Builder(
+        private val appId: String
+    ) {
+
+        private var baseUrl: String = DEFAULT_BASE_URL
+        private var dispatcher: CoroutineDispatcher = multiThreadDispatcher() // TODO
+
+        /**
+         * TODO
+         */
+        fun baseUrl(url: String) = apply { this.baseUrl = url }
+
+        /**
+         * TODO
+         */
+        fun dispatcher(dispatcher: CoroutineDispatcher) = apply { this.dispatcher = dispatcher }
+
+        /**
+         * TODO
+         */
+        fun build(): AppConfiguration = AppConfigurationImpl(
+            appId = appId,
+            baseUrl = baseUrl,
+            networkTransportDispatcher = dispatcher
+        )
+    }
 }

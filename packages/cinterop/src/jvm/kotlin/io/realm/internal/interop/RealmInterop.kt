@@ -17,7 +17,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.cptr
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
@@ -477,7 +476,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
-        TODO()
+        return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }
 
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {

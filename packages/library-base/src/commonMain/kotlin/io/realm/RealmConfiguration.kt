@@ -134,21 +134,23 @@ interface RealmConfiguration {
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
      * using the [RealmConfiguration] constructor.
      */
-    class Builder(
+    // TODO so far this is the least-effort implementation for supporting sync configurations too
+    //  though interfacing the builder is also an option
+    open class Builder(
         var path: String? = null, // Full path for Realm (directory + name)
         var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
         var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
 
-        private var logLevel: LogLevel = LogLevel.WARN
-        private var removeSystemLogger: Boolean = false
-        private var userLoggers: List<RealmLogger> = listOf()
-        private var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
-        private var notificationDispatcher: CoroutineDispatcher? = null
-        private var writeDispatcher: CoroutineDispatcher? = null
-        private var deleteRealmIfMigrationNeeded: Boolean = false
-        private var schemaVersion: Long = 0
-        private var encryptionKey: ByteArray? = null
+        protected var logLevel: LogLevel = LogLevel.WARN
+        protected var removeSystemLogger: Boolean = false
+        protected var userLoggers: List<RealmLogger> = listOf()
+        protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
+        protected var notificationDispatcher: CoroutineDispatcher? = null
+        protected var writeDispatcher: CoroutineDispatcher? = null
+        protected var deleteRealmIfMigrationNeeded: Boolean = false
+        protected var schemaVersion: Long = 0
+        protected var encryptionKey: ByteArray? = null
 
         /**
          * Sets the absolute path of the realm file.
@@ -313,14 +315,14 @@ interface RealmConfiguration {
             )
         }
 
-        private fun validateSchemaVersion(schemaVersion: Long): Long {
+        protected fun validateSchemaVersion(schemaVersion: Long): Long {
             if (schemaVersion < 0) {
                 throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
             }
             return schemaVersion
         }
 
-        private fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
+        protected fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
             if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
                 throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. The provided key was ${encryptionKey.size} bytes.")
             }

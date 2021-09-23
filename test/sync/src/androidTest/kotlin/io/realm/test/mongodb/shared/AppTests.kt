@@ -20,10 +20,8 @@ import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.EmailPassword
-import io.realm.mongodb.appConfigurationOf
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.runBlocking
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 const val TEST_APP_1 = "testapp1" // Id for the default test app
@@ -32,7 +30,7 @@ const val BASE_URL = "http://127.0.0.1:9090"
 // Cannot run on CI yet, as it requires sync server to be started with
 // tools/sync_test_server/start_server.sh and manual creation of a user "asdf@asdf.com"/"asdfasdf"
 // through the web ui
-@Ignore
+//@Ignore
 class AppTests {
 
     @Test
@@ -56,8 +54,11 @@ class AppTests {
             }
         }
 
-        val configuration: AppConfiguration = appConfigurationOf(applicationId, BASE_URL, singleThreadDispatcher("asdf"))
-        val app = App.create(configuration)
+        val app = AppConfiguration.Builder(applicationId)
+            .baseUrl(BASE_URL)
+            .dispatcher(singleThreadDispatcher("test dispatcher"))
+            .build()
+            .let { App.create(it) }
 
         runBlocking {
             app.login(EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
