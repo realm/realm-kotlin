@@ -17,6 +17,8 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.cptr
+import io.realm.internal.interop.sync.AuthProvider
 import kotlinx.coroutines.CoroutineDispatcher
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
@@ -471,8 +473,16 @@ actual object RealmInterop {
         realmc.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
+    actual fun realm_app_credentials_new_anonymous(): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_anonymous())
+    }
+
     actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_username_password(username, password))
+    }
+
+    actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
+        return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
 
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {

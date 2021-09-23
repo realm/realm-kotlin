@@ -16,13 +16,16 @@
 
 package io.realm.test.mongodb.shared
 
-import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.App
-import io.realm.mongodb.AppConfiguration
-import io.realm.mongodb.EmailPassword
-import io.realm.mongodb.internal.KtorNetworkTransport
+import io.realm.mongodb.AuthenticationProvider
+import io.realm.mongodb.Credentials
+import io.realm.test.mongodb.TestApp
+import io.realm.test.mongodb.asTestApp
 import kotlinx.coroutines.runBlocking
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 const val TEST_APP_1 = "testapp1" // Id for the default test app
 const val BASE_URL = "http://127.0.0.1:9090"
@@ -33,35 +36,60 @@ const val BASE_URL = "http://127.0.0.1:9090"
 //@Ignore
 class AppTests {
 
+    lateinit var app: App
+
+    @BeforeTest
+    fun setup() {
+        app = TestApp()
+    }
+
+    @AfterTest
+    fun teadDown() {
+        if (this::app.isInitialized) {
+            app.asTestApp.close()
+        }
+    }
+
+    // TODO Minimal subset of login tests. Migrate AppTest from realm-java, when full API is in
+    //  place
+    // TODO Exhaustive test on io.realm.mongodb.internal.Provider
     @Test
-    fun login() {
-        // Send request directly to the local server to get the actual app ID
-        // TODO Wrap test app setup as in Realm Java
-        //  https://github.com/realm/realm-kotlin/pull/447#discussion_r707350138
-        val applicationId = KtorNetworkTransport(
-            timeoutMs = 5000,
-            dispatcher = singleThreadDispatcher("transport dispatcher")
-        ).sendRequest(
-            "get",
-            "http://127.0.0.1:8888/$TEST_APP_1",
-            mapOf(),
-            "",
-            true
-        ).let { response ->
-            when (response.httpResponseCode) {
-                200 -> response.body
-                else -> throw IllegalStateException(response.toString())
+    fun loginAnonymous() {
+        runBlocking {
+            app.login(Credentials.anonymous()).getOrThrow()
+        }
+    }
+
+    @Test
+    fun loginEmailPassword() {
+        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
+        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
+        runBlocking {
+            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
+        }
+    }
+
+    @Test
+    fun loginNonCredentialImplThrows() {
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                app.login(object : Credentials {
+                    override val authenticationProvider: AuthenticationProvider =
+                        AuthenticationProvider.ANONYMOUS
+                })
             }
         }
+    }
 
-        val app = AppConfiguration.Builder(applicationId)
-            .baseUrl(BASE_URL)
-            .dispatcher(singleThreadDispatcher("test dispatcher"))
-            .build()
-            .let { App.create(it) }
-
+    @Test
+    fun loginInvalidUserThrows() {
+        val credentials = Credentials.emailPassword("foo", "bar")
         runBlocking {
-            app.login(EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
+            // TODO Should be AppException (ErrorCode.INVALID_EMAIL_PASSWORD, ex.errorCode)
+            //  https://github.com/realm/realm-kotlin/issues/426
+            assertFailsWith<RuntimeException> {
+                app.login(credentials).getOrThrow()
+            }
         }
     }
 }

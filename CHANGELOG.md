@@ -14,7 +14,7 @@
 * Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
 
 ### Enhancements
-* None.
+* Added support for marking a field as indexed with `@Index`
 
 ### Fixed
 * None.

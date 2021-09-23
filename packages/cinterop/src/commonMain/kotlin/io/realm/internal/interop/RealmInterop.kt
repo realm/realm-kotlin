@@ -16,6 +16,7 @@
 
 package io.realm.internal.interop
 
+import io.realm.internal.interop.sync.AuthProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 
@@ -151,7 +152,9 @@ expect object RealmInterop {
     fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String)
 
     // Credentials
+    fun realm_app_credentials_new_anonymous(): NativePointer
     fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer
+    fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Sync config
     fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer
