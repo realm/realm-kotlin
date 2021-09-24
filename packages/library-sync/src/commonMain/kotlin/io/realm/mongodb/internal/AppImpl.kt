@@ -39,24 +39,23 @@ internal class AppImpl(
             basePath = appFilesDirectory()
         )
 
-    override suspend fun login(credentials: Credentials): Result<User> {
-        val credentialsInternal: CredentialImpl = io.realm.internal.util.Validation.checkType(credentials, "credentials")
-        return RealmInterop.runCatching {
-            suspendCoroutine { continuation ->
-                realm_app_log_in_with_credentials(
-                    nativePointer,
-                    (credentials as CredentialImpl).nativePointer,
-                    object : CinteropCallback {
-                        override fun onSuccess(pointer: NativePointer) {
-                            continuation.resume(UserImpl(pointer))
-                        }
-
-                        override fun onError(throwable: Throwable) {
-                            continuation.resumeWithException(throwable)
-                        }
+    override suspend fun login(credentials: Credentials): User {
+        val credentialsInternal: CredentialImpl =
+            io.realm.internal.util.Validation.checkType(credentials, "credentials")
+        return suspendCoroutine { continuation ->
+            RealmInterop.realm_app_log_in_with_credentials(
+                nativePointer,
+                (credentials as CredentialImpl).nativePointer,
+                object : CinteropCallback {
+                    override fun onSuccess(pointer: NativePointer) {
+                        continuation.resume(UserImpl(pointer))
                     }
-                )
-            }
+
+                    override fun onError(throwable: Throwable) {
+                        continuation.resumeWithException(throwable)
+                    }
+                }
+            )
         }
     }
 }
