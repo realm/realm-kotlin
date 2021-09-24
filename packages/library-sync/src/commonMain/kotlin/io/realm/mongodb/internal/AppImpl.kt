@@ -40,11 +40,12 @@ internal class AppImpl(
         )
 
     override suspend fun login(credentials: Credentials): Result<User> {
+        val credentialsInternal: CredentialImpl = io.realm.internal.util.Validation.checkType(credentials, "credentials")
         return RealmInterop.runCatching {
             suspendCoroutine { continuation ->
                 realm_app_log_in_with_credentials(
                     nativePointer,
-                    credentials.nativePointer,
+                    (credentials as CredentialImpl).nativePointer,
                     object : CinteropCallback {
                         override fun onSuccess(pointer: NativePointer) {
                             continuation.resume(UserImpl(pointer))

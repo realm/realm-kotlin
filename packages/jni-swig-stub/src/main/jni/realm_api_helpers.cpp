@@ -211,12 +211,14 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass(
-            "io/realm/internal/interop/CinteropCallback");
-    static jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess",
-                                                           "(Lio/realm/internal/interop/NativePointer;)V");
-    static jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError",
-                                                         "(Ljava/lang/Throwable;)V");
+    // TODO OPTIMIZE Makes multiple lookups of CinteropCallback, but at least only once when
+    //  initializing static variables
+    //  https://github.com/realm/realm-kotlin/issues/460
+    static jmethodID on_success_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
+                                                "onSuccess",
+                                                "(Lio/realm/internal/interop/NativePointer;)V");
+    static jmethodID on_error_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
+                                              "onError", "(Ljava/lang/Throwable;)V");
 
     realm_app_log_in_with_credentials(
             app,
@@ -231,7 +233,9 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                                          on_error_method,
                                          jenv->ExceptionOccurred());
                 } else if (error) {
-                    static jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
+                    // TODO OPTIMIZE Make central global reference table of classes
+                    //  https://github.com/realm/realm-kotlin/issues/460
+                    jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
                                                                                "(Ljava/lang/String;)V");
 
@@ -245,7 +249,9 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                                          on_error_method,
                                          throwable);
                 } else {
-                    static jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
+                    // TODO OPTIMIZE Make central global reference table of classes
+                    //  https://github.com/realm/realm-kotlin/issues/460
+                    jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
 
                     jobject pointer = jenv->NewObject(exception_class, exception_constructor,
@@ -265,10 +271,8 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
 }
 
 static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
-    static jclass network_transport_class = jenv->FindClass("io/realm/internal/interop/sync/NetworkTransport");
-
-    static jmethodID m_send_request_method = jenv->GetMethodID(
-            network_transport_class,
+    static jmethodID m_send_request_method = lookup(jenv,
+            "io/realm/internal/interop/sync/NetworkTransport",
             "sendRequest",
             "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/internal/interop/sync/Response;"
     );
@@ -293,10 +297,12 @@ static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_tran
             break;
     }
 
-    static jclass mapClass = jenv->FindClass("java/util/HashMap");
+    // TODO OPTIMIZE Make central global reference table of classes
+    //  https://github.com/realm/realm-kotlin/issues/460
+    jclass mapClass = jenv->FindClass("java/util/HashMap");
     static jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
     static jmethodID put_method = jenv->GetMethodID(mapClass, "put",
-                                                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                                             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     size_t map_size = request.num_headers;
     jobject request_headers = jenv->NewObject(mapClass, init, (jsize) map_size);
@@ -413,8 +419,7 @@ static realm_http_transport_t *new_network_transport_lambda_function(void *userd
     jobject app_ref = static_cast<jobject>(userdata);
 
     // Use Kotlin lambda to access the network transport
-    static jclass app_class = jenv->FindClass("kotlin/jvm/functions/Function0");
-    static jmethodID get_network_transport_method = jenv->GetMethodID(app_class, "invoke", "()Ljava/lang/Object;");
+    static jmethodID get_network_transport_method = lookup(jenv, "kotlin/jvm/functions/Function0", "invoke", "()Ljava/lang/Object;");
     jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
 
     return realm_http_transport_new(jenv->NewGlobalRef(network_transport),

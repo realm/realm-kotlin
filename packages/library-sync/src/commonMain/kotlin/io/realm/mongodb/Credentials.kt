@@ -16,35 +16,31 @@
 
 package io.realm.mongodb
 
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmInterop
+import io.realm.mongodb.internal.CredentialImpl
 
 /**
  * TODO
  */
-// FIXME Revisit API
-//  https://github.com/realm/realm-kotlin/pull/447#discussion_r707345579
-sealed class Credentials(val id: String) {
+interface Credentials {
 
-    // FIXME Internalize. Hmm, implementation of sealed classes must be in same package
-    val nativePointer: NativePointer by lazy {
-        when (this) {
-            is EmailPassword ->
-                RealmInterop.realm_app_credentials_new_username_password(email, password)
+    val authenticationProvider: AuthenticationProvider
+
+    // TODO Consider adding asJson() like in Realm Java
+    // fun asJson(): String
+
+    companion object {
+        /**
+         * TODO
+         */
+        fun anonymous(): Credentials {
+            return CredentialImpl(CredentialImpl.anonymous())
+        }
+
+        /**
+         * TODO
+         */
+        fun emailPassword(email: String, password: String): Credentials {
+            return CredentialImpl(CredentialImpl.emailPassword(email, password))
         }
     }
 }
-
-/**
- * TODO
- */
-class EmailPassword(val email: String, val password: String) : Credentials("local-userpass")
-
-//    class Anonymous : Credentials("anon-user")
-//    class ApiKey : Credentials("api-key")
-//    class Apple : Credentials("oauth2-apple")
-//    class CustomFunction : Credentials("custom-function")
-//    class Facebook : Credentials("oauth2-facebook")
-//    class Google : Credentials("oauth2-google")
-//    class Jwt : Credentials("jwt")
-//    class Unknown : Credentials("")

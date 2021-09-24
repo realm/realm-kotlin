@@ -19,6 +19,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -1016,10 +1017,17 @@ actual object RealmInterop {
         realm_wrapper.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
+    actual fun realm_app_credentials_new_anonymous(): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous())
+    }
+
     actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_app_credentials_new_username_password(username, password))
     }
 
+    actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
+        return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
+    }
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
         TODO()
     }

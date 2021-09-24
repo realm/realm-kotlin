@@ -45,5 +45,11 @@ namespace realm {
                 throw std::runtime_error("jni version not supported");
             return env;
         }
+
+        jmethodID lookup(JNIEnv *jenv, const char *class_name, const char *method_name,
+                         const char *signature) {
+            jclass localClass = jenv->FindClass(class_name);
+            return jenv->GetMethodID(localClass, method_name, signature);
+        }
     }
 }
