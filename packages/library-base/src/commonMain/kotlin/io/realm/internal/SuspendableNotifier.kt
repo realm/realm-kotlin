@@ -2,6 +2,7 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
+import io.realm.InternalRealmConfiguration
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -53,7 +54,10 @@ internal class SuspendableNotifier(
 
     // Must only be accessed from the dispatchers thread
     private val realm: BaseRealmImpl by lazy {
-        val dbPointer = RealmInterop.realm_open(owner.configuration.nativeConfig, dispatcher)
+        val dbPointer = RealmInterop.realm_open(
+            (owner.configuration as InternalRealmConfiguration).nativeConfig,
+            dispatcher
+        )
         object : BaseRealmImpl(owner.configuration, dbPointer) {
             /* Realms used by the Notifier is just a basic Live Realm */
         }

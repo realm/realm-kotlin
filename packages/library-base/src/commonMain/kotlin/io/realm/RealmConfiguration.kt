@@ -16,10 +16,11 @@
 
 package io.realm
 
-import io.realm.RealmConfiguration.Builder
+import io.realm.internal.Mediator
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -352,4 +353,10 @@ interface RealmConfiguration {
             )
         }
     }
+}
+
+interface InternalRealmConfiguration {
+    val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
+    val mediator: Mediator
+    val nativeConfig: NativePointer
 }

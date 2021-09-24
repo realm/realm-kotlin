@@ -158,7 +158,6 @@ struct realm_size_t {
 %ignore "realm_get_values";
 %ignore "realm_set_values";
 // Not yet available in library
-%ignore "realm_config_set_sync_config";
 %ignore "realm_update_schema_advanced";
 %ignore "realm_config_set_audit_factory";
 %ignore "_realm_get_schema_native";

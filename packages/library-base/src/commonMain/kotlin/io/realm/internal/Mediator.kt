@@ -19,7 +19,7 @@ package io.realm.internal
 import io.realm.RealmObject
 import kotlin.reflect.KClass
 
-internal interface Mediator {
+interface Mediator {
     fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal
     fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
 }

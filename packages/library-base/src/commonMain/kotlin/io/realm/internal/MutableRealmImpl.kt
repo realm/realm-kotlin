@@ -17,7 +17,9 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
+import io.realm.InternalRealmConfiguration
 import io.realm.MutableRealm
+import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
@@ -55,8 +57,14 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
      * - Native: Either a scheduler dispatching to the supplied dispatcher or the default Darwin
      * scheduler, that delivers notifications on the main run loop.
      */
-    internal constructor(configuration: RealmConfigurationImpl, dispatcher: CoroutineDispatcher? = null) :
-        super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
+    internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher? = null) :
+        super(
+            configuration,
+            RealmInterop.realm_open(
+                (configuration as InternalRealmConfiguration).nativeConfig,
+                dispatcher
+            )
+        )
 
     internal fun beginTransaction() {
         try {
@@ -102,7 +110,11 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     }
 
     override fun <T : RealmObject> copyToRealm(instance: T): T {
-        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, instance)
+        return copyToRealm(
+            (configuration as InternalRealmConfiguration).mediator,
+            realmReference,
+            instance
+        )
     }
 
     override fun <T : RealmObject> delete(obj: T) {

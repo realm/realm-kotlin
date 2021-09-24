@@ -27,13 +27,14 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertNotNull
+import kotlin.test.assertEquals
 
 const val DEFAULT_PARTITION_VALUE = "default"
+const val DEFAULT_NAME = "test.realm"
 
 class SyncConfigTests {
 
-    lateinit var app: App
+    private lateinit var app: App
 
     @BeforeTest
     fun setup() {
@@ -47,7 +48,7 @@ class SyncConfigTests {
         }
     }
 
-    private fun createNewUser(): User {
+    private fun createTestUser(): User {
         app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
         return runBlocking {
             app.login(Credentials.anonymous()).getOrThrow()
@@ -56,930 +57,582 @@ class SyncConfigTests {
 
     private fun createSyncConfig(
         user: User,
-        partitionValue: String = DEFAULT_PARTITION_VALUE
+        partitionValue: String = DEFAULT_PARTITION_VALUE,
+        path: String? = null,
+        name: String = DEFAULT_NAME
     ): SyncConfiguration = SyncConfiguration.Builder(
+        path = path,
+        name = name,
         schema = setOf(Sample::class),
         user = user,
         partitionValue = partitionValue
     ).build()
 
-    @Test
-    fun syncConfig() {
-        val user = createNewUser()
-        val config = SyncConfiguration.Builder(
-            schema = setOf(Sample::class),
-            partitionValue = "ASDF",
-            user = user
-        ).build()
+//    @Test
+//    fun errorHandler() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val errorHandler: SyncSession.ErrorHandler = object : SyncSession.ErrorHandler {
+//            override fun onError(session: SyncSession, error: AppException) {}
+//        }
+//        val config = builder.errorHandler(errorHandler).build()
+//        assertEquals(errorHandler, config.errorHandler)
+//    }
+//
+//    @Test
+//    fun errorHandler_fromAppConfiguration() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
+//        assertEquals(app.configuration.defaultErrorHandler, config.errorHandler)
+//    }
+//
+//    @Test
+//    fun errorHandler_nullThrows() {
+//        val user: User = createTestUser(app)
+//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//        assertFailsWith<IllegalArgumentException> { builder.errorHandler(TestHelper.getNull()) }
+//    }
+//
+//    @Test
+//    fun clientResetHandler() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val handler = object : SyncSession.ClientResetHandler {
+//            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {}
+//        }
+//        val config = builder.clientResetHandler(handler).build()
+//        assertEquals(handler, config.clientResetHandler)
+//    }
+//
+//    @Test
+//    fun clientResetHandler_fromAppConfiguration() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
+//        assertEquals(app.configuration.defaultClientResetHandler, config.clientResetHandler)
+//    }
+//
+//    @Test
+//    fun clientResetHandler_nullThrows() {
+//        val user: User = createTestUser(app)
+//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//        assertFailsWith<IllegalArgumentException> { builder.clientResetHandler(TestHelper.getNull()) }
+//    }
+//
+//    @Test
+//    fun equals() {
+//        val user = createTestUser()
+//        val config = SyncConfiguration.Builder(user = user, partitionValue = DEFAULT_PARTITION_VALUE)
+//            .build()
+//        assertEquals(config, config)
+//    }
+//
+//    @Test
+//    fun equals_same() {
+//        val user = createTestUser()
+//        val config1 = SyncConfiguration.Builder(user = user, partitionValue = DEFAULT_PARTITION_VALUE)
+//            .build()
+//        val config2 = SyncConfiguration.Builder(user = user, partitionValue = DEFAULT_PARTITION_VALUE)
+//            .build()
+//        assertEquals(config1, config2)
+//    }
+//
+//    @Test
+//    // FIXME Tests are not exhaustive
+//    fun equals_not() {
+//        val user1: User = createTestUser(app)
+//        val user2: User = createTestUser(app)
+//        val config1: SyncConfiguration = SyncConfiguration.Builder(user1, DEFAULT_PARTITION).build()
+//        val config2: SyncConfiguration = SyncConfiguration.Builder(user2, DEFAULT_PARTITION).build()
+//        assertFalse(config1 == config2)
+//    }
+//
+//    @Test
+//    fun hashCode_equal() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
+//        assertEquals(config.hashCode(), config.hashCode())
+//    }
+//
+//    @Test
+//    fun hashCode_notEquals() {
+//        val user1: User = createTestUser(app)
+//        val user2: User = createTestUser(app)
+//        val config1: SyncConfiguration = SyncConfiguration.defaultConfig(user1, DEFAULT_PARTITION)
+//        val config2: SyncConfiguration = SyncConfiguration.defaultConfig(user2, DEFAULT_PARTITION)
+//        assertNotEquals(config1.hashCode(), config2.hashCode())
+//    }
+//
 
-        assertNotNull(config)
+    @Test
+    fun equals_syncSpecificFields() {
+        val user = createTestUser()
+        val config = createSyncConfig(user = user, name = DEFAULT_NAME)
+        assertEquals(config.name, DEFAULT_NAME)
+        assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
     }
 
-//    // Smoke test for Sync. Waiting for working Sync support.
 //    @Test
-//    fun connectWithInitialSchema() {
-//        val user: User = createNewUser()
-//        val config = createSyncConfig(user)
-//        val realm: Realm = Realm.open(config)
-//        realm.writeBlocking {
-//            with(realm.syncSession) {
-//                uploadAllLocalChanges()
-//                downloadAllServerChanges()
-//            }
-//            assertTrue(isEmpty)
-//        }
-//    }
-//
-//    // Smoke test for Sync
-//    @Test
-//    fun roundTripObjectsNotInServerSchemaObject() {
-//        // User 1 creates an object an uploads it to MongoDB Realm
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createCustomConfig(user1, partitionValue)
-//        Realm.getInstance(config1).use { realm ->
-//            realm.executeTransaction {
-//                for (i in 1..10) {
-//                    it.insert(SyncColor())
-//                }
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//            assertEquals(10, realm.where<SyncColor>().count())
-//        }
-//
-//        // User 2 logs and using the same partition key should see the object
-//        val user2: User = createNewUser()
-//        val config2 = createCustomConfig(user2, partitionValue)
-//        Realm.getInstance(config2).use { realm ->
-//            realm.syncSession.downloadAllServerChanges()
-//            realm.refresh()
-//            assertEquals(10, realm.where<SyncColor>().count())
-//        }
-//    }
-//
-//    // Smoke test for sync
-//    // Insert different types with no links between them
-//    @Test
-//    fun roundTripSimpleObjectsInServerSchema() {
-//        // User 1 creates an object an uploads it to MongoDB Realm
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
-//        Realm.getInstance(config1).use { realm ->
-//            realm.executeTransaction {
-//                val person = SyncPerson()
-//                person.firstName = "Jane"
-//                person.lastName = "Doe"
-//                person.age = 42
-//                realm.insert(person);
-//                for (i in 0..9) {
-//                    val dog = SyncDog()
-//                    dog.name = "Fido $i"
-//                    it.insert(dog)
-//                }
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//            assertEquals(10, realm.where<SyncDog>().count())
-//            assertEquals(1, realm.where<SyncPerson>().count())
-//        }
-//
-//        // User 2 logs and using the same partition key should see the object
-//        val user2: User = createNewUser()
-//        val config2 = createSyncConfig(user2, partitionValue)
-//        Realm.getInstance(config2).use { realm ->
-//            realm.syncSession.downloadAllServerChanges()
-//            realm.refresh()
-//            assertEquals(10, realm.where<SyncDog>().count())
-//            assertEquals(1, realm.where<SyncPerson>().count())
-//        }
-//    }
-//
-//    // Smoke test for sync
-//    // Insert objects with links between them
-//    @Test
-//    fun roundTripObjectsWithLists() {
-//        // User 1 creates an object an uploads it to MongoDB Realm
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
-//        Realm.deleteRealm(config1)
-//        Realm.getInstance(config1).use { realm ->
-//            realm.executeTransaction {
-//                val person = SyncPerson()
-//                person.firstName = "Jane"
-//                person.lastName = "Doe"
-//                person.age = 42
-//                for (i in 0..9) {
-//                    val dog = SyncDog()
-//                    dog.name = "Fido $i"
-//                    person.dogs.add(dog)
-//                }
-//                realm.insert(person)
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//            assertEquals(10, realm.where<SyncDog>().count())
-//            assertEquals(1, realm.where<SyncPerson>().count())
-//        }
-//
-//        // User 2 logs and using the same partition key should see the object
-//        val user2: User = createNewUser()
-//        val config2 = createSyncConfig(user2, partitionValue)
-//        Realm.deleteRealm(config2)
-//        Realm.getInstance(config2).use { realm ->
-//            realm.syncSession.downloadAllServerChanges()
-//            realm.refresh()
-//            assertEquals(10, realm.where<SyncDog>().count())
-//            assertEquals(1, realm.where<SyncPerson>().count())
-//        }
-//    }
-//
-//    @Test
-//    fun session() {
-//        val user: User = app.login(Credentials.anonymous())
-//        Realm.getInstance(createSyncConfig(user)).use { realm ->
-//            assertNotNull(realm.syncSession)
-//            assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
-//            assertEquals(user, realm.syncSession.user)
-//        }
-//    }
-//
-//    @Test
-//    fun nullPartition() {
-//        val config = configFactory.createSyncConfigurationBuilder(createNewUser(), BsonNull())
-//            .modules(DefaultSyncSchema())
+//    fun name() {
+//        val user: User = createTestUser(app)
+//        val filename = "my-file-name.realm"
+//        val config: SyncConfiguration = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//            .name(filename)
 //            .build()
-//        assertTrue(config.path.endsWith("null.realm"))
-//        Realm.getInstance(config).use { realm ->
-//            realm.syncSession.uploadAllLocalChanges() // Ensures that we can actually connect
-//        }
+//        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.id}/$filename"
+//        assertTrue(config.path.endsWith(suffix))
 //    }
 //
 //    @Test
-//    @Ignore("FIXME Flaky, seems like Realm.compactRealm(config) sometimes returns false")
-//    fun compactRealm_populatedRealm() {
-//        val config = configFactory.createSyncConfigurationBuilder(createNewUser()).build()
-//        Realm.getInstance(config).use { realm ->
-//            realm.executeTransaction { r: Realm ->
-//                for (i in 0..9) {
-//                    r.insert(AllJavaTypes(i.toLong()))
+//    fun name_illegalValuesThrows() {
+//        val user: User = createTestUser(app)
+//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//
+//        assertFailsWith<IllegalArgumentException> { builder.name(TestHelper.getNull()) }
+//        assertFailsWith<IllegalArgumentException> { builder.name(".realm") }
+//    }
+//
+//    @Test
+//    fun encryption() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//            .encryptionKey(TestHelper.getRandomKey())
+//            .build()
+//        assertNotNull(config.encryptionKey)
+//    }
+//
+//    @Test
+//    fun encryption_invalid_null() {
+//        val user: User = createTestUser(app)
+//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(TestHelper.getNull()) }
+//    }
+//
+//    @Test
+//    fun encryption_invalid_wrong_length() {
+//        val user: User = createTestUser(app)
+//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
+//    }
+//
+//    @Test
+//    fun initialData() {
+//        val user: User = createTestUser(app)
+//        val config = configFactory.createSyncConfigurationBuilder(user)
+//            .schema(SyncStringOnly::class.java)
+//            .initialData(object : Realm.Transaction {
+//                override fun execute(realm: Realm) {
+//                    val stringOnly: SyncStringOnly = realm.createObject(ObjectId())
+//                    stringOnly.chars = "TEST 42"
 //                }
-//            }
-//        }
-//        assertTrue(Realm.compactRealm(config))
+//            })
+//            .build()
+//        assertNotNull(config.initialDataTransaction)
 //
+//        // open the first time - initialData must be triggered
 //        Realm.getInstance(config).use { realm ->
-//            assertEquals(10, realm.where(AllJavaTypes::class.java).count())
+//            val results: RealmResults<SyncStringOnly> = realm.where<SyncStringOnly>().findAll()
+//            assertEquals(1, results.size)
+//            assertEquals("TEST 42", results.first()!!.chars)
+//        }
+//
+//        // open the second time - initialData must not be triggered
+//        Realm.getInstance(config).use { realm ->
+//            assertEquals(1, realm.where<SyncStringOnly>().count())
 //        }
 //    }
 //
 //    @Test
-//    fun compactOnLaunch_shouldCompact() {
-//        val user = createTestUser(app)
+//    fun defaultRxFactory() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
+//        assertNotNull(config.rxFactory)
+//    }
 //
-//        // Fill Realm with data and record size
-//        val config1 = configFactory.createSyncConfigurationBuilder(user)
-//            .testSchema(SyncByteArray::class.java)
+//    @Test
+//    fun toString_nonEmpty() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
+//        val configStr = config.toString()
+//        assertTrue(configStr.isNotEmpty())
+//    }
+//
+//    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
+//    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
+//    @Test
+//    fun multipleUsersReferenceSameRealm() {
+//        val user1: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+//        val user2: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+//
+//        val config1: SyncConfiguration = SyncConfiguration.Builder(user1, DEFAULT_PARTITION)
+//            .modules(SyncStringOnlyModule())
+//            .build()
+//        val config2: SyncConfiguration = SyncConfiguration.Builder(user2, DEFAULT_PARTITION)
+//            .modules(SyncStringOnlyModule())
 //            .build()
 //
-//        var originalSize: Long? = null
-//        Realm.getInstance(config1).use { realm ->
-//            val oneMBData = ByteArray(1024 * 1024)
-//            realm.executeTransaction {
-//                for (i in 0..9) {
-//                    realm.createObject(SyncByteArray::class.java, ObjectId()).columnBinary =
-//                        oneMBData
-//                }
-//            }
-//            originalSize = File(realm.path).length()
-//        }
+//        // Verify that two different configurations can be used for the same URL
+//        val realm1: Realm = Realm.getInstance(config1)
+//        val realm2: Realm = Realm.getInstance(config2)
+//        assertNotEquals(realm1, realm2)
 //
-//        // Open Realm with CompactOnLaunch
-//        val config2 = configFactory.createSyncConfigurationBuilder(user)
-//            .compactOnLaunch { totalBytes, usedBytes -> true }
-//            .testSchema(SyncByteArray::class.java)
+//        realm1.close()
+//        realm2.close()
+//
+//        // Verify that we actually save two different files
+//        assertNotEquals(config1.path, config2.path)
+//    }
+//
+//    @Test
+//    fun defaultConfiguration_throwsIfNotLoggedIn() {
+//        // TODO Maybe we could avoid registering a real user
+//        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+//        user.logOut()
+//        assertFailsWith<IllegalArgumentException> { SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION) }
+//    }
+//
+//    @Test
+//    @Ignore("Not implemented yet")
+//    fun shouldWaitForInitialRemoteData() {
+//    }
+//
+//    @Test
+//    @Ignore("Not implemented yet")
+//    fun getInitialRemoteDataTimeout() {
+//    }
+//
+//    @Test
+//    @Ignore("Not implemented yet")
+//    fun getSessionStopPolicy() {
+//    }
+//
+//    @Test
+//    @Ignore("Not implemented yet")
+//    fun getUrlPrefix() {
+//    }
+//
+//    @Test
+//    fun getPartitionValue() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
+//        assertEquals(BsonString(DEFAULT_PARTITION), config.partitionValue)
+//    }
+//
+//    @Test
+//    fun clientResyncMode() {
+//        val user: User = createTestUser(app)
+//
+//        // Default mode for full Realms
+//        var config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
+//        assertEquals(ClientResyncMode.MANUAL, config.clientResyncMode)
+//
+//        // Manually set the mode
+//        config = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
+//            .clientResyncMode(ClientResyncMode.DISCARD_LOCAL_REALM)
 //            .build()
-//        Realm.getInstance(config2).use { realm ->
-//            val compactedSize = File(realm.path).length()
-//            assertTrue(originalSize!! > compactedSize)
-//        }
+//        assertEquals(ClientResyncMode.DISCARD_LOCAL_REALM, config.clientResyncMode)
 //    }
 //
 //    @Test
-//    fun embeddedObject_roundTrip() {
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
-//        val primaryKeyValue = UUID.randomUUID().toString()
-//        Realm.getInstance(config1).use { realm ->
-//            assertTrue(realm.isEmpty)
-//
-//            realm.executeTransaction {
-//                realm.createObject<EmbeddedSimpleParent>(primaryKeyValue).let { parent ->
-//                    realm.createEmbeddedObject<EmbeddedSimpleChild>(parent, "child")
-//                }
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//
-//            assertEquals(1, realm.where<EmbeddedSimpleParent>().count())
-//            assertEquals(1, realm.where<EmbeddedSimpleChild>().count())
-//        }
-//
-//        val user2: User = createNewUser()
-//        val config2: SyncConfiguration = createSyncConfig(user2, partitionValue)
-//        Realm.getInstance(config2).use { realm ->
-//            realm.syncSession.downloadAllServerChanges(5, TimeUnit.SECONDS).let {
-//                if (!it) fail()
-//            }
-//            realm.refresh()
-//
-//            val childResults = realm.where<EmbeddedSimpleChild>()
-//            assertEquals(1, childResults.count())
-//            val parentResults = realm.where<EmbeddedSimpleParent>()
-//            assertEquals(1, parentResults.count())
-//            val parent = parentResults.findFirst()!!
-//            assertEquals(primaryKeyValue, parent._id)
-//            assertEquals(parent._id, parent.child!!.parent._id)
-//        }
-//    }
-//
-//    // FIXME: remove ignore when sync issue fixed
-//    @Test
-//    @Ignore("ignored until https://jira.mongodb.org/browse/REALMC-6541 is fixed")
-//    fun embeddedObject_copyUnmanaged_roundTrip() {
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
-//        val primaryKeyValue = UUID.randomUUID().toString()
-//
-//        Realm.getInstance(config1).use { realm ->
-//            assertTrue(realm.isEmpty)
-//
-//            realm.executeTransaction {
-//                val parent = EmbeddedSimpleParent(primaryKeyValue)
-//
-////                parent.child = EmbeddedSimpleChild()
-//                val managedParent = it.copyToRealmOrUpdate(parent)
-//                // FIXME: instantiating the child in managedParent yields this from sync:
-//                //  "MongoDB error: Updating the path 'child.childID' would create a conflict at 'child'"
-//                managedParent.child = EmbeddedSimpleChild() // Will copy the object to Realm
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//
-//            assertEquals(1, realm.where<EmbeddedSimpleParent>().count())
-//            assertEquals(1, realm.where<EmbeddedSimpleChild>().count())
-//        }
-//
-//        val user2: User = createNewUser()
-//        val config2: SyncConfiguration = createSyncConfig(user2, partitionValue)
-//        Realm.getInstance(config2).use { realm ->
-//            realm.syncSession.downloadAllServerChanges(5, TimeUnit.SECONDS).let {
-//                if (!it) fail()
-//            }
-//            realm.refresh()
-//
-//            val childResults = realm.where<EmbeddedSimpleChild>()
-//            assertEquals(1, childResults.count())
-//            val parentResults = realm.where<EmbeddedSimpleParent>()
-//            assertEquals(1, parentResults.count())
-//            val parent = parentResults.findFirst()!!
-//            assertEquals(primaryKeyValue, parent._id)
-//            assertEquals(parent._id, parent.child!!.parent._id)
-//        }
-//    }
-//
-//    @Test
-//    fun embeddedObject_realmList_roundTrip() {
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
-//        val primaryKeyValue = UUID.randomUUID().toString()
-//        Realm.getInstance(config1).use { realm ->
-//            realm.executeTransaction {
-//                realm.createObject(EmbeddedSimpleListParent::class.java, primaryKeyValue)
-//                    .let { parent ->
-//                        realm.createEmbeddedObject(
-//                            EmbeddedSimpleChild::class.java,
-//                            parent,
-//                            "children"
-//                        )
-//                        realm.createEmbeddedObject(
-//                            EmbeddedSimpleChild::class.java,
-//                            parent,
-//                            "children"
-//                        )
-//                    }
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//
-//            assertEquals(1, realm.where<EmbeddedSimpleListParent>().count())
-//            assertEquals(2, realm.where<EmbeddedSimpleChild>().count())
-//        }
-//
-//        val user2: User = createNewUser()
-//        val config2: SyncConfiguration = createSyncConfig(user2, partitionValue)
-//        Realm.getInstance(config2).use { realm ->
-//            assertEquals(0, realm.where<EmbeddedSimpleListParent>().count())
-//            assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-//
-//            realm.syncSession.downloadAllServerChanges(5, TimeUnit.SECONDS).let {
-//                if (!it) fail()
-//            }
-//            realm.refresh()
-//
-//            val childResults = realm.where<EmbeddedSimpleChild>()
-//            assertEquals(2, childResults.count())
-//            val parentResults = realm.where<EmbeddedSimpleListParent>()
-//            assertEquals(1, parentResults.count())
-//            val parentFromResults = parentResults.findFirst()!!
-//            assertEquals(primaryKeyValue, parentFromResults._id)
-//
-//            parentFromResults.children.also { childrenInParent ->
-//                val childrenFromResults = childResults.findAll()
-//                childrenInParent.forEach { childInParent ->
-//                    assertTrue(childrenFromResults.contains(childInParent))
-//                }
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun embeddedObject_realmList_copyUnmanaged_roundTrip() {
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
-//        val primaryKeyValue = UUID.randomUUID().toString()
-//        Realm.getInstance(config1).use { realm ->
-//            realm.executeTransaction {
-//                val parent = EmbeddedSimpleListParent(primaryKeyValue)
-//                parent.children =
-//                    RealmList(EmbeddedSimpleChild("child1"), EmbeddedSimpleChild("child2"))
-//                realm.insert(parent)
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//
-//            assertEquals(1, realm.where<EmbeddedSimpleListParent>().count())
-//            assertEquals(2, realm.where<EmbeddedSimpleChild>().count())
-//        }
-//
-//        val user2: User = createNewUser()
-//        val config2: SyncConfiguration = createSyncConfig(user2, partitionValue)
-//        Realm.getInstance(config2).use { realm ->
-//            assertEquals(0, realm.where<EmbeddedSimpleListParent>().count())
-//            assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-//
-//            realm.syncSession.downloadAllServerChanges(1, TimeUnit.SECONDS).let {
-//                if (!it) fail()
-//            }
-//            realm.refresh()
-//
-//            val childResults = realm.where<EmbeddedSimpleChild>()
-//            assertEquals(2, childResults.count())
-//            val parentResults = realm.where<EmbeddedSimpleListParent>()
-//            assertEquals(1, parentResults.count())
-//            val parentFromResults = parentResults.findFirst()!!
-//            assertEquals(primaryKeyValue, parentFromResults._id)
-//            assertEquals("child1", childResults.findAll()[0]!!.childId)
-//            assertEquals("child2", childResults.findAll()[1]!!.childId)
-//        }
-//    }
-//
-//    // FIXME: remember to add tree structure classes to DefaultSyncSchema.kt
-//    @Test
-//    @Ignore("Enable when https://jira.mongodb.org/projects/HELP/queues/issue/HELP-17759 is fixed")
-//    fun copyToRealm_treeSchema() {
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
-//        val primaryKeyValue = UUID.randomUUID().toString()
-//
-//        Realm.getInstance(config1).use { realm ->
-//            realm.executeTransaction {
-//                val parent = EmbeddedTreeParent("parent1")
-//
-//                val node1 = EmbeddedTreeNode("node1")
-//                node1.leafNode = EmbeddedTreeLeaf("leaf1")
-//                parent.middleNode = node1
-//                val node2 = EmbeddedTreeNode("node2")
-//                node2.leafNodeList.add(EmbeddedTreeLeaf("leaf2"))
-//                node2.leafNodeList.add(EmbeddedTreeLeaf("leaf3"))
-//                parent.middleNodeList.add(node2)
-//
-//                it.copyToRealm(parent)
-//            }
-//            realm.syncSession.uploadAllLocalChanges()
-//        }
-//
-//        val user2: User = createNewUser()
-//        val config2: SyncConfiguration = createSyncConfig(user2, partitionValue)
-//        Realm.getInstance(config2).use { realm ->
-//            assertEquals(0, realm.where<EmbeddedSimpleListParent>().count())
-//            assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-//
-//            realm.syncSession.downloadAllServerChanges(1, TimeUnit.SECONDS).let {
-//                if (!it) fail()
-//            }
-//            realm.refresh()
-//
-//            Assert.assertEquals(1, realm.where<EmbeddedTreeParent>().count())
-//            Assert.assertEquals("parent1", realm.where<EmbeddedTreeParent>().findFirst()!!._id)
-//
-//            Assert.assertEquals(2, realm.where<EmbeddedTreeNode>().count())
-//            val nodeResults = realm.where<EmbeddedTreeNode>().findAll()
-//            Assert.assertTrue(nodeResults.any { it.treeNodeId == "node1" })
-//            Assert.assertTrue(nodeResults.any { it.treeNodeId == "node2" })
-//
-//            Assert.assertEquals(3, realm.where<EmbeddedTreeLeaf>().count())
-//            val leafResults = realm.where<EmbeddedTreeLeaf>().findAll()
-//            Assert.assertTrue(leafResults.any { it.treeLeafId == "leaf1" })
-//            Assert.assertTrue(leafResults.any { it.treeLeafId == "leaf2" })
-//            Assert.assertTrue(leafResults.any { it.treeLeafId == "leaf3" })
-//        }
-//    }
-//
-//    // Check that we can create multiple apps that synchronize with each other
-//    @Test
-//    fun multipleAppsCanSync() {
-//        val app2 = TestApp(appName = TEST_APP_2)
-//        var realm1: Realm? = null
-//        var realm2: Realm? = null
+//    fun clientResyncMode_throwsOnNull() {
+//        val user: User = createTestUser(app)
+//        val config: SyncConfiguration.Builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
 //        try {
-//            // Login users on both Realms
-//            val app1User = app.login(Credentials.anonymous())
-//            val app2User = app2.login(Credentials.anonymous())
-//            Assert.assertNotEquals(app1User, app2User)
+//            config.clientResyncMode(TestHelper.getNull())
+//            fail()
+//        } catch (ignore: IllegalArgumentException) {
+//        }
+//    }
 //
-//            // Create one Realm against each app
-//            val config1 = configFactory.createSyncConfigurationBuilder(app1User, BsonString("foo"))
-//                .modules(DefaultSyncSchema())
-//                .build()
-//            val config2 = configFactory.createSyncConfigurationBuilder(app2User, BsonString("foo"))
-//                .modules(DefaultSyncSchema())
-//                .build()
+//    // If the same user create two configurations with different partition values they must
+//    // resolve to different paths on disk.
+//    @Test
+//    fun differentPartitionValuesAreDifferentRealms() {
+//        val user: User = createTestUser(app)
+//        val config1 = SyncConfiguration.Builder(user, "realm1").modules(SyncStringOnlyModule()).build()
+//        val config2 = SyncConfiguration.Builder(user, "realm2").modules(SyncStringOnlyModule()).build()
+//        assertNotEquals(config1.path, config2.path)
 //
-//            // Make sure we can synchronize changes
-//            realm1 = Realm.getInstance(config1)
-//            realm2 = Realm.getInstance(config2)
-//            realm1.syncSession.downloadAllServerChanges()
-//            realm2.syncSession.downloadAllServerChanges()
-//            Assert.assertTrue(realm1.isEmpty)
-//            Assert.assertTrue(realm2.isEmpty)
+//        assertTrue(config1.path.endsWith("${app.configuration.appId}/${user.id}/s_realm1.realm"))
+//        assertTrue(config2.path.endsWith("${app.configuration.appId}/${user.id}/s_realm2.realm"))
+//
+//        // Check for https://github.com/realm/realm-java/issues/6882
+//        val realm1 = Realm.getInstance(config1)
+//        try {
+//            val realm2 = Realm.getInstance(config2)
+//            realm2.close()
 //        } finally {
-//            realm1?.close()
-//            realm2?.close()
-//            app2.close()
+//            realm1.close()
 //        }
 //    }
 //
 //    @Test
-//    fun allTypes_roundTrip() {
-//        val expectedRealmAnyValues = arrayListOf(
-//            RealmAny.valueOf(1.toLong()),
-//            RealmAny.valueOf(false),
-//            RealmAny.valueOf(10.5.toFloat()),
-//            RealmAny.valueOf(10.5.toDouble()),
-//            RealmAny.valueOf("hello world 2"),
-//            RealmAny.valueOf(Date(105)),
-//            RealmAny.valueOf(Decimal128(102)),
-//            RealmAny.valueOf(ObjectId()),
-//            RealmAny.valueOf(UUID.randomUUID())
+//    fun nullPartitionValue() {
+//        val user: User = createTestUser(app)
+//
+//        val configs = listOf<SyncConfiguration>(
+//            SyncConfiguration.defaultConfig(user, null as String?),
+//            SyncConfiguration.defaultConfig(user, null as Int?),
+//            SyncConfiguration.defaultConfig(user, null as Long?),
+//            SyncConfiguration.defaultConfig(user, null as ObjectId?),
+//            SyncConfiguration.Builder(user, null as String?).build(),
+//            SyncConfiguration.Builder(user, null as Int?).build(),
+//            SyncConfiguration.Builder(user, null as Long?).build(),
+//            SyncConfiguration.Builder(user, null as ObjectId?).build()
 //        )
 //
-//        val primaryKeyValue = ObjectId()
-//        val expectedRealmInteger = 100.toLong()
-//        val expectedString = "hello world"
-//        val expectedLong = 10.toLong()
-//        val expectedDouble = 10.0
-//        val expectedFloat = 10.0.toFloat()
-//        val expectedBoolean = true
-//        val expectedDate = Date()
-//        val expectedBinary = byteArrayOf(0, 1, 0)
-//        val expectedDecimal128 = Decimal128(10)
-//        val expectedObjectId = ObjectId()
-//        val expectedUUID = UUID.randomUUID()
-//        var expectedRealmObject = SyncDog().apply {
-//            id = expectedObjectId
+//        configs.forEach { config ->
+//            assertTrue(config.path.endsWith("/null.realm"))
 //        }
-//        val expectedRealmList = RealmList<SyncDog>()
-//        val expectedStringList = RealmList<String>("hello world 1", "hello world 2")
-//        val expectedBinaryList = RealmList<ByteArray>(expectedBinary)
-//        val expectedBooleanList = RealmList<Boolean>(true, false, false, true)
-//        val expectedLongList = RealmList<Long>(0, 1, 2, 5, 7)
-//        val expectedDoubleList = RealmList<Double>(0.0, 2.toDouble(), 10.5)
-//        val expectedFloatList = RealmList<Float>(0.0.toFloat(), 2.toFloat(), 10.5.toFloat())
-//        val expectedDateList = RealmList<Date>(Date(100), Date(10), Date(200))
-//        val expectedDecimal128List =
-//            RealmList<Decimal128>(Decimal128(10), Decimal128(100), Decimal128(20))
-//        val expectedObjectIdList = RealmList<ObjectId>(
-//            ObjectId(Date(1000)), ObjectId(Date(100)), ObjectId(
-//                Date(2000)
-//            )
-//        )
-//        val expectedUUIDList = RealmList<UUID>(UUID.randomUUID())
-//        val expectedRealmAnyList = RealmList<RealmAny>()
-//        expectedRealmAnyList.addAll(expectedRealmAnyValues)
+//    }
 //
-//        val expectedRealmDict = RealmDictionary<SyncDog>()
-//        val expectedStringDict = RealmDictionary<String>().init(listOf("key" to expectedString))
-//        val expectedBinaryDict = RealmDictionary<ByteArray>().init(listOf("key" to expectedBinary))
-//        val expectedBooleanDict = RealmDictionary<Boolean>().init(listOf("key" to expectedBoolean))
-//        val expectedLongDict = RealmDictionary<Long>().init(listOf("key" to expectedLong))
-//        val expectedDoubleDict = RealmDictionary<Double>().init(listOf("key" to expectedDouble))
-//        val expectedFloatDict = RealmDictionary<Float>().init(listOf("key" to expectedFloat))
-//        val expectedDateDict = RealmDictionary<Date>().init(listOf("key" to expectedDate))
-//        val expectedDecimal128Dict =
-//            RealmDictionary<Decimal128>().init(listOf("key" to expectedDecimal128))
-//        val expectedObjectIdDict =
-//            RealmDictionary<ObjectId>().init(listOf("key" to expectedObjectId))
-//        val expectedUUIDDict = RealmDictionary<UUID>().init(listOf("key" to expectedUUID))
-//        val expectedRealmAnyDict = RealmDictionary<RealmAny>()
+//    @Test
+//    fun loggedOutUsersThrows() {
+//        val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+//        user.logOut()
+//        assertFailsWith<java.lang.IllegalArgumentException> {
+//            SyncConfiguration.defaultConfig(user, ObjectId())
+//        }
+//        assertFailsWith<java.lang.IllegalArgumentException> {
+//            SyncConfiguration.defaultConfig(app.currentUser(), ObjectId())
+//        }
+//    }
 //
-//        val expectedRealmSet = RealmSet<SyncDog>()
-//        val expectedStringSet = RealmSet<String>().init(listOf(expectedString))
-//        val expectedBinarySet = RealmSet<ByteArray>().init(listOf(expectedBinary))
-//        val expectedBooleanSet = RealmSet<Boolean>().init(listOf(expectedBoolean))
-//        val expectedLongSet = RealmSet<Long>().init(listOf(expectedLong))
-//        val expectedDoubleSet = RealmSet<Double>().init(listOf(expectedDouble))
-//        val expectedFloatSet = RealmSet<Float>().init(listOf(expectedFloat))
-//        val expectedDateSet = RealmSet<Date>().init(listOf(expectedDate))
-//        val expectedDecimal128Set = RealmSet<Decimal128>().init(listOf(expectedDecimal128))
-//        val expectedObjectIdSet = RealmSet<ObjectId>().init(listOf(expectedObjectId))
-//        val expectedUUIDSet = RealmSet<UUID>().init(listOf(expectedUUID))
-//        val expectedRealmAnySet = RealmSet<RealmAny>()
+//    @Test
+//    fun allowQueriesOnUiThread_defaultsToTrue() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val configuration = builder.build()
+//        assertTrue(configuration.isAllowQueriesOnUiThread)
+//    }
 //
-//        val user1: User = createNewUser()
-//        val config1: SyncConfiguration = createSyncConfig(user1, partitionValue)
+//    @Test
+//    fun allowQueriesOnUiThread_explicitFalse() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val configuration = builder.allowQueriesOnUiThread(false)
+//            .build()
+//        assertFalse(configuration.isAllowQueriesOnUiThread)
+//    }
 //
-//        val user2: User = createNewUser()
-//        val config2: SyncConfiguration = createSyncConfig(user2, partitionValue)
+//    @Test
+//    fun allowQueriesOnUiThread_explicitTrue() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val configuration = builder.allowQueriesOnUiThread(true)
+//            .build()
+//        assertTrue(configuration.isAllowQueriesOnUiThread)
+//    }
 //
-//        Realm.getInstance(config1).use { realm1 ->
-//            Realm.getInstance(config2).use { realm2 ->
-//                for (expectedRealmAny in expectedRealmAnyValues) {
-//                    realm1.executeTransaction {
-//                        expectedRealmObject = realm1.copyToRealmOrUpdate(expectedRealmObject)
-//                        expectedRealmList.add(expectedRealmObject)
-//                        expectedRealmDict["key"] = expectedRealmObject
+//    @Test
+//    fun allowWritesOnUiThread_defaultsToFalse() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val configuration = builder.build()
+//        assertFalse(configuration.isAllowWritesOnUiThread)
+//    }
 //
-//                        // Populate object to round-trip
-//                        val syncObject = SyncAllTypes().apply {
-//                            id = primaryKeyValue
+//    @Test
+//    fun allowWritesOnUiThread_explicitFalse() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val configuration = builder.allowWritesOnUiThread(false)
+//            .build()
+//        assertFalse(configuration.isAllowWritesOnUiThread)
+//    }
 //
-//                            RealmFieldType.values().map { realmFieldType ->
-//                                when (realmFieldType) {
-//                                    RealmFieldType.INTEGER -> {
-//                                        columnLong = expectedLong
-//                                        // MutableRealmInteger
-//                                        columnRealmInteger.set(expectedRealmInteger)
-//                                    }
-//                                    RealmFieldType.BOOLEAN -> isColumnBoolean = expectedBoolean
-//                                    RealmFieldType.STRING -> columnString = expectedString
-//                                    RealmFieldType.BINARY -> columnBinary = expectedBinary
-//                                    RealmFieldType.DATE -> columnDate = expectedDate
-//                                    RealmFieldType.DOUBLE -> columnDouble = expectedDouble
-//                                    RealmFieldType.FLOAT -> columnFloat = expectedFloat
-//                                    RealmFieldType.OBJECT -> columnRealmObject = expectedRealmObject
-//                                    RealmFieldType.DECIMAL128 -> columnDecimal128 =
-//                                        expectedDecimal128
-//                                    RealmFieldType.OBJECT_ID -> columnObjectId = expectedObjectId
-//                                    RealmFieldType.UUID -> columnUUID = expectedUUID
-//                                    RealmFieldType.MIXED -> columnRealmAny = expectedRealmAny
-//                                    RealmFieldType.LIST -> columnRealmList = expectedRealmList
-//                                    RealmFieldType.INTEGER_LIST -> columnLongList = expectedLongList
-//                                    RealmFieldType.BOOLEAN_LIST -> columnBooleanList =
-//                                        expectedBooleanList
-//                                    RealmFieldType.STRING_LIST -> columnStringList =
-//                                        expectedStringList
-//                                    RealmFieldType.BINARY_LIST -> columnBinaryList =
-//                                        expectedBinaryList
-//                                    RealmFieldType.DATE_LIST -> columnDateList = expectedDateList
-//                                    RealmFieldType.DOUBLE_LIST -> columnDoubleList =
-//                                        expectedDoubleList
-//                                    RealmFieldType.FLOAT_LIST -> columnFloatList = expectedFloatList
-//                                    RealmFieldType.DECIMAL128_LIST -> columnDecimal128List =
-//                                        expectedDecimal128List
-//                                    RealmFieldType.OBJECT_ID_LIST -> columnObjectIdList =
-//                                        expectedObjectIdList
-//                                    RealmFieldType.UUID_LIST -> columnUUIDList = expectedUUIDList
-//                                    RealmFieldType.MIXED_LIST -> columnRealmAnyList =
-//                                        expectedRealmAnyList
-//                                    RealmFieldType.STRING_TO_INTEGER_MAP -> columnLongDictionary =
-//                                        expectedLongDict
-//                                    RealmFieldType.STRING_TO_BOOLEAN_MAP -> columnBooleanDictionary =
-//                                        expectedBooleanDict
-//                                    RealmFieldType.STRING_TO_STRING_MAP -> columnStringDictionary =
-//                                        expectedStringDict
-//                                    RealmFieldType.STRING_TO_BINARY_MAP -> columnBinaryDictionary =
-//                                        expectedBinaryDict
-//                                    RealmFieldType.STRING_TO_DATE_MAP -> columnDateDictionary =
-//                                        expectedDateDict
-//                                    RealmFieldType.STRING_TO_DOUBLE_MAP -> columnDoubleDictionary =
-//                                        expectedDoubleDict
-//                                    RealmFieldType.STRING_TO_FLOAT_MAP -> columnFloatDictionary =
-//                                        expectedFloatDict
-//                                    RealmFieldType.STRING_TO_DECIMAL128_MAP -> columnDecimal128Dictionary =
-//                                        expectedDecimal128Dict
-//                                    RealmFieldType.STRING_TO_OBJECT_ID_MAP -> columnObjectIdDictionary =
-//                                        expectedObjectIdDict
-//                                    RealmFieldType.STRING_TO_UUID_MAP -> columnUUIDDictionary =
-//                                        expectedUUIDDict
-//                                    RealmFieldType.STRING_TO_MIXED_MAP -> {
-//                                        expectedRealmAnyDict["key"] = expectedRealmAny
-//                                        columnRealmAnyDictionary = expectedRealmAnyDict
-//                                    }
-//                                    RealmFieldType.STRING_TO_LINK_MAP -> columnRealmDictionary =
-//                                        expectedRealmDict
-//                                    RealmFieldType.LINK_SET -> columnRealmSet = expectedRealmSet
-//                                    RealmFieldType.INTEGER_SET -> columnLongSet = expectedLongSet
-//                                    RealmFieldType.BOOLEAN_SET -> columnBooleanSet =
-//                                        expectedBooleanSet
-//                                    RealmFieldType.STRING_SET -> columnStringSet = expectedStringSet
-//                                    RealmFieldType.BINARY_SET -> columnBinarySet = expectedBinarySet
-//                                    RealmFieldType.DATE_SET -> columnDateSet = expectedDateSet
-//                                    RealmFieldType.DOUBLE_SET -> columnDoubleSet = expectedDoubleSet
-//                                    RealmFieldType.FLOAT_SET -> columnFloatSet = expectedFloatSet
-//                                    RealmFieldType.DECIMAL128_SET -> columnDecimal128Set =
-//                                        expectedDecimal128Set
-//                                    RealmFieldType.OBJECT_ID_SET -> columnObjectIdSet =
-//                                        expectedObjectIdSet
-//                                    RealmFieldType.UUID_SET -> columnUUIDSet = expectedUUIDSet
-//                                    RealmFieldType.MIXED_SET -> columnRealmAnySet =
-//                                        expectedRealmAnySet
-//                                    RealmFieldType.LINKING_OBJECTS,     // Nothing to set
-//                                    RealmFieldType.TYPED_LINK          // Not an actual exposed type, it is used internally by RealmAny
-//                                    -> {
-//                                    }
-//                                }
-//                            }
-//                        }
+//    @Test
+//    fun allowWritesOnUiThread_explicitTrue() {
+//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//        val configuration = builder.allowWritesOnUiThread(true)
+//            .build()
+//        assertTrue(configuration.isAllowWritesOnUiThread)
+//    }
 //
-//                        realm1.copyToRealmOrUpdate(syncObject)
-//                    }
-//                    realm1.syncSession.uploadAllLocalChanges()
+//    @Test
+//    fun rxFactory_defaultNonNull() {
+//        val configuration = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//            .build()
+//        assertNotNull(configuration.rxFactory)
+//    }
 //
-//                    assertEquals(1, realm1.where<SyncAllTypes>().count())
+//    @Test
+//    fun rxFactory_nullThrows() {
+//        assertFailsWith<IllegalArgumentException> {
+//            SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//                .rxFactory(TestHelper.getNull())
+//        }.let {
+//            assertTrue(it.message!!.contains("null"))
+//        }
+//    }
 //
-//                    realm2.syncSession.downloadAllServerChanges(
-//                        TestHelper.STANDARD_WAIT_SECS.toLong(),
-//                        TimeUnit.SECONDS
-//                    ).let {
-//                        if (!it) fail()
-//                    }
-//                    realm2.refresh()
+//    @Test
+//    fun rxFactory() {
+//        val factory = object: RxObservableFactory {
+//            override fun from(realm: Realm): Flowable<Realm> {
+//                return Flowable.just(null)
+//            }
 //
-//                    assertEquals(1, realm2.where<SyncAllTypes>().count())
+//            override fun from(realm: DynamicRealm): Flowable<DynamicRealm> {
+//                return Flowable.just(null)
+//            }
 //
-//                    // Validate that after a round-trip the values are the initial ones, the expected values
-//                    realm2.where<SyncAllTypes>().findFirst()!!.let { syncAllTypes ->
-//                        assertEquals(primaryKeyValue, syncAllTypes.id)
+//            override fun <E : Any?> from(realm: Realm, results: RealmResults<E>): Flowable<RealmResults<E>> {
+//                return Flowable.just(null)
+//            }
 //
-//                        RealmFieldType.values().map { realmFieldType ->
-//                            when (realmFieldType) {
-//                                RealmFieldType.INTEGER -> {
-//                                    assertEquals(expectedLong, syncAllTypes.columnLong)
-//                                    // MutableRealmInteger
-//                                    assertEquals(
-//                                        expectedRealmInteger,
-//                                        syncAllTypes.columnRealmInteger.get()
-//                                    )
-//                                }
-//                                RealmFieldType.BOOLEAN -> assertEquals(
-//                                    expectedBoolean,
-//                                    syncAllTypes.isColumnBoolean
-//                                )
-//                                RealmFieldType.STRING -> assertEquals(
-//                                    expectedString,
-//                                    syncAllTypes.columnString
-//                                )
-//                                RealmFieldType.BINARY -> assertTrue(
-//                                    expectedBinary.contentEquals(
-//                                        syncAllTypes.columnBinary
-//                                    )
-//                                )
-//                                RealmFieldType.DATE -> assertEquals(
-//                                    expectedDate,
-//                                    syncAllTypes.columnDate
-//                                )
-//                                RealmFieldType.DOUBLE -> assertEquals(
-//                                    expectedDouble,
-//                                    syncAllTypes.columnDouble
-//                                )
-//                                RealmFieldType.OBJECT -> assertEquals(
-//                                    expectedObjectId,
-//                                    syncAllTypes.columnRealmObject!!.id
-//                                )
-//                                RealmFieldType.DECIMAL128 -> assertEquals(
-//                                    expectedDecimal128,
-//                                    syncAllTypes.columnDecimal128
-//                                )
-//                                RealmFieldType.OBJECT_ID -> assertEquals(
-//                                    expectedObjectId,
-//                                    syncAllTypes.columnObjectId
-//                                )
-//                                RealmFieldType.UUID -> assertEquals(
-//                                    expectedUUID,
-//                                    syncAllTypes.columnUUID
-//                                )
-//                                RealmFieldType.MIXED -> assertEquals(
-//                                    expectedRealmAny,
-//                                    syncAllTypes.columnRealmAny
-//                                )
-//                                RealmFieldType.LIST -> assertEquals(
-//                                    expectedObjectId,
-//                                    syncAllTypes.columnRealmList.first()!!.id
-//                                )
-//                                RealmFieldType.INTEGER_LIST -> assertEquals(
-//                                    expectedLongList,
-//                                    syncAllTypes.columnLongList
-//                                )
-//                                RealmFieldType.BOOLEAN_LIST -> assertEquals(
-//                                    expectedBooleanList,
-//                                    syncAllTypes.columnBooleanList
-//                                )
-//                                RealmFieldType.STRING_LIST -> assertEquals(
-//                                    expectedStringList,
-//                                    syncAllTypes.columnStringList
-//                                )
-//                                RealmFieldType.BINARY_LIST -> {
-//                                    expectedBinaryList.forEachIndexed { index, bytes ->
-//                                        Arrays.equals(bytes, syncAllTypes.columnBinaryList[index])
-//                                    }
-//                                }
-//                                RealmFieldType.DATE_LIST -> assertEquals(
-//                                    expectedDateList,
-//                                    syncAllTypes.columnDateList
-//                                )
-//                                RealmFieldType.DOUBLE_LIST -> assertEquals(
-//                                    expectedDoubleList,
-//                                    syncAllTypes.columnDoubleList
-//                                )
-//                                RealmFieldType.DECIMAL128_LIST -> assertEquals(
-//                                    expectedDecimal128List,
-//                                    syncAllTypes.columnDecimal128List
-//                                )
-//                                RealmFieldType.OBJECT_ID_LIST -> assertEquals(
-//                                    expectedObjectIdList,
-//                                    syncAllTypes.columnObjectIdList
-//                                )
-//                                RealmFieldType.UUID_LIST -> assertEquals(
-//                                    expectedUUIDList,
-//                                    syncAllTypes.columnUUIDList
-//                                )
-//                                RealmFieldType.MIXED_LIST -> assertEquals(
-//                                    expectedRealmAnyList,
-//                                    syncAllTypes.columnRealmAnyList
-//                                )
-//                                RealmFieldType.STRING_TO_INTEGER_MAP -> assertEquals(
-//                                    expectedLong,
-//                                    syncAllTypes.columnLongDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_BOOLEAN_MAP -> assertEquals(
-//                                    expectedBoolean,
-//                                    syncAllTypes.columnBooleanDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_STRING_MAP -> assertEquals(
-//                                    expectedString,
-//                                    syncAllTypes.columnStringDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_BINARY_MAP -> assertTrue(
-//                                    Arrays.equals(
-//                                        expectedBinary,
-//                                        syncAllTypes.columnBinaryDictionary["key"]
-//                                    )
-//                                )
-//                                RealmFieldType.STRING_TO_DATE_MAP -> assertEquals(
-//                                    expectedDate,
-//                                    syncAllTypes.columnDateDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_DOUBLE_MAP -> assertEquals(
-//                                    expectedDouble,
-//                                    syncAllTypes.columnDoubleDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_DECIMAL128_MAP -> assertEquals(
-//                                    expectedDecimal128,
-//                                    syncAllTypes.columnDecimal128Dictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_OBJECT_ID_MAP -> assertEquals(
-//                                    expectedObjectId,
-//                                    syncAllTypes.columnObjectIdDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_UUID_MAP -> assertEquals(
-//                                    expectedUUID,
-//                                    syncAllTypes.columnUUIDDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_MIXED_MAP -> assertEquals(
-//                                    expectedRealmAny,
-//                                    syncAllTypes.columnRealmAnyDictionary["key"]
-//                                )
-//                                RealmFieldType.STRING_TO_LINK_MAP -> assertEquals(
-//                                    expectedObjectId,
-//                                    syncAllTypes.columnRealmDictionary["key"]!!.id
-//                                )
-//                                RealmFieldType.INTEGER_SET -> {
-//                                    assertEquals(
-//                                        expectedLongSet.size,
-//                                        syncAllTypes.columnLongSet.size
-//                                    )
-//                                    expectedLongSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnLongSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.BOOLEAN_SET -> {
-//                                    assertEquals(
-//                                        expectedBooleanSet.size,
-//                                        syncAllTypes.columnBooleanSet.size
-//                                    )
-//                                    expectedBooleanSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnBooleanSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.STRING_SET -> {
-//                                    assertEquals(
-//                                        expectedStringSet.size,
-//                                        syncAllTypes.columnStringSet.size
-//                                    )
-//                                    expectedStringSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnStringSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.BINARY_SET -> {
-//                                    assertEquals(
-//                                        expectedBinarySet.size,
-//                                        syncAllTypes.columnBinarySet.size
-//                                    )
-//                                    expectedBinarySet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnBinarySet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.DATE_SET -> {
-//                                    assertEquals(
-//                                        expectedDateSet.size,
-//                                        syncAllTypes.columnDateSet.size
-//                                    )
-//                                    expectedDateSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnDateSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.DOUBLE_SET -> {
-//                                    assertEquals(
-//                                        expectedDoubleSet.size,
-//                                        syncAllTypes.columnDoubleSet.size
-//                                    )
-//                                    expectedDoubleSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnDoubleSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.DECIMAL128_SET -> {
-//                                    assertEquals(
-//                                        expectedDecimal128Set.size,
-//                                        syncAllTypes.columnDecimal128Set.size
-//                                    )
-//                                    expectedDecimal128Set.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnDecimal128Set.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.OBJECT_ID_SET -> {
-//                                    assertEquals(
-//                                        expectedObjectIdSet.size,
-//                                        syncAllTypes.columnObjectIdSet.size
-//                                    )
-//                                    expectedObjectIdSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnObjectIdSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.UUID_SET -> {
-//                                    assertEquals(
-//                                        expectedUUIDSet.size,
-//                                        syncAllTypes.columnUUIDSet.size
-//                                    )
-//                                    expectedUUIDSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnUUIDSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.MIXED_SET -> {
-//                                    assertEquals(
-//                                        expectedRealmAnySet.size,
-//                                        syncAllTypes.columnRealmAnySet.size
-//                                    )
-//                                    expectedRealmAnySet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnRealmAnySet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.LINK_SET -> {
-//                                    assertEquals(
-//                                        expectedRealmSet.size,
-//                                        syncAllTypes.columnRealmSet.size
-//                                    )
-//                                    expectedRealmSet.forEach { value ->
-//                                        assertTrue(syncAllTypes.columnRealmSet.contains(value))
-//                                    }
-//                                }
-//                                RealmFieldType.LINKING_OBJECTS -> assertEquals(
-//                                    primaryKeyValue,
-//                                    syncAllTypes.columnRealmObject!!.syncAllTypes!!.first()!!.id
-//                                )
-//                                RealmFieldType.TYPED_LINK,          // Not an actual exposed type, it is used internally by RealmAny
-//                                RealmFieldType.FLOAT,               // Float is not cloud compatible yet
-//                                RealmFieldType.FLOAT_LIST,          // Float is not cloud compatible yet
-//                                RealmFieldType.STRING_TO_FLOAT_MAP  // Float is not cloud compatible yet
-//                                -> {
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
+//            override fun <E : Any?> from(realm: DynamicRealm, results: RealmResults<E>): Flowable<RealmResults<E>> {
+//                return Flowable.just(null)
+//            }
+//
+//            override fun <E : Any?> from(realm: Realm, list: RealmList<E>): Flowable<RealmList<E>> {
+//                return Flowable.just(null)
+//            }
+//
+//            override fun <E : Any?> from(realm: DynamicRealm, list: RealmList<E>): Flowable<RealmList<E>> {
+//                return Flowable.just(null)
+//            }
+//
+//            override fun <E : RealmModel?> from(realm: Realm, `object`: E): Flowable<E> {
+//                return Flowable.just(null)
+//            }
+//
+//            override fun from(realm: DynamicRealm, `object`: DynamicRealmObject): Flowable<DynamicRealmObject> {
+//                return Flowable.just(null)
+//            }
+//
+//            override fun <E : Any?> from(realm: Realm, query: RealmQuery<E>): Single<RealmQuery<E>> {
+//                return Single.just(null)
+//            }
+//
+//            override fun <E : Any?> from(realm: DynamicRealm, query: RealmQuery<E>): Single<RealmQuery<E>> {
+//                return Single.just(null)
+//            }
+//
+//            override fun <E : Any?> changesetsFrom(realm: Realm, results: RealmResults<E>): Observable<CollectionChange<RealmResults<E>>> {
+//                return Observable.just(null)
+//            }
+//
+//            override fun <E : Any?> changesetsFrom(realm: DynamicRealm, results: RealmResults<E>): Observable<CollectionChange<RealmResults<E>>> {
+//                return Observable.just(null)
+//            }
+//
+//            override fun <E : Any?> changesetsFrom(realm: Realm, list: RealmList<E>): Observable<CollectionChange<RealmList<E>>> {
+//                return Observable.just(null)
+//            }
+//
+//            override fun <E : Any?> changesetsFrom(realm: DynamicRealm, list: RealmList<E>): Observable<CollectionChange<RealmList<E>>> {
+//                return Observable.just(null)
+//            }
+//
+//            override fun <E : RealmModel?> changesetsFrom(realm: Realm, `object`: E): Observable<ObjectChange<E>> {
+//                return Observable.just(null)
+//            }
+//
+//            override fun changesetsFrom(realm: DynamicRealm, `object`: DynamicRealmObject): Observable<ObjectChange<DynamicRealmObject>> {
+//                return Observable.just(null)
+//            }
+//
+//        }
+//
+//        val configuration1 = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//            .rxFactory(factory)
+//            .build()
+//        assertEquals(factory, configuration1.rxFactory)
+//
+//        val configuration2 = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//            .build()
+//        assertNotEquals(factory, configuration2.rxFactory)
+//    }
+//
+//    @Test
+//    fun flowFactory_defaultNonNull() {
+//        val configuration = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//            .build()
+//        assertNotNull(configuration.flowFactory)
+//    }
+//
+//    @Test
+//    fun flowFactory_nullThrows() {
+//        assertFailsWith<IllegalArgumentException> {
+//            SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//                .flowFactory(TestHelper.getNull())
+//        }.let {
+//            assertTrue(it.message!!.contains("null"))
+//        }
+//    }
+//
+//    @Test
+//    fun flowFactory() {
+//        val factory = object : FlowFactory {
+//            override fun from(realm: Realm): Flow<Realm> {
+//                return flowOf()
+//            }
+//
+//            override fun from(dynamicRealm: DynamicRealm): Flow<DynamicRealm> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> from(realm: Realm, results: RealmResults<T>): Flow<RealmResults<T>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> from(dynamicRealm: DynamicRealm, results: RealmResults<T>): Flow<RealmResults<T>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> from(realm: Realm, realmList: RealmList<T>): Flow<RealmList<T>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> from(dynamicRealm: DynamicRealm, realmList: RealmList<T>): Flow<RealmList<T>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : RealmModel?> from(realm: Realm, realmObject: T): Flow<T> {
+//                return flowOf()
+//            }
+//
+//            override fun from(dynamicRealm: DynamicRealm, dynamicRealmObject: DynamicRealmObject): Flow<DynamicRealmObject> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> changesetFrom(realm: Realm, results: RealmResults<T>): Flow<CollectionChange<RealmResults<T>>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> changesetFrom(dynamicRealm: DynamicRealm, results: RealmResults<T>): Flow<CollectionChange<RealmResults<T>>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> changesetFrom(realm: Realm, list: RealmList<T>): Flow<CollectionChange<RealmList<T>>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : Any?> changesetFrom(dynamicRealm: DynamicRealm, list: RealmList<T>): Flow<CollectionChange<RealmList<T>>> {
+//                return flowOf()
+//            }
+//
+//            override fun <T : RealmModel?> changesetFrom(realm: Realm, realmObject: T): Flow<ObjectChange<T>> {
+//                return flowOf()
+//            }
+//
+//            override fun changesetFrom(dynamicRealm: DynamicRealm, dynamicRealmObject: DynamicRealmObject): Flow<ObjectChange<DynamicRealmObject>> {
+//                return flowOf()
 //            }
 //        }
+//
+//        val configuration1 = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//            .flowFactory(factory)
+//            .build()
+//        assertEquals(factory, configuration1.flowFactory)
+//
+//        val configuration2 = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
+//            .build()
+//        assertNotEquals(factory, configuration2.flowFactory)
+//    }
+
+//    @Test
+//    fun syncConfig() {
+//        val user = createNewUser()
+//        val config = createSyncConfig(user)
+//        assertNotNull(config)
+//    }
+//
+//    @Test
+//    fun canOpen() {
+//        realm = Realm.open(syncConfiguration)
 //    }
 }

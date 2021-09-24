@@ -16,19 +16,16 @@
 
 package io.realm.mongodb
 
-import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
-import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
+import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
 
@@ -125,36 +122,13 @@ interface SyncConfiguration : RealmConfiguration {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
-            val localConfiguration = RealmConfigurationImpl(
-                companionMap,
-                path,
-                name,
-                schema,
-                LogConfiguration(logLevel, allLoggers),
-                maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(name),
-                writeDispatcher ?: singleThreadDispatcher(name),
-                schemaVersion,
-                deleteRealmIfMigrationNeeded,
-                encryptionKey,
+            val localConfiguration = RealmConfiguration.Builder(path, name, schema)
+                .build(companionMap)
+            return SyncConfigurationImpl(
+                localConfiguration as RealmConfigurationImpl,
+                partitionValue,
+                user as UserImpl
             )
-            return SyncConfigurationImpl(localConfiguration, partitionValue, user as UserImpl)
         }
-    }
-}
-
-internal class SyncConfigurationImpl(
-    localConfiguration: RealmConfigurationImpl,
-    override val partitionValue: PartitionValue,
-    userImpl: UserImpl,
-) : RealmConfiguration by localConfiguration, SyncConfiguration {
-
-    override val user: User
-
-    private val nativeSyncConfig: NativePointer =
-        RealmInterop.realm_sync_config_new(userImpl.nativePointer, partitionValue.asSyncPartition())
-
-    init {
-        user = userImpl
     }
 }

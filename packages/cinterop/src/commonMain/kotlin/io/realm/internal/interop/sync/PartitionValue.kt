@@ -40,9 +40,10 @@ class PartitionValue private constructor(
             ValueType.LONG -> """{"${'$'}numberLong":"${asLong()}"}"""
         }
     }
-    private fun asLong(): Long = checkValidType(ValueType.LONG).let { longValue!! }
 
-    private fun asString(): String = checkValidType(ValueType.STRING).let { stringValue!! }
+    fun asLong(): Long = checkValidType(ValueType.LONG).let { longValue!! }
+
+    fun asString(): String = checkValidType(ValueType.STRING).let { stringValue!! }
 
     private fun checkValidType(expectedValueType: ValueType) {
         if (expectedValueType != valueType) {

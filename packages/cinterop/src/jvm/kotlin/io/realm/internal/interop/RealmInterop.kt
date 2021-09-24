@@ -488,6 +488,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }
 
+    actual fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer) {
+        realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
+    }
+
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
         val found = booleanArrayOf(false)
         val classInfo = realm_class_info_t()
