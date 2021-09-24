@@ -10,8 +10,9 @@ if (System.getenv("JENKINS_HOME") != null) {
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        google()
         mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        google()
     }
     resolutionStrategy {
         eachPlugin {
@@ -25,3 +26,4 @@ rootProject.name = "KmmSample"
 
 include(":androidApp")
 include(":shared")
+include(":compose-desktop")

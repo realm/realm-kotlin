@@ -30,7 +30,12 @@ namespace realm {
             jint rc = cached_jvm->GetEnv((void **)&env, JNI_VERSION_1_2);
             if (rc == JNI_EDETACHED) {
                 if (attach_if_needed) {
-                    jint ret = cached_jvm->AttachCurrentThread(&env, nullptr);
+                   #if defined(__ANDROID__)
+                        JNIEnv **jenv = &env;
+                    #else
+                        void **jenv = (void **) &env;
+                    #endif
+                    jint ret = cached_jvm->AttachCurrentThread(jenv, nullptr);
                     if (ret != JNI_OK) throw std::runtime_error("Could not attach JVM on thread ");
                 } else {
                     throw std::runtime_error("current thread not attached");

@@ -19,14 +19,15 @@ package io.realm.test
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
-import kotlinx.coroutines.test.TestCoroutineDispatcher
+import io.realm.internal.platform.singleThreadDispatcher
 import org.junit.Test
 
 class RealmConfigurationTests {
     @Test
+    @Suppress("invisible_member")
     fun testDispatcherAsWriteDispatcher() {
-        val dispatcher = TestCoroutineDispatcher()
-        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .writeDispatcher(singleThreadDispatcher("foo")).build()
         val realm = Realm.open(configuration)
         realm.writeBlocking {
             copyToRealm(Sample())
