@@ -609,9 +609,11 @@ actual object RealmInterop {
 private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
 
-    fun notifyCore(coreNotificationFunctionPointer: Long, callbackUserdataPointer: Long) {
+    fun notifyCore(coreNotificationFunctionPointer: Long) {
         val function: suspend CoroutineScope.() -> Unit = {
-            realmc.invoke_core_notify_callback(coreNotificationFunctionPointer, callbackUserdataPointer)
+            realmc.invoke_core_notify_callback(
+                coreNotificationFunctionPointer
+            )
         }
         scope.launch(
             scope.coroutineContext,

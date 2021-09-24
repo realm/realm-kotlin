@@ -136,19 +136,19 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
     );
 }
 
-inline void jni_check_exception(JNIEnv* jenv = get_env()) {
+inline void jni_check_exception(JNIEnv *jenv = get_env()) {
     if (jenv->ExceptionCheck()) {
         jenv->ExceptionDescribe();
         throw std::runtime_error("An unexpected Error was thrown from Java.");
     }
 }
 
-class CustomJVMScheduler {
+class CustomJVMScheduler : public realm::util::Scheduler {
 public:
-    CustomJVMScheduler(jobject dispatchScheduler) {
+    CustomJVMScheduler(jobject dispatchScheduler) : m_id(std::this_thread::get_id()) {
         JNIEnv *jenv = get_env();
         jclass jvm_scheduler_class = jenv->FindClass("io/realm/internal/interop/JVMScheduler");
-        m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(JJ)V");
+        m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(J)V");
         m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
     }
 
