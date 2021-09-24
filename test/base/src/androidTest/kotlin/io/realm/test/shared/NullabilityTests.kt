@@ -19,7 +19,9 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Nullability
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TypeDescriptor
 import io.realm.test.util.Utils.createRandomString
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -79,9 +81,8 @@ class NullabilityTests {
 
     @Test
     fun safeNullGetterAndSetter() {
-        val nullableFields =
-            (Nullability as io.realm.internal.RealmObjectCompanion).`$realm$fields`!!.filter { it.returnType.isMarkedNullable }
-                .toMutableSet()
+        val nullableFieldTypes: MutableSet<KClassifier> = TypeDescriptor.allSingularFieldTypes.map { it.elementType }.filter { it.nullable }
+            .map { it.classifier }.toMutableSet()
 
         realm.writeBlocking {
             copyToRealm(Nullability()).also { nullability ->
@@ -91,19 +92,19 @@ class NullabilityTests {
                     assertEquals(value, property.get(nullability))
                     property.set(nullability, null)
                     assertNull(property.get(nullability))
-                    nullableFields.remove(property)
+                    nullableFieldTypes.remove(property.returnType.classifier)
                 }
                 testProperty(Nullability::stringNullable, "Realm")
                 testProperty(Nullability::booleanNullable, true)
                 testProperty(Nullability::byteNullable, 0xA)
                 testProperty(Nullability::charNullable, 'a')
-                testProperty(Nullability::shortNullable , 123)
+                testProperty(Nullability::shortNullable, 123)
                 testProperty(Nullability::intNullable, 123)
                 testProperty(Nullability::longNullability, 123L)
                 testProperty(Nullability::floatNullable, 123.456f)
                 testProperty(Nullability::doubleField, 123.456)
             }
-            assertTrue(nullableFields.isEmpty(), "Untested fields: $nullableFields")
+            assertTrue(nullableFieldTypes.isEmpty(), "Untested fields: $nullableFieldTypes")
         }
     }
 }
