@@ -16,11 +16,9 @@
 
 package io.realm.test.mongodb.shared
 
-import io.realm.entities.Sample
 import io.realm.mongodb.App
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
-import io.realm.mongodb.SyncConfiguration
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import kotlinx.coroutines.runBlocking
@@ -28,15 +26,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
 
-const val TEST_APP_1 = "testapp1" // Id for the default test app
-const val BASE_URL = "http://127.0.0.1:9090"
-
-// Cannot run on CI yet, as it requires sync server to be started with
-// tools/sync_test_server/start_server.sh and manual creation of a user "asdf@asdf.com"/"asdfasdf"
-// through the web ui
-//@Ignore
 class AppTests {
 
     lateinit var app: App
@@ -94,21 +84,5 @@ class AppTests {
                 app.login(credentials).getOrThrow()
             }
         }
-    }
-
-    @Test
-    fun syncConfig() {
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
-
-        val user = runBlocking {
-            app.login(Credentials.anonymous()).getOrThrow()
-        }
-
-        val config = SyncConfiguration.Builder(
-            schema = setOf(Sample::class),
-            partitionValue = "ASDF",
-            user = user
-        ).build()
-        assertNotNull(config)
     }
 }
