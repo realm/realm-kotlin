@@ -45,7 +45,7 @@ interface SyncConfiguration : RealmConfiguration {
     /**
      * TODO
      */
-    val partitionValue: PartitionValue?
+    val partitionValue: PartitionValue
 
     companion object {
         fun defaultConfig(
