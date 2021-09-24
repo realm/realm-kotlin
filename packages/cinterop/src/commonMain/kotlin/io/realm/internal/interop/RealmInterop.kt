@@ -157,5 +157,5 @@ expect object RealmInterop {
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Sync config
-    fun realm_sync_config_new(user: NativePointer?, partition: String): NativePointer
+    fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer
 }

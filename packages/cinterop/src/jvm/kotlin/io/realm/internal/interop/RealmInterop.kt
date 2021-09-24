@@ -484,7 +484,7 @@ actual object RealmInterop {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
 
-    actual fun realm_sync_config_new(user: NativePointer?, partition: String): NativePointer {
+    actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
         return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }
 

@@ -1028,7 +1028,7 @@ actual object RealmInterop {
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
     }
-    actual fun realm_sync_config_new(user: NativePointer?, partition: String): NativePointer {
+    actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
         TODO()
     }
 
