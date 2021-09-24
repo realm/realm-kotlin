@@ -17,6 +17,7 @@
 #include "realm_api_helpers.h"
 #include <vector>
 #include <thread>
+#include <realm/object-store/c_api/util.hpp>
 
 using namespace realm::jni_util;
 
