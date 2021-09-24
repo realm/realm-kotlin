@@ -16,37 +16,73 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
- * TODO
+ * An **AppConfiguration** is used to setup linkage to a MongoDB Realm application.
+ *
+ * Instances of a AppConfiguration can only created by using the
+ * {@link AppConfiguration.Builder} and calling its
+ * {@link AppConfiguration.Builder#build()} method.
+ * <p>
+ * Configuring a App is only required if the default settings are not enough. Otherwise calling
+ * {@code App("app-id")} is sufficient.
  */
 interface AppConfiguration {
+
     val appId: String
     val baseUrl: String
     val networkTransportDispatcher: CoroutineDispatcher
 
     companion object {
         /**
-         * TODO
+         * The default url for MongoDB Realm applications.
+         *
+         * @see Builder#baseUrl(String)
          */
         const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
 
         /**
-         * TODO
+         * The default header name used to carry authorization data when making network requests
+         * towards MongoDB Realm.
          */
         const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
-    }
-}
 
-// TODO Create full blown builder for this
-// FIXME Initialize with proper multithreaded dispatcher
-//  https://github.com/realm/realm-kotlin/issues/450
-fun appConfigurationOf(
-    appId: String,
-    baseUrl: String,
-    dispatcher: CoroutineDispatcher
-): AppConfiguration {
-    return AppConfigurationImpl(appId, baseUrl, dispatcher)
+    }
+
+    /**
+     * Builder used to construct instances of a {@link AppConfiguration} in a fluent manner.
+     */
+    class Builder(
+        val appId: String
+    ) {
+        private var baseUrl: String = DEFAULT_BASE_URL
+        private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId") // TODO
+
+        /**
+         * Sets the base url for the MongoDB Realm Application. The default value is
+         * {@link #DEFAULT_BASE_URL}.
+         *
+         * @param baseUrl the base url for the MongoDB Realm application.
+         */
+        fun baseUrl(url: String) = apply { this.baseUrl = url }
+
+        /**
+         * TODO
+         */
+        fun dispatcher(dispatcher: CoroutineDispatcher) = apply { this.dispatcher = dispatcher }
+
+        /**
+         * Creates the AppConfiguration from the properties of the builder.
+         *
+         * @return the AppConfiguration that can be used to create a {@link App}.
+         */
+        fun build(): AppConfiguration = AppConfigurationImpl(
+            appId = appId,
+            baseUrl = baseUrl,
+            networkTransportDispatcher = dispatcher
+        )
+    }
 }
