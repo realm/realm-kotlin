@@ -87,9 +87,6 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                                 || expression.type.classFqName == REALM_SYNC_CONFIGURATION) &&
                         name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
                     ) {
-//                    if (expression.type.classFqName == REALM_CONFIGURATION &&
-//                        name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
-//                    ) {
                         val specifiedModels =
                             mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
                         val (receiver, schemaArgument) = when (name) {

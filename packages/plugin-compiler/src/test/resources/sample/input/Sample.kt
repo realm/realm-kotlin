@@ -79,8 +79,3 @@ class Sample : RealmObject {
 class Child : RealmObject {
     var name: String? = "Child-default"
 }
-
-val configuration = SyncConfiguration.Builder(
-    schema = setOf(Child::class),
-    partitionValue = "ASDF"
-).build()

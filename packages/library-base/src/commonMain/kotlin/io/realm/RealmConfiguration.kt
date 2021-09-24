@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.RealmConfiguration.Builder
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
@@ -152,15 +153,6 @@ interface RealmConfiguration {
          * @return the created RealmConfiguration.
          */
         abstract fun build(): RealmConfiguration
-
-//        /**
-//         * Creates the RealmConfiguration based on the builder properties.
-//         *
-//         * @return the created RealmConfiguration.
-//         */
-//        fun build(): RealmConfiguration {
-//            REPLACED_BY_IR()
-//        }
 
         // Called from the compiler plugin
         // FIXME children should implement this without defining it here so that it is internal
