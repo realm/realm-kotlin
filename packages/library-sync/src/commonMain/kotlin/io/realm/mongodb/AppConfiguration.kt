@@ -23,12 +23,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 /**
  * An **AppConfiguration** is used to setup linkage to a MongoDB Realm application.
  *
- * Instances of a AppConfiguration can only created by using the
- * {@link AppConfiguration.Builder} and calling its
- * {@link AppConfiguration.Builder#build()} method.
- * <p>
- * Configuring a App is only required if the default settings are not enough. Otherwise calling
- * {@code App("app-id")} is sufficient.
+ * Instances of a AppConfiguration can only created by using the [AppConfiguration.Builder] and
+ * calling its [AppConfiguration.Builder.build] method.
  */
 interface AppConfiguration {
 
@@ -54,7 +50,9 @@ interface AppConfiguration {
     }
 
     /**
-     * Builder used to construct instances of a {@link AppConfiguration} in a fluent manner.
+     * Builder used to construct instances of an [AppConfiguration] in a fluent manner.
+     *
+     * @param appId the application id of the MongoDB Realm Application.
      */
     class Builder(
         val appId: String
@@ -64,11 +62,11 @@ interface AppConfiguration {
 
         /**
          * Sets the base url for the MongoDB Realm Application. The default value is
-         * {@link #DEFAULT_BASE_URL}.
+         * [DEFAULT_BASE_URL].
          *
          * @param baseUrl the base url for the MongoDB Realm application.
          */
-        fun baseUrl(url: String) = apply { this.baseUrl = url }
+        fun baseUrl(baseUrl: String) = apply { this.baseUrl = baseUrl }
 
         /**
          * TODO
@@ -78,7 +76,7 @@ interface AppConfiguration {
         /**
          * Creates the AppConfiguration from the properties of the builder.
          *
-         * @return the AppConfiguration that can be used to create a {@link App}.
+         * @return the AppConfiguration that can be used to create a [App].
          */
         fun build(): AppConfiguration = AppConfigurationImpl(
             appId = appId,
