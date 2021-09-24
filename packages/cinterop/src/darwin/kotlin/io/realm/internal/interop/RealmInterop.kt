@@ -1065,6 +1065,7 @@ actual object RealmInterop {
     }
 
     private fun createSingleThreadDispatcherScheduler(dispatcher: CoroutineDispatcher): CPointer<realm_scheduler_t>? {
+        printlntid("createSingleThreadDispatcherScheduler")
         val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher).freeze()
 
         return realm_wrapper.realm_scheduler_new(
