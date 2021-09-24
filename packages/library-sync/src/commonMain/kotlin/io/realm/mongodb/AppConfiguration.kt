@@ -33,6 +33,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 interface AppConfiguration {
 
     val appId: String
+    // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
+    //  requires ktor as api dependency
     val baseUrl: String
     val networkTransportDispatcher: CoroutineDispatcher
 
@@ -49,7 +51,6 @@ interface AppConfiguration {
          * towards MongoDB Realm.
          */
         const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
-
     }
 
     /**
