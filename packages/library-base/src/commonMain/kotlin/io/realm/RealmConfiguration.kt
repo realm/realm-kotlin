@@ -85,20 +85,6 @@ interface RealmConfiguration {
     public val maxNumberOfActiveVersions: Long
 
     /**
-     * The coroutine dispatcher for internal handling of notification registration and delivery.
-     * Note: this needs to be a single thread based dispatcher in order for the JVM custom scheduler to work properly.
-     *       [kotlinx.coroutines.test.TestCoroutineDispatcher] is not supported.
-     */
-    public val notificationDispatcher: CoroutineDispatcher
-
-    /**
-     * The coroutine dispatcher used for all write operations.
-     * Note: this needs to be a single thread based dispatcher in order for the JVM custom scheduler to work properly.
-     *      [kotlinx.coroutines.test.TestCoroutineDispatcher] is not supported.
-     */
-    public val writeDispatcher: CoroutineDispatcher
-
-    /**
      * The schema version.
      */
     public val schemaVersion: Long

@@ -23,8 +23,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import java.lang.reflect.Method
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -40,8 +38,6 @@ private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_
  */
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
-
-    private val realmOpenLock: ReentrantLock = ReentrantLock()
 
     // TODO API-CLEANUP Maybe pull library loading into separate method
     //  https://github.com/realm/realm-kotlin/issues/56
@@ -155,12 +151,14 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
-        val realmPtr: LongPointerWrapper = if (dispatcher != null) {
+        val realmPtr = if (dispatcher != null) {
             // create a custom Scheduler for JVM, use a lock to prevent concurrent modification of the RealmConfig
-            realmOpenLock.withLock {
-                realmc.register_realm_scheduler((config as LongPointerWrapper).ptr, JVMScheduler(dispatcher))
-                LongPointerWrapper(realmc.realm_open(config.ptr))
-            }
+            LongPointerWrapper(
+                realmc.open_realm_with_scheduler(
+                    (config as LongPointerWrapper).ptr,
+                    JVMScheduler(dispatcher)
+                )
+            )
         } else {
             LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
         }

@@ -155,61 +155,35 @@ public:
         get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
     }
 
-    realm_scheduler_t* build() {
-        return realm_scheduler_new(
-                this /*void* userdata*/,
-                [](void *userdata) { /*realm_free_userdata_func_t*/ //TODO this doesn't seem to be invoked (maybe on closing the Realm)
-                    delete reinterpret_cast<CustomJVMScheduler * >(userdata);
-                },
-                [](void *userdata) { /*realm_scheduler_notify_func_t notify*/
-                    reinterpret_cast<CustomJVMScheduler * >(userdata)->notify();
-                },
-                [](void *userdata) -> bool
-                { /*realm_scheduler_is_on_thread_func_t is_on_thread*/
-                    return reinterpret_cast<CustomJVMScheduler * >(userdata)->is_on_thread();
-                },
-                [](const void *userdata1,
-                   const void *userdata2) -> bool
-                {/*realm_scheduler_is_same_as_func_t*/
-                    return  (userdata1 == userdata2);
-                },
-                [](void *userdata) -> bool
-                {/*realm_scheduler_can_deliver_notifications_func_t can_deliver_notifications*/
-                    return true;
-                },
-                [](void *userdata,
-                   void *callback_userdata,
-                   realm_free_userdata_func_t /* TODO finds out what's this freeing */,
-                   realm_scheduler_notify_func_t
-                   core_notif_function) {/*realm_scheduler_set_notify_callback_func_t set_notify_callback*/
-                    auto scheduler = reinterpret_cast<CustomJVMScheduler * >(userdata);
-                    // it's important to set the thread id here and not when constructing since the RealmConfiguration
-                    // could be reused to open a Realm (previously closed) in a new thread. Setting it in the ctor will
-                    // keep the old thread id cached which will inevitably causes a "[6]: Realm accessed from incorrect thread" exception
-                    scheduler->m_id = std::this_thread::get_id();
-                    scheduler->m_callback_userdata = callback_userdata;
-                    scheduler->m_core_notif_function = core_notif_function;
-                });
-    }
-
-private:
-    std::thread::id m_id;
-    jmethodID m_notify_method;
-    jobject m_jvm_dispatch_scheduler;
-    void* m_callback_userdata;
-    realm_scheduler_notify_func_t m_core_notif_function;
-
-    void notify() {
+    void notify() override {
         auto jenv = get_env(true);
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
-                             reinterpret_cast<jlong>(m_core_notif_function),
-                             reinterpret_cast<jlong>(m_callback_userdata));
+                             reinterpret_cast<jlong>(&m_callback));
     }
 
-    bool is_on_thread() {
+    void set_notify_callback(std::function<void()> fn) override {
+        m_callback = std::move(fn);
+    }
+
+    bool is_on_thread() const noexcept override {
         return m_id == std::this_thread::get_id();
     }
+
+    bool is_same_as(const Scheduler *other) const noexcept override {
+        auto o = dynamic_cast<const CustomJVMScheduler *>(other);
+        return (o && (o->m_id == m_id));
+    }
+
+    bool can_deliver_notifications() const noexcept override {
+        return true;
+    }
+
+private:
+    std::function<void()> m_callback;
+    std::thread::id m_id;
+    jmethodID m_notify_method;
+    jobject m_jvm_dispatch_scheduler;
 };
 
 // Note: using jlong here will create a linker issue
@@ -220,24 +194,28 @@ private:
 //
 // I suspect this could be related to the fact that jni.h defines jlong differently between Android (typedef int64_t)
 // and JVM which is a (typedef long long) resulting in a different signature of the method that could be found by the linker.
-void invoke_core_notify_callback(int64_t core_notif_function, int64_t callback_userdata) {
-    realm_scheduler_notify_func_t notify = reinterpret_cast<realm_scheduler_notify_func_t>(core_notif_function);
-    // callback_userdata is a weak reference to Realm. that `WeakRealmNotifier::bind_to_scheduler` will use to invoke realm.notify()
-    notify(reinterpret_cast<void*>(callback_userdata));
+void invoke_core_notify_callback(int64_t core_notify_function) {
+    auto notify = reinterpret_cast<std::function<void()> *>(core_notify_function);
+    (*notify)();
 }
 
-void register_realm_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
-    CustomJVMScheduler * jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
-    realm_scheduler_t *scheduler = jvmScheduler->build();
-    realm_config_set_scheduler(reinterpret_cast<realm_config_t * >(config_ptr), scheduler);
+realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
+    auto *cfg = reinterpret_cast<realm_config_t * >(config_ptr);
+    // copy construct to not set the scheduler on the original Conf which could be used
+    // to open Frozen Realm for instance.
+    auto copyConf = *cfg;
+    copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    return realm_open(&copyConf);
 }
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/CinteropCallback");
+    static jclass notification_class = jenv->FindClass(
+            "io/realm/internal/interop/CinteropCallback");
     static jmethodID on_success_method = jenv->GetMethodID(notification_class, "onSuccess",
                                                            "(Lio/realm/internal/interop/NativePointer;)V");
-    static jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError", "(Ljava/lang/Throwable;)V");
+    static jmethodID on_error_method = jenv->GetMethodID(notification_class, "onError",
+                                                         "(Ljava/lang/Throwable;)V");
 
     realm_app_log_in_with_credentials(
             app,
