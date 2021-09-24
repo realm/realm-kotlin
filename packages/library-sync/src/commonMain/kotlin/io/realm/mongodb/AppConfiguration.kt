@@ -23,7 +23,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 /**
  * An **AppConfiguration** is used to setup linkage to a MongoDB Realm application.
  *
- * Instances of a AppConfiguration can only created by using the [AppConfiguration.Builder] and
+ * Instances of an AppConfiguration can only be created by using the [AppConfiguration.Builder] and
  * calling its [AppConfiguration.Builder.build] method.
  */
 interface AppConfiguration {
