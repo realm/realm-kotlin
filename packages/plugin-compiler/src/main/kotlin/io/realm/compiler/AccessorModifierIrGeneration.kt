@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.ir.builders.irIfThenElse
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
+import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -378,8 +379,18 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             }
 
                         val cinteropExpression = if (fromLongToType != null) {
-                            irCall(fromLongToType).also {
-                                it.dispatchReceiver = cinteropCall
+                            irBlock {
+                                val temporary = scope.createTemporaryVariableDeclaration(
+                                    cinteropCall.type,
+                                    "core",
+                                    false
+                                ).apply { initializer = cinteropCall }
+                                +createSafeCallConstruction(
+                                    temporary,
+                                    temporary.symbol,
+                                    irCall(fromLongToType).apply {
+                                        this.dispatchReceiver = irGet(temporary)
+                                    })
                             }
                         } else {
                             cinteropCall

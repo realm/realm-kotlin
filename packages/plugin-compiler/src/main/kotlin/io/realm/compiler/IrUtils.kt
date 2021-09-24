@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
+import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
@@ -36,25 +37,38 @@ import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
+import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrBranchImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrElseBranchImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrWhenImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
@@ -338,6 +352,44 @@ internal fun IrClass.addFakeOverrides(
             this.overriddenSymbols = listOf(override.symbol)
             dispatchReceiverParameter =
                 receiver.owner.thisReceiver!!.copyTo(this)
+        }
+    }
+}
+
+// Copy of Kotlin's Fir2IrComponents.createSafeCallConstruction
+fun IrBlockBuilder.createSafeCallConstruction(
+    receiverVariable: IrVariable,
+    receiverVariableSymbol: IrValueSymbol,
+    expressionOnNotNull: IrExpression,
+): IrExpression {
+    val startOffset = expressionOnNotNull.startOffset
+    val endOffset = expressionOnNotNull.endOffset
+
+    val resultType = expressionOnNotNull.type.makeNullable()
+    return IrBlockImpl(startOffset, endOffset, resultType, IrStatementOrigin.SAFE_CALL).apply {
+        statements += receiverVariable
+        statements += IrWhenImpl(startOffset, endOffset, resultType).apply {
+            val condition = IrCallImpl(
+                startOffset, endOffset, context.irBuiltIns.booleanType,
+                context.irBuiltIns.eqeqSymbol,
+                valueArgumentsCount = 2,
+                typeArgumentsCount = 0,
+                origin = IrStatementOrigin.EQEQ
+            ).apply {
+                putValueArgument(0, IrGetValueImpl(startOffset, endOffset, receiverVariableSymbol))
+                putValueArgument(
+                    1,
+                    IrConstImpl.constNull(startOffset, endOffset, context.irBuiltIns.nothingNType)
+                )
+            }
+            branches += IrBranchImpl(
+                condition,
+                IrConstImpl.constNull(startOffset, endOffset, context.irBuiltIns.nothingNType)
+            )
+            branches += IrElseBranchImpl(
+                IrConstImpl.boolean(startOffset, endOffset, context.irBuiltIns.booleanType, true),
+                expressionOnNotNull
+            )
         }
     }
 }
