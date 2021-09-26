@@ -37,12 +37,14 @@ import io.ktor.http.HttpMethod
 import io.ktor.utils.io.errors.IOException
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.interop.sync.ResponseCallback
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.freeze
-import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlin.collections.set
 
 // TODO Consider adding a logger
@@ -63,12 +65,14 @@ class KtorNetworkTransport(
         url: String,
         headers: Map<String, String>,
         body: String,
-        usesRefreshToken: Boolean
-    ): Response {
-        try {
-            // FIXME Ensure background jobs does not block user/main thread
-            //  https://github.com/realm/realm-kotlin/issues/450
-            return runBlocking(dispatcher) {
+        usesRefreshToken: Boolean,
+        callback: ResponseCallback,
+    ) {
+        // FIXME Ensure background jobs does not block user/main thread
+        //  https://github.com/realm/realm-kotlin/issues/450
+        // FIXME Validate threading model
+        CoroutineScope(dispatcher).async {
+            val response = try {
                 val requestBuilderBlock: HttpRequestBuilder.() -> Unit = {
                     headers {
                         // 1. First of all add all custom headers
@@ -99,37 +103,31 @@ class KtorNetworkTransport(
                     addBody(method, body)
                     addMethod(method)
                 }
-
-                try {
-                    when (method) {
-                        "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
-                        "patch" -> client.patch<HttpResponse>(url, requestBuilderBlock)
-                        "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
-                        "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
-                        "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
-                        else -> throw IllegalArgumentException("Wrong request method: '$method'")
-                    }.let {
-                        processHttpResponse(it)
-                    }
-                } catch (e: ServerResponseException) {
-                    // 500s are thrown as ServerResponseException
-                    processHttpResponse(e.response)
-                } catch (e: IOException) {
-                    Response(0, ERROR_IO, mapOf(), e.toString())
-                } catch (e: CancellationException) {
-                    // FIXME Validate we propagate the custom codes as an actual exception to the user
-                    //  https://github.com/realm/realm-kotlin/issues/451
-                    Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
-                } catch (e: Exception) {
-                    // FIXME Validate we propagate the custom codes as an actual exception to the user
-                    //  https://github.com/realm/realm-kotlin/issues/451
-                    Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
+                when (method) {
+                    "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
+                    "patch" -> client.patch<HttpResponse>(url, requestBuilderBlock)
+                    "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
+                    "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
+                    "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
+                    else -> throw IllegalArgumentException("Wrong request method: '$method'")
+                }.let {
+                    processHttpResponse(it)
                 }
+            } catch (e: ServerResponseException) {
+                // 500s are thrown as ServerResponseException
+                processHttpResponse(e.response)
+            } catch (e: IOException) {
+                Response(0, ERROR_IO, mapOf(), e.toString())
+            } catch (e: CancellationException) {
+                // FIXME Validate we propagate the custom codes as an actual exception to the user
+                //  https://github.com/realm/realm-kotlin/issues/451
+                Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
+            } catch (e: Exception) {
+                // FIXME Validate we propagate the custom codes as an actual exception to the user
+                //  https://github.com/realm/realm-kotlin/issues/451
+                Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
             }
-        } catch (e: Exception) {
-            // FIXME Validate we propagate the custom codes as an actual exception to the user
-            //  https://github.com/realm/realm-kotlin/issues/451
-            return Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
+            callback.response(response)
         }
     }
 

@@ -195,11 +195,11 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
     );
 }
 
-static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
+static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
     static jmethodID m_send_request_method = lookup(jenv,
             "io/realm/internal/interop/sync/NetworkTransport",
             "sendRequest",
-            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/internal/interop/sync/Response;"
+            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ZLio/realm/internal/interop/sync/ResponseCallback;)V"
     );
 
     // Prepare request fields to be consumable by JVM
@@ -241,14 +241,15 @@ static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_tran
         jenv->DeleteLocalRef(value);
     }
 
-    // Send request and retrieve JVM response
-    return jenv->CallObjectMethod(network_transport,
+    // Send request
+    jenv->CallVoidMethod(network_transport,
                                   m_send_request_method,
                                   to_jstring(jenv, method),
                                   to_jstring(jenv, request.url),
                                   request_headers,
                                   to_jstring(jenv, request.body),
-                                  jboolean(request.uses_refresh_token)
+                                  jboolean(request.uses_refresh_token),
+                                  j_response_callback
     );
 }
 
@@ -318,8 +319,17 @@ static void network_request_lambda_function(void *userdata, // Network transport
     jobject network_transport = static_cast<jobject>(userdata);
 
     try {
-        jobject j_response = send_request_via_jvm_transport(jenv, network_transport, request);
-        pass_jvm_response_to_core(jenv, j_response, completion_data, completion_callback);
+        jclass response_callback_class = jenv->FindClass(
+                "io/realm/internal/interop/sync/ResponseCallbackImpl");
+        static jmethodID response_callback_constructor = jenv->GetMethodID(response_callback_class,
+                                                                           "<init>",
+                                                                           "(JJ)V");
+        jobject response_callback = jenv->NewObject(response_callback_class,
+                                                    response_callback_constructor,
+                                                    reinterpret_cast<jlong>(completion_callback),
+                                                    reinterpret_cast<jlong>(completion_data));
+
+        send_request_via_jvm_transport(jenv, network_transport, request, response_callback);
     } catch (std::runtime_error &e) {
         // Runtime exception while processing the request/response
         realm_http_response_t response_error;
@@ -368,3 +378,8 @@ new_app_config(const char *app_id, jobject network_factory) {
     );
 }
 
+void
+native_response_callback(realm_http_completion_func_t completion_callback, void* completion_data, jobject j_response) {
+    auto jenv = get_env(false); // should always be attached
+    pass_jvm_response_to_core(jenv, j_response, completion_data, completion_callback);
+}

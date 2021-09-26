@@ -21,6 +21,8 @@ package io.realm.internal.interop
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.interop.sync.Response
+import io.realm.internal.interop.sync.ResponseCallback
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
@@ -932,10 +934,13 @@ actual object RealmInterop {
                 for (i in 0 until num_headers.toInt()) {
                     headers?.get(i)?.let { header ->
                         headerMap[header.name!!.toKString()] = header.value!!.toKString()
-                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
+                    }
+                        ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
                 }
 
-                val response = networkTransport.sendRequest(
+                val callback = callback ?: error("Callback should never be null")
+
+                networkTransport.sendRequest(
                     method = when (method) {
                         realm_http_method.RLM_HTTP_METHOD_GET -> NetworkTransport.GET
                         realm_http_method.RLM_HTTP_METHOD_POST -> NetworkTransport.POST
@@ -946,31 +951,35 @@ actual object RealmInterop {
                     url = url!!.toKString(),
                     headers = headerMap,
                     body = body!!.toKString(),
-                    usesRefreshToken = uses_refresh_token
-                )
+                    usesRefreshToken = uses_refresh_token,
+                    object : ResponseCallback {
+                        override fun response(response: Response) {
+                            memScoped {
+                                val headersSize = response.headers.entries.size
+                                val cResponseHeaders =
+                                    allocArray<realm_http_header_t>(headersSize)
 
-                memScoped {
-                    val headersSize = response.headers.entries.size
-                    val cResponseHeaders = allocArray<realm_http_header_t>(headersSize)
+                                response.headers.entries.forEachIndexed { i, entry ->
+                                    cResponseHeaders[i].let { header ->
+                                        header.name = entry.key.cstr.getPointer(memScope)
+                                        header.value = entry.value.cstr.getPointer(memScope)
+                                    }
+                                }
 
-                    response.headers.entries.forEachIndexed { i, entry ->
-                        cResponseHeaders[i].let { header ->
-                            header.name = entry.key.cstr.getPointer(memScope)
-                            header.value = entry.value.cstr.getPointer(memScope)
+                                val cResponse = cValue<realm_http_response_t> {
+                                    body = response.body.cstr.getPointer(memScope)
+                                    body_size = response.body.cstr.getBytes().size.toULong()
+                                    custom_status_code = response.customResponseCode
+                                    status_code = response.httpResponseCode
+                                    num_headers = response.headers.entries.size.toULong()
+                                    headers = cResponseHeaders
+                                }
+                                println("Callladsdf: $response")
+                                callback.invoke(completionData, cResponse)
+                            }
                         }
                     }
-
-                    val cResponse = cValue<realm_http_response_t> {
-                        body = response.body.cstr.getPointer(memScope)
-                        body_size = response.body.cstr.getBytes().size.toULong()
-                        custom_status_code = response.customResponseCode
-                        status_code = response.httpResponseCode
-                        num_headers = response.headers.entries.size.toULong()
-                        headers = cResponseHeaders
-                    }
-                    // Copying?
-                    callback?.invoke(completionData, cResponse) ?: error("Callback should never be null")
-                }
+                )
             }
         }
     }

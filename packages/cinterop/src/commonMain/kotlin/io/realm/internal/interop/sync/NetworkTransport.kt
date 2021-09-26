@@ -19,8 +19,13 @@ interface NetworkTransport {
         url: String,
         headers: Map<String, String>,
         body: String,
-        usesRefreshToken: Boolean
-    ): Response
+        usesRefreshToken: Boolean,
+        callback: ResponseCallback
+    )
+}
+
+interface ResponseCallback {
+    fun response(response: Response)
 }
 
 data class Response(

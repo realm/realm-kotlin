@@ -36,4 +36,7 @@ new_app_config(const char* app_id, jobject app_instance);
 void
 register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback);
 
+void
+native_response_callback(realm_http_completion_func_t callback, void* userdata, jobject response);
+
 #endif //TEST_REALM_API_HELPERS_H
