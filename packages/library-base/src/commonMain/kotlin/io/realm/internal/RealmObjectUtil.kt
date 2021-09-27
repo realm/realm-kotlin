@@ -63,28 +63,9 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-<<<<<<< HEAD:packages/library/src/commonMain/kotlin/io/realm/internal/RealmObjectUtil.kt
-fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T? {
-    @Suppress("UNCHECKED_CAST")
-    val type: KClass<T> = this::class as KClass<T>
-    val mediator = `$realm$Mediator`!!
-    val managedModel = mediator.createInstanceOf(type)
-    return RealmInterop.realm_object_resolve_in(
-        `$realm$ObjectPointer`!!,
-        frozenRealm.dbPointer
-    )?.let {
-        managedModel.manage(
-            frozenRealm!!,
-            mediator,
-            type,
-            it
-        )
-    }
-=======
 internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
     @Suppress("UNCHECKED_CAST")
     return this.freeze(frozenRealm) as T
->>>>>>> master:packages/library-base/src/commonMain/kotlin/io/realm/internal/RealmObjectUtil.kt
 }
 
 /**
@@ -94,21 +75,6 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  */
 internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealmImpl): T? {
     @Suppress("UNCHECKED_CAST")
-<<<<<<< HEAD:packages/library/src/commonMain/kotlin/io/realm/internal/RealmObjectUtil.kt
-    val type: KClass<T> = this::class as KClass<T>
-    val mediator = `$realm$Mediator`!!
-    val managedModel = mediator.createInstanceOf(type)
-    val dbPointer = liveRealm.realmReference.dbPointer
-    return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)
-        ?.let { thawedObject ->
-            managedModel.manage(
-                liveRealm.realmReference,
-                mediator,
-                type,
-                thawedObject
-            )
-        }
-=======
     return this.thaw(liveRealm.realmReference)?.let { it as T }
 }
 
@@ -122,5 +88,4 @@ internal fun <T : RealmObject> Link.toRealmObject(
 ): T {
     return mediator.createInstanceOf(clazz)
         .link(realm, mediator, clazz, this)
->>>>>>> master:packages/library-base/src/commonMain/kotlin/io/realm/internal/RealmObjectUtil.kt
 }

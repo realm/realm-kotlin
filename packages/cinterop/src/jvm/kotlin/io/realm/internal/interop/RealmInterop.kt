@@ -16,13 +16,8 @@
 
 package io.realm.internal.interop
 
-<<<<<<< HEAD:packages/cinterop/src/jvm/kotlin/io/realm/interop/RealmInterop.kt
-import io.realm.interop.Constants.ENCRYPTION_KEY_LENGTH
-=======
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.cptr
 import io.realm.internal.interop.sync.AuthProvider
->>>>>>> master:packages/cinterop/src/jvm/kotlin/io/realm/internal/interop/RealmInterop.kt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
