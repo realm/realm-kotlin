@@ -334,13 +334,6 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
     }
 
-    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
-        val realmPtr = CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
-        // Ensure that we can read version information, etc.
-        realm_begin_read(realmPtr)
-        return realmPtr
-    }
-
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
         return realm_wrapper.realm_is_frozen(realm.cptr<realm_t>())
     }
@@ -428,15 +421,11 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
-    }
-
-    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
+    actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
         memScoped {
             val objectPointer = allocArray<CPointerVar<realm_object_t>>(1)
             checkedBooleanResult(
-                realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr(), objectPointer)
+                realm_wrapper.realm_object_resolve_in(obj.cptr(), realm.cptr(), objectPointer)
             )
             return objectPointer[0]?.let {
                 return CPointerWrapper(it)
@@ -556,20 +545,11 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
-    actual fun realm_list_freeze(
-        liveList: NativePointer,
-        frozenRealm: NativePointer
-    ): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_list_freeze(liveList.cptr(), frozenRealm.cptr())
-        )
-    }
-
-    actual fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer? {
+    actual fun realm_list_resolve_in(list: NativePointer, realm: NativePointer): NativePointer? {
         memScoped {
             val listPointer = allocArray<CPointerVar<realm_list_t>>(1)
             checkedBooleanResult(
-                realm_wrapper.realm_list_thaw(frozenList.cptr(), liveRealm.cptr(), listPointer)
+                realm_wrapper.realm_list_resolve_in(list.cptr(), realm.cptr(), listPointer)
             )
             return listPointer[0]?.let {
                 CPointerWrapper(it)
@@ -694,26 +674,14 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_results_freeze(
-        liveResults: NativePointer,
-        frozenRealm: NativePointer
+    actual fun realm_results_resolve_in(
+        results: NativePointer,
+        realm: NativePointer
     ): NativePointer {
         return CPointerWrapper(
-            realm_wrapper.realm_results_freeze(
-                liveResults.cptr(),
-                frozenRealm.cptr()
-            )
-        )
-    }
-
-    actual fun realm_results_thaw(
-        frozenResults: NativePointer,
-        liveRealm: NativePointer
-    ): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_results_thaw(
-                frozenResults.cptr(),
-                liveRealm.cptr()
+            realm_wrapper.realm_results_resolve_in(
+                results.cptr(),
+                realm.cptr()
             )
         )
     }

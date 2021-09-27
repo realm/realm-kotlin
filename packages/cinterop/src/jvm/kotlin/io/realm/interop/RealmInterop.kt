@@ -149,13 +149,6 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
     }
 
-    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
-        val realmPtr = LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
-        // Ensure that we can read version information, etc.
-        realm_begin_read(realmPtr)
-        return realmPtr
-    }
-
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
         return realmc.realm_is_frozen(realm.cptr())
     }
@@ -217,13 +210,9 @@ actual object RealmInterop {
         return realmc.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
-    }
-
-    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
+    actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
         val objectPointer = longArrayOf(0)
-        realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr(), objectPointer)
+        realmc.realm_object_resolve_in(obj.cptr(), realm.cptr(), objectPointer)
         return if (objectPointer[0] != 0L) {
             LongPointerWrapper(objectPointer[0])
         } else {
@@ -319,19 +308,12 @@ actual object RealmInterop {
         realmc.realm_list_erase(list.cptr(), index)
     }
 
-    actual fun realm_list_freeze(
-        liveList: NativePointer,
-        frozenRealm: NativePointer
-    ): NativePointer {
-        return LongPointerWrapper(realmc.realm_list_freeze(liveList.cptr(), frozenRealm.cptr()))
-    }
-
-    actual fun realm_list_thaw(
-        frozenList: NativePointer,
-        liveRealm: NativePointer
+    actual fun realm_list_resolve_in(
+        list: NativePointer,
+        realm: NativePointer
     ): NativePointer? {
         val listPointer = longArrayOf(0)
-        realmc.realm_list_thaw(frozenList.cptr(), liveRealm.cptr(), listPointer)
+        realmc.realm_list_resolve_in(list.cptr(), realm.cptr(), listPointer)
         return if (listPointer[0] != 0L) {
             LongPointerWrapper(listPointer[0])
         } else {
@@ -486,12 +468,8 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_freeze(liveResults.cptr(), frozenRealm.cptr()))
-    }
-
-    actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
+    actual fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_resolve_in(results.cptr(), realm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

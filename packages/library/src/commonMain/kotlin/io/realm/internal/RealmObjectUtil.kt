@@ -64,20 +64,22 @@ fun <T : RealmObject> RealmObjectInternal.link(
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
+fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T? {
     @Suppress("UNCHECKED_CAST")
     val type: KClass<T> = this::class as KClass<T>
     val mediator = `$realm$Mediator`!!
     val managedModel = mediator.createInstanceOf(type)
-    return managedModel.manage(
-        frozenRealm!!,
-        mediator,
-        type,
-        RealmInterop.realm_object_freeze(
-            `$realm$ObjectPointer`!!,
-            frozenRealm.dbPointer
+    return RealmInterop.realm_object_resolve_in(
+        `$realm$ObjectPointer`!!,
+        frozenRealm.dbPointer
+    )?.let {
+        managedModel.manage(
+            frozenRealm!!,
+            mediator,
+            type,
+            it
         )
-    )
+    }
 }
 
 /**
@@ -91,7 +93,7 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealm): T
     val mediator = `$realm$Mediator`!!
     val managedModel = mediator.createInstanceOf(type)
     val dbPointer = liveRealm.realmReference.dbPointer
-    return RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)
+    return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)
         ?.let { thawedObject ->
             managedModel.manage(
                 liveRealm.realmReference,

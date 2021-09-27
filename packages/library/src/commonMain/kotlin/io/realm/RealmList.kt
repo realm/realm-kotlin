@@ -65,7 +65,7 @@ class RealmList<E> private constructor(
      */
     fun observe(): Flow<RealmList<E>> = delegate.observe(this)
 
-    internal fun freeze(realm: RealmReference): RealmList<E> = delegate.freeze(realm)
+    internal fun freeze(realm: RealmReference): RealmList<E>? = delegate.freeze(realm)
     internal fun thaw(realm: RealmReference): RealmList<E>? = delegate.thaw(realm)
 
     @Suppress("TooGenericExceptionCaught")
@@ -138,7 +138,7 @@ internal interface RealmListApi<E> : MutableList<E> {
     val listPtr: NativePointer
 
     fun observe(list: RealmList<E>): Flow<RealmList<E>>
-    fun freeze(frozenRealm: RealmReference): RealmList<E>
+    fun freeze(frozenRealm: RealmReference): RealmList<E>?
     fun thaw(liveRealm: RealmReference): RealmList<E>?
 }
 
@@ -230,14 +230,15 @@ private class ManagedListDelegate<E>(
         return metadata.realm.owner.registerListObserver(list)
     }
 
-    override fun freeze(frozenRealm: RealmReference): RealmList<E> {
-        val frozenList = RealmInterop.realm_list_freeze(listPtr, frozenRealm.dbPointer)
-        return RealmList(frozenList, metadata.copy(realm = frozenRealm))
+    override fun freeze(frozenRealm: RealmReference): RealmList<E>? {
+        return RealmInterop.realm_list_resolve_in(listPtr, frozenRealm.dbPointer)?.let {
+            RealmList(it, metadata.copy(realm = frozenRealm))
+        }
     }
 
     override fun thaw(liveRealm: RealmReference): RealmList<E>? {
-        return RealmInterop.realm_list_thaw(listPtr, liveRealm.dbPointer)?.run {
-            RealmList(this, metadata.copy(realm = liveRealm))
+        return RealmInterop.realm_list_resolve_in(listPtr, liveRealm.dbPointer)?.let {
+            RealmList(it, metadata.copy(realm = liveRealm))
         }
     }
 
