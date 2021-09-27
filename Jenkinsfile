@@ -146,6 +146,14 @@ pipeline {
                         }
                     }
                 }
+                stage('iOS Sample App Builds') {
+                    when { expression { runTests } }
+                    steps {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            packForXcode()
+                        }
+                    }
+                }
                 stage('Build Android on Java 8') {
                     when { expression { runTests } }
                     environment {
@@ -424,6 +432,18 @@ def runBuildAndroidApp() {
             cd examples/kmm-sample
             java -version
             ./gradlew :androidApp:assembleDebug --stacktrace --no-daemon
+        """
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        currentBuild.stageResult = 'FAILURE'
+    }
+}
+
+def packForXcode() {
+    try {
+        sh """
+            cd examples/kmm-sample
+            ./gradlew :shared:packForXcode --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'
