@@ -21,6 +21,7 @@ package io.realm.internal.interop
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.mongodb.AppException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
@@ -42,7 +43,6 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
@@ -95,8 +95,6 @@ private fun throwOnError() {
         }
     }
 }
-
-private fun toKException(error: realm_error_t): Throwable = RuntimeException("[${error.error}]: ${error.message?.toKString()}")
 
 private fun checkedBooleanResult(boolean: Boolean): Boolean {
     if (!boolean) throwOnError(); return boolean
@@ -912,7 +910,7 @@ actual object RealmInterop {
                 if (error == null) {
                     callback.onSuccess(CPointerWrapper(user))
                 } else {
-                    callback.onError(toKException(error.pointed))
+                    callback.onError(AppException())
                 }
             },
             StableRef.create(callback).asCPointer(),
