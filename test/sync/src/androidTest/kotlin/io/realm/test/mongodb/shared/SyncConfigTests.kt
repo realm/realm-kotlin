@@ -16,29 +16,41 @@
 
 package io.realm.test.mongodb.shared
 
+import io.realm.Realm
 import io.realm.entities.Sample
+import io.realm.entities.link.Child
+import io.realm.entities.link.Parent
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.platform.PlatformUtils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
 
 class SyncConfigTests {
 
+    private lateinit var tmpDir: String
     private lateinit var app: App
+    private lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        tmpDir = PlatformUtils.createTempDir()
+        app = TestApp().also { it.asTestApp.deleteAllUsers() }
     }
 
     @AfterTest
@@ -63,10 +75,46 @@ class SyncConfigTests {
     ): SyncConfiguration = SyncConfiguration.Builder(
         path = path,
         name = name,
-        schema = setOf(Sample::class),
+        schema = setOf(Parent::class, Child::class),
         user = user,
         partitionValue = partitionValue
     ).build()
+
+    @Test
+    fun canOpenRealm() {
+        val user = createTestUser()
+        val config = createSyncConfig(path = "$tmpDir/$DEFAULT_NAME", user = user)
+        realm = Realm.open(config)
+        assertNotNull(realm)
+
+        val child = Child().apply {
+            _id = "CHILD_A"
+            name = "A"
+        }
+
+        val channel = Channel<Child>(1)
+
+        runBlocking {
+            val observer = async {
+                realm.objects(Child::class)
+                    .observe()
+                    .collect { childResults ->
+                        channel.send(childResults[0])
+                    }
+            }
+
+            realm.write {
+                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
+                copyToRealm(child)
+            }
+
+            val childResult = channel.receive()
+            println("------ child received: ${childResult._id}, ${childResult.name}")
+            observer.cancel()
+            channel.close()
+        }
+        println("------ done")
+    }
 
 //    @Test
 //    fun errorHandler() {
@@ -622,17 +670,5 @@ class SyncConfigTests {
 //        val configuration2 = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
 //            .build()
 //        assertNotEquals(factory, configuration2.flowFactory)
-//    }
-
-//    @Test
-//    fun syncConfig() {
-//        val user = createNewUser()
-//        val config = createSyncConfig(user)
-//        assertNotNull(config)
-//    }
-//
-//    @Test
-//    fun canOpen() {
-//        realm = Realm.open(syncConfiguration)
 //    }
 }
