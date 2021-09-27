@@ -16,7 +16,6 @@
 
 package io.realm.mongodb
 
+@Suppress("ForbiddenComment")
 // TODO: implement actual AppException with sync error codes hierarchy
-// https://github.com/realm/realm-kotlin/issues/426
-
 class AppException : Exception()
