@@ -36,5 +36,3 @@ class Nullability : RealmObject {
     var doubleField: Double? = null
     var objectField: Nullability? = null
 }
-
-
