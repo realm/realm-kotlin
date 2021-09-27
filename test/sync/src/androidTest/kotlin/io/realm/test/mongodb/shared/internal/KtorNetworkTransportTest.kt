@@ -17,12 +17,17 @@
 package io.realm.test.mongodb.shared.internal
 
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.interop.sync.ResponseCallback
+import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.KtorNetworkTransport
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+
 
 private const val BASE_URL = "http://127.0.0.1:8888" // URL to command server
 
@@ -47,19 +52,26 @@ internal class KtorNetworkTransportTest {
     }
 
     @Test
-    fun requestSuccessful() {
+    fun requestSuccessful() = runBlocking {
         val url = "$BASE_URL/okhttp?success=true"
 
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body,
-                true
-            )
+            val response = suspendCoroutine<Response> {
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body,
+                    true,
+                    object : ResponseCallback {
+                        override fun response(response: Response) {
+                            it.resume(response)
+                        }
+                    }
+                )
+            }
             assertEquals(200, response.httpResponseCode)
             assertEquals(0, response.customResponseCode)
             assertEquals("${method.name}-success", response.body)
@@ -67,18 +79,25 @@ internal class KtorNetworkTransportTest {
     }
 
     @Test
-    fun requestFailedOnServer() {
+    fun requestFailedOnServer() = runBlocking {
         val url = "$BASE_URL/okhttp?success=false"
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body,
-                true
-            )
+            val response = suspendCoroutine<Response> {
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body,
+                    true,
+                    object : ResponseCallback {
+                        override fun response(response: Response) {
+                            it.resume(response)
+                        }
+                    }
+                )
+            }
             assertEquals(500, response.httpResponseCode)
             assertEquals(0, response.customResponseCode)
             assertEquals("${method.name}-failure", response.body)
@@ -89,18 +108,25 @@ internal class KtorNetworkTransportTest {
     // This is mostly a guard against Java crashing if ObjectStore serializes the wrong
     // way by accident.
     @Test
-    fun requestSendsIllegalJson() {
+    fun requestSendsIllegalJson() = runBlocking {
         val url = "$BASE_URL/okhttp?success=true"
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "Boom!"
 
-            val response: Response = transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body,
-                true
-            )
+            val response = suspendCoroutine<Response> {
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body,
+                    true,
+                    object : ResponseCallback {
+                        override fun response(response: Response) {
+                            it.resume(response)
+                        }
+                    }
+                )
+            }
             assertEquals(200, response.httpResponseCode)
             assertEquals(0, response.customResponseCode)
             assertEquals("${method.name}-success", response.body)
