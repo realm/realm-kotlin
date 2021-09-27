@@ -34,11 +34,11 @@ tasks.create("realmWrapperJvm") {
     doLast {
         exec {
             workingDir(".")
-            commandLine("swig", "-java", "-c++", "-package", "io.realm.interop", "-I$projectDir/../external/core/src", "-o", "$projectDir/src/main/jni/realmc.cpp", "-outdir", "$projectDir/src/main/java/io/realm/interop", "realm.i")
+            commandLine("swig", "-java", "-c++", "-package", "io.realm.internal.interop", "-I$projectDir/../external/core/src", "-o", "$projectDir/src/main/jni/realmc.cpp", "-outdir", "$projectDir/src/main/java/io/realm/internal/interop", "realm.i")
         }
     }
     inputs.file("realm.i")
-    outputs.dir("$projectDir/src/main/java/io/realm/interop")
+    outputs.dir("$projectDir/src/main/java/io/realm/internal/interop")
     outputs.dir("$projectDir/src/main/jni")
 }
 
@@ -72,12 +72,13 @@ publishing {
 tasks.create("cleanJvmWrapper") {
     doLast {
         delete(
-            fileTree("$projectDir/src/main/java/io/realm/interop/").matching {
+            fileTree("$projectDir/src/main/java/io/realm/internal/interop/").matching {
                 include("*.java")
                 exclude("LongPointerWrapper.java") // not generated
             }
         )
-        delete("$projectDir/src/main/jni/")
+        delete(file("$projectDir/src/main/jni/realmc.cpp"))
+        delete(file("$projectDir/src/main/jni/realmc.h"))
     }
 }
 

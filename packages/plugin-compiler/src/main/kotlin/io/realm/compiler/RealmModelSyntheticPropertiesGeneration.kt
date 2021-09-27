@@ -18,6 +18,7 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_FLAG
 import io.realm.compiler.FqNames.COLLECTION_TYPE
+import io.realm.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.compiler.FqNames.PROPERTY
 import io.realm.compiler.FqNames.PROPERTY_FLAG
@@ -26,7 +27,6 @@ import io.realm.compiler.FqNames.REALM_MEDIATOR_INTERFACE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
-import io.realm.compiler.FqNames.REALM_OBJECT_INTEROP_INTERFACE
 import io.realm.compiler.FqNames.REALM_REFERENCE
 import io.realm.compiler.FqNames.TABLE
 import io.realm.compiler.Names.CLASS_FLAG_NORMAL
@@ -36,6 +36,7 @@ import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
+import io.realm.compiler.Names.PROPERTY_FLAG_INDEX
 import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
 import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
@@ -93,11 +94,10 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 /**
  * Helper to assisting in modifying classes marked with the [RealmObject] interface according to our
  * needs:
- * - Adding the internal properties of [io.realm.interop.RealmObjectInterop]
+ * - Adding the internal properties of [io.realm.internal.interop.RealmObjectInterop]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
-    private val realmModelInteropInterface: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTEROP_INTERFACE)
     private val realmModelInternalInterface: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val nullableNativePointerInterface =
         pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
@@ -134,7 +134,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addVariableProperty(realmModelInteropInterface, OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
+            addVariableProperty(realmModelInternalInterface, OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
             addVariableProperty(realmModelInternalInterface, REALM_OWNER, realmReferenceClass.defaultType.makeNullable(), ::irNull)
             addVariableProperty(
                 realmModelInternalInterface,
@@ -324,12 +324,17 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         ?: error("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
+                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
+
                                 val propertyFlags = mutableListOf<Name>()
                                 if (nullable) {
                                     propertyFlags.add(PROPERTY_FLAG_NULLABLE)
                                 }
                                 if (primaryKey) {
                                     propertyFlags.add(PROPERTY_FLAG_PRIMARY_KEY)
+                                }
+                                if (isIndexed) {
+                                    propertyFlags.add(PROPERTY_FLAG_INDEX)
                                 }
                                 val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
                                     setOf(
@@ -344,6 +349,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
                                     logError(
                                         "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                    )
+                                }
+                                val indexableTypes = with(pluginContext.irBuiltIns) {
+                                    setOf(byteType, charType, shortType, intType, longType, stringType).map { it.classifierOrFail }
+                                }
+                                if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
+                                    logError(
+                                        "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
                                     )
                                 }
 

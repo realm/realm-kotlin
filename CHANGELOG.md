@@ -1,10 +1,21 @@
 ## 0.6.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Rename library dependency from `io.realm.kotlin:library:<VERSION>` to `io.realm.kotlin:library-base:<VERSION>`
+* Abstracted public API into interfaces. The interfaces have kept the name of the previous classes so only differences are:
+  - Opening a realm: `Realm(configuration)` has changed to `Realm.open(configuration)`
+  - Easy construction of simple configurations: `RealmConfiguration(schema = ...)` has changed to `RealmConfiguration.with(schema = ...)`
+  - Instantiating a `RealmList` is now done through `realmListOf(...)` or by `Iterable<T>.toRealmList()`
+* Make argument to `findLatest` non-nullable: `MutableRealm.findLatest(obj: T?): T?` has changed to `MutableRealm.findLatest(obj: T): T?`
+* Allow query arguments to be `null`: `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>` has change to `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any?): RealmResults<T>`
+* Moved `objects(KClass<T>)` and `<reified T> objects()` methods from `BaseRealm` to `TypedRealm`
+* Changed `RealmObject.version` into method `RealmObject.version()`.
+* Replaced `RuntimeException`s by the explicit exceptions: `IllegalArgumentException`, `IllegalStateException` and `IndexOutOfBoundsException`.
+* Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
 
 ### Enhancements
-* None.
+* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) (currently only macos).
+* Added support for marking a field as indexed with `@Index`
 
 ### Fixed
 * None.

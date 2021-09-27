@@ -29,8 +29,10 @@ import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrPropertyBuilder
+import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
 import org.jetbrains.kotlin.ir.builders.declarations.addProperty
+import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
@@ -47,6 +49,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -313,4 +316,28 @@ fun IrClass.addValueProperty(
         )
     }
     return property
+}
+
+internal fun IrClass.addFakeOverrides(
+    receiver: IrClassSymbol,
+    functions: Set<Name>,
+) {
+    val overrides = receiver.owner.declarations.filterIsInstance<IrSimpleFunction>()
+        .filter { it.name in functions }
+    for (override in overrides) {
+        addFunction {
+            updateFrom(override)
+            name = override.name
+            returnType = override.returnType
+            origin = IrDeclarationOrigin.FAKE_OVERRIDE
+            isFakeOverride = true
+        }.apply {
+            override.valueParameters.forEach { x ->
+                addValueParameter(x.name, x.type)
+            }
+            this.overriddenSymbols = listOf(override.symbol)
+            dispatchReceiverParameter =
+                receiver.owner.thisReceiver!!.copyTo(this)
+        }
+    }
 }
