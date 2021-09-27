@@ -32,7 +32,7 @@ interface App {
     // FIXME Reevaluate Result api to surface App errors more explicitly
     //  https://github.com/realm/realm-kotlin/pull/447#discussion_r707344044
     //  https://github.com/realm/realm-kotlin/issues/241
-    suspend fun login(credentials: Credentials): Result<User>
+    suspend fun login(credentials: Credentials): User
 
     companion object {
         /**
