@@ -19,4 +19,4 @@ package io.realm.mongodb
 // TODO: implement actual AppException with sync error codes hierarchy
 // https://github.com/realm/realm-kotlin/issues/426
 
-class AppException: Exception()
+class AppException : Exception()
