@@ -85,13 +85,13 @@ class NullabilityTests {
             .map { it.classifier }.toMutableSet()
 
         realm.writeBlocking {
-            copyToRealm(Nullability()).also { nullability ->
+            copyToRealm(Nullability()).also { nullableProp ->
                 fun <T> testProperty(property: KMutableProperty1<Nullability, T?>, value: T) {
-                    assertNull(property.get(nullability))
-                    property.set(nullability, value)
-                    assertEquals(value, property.get(nullability))
-                    property.set(nullability, null)
-                    assertNull(property.get(nullability))
+                    assertNull(property.get(nullableProp))
+                    property.set(nullableProp, value)
+                    assertEquals(value, property.get(nullableProp))
+                    property.set(nullableProp, null)
+                    assertNull(property.get(nullableProp))
                     nullableFieldTypes.remove(property.returnType.classifier)
                 }
                 testProperty(Nullability::stringNullable, "Realm")
@@ -103,6 +103,9 @@ class NullabilityTests {
                 testProperty(Nullability::longNullability, 123L)
                 testProperty(Nullability::floatNullable, 123.456f)
                 testProperty(Nullability::doubleField, 123.456)
+                testProperty(Nullability::objectField, null)
+                // hack! removing it manually
+                nullableFieldTypes.remove(io.realm.RealmObject::class)
             }
             assertTrue(nullableFieldTypes.isEmpty(), "Untested fields: $nullableFieldTypes")
         }
