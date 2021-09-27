@@ -20,6 +20,7 @@ import io.realm.internal.interop.CinteropCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.util.Validation
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -40,8 +41,7 @@ internal class AppImpl(
         )
 
     override suspend fun login(credentials: Credentials): User {
-        val credentialsInternal: CredentialImpl =
-            io.realm.internal.util.Validation.checkType(credentials, "credentials")
+        val credentialsInternal: CredentialImpl = Validation.checkType(credentials, "credentials")
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
