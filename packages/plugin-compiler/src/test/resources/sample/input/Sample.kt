@@ -17,6 +17,7 @@
 package sample.input
 
 import io.realm.realmListOf
+import io.realm.mongodb.SyncConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey

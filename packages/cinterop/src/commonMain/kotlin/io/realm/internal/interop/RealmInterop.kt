@@ -158,4 +158,5 @@ expect object RealmInterop {
 
     // Sync config
     fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer
+    fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer)
 }

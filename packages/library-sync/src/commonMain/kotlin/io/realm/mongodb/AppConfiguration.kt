@@ -41,6 +41,8 @@ interface AppConfiguration {
          * @see Builder#baseUrl(String)
          */
         const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
+        const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
+    }
 
         /**
          * The default header name used to carry authorization data when making network requests

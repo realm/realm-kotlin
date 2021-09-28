@@ -11,6 +11,9 @@ public actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     return Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 }
 
+public actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher =
+    Executors.newFixedThreadPool(size).asCoroutineDispatcher()
+
 // Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
     return kotlinx.coroutines.runBlocking(context, block)

@@ -25,15 +25,17 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
-internal class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPointer: NativePointer) :
-    BaseRealmImpl(configuration, dbPointer), Realm {
+internal class RealmImpl private constructor(
+    configuration: RealmConfiguration,
+    dbPointer: NativePointer
+) : BaseRealmImpl(configuration, dbPointer), Realm {
 
     internal val realmScope: CoroutineScope =
-        CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
+        CoroutineScope(SupervisorJob() + (configuration  as RealmConfigurationImpl).notificationDispatcher)
     private val realmFlow =
         MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
-    private val notifier = SuspendableNotifier(this, configuration.notificationDispatcher)
-    private val writer = SuspendableWriter(this, configuration.writeDispatcher)
+    private val notifier = SuspendableNotifier(this, (configuration  as RealmConfigurationImpl).notificationDispatcher)
+    private val writer = SuspendableWriter(this, (configuration  as RealmConfigurationImpl).writeDispatcher)
     private val realmPointerMutex = Mutex()
 
     private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
@@ -74,9 +76,9 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
 
     constructor(configuration: RealmConfiguration) :
         this(
-            configuration as RealmConfigurationImpl,
+            configuration,
             try {
-                RealmInterop.realm_open(configuration.nativeConfig)
+                RealmInterop.realm_open((configuration as InternalRealmConfiguration).nativeConfig)
             } catch (exception: RealmCoreException) {
                 throw genericRealmCoreExceptionHandler(
                     "Could not open Realm with the given configuration",

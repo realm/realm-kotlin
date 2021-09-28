@@ -59,7 +59,7 @@ return $jnicall;
 %apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*,
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
-               realm_sync_client_config_t*, realm_user_t* };
+               realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -158,7 +158,6 @@ struct realm_size_t {
 %ignore "realm_get_values";
 %ignore "realm_set_values";
 // Not yet available in library
-%ignore "realm_config_set_sync_config";
 %ignore "realm_update_schema_advanced";
 %ignore "realm_config_set_audit_factory";
 %ignore "_realm_get_schema_native";

@@ -34,11 +34,10 @@ internal class AppImpl(
 
     override val configuration: AppConfigurationImpl = configuration
 
-    val nativePointer: NativePointer =
-        RealmInterop.realm_app_new(
-            appConfig = configuration.nativePointer,
-            basePath = appFilesDirectory()
-        )
+    private val nativePointer: NativePointer = RealmInterop.realm_app_new(
+        appConfig = configuration.nativePointer,
+        basePath = appFilesDirectory()
+    )
 
     override suspend fun login(credentials: Credentials): User {
         val credentialsInternal: CredentialImpl = Validation.checkType(credentials, "credentials")

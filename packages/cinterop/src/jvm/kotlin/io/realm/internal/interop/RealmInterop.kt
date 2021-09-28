@@ -17,7 +17,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.cptr
 import io.realm.internal.interop.sync.AuthProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -509,7 +508,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
-        TODO()
+        return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
+    }
+
+    actual fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer) {
+        realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {

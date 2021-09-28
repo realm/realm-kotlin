@@ -18,6 +18,7 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
+import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.interop.NativePointer
@@ -26,8 +27,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
-internal abstract class BaseRealmImpl internal constructor(
-    override val configuration: RealmConfigurationImpl,
+abstract class BaseRealmImpl internal constructor(
+    final override val configuration: RealmConfiguration,
     dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {
 
@@ -74,7 +75,7 @@ internal abstract class BaseRealmImpl internal constructor(
                 "TRUEPREDICATE"
             ),
             clazz,
-            configuration.mediator
+            (configuration as InternalRealmConfiguration).mediator
         )
     }
 

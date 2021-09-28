@@ -5,6 +5,8 @@ import android.os.HandlerThread
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.android.asCoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
+import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
 actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
@@ -12,6 +14,9 @@ actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     thread.start()
     return Handler(thread.looper).asCoroutineDispatcher()
 }
+
+actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher =
+    Executors.newFixedThreadPool(size).asCoroutineDispatcher()
 
 // Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
