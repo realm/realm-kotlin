@@ -19,7 +19,6 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmCoreOtherException
 import io.realm.internal.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.coroutines.channels.ChannelResult
