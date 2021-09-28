@@ -39,6 +39,6 @@ internal class AppConfigurationImpl(
     val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
-        networkTransportFactory = { networkTransport }
+        networkTransport = RealmInterop.realm_network_transport_new(networkTransport)
     )
 }

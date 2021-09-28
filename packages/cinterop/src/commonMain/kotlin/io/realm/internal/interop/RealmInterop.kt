@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 
@@ -107,6 +108,7 @@ expect object RealmInterop {
     fun realm_list_clear(list: NativePointer)
     fun realm_list_erase(list: NativePointer, index: Long)
     fun realm_list_resolve_in(list: NativePointer, realm: NativePointer): NativePointer?
+    fun realm_list_is_valid(list: NativePointer): Boolean
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer
@@ -140,9 +142,10 @@ expect object RealmInterop {
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
 
     // AppConfig
+    fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer
     fun realm_app_config_new(
         appId: String,
-        networkTransportFactory: () -> Any,
+        networkTransport: NativePointer,
         baseUrl: String? = null
     ): NativePointer
     fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String)

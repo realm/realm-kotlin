@@ -30,8 +30,7 @@ register_list_notification_cb(realm_list_t *list, jobject callback);
 realm_notification_token_t *
 register_object_notification_cb(realm_object_t *object, jobject callback);
 
-realm_app_config_t *
-new_app_config(const char* app_id, jobject app_instance);
+realm_http_transport_t *realm_network_transport_new(jobject network_transport);
 
 realm_t* open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 

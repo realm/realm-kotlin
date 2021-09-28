@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -343,6 +344,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_list_is_valid(list: NativePointer): Boolean {
+        return realmc.realm_list_is_valid(list.cptr())
+    }
+
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
     private fun <T> to_realm_value(value: T): realm_value_t {
@@ -453,7 +458,7 @@ actual object RealmInterop {
 
         // TODO add metadata mode to config
         realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED)
-        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig))
+        return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig))
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
@@ -465,12 +470,15 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
+        return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
+    }
     actual fun realm_app_config_new(
         appId: String,
-        networkTransportFactory: () -> Any,
+        networkTransport: NativePointer,
         baseUrl: String?
     ): NativePointer {
-        val config = realmc.new_app_config(appId, networkTransportFactory)
+        val config = realmc.realm_app_config_new(appId, networkTransport.cptr())
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
