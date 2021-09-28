@@ -51,9 +51,9 @@ class RealmConfigurationImpl constructor(
 
     override val maxNumberOfActiveVersions: Long
 
-    override val notificationDispatcher: CoroutineDispatcher
+    val notificationDispatcher: CoroutineDispatcher
 
-    override val writeDispatcher: CoroutineDispatcher
+    val writeDispatcher: CoroutineDispatcher
 
     override val schemaVersion: Long
 

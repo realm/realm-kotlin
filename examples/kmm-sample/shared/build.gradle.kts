@@ -34,6 +34,7 @@ configurations.all {
 apply(plugin = "io.realm.kotlin")
 
 kotlin {
+    jvm()
     android()
     ios {
         binaries {

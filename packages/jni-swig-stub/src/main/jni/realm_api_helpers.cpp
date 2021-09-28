@@ -16,6 +16,8 @@
 
 #include "realm_api_helpers.h"
 #include <vector>
+#include <thread>
+#include <realm/object-store/c_api/util.hpp>
 
 using namespace realm::jni_util;
 
@@ -134,6 +136,79 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
     );
 }
 
+inline void jni_check_exception(JNIEnv *jenv = get_env()) {
+    if (jenv->ExceptionCheck()) {
+        jenv->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java.");
+    }
+}
+
+class CustomJVMScheduler : public realm::util::Scheduler {
+public:
+    CustomJVMScheduler(jobject dispatchScheduler) : m_id(std::this_thread::get_id()) {
+        JNIEnv *jenv = get_env();
+        jclass jvm_scheduler_class = jenv->FindClass("io/realm/internal/interop/JVMScheduler");
+        m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(J)V");
+        m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
+    }
+
+    ~CustomJVMScheduler() {
+        get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
+    }
+
+    void notify() override {
+        auto jenv = get_env(true);
+        jni_check_exception(jenv);
+        jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
+                             reinterpret_cast<jlong>(&m_callback));
+    }
+
+    void set_notify_callback(std::function<void()> fn) override {
+        m_callback = std::move(fn);
+    }
+
+    bool is_on_thread() const noexcept override {
+        return m_id == std::this_thread::get_id();
+    }
+
+    bool is_same_as(const Scheduler *other) const noexcept override {
+        auto o = dynamic_cast<const CustomJVMScheduler *>(other);
+        return (o && (o->m_id == m_id));
+    }
+
+    bool can_deliver_notifications() const noexcept override {
+        return true;
+    }
+
+private:
+    std::function<void()> m_callback;
+    std::thread::id m_id;
+    jmethodID m_notify_method;
+    jobject m_jvm_dispatch_scheduler;
+};
+
+// Note: using jlong here will create a linker issue
+// Undefined symbols for architecture x86_64:
+//  "invoke_core_notify_callback(long long, long long)", referenced from:
+//      _Java_io_realm_internal_interop_realmcJNI_invoke_1core_1notify_1callback in realmc.cpp.o
+//ld: symbol(s) not found for architecture x86_64
+//
+// I suspect this could be related to the fact that jni.h defines jlong differently between Android (typedef int64_t)
+// and JVM which is a (typedef long long) resulting in a different signature of the method that could be found by the linker.
+void invoke_core_notify_callback(int64_t core_notify_function) {
+    auto notify = reinterpret_cast<std::function<void()> *>(core_notify_function);
+    (*notify)();
+}
+
+realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
+    auto *cfg = reinterpret_cast<realm_config_t * >(config_ptr);
+    // copy construct to not set the scheduler on the original Conf which could be used
+    // to open Frozen Realm for instance.
+    auto copyConf = *cfg;
+    copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    return realm_open(&copyConf);
+}
+
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
     auto jenv = get_env();
     // TODO OPTIMIZE Makes multiple lookups of CinteropCallback, but at least only once when
@@ -160,15 +235,11 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                 } else if (error) {
                     // TODO OPTIMIZE Make central global reference table of classes
                     //  https://github.com/realm/realm-kotlin/issues/460
-                    jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
+                    jclass exception_class = jenv->FindClass("io/realm/mongodb/AppException");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
-                                                                               "(Ljava/lang/String;)V");
+                                                                               "()V");
 
-                    std::string message("[" + std::to_string(error->error) + "]: " +
-                                        (error->message ? std::string(error->message) : ""));
-
-                    jobject throwable = jenv->NewObject(exception_class, exception_constructor,
-                                                        jenv->NewStringUTF(message.c_str()));
+                    jobject throwable = jenv->NewObject(exception_class, exception_constructor);
 
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,

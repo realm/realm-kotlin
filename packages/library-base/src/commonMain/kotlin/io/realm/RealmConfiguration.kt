@@ -85,16 +85,6 @@ interface RealmConfiguration {
     public val maxNumberOfActiveVersions: Long
 
     /**
-     * The coroutine dispatcher for internal handling of notification registration and delivery.
-     */
-    public val notificationDispatcher: CoroutineDispatcher
-
-    /**
-     * The coroutine dispatcher used for all write operations.
-     */
-    public val writeDispatcher: CoroutineDispatcher
-
-    /**
      * The schema version.
      */
     public val schemaVersion: Long
@@ -236,7 +226,7 @@ interface RealmConfiguration {
          * @param dispatcher Dispatcher on which writes are run. It is required to be backed by a
          * single thread only.
          */
-        public fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
+        internal fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.notificationDispatcher = dispatcher
         }
 
@@ -253,7 +243,7 @@ interface RealmConfiguration {
          * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
          * by a single thread only.
          */
-        public fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
+        internal fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.writeDispatcher = dispatcher
         }
 

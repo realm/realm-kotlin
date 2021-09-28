@@ -42,8 +42,10 @@ class TestApp(
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     appId: String = runBlocking(dispatcher) { getAppId(appName) }
 ) : App by App.create(
-    AppConfiguration.Builder(appId).dispatcher(dispatcher).baseUrl(TEST_SERVER_BASE_URL).build()
-), AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, dispatcher) }) {
+    AppConfiguration.Builder(appId).baseUrl(TEST_SERVER_BASE_URL).dispatcher(dispatcher).build()
+), AdminApi by (runBlocking(dispatcher) {
+        AdminApiImpl(TEST_SERVER_BASE_URL, appId, dispatcher)
+}) {
 
     fun close() {
         deleteAllUsers()

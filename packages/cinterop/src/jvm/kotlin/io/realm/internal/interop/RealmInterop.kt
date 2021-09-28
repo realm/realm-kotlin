@@ -19,6 +19,10 @@ package io.realm.internal.interop
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
+import java.lang.reflect.Method
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -38,7 +42,16 @@ actual object RealmInterop {
     // TODO API-CLEANUP Maybe pull library loading into separate method
     //  https://github.com/realm/realm-kotlin/issues/56
     init {
-        System.loadLibrary("realmc")
+        if (isAndroid()) {
+            System.loadLibrary("realmc")
+        } else {
+            // otherwise locate, using reflection, the dependency SoLoader and call load
+            // (calling SoLoader directly will create a circular dependency with `jvmMain`)
+            val classToLoad = Class.forName("io.realm.jvm.SoLoader")
+            val instance = classToLoad.newInstance()
+            val loadMethod: Method = classToLoad.getDeclaredMethod("load")
+            loadMethod.invoke(instance)
+        }
     }
 
     actual fun realm_get_version_id(realm: NativePointer): Long {
@@ -138,7 +151,17 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
-        val realmPtr = LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        val realmPtr = if (dispatcher != null) {
+            // create a custom Scheduler for JVM, use a lock to prevent concurrent modification of the RealmConfig
+            LongPointerWrapper(
+                realmc.open_realm_with_scheduler(
+                    (config as LongPointerWrapper).ptr,
+                    JVMScheduler(dispatcher)
+                )
+            )
+        } else {
+            LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
+        }
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
@@ -594,3 +617,24 @@ actual object RealmInterop {
         return Link(this.link.target_table, this.link.target)
     }
 }
+
+private class JVMScheduler(dispatcher: CoroutineDispatcher) {
+    val scope: CoroutineScope = CoroutineScope(dispatcher)
+
+    fun notifyCore(coreNotificationFunctionPointer: Long) {
+        val function: suspend CoroutineScope.() -> Unit = {
+            realmc.invoke_core_notify_callback(
+                coreNotificationFunctionPointer
+            )
+        }
+        scope.launch(
+            scope.coroutineContext,
+            CoroutineStart.DEFAULT,
+            function
+        )
+    }
+}
+
+// using https://developer.android.com/reference/java/lang/System#getProperties()
+private fun isAndroid(): Boolean =
+    System.getProperty("java.specification.vendor").contains("Android")

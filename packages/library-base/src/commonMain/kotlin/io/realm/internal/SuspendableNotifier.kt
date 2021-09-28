@@ -9,6 +9,7 @@ import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
@@ -51,16 +52,14 @@ internal class SuspendableNotifier(
         extraBufferCapacity = 1
     )
 
-    // Must only be accessed from the dispatchers thread
-    private val realm: BaseRealmImpl by lazy {
-        val dbPointer = RealmInterop.realm_open(
-            (owner.configuration as InternalRealmConfiguration).nativeConfig,
-            dispatcher
-        )
+    private val realmInitializer = lazy {
+        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalRealmConfiguration).nativeConfig, dispatcher)
         object : BaseRealmImpl(owner.configuration, dbPointer) {
             /* Realms used by the Notifier is just a basic Live Realm */
         }
     }
+    // Must only be accessed from the dispatchers thread
+    private val realm: BaseRealmImpl by realmInitializer
 
     /**
      * FIXME Currently this is a hacked implementation that only does the correct thing if
@@ -148,7 +147,11 @@ internal class SuspendableNotifier(
         // FIXME Is it safe at all times to close a Realm? Probably not during a changelistener callback, but Mutexes
         //  are not supported within change listeners as they are not suspendable.
         runBlocking(dispatcher) {
-            realm.close()
+            if (realmInitializer.isInitialized()) {
+                // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
+                // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
+                realm.close()
+            }
         }
     }
 

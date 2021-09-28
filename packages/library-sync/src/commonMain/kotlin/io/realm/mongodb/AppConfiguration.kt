@@ -16,38 +16,57 @@
 
 package io.realm.mongodb
 
-import io.realm.internal.platform.multiThreadDispatcher
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
- * TODO
+ * An **AppConfiguration** is used to setup linkage to a MongoDB Realm application.
+ *
+ * Instances of an AppConfiguration can only be created by using the [AppConfiguration.Builder] and
+ * calling its [AppConfiguration.Builder.build] method.
  */
 interface AppConfiguration {
 
     val appId: String
+    // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
+    //  requires ktor as api dependency
     val baseUrl: String
     val networkTransportDispatcher: CoroutineDispatcher
 
     companion object {
+        /**
+         * The default url for MongoDB Realm applications.
+         *
+         * @see Builder#baseUrl(String)
+         */
         const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
+
+        /**
+         * The default header name used to carry authorization data when making network requests
+         * towards MongoDB Realm.
+         */
         const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
     }
 
     /**
-     * TODO
+     * Builder used to construct instances of an [AppConfiguration] in a fluent manner.
+     *
+     * @param appId the application id of the MongoDB Realm Application.
      */
     class Builder(
-        private val appId: String
+        val appId: String
     ) {
-
         private var baseUrl: String = DEFAULT_BASE_URL
-        private var dispatcher: CoroutineDispatcher = multiThreadDispatcher() // TODO
+        private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId") // TODO
 
         /**
-         * TODO
+         * Sets the base url for the MongoDB Realm Application. The default value is
+         * [DEFAULT_BASE_URL].
+         *
+         * @param baseUrl the base url for the MongoDB Realm application.
          */
-        fun baseUrl(url: String) = apply { this.baseUrl = url }
+        fun baseUrl(baseUrl: String) = apply { this.baseUrl = baseUrl }
 
         /**
          * TODO
@@ -55,7 +74,9 @@ interface AppConfiguration {
         fun dispatcher(dispatcher: CoroutineDispatcher) = apply { this.dispatcher = dispatcher }
 
         /**
-         * TODO
+         * Creates the AppConfiguration from the properties of the builder.
+         *
+         * @return the AppConfiguration that can be used to create a [App].
          */
         fun build(): AppConfiguration = AppConfigurationImpl(
             appId = appId,

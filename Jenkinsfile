@@ -53,20 +53,20 @@ pipeline {
      agent none
      options {
         // In Realm Java, we had to lock the entire build as sharing the global Gradle
-        // cache was causing issues. We never discovered the root cause, but 
+        // cache was causing issues. We never discovered the root cause, but
         // https://github.com/gradle/gradle/issues/851 seems to indicate that the problem
-        // is when running builds inside Docker containers that share a host .gradle 
+        // is when running builds inside Docker containers that share a host .gradle
         // folder.
-        // 
+        //
         // This isn't the case for Kotlin, so it seems safe to remove the lock.
         // Locking is furthermore complicated by the fact that there doesn't seem an
         // easy way to grap a node-lock for pipeline syntax builds.
         // https://stackoverflow.com/a/44758361/1389357.
         //
-        // So in summary, removing the lock should work fine. I'm mostly keeping this 
+        // So in summary, removing the lock should work fine. I'm mostly keeping this
         // description in case we run into problems down the line.
 
-        // lock resource: 'kotlin_build_lock' 
+        // lock resource: 'kotlin_build_lock'
         timeout(time: 15, activity: true, unit: 'MINUTES')
     }
     environment {
@@ -131,10 +131,11 @@ pipeline {
                         testWithServer("test", ["macosTest", "connectedAndroidTest"])
                     }
                 }
-                stage('Tests JVM (compiler only)') {
+                stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+                                        testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -188,10 +189,10 @@ def runScm() {
         [$class: 'SubmoduleOption', recursiveSubmodules: true]
     ]
     if (isReleaseBranch) {
-        repoExtensions += [          
+        repoExtensions += [
             [$class: 'WipeWorkspace'],
             [$class: 'CleanCheckout'],
-        ]       
+        ]
     }
     checkout([
             $class           : 'GitSCM',
@@ -357,8 +358,8 @@ def testWithServer(dir, tasks) {
         mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
         sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
-        // Techinically this is only needed for Android, but since all tests are 
-        // executed on same host and tasks are grouped in same stage we just do it 
+        // Techinically this is only needed for Android, but since all tests are
+        // executed on same host and tasks are grouped in same stage we just do it
         // here
         forwardAdbPorts()
 

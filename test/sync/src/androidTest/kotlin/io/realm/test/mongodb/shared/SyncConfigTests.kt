@@ -17,9 +17,9 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
-import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
+import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
@@ -29,13 +29,10 @@ import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 const val DEFAULT_PARTITION_VALUE = "default"
@@ -63,7 +60,7 @@ class SyncConfigTests {
     private fun createTestUser(): User {
         app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
         return runBlocking {
-            app.login(Credentials.anonymous()).getOrThrow()
+            app.login(Credentials.anonymous())
         }
     }
 
