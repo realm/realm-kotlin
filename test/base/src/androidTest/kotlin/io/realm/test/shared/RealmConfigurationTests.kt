@@ -70,6 +70,9 @@ class RealmConfigurationTests {
         val config = RealmConfiguration.with(path = realmPath, schema = setOf(Sample::class))
         assertEquals(realmPath, config.path)
 
+        RealmConfiguration.Builder(path = realmPath, schema = setOf(Sample::class))
+            .path
+
         val configFromBuilder: RealmConfiguration =
             RealmConfiguration.Builder(path = realmPath, schema = setOf(Sample::class)).build()
         assertEquals(realmPath, configFromBuilder.path)

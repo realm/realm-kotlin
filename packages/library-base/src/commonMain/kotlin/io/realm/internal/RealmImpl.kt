@@ -2,7 +2,6 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.InternalRealmConfiguration
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration

@@ -16,11 +16,9 @@
 
 package io.realm
 
-import io.realm.internal.Mediator
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -132,6 +130,9 @@ interface RealmConfiguration {
         }
     }
 
+    /**
+     * TODO
+     */
     abstract class SharedBuilder<S>(
         var path: String? = null, // Full path for Realm (directory + name)
         var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
@@ -353,10 +354,4 @@ interface RealmConfiguration {
             )
         }
     }
-}
-
-interface InternalRealmConfiguration {
-    val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
-    val mediator: Mediator
-    val nativeConfig: NativePointer
 }

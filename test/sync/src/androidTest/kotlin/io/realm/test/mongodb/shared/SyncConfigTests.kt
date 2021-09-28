@@ -54,7 +54,7 @@ class SyncConfigTests {
     }
 
     @AfterTest
-    fun teadDown() {
+    fun tearDown() {
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }

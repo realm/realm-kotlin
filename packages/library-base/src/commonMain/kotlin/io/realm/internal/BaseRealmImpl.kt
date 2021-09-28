@@ -18,7 +18,6 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.InternalRealmConfiguration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.RealmResults

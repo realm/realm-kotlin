@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.InternalRealmConfiguration
 import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject

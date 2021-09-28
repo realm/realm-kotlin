@@ -30,18 +30,23 @@ import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
 
 /**
- * TODO
+ * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
+ * devices using MongoDB Realm.
+ *
+ * A valid [User] is required to create a [SyncConfiguration]. See
+ * [Credentials] and [App.login] for more information on how to get a user object.
+ *
+ * A minimal [SyncConfiguration] can be found below.
+ * ```
+ * val app = App.create(AppConfiguration.Builder(appId))
+ * val user = app.login(Credentials.anonymous())
+ * val config = SyncConfiguration.Builder(user, "partition-value")
+ * val realm = Realm.getInstance(config)
+ * ```
  */
 interface SyncConfiguration : RealmConfiguration {
 
-    /**
-     * TODO
-     */
     val user: User
-
-    /**
-     * TODO
-     */
     val partitionValue: PartitionValue
 
     companion object {
@@ -50,7 +55,7 @@ interface SyncConfiguration : RealmConfiguration {
             partitionValue: Int,
             schema: Set<KClass<out RealmObject>>
         ): SyncConfiguration {
-            TODO("REPLACED_BY_IR")
+            TODO("Add compiler plugin IR modification for this method")
         }
 
         fun defaultConfig(
@@ -58,7 +63,7 @@ interface SyncConfiguration : RealmConfiguration {
             partitionValue: Long,
             schema: Set<KClass<out RealmObject>>
         ): SyncConfiguration {
-            TODO("REPLACED_BY_IR")
+            TODO("Add compiler plugin IR modification for this method")
         }
 
         fun defaultConfig(
@@ -66,7 +71,7 @@ interface SyncConfiguration : RealmConfiguration {
             partitionValue: String,
             schema: Set<KClass<out RealmObject>>
         ): SyncConfiguration {
-            TODO("REPLACED_BY_IR")
+            TODO("Add compiler plugin IR modification for this method")
         }
     }
 
