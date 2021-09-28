@@ -30,6 +30,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -78,7 +79,7 @@ class SyncedRealmTests {
     @Test
     fun canOpen() {
         realm = Realm.open(syncConfiguration)
-        val khasd = 0
+        assertNotNull(realm)
     }
 
 //    @Test
