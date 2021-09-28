@@ -51,10 +51,6 @@ class RealmConfigurationImpl constructor(
 
     override val maxNumberOfActiveVersions: Long
 
-    val notificationDispatcher: CoroutineDispatcher
-
-    val writeDispatcher: CoroutineDispatcher
-
     override val schemaVersion: Long
 
     override val deleteRealmIfMigrationNeeded: Boolean
@@ -66,6 +62,10 @@ class RealmConfigurationImpl constructor(
     override val mediator: Mediator
 
     override val nativeConfig: NativePointer = RealmInterop.realm_config_new()
+
+    override val notificationDispatcher: CoroutineDispatcher
+
+    override val writeDispatcher: CoroutineDispatcher
 
     init {
         this.path = if (path == null || path.isEmpty()) {
