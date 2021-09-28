@@ -208,15 +208,15 @@ class SyncConfigTests {
 //        assertNotEquals(config1.hashCode(), config2.hashCode())
 //    }
 //
-
-    @Test
-    fun equals_syncSpecificFields() {
-        val user = createTestUser()
-        val config = createSyncConfig(user = user, name = DEFAULT_NAME)
-        assertEquals(config.name, DEFAULT_NAME)
-        assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
-    }
-
+//
+//    @Test
+//    fun equals_syncSpecificFields() {
+//        val user = createTestUser()
+//        val config = createSyncConfig(user = user, name = DEFAULT_NAME)
+//        assertEquals(config.name, DEFAULT_NAME)
+//        assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
+//    }
+//
 //    @Test
 //    fun name() {
 //        val user: User = createTestUser(app)
