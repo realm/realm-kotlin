@@ -29,9 +29,10 @@ RUN mkdir -p /etc/ssh && \
     echo "Host github.com\n\tStrictHostKeyChecking no\n" >> /etc/ssh/ssh_config && \
     ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts
 
+RUN ls -l && pwd
 # compile
-RUN mkdir -p jvm_linux_jar_libs \
-    && cd jvm_linux_jar_libs \
-    && cmake .. \
-    && make -j8
+# RUN mkdir -p jvm_linux_jar_libs \
+#     && cd jvm_linux_jar_libs \
+#     && cmake .. \
+#     && make -j8
 

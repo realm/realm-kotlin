@@ -61,6 +61,8 @@ rlmNode('docker') {
         dir('packages/cinterop/src/jvmMain/linux') {
             docker.build('jvm_linux', '-f generic.Dockerfile .').inside {
                 sh """
+                   pwd
+                   ls -l
                    rm -rf build-dir
                    mkdir build-dir
                    cd build-dir
