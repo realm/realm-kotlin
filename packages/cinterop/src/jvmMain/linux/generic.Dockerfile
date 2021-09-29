@@ -14,6 +14,7 @@ RUN yum install -y \
         openssh-clients \
         rh-git218 \
         zlib-devel \
+        java-1.8.0-openjdk-devel \
  && yum clean all
 
 ENV PATH /opt/cmake/bin:/opt/rh/rh-git218/root/usr/bin:/opt/rh/devtoolset-9/root/usr/bin:$PATH
@@ -27,9 +28,6 @@ RUN mkdir -p /opt/cmake \
 RUN mkdir -p /etc/ssh && \
     echo "Host github.com\n\tStrictHostKeyChecking no\n" >> /etc/ssh/ssh_config && \
     ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts
-
-# install JDK
-RUN yum install java-1.8.0-openjdk-devel
 
 # compile
 RUN mkdir -p jvm_linux_jar_libs \
