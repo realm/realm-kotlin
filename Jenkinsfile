@@ -97,24 +97,27 @@ pipeline {
                     }
                 }
 
-                rlmNode('docker') {
-                    unstash 'packages'
-                    dir('packages/cinterop/src/jvmMain/linux') {
-                        docker.build('jvm_linux', '-f generic.Dockerfile .').inside {
-                            sh """
-                               rm -rf build-dir
-                               mkdir build-dir
-                               cd build-dir
-                               cmake ..
-                               make -j8
-                            """
+                stage('build-linux') {
+                    rlmNode('docker') {
+                        unstash 'packages'
+                        dir('packages/cinterop/src/jvmMain/linux') {
+                            docker.build('jvm_linux', '-f generic.Dockerfile .').inside {
+                                sh """
+                                   rm -rf build-dir
+                                   mkdir build-dir
+                                   cd build-dir
+                                   cmake ..
+                                   make -j8
+                                """
 
-                            archiveArtifacts("*.tar.gz")
-                            def stashName = "linux_so_files"
-                            stash includes:"*.so", name:stashName
+                                archiveArtifacts("*.tar.gz")
+                                def stashName = "linux_so_files"
+                                stash includes:"*.so", name:stashName
+                            }
                         }
                     }
                 }
+
 //                 stage('Build') {
 //                     steps {
 //                         runBuild()
