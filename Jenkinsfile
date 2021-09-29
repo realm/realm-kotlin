@@ -58,14 +58,10 @@ rlmNode('osx_kotlin') {
 rlmNode('docker') {
     stage('build-linux') {
         unstash 'packages'
-        dir('packages/cinterop/src/jvmMain/linux') {
-            docker.build('jvm_linux', '-f generic.Dockerfile .').inside {
+        dir('packages') {
+            docker.build('jvm_linux', '-f cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
                 sh """
-                   pwd
-                   ls -l ../
-                   ls -l ../../
-                   ls -l ../../../
-                   ls -l ../../../../external/core
+                   cd cinterop/src/jvmMain/linux/
                    rm -rf build-dir
                    mkdir build-dir
                    cd build-dir
