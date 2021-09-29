@@ -31,11 +31,11 @@ internal class RealmImpl private constructor(
 ) : BaseRealmImpl(configuration, dbPointer), Realm {
 
     internal val realmScope: CoroutineScope =
-        CoroutineScope(SupervisorJob() + (configuration  as RealmConfigurationImpl).notificationDispatcher)
+        CoroutineScope(SupervisorJob() + (configuration as InternalRealmConfiguration).notificationDispatcher)
     private val realmFlow =
         MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
-    private val notifier = SuspendableNotifier(this, (configuration  as RealmConfigurationImpl).notificationDispatcher)
-    private val writer = SuspendableWriter(this, (configuration  as RealmConfigurationImpl).writeDispatcher)
+    private val notifier = SuspendableNotifier(this, (configuration as InternalRealmConfiguration).notificationDispatcher)
+    private val writer = SuspendableWriter(this, (configuration as InternalRealmConfiguration).writeDispatcher)
     private val realmPointerMutex = Mutex()
 
     private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
