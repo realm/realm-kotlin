@@ -32,8 +32,8 @@ RUN mkdir -p /etc/ssh && \
 RUN yum install java-1.8.0-openjdk-devel
 
 # compile
-RUN mkdir -p jvm_linux_jar_libs
-    && cd jvm_linux_jar_libs
-    && cmake ..
+RUN mkdir -p jvm_linux_jar_libs \
+    && cd jvm_linux_jar_libs \
+    && cmake .. \
     && make -j8
 

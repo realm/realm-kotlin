@@ -130,3 +130,12 @@ def runScm() {
 
     stash includes: 'packages/**', name: 'packages'
 }
+
+def readGitTag() {
+    def command = 'git describe --exact-match --tags HEAD'
+    def returnStatus = sh(returnStatus: true, script: command)
+    if (returnStatus != 0) {
+        return null
+    }
+    return sh(returnStdout: true, script: command).trim()
+}
