@@ -462,7 +462,7 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
 
         // TODO add metadata mode to config
-        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED)
+        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
         return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
