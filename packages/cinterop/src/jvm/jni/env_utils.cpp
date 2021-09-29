@@ -15,6 +15,7 @@
  */
 
 #include "env_utils.h"
+#include <stdexcept>
 
 static JavaVM *cached_jvm = 0;
 
