@@ -50,7 +50,7 @@ node_label = 'osx_kotlin'
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
 pipeline {
-//      agent none
+     agent none
      options {
         // In Realm Java, we had to lock the entire build as sharing the global Gradle
         // cache was causing issues. We never discovered the root cause, but
