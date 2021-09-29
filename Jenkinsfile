@@ -49,63 +49,45 @@ node_label = 'osx_kotlin'
 // executors. At least not if we want to support building multiple versions of the same PR.
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
-pipeline {
-     agent none
-     options {
-        // In Realm Java, we had to lock the entire build as sharing the global Gradle
-        // cache was causing issues. We never discovered the root cause, but
-        // https://github.com/gradle/gradle/issues/851 seems to indicate that the problem
-        // is when running builds inside Docker containers that share a host .gradle
-        // folder.
-        //
-        // This isn't the case for Kotlin, so it seems safe to remove the lock.
-        // Locking is furthermore complicated by the fact that there doesn't seem an
-        // easy way to grap a node-lock for pipeline syntax builds.
-        // https://stackoverflow.com/a/44758361/1389357.
-        //
-        // So in summary, removing the lock should work fine. I'm mostly keeping this
-        // description in case we run into problems down the line.
-
-        // lock resource: 'kotlin_build_lock'
-        timeout(time: 15, activity: true, unit: 'MINUTES')
+rlmNode('osx_kotlin') {
+    stage('SCM') {
+        runScm()
     }
-    environment {
-          ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
-          NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
-          ANDROID_NDK="${NDK_HOME}"
-          ANDROID_NDK_HOME="${NDK_HOME}"
-          REALM_DISABLE_ANALYTICS=true
-          JAVA_8='/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home'
-          JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
-          JAVA_HOME="${JAVA_11}"
-    }
+}
 
-    rlmNode('osx_kotlin') {
-        stage('SCM') {
-            runScm()
-        }
-    }
+rlmNode('docker') {
+    stage('build-linux') {
+        unstash 'packages'
+        dir('packages/cinterop/src/jvmMain/linux') {
+            docker.build('jvm_linux', '-f generic.Dockerfile .').inside {
+                sh """
+                   rm -rf build-dir
+                   mkdir build-dir
+                   cd build-dir
+                   cmake ..
+                   make -j8
+                """
 
-    rlmNode('docker') {
-        stage('build-linux') {
-            unstash 'packages'
-            dir('packages/cinterop/src/jvmMain/linux') {
-                docker.build('jvm_linux', '-f generic.Dockerfile .').inside {
-                    sh """
-                       rm -rf build-dir
-                       mkdir build-dir
-                       cd build-dir
-                       cmake ..
-                       make -j8
-                    """
-
-                    archiveArtifacts("*.tar.gz")
-                    def stashName = "linux_so_files"
-                    stash includes:"*.so", name:stashName
-                }
+                archiveArtifacts("*.tar.gz")
+                def stashName = "linux_so_files"
+                stash includes:"*.so", name:stashName
             }
         }
     }
+}
+
+
+def environment() {
+    return [
+        "ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/",
+        "NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172",
+        "ANDROID_NDK=$NDK_HOME",
+        "ANDROID_NDK_HOME=$NDK_HOME",
+        "REALM_DISABLE_ANALYTICS=true",
+        "JAVA_8=/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home",
+        "JAVA_11=/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home",
+        "JAVA_HOME=$JAVA_11",
+        ]
 }
 
 def runScm() {
