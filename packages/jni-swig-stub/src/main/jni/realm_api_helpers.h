@@ -33,6 +33,9 @@ register_object_notification_cb(realm_object_t *object, jobject callback);
 realm_app_config_t *
 new_app_config(const char* app_id, jobject app_instance);
 
+void
+sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_factory);
+
 realm_t* open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 
 void invoke_core_notify_callback(int64_t core_notify_function);

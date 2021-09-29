@@ -892,7 +892,11 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
+    actual fun realm_app_new(
+        appConfig: NativePointer,
+        syncClientConfig: NativePointer,
+        basePath: String
+    ): NativePointer {
         val syncClientConfig = realm_wrapper.realm_sync_client_config_new()
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
 
@@ -971,6 +975,17 @@ actual object RealmInterop {
                 }
             }
         }
+    }
+
+    actual fun realm_sync_client_config_new(): NativePointer {
+        TODO()
+    }
+
+    actual fun realm_sync_client_config_set_logger_factory(
+        syncClientConfig: NativePointer,
+        loggerFactory: () -> Any
+    ) {
+        TODO()
     }
 
     actual fun realm_app_config_new(

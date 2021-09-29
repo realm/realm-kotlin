@@ -410,7 +410,7 @@ static void network_request_lambda_function(void *userdata, // Network transport
  * 1. Cast userdata to the network transport factory
  * 2. Create a global reference for the network transport
  */
-static realm_http_transport_t *new_network_transport_lambda_function(void *userdata) {
+static realm_http_transport_t* new_network_transport_lambda_function(void *userdata) {
     auto jenv = get_env(true);
     jobject app_ref = static_cast<jobject>(userdata);
 
@@ -425,17 +425,57 @@ static realm_http_transport_t *new_network_transport_lambda_function(void *userd
                                     &network_request_lambda_function);
 }
 
+static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_level_e level) {
+    auto jenv = get_env(true);
+    jobject logger_factory = static_cast<jobject>(userdata);
+
+    static jmethodID get_logger_factory_method = lookup(jenv, "kotlin/jvm/functions/Function1", "invoke", "(I)Ljava/lang/Object;");
+    jobject logger_ref = jenv->CallObjectMethod(logger_factory, get_logger_factory_method, level);
+
+    return realm_logger_new(jenv->NewGlobalRef(logger_ref),
+                            [](void* userdata, realm_log_level_e level, const char* message) {
+                                // TODO call java method from Kotlin class to print log
+                                jobject logger = static_cast<jobject>(userdata);
+
+                                auto jenv_ = get_env(true);
+
+                                static jmethodID get_logger_log_method = lookup(jenv_, "io/realm/log/RealmLogger", "log", "(Ljava/lang/String;)V");
+
+                                jenv_->CallVoidMethod(logger, get_logger_log_method, message);
+                            },
+                            [](void* userdata) {
+                                return RLM_LOG_LEVEL_ALL;
+                            },
+                            [](void* userdata) {
+                                get_env(true)->DeleteGlobalRef(
+                                        static_cast<jobject>(userdata));
+                            });
+}
+
 realm_app_config_t *
 new_app_config(const char *app_id, jobject network_factory) {
     auto jenv = get_env();
-
     return realm_app_config_new(app_id,
                                 &new_network_transport_lambda_function,
                                 static_cast<jobject>(jenv->NewGlobalRef(network_factory)), // keep app reference
                                 [](void *userdata) {
+                                    // free app reference
                                     get_env(true)->DeleteGlobalRef(
-                                            static_cast<jobject>(userdata)); // free app reference
+                                            static_cast<jobject>(userdata)
+                                    );
                                 }
     );
 }
 
+void
+sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_factory) {
+    auto jenv = get_env();
+    return realm_sync_client_config_set_logger_factory(sync_config,
+                                                       &new_logger_lambda_function,
+                                                       static_cast<jobject>(jenv->NewGlobalRef(logger_factory)),
+                                                       [](void *userdata) {
+                                                           get_env(true)->DeleteGlobalRef(
+                                                                   static_cast<jobject>(userdata));
+                                                       }
+    );
+}

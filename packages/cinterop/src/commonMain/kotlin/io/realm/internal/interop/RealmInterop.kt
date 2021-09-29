@@ -140,8 +140,19 @@ expect object RealmInterop {
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
 
     // App
-    fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer // TODO sync config shouldn't be null
+    fun realm_app_new(
+        appConfig: NativePointer,
+        syncClientConfig: NativePointer,
+        basePath: String,
+    ): NativePointer // TODO sync config shouldn't be null
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
+
+    // Sync client config
+    fun realm_sync_client_config_new(): NativePointer
+    fun realm_sync_client_config_set_logger_factory(
+        syncClientConfig: NativePointer,
+        loggerFactory: () -> Any
+    )
 
     // AppConfig
     fun realm_app_config_new(

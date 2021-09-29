@@ -453,13 +453,17 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
-        val syncClientConfig = realmc.realm_sync_client_config_new()
-        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
+    actual fun realm_app_new(
+        appConfig: NativePointer,
+        syncClientConfig: NativePointer,
+        basePath: String
+    ): NativePointer {
+//        val syncClientConfig = realm_sync_client_config_new().cptr()
+        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
 
         // TODO add metadata mode to config
-        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED)
-        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig))
+        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED)
+        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
@@ -469,6 +473,17 @@ actual object RealmInterop {
             credentials.cptr(),
             callback
         )
+    }
+
+    actual fun realm_sync_client_config_new(): NativePointer {
+        return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_logger_factory(
+        syncClientConfig: NativePointer,
+        loggerFactory: () -> Any
+    ) {
+        realmc.sync_config_set_logger(syncClientConfig.cptr(), loggerFactory)
     }
 
     actual fun realm_app_config_new(

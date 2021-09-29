@@ -97,7 +97,9 @@ class SyncConfigTests {
                 realm.objects(Child::class)
                     .observe()
                     .collect { childResults ->
-                        channel.send(childResults[0])
+                        println("--- RECEIVED CHILD")
+                        val kjhasd = 0
+//                        channel.send(childResults[0])
                     }
             }
 
@@ -106,11 +108,14 @@ class SyncConfigTests {
                 copyToRealm(child)
             }
 
+            println("--- BEFORE RECEIVE")
             val childResult = channel.receive()
+            println("--- AFTER  RECEIVE")
             assertEquals("CHILD_A", childResult._id)
             observer.cancel()
             channel.close()
         }
+        val kjahsd = 0
     }
 
 //    @Test
