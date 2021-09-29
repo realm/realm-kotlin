@@ -62,7 +62,10 @@ rlmNode('docker') {
             docker.build('jvm_linux', '-f generic.Dockerfile .').inside {
                 sh """
                    pwd
-                   ls -l
+                   ls -l ../
+                   ls -l ../../
+                   ls -l ../../../
+                   ls -l ../../../../external/core
                    rm -rf build-dir
                    mkdir build-dir
                    cd build-dir
