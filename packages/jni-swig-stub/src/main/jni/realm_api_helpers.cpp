@@ -365,9 +365,8 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
     }
 
     // transform JVM response -> realm_http_response_t
-    // FIXME Is it okay to allocate this on the stack
     {
-        realm_http_response_t x = {
+        realm_http_response_t response = {
                 .status_code = http_code,
                 .custom_status_code = custom_code,
                 .headers = response_headers.data(),
@@ -375,7 +374,7 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
                 .body = body.c_str(),
                 .body_size = body.size(),
         };
-        completion_callback(completion_data,&x);
+        completion_callback(completion_data,&response);
     }
 }
 

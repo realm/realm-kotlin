@@ -956,7 +956,6 @@ actual object RealmInterop {
                         num_headers = response.headers.entries.size.toULong()
                         headers = cResponseHeaders
                     }
-                    // Copying?
                     callback?.invoke(completionData, cResponse.ptr) ?: error("Callback should never be null")
                 }
             }
