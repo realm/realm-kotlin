@@ -13,7 +13,7 @@ set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../../../external/core" core EXCLUDE_FROM_ALL)
 
-include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/windows" "${CINTEROP_JNI}" "${SWIG_JNI}")
+include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/win32" "${CINTEROP_JNI}" "${SWIG_JNI}")
 
 file(GLOB jni_SRC
         "${CINTEROP_JNI}/env_utils.cpp"

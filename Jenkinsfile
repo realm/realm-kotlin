@@ -78,18 +78,24 @@ rlmNode('osx_kotlin') {
 
 rlmNode('windows') {
   unstash 'packages'
+
+  def cmakeOptions = [
+        CMAKE_GENERATOR_PLATFORM: 'x64',
+        CMAKE_BUILD_TYPE: 'Debug',
+        REALM_ENABLE_SYNC: "ON",
+        CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+        CMAKE_SYSTEM_VERSION: '8.1',
+        REALM_NO_TESTS: '1',
+        VCPKG_TARGET_TRIPLET: 'x64-windows-static'
+
+      ]
+
+  def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
+
   dir('packages') {
-    powershell '''
-      cd cinterop\\src\\jvmMain\\windows
-      rm -rf build-dir
-      mkdir build-dir
-      cd build-dir
-      c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake ..
-      make -j8
-    '''
+      bat "cd cinterop\\src\\jvmMain\\windows && mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .."
   }
 }
-
 def environment() {
     return [
         "ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/",
