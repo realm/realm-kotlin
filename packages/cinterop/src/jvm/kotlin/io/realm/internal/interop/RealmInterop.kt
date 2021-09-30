@@ -458,7 +458,6 @@ actual object RealmInterop {
         syncClientConfig: NativePointer,
         basePath: String
     ): NativePointer {
-//        val syncClientConfig = realm_sync_client_config_new().cptr()
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
 
         // TODO add metadata mode to config
@@ -481,7 +480,7 @@ actual object RealmInterop {
 
     actual fun realm_sync_client_config_set_logger_factory(
         syncClientConfig: NativePointer,
-        loggerFactory: () -> Any
+        loggerFactory: () -> CoreLogger
     ) {
         realmc.sync_config_set_logger(syncClientConfig.cptr(), loggerFactory)
     }

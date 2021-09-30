@@ -897,12 +897,11 @@ actual object RealmInterop {
         syncClientConfig: NativePointer,
         basePath: String
     ): NativePointer {
-        val syncClientConfig = realm_wrapper.realm_sync_client_config_new()
-        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
+        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
 
         // TODO add metadata mode to config
-        realm_wrapper.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
-        return CPointerWrapper(realm_wrapper.realm_app_new(appConfig.cptr(), syncClientConfig))
+        realm_wrapper.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
+        return CPointerWrapper(realm_wrapper.realm_app_new(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
@@ -978,14 +977,39 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_client_config_new(): NativePointer {
-        TODO()
+        return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
 
     actual fun realm_sync_client_config_set_logger_factory(
         syncClientConfig: NativePointer,
-        loggerFactory: () -> Any
+        loggerFactory: () -> CoreLogger
     ) {
-        TODO()
+        println("Create Logger factory")
+        realm_wrapper.realm_sync_client_config_set_logger_factory(
+            syncClientConfig.cptr(),
+            staticCFunction { userData, logLevel ->
+                println("Create Logger factory callback")
+                val realmLoggerFactory = safeUserData<() -> CoreLogger>(userData)
+                realmLoggerFactory.invoke().let { logger ->
+                    realm_wrapper.realm_logger_new(
+                        StableRef.create(logger).asCPointer(),
+                        staticCFunction { userData, logLevel: realm_wrapper.realm_log_level, message: CPointer<ByteVarOf<Byte>>? ->
+                            println(message?.toKString() ?: "")
+                            val logger = safeUserData<CoreLogger>(userData)
+                            logger.log(logLevel.value.toShort(), message?.toKString() ?: "")
+                        },
+                        staticCFunction { userData ->
+                            realm_wrapper.realm_log_level.RLM_LOG_LEVEL_ALL
+                        },
+                        staticCFunction { userData ->
+                            disposeUserData<CoreLogger>(userData)
+                        }
+                    )
+                }
+            },
+            StableRef.create(loggerFactory).asCPointer(),
+            staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) }
+        )
     }
 
     actual fun realm_app_config_new(

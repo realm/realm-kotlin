@@ -425,22 +425,23 @@ static realm_http_transport_t* new_network_transport_lambda_function(void *userd
                                     &network_request_lambda_function);
 }
 
+// TMP Workaround to pipe to logcat
+// Accessing global_logger_ref results in "Invalid jobject" :/
+// #include <android/log.h>
 static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_level_e level) {
-    auto jenv = get_env(true);
+    JNIEnv* jenv = get_env(true);
     jobject logger_factory = static_cast<jobject>(userdata);
 
-    static jmethodID get_logger_factory_method = lookup(jenv, "kotlin/jvm/functions/Function1", "invoke", "(I)Ljava/lang/Object;");
-    jobject logger_ref = jenv->CallObjectMethod(logger_factory, get_logger_factory_method, level);
+    static jmethodID get_logger_factory_method = lookup(jenv, "kotlin/jvm/functions/Function0", "invoke", "()Ljava/lang/Object;");
+    jobject logger_ref = jenv->CallObjectMethod(logger_factory, get_logger_factory_method);
+    jobject global_logger_ref = jenv->NewGlobalRef(logger_ref); // FIXME: Cleanup
 
-    return realm_logger_new(jenv->NewGlobalRef(logger_ref),
+    return realm_logger_new(global_logger_ref,
                             [](void* userdata, realm_log_level_e level, const char* message) {
-                                // TODO call java method from Kotlin class to print log
+                                // __android_log_write(ANDROID_LOG_ERROR, "SYNC", message);
                                 jobject logger = static_cast<jobject>(userdata);
-
                                 auto jenv_ = get_env(true);
-
                                 static jmethodID get_logger_log_method = lookup(jenv_, "io/realm/log/RealmLogger", "log", "(Ljava/lang/String;)V");
-
                                 jenv_->CallVoidMethod(logger, get_logger_log_method, message);
                             },
                             [](void* userdata) {
