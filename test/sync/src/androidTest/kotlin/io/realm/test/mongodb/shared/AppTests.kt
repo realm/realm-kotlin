@@ -17,6 +17,7 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.mongodb.App
+import io.realm.mongodb.AppException
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
@@ -49,7 +50,7 @@ class AppTests {
     @Test
     fun loginAnonymous() {
         runBlocking {
-            app.login(Credentials.anonymous()).getOrThrow()
+            app.login(Credentials.anonymous())
         }
     }
 
@@ -58,7 +59,7 @@ class AppTests {
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
         runBlocking {
-            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
+            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf"))
         }
     }
 
@@ -78,10 +79,10 @@ class AppTests {
     fun loginInvalidUserThrows() {
         val credentials = Credentials.emailPassword("foo", "bar")
         runBlocking {
-            // TODO Should be AppException (ErrorCode.INVALID_EMAIL_PASSWORD, ex.errorCode)
+            // TODO AppException (ErrorCode.INVALID_EMAIL_PASSWORD, ex.errorCode)
             //  https://github.com/realm/realm-kotlin/issues/426
-            assertFailsWith<RuntimeException> {
-                app.login(credentials).getOrThrow()
+            assertFailsWith<AppException> {
+                app.login(credentials)
             }
         }
     }

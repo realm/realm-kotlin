@@ -18,6 +18,7 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,11 +35,11 @@ internal class AppConfigurationImpl(
         //  https://github.com/realm/realm-kotlin/issues/408
         timeoutMs = 5000,
         dispatcher = networkTransportDispatcher
-    )
+    ).freeze()
 
     val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
-        networkTransportFactory = { networkTransport }
+        networkTransport = RealmInterop.realm_network_transport_new(networkTransport)
     )
 }

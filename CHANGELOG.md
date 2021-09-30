@@ -14,6 +14,7 @@
 * Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
 
 ### Enhancements
+* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) (currently only macos).
 * Added support for marking a field as indexed with `@Index`
 
 ### Fixed
@@ -23,7 +24,8 @@
 * This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
 
 ### Internal
-* None.
+* Updated to Realm Core commit: 028626880253a62d1c936eed4ef73af80b64b71
+
 
 ## 0.5.0 (2021-08-20)
 

@@ -60,7 +60,10 @@ kotlin {
                 // If runtimeapi is merged with cinterop then we will be exposing both to the users
                 // Runtime holds annotations, etc. that has to be exposed to users
                 // Cinterop does not hold anything required by users
-                implementation(project(":cinterop"))
+
+                // NOTE: scope needs to be API since 'implementation' will produce a POM with 'runtime' scope
+                //       causing the compiler plugin to fail to lookup classes from the 'cinterop' package
+                api(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
@@ -82,7 +85,6 @@ kotlin {
         getByName("androidMain") {
             dependsOn(getByName("jvm"))
             dependencies {
-                api(project(":cinterop"))
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }

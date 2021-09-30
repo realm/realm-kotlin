@@ -7,13 +7,15 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
-# Tell us about your experience
-
-We want to hear from you! Tell us about your experience using the Realm SDKs in our [short survey](http://bit.ly/3hRO5U2).
-
 # Examples 
 
 https://github.com/realm/realm-kotlin-samples
+
+## Kotlin Multiplatform Sample
+
+The folder `examples/kmm-sample` contains an example showing how to use Realm in a multiplatform
+project, sharing code for using Realm in the `shared` module. The project is based on
+`https://github.com/Kotlin/kmm-sample`.
 
 # Documentation
 
@@ -346,24 +348,19 @@ location for these.
 - Step out:
 `finish`
 
+## Contributing
 
-## Contributing Enhancements
-
-We love contributions to Realm! If you'd like to contribute code, documentation, or any other improvements, please [file a Pull Request](https://github.com/realm/realm-kotlin/pulls) on our GitHub repository. Make sure to accept our [CLA](#CLA)!
-
-This project adheres to the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/0/code_of_conduct/code_of_conduct.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to info@realm.io.
+We love contributions to Realm! If you'd like to contribute code, documentation, or any other improvements, please [file a Pull Request](https://github.com/realm/realm-kotlin/pulls) on our GitHub repository. Make sure to accept our CLA:
 
 ### CLA
 
-Realm welcomes all contributions! The only requirement we have is that, like many other projects, we need to have a [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement) (CLA) in place before we can accept any external code. Our own CLA is a modified version of the Apache Software Foundation’s CLA.
+We welcomes all contributions! The only requirement we have is that, like many other projects, we need to have a [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement) (CLA) in place before we can accept any external code. Our own CLA is a modified version of the Apache Software Foundation’s CLA.
 
 [Please submit your CLA electronically using our Google form](https://docs.google.com/forms/d/e/1FAIpQLSeQ9ROFaTu9pyrmPhXc-dEnLD84DbLuT_-tPNZDOL9J10tOKQ/viewform) so we can accept your submissions. The GitHub username you file there will need to match that of your Pull Requests. If you have any questions or cannot file the CLA electronically, you can email help@realm.io.
 
+## Code of Conduct
 
-# Samples
+This project adheres to the [MongoDB Code of Conduct](https://www.mongodb.com/community-code-of-conduct).
+By participating, you are expected to uphold this code. Please report
+unacceptable behavior to [community-conduct@mongodb.com](mailto:community-conduct@mongodb.com).
 
-## Kotlin Multiplatform Sample
-
-The folder `examples/kmm-sample` contains an example showing how to use Realm in a multiplatform
-project, sharing code for using Realm in the `shared` module. The project is based on
-`https://github.com/Kotlin/kmm-sample`.
