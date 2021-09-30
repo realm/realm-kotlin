@@ -235,15 +235,11 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                 } else if (error) {
                     // TODO OPTIMIZE Make central global reference table of classes
                     //  https://github.com/realm/realm-kotlin/issues/460
-                    jclass exception_class = jenv->FindClass("java/lang/RuntimeException");
+                    jclass exception_class = jenv->FindClass("io/realm/mongodb/AppException");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
-                                                                               "(Ljava/lang/String;)V");
+                                                                               "()V");
 
-                    std::string message("[" + std::to_string(error->error) + "]: " +
-                                        (error->message ? std::string(error->message) : ""));
-
-                    jobject throwable = jenv->NewObject(exception_class, exception_constructor,
-                                                        jenv->NewStringUTF(message.c_str()));
+                    jobject throwable = jenv->NewObject(exception_class, exception_constructor);
 
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,
