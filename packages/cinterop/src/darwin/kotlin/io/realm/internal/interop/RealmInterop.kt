@@ -979,7 +979,6 @@ actual object RealmInterop {
                 val realmLoggerFactory = safeUserData<() -> CoreLogger>(userData)
                 realmLoggerFactory.invoke().let { logger ->
                     realm_wrapper.realm_logger_new(
-                        StableRef.create(logger).asCPointer(),
                         staticCFunction { userData, logLevel: realm_wrapper.realm_log_level, message: CPointer<ByteVarOf<Byte>>? ->
                             println(message?.toKString() ?: "")
                             val logger = safeUserData<CoreLogger>(userData)
@@ -988,6 +987,7 @@ actual object RealmInterop {
                         staticCFunction { userData ->
                             realm_wrapper.realm_log_level.RLM_LOG_LEVEL_ALL
                         },
+                        StableRef.create(logger).asCPointer(),
                         staticCFunction { userData ->
                             disposeUserData<CoreLogger>(userData)
                         }
