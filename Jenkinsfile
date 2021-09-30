@@ -55,28 +55,40 @@ rlmNode('osx_kotlin') {
     }
 }
 
-rlmNode('docker') {
-    stage('build-linux') {
-        unstash 'packages'
-        dir('packages') {
-            docker.build('jvm_linux', '-f cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
-                sh """
-                   cd cinterop/src/jvmMain/linux/
-                   rm -rf build-dir
-                   mkdir build-dir
-                   cd build-dir
-                   cmake ..
-                   make -j8
-                """
+// rlmNode('docker') {
+//     stage('build-linux') {
+//         unstash 'packages'
+//         dir('packages') {
+//             docker.build('jvm_linux', '-f cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
+//                 sh """
+//                    cd cinterop/src/jvmMain/linux/
+//                    rm -rf build-dir
+//                    mkdir build-dir
+//                    cd build-dir
+//                    cmake ..
+//                    make -j8
+//                 """
+//
+//                 def stashName = "linux_so_files"
+//                 stash includes:"./cinterop/src/jvmMain/linux/build-dir/librealmc.so,./cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so", name:stashName
+//             }
+//         }
+//     }
+// }
 
-                archiveArtifacts("*.tar.gz")
-                def stashName = "linux_so_files"
-                stash includes:"*.so", name:stashName
-            }
-        }
-    }
+rlmNode('windows') {
+  unstash 'packages'
+  dir('packages') {
+    powershell '''
+      cd cinterop\\src\\jvmMain\\windows
+      rm -rf build-dir
+      mkdir build-dir
+      cd build-dir
+      c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake ..
+      make -j8
+    '''
+  }
 }
-
 
 def environment() {
     return [
