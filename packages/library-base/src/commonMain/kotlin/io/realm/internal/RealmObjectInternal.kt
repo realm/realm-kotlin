@@ -19,7 +19,6 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmCoreOtherException
 import io.realm.internal.interop.RealmInterop
 import io.realm.isValid
 import kotlinx.coroutines.channels.ChannelResult
@@ -50,20 +49,22 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         return `$realm$Owner` ?: UnmanagedState
     }
 
-    override fun freeze(frozenRealm: RealmReference): RealmObjectInternal {
+    override fun freeze(frozenRealm: RealmReference): RealmObjectInternal? {
         @Suppress("UNCHECKED_CAST")
         val type: KClass<RealmObjectInternal> = this::class as KClass<RealmObjectInternal>
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
-        return managedModel.manage(
-            frozenRealm,
-            mediator,
-            type,
-            RealmInterop.realm_object_freeze(
-                `$realm$ObjectPointer`!!,
-                frozenRealm.dbPointer
+        return RealmInterop.realm_object_resolve_in(
+            `$realm$ObjectPointer`!!,
+            frozenRealm.dbPointer
+        )?.let {
+            managedModel.manage(
+                frozenRealm,
+                mediator,
+                type,
+                it
             )
-        )
+        }
     }
 
     override fun thaw(liveRealm: RealmReference): Observable<RealmObjectInternal>? {
@@ -72,24 +73,13 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
         val dbPointer = liveRealm.dbPointer
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            val realmObjectThaw: NativePointer =
-                RealmInterop.realm_object_thaw(`$realm$ObjectPointer`!!, dbPointer)!!
-            val let: RealmObjectInternal = realmObjectThaw.let { thawedObject: NativePointer ->
-                managedModel.manage(
-                    liveRealm,
-                    mediator,
-                    type as KClass<RealmObjectInternal>,
-                    thawedObject
-                )
-            }
-            return let
-        } catch (e: RealmCoreOtherException) {
-            // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
-            //  catching that and returning null. Only treat unknown null pointers as non-existing objects
-            //  to avoid handling unintended situations here.
-            return null
+        return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
+            managedModel.manage(
+                liveRealm,
+                mediator,
+                type as KClass<RealmObjectInternal>,
+                it
+            )
         }
     }
 
@@ -103,15 +93,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         change: NativePointer,
         channel: SendChannel<RealmObjectInternal>
     ): ChannelResult<Unit>? {
-        @Suppress("TooGenericExceptionCaught")
-        val f: RealmObjectInternal? = try {
-            this.freeze(frozenRealm)
-        } catch (e: RealmCoreOtherException) {
-            // FIXME C-API is currently throwing an error if the object has been deleted, so currently just
-            //  catching that and returning null. Only treat unknown null pointers as non-existing objects
-            //  to avoid handling unintended situations here.
-            null
-        }
+        val f: RealmObjectInternal? = this.freeze(frozenRealm)
         return if (f == null) {
             channel.close()
             null

@@ -59,7 +59,8 @@ return $jnicall;
 %apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*,
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
-               realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t* };
+               realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
+               realm_http_transport_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -147,6 +148,27 @@ struct realm_size_t {
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
 
+// Enable passing output argument pointers as long[]
+%apply int64_t[] {void **};
+// Type map for int64_t has an erroneous cast, don't know how to fix it except with this
+%typemap(in) void** ( jlong *jarr ){
+    // Original
+    %#if defined(__ANDROID__)
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return 0;
+    %#else
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr3, (long long **)&arg3, jarg3)) return 0;
+    %#endif
+}
+%typemap(argout) void** {
+    // Original
+    %#if defined(__ANDROID__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
+    %#else
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr3, (long long *)arg3, jarg3);
+    %#endif
+}
+%apply void** {realm_object_t **, realm_list_t **};
+
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"
 %javaconst(1);
@@ -188,6 +210,8 @@ struct realm_size_t {
 %ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
+// FIXME Has this moved? Maybe a merge error in the core master/sync merge
+%ignore "realm_results_freeze";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)

@@ -361,14 +361,17 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
     }
 
     // transform JVM response -> realm_http_response_t
-    completion_callback(completion_data, {
-            .status_code = http_code,
-            .custom_status_code = custom_code,
-            .headers = response_headers.data(),
-            .num_headers = response_headers.size(),
-            .body = body.c_str(),
-            .body_size = body.size(),
-    });
+    {
+        realm_http_response_t response = {
+                .status_code = http_code,
+                .custom_status_code = custom_code,
+                .headers = response_headers.data(),
+                .num_headers = response_headers.size(),
+                .body = body.c_str(),
+                .body_size = body.size(),
+        };
+        completion_callback(completion_data, &response);
+    }
 }
 
 /**
@@ -400,72 +403,18 @@ static void network_request_lambda_function(void *userdata, // Network transport
         response_error.num_headers = 0;
         response_error.body_size = 0;
 
-        completion_callback(completion_data, response_error);
+        completion_callback(completion_data, &response_error);
     }
 };
 
-/**
- * Provides access to the network transport to core
- *
- * 1. Cast userdata to the network transport factory
- * 2. Create a global reference for the network transport
- */
-static realm_http_transport_t* new_network_transport_lambda_function(void *userdata) {
-    auto jenv = get_env(true);
-    jobject app_ref = static_cast<jobject>(userdata);
-
-    // Use Kotlin lambda to access the network transport
-    static jmethodID get_network_transport_method = lookup(jenv, "kotlin/jvm/functions/Function0", "invoke", "()Ljava/lang/Object;");
-    jobject network_transport = jenv->CallObjectMethod(app_ref, get_network_transport_method);
-
+realm_http_transport_t *realm_network_transport_new(jobject network_transport) {
+    auto jenv = get_env(false); // Always called from JVM
     return realm_http_transport_new(jenv->NewGlobalRef(network_transport),
-                                    [](void *userdata) {
-                                        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-                                    },
-                                    &network_request_lambda_function);
-}
+            [](void *userdata) {
+                get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+            },
+            &network_request_lambda_function);
 
-// TMP Workaround to pipe to logcat
-// Accessing global_logger_ref results in "Invalid jobject" :/
-// #include <android/log.h>
-static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_level_e level) {
-    JNIEnv* jenv = get_env(true);
-    jobject logger_factory = static_cast<jobject>(userdata);
-
-    static jmethodID get_logger_factory_method = lookup(jenv, "kotlin/jvm/functions/Function0", "invoke", "()Ljava/lang/Object;");
-    jobject logger_ref = jenv->CallObjectMethod(logger_factory, get_logger_factory_method);
-    jobject global_logger_ref = jenv->NewGlobalRef(logger_ref); // FIXME: Cleanup
-
-    return realm_logger_new(global_logger_ref,
-                            [](void* userdata, realm_log_level_e level, const char* message) {
-                                // __android_log_write(ANDROID_LOG_ERROR, "SYNC", message);
-                                jobject logger = static_cast<jobject>(userdata);
-                                auto jenv_ = get_env(true);
-                                static jmethodID get_logger_log_method = lookup(jenv_, "io/realm/log/RealmLogger", "log", "(Ljava/lang/String;)V");
-                                jenv_->CallVoidMethod(logger, get_logger_log_method, message);
-                            },
-                            [](void* userdata) {
-                                return RLM_LOG_LEVEL_ALL;
-                            },
-                            [](void* userdata) {
-                                get_env(true)->DeleteGlobalRef(
-                                        static_cast<jobject>(userdata));
-                            });
-}
-
-realm_app_config_t *
-new_app_config(const char *app_id, jobject network_factory) {
-    auto jenv = get_env();
-    return realm_app_config_new(app_id,
-                                &new_network_transport_lambda_function,
-                                static_cast<jobject>(jenv->NewGlobalRef(network_factory)), // keep app reference
-                                [](void *userdata) {
-                                    // free app reference
-                                    get_env(true)->DeleteGlobalRef(
-                                            static_cast<jobject>(userdata)
-                                    );
-                                }
-    );
 }
 
 void
