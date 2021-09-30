@@ -356,22 +356,22 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
         stacked_headers.push_back(std::move(key));
         stacked_headers.push_back(std::move(value));
 
-        realm_http_header header = {
-                .name = stacked_headers[i].c_str(),
-                .value = stacked_headers[i + 1].c_str()
-        };
+        // FIXME REFACTOR when C++20 will be available
+        realm_http_header header;
+        header.name = stacked_headers[i].c_str();
+        header.value = stacked_headers[i + 1].c_str();
 
         response_headers.push_back(header);
     }
 
     // transform JVM response -> realm_http_response_t
     completion_callback(completion_data, {
-            .status_code = http_code,
-            .custom_status_code = custom_code,
-            .headers = response_headers.data(),
-            .num_headers = response_headers.size(),
-            .body = body.c_str(),
-            .body_size = body.size(),
+            http_code,
+            custom_code,
+            response_headers.data(),
+            response_headers.size(),
+            body.c_str(),
+            body.size(),
     });
 }
 
