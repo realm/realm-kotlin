@@ -4,7 +4,7 @@ find_package(JNI)
 set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../../jni-swig-stub/src/main/jni")
 set(CINTEROP_JNI "${CMAKE_SOURCE_DIR}/../../jvm/jni")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Build Realm Core

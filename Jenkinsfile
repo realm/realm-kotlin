@@ -76,7 +76,7 @@ rlmNode('osx_kotlin') {
 //     }
 // }
 
-rlmNode('windows') {
+rlmNode('aws-windows-01') { // has jdk 1.8
   unstash 'packages'
 
   def cmakeOptions = [
@@ -93,7 +93,7 @@ rlmNode('windows') {
   def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
 
   dir('packages') {
-      bat "cd cinterop\\src\\jvmMain\\windows && mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .."
+      bat "cd cinterop\\src\\jvmMain\\windows && mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Debug"
   }
 }
 def environment() {
