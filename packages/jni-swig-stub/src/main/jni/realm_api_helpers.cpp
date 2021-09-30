@@ -370,7 +370,7 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
                 .body = body.c_str(),
                 .body_size = body.size(),
         };
-        completion_callback(completion_data,&response);
+        completion_callback(completion_data, &response);
     }
 }
 
