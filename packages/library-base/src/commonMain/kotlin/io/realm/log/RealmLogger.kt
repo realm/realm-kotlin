@@ -20,7 +20,8 @@ interface RealmLogger: CoreLogger {
     fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
 
     fun log(message: String) {
-        log(LogLevel.ALL, null, message, null)
+        println("---> $message")
+//        log(LogLevel.ALL, null, message, null)
     }
 
     // FIXME

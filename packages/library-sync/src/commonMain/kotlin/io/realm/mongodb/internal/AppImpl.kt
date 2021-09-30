@@ -36,7 +36,9 @@ internal class AppImpl(
 
     override val configuration: AppConfigurationImpl = configuration
 
-    private val loggerFactory: () -> RealmLogger = { createDefaultSystemLogger("SYNC") }
+    private val loggerFactory: () -> RealmLogger = {
+        createDefaultSystemLogger("SYNC")
+    }
 
     private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
         .also { syncClientConfig ->

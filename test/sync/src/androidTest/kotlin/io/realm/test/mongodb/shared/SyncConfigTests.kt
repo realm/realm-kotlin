@@ -27,6 +27,7 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
@@ -48,7 +49,8 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        app = TestApp().also { it.asTestApp.deleteAllUsers() }
+        app = TestApp()
+//            .also { it.asTestApp.deleteAllUsers() }
     }
 
     @AfterTest
@@ -59,9 +61,10 @@ class SyncConfigTests {
     }
 
     private fun createTestUser(): User {
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
+        val email = randomEmail()
+        app.asTestApp.createUser(email, "asdfasdf")
         return runBlocking {
-            app.login(Credentials.anonymous())
+            app.login(Credentials.emailPassword(email, "asdfasdf"))
         }
     }
 
@@ -85,36 +88,35 @@ class SyncConfigTests {
         realm = Realm.open(config)
         assertNotNull(realm)
 
-        val child = Child().apply {
-            _id = "CHILD_A"
-            name = "A"
-        }
-
-        val channel = Channel<Child>(1)
-
-        runBlocking {
-            val observer = async {
-                realm.objects(Child::class)
-                    .observe()
-                    .collect { childResults ->
-                        println("--- RECEIVED CHILD")
-                        val kjhasd = 0
+//        val child = Child().apply {
+//            _id = "CHILD_A"
+//            name = "A"
+//        }
+//
+//        val channel = Channel<Child>(1)
+//
+//        runBlocking {
+//            val observer = async {
+//                realm.objects(Child::class)
+//                    .observe()
+//                    .collect { childResults ->
+//                        println("===> RECEIVED results, size: ${childResults.size}")
 //                        channel.send(childResults[0])
-                    }
-            }
-
-            realm.write {
-                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
-                copyToRealm(child)
-            }
-
-            println("--- BEFORE RECEIVE")
-            val childResult = channel.receive()
-            println("--- AFTER  RECEIVE")
-            assertEquals("CHILD_A", childResult._id)
-            observer.cancel()
-            channel.close()
-        }
+//                    }
+//            }
+//
+//            realm.write {
+//                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
+//                copyToRealm(child)
+//            }
+//
+//            println("===> BEFORE RECEIVE")
+//            val childResult = channel.receive()
+//            println("===> AFTER  RECEIVE")
+//            assertEquals("CHILD_A", childResult._id)
+//            observer.cancel()
+//            channel.close()
+//        }
         val kjahsd = 0
     }
 
