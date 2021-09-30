@@ -71,6 +71,8 @@ import realm_wrapper.realm_http_method
 import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
+import realm_wrapper.realm_list_t
+import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
@@ -343,13 +345,6 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
     }
 
-    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
-        val realmPtr = CPointerWrapper(realm_wrapper.realm_thaw(frozenRealm.cptr<realm_t>()))
-        // Ensure that we can read version information, etc.
-        realm_begin_read(realmPtr)
-        return realmPtr
-    }
-
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
         return realm_wrapper.realm_is_frozen(realm.cptr<realm_t>())
     }
@@ -437,12 +432,16 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
-    }
-
-    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
-        return CPointerWrapper(realm_wrapper.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
+    actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
+        memScoped {
+            val objectPointer = allocArray<CPointerVar<realm_object_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_object_resolve_in(obj.cptr(), realm.cptr(), objectPointer)
+            )
+            return objectPointer[0]?.let {
+                return CPointerWrapper(it)
+            }
+        }
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
@@ -557,19 +556,20 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
 
-    actual fun realm_list_freeze(
-        liveList: NativePointer,
-        frozenRealm: NativePointer
-    ): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_list_freeze(liveList.cptr(), frozenRealm.cptr())
-        )
+    actual fun realm_list_resolve_in(list: NativePointer, realm: NativePointer): NativePointer? {
+        memScoped {
+            val listPointer = allocArray<CPointerVar<realm_list_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_list_resolve_in(list.cptr(), realm.cptr(), listPointer)
+            )
+            return listPointer[0]?.let {
+                CPointerWrapper(it)
+            }
+        }
     }
 
-    actual fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_list_thaw(frozenList.cptr(), liveRealm.cptr())
-        )
+    actual fun realm_list_is_valid(list: NativePointer): Boolean {
+        return realm_wrapper.realm_list_is_valid(list.cptr())
     }
 
     @Suppress("ComplexMethod")
@@ -689,26 +689,14 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_results_freeze(
-        liveResults: NativePointer,
-        frozenRealm: NativePointer
+    actual fun realm_results_resolve_in(
+        results: NativePointer,
+        realm: NativePointer
     ): NativePointer {
         return CPointerWrapper(
-            realm_wrapper.realm_results_freeze(
-                liveResults.cptr(),
-                frozenRealm.cptr()
-            )
-        )
-    }
-
-    actual fun realm_results_thaw(
-        frozenResults: NativePointer,
-        liveRealm: NativePointer
-    ): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_results_thaw(
-                frozenResults.cptr(),
-                liveRealm.cptr()
+            realm_wrapper.realm_results_resolve_in(
+                results.cptr(),
+                realm.cptr()
             )
         )
     }
@@ -898,7 +886,7 @@ actual object RealmInterop {
 
         // TODO add metadata mode to config
         realm_wrapper.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
-        return CPointerWrapper(realm_wrapper.realm_app_new(appConfig.cptr(), syncClientConfig))
+        return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig))
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
@@ -958,7 +946,7 @@ actual object RealmInterop {
                         }
                     }
 
-                    val cResponse = cValue<realm_http_response_t> {
+                    val cResponse: realm_http_response_t /* = realm_wrapper.realm_http_response */ = alloc<realm_http_response_t> {
                         body = response.body.cstr.getPointer(memScope)
                         body_size = response.body.cstr.getBytes().size.toULong()
                         custom_status_code = response.customResponseCode
@@ -966,36 +954,30 @@ actual object RealmInterop {
                         num_headers = response.headers.entries.size.toULong()
                         headers = cResponseHeaders
                     }
-                    // Copying?
-                    callback?.invoke(completionData, cResponse) ?: error("Callback should never be null")
+                    callback?.invoke(completionData, cResponse.ptr) ?: error("Callback should never be null")
                 }
             }
         }
     }
 
+    actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_http_transport_new(
+                StableRef.create(networkTransport).asCPointer(),
+                staticCFunction { userdata: CPointer<out CPointed>? ->
+                    disposeUserData<NetworkTransport>(userdata)
+                },
+                newRequestLambda
+            )
+        )
+    }
+
     actual fun realm_app_config_new(
         appId: String,
-        networkTransportFactory: () -> Any,
+        networkTransport: NativePointer,
         baseUrl: String?
     ): NativePointer {
-        val appConfig =
-            realm_wrapper.realm_app_config_new(
-                appId,
-                staticCFunction { userdata ->
-                    val networkTransportFactory = safeUserData<() -> NetworkTransport>(userdata)
-                    networkTransportFactory.invoke().let { networkTransport ->
-                        realm_wrapper.realm_http_transport_new(
-                            StableRef.create(networkTransport).asCPointer(),
-                            staticCFunction { userdata: CPointer<out CPointed>? ->
-                                disposeUserData<NetworkTransport>(userdata)
-                            },
-                            newRequestLambda
-                        )
-                    }
-                },
-                StableRef.create(networkTransportFactory).asCPointer(),
-                staticCFunction { userdata -> disposeUserData<() -> NetworkTransport>(userdata) },
-            )
+        val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
 
         // TODO Fill in appropriate meta data
         //  https://github.com/realm/realm-kotlin/issues/449

@@ -17,8 +17,8 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.cptr
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -172,13 +172,6 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
     }
 
-    actual fun realm_thaw(frozenRealm: NativePointer): NativePointer {
-        val realmPtr = LongPointerWrapper(realmc.realm_thaw(frozenRealm.cptr()))
-        // Ensure that we can read version information, etc.
-        realm_begin_read(realmPtr)
-        return realmPtr
-    }
-
     actual fun realm_is_frozen(realm: NativePointer): Boolean {
         return realmc.realm_is_frozen(realm.cptr())
     }
@@ -240,12 +233,14 @@ actual object RealmInterop {
         return realmc.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_freeze(liveObject.cptr(), frozenRealm.cptr()))
-    }
-
-    actual fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer? {
-        return LongPointerWrapper(realmc.realm_object_thaw(frozenObject.cptr(), liveRealm.cptr()))
+    actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
+        val objectPointer = longArrayOf(0)
+        realmc.realm_object_resolve_in(obj.cptr(), realm.cptr(), objectPointer)
+        return if (objectPointer[0] != 0L) {
+            LongPointerWrapper(objectPointer[0])
+        } else {
+            null
+        }
     }
 
     actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
@@ -336,18 +331,21 @@ actual object RealmInterop {
         realmc.realm_list_erase(list.cptr(), index)
     }
 
-    actual fun realm_list_freeze(
-        liveList: NativePointer,
-        frozenRealm: NativePointer
-    ): NativePointer {
-        return LongPointerWrapper(realmc.realm_list_freeze(liveList.cptr(), frozenRealm.cptr()))
+    actual fun realm_list_resolve_in(
+        list: NativePointer,
+        realm: NativePointer
+    ): NativePointer? {
+        val listPointer = longArrayOf(0)
+        realmc.realm_list_resolve_in(list.cptr(), realm.cptr(), listPointer)
+        return if (listPointer[0] != 0L) {
+            LongPointerWrapper(listPointer[0])
+        } else {
+            null
+        }
     }
 
-    actual fun realm_list_thaw(
-        frozenList: NativePointer,
-        liveRealm: NativePointer
-    ): NativePointer {
-        return LongPointerWrapper(realmc.realm_list_thaw(frozenList.cptr(), liveRealm.cptr()))
+    actual fun realm_list_is_valid(list: NativePointer): Boolean {
+        return realmc.realm_list_is_valid(list.cptr())
     }
 
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
@@ -460,7 +458,7 @@ actual object RealmInterop {
 
         // TODO add metadata mode to config
         realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
-        return LongPointerWrapper(realmc.realm_app_new(appConfig.cptr(), syncClientConfig))
+        return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig))
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
@@ -472,12 +470,15 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
+        return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
+    }
     actual fun realm_app_config_new(
         appId: String,
-        networkTransportFactory: () -> Any,
+        networkTransport: NativePointer,
         baseUrl: String?
     ): NativePointer {
-        val config = realmc.new_app_config(appId, networkTransportFactory)
+        val config = realmc.realm_app_config_new(appId, networkTransport.cptr())
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
@@ -556,12 +557,8 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_freeze(liveResults.cptr(), frozenRealm.cptr()))
-    }
-
-    actual fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer {
-        return LongPointerWrapper(realmc.realm_results_thaw(frozenResults.cptr(), liveRealm.cptr()))
+    actual fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_results_resolve_in(results.cptr(), realm.cptr()))
     }
 
     actual fun realm_results_count(results: NativePointer): Long {

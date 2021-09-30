@@ -212,9 +212,9 @@ MODULE_FRAGMENT name:<main>
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
         VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
-      FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal [fake_override]
+      FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
-          public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal declared in io.realm.internal.RealmObjectInternal
+          public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
       FUN FAKE_OVERRIDE name:isFrozen visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Boolean [fake_override]
@@ -450,9 +450,9 @@ MODULE_FRAGMENT name:<main>
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
         VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
-      FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal [fake_override]
+      FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
-          public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal declared in io.realm.internal.RealmObjectInternal
+          public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
       FUN FAKE_OVERRIDE name:isFrozen visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Boolean [fake_override]
@@ -688,9 +688,9 @@ MODULE_FRAGMENT name:<main>
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
         VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
-      FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal [fake_override]
+      FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
-          public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal declared in io.realm.internal.RealmObjectInternal
+          public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
       FUN FAKE_OVERRIDE name:isFrozen visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Boolean [fake_override]
