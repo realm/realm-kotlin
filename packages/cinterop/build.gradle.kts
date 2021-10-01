@@ -334,15 +334,41 @@ fun Task.buildSharedLibrariesForJVM() {
         File("$directory/librealmc.dylib")
             .copyTo(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"), overwrite = true)
 
-        // TODO add Windows and Linux
-
         // build hash file
         genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
+
+
+        // Only on CI
+        if (System.getenv("JENKINS_HOME") != null) {
+            // copy files (Linux)
+            project.file("src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so")
+                .copyTo(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"), overwrite = true)
+            project.file("src/jvmMain/linux/build-dir/librealmc.so")
+                .copyTo(project.file("src/jvmMain/resources/jni/linux/librealmc.so"), overwrite = true)
+            genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
+
+            // copy files (Windows)
+            project.file("packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll")
+                .copyTo(project.file("src/jvmMain/resources/jni/windows/realm-ffi.dll"), overwrite = true)
+            project.file("packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll")
+                .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
+            genHashFile(platform = "windows", prefix = "", suffix = ".dll")
+        }
     }
 
     outputs.file(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"))
     outputs.file(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"))
     outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
+
+    if (System.getenv("JENKINS_HOME") != null) {
+        outputs.file(project.file("src/jvmMain/resources/jni/linux/librealmc.so"))
+        outputs.file(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"))
+        outputs.file(project.file("src/jvmMain/resources/jni/linux/dynamic_libraries.properties"))
+
+        outputs.file(project.file("src/jvmMain/resources/jni/windows/realmc.dll"))
+        outputs.file(project.file("src/jvmMain/resources/jni/windows/realm-ffi.dll"))
+        outputs.file(project.file("src/jvmMain/resources/jni/windows/dynamic_libraries.properties"))
+    }
 }
 
 fun genHashFile(platform: String, prefix: String, suffix: String) {

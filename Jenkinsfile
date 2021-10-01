@@ -269,6 +269,7 @@ def runBuild() {
                """
         }
     }
+    archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/**', allowEmptyArchive: true
 }
 
 def runStaticAnalysis() {
@@ -326,7 +327,7 @@ def runPublishSnapshotToMavenCentral() {
     }
 }
 
-def  runPublishReleaseOnMavenCentral() {
+def runPublishReleaseOnMavenCentral() {
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
