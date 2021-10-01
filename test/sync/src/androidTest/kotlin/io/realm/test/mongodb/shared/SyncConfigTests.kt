@@ -73,50 +73,58 @@ class SyncConfigTests {
         partitionValue: String = DEFAULT_PARTITION_VALUE,
         path: String? = null,
         name: String = DEFAULT_NAME
-    ): SyncConfiguration = SyncConfiguration.Builder(
-        path = path,
-        name = name,
-        schema = setOf(Parent::class, Child::class),
-        user = user,
-        partitionValue = partitionValue
-    ).build()
+    ): SyncConfiguration {
+        val configuration: SyncConfiguration = SyncConfiguration.Builder(
+            path = path,
+            name = name,
+            schema = setOf(Parent::class, Child::class),
+            user = user,
+            partitionValue = partitionValue
+        ).schema().build()
+        return configuration
+    }
 
     @Test
     fun canOpenRealm() {
+
+
         val user = createTestUser()
-        val config = createSyncConfig(path = "$tmpDir/$DEFAULT_NAME", user = user)
+        val config: SyncConfiguration =
+            createSyncConfig(path = "$tmpDir/$DEFAULT_NAME", user = user)
+        assert(config is SyncConfiguration)
         realm = Realm.open(config)
         assertNotNull(realm)
 
-//        val child = Child().apply {
-//            _id = "CHILD_A"
-//            name = "A"
-//        }
-//
-//        val channel = Channel<Child>(1)
-//
-//        runBlocking {
-//            val observer = async {
-//                realm.objects(Child::class)
-//                    .observe()
-//                    .collect { childResults ->
-//                        println("===> RECEIVED results, size: ${childResults.size}")
+        val child = Child().apply {
+            _id = "CHILD_A"
+
+            name = "A"
+        }
+
+        val channel = Channel<Child>(1)
+
+        runBlocking {
+            val observer = async {
+                realm.objects(Child::class)
+                    .observe()
+                    .collect { childResults ->
+                        println("===> RECEIVED results, size: ${childResults.size}")
 //                        channel.send(childResults[0])
-//                    }
-//            }
-//
-//            realm.write {
-//                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
-//                copyToRealm(child)
-//            }
-//
-//            println("===> BEFORE RECEIVE")
-//            val childResult = channel.receive()
-//            println("===> AFTER  RECEIVE")
-//            assertEquals("CHILD_A", childResult._id)
-//            observer.cancel()
-//            channel.close()
-//        }
+                    }
+            }
+
+            realm.write {
+                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
+                copyToRealm(child)
+            }
+
+            println("===> BEFORE RECEIVE")
+            val childResult = channel.receive()
+            println("===> AFTER  RECEIVE")
+            assertEquals("CHILD_A", childResult._id)
+            observer.cancel()
+            channel.close()
+        }
         val kjahsd = 0
     }
 

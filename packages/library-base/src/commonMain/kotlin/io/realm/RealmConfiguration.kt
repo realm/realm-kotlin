@@ -144,12 +144,12 @@ interface RealmConfiguration {
          *
          * @return the created RealmConfiguration.
          */
-        abstract fun build(): RealmConfiguration
+//        abstract fun build(): RealmConfiguration
 
         // Called from the compiler plugin
         // FIXME children should implement this without defining it here so that it is internal
         //  regardless. Handle bypass between build() and this function via IR
-        abstract fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration
+//        abstract fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration
 
         /**
          * Sets the absolute path of the realm file.
@@ -159,7 +159,7 @@ interface RealmConfiguration {
         /**
          * Sets the filename of the realm file.
          */
-        fun name(name: String) = apply { this.name = name }
+        fun name(name: String) = apply { this.name = name } as S
 
         /**
          * Sets the classes of the schema.
@@ -168,7 +168,7 @@ interface RealmConfiguration {
          *
          * @param classes The set of classes that the schema consists of.
          */
-        fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes }
+        fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes } as S
 
         /**
          * Sets the classes of the schema.
@@ -178,7 +178,7 @@ interface RealmConfiguration {
          * @param classes The classes that the schema consists of.
          */
         fun schema(vararg classes: KClass<out RealmObject>) =
-            apply { this.schema = setOf(*classes) }
+            apply { this.schema = setOf(*classes) } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
@@ -199,7 +199,7 @@ interface RealmConfiguration {
                 throw IllegalArgumentException("Only positive numbers above 0 are allowed. Yours was: $maxVersions")
             }
             this.maxNumberOfActiveVersions = maxVersions
-        }
+        } as S
 
         /**
          * Configure how Realm will report log events.
@@ -213,7 +213,7 @@ interface RealmConfiguration {
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
-            }
+            } as S
 
         /**
          * Dispatcher used to run background writes to the Realm.
@@ -228,7 +228,7 @@ interface RealmConfiguration {
          */
         internal fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.notificationDispatcher = dispatcher
-        }
+        } as S
 
         /**
          * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
@@ -245,7 +245,7 @@ interface RealmConfiguration {
          */
         internal fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.writeDispatcher = dispatcher
-        }
+        } as S
 
         /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
@@ -253,14 +253,14 @@ interface RealmConfiguration {
          *
          * **WARNING!** This will result in loss of data.
          */
-        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
+        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true } as S
 
         /**
          * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
          * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
          */
         fun schemaVersion(schemaVersion: Long) =
-            apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
+            apply { this.schemaVersion = validateSchemaVersion(schemaVersion) } as S
 
         /**
          * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file
@@ -271,7 +271,7 @@ interface RealmConfiguration {
          * @param encryptionKey 64-byte encryption key.
          */
         fun encryptionKey(encryptionKey: ByteArray) =
-            apply { this.encryptionKey = validateEncryptionKey(encryptionKey) }
+            apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
 
         /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
@@ -282,7 +282,7 @@ interface RealmConfiguration {
          *
          * @see [RealmConfiguration.Builder.log]
          */
-        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
+        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
 
         protected fun validateSchemaVersion(schemaVersion: Long): Long {
             if (schemaVersion < 0) {
@@ -316,12 +316,12 @@ interface RealmConfiguration {
          *
          * @return the created RealmConfiguration.
          */
-        override fun build(): RealmConfiguration {
+        fun build(): RealmConfiguration {
             REPLACED_BY_IR()
         }
 
         // Called from the compiler plugin
-        override fun build(
+        fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()

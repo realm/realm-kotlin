@@ -971,6 +971,7 @@ actual object RealmInterop {
         syncClientConfig: NativePointer,
         loggerFactory: () -> CoreLogger
     ) {
+        loggerFactory.freeze()
         println("Create Logger factory")
         realm_wrapper.realm_sync_client_config_set_logger_factory(
             syncClientConfig.cptr(),
@@ -981,8 +982,8 @@ actual object RealmInterop {
                     realm_wrapper.realm_logger_new(
                         staticCFunction { userData, logLevel: realm_wrapper.realm_log_level, message: CPointer<ByteVarOf<Byte>>? ->
                             println(message?.toKString() ?: "")
-                            val logger = safeUserData<CoreLogger>(userData)
-                            logger.log(logLevel.value.toShort(), message?.toKString() ?: "")
+//                            val logger = safeUserData<CoreLogger>(userData)
+//                            logger.log(logLevel.value.toShort(), message?.toKString() ?: "")
                         },
                         staticCFunction { userData ->
                             realm_wrapper.realm_log_level.RLM_LOG_LEVEL_ALL
@@ -995,7 +996,8 @@ actual object RealmInterop {
                 }
             },
             StableRef.create(loggerFactory).asCPointer(),
-            staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) }
+            staticCFunction { userdata -> //disposeUserData<() -> CoreLogger>(userdata)
+            }
         )
     }
 

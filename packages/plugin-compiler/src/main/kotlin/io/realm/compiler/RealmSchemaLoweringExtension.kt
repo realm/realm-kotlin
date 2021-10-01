@@ -19,6 +19,7 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.REALM_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_CONFIGURATION_BUILDER
 import io.realm.compiler.FqNames.REALM_SYNC_CONFIGURATION
+import io.realm.compiler.FqNames.SYNC_CONFIGURATION_BUILDER
 import io.realm.compiler.Names.REALM_CONFIGURATION_BUILDER_BUILD
 import io.realm.compiler.Names.REALM_CONFIGURATION_WITH
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
@@ -79,6 +81,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
         val internalBuildFunction = configurationBuilder.functions.first {
             it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
         }
+
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
                 override fun visitCall(expression: IrCall): IrExpression {
@@ -87,6 +90,16 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                                 || expression.type.classFqName == REALM_SYNC_CONFIGURATION) &&
                         name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
                     ) {
+                        val buildFunction = if (expression.type.classFqName == REALM_SYNC_CONFIGURATION) {
+                            val syncConfigurationBuilder = pluginContext.lookupClassOrThrow(SYNC_CONFIGURATION_BUILDER)
+                            println(syncConfigurationBuilder.functions.map { it.toString() })
+                            val internalSyncBuildFunction = syncConfigurationBuilder.functions.first {
+                                it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
+                            }
+                            internalSyncBuildFunction
+                        } else {
+                            internalBuildFunction
+                        }
                         val specifiedModels =
                             mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
                         val (receiver, schemaArgument) = when (name) {
@@ -127,7 +140,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             startOffset = expression.startOffset,
                             endOffset = expression.endOffset,
                             type = expression.type,
-                            symbol = internalBuildFunction.symbol,
+                            symbol = buildFunction.symbol,
                             typeArgumentsCount = 0,
                             valueArgumentsCount = 1,
                             origin = null,

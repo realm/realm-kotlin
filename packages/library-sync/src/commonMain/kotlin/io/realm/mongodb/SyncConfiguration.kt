@@ -115,11 +115,11 @@ interface SyncConfiguration : RealmConfiguration {
          *
          * @return the created RealmConfiguration.
          */
-        override fun build(): SyncConfiguration {
+        fun build(): SyncConfiguration {
             REPLACED_BY_IR()
         }
 
-        override fun build(
+        fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): SyncConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
