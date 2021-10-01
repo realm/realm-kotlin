@@ -149,7 +149,7 @@ pipeline {
                     }
                 }
                 stage('Build') {
-                    steps {s
+                    steps {
                         runBuild()
                     }
                 }
