@@ -2,12 +2,13 @@ package io.realm.log
 
 import io.realm.RealmConfiguration
 import io.realm.internal.interop.CoreLogger
+
 /**
  * Interface describing a logger implementation.
  *
  * @see RealmConfiguration.Builder.log
  */
-interface RealmLogger: CoreLogger {
+interface RealmLogger : CoreLogger {
 
     /**
      * Tag that can be used to describe the output.

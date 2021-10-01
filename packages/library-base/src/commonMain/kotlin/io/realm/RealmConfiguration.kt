@@ -123,6 +123,7 @@ interface RealmConfiguration {
     /**
      * TODO
      */
+    @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
     abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         var path: String? = null, // Full path for Realm (directory + name)
         var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')

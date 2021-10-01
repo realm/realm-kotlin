@@ -89,17 +89,20 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
 
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
+                @Suppress("LongMethod")
                 override fun visitCall(expression: IrCall): IrExpression {
                     val name = expression.symbol.owner.name
-                    if ((expression.type.classFqName == REALM_CONFIGURATION
-                                || expression.type.classFqName == REALM_SYNC_CONFIGURATION) &&
-                        name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
+                    if ((expression.type.classFqName == REALM_CONFIGURATION || expression.type.classFqName == REALM_SYNC_CONFIGURATION) && name in setOf(
+                            REALM_CONFIGURATION_BUILDER_BUILD,
+                            REALM_CONFIGURATION_WITH
+                        )
                     ) {
-                        val buildFunction = if (expression.type.classFqName == REALM_SYNC_CONFIGURATION) {
-                            syncBuildFunction!!
-                        } else {
-                            realmBuildFunction
-                        }
+                        val buildFunction =
+                            if (expression.type.classFqName == REALM_SYNC_CONFIGURATION) {
+                                syncBuildFunction!!
+                            } else {
+                                realmBuildFunction
+                            }
                         val specifiedModels =
                             mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
                         val (receiver, schemaArgument) = when (name) {
@@ -179,7 +182,11 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
  * TODO We should lift this restriction
  * ```
  */
-fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPluginContext, specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>) {
+fun findSchemaClassLiterals(
+    schemaArgument: IrExpression?,
+    pluginContext: IrPluginContext,
+    specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>
+) {
     when (schemaArgument) {
         is IrCallImpl -> {
             // This will iterate the full schemaArgument tree, which conveniently includes the
@@ -191,8 +198,8 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             //
             // no ARGUMENTS_REORDERING_FOR_CALL block was added by IR, CLASS_REFERENCE should
             // be available as children
-            schemaArgument.acceptChildrenVoid(object :
-                    IrElementVisitorVoid {
+            schemaArgument.acceptChildrenVoid(
+                object : IrElementVisitorVoid {
                     override fun visitElement(element: IrElement) {
                         element.acceptChildrenVoid(this)
                     }
@@ -204,7 +211,8 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
                             specifiedModels
                         )
                     }
-                })
+                }
+            )
         }
         is IrGetValueImpl -> {
             // the list of CLASS_REFERENCE were probably created in a tmp variable because of
@@ -212,28 +220,19 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             // the CLASS_REFERENCE via the content of the tmp variable
             if (schemaArgument.symbol.owner.origin == IrDeclarationOrigin.IR_TEMPORARY_VARIABLE) {
                 schemaArgument.symbol.owner.parent.acceptChildren(
-                    object :
-                        IrElementVisitor<Unit, Name> {
-                        override fun visitElement(
-                            element: IrElement,
-                            data: Name
-                        ) {
+                    object : IrElementVisitor<Unit, Name> {
+                        override fun visitElement(element: IrElement, data: Name) {
                             element.acceptChildren(this, data)
                         }
 
-                        override fun visitVariable(
-                            declaration: IrVariable,
-                            data: Name
-                        ) {
+                        override fun visitVariable(declaration: IrVariable, data: Name) {
                             if (declaration.name == data) {
                                 // get class references
-                                declaration.acceptChildrenVoid(object :
-                                        IrElementVisitorVoid {
-
+                                declaration.acceptChildrenVoid(
+                                    object : IrElementVisitorVoid {
                                         override fun visitElement(element: IrElement) {
                                             element.acceptChildrenVoid(this)
                                         }
-
                                         override fun visitClassReference(expression: IrClassReference) {
                                             addEntryToCompanionMap(
                                                 expression,
@@ -241,7 +240,8 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
                                                 specifiedModels
                                             )
                                         }
-                                    })
+                                    }
+                                )
                             } else {
                                 super.visitVariable(declaration, data)
                             }
@@ -282,11 +282,13 @@ private fun populateCompanion(
 
     val mapOf = pluginContext.referenceFunctions(FqNames.KOTLIN_COLLECTIONS_MAPOF)
         .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
-    val realmObjectCompanionIrClass: IrClass = pluginContext.lookupClassOrThrow(FqNames.REALM_MODEL_COMPANION)
+    val realmObjectCompanionIrClass: IrClass =
+        pluginContext.lookupClassOrThrow(FqNames.REALM_MODEL_COMPANION)
     val mapType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_MAP)
     val companionMapKeyType = pluginContext.irBuiltIns.kClassClass.starProjectedType
     val companionMapValueType = realmObjectCompanionIrClass.defaultType
-    val companionMapType: IrSimpleType = mapType.typeWith(companionMapKeyType, companionMapValueType)
+    val companionMapType: IrSimpleType =
+        mapType.typeWith(companionMapKeyType, companionMapValueType)
     val companionMapEntryType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_PAIR)
         .typeWith(companionMapKeyType, companionMapValueType)
     val pairCtor = pluginContext.lookupConstructorInClass(FqNames.KOTLIN_PAIR) {
