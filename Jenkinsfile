@@ -98,7 +98,6 @@ pipeline {
                 }
 
                 stage('build-jvm-native-libs') {
-                  steps {
                     parallel(
                       stage('build_jvm_linux') {
                           agent {
@@ -121,12 +120,10 @@ pipeline {
                           }
                       }
                     )
-                  }
                 }
+
                 stage('Build') {
                     steps {
-                        unstash name: 'linux_so_files'
-                        unstash name: 'win_dlls'
                         runBuild()
                     }
                 }
@@ -198,7 +195,6 @@ pipeline {
                 }
             }
         }
-
     }
     post {
         failure {
@@ -254,6 +250,9 @@ def runScm() {
 }
 
 def runBuild() {
+    unstash name: 'linux_so_files'
+    unstash name: 'win_dlls'
+
     withCredentials([
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
