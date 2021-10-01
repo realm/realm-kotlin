@@ -55,7 +55,8 @@ class KtorNetworkTransport(
     private val dispatcher: CoroutineDispatcher,
 ) : NetworkTransport {
 
-    private val client: HttpClient = getClient()
+    // FIXME Figure out how to reuse the HttpClient across all network requests.
+    // private val client: HttpClient = getClient()
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")
     override fun sendRequest(
@@ -66,6 +67,14 @@ class KtorNetworkTransport(
         usesRefreshToken: Boolean
     ): Response {
         try {
+            // FIXME When using a shared HttpClient we are seeing sporadic
+            //  network failures on macOS. They manifest as ClientRequestException
+            //  even though the request appear to be valid. This could indicate
+            //  that some state isn't cleaned up correctly between requests, but
+            //  it is unclear what. As a temporary work-around, we now create a
+            //  HttpClient pr. request.
+            val client = getClient()
+
             // FIXME Ensure background jobs does not block user/main thread
             //  https://github.com/realm/realm-kotlin/issues/450
             return runBlocking(dispatcher) {
