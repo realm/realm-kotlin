@@ -27,11 +27,13 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -48,7 +50,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        app = TestApp().also { it.asTestApp.deleteAllUsers() }
+        app = TestApp()
     }
 
     @AfterTest
@@ -59,9 +61,10 @@ class SyncConfigTests {
     }
 
     private fun createTestUser(): User {
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
+        val (email, password) = randomEmail() to "asdfasdf"
+        app.asTestApp.createUser(email, password)
         return runBlocking {
-            app.login(Credentials.anonymous())
+            app.login(Credentials.emailPassword(email, password))
         }
     }
 
@@ -79,6 +82,8 @@ class SyncConfigTests {
     ).build()
 
     @Test
+    @Ignore
+    // FIXME remove ignore once freeze/thaw changes from core are incorporated to the branch
     fun canOpenRealm() {
         val user = createTestUser()
         val config = createSyncConfig(path = "$tmpDir/$DEFAULT_NAME", user = user)
@@ -97,9 +102,7 @@ class SyncConfigTests {
                 realm.objects(Child::class)
                     .observe()
                     .collect { childResults ->
-                        println("--- RECEIVED CHILD")
-                        val kjhasd = 0
-//                        channel.send(childResults[0])
+                        channel.send(childResults[0])
                     }
             }
 
@@ -108,14 +111,11 @@ class SyncConfigTests {
                 copyToRealm(child)
             }
 
-            println("--- BEFORE RECEIVE")
             val childResult = channel.receive()
-            println("--- AFTER  RECEIVE")
             assertEquals("CHILD_A", childResult._id)
             observer.cancel()
             channel.close()
         }
-        val kjahsd = 0
     }
 
 //    @Test

@@ -20,9 +20,6 @@ import io.realm.internal.interop.CinteropCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.internal.platform.createDefaultSystemLogger
-import io.realm.internal.util.Validation
-import io.realm.log.RealmLogger
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -31,29 +28,16 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 internal class AppImpl(
-    configuration: AppConfigurationImpl,
+    override val configuration: AppConfigurationImpl,
 ) : App {
 
-    override val configuration: AppConfigurationImpl = configuration
-
-    private val loggerFactory: () -> RealmLogger = { createDefaultSystemLogger("SYNC") }
-
-    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
-        .also { syncClientConfig ->
-            RealmInterop.realm_sync_client_config_set_logger_factory(
-                syncClientConfig,
-                loggerFactory
-            )
-        }.let { syncClientConfig ->
-            RealmInterop.realm_app_new(
-                appConfig = configuration.nativePointer,
-                syncClientConfig = syncClientConfig,
-                basePath = appFilesDirectory()
-            )
-        }
+    private val nativePointer: NativePointer = RealmInterop.realm_app_new(
+        appConfig = configuration.nativePointer,
+        syncClientConfig = RealmInterop.realm_sync_client_config_new(),
+        basePath = appFilesDirectory()
+    )
 
     override suspend fun login(credentials: Credentials): User {
-        val credentialsInternal: CredentialImpl = Validation.checkType(credentials, "credentials")
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,

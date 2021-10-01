@@ -18,6 +18,7 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
@@ -29,7 +30,7 @@ internal class AppConfigurationImpl(
     override val networkTransportDispatcher: CoroutineDispatcher
 ) : AppConfiguration {
 
-    private val networkTransport: io.realm.internal.interop.sync.NetworkTransport = KtorNetworkTransport(
+    private val networkTransport: NetworkTransport = KtorNetworkTransport(
         // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
         //  constant in AppConfiguration.Companion
         //  https://github.com/realm/realm-kotlin/issues/408

@@ -416,16 +416,3 @@ realm_http_transport_t *realm_network_transport_new(jobject network_transport) {
             &network_request_lambda_function);
 
 }
-
-void
-sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_factory) {
-    auto jenv = get_env();
-    return realm_sync_client_config_set_logger_factory(sync_config,
-                                                       &new_logger_lambda_function,
-                                                       static_cast<jobject>(jenv->NewGlobalRef(logger_factory)),
-                                                       [](void *userdata) {
-                                                           get_env(true)->DeleteGlobalRef(
-                                                                   static_cast<jobject>(userdata));
-                                                       }
-    );
-}

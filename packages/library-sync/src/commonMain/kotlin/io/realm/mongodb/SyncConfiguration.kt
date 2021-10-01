@@ -38,10 +38,10 @@ import kotlin.reflect.KClass
  *
  * A minimal [SyncConfiguration] can be found below.
  * ```
- * val app = App.create(AppConfiguration.Builder(appId))
- * val user = app.login(Credentials.anonymous())
- * val config = SyncConfiguration.Builder(user, "partition-value")
- * val realm = Realm.getInstance(config)
+ *      val app = App.create(AppConfiguration.Builder(appId))
+ *      val user = app.login(Credentials.anonymous())
+ *      val config = SyncConfiguration.Builder(user, "partition-value")
+ *      val realm = Realm.getInstance(config)
  * ```
  */
 interface SyncConfiguration : RealmConfiguration {
@@ -76,7 +76,7 @@ interface SyncConfiguration : RealmConfiguration {
     }
 
     /**
-     *
+     * TODO
      */
     class Builder private constructor(
         path: String?, // Full path for Realm (directory + name)

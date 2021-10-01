@@ -19,14 +19,15 @@ import io.realm.Realm
 import io.realm.VersionId
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
+import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper.randomEmail
 import io.realm.test.util.Utils.createRandomString
-import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -51,9 +52,10 @@ class SyncedRealmTests {
         app = TestApp()
 
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
+        val (email, password) = randomEmail() to "asdfasdf"
+        app.asTestApp.createUser(email, password)
         val user = runBlocking {
-            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf"))
+            app.login(Credentials.emailPassword(email, password))
         }
 
         tmpDir = PlatformUtils.createTempDir()
@@ -67,7 +69,7 @@ class SyncedRealmTests {
 
     @AfterTest
     fun tearDown() {
-         if (this::app.isInitialized) {
+        if (this::app.isInitialized) {
             app.asTestApp.close()
         }
         if (!realm.isClosed()) {

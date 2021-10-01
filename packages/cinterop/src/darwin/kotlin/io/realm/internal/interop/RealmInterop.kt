@@ -967,38 +967,6 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
 
-    actual fun realm_sync_client_config_set_logger_factory(
-        syncClientConfig: NativePointer,
-        loggerFactory: () -> CoreLogger
-    ) {
-        println("Create Logger factory")
-        realm_wrapper.realm_sync_client_config_set_logger_factory(
-            syncClientConfig.cptr(),
-            staticCFunction { userData, logLevel ->
-                println("Create Logger factory callback")
-                val realmLoggerFactory = safeUserData<() -> CoreLogger>(userData)
-                realmLoggerFactory.invoke().let { logger ->
-                    realm_wrapper.realm_logger_new(
-                        StableRef.create(logger).asCPointer(),
-                        staticCFunction { userData, logLevel: realm_wrapper.realm_log_level, message: CPointer<ByteVarOf<Byte>>? ->
-                            println(message?.toKString() ?: "")
-                            val logger = safeUserData<CoreLogger>(userData)
-                            logger.log(logLevel.value.toShort(), message?.toKString() ?: "")
-                        },
-                        staticCFunction { userData ->
-                            realm_wrapper.realm_log_level.RLM_LOG_LEVEL_ALL
-                        },
-                        staticCFunction { userData ->
-                            disposeUserData<CoreLogger>(userData)
-                        }
-                    )
-                }
-            },
-            StableRef.create(loggerFactory).asCPointer(),
-            staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) }
-        )
-    }
-
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return CPointerWrapper(
             realm_wrapper.realm_http_transport_new(

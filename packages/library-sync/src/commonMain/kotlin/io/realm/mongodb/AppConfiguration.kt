@@ -55,7 +55,7 @@ interface AppConfiguration {
      * @param appId the application id of the MongoDB Realm Application.
      */
     class Builder(
-        val appId: String
+        private val appId: String
     ) {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId") // TODO
