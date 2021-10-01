@@ -348,9 +348,9 @@ fun Task.buildSharedLibrariesForJVM() {
             genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
 
             // copy files (Windows)
-            project.file("packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll")
+            project.file("src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll")
                 .copyTo(project.file("src/jvmMain/resources/jni/windows/realm-ffi.dll"), overwrite = true)
-            project.file("packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll")
+            project.file("src/jvmMain/windows/build-dir/Release/realmc.dll")
                 .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
             genHashFile(platform = "windows", prefix = "", suffix = ".dll")
         }

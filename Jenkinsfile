@@ -544,20 +544,18 @@ def runCommand(String command){
 
 def build_jvm_linux() {
     unstash 'packages'
-    dir('packages') {
-        docker.build('jvm_linux', '-f cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
-            sh """
-               cd cinterop/src/jvmMain/linux/
-               rm -rf build-dir
-               mkdir build-dir
-               cd build-dir
-               cmake ..
-               make -j8
-            """
+    docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
+        sh """
+           cd packages/cinterop/src/jvmMain/linux/
+           rm -rf build-dir
+           mkdir build-dir
+           cd build-dir
+           cmake ..
+           make -j8
+        """
 
-            archiveArtifacts artifacts: 'cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,cinterop/src/jvmMain/linux/build-dir/librealmc.so', allowEmptyArchive: true
-            stash includes:"cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,cinterop/src/jvmMain/linux/build-dir/librealmc.so", name: 'linux_so_files'
-        }
+        archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,cinterop/src/jvmMain/linux/build-dir/librealmc.so', allowEmptyArchive: true
+        stash includes:"packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,cinterop/src/jvmMain/linux/build-dir/librealmc.so", name: 'linux_so_files'
     }
 }
 
