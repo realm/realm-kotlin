@@ -241,6 +241,7 @@ def runScm() {
             publishBuild = true
         }
     }
+    stash includes: 'packages/**', name: 'packages'
 }
 
 def runBuild() {
