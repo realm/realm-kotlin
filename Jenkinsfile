@@ -55,33 +55,35 @@ rlmNode('osx_kotlin') {
     }
 }
 
-// rlmNode('docker') {
-//     stage('build-linux') {
-//         unstash 'packages'
-//         dir('packages') {
-//             docker.build('jvm_linux', '-f cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
-//                 sh """
-//                    cd cinterop/src/jvmMain/linux/
-//                    rm -rf build-dir
-//                    mkdir build-dir
-//                    cd build-dir
-//                    cmake ..
-//                    make -j8
-//                 """
-//
-//                 def stashName = "linux_so_files"
+rlmNode('docker') {
+    stage('build-linux') {
+        unstash 'packages'
+        dir('packages') {
+            docker.build('jvm_linux', '-f cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
+                sh """
+                   cd cinterop/src/jvmMain/linux/
+                   rm -rf build-dir
+                   mkdir build-dir
+                   cd build-dir
+                   cmake ..
+                   make -j8
+                """
+
+                def stashName = "linux_so_files"
 //                 stash includes:"./cinterop/src/jvmMain/linux/build-dir/librealmc.so,./cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so", name:stashName
-//             }
-//         }
-//     }
-// }
+                archiveArtifacts artifacts: '**/*.so', allowEmptyArchive: true
+                stash includes:"**/*.so", name: 'linux_so_files'
+            }
+        }
+    }
+}
 
 rlmNode('aws-windows-01') { // has jdk 1.8
   unstash 'packages'
 
   def cmakeOptions = [
         CMAKE_GENERATOR_PLATFORM: 'x64',
-        CMAKE_BUILD_TYPE: 'Debug',
+        CMAKE_BUILD_TYPE: 'Release',
         REALM_ENABLE_SYNC: "ON",
         CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
         CMAKE_SYSTEM_VERSION: '8.1',
@@ -91,11 +93,13 @@ rlmNode('aws-windows-01') { // has jdk 1.8
       ]
 
   def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
-
   dir('packages') {
-      bat "cd cinterop\\src\\jvmMain\\windows && mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Debug"
+      bat "cd cinterop\\src\\jvmMain\\windows && mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
   }
+  archiveArtifacts artifacts: '**/*.dll', allowEmptyArchive: true
+  stash includes: '**/*.dll', name: 'win_dlls'
 }
+
 def environment() {
     return [
         "ANDROID_SDK_ROOT=/Users/realm/Library/Android/sdk/",
