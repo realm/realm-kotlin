@@ -33,7 +33,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -61,7 +60,8 @@ class SyncConfigTests {
     }
 
     private fun createTestUser(): User {
-        val (email, password) = randomEmail() to "asdfasdf"
+        val email = randomEmail()
+        val password = "asdfasdf"
         app.asTestApp.createUser(email, password)
         return runBlocking {
             app.login(Credentials.emailPassword(email, password))
@@ -82,13 +82,20 @@ class SyncConfigTests {
     ).build()
 
     @Test
-    @Ignore
-    // FIXME remove ignore once freeze/thaw changes from core are incorporated to the branch
     fun canOpenRealm() {
         val user = createTestUser()
-        val config = createSyncConfig(path = "$tmpDir/$DEFAULT_NAME", user = user)
-        realm = Realm.open(config)
-        assertNotNull(realm)
+
+        val dir1 = PlatformUtils.createTempDir()
+        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user)
+        assert(config1 is SyncConfiguration)
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        val dir2 = PlatformUtils.createTempDir()
+        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user)
+        assert(config2 is SyncConfiguration)
+        val realm2 = Realm.open(config2)
+        assertNotNull(realm2)
 
         val child = Child().apply {
             _id = "CHILD_A"
@@ -99,19 +106,23 @@ class SyncConfigTests {
 
         runBlocking {
             val observer = async {
-                realm.objects(Child::class)
+                realm2.objects(Child::class)
                     .observe()
                     .collect { childResults ->
-                        channel.send(childResults[0])
+                        println("===> RECEIVED results, size: ${childResults.size}")
+                        if (childResults.size == 1)
+                            channel.send(childResults[0])
                     }
             }
 
-            realm.write {
+            realm1.write {
                 // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
                 copyToRealm(child)
             }
 
+            println("===> BEFORE RECEIVE")
             val childResult = channel.receive()
+            println("===> AFTER  RECEIVE")
             assertEquals("CHILD_A", childResult._id)
             observer.cancel()
             channel.close()

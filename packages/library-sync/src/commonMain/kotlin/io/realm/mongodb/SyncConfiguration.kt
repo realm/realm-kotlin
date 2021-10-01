@@ -19,7 +19,6 @@ package io.realm.mongodb
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.sync.PartitionValue
@@ -84,7 +83,7 @@ interface SyncConfiguration : RealmConfiguration {
         schema: Set<KClass<out RealmObject>>,
         private var user: User,
         private var partitionValue: PartitionValue
-    ) : RealmConfiguration.SharedBuilder<Builder>(path, name, schema) {
+    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(path, name, schema) {
 
         constructor(
             path: String? = null,
@@ -110,11 +109,7 @@ interface SyncConfiguration : RealmConfiguration {
             partitionValue: String
         ) : this(path, name, schema, user, PartitionValue(partitionValue))
 
-        override fun build(): SyncConfiguration {
-            REPLACED_BY_IR()
-        }
-
-        override fun build(
+        internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): SyncConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
@@ -122,6 +117,7 @@ interface SyncConfiguration : RealmConfiguration {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
+            @Suppress("invisible_member")
             val localConfiguration = RealmConfiguration.Builder(path, name, schema)
                 .build(companionMap)
             return SyncConfigurationImpl(

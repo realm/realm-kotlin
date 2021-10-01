@@ -20,6 +20,7 @@ import io.realm.internal.interop.CinteropCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.util.Validation
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -41,7 +42,7 @@ internal class AppImpl(
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                (credentials as CredentialImpl).nativePointer,
+                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
                 object : CinteropCallback {
                     override fun onSuccess(pointer: NativePointer) {
                         continuation.resume(UserImpl(pointer))
