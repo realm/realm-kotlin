@@ -5,6 +5,7 @@ set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../../jni-swig-stub/src/main/jni")
 set(CINTEROP_JNI "${CMAKE_SOURCE_DIR}/../../jvm/jni")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_BUILD_TYPE "Release")
 
 # Build Realm Core
 # Set option flags for Core.

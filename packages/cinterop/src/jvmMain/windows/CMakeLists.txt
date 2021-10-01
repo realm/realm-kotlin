@@ -6,6 +6,7 @@ set(CINTEROP_JNI "${CMAKE_SOURCE_DIR}/../../jvm/jni")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE "Release")
 
 # Build Realm Core
 # Set option flags for Core.
