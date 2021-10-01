@@ -17,6 +17,7 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppException
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
@@ -26,6 +27,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class AppTests {
@@ -41,6 +43,20 @@ class AppTests {
     fun teadDown() {
         if (this::app.isInitialized) {
             app.asTestApp.close()
+        }
+    }
+
+    @Test
+    fun defaultApp() {
+        val defaultApp = App.create("foo")
+        assertEquals("foo", app.configuration.appId)
+        assertEquals(AppConfiguration.DEFAULT_BASE_URL, defaultApp.configuration.baseUrl)
+    }
+
+    @Test
+    fun defaultApp_emptyIdThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            App.create("")
         }
     }
 
