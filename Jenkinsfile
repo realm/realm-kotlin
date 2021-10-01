@@ -98,7 +98,7 @@ pipeline {
                 }
 
                 stage('build-jvm-native-libs') {
-                    parallel(
+                    parallel{
                       stage('build_jvm_linux') {
                           agent {
                               node {
@@ -119,7 +119,7 @@ pipeline {
                             build_jvm_windows()
                           }
                       }
-                    )
+                    }
                 }
 
                 stage('Build') {
