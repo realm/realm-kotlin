@@ -110,11 +110,6 @@ interface SyncConfiguration : RealmConfiguration {
             partitionValue: String
         ) : this(path, name, schema, user, PartitionValue(partitionValue))
 
-        /**
-         * Creates the RealmConfiguration based on the builder properties.
-         *
-         * @return the created RealmConfiguration.
-         */
         override fun build(): SyncConfiguration {
             REPLACED_BY_IR()
         }
