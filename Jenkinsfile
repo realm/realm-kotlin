@@ -96,28 +96,37 @@ pipeline {
                         runScm()
                     }
                 }
-                stage('build_jvm_linux') {
-                    agent {
-                        node {
-                            label 'docker'
-                        }
-                    }
-                    steps {
-                        build_jvm_linux()
-                    }
-                }
-                stage('build_jvm_windows') {
-                    agent {
-                        node {
-                            label 'aws-windows-01'
-                        }
-                    }
-                    steps {
-                      build_jvm_windows()
-                    }
+
+                stage('build-jvm-native-libs') {
+                  steps {
+                    parallel(
+                      stage('build_jvm_linux') {
+                          agent {
+                              node {
+                                  label 'docker'
+                              }
+                          }
+                          steps {
+                              build_jvm_linux()
+                          }
+                      },
+                      stage('build_jvm_windows') {
+                          agent {
+                              node {
+                                  label 'aws-windows-01'
+                              }
+                          }
+                          steps {
+                            build_jvm_windows()
+                          }
+                      }
+                    )
+                  }
                 }
                 stage('Build') {
                     steps {
+                        unstash name: 'linux_so_files'
+                        unstash name: 'win_dlls'
                         runBuild()
                     }
                 }
