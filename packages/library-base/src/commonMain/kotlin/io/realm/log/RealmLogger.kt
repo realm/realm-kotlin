@@ -19,7 +19,7 @@ interface RealmLogger: CoreLogger {
      */
     fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
 
-    fun log(message: String) {
+    override fun log(message: String) {
         println("---> $message")
 //        log(LogLevel.ALL, null, message, null)
     }

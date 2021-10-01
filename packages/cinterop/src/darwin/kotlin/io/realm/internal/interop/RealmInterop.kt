@@ -72,6 +72,7 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
+import realm_wrapper.realm_log_level_e
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
@@ -979,12 +980,13 @@ actual object RealmInterop {
                 val realmLoggerFactory = safeUserData<() -> CoreLogger>(userData)
                 realmLoggerFactory.invoke().let { logger ->
                     realm_wrapper.realm_logger_new(
-                        staticCFunction { userData, logLevel: realm_wrapper.realm_log_level, message: CPointer<ByteVarOf<Byte>>? ->
+                        staticCFunction { userData, logLevel: realm_wrapper.realm_log_level_e, message: CPointer<ByteVarOf<Byte>>? ->
                             println(message?.toKString() ?: "")
-                            val logger = safeUserData<CoreLogger>(userData)
-                            logger.log(logLevel.value.toShort(), message?.toKString() ?: "")
+                            val userDataLogger = safeUserData<CoreLogger>(userData)
+                            userDataLogger.log(logLevel.value.toShort(), message?.toKString() ?: "")
                         },
                         staticCFunction { userData ->
+                            // TODO get level from kotlin logger object
                             realm_wrapper.realm_log_level.RLM_LOG_LEVEL_ALL
                         },
                         StableRef.create(logger).asCPointer(),
@@ -996,6 +998,13 @@ actual object RealmInterop {
             },
             StableRef.create(loggerFactory).asCPointer(),
             staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) }
+        )
+    }
+
+    actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {
+        realm_wrapper.realm_sync_client_config_set_log_level(
+            syncClientConfig.cptr(),
+            realm_log_level_e.byValue(level.toUInt())
         )
     }
 

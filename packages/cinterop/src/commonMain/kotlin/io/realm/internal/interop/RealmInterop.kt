@@ -33,7 +33,6 @@ value class ColumnKey(val key: Long)
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
-
     fun realm_get_version_id(realm: NativePointer): Long
     fun realm_get_library_version(): String
     fun realm_get_num_versions(realm: NativePointer): Long
@@ -151,6 +150,7 @@ expect object RealmInterop {
         syncClientConfig: NativePointer,
         loggerFactory: () -> CoreLogger
     )
+    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer

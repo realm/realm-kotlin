@@ -88,35 +88,35 @@ class SyncConfigTests {
         realm = Realm.open(config)
         assertNotNull(realm)
 
-//        val child = Child().apply {
-//            _id = "CHILD_A"
-//            name = "A"
-//        }
-//
-//        val channel = Channel<Child>(1)
-//
-//        runBlocking {
-//            val observer = async {
-//                realm.objects(Child::class)
-//                    .observe()
-//                    .collect { childResults ->
-//                        println("===> RECEIVED results, size: ${childResults.size}")
+        val child = Child().apply {
+            _id = "CHILD_A"
+            name = "A"
+        }
+
+        val channel = Channel<Child>(1)
+
+        runBlocking {
+            val observer = async {
+                realm.objects(Child::class)
+                    .observe()
+                    .collect { childResults ->
+                        println("===> RECEIVED results, size: ${childResults.size}")
 //                        channel.send(childResults[0])
-//                    }
-//            }
-//
-//            realm.write {
-//                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
-//                copyToRealm(child)
-//            }
-//
-//            println("===> BEFORE RECEIVE")
-//            val childResult = channel.receive()
-//            println("===> AFTER  RECEIVE")
-//            assertEquals("CHILD_A", childResult._id)
-//            observer.cancel()
-//            channel.close()
-//        }
+                    }
+            }
+
+            realm.write {
+                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
+                copyToRealm(child)
+            }
+
+            println("===> BEFORE RECEIVE")
+            val childResult = channel.receive()
+            println("===> AFTER  RECEIVE")
+            assertEquals("CHILD_A", childResult._id)
+            observer.cancel()
+            channel.close()
+        }
         val kjahsd = 0
     }
 

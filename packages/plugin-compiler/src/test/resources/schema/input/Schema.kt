@@ -16,18 +16,23 @@
 
 package schema.input
 
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.User
 
 class A : RealmObject
 class B : RealmObject
 class C : RealmObject
 
-val conf1 = RealmConfiguration.Builder()
-    .schema(A::class, B::class, C::class)
+val user: User = null!!
+
+val conf1 = SyncConfiguration.Builder(
+    user = user,
+    partitionValue = "abc"
+).schema(A::class, B::class, C::class)
     .build()
 
-val conf2 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
-    .build()
-
-val conf3 = RealmConfiguration.with(schema = setOf(A::class, C::class))
+//val conf2 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
+//    .build()
+//
+//val conf3 = RealmConfiguration.with(schema = setOf(A::class, C::class))

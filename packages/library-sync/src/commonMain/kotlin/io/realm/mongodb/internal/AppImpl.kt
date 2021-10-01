@@ -17,6 +17,7 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.CoreLogger
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
@@ -31,12 +32,10 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 internal class AppImpl(
-    configuration: AppConfigurationImpl,
+    override val configuration: AppConfigurationImpl,
 ) : App {
 
-    override val configuration: AppConfigurationImpl = configuration
-
-    private val loggerFactory: () -> RealmLogger = {
+    private val loggerFactory: () -> CoreLogger = {
         createDefaultSystemLogger("SYNC")
     }
 
@@ -46,6 +45,8 @@ internal class AppImpl(
                 syncClientConfig,
                 loggerFactory
             )
+            // FIXME: 0 means "ALL" - make LogLevel values somehow match realm_log_level_e values
+            RealmInterop.realm_sync_client_config_set_log_level(syncClientConfig, 0)
         }.let { syncClientConfig ->
             RealmInterop.realm_app_new(
                 appConfig = configuration.nativePointer,
@@ -55,7 +56,6 @@ internal class AppImpl(
         }
 
     override suspend fun login(credentials: Credentials): User {
-        val credentialsInternal: CredentialImpl = Validation.checkType(credentials, "credentials")
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,

@@ -435,6 +435,7 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
                                 jenv_->CallVoidMethod(logger, get_logger_log_method, to_jstring(jenv_, message));
                             },
                             [](void* userdata) {
+                                // TODO get level from kotlin logger object
                                 return RLM_LOG_LEVEL_ALL;
                             },
                             global_logger_ref,

@@ -484,6 +484,10 @@ actual object RealmInterop {
         realmc.sync_config_set_logger(syncClientConfig.cptr(), loggerFactory)
     }
 
+    actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {
+        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level)
+    }
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
