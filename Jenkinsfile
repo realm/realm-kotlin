@@ -108,7 +108,7 @@ pipeline {
                           steps {
                               build_jvm_linux()
                           }
-                      },
+                      }
                       stage('build_jvm_windows') {
                           agent {
                               node {
