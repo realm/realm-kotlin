@@ -250,8 +250,10 @@ def runScm() {
 }
 
 def runBuild() {
-    unstash name: 'linux_so_files'
-    unstash name: 'win_dlls'
+    dir('packages') {
+        unstash name: 'linux_so_files'
+        unstash name: 'win_dlls'
+    }
 
     withCredentials([
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
