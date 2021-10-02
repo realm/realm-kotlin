@@ -49,7 +49,7 @@ class AppTests {
     @Test
     fun defaultApp() {
         val defaultApp = App.create("foo")
-        assertEquals("foo", app.configuration.appId)
+        assertEquals("foo", defaultApp.configuration.appId)
         assertEquals(AppConfiguration.DEFAULT_BASE_URL, defaultApp.configuration.baseUrl)
     }
 
