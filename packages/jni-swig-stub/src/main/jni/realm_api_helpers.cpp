@@ -360,15 +360,15 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
         response_headers.push_back(header);
     }
 
-    // transform JVM response -> realm_http_response_t
-    completion_callback(completion_data, {
-            http_code,
-            custom_code,
-            response_headers.data(),
-            response_headers.size(),
-            body.c_str(),
-            body.size(),
-    });
+    realm_http_response response;
+    response.status_code = http_code;
+    response.custom_status_code = custom_code;
+    response.headers = response_headers.data();
+    response.num_headers = response_headers.size();
+    response.body = body.c_str();
+    response.body_size = body.size();
+
+    completion_callback(completion_data, &response);
 }
 
 /**
