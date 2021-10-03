@@ -14,7 +14,7 @@
 * Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
 
 ### Enhancements
-* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) (currently only macos).
+* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62).
 * Added support for marking a field as indexed with `@Index`
 
 ### Fixed

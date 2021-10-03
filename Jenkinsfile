@@ -96,6 +96,32 @@ pipeline {
                         runScm()
                     }
                 }
+
+                stage('build-jvm-native-libs') {
+                    parallel{
+                      stage('build_jvm_linux') {
+                          agent {
+                              node {
+                                  label 'docker'
+                              }
+                          }
+                          steps {
+                              build_jvm_linux()
+                          }
+                      }
+                      stage('build_jvm_windows') {
+                          agent {
+                              node {
+                                  label 'aws-windows-01'
+                              }
+                          }
+                          steps {
+                            build_jvm_windows()
+                          }
+                      }
+                    }
+                }
+
                 stage('Build') {
                     steps {
                         runBuild()
@@ -169,7 +195,6 @@ pipeline {
                 }
             }
         }
-
     }
     post {
         failure {
@@ -221,9 +246,15 @@ def runScm() {
             publishBuild = true
         }
     }
+    stash includes: 'packages/**', name: 'packages'
 }
 
 def runBuild() {
+    dir('packages') {
+        unstash name: 'linux_so_files'
+        unstash name: 'win_dlls'
+    }
+
     withCredentials([
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
@@ -297,7 +328,7 @@ def runPublishSnapshotToMavenCentral() {
     }
 }
 
-def  runPublishReleaseOnMavenCentral() {
+def runPublishReleaseOnMavenCentral() {
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
@@ -508,4 +539,41 @@ def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContai
 
 def runCommand(String command){
   return sh(script: command, returnStdout: true).trim()
+}
+
+def build_jvm_linux() {
+    unstash 'packages'
+    docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
+        sh """
+           cd packages/cinterop/src/jvmMain/linux/
+           rm -rf build-dir
+           mkdir build-dir
+           cd build-dir
+           cmake ..
+           make -j8
+        """
+
+        archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', allowEmptyArchive: true
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files'
+    }
+}
+
+def build_jvm_windows() {
+  unstash 'packages'
+  def cmakeOptions = [
+        CMAKE_GENERATOR_PLATFORM: 'x64',
+        CMAKE_BUILD_TYPE: 'Release',
+        REALM_ENABLE_SYNC: "ON",
+        CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+        CMAKE_SYSTEM_VERSION: '8.1',
+        REALM_NO_TESTS: '1',
+        VCPKG_TARGET_TRIPLET: 'x64-windows-static'
+      ]
+
+  def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
+  dir('packages') {
+      bat "cd cinterop\\src\\jvmMain\\windows && rmdir build-dir /s /q && mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
+  }
+  archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', allowEmptyArchive: true
+  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls'
 }
