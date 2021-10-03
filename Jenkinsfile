@@ -552,10 +552,11 @@ def build_jvm_linux() {
            cd build-dir
            cmake ..
            make -j8
+           ls -l
         """
 
-        archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,cinterop/src/jvmMain/linux/build-dir/librealmc.so', allowEmptyArchive: true
-        stash includes:"packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,cinterop/src/jvmMain/linux/build-dir/librealmc.so", name: 'linux_so_files'
+        archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', allowEmptyArchive: true
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files'
     }
 }
 
