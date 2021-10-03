@@ -337,7 +337,6 @@ fun Task.buildSharedLibrariesForJVM() {
         // build hash file
         genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
 
-
         // Only on CI
         if (System.getenv("JENKINS_HOME") != null) {
             // copy files (Linux)
@@ -383,7 +382,7 @@ fun genHashFile(platform: String, prefix: String, suffix: String) {
 
     """.trimIndent()
 
-    Paths.get(resourceDir, "macos", "dynamic_libraries.properties").also {
+    Paths.get(resourceDir, platform, "dynamic_libraries.properties").also {
         Files.writeString(it, macosHashes)
     }
 }
