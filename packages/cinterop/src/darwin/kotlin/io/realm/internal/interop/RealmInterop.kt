@@ -184,7 +184,13 @@ actual object RealmInterop {
         memScoped {
             val info = alloc<realm_version_id_t>()
             val found = alloc<BooleanVar>()
-            checkedBooleanResult(realm_wrapper.realm_get_version_id(realm.cptr(), found.ptr, info.ptr))
+            checkedBooleanResult(
+                realm_wrapper.realm_get_version_id(
+                    realm.cptr(),
+                    found.ptr,
+                    info.ptr
+                )
+            )
             return if (found.value) {
                 info.version.toLong()
             } else {
@@ -277,7 +283,10 @@ actual object RealmInterop {
         config: NativePointer,
         maxNumberOfVersions: Long
     ) {
-        realm_wrapper.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions.toULong())
+        realm_wrapper.realm_config_set_max_number_of_active_versions(
+            config.cptr(),
+            maxNumberOfVersions.toULong()
+        )
     }
 
     actual fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray) {
@@ -411,7 +420,12 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_object_create(realm.cptr(), classKey.key.toUInt()))
+        return CPointerWrapper(
+            realm_wrapper.realm_object_create(
+                realm.cptr(),
+                classKey.key.toUInt()
+            )
+        )
     }
 
     actual fun realm_object_create_with_primary_key(
@@ -736,7 +750,11 @@ actual object RealmInterop {
         return CPointerWrapper(ptr)
     }
 
-    actual fun realm_object_find_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer? {
+    actual fun realm_object_find_with_primary_key(
+        realm: NativePointer,
+        classKey: ClassKey,
+        primaryKey: Any?
+    ): NativePointer? {
         val ptr = memScoped {
             val found = alloc<BooleanVar>()
             realm_wrapper.realm_object_find_with_primary_key_by_ref(
@@ -887,11 +905,18 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
 
         // TODO add metadata mode to config
-        realm_wrapper.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
+        realm_wrapper.realm_sync_client_config_set_metadata_mode(
+            syncClientConfig,
+            realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
+        )
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
+    actual fun realm_app_log_in_with_credentials(
+        app: NativePointer,
+        credentials: NativePointer,
+        callback: CinteropCallback
+    ) {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
@@ -952,16 +977,24 @@ actual object RealmInterop {
                                     }
                                 }
 
-                    val cResponse: realm_http_response_t /* = realm_wrapper.realm_http_response */ = alloc<realm_http_response_t> {
-                        body = response.body.cstr.getPointer(memScope)
-                        body_size = response.body.cstr.getBytes().size.toULong()
-                        custom_status_code = response.customResponseCode
-                        status_code = response.httpResponseCode
-                        num_headers = response.headers.entries.size.toULong()
-                        headers = cResponseHeaders
+                                val cResponse: realm_http_response_t /* = realm_wrapper.realm_http_response */ =
+                                    alloc<realm_http_response_t> {
+                                        body = response.body.cstr.getPointer(memScope)
+                                        body_size = response.body.cstr.getBytes().size.toULong()
+                                        custom_status_code = response.customResponseCode
+                                        status_code = response.httpResponseCode
+                                        num_headers = response.headers.entries.size.toULong()
+                                        headers = cResponseHeaders
+                                    }
+                                println("capi-responding")
+                                callback?.invoke(completionData, cResponse.ptr)
+                                    ?: error("Callback should never be null")
+
+                                println("capi-responded")
+                            }
+                        }
                     }
-                    callback?.invoke(completionData, cResponse.ptr) ?: error("Callback should never be null")
-                }
+                )
             }
         }
     }
@@ -1007,18 +1040,33 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous())
     }
 
-    actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_username_password(username, password))
+    actual fun realm_app_credentials_new_username_password(
+        username: String,
+        password: String
+    ): NativePointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_app_credentials_new_username_password(
+                username,
+                password
+            )
+        )
     }
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
     }
-    actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
+
+    actual fun realm_sync_config_new(
+        user: NativePointer,
+        partition: String
+    ): NativePointer {
         TODO()
     }
 
-    private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {
+    private fun MemScope.classInfo(
+        realm: NativePointer,
+        table: String
+    ): realm_class_info_t {
         val found = alloc<BooleanVar>()
         val classInfo = alloc<realm_class_info_t>()
         checkedBooleanResult(
@@ -1075,7 +1123,8 @@ actual object RealmInterop {
             // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
             staticCFunction<COpaquePointer?, Unit> { userdata ->
                 // Must be thread safe
-                val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                val scheduler =
+                    userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                 printlntid("$scheduler notify")
                 try {
                     scheduler.notify()
@@ -1089,7 +1138,8 @@ actual object RealmInterop {
             // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
             staticCFunction<COpaquePointer?, Boolean> { userdata ->
                 // Must be thread safe
-                val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                val scheduler =
+                    userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                 printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
                 scheduler.threadId == tid()
             },
@@ -1109,9 +1159,15 @@ actual object RealmInterop {
             //     notify realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */) -> kotlin.Unit>>? */)
             staticCFunction { userdata, notify_callback_userdata, free_notify_callback_userdata, notify_callback ->
                 try {
-                    val scheduler = userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                    val scheduler =
+                        userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                     printlntid("set notify callback [$scheduler]: $notify_callback $notify_callback_userdata")
-                    scheduler.set_notify_callback(CoreCallback(notify_callback!!, notify_callback_userdata!!))
+                    scheduler.set_notify_callback(
+                        CoreCallback(
+                            notify_callback!!,
+                            notify_callback_userdata!!
+                        )
+                    )
                 } catch (e: Exception) {
                     // Should never happen, but is included for development to get some indicators
                     // on errors instead of silent crashes.
