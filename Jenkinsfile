@@ -251,8 +251,19 @@ def runScm() {
 
 def runBuild() {
     dir('packages') {
-        unstash name: 'linux_so_files-01'
-        unstash name: 'win_dlls-01'
+        try {
+            unstash name: 'linux_so_files-01'
+        } catch (error)  {
+            echo "error unstashing linux: ${error}"
+        }
+
+        try {
+            unstash name: 'win_dlls-01'
+        } catch (error)  {
+            echo "error unstashing windows: ${error}"
+        }
+        
+
     }
 
     withCredentials([
