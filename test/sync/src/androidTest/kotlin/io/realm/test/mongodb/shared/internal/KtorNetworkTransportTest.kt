@@ -80,7 +80,7 @@ internal class KtorNetworkTransportTest {
                 true
             )
             assertEquals(500, response.httpResponseCode, "$method failed")
-            assertEquals(0, response.customResponseCode,"$method failed")
+            assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-failure", response.body, "$method failed")
         }
     }
