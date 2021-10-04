@@ -19,6 +19,7 @@
 
 #include "realm.h"
 #include "env_utils.h"
+#include "java_class_global_def.hpp"
 #include "utils.h"
 
 realm_notification_token_t *
