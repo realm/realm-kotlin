@@ -56,7 +56,7 @@ class KtorNetworkTransport(
 ) : NetworkTransport {
 
     // FIXME Figure out how to reuse the HttpClient across all network requests.
-    // private val client: HttpClient = getClient()
+    private val clientCache: HttpClientCache = HttpClientCache(timeoutMs)
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")
     override fun sendRequest(
@@ -73,7 +73,7 @@ class KtorNetworkTransport(
             //  that some state isn't cleaned up correctly between requests, but
             //  it is unclear what. As a temporary work-around, we now create a
             //  HttpClient pr. request.
-            val client = getClient()
+            val client = clientCache.getClient()
 
             // FIXME Ensure background jobs does not block user/main thread
             //  https://github.com/realm/realm-kotlin/issues/450
@@ -162,41 +162,6 @@ class KtorNetworkTransport(
             "post" -> this.method = HttpMethod.Post
             "put" -> this.method = HttpMethod.Put
             "get" -> this.method = HttpMethod.Get
-        }
-    }
-
-    private fun getClient(): HttpClient {
-        // Need to freeze value as it is used inside the client's init lambda block, which also
-        // freezes captured objects too, see:
-        // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
-        val frozenTimeout = timeoutMs.freeze()
-        // TODO We probably need to fix the clients, so ktor does not automatically override with
-        //  another client if people update the runtime available ones through other dependencies
-        return HttpClient() {
-            // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
-
-            install(HttpTimeout) {
-                connectTimeoutMillis = frozenTimeout
-                requestTimeoutMillis = frozenTimeout
-                socketTimeoutMillis = frozenTimeout
-            }
-
-            // TODO figure out logging and obfuscating sensitive info
-            //  https://github.com/realm/realm-kotlin/issues/410
-            install(Logging) {
-                logger = object : Logger {
-                    // TODO Hook up with AppConfiguration/RealmConfiguration logger
-                    private val logger = createDefaultSystemLogger("realm-http")
-                    override fun log(message: String) {
-                        logger.log(io.realm.log.LogLevel.DEBUG, throwable = null, message = message)
-                    }
-                }
-                level = LogLevel.BODY
-            }
-
-            followRedirects = true
-
-            // TODO connectionPool?
         }
     }
 
