@@ -94,6 +94,7 @@ pipeline {
                 stage('SCM') {
                     steps {
                         runScm()
+                        setBuildDetails()
                     }
                 }
 
@@ -106,6 +107,9 @@ pipeline {
                               }
                           }
                           steps {
+                              // It is an order of magnitude faster to checkout the repo
+                              // rather then stashing/unstashing all files to build Linux and Win
+                              runScm()
                               build_jvm_linux()
                           }
                       }
@@ -116,6 +120,7 @@ pipeline {
                               }
                           }
                           steps {
+                            runScm()
                             build_jvm_windows()
                           }
                       }
@@ -226,7 +231,9 @@ def runScm() {
             extensions       : scm.extensions + repoExtensions,
             userRemoteConfigs: scm.userRemoteConfigs
     ])
+}
 
+def setBuildDetails() {
     // Check type of Build. We are treating this as a release build if we are building
     // the exact Git SHA that was tagged.
     gitTag = readGitTag()
@@ -246,7 +253,6 @@ def runScm() {
             publishBuild = true
         }
     }
-    stash includes: 'packages/**', name: 'packages'
 }
 
 def runBuild() {
@@ -540,7 +546,6 @@ def runCommand(String command){
 }
 
 def build_jvm_linux() {
-    unstash 'packages'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
         sh """
            cd packages/cinterop/src/jvmMain/linux/
@@ -556,7 +561,6 @@ def build_jvm_linux() {
 }
 
 def build_jvm_windows() {
-  unstash 'packages'
   def cmakeOptions = [
         CMAKE_GENERATOR_PLATFORM: 'x64',
         CMAKE_BUILD_TYPE: 'Release',
