@@ -554,7 +554,7 @@ def build_jvm_linux() {
         """
 
         archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', allowEmptyArchive: true
-        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files'
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files', allowEmptyArchive: true
     }
 }
 
@@ -575,5 +575,5 @@ def build_jvm_windows() {
       bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
   }
   archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', allowEmptyArchive: true
-  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls'
+  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls', allowEmptyArchive: true
 }
