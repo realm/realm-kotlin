@@ -38,7 +38,7 @@ interface App {
     companion object {
         /**
          * Create an [App] with default settings.
-         * @return
+         * @param appId The MongoDB Realm App ID.
          */
         fun create(appId: String): App {
             Validation.checkEmpty(appId, "appId")
