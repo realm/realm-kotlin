@@ -112,7 +112,7 @@ pipeline {
                       stage('build_jvm_windows') {
                           agent {
                               node {
-                                  label 'aws-windows-01'
+                                  label 'windows'
                               }
                           }
                           steps {
@@ -250,21 +250,8 @@ def runScm() {
 }
 
 def runBuild() {
-    dir('packages') {
-        try {
-            unstash name: 'linux_so_files-01'
-        } catch (error)  {
-            echo "error unstashing linux: ${error}"
-        }
-
-        try {
-            unstash name: 'win_dlls-01'
-        } catch (error)  {
-            echo "error unstashing windows: ${error}"
-        }
-        
-
-    }
+    unstash name: 'linux_so_files'
+    unstash name: 'win_dlls'
 
     withCredentials([
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
@@ -564,8 +551,7 @@ def build_jvm_linux() {
            make -j8
         """
 
-        archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', allowEmptyArchive: true
-        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files-01', allowEmptyArchive: true
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files', allowEmpty: true
     }
 }
 
@@ -585,6 +571,5 @@ def build_jvm_windows() {
   dir('packages') {
       bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
   }
-  archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', allowEmptyArchive: true
-  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls-01', allowEmptyArchive: true
+  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls', allowEmpty: true
 }
