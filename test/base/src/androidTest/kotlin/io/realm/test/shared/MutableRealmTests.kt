@@ -30,6 +30,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class MutableRealmTests {
 
@@ -61,6 +62,11 @@ class MutableRealmTests {
         val parents = realm.objects<Parent>()
         assertEquals(1, parents.size)
         assertEquals("N.N.", parents[0].name)
+    }
+
+    @Test
+    fun writeReturningUnmanaged() {
+        assertTrue(realm.writeBlocking { Parent() } is Parent)
     }
 
     @Test
