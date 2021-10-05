@@ -16,6 +16,7 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.util.Validation
 import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.AppImpl
 
@@ -36,10 +37,21 @@ interface App {
 
     companion object {
         /**
-         * TODO
+         * Create an [App] with default settings.
+         * @param appId The MongoDB Realm App ID.
          */
-        fun create(
-            configuration: AppConfiguration,
-        ): App = AppImpl(configuration as AppConfigurationImpl)
+        fun create(appId: String): App {
+            Validation.checkEmpty(appId, "appId")
+            return create(AppConfiguration.Builder(appId).build())
+        }
+
+        /**
+         * Create an [App] according to the given [AppConfiguration].
+         *
+         * @param configuration The configuration to use for this [App] instance.
+         * @see AppConfiguration.Builder
+         */
+        fun create(configuration: AppConfiguration): App =
+            AppImpl(configuration as AppConfigurationImpl)
     }
 }
