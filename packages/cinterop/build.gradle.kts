@@ -309,6 +309,8 @@ fun Task.buildSharedLibrariesForJVM() {
     group = "Build"
     description = "Compile dynamic libraries loaded by the JVM fat jar for supported platforms."
     val directory = "$buildDir/jvm_fat_jar_libs"
+    val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
+
     doLast {
         exec {
             commandLine("mkdir", "-p", directory)
@@ -338,7 +340,7 @@ fun Task.buildSharedLibrariesForJVM() {
         genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
 
         // Only on CI for Snapshots and Releases
-        if (System.getenv("JENKINS_HOME") != null && (System.getenv("BUILD_JVM_ABIS") != null)) {
+        if (copyJvmABIs) {
             // copy files (Linux)
             project.file("src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so")
                 .copyTo(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"), overwrite = true)
@@ -359,7 +361,7 @@ fun Task.buildSharedLibrariesForJVM() {
     outputs.file(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"))
     outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
 
-    if (System.getenv("JENKINS_HOME") != null && (System.getenv("BUILD_JVM_ABIS") != null)) {
+    if (copyJvmABIs) {
         outputs.file(project.file("src/jvmMain/resources/jni/linux/librealmc.so"))
         outputs.file(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"))
         outputs.file(project.file("src/jvmMain/resources/jni/linux/dynamic_libraries.properties"))
