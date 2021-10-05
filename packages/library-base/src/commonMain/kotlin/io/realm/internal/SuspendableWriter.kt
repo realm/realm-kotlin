@@ -82,8 +82,8 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
             val newDbPointer = RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-            // FIXME Should we actually rather just throw if we cannot freeze the result?
             val newReference = RealmReference(owner, newDbPointer)
+            // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {
                 result = freezeWriteReturnValue(newReference, result)
             }

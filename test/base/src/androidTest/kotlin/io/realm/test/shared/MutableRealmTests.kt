@@ -162,9 +162,7 @@ class MutableRealmTests {
             val child = realm.write { copyToRealm(Child()) }
             for (i in 1..10) {
                 realm.write {
-                    findLatest(child)?.apply {
-                        this.name = i.toString()
-                    }
+                    assertNotNull(findLatest(child))
                 }
                 delay(100)
             }
