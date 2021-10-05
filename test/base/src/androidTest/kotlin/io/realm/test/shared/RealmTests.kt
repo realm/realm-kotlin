@@ -423,6 +423,7 @@ class RealmTests {
     // TODO Investigate why clearing local object variable does not trigger collection of
     //  reference on Native. Could just be that the GC somehow does not collect this when
     //  cleared due some thresholds or outcome of GC not being predictable.
+    //  https://github.com/realm/realm-kotlin/issues/486
     @Ignore
     fun clearingRealmObjectReleasesRealmReference() {
         assertEquals(0, intermediateReferences.value.size)
