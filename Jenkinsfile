@@ -107,10 +107,6 @@ pipeline {
                                   label 'docker'
                               }
                           }
-                          environment {
-                              // set env variable for Gradle build to skip or proceed with copying Linux/Win files
-                              BUILD_JVM_ABIS = 'true'
-                          }
                           steps {
                               // It is an order of magnitude faster to checkout the repo
                               // rather then stashing/unstashing all files to build Linux and Win
@@ -124,9 +120,6 @@ pipeline {
                               node {
                                   label 'windows'
                               }
-                          }
-                          environment {
-                             BUILD_JVM_ABIS = 'true'
                           }
                           steps {
                             runScm()
@@ -265,9 +258,11 @@ def setBuildDetails() {
 }
 
 def runBuild() {
+    def buildJvmAbiFlag = "-PcopyJvmABIs=false"
     if (shouldBuildJvmABIs()) {
         unstash name: 'linux_so_files'
         unstash name: 'win_dlls'
+        buildJvmAbiFlag = "-PcopyJvmABIs=true"
     }
 
     withCredentials([
@@ -278,7 +273,7 @@ def runBuild() {
             startEmulatorInBgIfNeeded()
             def signingFlags = ""
             if (isReleaseBranch) {
-                signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
+                signingFlags = "${buildJvmAbiFlag} -PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
             }
             sh """
                   cd packages
