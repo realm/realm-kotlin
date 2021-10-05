@@ -409,7 +409,7 @@ class RealmTests {
 
         // Trigger GC - On native we also need to trigger GC on the background thread that creates
         // the references
-        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher){
+        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
             triggerGC()
         }
         triggerGC()
@@ -420,15 +420,16 @@ class RealmTests {
     }
 
     @Test
-    @Ignore // Clearing local object variable does not trigger collection of reference
-    fun closingIntermediateVersionsWhenNoLongerReferencedByRemoteObject() {
+    // TODO Investigate why clearing local object variable does not trigger collection of
+    //  reference on Native. Could just be that the GC somehow does not collect this when
+    //  cleared due some thresholds or outcome of GC not being predictable.
+    @Ignore
+    fun closingIntermediateVersionsWhenNoLongerReferencedByLocalObject() {
         assertEquals(0, intermediateReferences.value.size)
-        // TODO For some reason cleaning up doesn't work if we have a local reference and clears it.
-        //  The below code creates the object without returning it from write to show that the
-        //  issue is not bound to the freezing inside write, but also happens in a single thread.
-        //  Could just be that the GC somehow does not collect this when cleared due some
-        //  thresholds.
-        realm.writeBlocking { copyToRealm(Parent()); Unit}
+        // The below code creates the object without returning it from write to show that the
+        // issue is not bound to the freezing inside write, but also happens on the same thread as
+        // the realm is constructed on.
+        realm.writeBlocking { copyToRealm(Parent()); Unit }
         var parent: Parent? = realm.objects<Parent>()!!.first()
         assertEquals(1, intermediateReferences.value.size)
         realm.writeBlocking { }
@@ -441,7 +442,7 @@ class RealmTests {
 
         // Trigger GC - On native we also need to trigger GC on the background thread that creates
         // the references
-        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher){
+        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
             triggerGC()
         }
         triggerGC()
