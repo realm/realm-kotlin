@@ -273,11 +273,11 @@ def runBuild() {
             startEmulatorInBgIfNeeded()
             def signingFlags = ""
             if (isReleaseBranch) {
-                signingFlags = "${buildJvmAbiFlag} -PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
+                signingFlags = "-PsignBuild=true -PsignSecretRingFileKotlin=\"${env.SIGN_KEY}\" -PsignPasswordKotlin=${env.SIGN_KEY_PASSWORD}"
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew assemble ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
