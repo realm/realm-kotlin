@@ -101,12 +101,19 @@ pipeline {
                 stage('build-jvm-native-libs') {
                     parallel{
                       stage('build_jvm_linux') {
+                          when { expression { shouldBuildJvmABIs() } }
                           agent {
                               node {
                                   label 'docker'
                               }
                           }
+                          environment {
+                              BUILD_JVM_ABIS = 'false'
+                          }
                           steps {
+                              script {
+                                  env.BUILD_JVM_ABIS = 'true'
+                              }
                               // It is an order of magnitude faster to checkout the repo
                               // rather then stashing/unstashing all files to build Linux and Win
                               runScm()
@@ -114,12 +121,19 @@ pipeline {
                           }
                       }
                       stage('build_jvm_windows') {
+                          when { expression { shouldBuildJvmABIs() } }
                           agent {
                               node {
                                   label 'windows'
                               }
                           }
+                          environment {
+                             BUILD_JVM_ABIS = 'false'
+                          }
                           steps {
+                            script {
+                                env.BUILD_JVM_ABIS = 'true'
+                            }
                             runScm()
                             build_jvm_windows()
                           }
@@ -545,6 +559,11 @@ def runCommand(String command){
   return sh(script: command, returnStdout: true).trim()
 }
 
+def shouldBuildJvmABIs() {
+    if (publishBuild || shouldPublishSnapshot(version)) return true else return false
+}
+
+// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
 def build_jvm_linux() {
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
         sh """
@@ -556,7 +575,7 @@ def build_jvm_linux() {
            make -j8
         """
 
-        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files', allowEmpty: true
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files'
     }
 }
 
@@ -575,5 +594,5 @@ def build_jvm_windows() {
   dir('packages') {
       bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
   }
-  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls', allowEmpty: true
+  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls'
 }

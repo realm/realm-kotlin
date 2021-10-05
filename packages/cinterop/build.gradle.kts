@@ -338,7 +338,9 @@ fun Task.buildSharedLibrariesForJVM() {
         genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
 
         // Only on CI
-        if (System.getenv("JENKINS_HOME") != null) {
+        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> System.getenv(\"JENKINS_HOME\") = ${System.getenv("JENKINS_HOME")}")
+        println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> System.getenv(\"BUILD_JVM_ABIS\") = ${System.getenv("BUILD_JVM_ABIS")}")
+        if (System.getenv("JENKINS_HOME") != null && (System.getenv("BUILD_JVM_ABIS") == "true")) {
             // copy files (Linux)
             project.file("src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so")
                 .copyTo(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"), overwrite = true)
@@ -359,7 +361,7 @@ fun Task.buildSharedLibrariesForJVM() {
     outputs.file(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"))
     outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
 
-    if (System.getenv("JENKINS_HOME") != null) {
+    if (System.getenv("JENKINS_HOME") != null && (System.getenv("BUILD_JVM_ABIS") == "true")) {
         outputs.file(project.file("src/jvmMain/resources/jni/linux/librealmc.so"))
         outputs.file(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"))
         outputs.file(project.file("src/jvmMain/resources/jni/linux/dynamic_libraries.properties"))
