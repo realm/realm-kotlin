@@ -1,5 +1,6 @@
 package io.realm.internal.platform
 
+import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 
 /**
@@ -10,7 +11,7 @@ expect fun appFilesDirectory(): String
 /**
  * Returns the default logger for the platform.
  */
-expect fun createDefaultSystemLogger(tag: String): RealmLogger
+expect fun createDefaultSystemLogger(tag: String, logLevel: LogLevel = LogLevel.NONE): RealmLogger
 
 /**
  * Method to freeze state.

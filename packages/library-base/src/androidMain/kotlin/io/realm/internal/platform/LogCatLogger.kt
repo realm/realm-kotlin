@@ -28,7 +28,10 @@ import java.util.Locale
  * Credit to https://github.com/JakeWharton/timber/blob/master/timber/src/main/java/timber/log/Timber.kt
  * for message creation and formatting
  */
-internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
+internal class LogCatLogger(
+    override val tag: String = "REALM",
+    override val level: LogLevel
+) : RealmLogger {
 
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val priority: Int = level.priority
@@ -39,7 +42,8 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
             if (level.priority == LogLevel.WTF.priority) {
                 Log.wtf(tag, logMessage)
             } else {
-                Log.println(priority, tag, logMessage)
+                // Do not use "priority" here since our values don't match Android's
+                Log.println(Log.INFO, tag, logMessage)
             }
             return
         }
@@ -56,7 +60,8 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
                 if (priority == Log.ASSERT) {
                     Log.wtf(tag, part)
                 } else {
-                    Log.println(priority, tag, part)
+                    // Do not use "priority" here since our values don't match Android's
+                    Log.println(Log.INFO, tag, part)
                 }
                 i = end
             } while (i < newline)
@@ -64,22 +69,26 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
         }
     }
 
-    private fun prepareLogMessage(throwable: Throwable?, message: String?, vararg args: Any?): String {
-        var message = message
-        if (message.isNullOrEmpty()) {
+    private fun prepareLogMessage(
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?
+    ): String {
+        var messageToLog = message
+        if (messageToLog.isNullOrEmpty()) {
             if (throwable == null) {
                 return ""
             }
-            message = getStackTraceString(throwable)
+            messageToLog = getStackTraceString(throwable)
         } else {
             if (args.isNotEmpty()) {
-                message = formatMessage(message, *args)
+                messageToLog = formatMessage(messageToLog, *args)
             }
             if (throwable != null) {
-                message += "\n" + getStackTraceString(throwable)
+                messageToLog += "\n" + getStackTraceString(throwable)
             }
         }
-        return message
+        return messageToLog
     }
 
     private fun formatMessage(message: String, vararg args: Any?): String {

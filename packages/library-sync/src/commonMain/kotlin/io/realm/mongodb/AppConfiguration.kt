@@ -17,6 +17,7 @@
 package io.realm.mongodb
 
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.log.LogLevel
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -32,6 +33,7 @@ interface AppConfiguration {
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     val baseUrl: String
+    val logLevel: LogLevel
     val networkTransportDispatcher: CoroutineDispatcher
 
     companion object {
@@ -59,6 +61,7 @@ interface AppConfiguration {
     ) {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId") // TODO
+        private var logLevel: LogLevel = LogLevel.NONE // TODO what should this value be?
 
         /**
          * Sets the base url for the MongoDB Realm Application. The default value is
@@ -74,6 +77,11 @@ interface AppConfiguration {
         fun dispatcher(dispatcher: CoroutineDispatcher) = apply { this.dispatcher = dispatcher }
 
         /**
+         * TODO
+         */
+        fun logLevel(logLevel: LogLevel) = apply { this.logLevel = logLevel }
+
+        /**
          * Creates the AppConfiguration from the properties of the builder.
          *
          * @return the AppConfiguration that can be used to create a [App].
@@ -81,6 +89,7 @@ interface AppConfiguration {
         fun build(): AppConfiguration = AppConfigurationImpl(
             appId = appId,
             baseUrl = baseUrl,
+            logLevel = logLevel,
             networkTransportDispatcher = dispatcher
         )
     }

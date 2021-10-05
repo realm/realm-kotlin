@@ -17,10 +17,12 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.CoreLogger
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.util.Validation
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -32,11 +34,18 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val nativePointer: NativePointer = RealmInterop.realm_app_new(
-        appConfig = configuration.nativePointer,
-        syncClientConfig = RealmInterop.realm_sync_client_config_new(),
-        basePath = appFilesDirectory()
-    )
+    private val loggerFactory: () -> CoreLogger = {
+        val createDefaultSystemLogger = createDefaultSystemLogger("SYNC", configuration.logLevel)
+        createDefaultSystemLogger
+    }
+
+    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
+        .also {
+            RealmInterop.realm_sync_client_config_set_logger_factory(it, loggerFactory)
+            RealmInterop.realm_sync_client_config_set_log_level(it, configuration.logLevel.priority)
+        }.let {
+            RealmInterop.realm_app_new(configuration.nativePointer, it, appFilesDirectory())
+        }
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->

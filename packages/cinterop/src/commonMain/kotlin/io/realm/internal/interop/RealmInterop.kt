@@ -31,6 +31,21 @@ value class ClassKey(val key: Long)
 @JvmInline
 value class ColumnKey(val key: Long)
 
+expect enum class CoreLogLevel {
+    RLM_LOG_LEVEL_ALL,
+    RLM_LOG_LEVEL_TRACE,
+    RLM_LOG_LEVEL_DEBUG,
+    RLM_LOG_LEVEL_DETAIL,
+    RLM_LOG_LEVEL_INFO,
+    RLM_LOG_LEVEL_WARNING,
+    RLM_LOG_LEVEL_ERROR,
+    RLM_LOG_LEVEL_FATAL,
+    RLM_LOG_LEVEL_OFF;
+
+    // We need this property since it isn't allowed to have constructor params in an expect enum
+    val value: Int
+}
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
 
@@ -147,6 +162,11 @@ expect object RealmInterop {
 
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer
+    fun realm_sync_client_config_set_logger_factory(
+        syncClientConfig: NativePointer,
+        loggerFactory: () -> CoreLogger
+    )
+    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer

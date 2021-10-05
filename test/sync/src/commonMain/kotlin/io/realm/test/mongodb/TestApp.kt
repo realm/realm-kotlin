@@ -21,6 +21,7 @@ package io.realm.test.mongodb
 import io.ktor.client.request.get
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
 import io.realm.test.mongodb.util.AdminApi
@@ -39,8 +40,9 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
 class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    appId: String = runBlocking(dispatcher) { getAppId(appName) }
-) : App by App.create(AppConfiguration.Builder(appId).baseUrl(TEST_SERVER_BASE_URL).dispatcher(dispatcher).build()),
+    appId: String = runBlocking(dispatcher) { getAppId(appName) },
+    logLevel: LogLevel = LogLevel.DEBUG
+) : App by App.create(AppConfiguration.Builder(appId).baseUrl(TEST_SERVER_BASE_URL).dispatcher(dispatcher).logLevel(logLevel).build()),
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, dispatcher) }) {
 
     fun close() {

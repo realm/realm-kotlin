@@ -1,5 +1,5 @@
 package io.realm.internal.interop
 
-public interface CoreLogger {
+interface CoreLogger {
     fun log(level: Short, message: String)
 }

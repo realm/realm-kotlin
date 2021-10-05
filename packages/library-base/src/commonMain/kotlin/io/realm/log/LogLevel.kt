@@ -1,6 +1,9 @@
 package io.realm.log
 
 import io.realm.RealmConfiguration
+import io.realm.internal.interop.CoreLogLevel
+import io.realm.log.LogLevel.TRACE
+import io.realm.log.LogLevel.WTF
 
 /**
  * Enum describing the log levels available to Realms internal logger.
@@ -11,13 +14,14 @@ import io.realm.RealmConfiguration
  * @see RealmConfiguration.Builder.log
  */
 @Suppress("MagicNumber")
-public enum class LogLevel(internal val priority: Int) {
-    ALL(0),
-    TRACE(1),
-    DEBUG(2),
-    INFO(3),
-    WARN(4),
-    ERROR(5),
-    WTF(6),
-    NONE(7)
+enum class LogLevel(val priority: Int) {
+    ALL(CoreLogLevel.RLM_LOG_LEVEL_ALL.value),
+    TRACE(CoreLogLevel.RLM_LOG_LEVEL_TRACE.value),
+    DEBUG(CoreLogLevel.RLM_LOG_LEVEL_DEBUG.value),
+    DETAIL(CoreLogLevel.RLM_LOG_LEVEL_DETAIL.value),
+    INFO(CoreLogLevel.RLM_LOG_LEVEL_INFO.value),
+    WARN(CoreLogLevel.RLM_LOG_LEVEL_WARNING.value),
+    ERROR(CoreLogLevel.RLM_LOG_LEVEL_ERROR.value),
+    WTF(CoreLogLevel.RLM_LOG_LEVEL_FATAL.value),
+    NONE(CoreLogLevel.RLM_LOG_LEVEL_OFF.value)
 }

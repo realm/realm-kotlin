@@ -389,7 +389,7 @@ static void network_request_lambda_function(void *userdata, // Network transport
     auto jenv = get_env(true);
 
     // Initialize pointer to JVM class and methods
-    jobject network_transport = static_cast<jobject>(userdata);
+    auto network_transport = static_cast<jobject>(userdata);
 
     try {
         jobject j_response = send_request_via_jvm_transport(jenv, network_transport, request);
@@ -410,9 +410,76 @@ static void network_request_lambda_function(void *userdata, // Network transport
 realm_http_transport_t *realm_network_transport_new(jobject network_transport) {
     auto jenv = get_env(false); // Always called from JVM
     return realm_http_transport_new(jenv->NewGlobalRef(network_transport),
-            [](void *userdata) {
-                get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-            },
-            &network_request_lambda_function);
+                                    [](void *userdata) {
+                                        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                    },
+                                    &network_request_lambda_function);
+}
 
+static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_level_e level) {
+    JNIEnv* jenv = get_env(true);
+    auto logger_factory = static_cast<jobject>(userdata);
+
+    static jmethodID get_logger_factory_method = lookup(jenv, "kotlin/jvm/functions/Function0", "invoke", "()Ljava/lang/Object;");
+    jobject logger_ref = jenv->CallObjectMethod(logger_factory, get_logger_factory_method);
+    jobject global_logger_ref = jenv->NewGlobalRef(logger_ref); // FIXME: Cleanup
+
+    return realm_logger_new([](void* userdata, realm_log_level_e level, const char* message) {
+                                auto logger = static_cast<jobject>(userdata);
+                                auto jenv = get_env(true);
+                                static jmethodID get_logger_log_method = lookup(jenv, "io/realm/log/RealmLogger", "log", "(SLjava/lang/String;)V");
+                                jenv->CallVoidMethod(logger, get_logger_log_method, level, to_jstring(jenv, message));
+                            },
+                            [](void* userdata) {
+                                auto logger = static_cast<jobject>(userdata);
+                                auto jenv = get_env(true);
+
+                                static jclass realm_logger_class = jenv->FindClass("io/realm/log/RealmLogger");
+                                static jmethodID get_log_level_method = jenv->GetMethodID(realm_logger_class, "getLevel", "()Lio/realm/log/LogLevel;");
+                                static jclass log_level_class = jenv->FindClass("io/realm/log/LogLevel");
+                                static jmethodID get_priority_method = jenv->GetMethodID(log_level_class, "getPriority", "()I");
+
+//                                jmethodID get_log_level_method = lookup(jenv, "io/realm/log/RealmLogger", "getLevel", "()Lio/realm/log/RealmLogger;");
+                                jobject log_level = jenv->CallObjectMethod(logger, get_log_level_method);
+//                                jmethodID get_priority_method = lookup(jenv, "io/realm/log/LogLeve", "getPriority", "()I");
+                                jint j_log_level = jenv->CallIntMethod(log_level, get_priority_method);
+                                if (j_log_level == RLM_LOG_LEVEL_ALL) {
+                                    return RLM_LOG_LEVEL_ALL;
+                                } else if (j_log_level == RLM_LOG_LEVEL_TRACE) {
+                                    return RLM_LOG_LEVEL_TRACE;
+                                } else if (j_log_level == RLM_LOG_LEVEL_DEBUG) {
+                                    return RLM_LOG_LEVEL_DEBUG;
+                                } else if (j_log_level == RLM_LOG_LEVEL_DETAIL) {
+                                    return RLM_LOG_LEVEL_DETAIL;
+                                } else if (j_log_level == RLM_LOG_LEVEL_INFO) {
+                                    return RLM_LOG_LEVEL_INFO;
+                                } else if (j_log_level == RLM_LOG_LEVEL_WARNING) {
+                                    return RLM_LOG_LEVEL_WARNING;
+                                } else if (j_log_level == RLM_LOG_LEVEL_ERROR) {
+                                    return RLM_LOG_LEVEL_ERROR;
+                                } else if (j_log_level == RLM_LOG_LEVEL_FATAL) {
+                                    return RLM_LOG_LEVEL_FATAL;
+                                } else if (j_log_level == RLM_LOG_LEVEL_OFF) {
+                                    return RLM_LOG_LEVEL_OFF;
+                                }
+                                return RLM_LOG_LEVEL_OFF;
+                            },
+                            global_logger_ref,
+                            [](void* userdata) {
+                                get_env(true)->DeleteGlobalRef(
+                                        static_cast<jobject>(userdata));
+                            });
+}
+
+void
+sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_factory) {
+    auto jenv = get_env();
+    return realm_sync_client_config_set_logger_factory(sync_config,
+                                                       &new_logger_lambda_function,
+                                                       static_cast<jobject>(jenv->NewGlobalRef(logger_factory)),
+                                                       [](void *userdata) {
+                                                           get_env(true)->DeleteGlobalRef(
+                                                                   static_cast<jobject>(userdata));
+                                                       }
+    );
 }
