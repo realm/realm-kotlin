@@ -398,7 +398,7 @@ class RealmTests {
     }
 
     @Test
-    fun closingIntermediateVersionsWhenNoLongerReferenced() {
+    fun intermediateVersionsReleaseWhenProgressingRealm() {
         assertEquals(0, intermediateReferences.value.size)
         realm.writeBlocking { }
         assertEquals(1, intermediateReferences.value.size)
@@ -424,7 +424,7 @@ class RealmTests {
     //  reference on Native. Could just be that the GC somehow does not collect this when
     //  cleared due some thresholds or outcome of GC not being predictable.
     @Ignore
-    fun closingIntermediateVersionsWhenNoLongerReferencedByLocalObject() {
+    fun clearingRealmObjectReleasesRealmReference() {
         assertEquals(0, intermediateReferences.value.size)
         // The below code creates the object without returning it from write to show that the
         // issue is not bound to the freezing inside write, but also happens on the same thread as
@@ -437,9 +437,6 @@ class RealmTests {
         realm.writeBlocking { }
         assertEquals(3, intermediateReferences.value.size)
 
-        // Clear reference
-        parent = null
-
         // Trigger GC - On native we also need to trigger GC on the background thread that creates
         // the references
         runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
@@ -449,6 +446,20 @@ class RealmTests {
 
         // Close of intermediate version is currently only done when updating the realm after a write
         realm.writeBlocking { }
+        // We still have the single intermediate reference as a result of the write itself
+        // and the reference kept alive by the realm object
+        assertEquals(2, intermediateReferences.value.size)
+
+        // Clear reference
+        parent = null
+
+        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
+            triggerGC()
+        }
+        triggerGC()
+
+        realm.writeBlocking { }
+        // Clearing the realm object reference allowed clearing the corresponding reference
         assertEquals(1, intermediateReferences.value.size)
     }
 
