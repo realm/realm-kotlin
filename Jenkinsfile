@@ -108,12 +108,10 @@ pipeline {
                               }
                           }
                           environment {
-                              BUILD_JVM_ABIS = 'false'
+                              // set env variable for Gradle build to skip or proceed with copying Linux/Win files
+                              BUILD_JVM_ABIS = 'true'
                           }
                           steps {
-                              script {
-                                  env.BUILD_JVM_ABIS = 'true'
-                              }
                               // It is an order of magnitude faster to checkout the repo
                               // rather then stashing/unstashing all files to build Linux and Win
                               runScm()
@@ -128,12 +126,9 @@ pipeline {
                               }
                           }
                           environment {
-                             BUILD_JVM_ABIS = 'false'
+                             BUILD_JVM_ABIS = 'true'
                           }
                           steps {
-                            script {
-                                env.BUILD_JVM_ABIS = 'true'
-                            }
                             runScm()
                             build_jvm_windows()
                           }
@@ -270,8 +265,10 @@ def setBuildDetails() {
 }
 
 def runBuild() {
-    unstash name: 'linux_so_files'
-    unstash name: 'win_dlls'
+    if (shouldBuildJvmABIs()) {
+        unstash name: 'linux_so_files'
+        unstash name: 'win_dlls'
+    }
 
     withCredentials([
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
