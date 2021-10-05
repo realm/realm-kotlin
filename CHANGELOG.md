@@ -18,7 +18,7 @@
 * Added support for marking a field as indexed with `@Index`
 
 ### Fixed
-* None.
+* Fixed null pointer exceptions when returning an unmanaged object from `MutableRealm.write/writeBlocking`.
 
 ### Compatibility
 * This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
