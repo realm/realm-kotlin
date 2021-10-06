@@ -19,6 +19,7 @@
 
 ### Fixed
 * Fixed null pointer exceptions when returning an unmanaged object from `MutableRealm.write/writeBlocking`.
+* Fixed premature closing of underlying realm of frozen objects returned from `MutableRealm.write/writeBlocking`. (Issue [#477](https://github.com/realm/realm-kotlin/issues/477))
 
 ### Compatibility
 * This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.

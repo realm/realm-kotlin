@@ -23,6 +23,8 @@ import io.realm.entities.link.Parent
 import io.realm.objects
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.createRandomString
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -150,6 +152,19 @@ class MutableRealmTests {
         realm.writeBlocking {
             assertFailsWith<IllegalArgumentException> {
                 val latest = findLatest(StringPropertyWithPrimaryKey())
+            }
+        }
+    }
+
+    @Test
+    fun findLatest_inLongHistory() {
+        runBlocking {
+            val child = realm.write { copyToRealm(Child()) }
+            for (i in 1..10) {
+                realm.write {
+                    assertNotNull(findLatest(child))
+                }
+                delay(100)
             }
         }
     }
