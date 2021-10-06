@@ -24,7 +24,7 @@
 ### Compatibility
 * This release is compatible with:
   * Kotlin 1.5.31
-  * Coroutines 1.5.2
+  * Coroutines 1.5.2-native-mt
   * AtomicFu 0.16.3
 
 ### Internal
