@@ -398,6 +398,9 @@ class RealmTests {
     }
 
     @Test
+    // TODO Non deterministic.
+    //  https://github.com/realm/realm-kotlin/issues/486
+    @Ignore
     fun intermediateVersionsReleaseWhenProgressingRealm() {
         assertEquals(0, intermediateReferences.value.size)
         realm.writeBlocking { }
