@@ -73,10 +73,12 @@ class GenerationExtensionTest {
         ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
-            stripInputPath(File("${outputDir()}/00_ValidateIrBeforeLowering.ir"), fileMap)
+            // TODO Quick fix: Investigate where 'main' part suddenly came from with Kotlin 1.5.31
+            stripInputPath(File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir"), fileMap)
             assertEquals(
                 File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
-                File("${outputDir()}/00_ValidateIrBeforeLowering.ir").readText()
+                // TODO Quick fix: Investigate where 'main' part suddenly came from with Kotlin 1.5.31
+                File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir").readText()
             )
         }
     }
