@@ -384,7 +384,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             irBlock {
                                 val temporary = scope.createTemporaryVariableDeclaration(
                                     cinteropCall.type,
-                                    "core",
+                                    "coreValue",
                                     false
                                 ).apply { initializer = cinteropCall }
                                 +createSafeCallConstruction(
@@ -440,20 +440,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                     putValueArgument(0, irGet(receiver))
                                     putValueArgument(1, irString(property.name.identifier))
                                     val argumentExpression = if (functionTypeToLong != null) {
-                                        /*
-                                        irCall(functionTypeToLong).also {
-                                            it.dispatchReceiver = irGet(setter.valueParameters.first())
-                                            HERE
-                                        }
-
-                                         */
                                         irIfNull(
                                             pluginContext.irBuiltIns.longType.makeNullable(),
-                                            // Condition
                                             irGet(setter.valueParameters.first()),
-                                            // If null
                                             irNull(),
-                                            // If non-null
                                             irCall(functionTypeToLong).also {
                                                 it.dispatchReceiver =
                                                     irGet(setter.valueParameters.first())

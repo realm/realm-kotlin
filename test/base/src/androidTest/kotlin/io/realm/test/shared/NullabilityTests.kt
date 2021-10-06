@@ -81,10 +81,10 @@ class NullabilityTests {
 
     @Test
     fun safeNullGetterAndSetter() {
-        val nullableFieldTypes: MutableSet<KClassifier> = TypeDescriptor.allSingularFieldTypes.map { it.elementType }.filter { it.nullable }
-            .map { it.classifier }.toMutableSet()
-
         realm.writeBlocking {
+            val nullableFieldTypes: MutableSet<KClassifier> = TypeDescriptor.allSingularFieldTypes.map { it.elementType }.filter { it.nullable }
+                .map { it.classifier }.toMutableSet()
+
             copyToRealm(Nullability()).also { nullableProp ->
                 fun <T> testProperty(property: KMutableProperty1<Nullability, T?>, value: T) {
                     assertNull(property.get(nullableProp))
@@ -104,7 +104,9 @@ class NullabilityTests {
                 testProperty(Nullability::floatNullable, 123.456f)
                 testProperty(Nullability::doubleField, 123.456)
                 testProperty(Nullability::objectField, null)
-                // hack! removing it manually
+                // Manually removing RealmObject as nullableFieldTypes is not referencing the
+                // explicit subtype (Nullability). Don't know how to make the linkage without
+                // so it also works on Native.
                 nullableFieldTypes.remove(io.realm.RealmObject::class)
             }
             assertTrue(nullableFieldTypes.isEmpty(), "Untested fields: $nullableFieldTypes")
