@@ -22,10 +22,14 @@
 * Fixed premature closing of underlying realm of frozen objects returned from `MutableRealm.write/writeBlocking`. (Issue [#477](https://github.com/realm/realm-kotlin/issues/477))
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2
+  * AtomicFu 0.16.3
 
 ### Internal
 * Updated to Realm Core commit: 028626880253a62d1c936eed4ef73af80b64b71
+* Updated to Kotlin 1.5.31.
 
 
 ## 0.5.0 (2021-08-20)
