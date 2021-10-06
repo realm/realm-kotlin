@@ -17,7 +17,6 @@ include_directories(${CAPI_BUILD}/src jni)
 
 file(GLOB jni_SRC
         "jni/env_utils.cpp"
-        "jni/realm_api_helpers.cpp"
         "jni/utils.cpp"
         )
 

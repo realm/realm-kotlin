@@ -42,12 +42,12 @@ import io.realm.internal.freeze as freezeTyped
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
-
     private val tid: ULong
-    // Must only be accessed from the dispatchers thread
-    private val realm: MutableRealmImpl by lazy {
+    private val realmInitializer = lazy {
         MutableRealmImpl(owner.configuration, dispatcher)
     }
+    // Must only be accessed from the dispatchers thread
+    private val realm: MutableRealmImpl by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
 
@@ -114,7 +114,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         // How to test for managed results?
         return when (result) {
             // is RealmResults<*> -> return result.owner != null
-            is RealmObject -> return result is RealmObjectInternal
+            is RealmObject -> return result is RealmObjectInternal && result.`$realm$IsManaged`
             else -> false
         }
     }
@@ -144,7 +144,11 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // which will itself prevent other transactions to start as the dispatcher can only run
             // a single job at a time
             withContext(dispatcher) {
-                realm.close()
+                if (realmInitializer.isInitialized()) {
+                    // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
+                    // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
+                    realm.close()
+                }
             }
         }
     }

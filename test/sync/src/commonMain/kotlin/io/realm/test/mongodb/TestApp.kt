@@ -22,7 +22,7 @@ import io.ktor.client.request.get
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.App
-import io.realm.mongodb.appConfigurationOf
+import io.realm.mongodb.AppConfiguration
 import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
@@ -41,7 +41,7 @@ class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     appId: String = runBlocking(dispatcher) { getAppId(appName) }
-) : App by App.create(appConfigurationOf(appId, TEST_SERVER_BASE_URL, dispatcher)),
+) : App by App.create(AppConfiguration.Builder(appId).baseUrl(TEST_SERVER_BASE_URL).dispatcher(dispatcher).build()),
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, dispatcher) }) {
 
     fun close() {
