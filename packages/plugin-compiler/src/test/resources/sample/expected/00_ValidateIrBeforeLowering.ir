@@ -1,4 +1,4 @@
--- IR for <main> after Validate IR before lowering
+// --- IR for <main> after Validate IR before lowering
 MODULE_FRAGMENT name:<main>
   FILE fqName:sample.input fileName:input/Sample.kt
     CLASS CLASS name:Sample modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]
