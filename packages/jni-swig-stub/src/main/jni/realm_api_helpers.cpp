@@ -472,3 +472,49 @@ sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_f
                                                        }
     );
 }
+
+jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
+    static JavaMethod pointer_wrapper_constructor(jenv,
+                                                  JavaClassGlobalDef::long_pointer_wrapper(),
+                                                  "<init>",
+                                                  "(JZ)V");
+    return jenv->NewObject(JavaClassGlobalDef::long_pointer_wrapper(),
+                           pointer_wrapper_constructor,
+                           pointer,
+                           managed);
+}
+
+jobject convert_exception(JNIEnv* jenv, realm_error_t &error) {
+    static JavaMethod pointer_wrapper_constructor(jenv,
+                                                  JavaClassGlobalDef::app_exception(),
+                                                  "<init>",
+                                                  "()V");
+    return jenv->NewObject(JavaClassGlobalDef::app_exception(),
+                           pointer_wrapper_constructor);
+}
+
+void
+sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler){
+    realm_sync_config_set_error_handler(sync_config,
+                                        [](void* userdata, const realm_sync_session_t *session, realm_error_t error) {
+                                            auto jenv = get_env(true);
+
+                                            jobject session_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(session));
+                                            jobject app_exception = convert_exception(jenv, error);
+
+                                            static JavaMethod function2_invoke(jenv,
+                                                                               JavaClassGlobalDef::kotlin_function2(),
+                                                                               "invoke",
+                                                                               "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+                                            jenv->CallObjectMethod(static_cast<jobject>(userdata), // Function0 type
+                                                                 function2_invoke,
+                                                                 session_pointer_wrapper,
+                                                                 app_exception);
+                                        },
+                                        static_cast<jobject>(get_env()->NewGlobalRef(error_handler)),
+                                        [](void *userdata) {
+                                            get_env(true)->DeleteGlobalRef(
+                                                    static_cast<jobject>(userdata));
+                                        });
+}

@@ -19,6 +19,7 @@ package io.realm.internal.interop
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.mongodb.AppException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -490,6 +491,13 @@ actual object RealmInterop {
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
+    }
+
+    actual fun realm_sync_set_error_handler(
+        syncConfig: NativePointer,
+        errorHandler: (syncSession: NativePointer, error: AppException) -> Unit
+    ) {
+        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
     }
 
     actual fun realm_app_config_new(

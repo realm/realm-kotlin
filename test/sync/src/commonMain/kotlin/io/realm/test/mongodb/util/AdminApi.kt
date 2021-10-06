@@ -25,13 +25,13 @@ import io.ktor.client.request.post
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
-import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
+import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.http.contentType
+import io.ktor.http.HttpMethod.Companion.Patch
 import io.realm.internal.platform.runBlocking
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -54,6 +54,11 @@ interface AdminApi {
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
     fun deleteAllUsers()
+
+    /**
+     * Triggers a restart of the sync service.
+     */
+    suspend fun restartSync()
 }
 
 open class AdminApiImpl internal constructor(
@@ -163,6 +168,45 @@ open class AdminApiImpl internal constructor(
             users.map {
                 client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
             }
+        }
+    }
+
+    private suspend fun getBackingDBServiceId(): String = client.typedRequest<JsonArray>(
+        Get,
+        "$url/groups/$groupId/apps/$appId/services"
+    ).first().let {
+        it.jsonObject["_id"]!!.jsonPrimitive.content
+    }
+    
+    private suspend fun controlSync(serviceId: String, enabled: Boolean) = client
+        .request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
+                method = Patch
+                body = """
+                    {
+                      "sync": {
+                        "state": "${if (enabled) "enabled" else "disabled"}",
+                        "database_name": "test_data",
+                        "partition": {
+                          "key": "realm_id",
+                          "type": "string",
+                          "permissions": {
+                            "read": true,
+                            "write": true
+                          }
+                        },
+                        "last_disabled": 1633520376
+                      }
+                    }
+                """.trimIndent()
+        }.let {
+            if(!it.status.isSuccess()) throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
+        }
+
+    override suspend fun restartSync() {
+        withContext (dispatcher){
+            val backingDbServiceId = getBackingDBServiceId()
+            controlSync(backingDbServiceId, false)
+            controlSync(backingDbServiceId, true)
         }
     }
 

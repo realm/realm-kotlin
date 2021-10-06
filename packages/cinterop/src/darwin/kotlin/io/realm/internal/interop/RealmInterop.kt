@@ -43,6 +43,7 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
@@ -79,6 +80,7 @@ import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
+import realm_wrapper.realm_sync_session_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -999,6 +1001,21 @@ actual object RealmInterop {
             StableRef.create(loggerFactory).asCPointer(),
             staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) }
         )
+    }
+    
+    actual fun realm_sync_set_error_handler(
+        syncConfig: NativePointer,
+        errorHandler: (syncSession: NativePointer, error: AppException) -> Unit
+    ) {
+        realm_wrapper.realm_sync_config_set_error_handler(
+            syncConfig.cptr(),
+            staticCFunction<COpaquePointer?, CPointer<realm_sync_session_t>?, CValue<realm_error_t>, Unit>
+            { userData, syncSession, _ ->
+                val errorCallback = safeUserData<(NativePointer, AppException) -> Unit>(userData)
+                errorCallback(CPointerWrapper(syncSession), AppException())
+            },
+            StableRef.create(errorHandler).asCPointer(),
+            staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) })
     }
 
     actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {

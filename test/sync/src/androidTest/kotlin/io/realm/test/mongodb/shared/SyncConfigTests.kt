@@ -17,33 +17,49 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
+import io.realm.RealmResults
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
+import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.randomEmail
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.single
+import kotlin.coroutines.suspendCoroutine
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
 
+@ExperimentalTime
+@ExperimentalCoroutinesApi
 class SyncConfigTests {
 
     private lateinit var tmpDir: String
-    private lateinit var app: App
+    private lateinit var app: TestApp
     private lateinit var realm: Realm
 
     @BeforeTest
@@ -83,26 +99,22 @@ class SyncConfigTests {
 
     @Test
     fun canOpenRealm() {
-        val user = createTestUser()
-        val config = createSyncConfig(path = "$tmpDir/$DEFAULT_NAME", user = user)
-        realm = Realm.open(config)
-        assertNotNull(realm)
-
-        val child = Child().apply {
-            _id = "CHILD_A"
-            name = "A"
-        }
-
-        val channel = Channel<Child>(1)
-
         runBlocking {
-            val observer = async {
+            val user = createTestUser()
+            val config = createSyncConfig(path = "$tmpDir/$DEFAULT_NAME", user = user)
+            realm = Realm.open(config)
+            assertNotNull(realm)
+
+            val child = Child().apply {
+                _id = "CHILD_A"
+                name = "A"
+            }
+
+            // Observe changes and return the first occurrence
+            val observer: Deferred<Child> = async {
                 realm.objects(Child::class)
                     .observe()
-                    .collect { childResults ->
-                        println("===> RECEIVED results, size: ${childResults.size}")
-//                        channel.send(childResults[0])
-                    }
+                    .first()[0]
             }
 
             realm.write {
@@ -110,14 +122,44 @@ class SyncConfigTests {
                 copyToRealm(child)
             }
 
-            println("===> BEFORE RECEIVE")
-            val childResult = channel.receive()
-            println("===> AFTER  RECEIVE")
+            // Await for changes to complete
+            observer.await()
+            val childResult = observer.getCompleted()
             assertEquals("CHILD_A", childResult._id)
-            observer.cancel()
-            channel.close()
         }
-        val kjahsd = 0
+    }
+
+    @Test
+    fun testErrorHandler() {
+        runBlocking {
+            val user = createTestUser()
+            val asyncAppException: Deferred<AppException> = async {
+                suspendCoroutine {
+                    // Create Sync configuration with error handler.
+                    val config = SyncConfiguration.Builder(
+                        path = "$tmpDir/$DEFAULT_NAME",
+                        name = DEFAULT_NAME,
+                        schema = setOf(Parent::class, Child::class),
+                        user = user,
+                        partitionValue = DEFAULT_PARTITION_VALUE
+                    ).setSyncErrorHandler { _, exception ->
+                        it.resumeWith(Result.success(exception))
+                    }.build()
+
+                    realm = Realm.open(config)
+                    assertNotNull(realm)
+                }
+            }
+
+            // Restart sync
+            app.restartSync()
+
+            // Await for exception to happen
+            asyncAppException.await()
+
+            // Validate that the exception was captured
+            assertIs<AppException>(asyncAppException.getCompleted())
+        }
     }
 
 //    @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop
+package io.realm.mongodb
 
-import io.realm.mongodb.AppException
-
-// TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
-interface Callback {
-    fun onChange(change: NativePointer)
-}
-
-interface CinteropCallback {
-    fun onSuccess(pointer: NativePointer)
-    fun onError(throwable: Throwable)
-}
-
-interface ErrorHandlerCallback {
-    fun onError(pointer: NativePointer, throwable: AppException)
-}
+/**
+ * TODO
+ */
+interface SyncSession

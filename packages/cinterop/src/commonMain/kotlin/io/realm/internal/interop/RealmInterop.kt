@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.mongodb.AppException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 
@@ -151,6 +152,9 @@ expect object RealmInterop {
         loggerFactory: () -> CoreLogger
     )
     fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
+    fun realm_sync_set_error_handler(
+        syncConfig: NativePointer,
+        errorHandler: (syncSession: NativePointer, error: AppException) -> Unit)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer

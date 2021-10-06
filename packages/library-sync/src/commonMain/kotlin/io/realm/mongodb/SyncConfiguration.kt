@@ -48,6 +48,7 @@ interface SyncConfiguration : RealmConfiguration {
 
     val user: User
     val partitionValue: PartitionValue
+    val errorHandler: (SyncSession, AppException) -> Unit
 
     companion object {
         fun defaultConfig(
@@ -83,7 +84,8 @@ interface SyncConfiguration : RealmConfiguration {
         name: String, // Optional Realm name (default is 'default')
         schema: Set<KClass<out RealmObject>>,
         private var user: User,
-        private var partitionValue: PartitionValue
+        private var partitionValue: PartitionValue,
+        private var syncErrorHandler: (SyncSession, AppException) -> Unit = { _, _ -> } // Default noop
     ) : RealmConfiguration.SharedBuilder<Builder>(path, name, schema) {
 
         constructor(
@@ -111,6 +113,16 @@ interface SyncConfiguration : RealmConfiguration {
         ) : this(path, name, schema, user, PartitionValue(partitionValue))
 
         /**
+         * Sets the error handler used by Synced Realms when reporting errors with their session.
+         *
+         * @param errorHandler lambda to handle the error.
+         */
+        fun setSyncErrorHandler(errorHandler: (SyncSession, AppException) -> Unit): Builder {
+            this.syncErrorHandler = errorHandler
+            return this
+        }
+
+        /**
          * Creates the RealmConfiguration based on the builder properties.
          *
          * @return the created RealmConfiguration.
@@ -132,7 +144,8 @@ interface SyncConfiguration : RealmConfiguration {
             return SyncConfigurationImpl(
                 localConfiguration as RealmConfigurationImpl,
                 partitionValue,
-                user as UserImpl
+                user as UserImpl,
+                syncErrorHandler
             )
         }
     }
