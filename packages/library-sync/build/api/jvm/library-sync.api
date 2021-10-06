@@ -1,0 +1,73 @@
+public abstract interface class io/realm/mongodb/App {
+	public static final field Companion Lio/realm/mongodb/App$Companion;
+	public abstract fun getConfiguration ()Lio/realm/mongodb/AppConfiguration;
+	public abstract fun login (Lio/realm/mongodb/Credentials;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/realm/mongodb/App$Companion {
+	public final fun create (Lio/realm/mongodb/AppConfiguration;)Lio/realm/mongodb/App;
+	public final fun create (Ljava/lang/String;)Lio/realm/mongodb/App;
+}
+
+public abstract interface class io/realm/mongodb/AppConfiguration {
+	public static final field Companion Lio/realm/mongodb/AppConfiguration$Companion;
+	public static final field DEFAULT_AUTHORIZATION_HEADER_NAME Ljava/lang/String;
+	public static final field DEFAULT_BASE_URL Ljava/lang/String;
+	public abstract fun getAppId ()Ljava/lang/String;
+	public abstract fun getBaseUrl ()Ljava/lang/String;
+	public abstract fun getNetworkTransportDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
+public final class io/realm/mongodb/AppConfiguration$Builder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun baseUrl (Ljava/lang/String;)Lio/realm/mongodb/AppConfiguration$Builder;
+	public final fun build ()Lio/realm/mongodb/AppConfiguration;
+	public final fun dispatcher (Lkotlinx/coroutines/CoroutineDispatcher;)Lio/realm/mongodb/AppConfiguration$Builder;
+	public final fun getAppId ()Ljava/lang/String;
+}
+
+public final class io/realm/mongodb/AppConfiguration$Companion {
+	public static final field DEFAULT_AUTHORIZATION_HEADER_NAME Ljava/lang/String;
+	public static final field DEFAULT_BASE_URL Ljava/lang/String;
+}
+
+public final class io/realm/mongodb/AuthenticationProvider : java/lang/Enum {
+	public static final field ANONYMOUS Lio/realm/mongodb/AuthenticationProvider;
+	public static final field EMAIL_PASSWORD Lio/realm/mongodb/AuthenticationProvider;
+	public static fun valueOf (Ljava/lang/String;)Lio/realm/mongodb/AuthenticationProvider;
+	public static fun values ()[Lio/realm/mongodb/AuthenticationProvider;
+}
+
+public abstract interface class io/realm/mongodb/Credentials {
+	public static final field Companion Lio/realm/mongodb/Credentials$Companion;
+	public abstract fun getAuthenticationProvider ()Lio/realm/mongodb/AuthenticationProvider;
+}
+
+public final class io/realm/mongodb/Credentials$Companion {
+	public final fun anonymous ()Lio/realm/mongodb/Credentials;
+	public final fun emailPassword (Ljava/lang/String;Ljava/lang/String;)Lio/realm/mongodb/Credentials;
+}
+
+public abstract interface class io/realm/mongodb/User {
+}
+
+public final class io/realm/mongodb/internal/EmailPasswordAuthImpl {
+	public fun <init> (Lio/realm/mongodb/App;)V
+	public final fun registerUser-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/realm/mongodb/internal/KtorNetworkTransport : io/realm/internal/interop/sync/NetworkTransport {
+	public static final field Companion Lio/realm/mongodb/internal/KtorNetworkTransport$Companion;
+	public static final field ERROR_INTERRUPTED I
+	public static final field ERROR_IO I
+	public static final field ERROR_UNKNOWN I
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;JLkotlinx/coroutines/CoroutineDispatcher;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;JLkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getAuthorizationHeaderName ()Ljava/lang/String;
+	public fun getCustomHeaders ()Ljava/util/Map;
+	public fun sendRequest (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/internal/interop/sync/Response;
+}
+
+public final class io/realm/mongodb/internal/KtorNetworkTransport$Companion {
+}
+

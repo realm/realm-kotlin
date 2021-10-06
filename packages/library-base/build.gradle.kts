@@ -21,6 +21,7 @@ plugins {
     id("com.android.library")
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version Versions.compatibilityValidator
 }
 buildscript {
     repositories {

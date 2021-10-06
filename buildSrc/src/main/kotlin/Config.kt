@@ -73,6 +73,7 @@ object Versions {
     // Upgrading might be possible if we can bump Android Gradle Plugin, but that is blocked on another bug.
     const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
     const val coroutines = "1.5.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
+    const val compatibilityValidator = "0.8.0-RC"
     const val detektPlugin = "1.17.1" // https://github.com/detekt/detekt
     const val dokka = "1.4.32" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
