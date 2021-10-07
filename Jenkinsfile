@@ -291,7 +291,7 @@ def runBuild() {
                """
         }
     }
-    archiveArtifacts artifacts: 'packages/cinterop/jvmMain/resources/**', allowEmptyArchive: true
+    archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/resources/**/*.*', allowEmptyArchive: true
 
 }
 
