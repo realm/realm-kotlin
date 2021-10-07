@@ -200,12 +200,18 @@ void invoke_core_notify_callback(int64_t core_notify_function) {
     (*notify)();
 }
 
+// TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
 realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
     auto *cfg = reinterpret_cast<realm_config_t * >(config_ptr);
     // copy construct to not set the scheduler on the original Conf which could be used
     // to open Frozen Realm for instance.
     auto copyConf = *cfg;
-    copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    if (dispatchScheduler) {
+        copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    } else {
+        copyConf.scheduler = realm::util::Scheduler::make_generic();
+    }
+
     return realm_open(&copyConf);
 }
 
