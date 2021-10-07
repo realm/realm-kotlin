@@ -291,6 +291,8 @@ def runBuild() {
                """
         }
     }
+    archiveArtifacts artifacts: 'packages/cinterop/jvmMain/resources/**', allowEmptyArchive: true
+
 }
 
 def runStaticAnalysis() {
@@ -570,9 +572,7 @@ def build_jvm_linux() {
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
         sh """
-           cd packages/jni-swig-stub/
-           ../gradlew assemble
-           cd ../cinterop/src/jvmMain/linux/
+           cd packages/cinterop/src/jvmMain/linux/
            rm -rf build-dir
            mkdir build-dir
            cd build-dir
