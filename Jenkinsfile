@@ -95,6 +95,7 @@ pipeline {
                     steps {
                         runScm()
                         setBuildDetails()
+                        genAndStashSwigJNI()
                     }
                 }
 
@@ -257,6 +258,15 @@ def setBuildDetails() {
     }
 }
 
+def genAndStashSwigJNI() {
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        sh """
+        cd packages/jni-swig-stub
+        ../gradlew assemble
+        """
+    }
+    stash includes: 'packages/jni-swig-stub/src/main/jni/realmc.cpp,packages/jni-swig-stub/src/main/jni/realmc.h', name: 'swig_jni'
+}
 def runBuild() {
     def buildJvmAbiFlag = "-PcopyJvmABIs=false"
     if (shouldBuildJvmABIs()) {
@@ -557,6 +567,7 @@ def shouldBuildJvmABIs() {
 
 // TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
 def build_jvm_linux() {
+    unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
         sh """
            cd packages/jni-swig-stub/
@@ -574,6 +585,7 @@ def build_jvm_linux() {
 }
 
 def build_jvm_windows() {
+  unstash name: 'swig_jni'
   def cmakeOptions = [
         CMAKE_GENERATOR_PLATFORM: 'x64',
         CMAKE_BUILD_TYPE: 'Release',
