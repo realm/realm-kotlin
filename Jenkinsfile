@@ -260,8 +260,8 @@ def setBuildDetails() {
 def runBuild() {
     def buildJvmAbiFlag = "-PcopyJvmABIs=false"
     if (shouldBuildJvmABIs()) {
-        unstash name: 'linux_so_files'
-        unstash name: 'win_dlls'
+        unstash name: 'linux_so_file'
+        unstash name: 'win_dll'
         buildJvmAbiFlag = "-PcopyJvmABIs=true"
     }
 
@@ -559,7 +559,9 @@ def shouldBuildJvmABIs() {
 def build_jvm_linux() {
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
         sh """
-           cd packages/cinterop/src/jvmMain/linux/
+           cd packages/jni-swig-stub/
+           ../gradlew assemble
+           cd ../cinterop/src/jvmMain/linux/
            rm -rf build-dir
            mkdir build-dir
            cd build-dir
@@ -567,7 +569,7 @@ def build_jvm_linux() {
            make -j8
         """
 
-        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so,packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_files'
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_file'
     }
 }
 
@@ -586,5 +588,5 @@ def build_jvm_windows() {
   dir('packages') {
       bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
   }
-  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll,packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dlls'
+  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dll'
 }

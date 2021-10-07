@@ -331,8 +331,6 @@ fun Task.buildSharedLibrariesForJVM() {
         exec {
             commandLine("mkdir", "-p", project.file("src/jvmMain/resources/jni/macos"))
         }
-        File("$directory/core/src/realm/object-store/c_api/librealm-ffi.dylib")
-            .copyTo(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"), overwrite = true)
         File("$directory/librealmc.dylib")
             .copyTo(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"), overwrite = true)
 
@@ -342,15 +340,11 @@ fun Task.buildSharedLibrariesForJVM() {
         // Only on CI for Snapshots and Releases
         if (copyJvmABIs) {
             // copy files (Linux)
-            project.file("src/jvmMain/linux/build-dir/core/src/realm/object-store/c_api/librealm-ffi.so")
-                .copyTo(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"), overwrite = true)
             project.file("src/jvmMain/linux/build-dir/librealmc.so")
                 .copyTo(project.file("src/jvmMain/resources/jni/linux/librealmc.so"), overwrite = true)
             genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
 
             // copy files (Windows)
-            project.file("src/jvmMain/windows/build-dir/core/src/realm/object-store/c_api/Release/realm-ffi.dll")
-                .copyTo(project.file("src/jvmMain/resources/jni/windows/realm-ffi.dll"), overwrite = true)
             project.file("src/jvmMain/windows/build-dir/Release/realmc.dll")
                 .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
             genHashFile(platform = "windows", prefix = "", suffix = ".dll")
@@ -363,23 +357,19 @@ fun Task.buildSharedLibrariesForJVM() {
 
     if (copyJvmABIs) {
         outputs.file(project.file("src/jvmMain/resources/jni/linux/librealmc.so"))
-        outputs.file(project.file("src/jvmMain/resources/jni/linux/librealm-ffi.so"))
         outputs.file(project.file("src/jvmMain/resources/jni/linux/dynamic_libraries.properties"))
 
         outputs.file(project.file("src/jvmMain/resources/jni/windows/realmc.dll"))
-        outputs.file(project.file("src/jvmMain/resources/jni/windows/realm-ffi.dll"))
         outputs.file(project.file("src/jvmMain/resources/jni/windows/dynamic_libraries.properties"))
     }
 }
 
 fun genHashFile(platform: String, prefix: String, suffix: String) {
     val resourceDir = project.file("src/jvmMain/resources/jni").absolutePath
-    val libFFI: Path = Paths.get(resourceDir, platform, "${prefix}realm-ffi$suffix")
     val libRealmc: Path = Paths.get(resourceDir, platform, "${prefix}realmc$suffix")
 
     // the order matters (i.e 'realm-ffi' first then 'realmc')
     val macosHashes = """
-            realm-ffi ${sha1(libFFI)}
             realmc ${sha1(libRealmc)}
 
     """.trimIndent()
