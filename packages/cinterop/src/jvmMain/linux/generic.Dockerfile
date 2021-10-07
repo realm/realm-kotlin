@@ -19,6 +19,7 @@ RUN yum install -y \
         automake \
         bison \
         byacc \
+        wget \
  && yum clean all
 
 ENV PATH /opt/cmake/bin:/opt/rh/rh-git218/root/usr/bin:/opt/rh/devtoolset-9/root/usr/bin:$PATH
