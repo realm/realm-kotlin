@@ -205,7 +205,12 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
     // copy construct to not set the scheduler on the original Conf which could be used
     // to open Frozen Realm for instance.
     auto copyConf = *cfg;
-    copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    if (dispatchScheduler) {
+        copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    } else {
+        copyConf.scheduler = realm::util::Scheduler::make_generic();
+    }
+
     return realm_open(&copyConf);
 }
 
