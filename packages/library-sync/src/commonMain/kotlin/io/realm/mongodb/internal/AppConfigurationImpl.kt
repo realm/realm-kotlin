@@ -16,6 +16,8 @@
 
 package io.realm.mongodb.internal
 
+import io.realm.LogConfiguration
+import io.realm.internal.RealmLog
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.NetworkTransport
@@ -27,15 +29,19 @@ import kotlinx.coroutines.CoroutineDispatcher
 internal class AppConfigurationImpl(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
-    override val networkTransportDispatcher: CoroutineDispatcher
+    override val networkTransportDispatcher: CoroutineDispatcher,
+    logConfig: LogConfiguration,
 ) : AppConfiguration {
+
+    val log: RealmLog = RealmLog(configuration = logConfig)
 
     private val networkTransport: NetworkTransport = KtorNetworkTransport(
         // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
         //  constant in AppConfiguration.Companion
         //  https://github.com/realm/realm-kotlin/issues/408
         timeoutMs = 5000,
-        dispatcher = networkTransportDispatcher
+        dispatcher = networkTransportDispatcher,
+        log = log
     ).freeze()
 
     val nativePointer: NativePointer = RealmInterop.realm_app_config_new(

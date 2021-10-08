@@ -109,16 +109,23 @@ interface SyncConfiguration : RealmConfiguration {
             partitionValue: String
         ) : this(path, name, schema, user, PartitionValue(partitionValue))
 
+        init {
+            val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
+            this.logLevel = appLogConfiguration.level
+            this.userLoggers = appLogConfiguration.loggers
+            this.removeSystemLogger = true
+        }
+
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): SyncConfiguration {
-            val allLoggers = mutableListOf<RealmLogger>()
-            if (!removeSystemLogger) {
-                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-            }
-            allLoggers.addAll(userLoggers)
+            val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
+
             @Suppress("invisible_member")
             val localConfiguration = RealmConfiguration.Builder(path, name, schema)
+                .log(logLevel, userLoggers)
+                // This is already added in the AppConfiguration
+                .removeSystemLogger()
                 .build(companionMap)
             return SyncConfigurationImpl(
                 localConfiguration as RealmConfigurationImpl,

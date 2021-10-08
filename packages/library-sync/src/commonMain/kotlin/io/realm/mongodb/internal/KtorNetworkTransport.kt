@@ -35,6 +35,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.utils.io.errors.IOException
+import io.realm.internal.RealmLog
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
 import io.realm.internal.platform.createDefaultSystemLogger
@@ -53,6 +54,7 @@ class KtorNetworkTransport(
     //  https://github.com/realm/realm-kotlin/issues/408
     private val timeoutMs: Long,
     private val dispatcher: CoroutineDispatcher,
+    private val log: RealmLog? = null,
 ) : NetworkTransport {
 
     private val client: HttpClient = getClient()
@@ -174,15 +176,15 @@ class KtorNetworkTransport(
 
             // TODO figure out logging and obfuscating sensitive info
             //  https://github.com/realm/realm-kotlin/issues/410
-            install(Logging) {
-                logger = object : Logger {
-                    // TODO Hook up with AppConfiguration/RealmConfiguration logger
-                    private val logger = createDefaultSystemLogger("realm-http")
-                    override fun log(message: String) {
-                        logger.log(io.realm.log.LogLevel.DEBUG, throwable = null, message = message)
+            log?.let { realmLogger ->
+                install(Logging) {
+                    logger = object : Logger {
+                        override fun log(message: String) {
+                            realmLogger.debug(message = message)
+                        }
                     }
+                    level = LogLevel.BODY
                 }
-                level = LogLevel.BODY
             }
 
             followRedirects = true

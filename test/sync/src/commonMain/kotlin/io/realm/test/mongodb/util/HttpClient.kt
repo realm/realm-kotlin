@@ -31,7 +31,7 @@ import kotlin.time.ExperimentalTime
 
 // TODO Consider moving it to util package?
 @OptIn(ExperimentalTime::class)
-fun defaultClient(name: String, block: HttpClientConfig<*>.() -> Unit = {}): HttpClient {
+fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() -> Unit = {}): HttpClient {
     // Need to freeze value as it is used inside the client's init lambda block, which also
     // freezes captured objects too, see:
     // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
@@ -58,15 +58,17 @@ fun defaultClient(name: String, block: HttpClientConfig<*>.() -> Unit = {}): Htt
 
         // TODO figure out logging and obfuscating sensitive info
         //  https://github.com/realm/realm-kotlin/issues/410
-        install(Logging) {
-            logger = object : Logger {
-                // TODO Hook up with AppConfiguration/RealmConfiguration logger
-                private val logger = createDefaultSystemLogger(name)
-                override fun log(message: String) {
-                    logger.log(LogLevel.DEBUG, throwable = null, message = message)
+        if (debug) {
+            install(Logging) {
+                logger = object : Logger {
+                    // TODO Hook up with AppConfiguration/RealmConfiguration logger
+                    private val logger = createDefaultSystemLogger(name)
+                    override fun log(message: String) {
+                        logger.log(LogLevel.DEBUG, throwable = null, message = message)
+                    }
                 }
+                level = io.ktor.client.features.logging.LogLevel.ALL
             }
-            level = io.ktor.client.features.logging.LogLevel.ALL
         }
 
         followRedirects = true

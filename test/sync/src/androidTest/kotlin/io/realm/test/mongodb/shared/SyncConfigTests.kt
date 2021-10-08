@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
@@ -49,7 +50,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        app = TestApp()
+        app = TestApp(debug = true, logLevel = LogLevel.DEBUG)
     }
 
     @AfterTest
