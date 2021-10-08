@@ -648,7 +648,7 @@ class CinteropTest {
         realmc.propertyArrayArray_setitem(props, 1, properties_2)
 
         val realmSchemaNew = realmc.realm_schema_new(classes, 2, props)
-        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.swigValue().toLong()))
 
         val config: Long = realmc.realm_config_new()
 
@@ -664,7 +664,7 @@ class CinteropTest {
 
         // Schema validates
         val schema = realmc.realm_get_schema(realm)
-        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.swigValue().toLong()))
         realmc.realm_release(schema)
 
         assertEquals(2, realmc.realm_get_num_classes(realm))
