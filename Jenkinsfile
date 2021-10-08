@@ -262,7 +262,7 @@ def apiCheck() {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
         sh """
         cd packages
-        gradlew apiCheck
+        ./gradlew apiCheck
         """
     }
 }
