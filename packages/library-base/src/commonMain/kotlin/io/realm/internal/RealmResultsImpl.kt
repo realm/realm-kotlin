@@ -112,7 +112,7 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
      */
     override fun freeze(realm: RealmReference): RealmResultsImpl<T> {
         val frozenDbPointer = realm.dbPointer
-        val frozenResults = RealmInterop.realm_results_freeze(result, frozenDbPointer)
+        val frozenResults = RealmInterop.realm_results_resolve_in(result, frozenDbPointer)
         return fromResults(realm, frozenResults, clazz, schema)
     }
 
@@ -121,7 +121,7 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
      */
     override fun thaw(realm: RealmReference): RealmResultsImpl<T> {
         val liveDbPointer = realm.dbPointer
-        val liveResultPtr = RealmInterop.realm_results_thaw(result, liveDbPointer)
+        val liveResultPtr = RealmInterop.realm_results_resolve_in(result, liveDbPointer)
         return fromResults(realm, liveResultPtr, clazz, schema)
     }
 

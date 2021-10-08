@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.Flow
 //  - Public Observable
 //    fun observe(): Flow<T>
 internal interface Observable<T> {
-    fun freeze(frozenRealm: RealmReference): Observable<T>
+    fun freeze(frozenRealm: RealmReference): Observable<T>?
     fun thaw(liveRealm: RealmReference): Observable<T>?
     fun registerForNotification(callback: Callback): NativePointer
     // FIXME Needs elaborate doc on how to signal and close channel

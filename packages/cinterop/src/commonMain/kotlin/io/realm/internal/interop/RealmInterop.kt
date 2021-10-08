@@ -16,6 +16,8 @@
 
 package io.realm.internal.interop
 
+import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 
@@ -66,7 +68,6 @@ expect object RealmInterop {
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
     fun realm_freeze(liveRealm: NativePointer): NativePointer
-    fun realm_thaw(frozenRealm: NativePointer): NativePointer
     fun realm_is_frozen(realm: NativePointer): Boolean
     fun realm_close(realm: NativePointer)
 
@@ -89,8 +90,7 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
-    fun realm_object_freeze(liveObject: NativePointer, frozenRealm: NativePointer): NativePointer
-    fun realm_object_thaw(frozenObject: NativePointer, liveRealm: NativePointer): NativePointer?
+    fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer?
 
     fun realm_object_as_link(obj: NativePointer): Link
 
@@ -107,8 +107,8 @@ expect object RealmInterop {
     fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T
     fun realm_list_clear(list: NativePointer)
     fun realm_list_erase(list: NativePointer, index: Long)
-    fun realm_list_freeze(liveList: NativePointer, frozenRealm: NativePointer): NativePointer
-    fun realm_list_thaw(frozenList: NativePointer, liveRealm: NativePointer): NativePointer
+    fun realm_list_resolve_in(list: NativePointer, realm: NativePointer): NativePointer?
+    fun realm_list_is_valid(list: NativePointer): Boolean
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer
@@ -116,8 +116,7 @@ expect object RealmInterop {
     fun realm_query_find_first(realm: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
 
-    fun realm_results_freeze(liveResults: NativePointer, frozenRealm: NativePointer): NativePointer
-    fun realm_results_thaw(frozenResults: NativePointer, liveRealm: NativePointer): NativePointer
+    fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer
     fun realm_results_count(results: NativePointer): Long
     // FIXME OPTIMIZE Get many
     fun <T> realm_results_get(results: NativePointer, index: Long): Link
@@ -143,15 +142,18 @@ expect object RealmInterop {
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
 
     // AppConfig
+    fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer
     fun realm_app_config_new(
         appId: String,
-        networkTransportFactory: () -> Any,
+        networkTransport: NativePointer,
         baseUrl: String? = null
     ): NativePointer
     fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String)
 
     // Credentials
+    fun realm_app_credentials_new_anonymous(): NativePointer
     fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer
+    fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Sync config
     fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer

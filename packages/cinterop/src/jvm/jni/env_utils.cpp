@@ -15,6 +15,7 @@
  */
 
 #include "env_utils.h"
+#include <stdexcept> // needed for Linux centos7 build
 
 static JavaVM *cached_jvm = 0;
 
@@ -30,7 +31,12 @@ namespace realm {
             jint rc = cached_jvm->GetEnv((void **)&env, JNI_VERSION_1_2);
             if (rc == JNI_EDETACHED) {
                 if (attach_if_needed) {
-                    jint ret = cached_jvm->AttachCurrentThread(&env, nullptr);
+                   #if defined(__ANDROID__)
+                        JNIEnv **jenv = &env;
+                    #else
+                        void **jenv = (void **) &env;
+                    #endif
+                    jint ret = cached_jvm->AttachCurrentThread(jenv, nullptr);
                     if (ret != JNI_OK) throw std::runtime_error("Could not attach JVM on thread ");
                 } else {
                     throw std::runtime_error("current thread not attached");
@@ -39,6 +45,12 @@ namespace realm {
             if (rc == JNI_EVERSION)
                 throw std::runtime_error("jni version not supported");
             return env;
+        }
+
+        jmethodID lookup(JNIEnv *jenv, const char *class_name, const char *method_name,
+                         const char *signature) {
+            jclass localClass = jenv->FindClass(class_name);
+            return jenv->GetMethodID(localClass, method_name, signature);
         }
     }
 }

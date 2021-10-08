@@ -17,13 +17,18 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.mongodb.App
-import io.realm.mongodb.EmailPassword
+import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.AppException
+import io.realm.mongodb.AuthenticationProvider
+import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class AppTests {
 
@@ -32,7 +37,6 @@ class AppTests {
     @BeforeTest
     fun setup() {
         app = TestApp()
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
     }
 
     @AfterTest
@@ -43,9 +47,59 @@ class AppTests {
     }
 
     @Test
-    fun login() {
+    fun defaultApp() {
+        val defaultApp = App.create("foo")
+        assertEquals("foo", defaultApp.configuration.appId)
+        assertEquals(AppConfiguration.DEFAULT_BASE_URL, defaultApp.configuration.baseUrl)
+    }
+
+    @Test
+    fun defaultApp_emptyIdThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            App.create("")
+        }
+    }
+
+    // TODO Minimal subset of login tests. Migrate AppTest from realm-java, when full API is in
+    //  place
+    // TODO Exhaustive test on io.realm.mongodb.internal.Provider
+    @Test
+    fun loginAnonymous() {
         runBlocking {
-            app.login(EmailPassword("asdf@asdf.com", "asdfasdf")).getOrThrow()
+            app.login(Credentials.anonymous())
+        }
+    }
+
+    @Test
+    fun loginEmailPassword() {
+        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
+        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
+        runBlocking {
+            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf"))
+        }
+    }
+
+    @Test
+    fun loginNonCredentialImplThrows() {
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                app.login(object : Credentials {
+                    override val authenticationProvider: AuthenticationProvider =
+                        AuthenticationProvider.ANONYMOUS
+                })
+            }
+        }
+    }
+
+    @Test
+    fun loginInvalidUserThrows() {
+        val credentials = Credentials.emailPassword("foo", "bar")
+        runBlocking {
+            // TODO AppException (ErrorCode.INVALID_EMAIL_PASSWORD, ex.errorCode)
+            //  https://github.com/realm/realm-kotlin/issues/426
+            assertFailsWith<AppException> {
+                app.login(credentials)
+            }
         }
     }
 }

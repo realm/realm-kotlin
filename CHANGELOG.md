@@ -14,16 +14,23 @@
 * Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
 
 ### Enhancements
+* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) supported platforms are: Linux (since Centos7 x86_64), Windows (since 8.1 x86_64) and Macos (x86_64).
 * Added support for marking a field as indexed with `@Index`
 
 ### Fixed
-* None.
+* Fixed null pointer exceptions when returning an unmanaged object from `MutableRealm.write/writeBlocking`.
+* Fixed premature closing of underlying realm of frozen objects returned from `MutableRealm.write/writeBlocking`. (Issue [#477](https://github.com/realm/realm-kotlin/issues/477))
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
 
 ### Internal
-* None.
+* Updated to Realm Core commit: 028626880253a62d1c936eed4ef73af80b64b71
+* Updated to Kotlin 1.5.31.
+
 
 ## 0.5.0 (2021-08-20)
 

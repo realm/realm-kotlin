@@ -19,12 +19,17 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Nullability
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TypeDescriptor
 import io.realm.test.util.Utils.createRandomString
+import kotlin.reflect.KClassifier
+import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class NullabilityTests {
 
@@ -34,7 +39,10 @@ class NullabilityTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.with(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Nullability::class))
+        val configuration = RealmConfiguration.with(
+            path = "$tmpDir/${createRandomString(16)}.realm",
+            schema = setOf(Nullability::class)
+        )
         realm = Realm.open(configuration)
     }
 
@@ -69,5 +77,39 @@ class NullabilityTests {
         val nullabilityAfter = realm.objects(Nullability::class)[0]
         assertNull(nullabilityAfter.stringNullable)
         assertNotNull(nullabilityAfter.stringNonNullable)
+    }
+
+    @Test
+    fun safeNullGetterAndSetter() {
+        realm.writeBlocking {
+            val nullableFieldTypes: MutableSet<KClassifier> = TypeDescriptor.allSingularFieldTypes.map { it.elementType }.filter { it.nullable }
+                .map { it.classifier }.toMutableSet()
+
+            copyToRealm(Nullability()).also { nullableProp ->
+                fun <T> testProperty(property: KMutableProperty1<Nullability, T?>, value: T) {
+                    assertNull(property.get(nullableProp))
+                    property.set(nullableProp, value)
+                    assertEquals(value, property.get(nullableProp))
+                    property.set(nullableProp, null)
+                    assertNull(property.get(nullableProp))
+                    nullableFieldTypes.remove(property.returnType.classifier)
+                }
+                testProperty(Nullability::stringNullable, "Realm")
+                testProperty(Nullability::booleanNullable, true)
+                testProperty(Nullability::byteNullable, 0xA)
+                testProperty(Nullability::charNullable, 'a')
+                testProperty(Nullability::shortNullable, 123)
+                testProperty(Nullability::intNullable, 123)
+                testProperty(Nullability::longNullability, 123L)
+                testProperty(Nullability::floatNullable, 123.456f)
+                testProperty(Nullability::doubleField, 123.456)
+                testProperty(Nullability::objectField, null)
+                // Manually removing RealmObject as nullableFieldTypes is not referencing the
+                // explicit subtype (Nullability). Don't know how to make the linkage without
+                // so it also works on Native.
+                nullableFieldTypes.remove(io.realm.RealmObject::class)
+            }
+            assertTrue(nullableFieldTypes.isEmpty(), "Untested fields: $nullableFieldTypes")
+        }
     }
 }

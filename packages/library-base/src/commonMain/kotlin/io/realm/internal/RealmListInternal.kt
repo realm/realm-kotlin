@@ -22,7 +22,6 @@ import io.realm.internal.interop.Callback
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
-import io.realm.internal.interop.RealmCoreInvalidatedObjectException
 import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
@@ -43,7 +42,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     val nativePointer: NativePointer,
     val metadata: ListOperatorMetadata
-) : AbstractMutableList<E>(), RealmList<E>, Observable<RealmList<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
 
     private val operator = ListOperator<E>(metadata)
 
@@ -113,24 +112,19 @@ internal class ManagedRealmList<E>(
         }
     }
 
-    override fun observe(): Flow<RealmList<E>> {
+    override fun observe(): Flow<ManagedRealmList<E>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }
 
-    override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E> {
-        val frozenListPointer = RealmInterop.realm_list_freeze(
-            nativePointer,
-            frozenRealm.dbPointer
-        )
-        return ManagedRealmList(frozenListPointer, metadata.copy(realm = frozenRealm))
+    override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {
+        return RealmInterop.realm_list_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
+            ManagedRealmList(it, metadata.copy(realm = frozenRealm))
+        }
     }
 
     override fun thaw(liveRealm: RealmReference): ManagedRealmList<E>? {
-        return RealmInterop.realm_list_thaw(
-            nativePointer,
-            liveRealm.dbPointer
-        )?.let {
+        return RealmInterop.realm_list_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
             ManagedRealmList(it, metadata.copy(realm = liveRealm))
         }
     }
@@ -142,27 +136,20 @@ internal class ManagedRealmList<E>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<RealmList<E>>
+        channel: SendChannel<ManagedRealmList<E>>
     ): ChannelResult<Unit>? {
-        return if (!isValid()) {
+        val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
+        return if (frozenList != null) {
+            channel.trySend(frozenList)
+        } else {
             channel.close()
             null
-        } else {
-            val frozenList = freeze(frozenRealm)
-            return channel.trySend(frozenList)
         }
     }
 
     // TODO from LifeCycle interface
-    @Suppress("TooGenericExceptionCaught")
     internal fun isValid(): Boolean {
-        // FIXME workaround until https://github.com/realm/realm-core/issues/4843 is done
-        try {
-            size
-        } catch (e: RealmCoreInvalidatedObjectException) {
-            return false
-        }
-        return true
+        return RealmInterop.realm_list_is_valid(nativePointer)
     }
 
     private fun rangeCheckForAdd(index: Int) {

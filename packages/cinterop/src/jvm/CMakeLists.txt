@@ -17,7 +17,6 @@ include_directories(${CAPI_BUILD}/src jni)
 
 file(GLOB jni_SRC
         "jni/env_utils.cpp"
-        "jni/realm_api_helpers.cpp"
         "jni/utils.cpp"
         )
 
@@ -32,4 +31,4 @@ add_library(realmc SHARED
         ${jni_SRC}
         )
 
-target_link_libraries(realmc log android RealmFFI Realm::ObjectStore)
+target_link_libraries(realmc log android RealmFFIStatic Realm::ObjectStore)

@@ -18,8 +18,6 @@ package io.realm.internal
 
 import io.realm.MutableRealm
 import io.realm.RealmObject
-import io.realm.VersionId
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
@@ -42,12 +40,12 @@ import io.realm.internal.freeze as freezeTyped
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
-
     private val tid: ULong
-    // Must only be accessed from the dispatchers thread
-    private val realm: MutableRealmImpl by lazy {
+    private val realmInitializer = lazy {
         MutableRealmImpl(owner.configuration, dispatcher)
     }
+    // Must only be accessed from the dispatchers thread
+    private val realm: MutableRealmImpl by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
 
@@ -55,7 +53,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         tid = runBlocking(dispatcher) { threadId() }
     }
 
-    suspend fun <R> write(block: MutableRealm.() -> R): Triple<NativePointer, VersionId, R> {
+    suspend fun <R> write(block: MutableRealm.() -> R): Pair<RealmReference, R> {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
         return withContext(dispatcher) {
             var result: R
@@ -84,27 +82,22 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
             val newDbPointer = RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-            val newVersion = VersionId(RealmInterop.realm_get_version_id(newDbPointer))
+            val newReference = RealmReference(owner, newDbPointer)
             // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {
-                result = freezeWriteReturnValue(result, newDbPointer)
+                result = freezeWriteReturnValue(newReference, result)
             }
-            Triple(newDbPointer, newVersion, result)
+            Pair(newReference, result)
         }
     }
 
-    private fun <R> freezeWriteReturnValue(result: R, frozenDbPointer: NativePointer): R {
+    private fun <R> freezeWriteReturnValue(reference: RealmReference, result: R): R {
         return when (result) {
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
-                (result as RealmObjectInternal).freezeTyped(
-                    RealmReference(
-                        owner,
-                        frozenDbPointer
-                    )
-                )
+                (result as RealmObjectInternal).freezeTyped(reference)
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }
@@ -114,7 +107,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         // How to test for managed results?
         return when (result) {
             // is RealmResults<*> -> return result.owner != null
-            is RealmObject -> return result is RealmObjectInternal
+            is RealmObject -> return result is RealmObjectInternal && result.`$realm$IsManaged`
             else -> false
         }
     }
@@ -144,7 +137,11 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // which will itself prevent other transactions to start as the dispatcher can only run
             // a single job at a time
             withContext(dispatcher) {
-                realm.close()
+                if (realmInitializer.isInitialized()) {
+                    // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
+                    // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
+                    realm.close()
+                }
             }
         }
     }

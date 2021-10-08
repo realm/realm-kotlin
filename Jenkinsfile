@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import groovy.json.JsonOutput
 
 @Library('realm-ci') _
@@ -51,17 +50,23 @@ node_label = 'osx_kotlin'
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
 pipeline {
-    agent {
-        node {
-            label node_label
-            customWorkspace workspacePath
-        }
-     }
-    // The Gradle cache is re-used between stages, in order to avoid builds interleave,
-    // and potentially corrupt each others cache, we grab a global lock for the entire
-    // build.
-    options {
-        lock resource: 'kotlin_build_lock'
+     agent none
+     options {
+        // In Realm Java, we had to lock the entire build as sharing the global Gradle
+        // cache was causing issues. We never discovered the root cause, but
+        // https://github.com/gradle/gradle/issues/851 seems to indicate that the problem
+        // is when running builds inside Docker containers that share a host .gradle
+        // folder.
+        //
+        // This isn't the case for Kotlin, so it seems safe to remove the lock.
+        // Locking is furthermore complicated by the fact that there doesn't seem an
+        // easy way to grap a node-lock for pipeline syntax builds.
+        // https://stackoverflow.com/a/44758361/1389357.
+        //
+        // So in summary, removing the lock should work fine. I'm mostly keeping this
+        // description in case we run into problems down the line.
+
+        // lock resource: 'kotlin_build_lock'
         timeout(time: 15, activity: true, unit: 'MINUTES')
     }
     environment {
@@ -75,79 +80,127 @@ pipeline {
           JAVA_HOME="${JAVA_11}"
     }
     stages {
-        stage('SCM') {
-            steps {
-                runScm()
-            }
-        }
-        stage('Build') {
-            steps {
-                runBuild()
-            }
-        }
-        stage('Static Analysis') {
-            when { expression { runTests } }
-            steps {
-                runStaticAnalysis()
-            }
-        }
-        stage('Tests Compiler Plugin') {
-            when { expression { runTests } }
-            steps {
-                runCompilerPluginTest()
-            }
-        }
-        stage('Tests Macos - Unit Tests') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "macosTest")
-            }
-        }
-        stage('Tests Android - Unit Tests') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("packages", "connectedAndroidTest")
-            }
-        }
-        stage('Integration Tests') {
-            when { expression { runTests } }
-            steps {
-                testWithServer("test", ["macosTest", "connectedAndroidTest"])
-            }
-        }
-        stage('Tests JVM (compiler only)') {
-            when { expression { runTests } }
-            steps {
-                testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-            }
-        }
-        stage('Tests Android Sample App') {
-            when { expression { runTests } }
-            steps {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    runMonkey()
+        stage('Prepare CI') {
+            // Force all stages to use the same node, so we can take advantage
+            // of the gradle cache between steps, otherwise Jenkins are free
+            // to move a stage to a different node.
+            agent {
+                node {
+                    label node_label
+                    customWorkspace workspacePath
                 }
-            }
-        }
-        stage('Build Android on Java 8') {
-            when { expression { runTests } }
-            environment {
-                JAVA_HOME="${JAVA_8}"
-            }
-            steps {
-                runBuildAndroidApp()
-            }
-        }
-        stage('Publish SNAPSHOT to Maven Central') {
-            when { expression { shouldPublishSnapshot(version) } }
-            steps {
-                runPublishSnapshotToMavenCentral()
-            }
-        }
-        stage('Publish Release to Maven Central') {
-            when { expression { publishBuild } }
-            steps {
-                runPublishReleaseOnMavenCentral()
+             }
+            stages {
+                stage('SCM') {
+                    steps {
+                        runScm()
+                        setBuildDetails()
+                        genAndStashSwigJNI()
+                    }
+                }
+
+                stage('build-jvm-native-libs') {
+                    parallel{
+                      stage('build_jvm_linux') {
+                          when { expression { shouldBuildJvmABIs() } }
+                          agent {
+                              node {
+                                  label 'docker'
+                              }
+                          }
+                          steps {
+                              // It is an order of magnitude faster to checkout the repo
+                              // rather then stashing/unstashing all files to build Linux and Win
+                              runScm()
+                              build_jvm_linux()
+                          }
+                      }
+                      stage('build_jvm_windows') {
+                          when { expression { shouldBuildJvmABIs() } }
+                          agent {
+                              node {
+                                  label 'windows'
+                              }
+                          }
+                          steps {
+                            runScm()
+                            build_jvm_windows()
+                          }
+                      }
+                    }
+                }
+
+                stage('Build') {
+                    steps {
+                        runBuild()
+                    }
+                }
+                stage('Static Analysis') {
+                    when { expression { runTests } }
+                    steps {
+                        runStaticAnalysis()
+                    }
+                }
+                stage('Tests Compiler Plugin') {
+                    when { expression { runTests } }
+                    steps {
+                        runCompilerPluginTest()
+                    }
+                }
+                stage('Tests Macos - Unit Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("packages", "macosTest")
+                    }
+                }
+                stage('Tests Android - Unit Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("packages", "connectedAndroidTest")
+                    }
+                }
+                stage('Integration Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer("test", ["macosTest", "connectedAndroidTest"])
+                    }
+                }
+                stage('Tests JVM') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
+                                        testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
+                    }
+                }
+                stage('Tests Android Sample App') {
+                    when { expression { runTests } }
+                    steps {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            runMonkey()
+                        }
+                    }
+                }
+                stage('Build Android on Java 8') {
+                    when { expression { runTests } }
+                    environment {
+                        JAVA_HOME="${JAVA_8}"
+                    }
+                    steps {
+                        runBuildAndroidApp()
+                    }
+                }
+                stage('Publish SNAPSHOT to Maven Central') {
+                    when { expression { shouldPublishSnapshot(version) } }
+                    steps {
+                        runPublishSnapshotToMavenCentral()
+                    }
+                }
+                stage('Publish Release to Maven Central') {
+                    when { expression { publishBuild } }
+                    steps {
+                        runPublishReleaseOnMavenCentral()
+                    }
+                }
             }
         }
     }
@@ -165,18 +218,25 @@ pipeline {
 }
 
 def runScm() {
+    def repoExtensions = [
+        [$class: 'SubmoduleOption', recursiveSubmodules: true]
+    ]
+    if (isReleaseBranch) {
+        repoExtensions += [
+            [$class: 'WipeWorkspace'],
+            [$class: 'CleanCheckout'],
+        ]
+    }
     checkout([
             $class           : 'GitSCM',
             branches         : scm.branches,
             gitTool          : 'native git',
-            extensions       : scm.extensions + [
-                    [$class: 'WipeWorkspace'],
-                    [$class: 'CleanCheckout'],
-                    [$class: 'SubmoduleOption', recursiveSubmodules: true]
-            ],
+            extensions       : scm.extensions + repoExtensions,
             userRemoteConfigs: scm.userRemoteConfigs
     ])
+}
 
+def setBuildDetails() {
     // Check type of Build. We are treating this as a release build if we are building
     // the exact Git SHA that was tagged.
     gitTag = readGitTag()
@@ -198,7 +258,23 @@ def runScm() {
     }
 }
 
+def genAndStashSwigJNI() {
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        sh """
+        cd packages/jni-swig-stub
+        ../gradlew assemble
+        """
+    }
+    stash includes: 'packages/jni-swig-stub/src/main/jni/realmc.cpp,packages/jni-swig-stub/src/main/jni/realmc.h', name: 'swig_jni'
+}
 def runBuild() {
+    def buildJvmAbiFlag = "-PcopyJvmABIs=false"
+    if (shouldBuildJvmABIs()) {
+        unstash name: 'linux_so_file'
+        unstash name: 'win_dll'
+        buildJvmAbiFlag = "-PcopyJvmABIs=true"
+    }
+
     withCredentials([
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
@@ -211,10 +287,12 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew clean assemble ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
+    archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/resources/**/*.*', allowEmptyArchive: true
+
 }
 
 def runStaticAnalysis() {
@@ -272,7 +350,7 @@ def runPublishSnapshotToMavenCentral() {
     }
 }
 
-def  runPublishReleaseOnMavenCentral() {
+def runPublishReleaseOnMavenCentral() {
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
@@ -300,7 +378,7 @@ def runCompilerPluginTest() {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
         sh """
             cd packages
-            ./gradlew --no-daemon clean :plugin-compiler:test --info --stacktrace
+            ./gradlew --no-daemon :plugin-compiler:test --info --stacktrace
         """
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
@@ -333,8 +411,8 @@ def testWithServer(dir, tasks) {
         mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
         sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
-        // Techinically this is only needed for Android, but since all tests are 
-        // executed on same host and tasks are grouped in same stage we just do it 
+        // Techinically this is only needed for Android, but since all tests are
+        // executed on same host and tasks are grouped in same stage we just do it
         // here
         forwardAdbPorts()
 
@@ -398,7 +476,7 @@ def runBuildAndroidApp() {
         sh """
             cd examples/kmm-sample
             java -version
-            ./gradlew :androidApp:clean :androidApp:assembleDebug --stacktrace --no-daemon
+            ./gradlew :androidApp:assembleDebug --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'
@@ -483,4 +561,44 @@ def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContai
 
 def runCommand(String command){
   return sh(script: command, returnStdout: true).trim()
+}
+
+def shouldBuildJvmABIs() {
+    if (publishBuild || shouldPublishSnapshot(version)) return true else return false
+}
+
+// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
+def build_jvm_linux() {
+    unstash name: 'swig_jni'
+    docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
+        sh """
+           cd packages/cinterop/src/jvmMain/linux/
+           rm -rf build-dir
+           mkdir build-dir
+           cd build-dir
+           cmake ..
+           make -j8
+        """
+
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_file'
+    }
+}
+
+def build_jvm_windows() {
+  unstash name: 'swig_jni'
+  def cmakeOptions = [
+        CMAKE_GENERATOR_PLATFORM: 'x64',
+        CMAKE_BUILD_TYPE: 'Release',
+        REALM_ENABLE_SYNC: "ON",
+        CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+        CMAKE_SYSTEM_VERSION: '8.1',
+        REALM_NO_TESTS: '1',
+        VCPKG_TARGET_TRIPLET: 'x64-windows-static'
+      ]
+
+  def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
+  dir('packages') {
+      bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
+  }
+  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dll'
 }
