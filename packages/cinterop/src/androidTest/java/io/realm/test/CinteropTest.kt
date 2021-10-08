@@ -370,7 +370,7 @@ class CinteropTest {
             num_properties = 3
             num_computed_properties = 0
             key = rlmInvalidClassKey
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
         }
 
         val prop_1_1 = realm_property_info_t().apply {
@@ -381,7 +381,7 @@ class CinteropTest {
             link_target = ""
             link_origin_property_name = ""
             key = rlmInvalidPropertyKey
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
         }
         val prop_1_2 = realm_property_info_t().apply {
             name = "str"
@@ -391,7 +391,7 @@ class CinteropTest {
             link_target = ""
             link_origin_property_name = ""
             key = rlmInvalidPropertyKey
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
         }
         val prop_1_3 = realm_property_info_t().apply {
             name = "bars"
@@ -401,7 +401,7 @@ class CinteropTest {
             link_target = "bar"
             link_origin_property_name = ""
             key = rlmInvalidPropertyKey
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
         }
 
         val class_2 = realm_class_info_t().apply {
@@ -410,7 +410,7 @@ class CinteropTest {
             num_properties = 2
             num_computed_properties = 0
             key = rlmInvalidClassKey
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
         }
 
         val classes = realmc.new_classArray(2)
@@ -436,7 +436,7 @@ class CinteropTest {
                     link_target = ""
                     link_origin_property_name = ""
                     key = rlmInvalidPropertyKey
-                    flags = realm_property_flags_e.RLM_PROPERTY_INDEXED or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY
+                    flags = realm_property_flags_e.RLM_PROPERTY_INDEXED.swigValue() or realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY.swigValue()
                 },
                 realm_property_info_t().apply {
                     name = "strings"
@@ -446,7 +446,7 @@ class CinteropTest {
                     link_target = ""
                     link_origin_property_name = ""
                     key = rlmInvalidPropertyKey
-                    flags = realm_property_flags_e.RLM_PROPERTY_NORMAL or realm_property_flags_e.RLM_PROPERTY_NULLABLE
+                    flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue() or realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
                 }
             ).forEachIndexed { i, prop ->
                 realmc.propertyArray_setitem(properties, i, prop)
@@ -455,7 +455,7 @@ class CinteropTest {
         realmc.propertyArrayArray_setitem(props, 1, properties_2)
 
         val realmSchemaNew = realmc.realm_schema_new(classes, 2, props)
-        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+        assertTrue(realmc.realm_schema_validate(realmSchemaNew, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.swigValue().toLong()))
 
         val config: Long = realmc.realm_config_new()
 
@@ -472,7 +472,7 @@ class CinteropTest {
 
         // Schema validates
         val schema = realmc.realm_get_schema(realm)
-        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.toLong()))
+        assertTrue(realmc.realm_schema_validate(schema, realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC.swigValue().toLong()))
         realmc.realm_release(schema)
 
         assertEquals(2, realmc.realm_get_num_classes(realm))
@@ -598,7 +598,7 @@ class CinteropTest {
             num_properties = 1
             num_computed_properties = 0
             key = rlmInvalidClassKey
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
         }
 
         val prop_1_1 = realm_property_info_t().apply {
@@ -609,7 +609,7 @@ class CinteropTest {
             link_target = "Child"
             link_origin_property_name = ""
             key = rlmInvalidPropertyKey
-            flags = realm_property_flags_e.RLM_PROPERTY_NULLABLE
+            flags = realm_property_flags_e.RLM_PROPERTY_NULLABLE.swigValue()
         }
 
         val class_2 = realm_class_info_t().apply {
@@ -618,7 +618,7 @@ class CinteropTest {
             num_properties = 1
             num_computed_properties = 0
             key = rlmInvalidClassKey
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
         }
         val prop_2_1 = realm_property_info_t().apply {
             name = "name"
@@ -628,7 +628,7 @@ class CinteropTest {
             link_target = ""
             link_origin_property_name = ""
             key = rlmInvalidPropertyKey
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
         }
 
         val classes = realmc.new_classArray(2)
@@ -704,7 +704,7 @@ class CinteropTest {
             link_target = ""
             link_origin_property_name = ""
             key = realmc.getRLM_INVALID_PROPERTY_KEY()
-            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL
+            flags = realm_property_flags_e.RLM_PROPERTY_NORMAL.swigValue()
         }
     }
 
@@ -715,7 +715,7 @@ class CinteropTest {
             num_properties = numberOfProperties
             num_computed_properties = 0
             key = realmc.getRLM_INVALID_CLASS_KEY()
-            flags = realm_class_flags_e.RLM_CLASS_NORMAL
+            flags = realm_class_flags_e.RLM_CLASS_NORMAL.swigValue()
         }
     }
 
