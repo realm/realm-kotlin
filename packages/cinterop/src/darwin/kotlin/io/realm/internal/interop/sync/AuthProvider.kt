@@ -16,8 +16,8 @@
 
 package io.realm.internal.interop.sync
 
-import realm_wrapper.realm_auth_provider
 import io.realm.internal.interop.NativeEnumerated
+import realm_wrapper.realm_auth_provider
 
 actual enum class AuthProvider(override val nativeEnum: realm_auth_provider) :
     NativeEnumerated<realm_auth_provider> {
