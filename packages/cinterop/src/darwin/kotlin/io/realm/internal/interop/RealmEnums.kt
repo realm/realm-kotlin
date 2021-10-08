@@ -16,62 +16,56 @@
 
 package io.realm.internal.interop
 
+import realm_wrapper.realm_class_flags
+import realm_wrapper.realm_collection_type
+import realm_wrapper.realm_property_flags
+import realm_wrapper.realm_property_type
 import realm_wrapper.realm_schema_mode
-import realm_wrapper.realm_schema_mode_e
-
-// Interfaces to hold C API enum from cinterop
-interface NativeEnum<T : Enum<T>> {
-    val nativeValue: Enum<T>
-}
-
-// Interfaces to hold C API enumerated constant from cinterop
-interface NativeEnumerated {
-    val nativeValue: UInt
-}
+import realm_wrapper.realm_schema_validation_mode
 
 // FIXME API-SCHEMA On JVM actuals cannot be combined in same file. Consider replicating that split here too,
 //  but await final placement.
 
-actual enum class SchemaMode(override val nativeValue: realm_schema_mode) : NativeEnum<realm_schema_mode> {
-    RLM_SCHEMA_MODE_AUTOMATIC(realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC),
-    RLM_SCHEMA_MODE_IMMUTABLE(realm_schema_mode_e.RLM_SCHEMA_MODE_IMMUTABLE),
-    RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE(realm_schema_mode_e.RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE),
-    RLM_SCHEMA_MODE_RESET_FILE(realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE),
-    RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED(realm_schema_mode_e.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED),
-    RLM_SCHEMA_MODE_ADDITIVE_EXPLICIT(realm_schema_mode_e.RLM_SCHEMA_MODE_ADDITIVE_EXPLICIT),
-    RLM_SCHEMA_MODE_MANUAL(realm_schema_mode_e.RLM_SCHEMA_MODE_MANUAL),
+actual enum class SchemaMode(override val nativeEnum: realm_schema_mode) : NativeEnumerated<realm_schema_mode> {
+    RLM_SCHEMA_MODE_AUTOMATIC(realm_schema_mode.RLM_SCHEMA_MODE_AUTOMATIC),
+    RLM_SCHEMA_MODE_IMMUTABLE(realm_schema_mode.RLM_SCHEMA_MODE_IMMUTABLE),
+    RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE(realm_schema_mode.RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE),
+    RLM_SCHEMA_MODE_RESET_FILE(realm_schema_mode.RLM_SCHEMA_MODE_RESET_FILE),
+    RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED(realm_schema_mode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED),
+    RLM_SCHEMA_MODE_ADDITIVE_EXPLICIT(realm_schema_mode.RLM_SCHEMA_MODE_ADDITIVE_EXPLICIT),
+    RLM_SCHEMA_MODE_MANUAL(realm_schema_mode.RLM_SCHEMA_MODE_MANUAL),
 }
 
-actual enum class ClassFlag(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_CLASS_NORMAL(realm_wrapper.RLM_CLASS_NORMAL),
-    RLM_CLASS_EMBEDDED(realm_wrapper.RLM_CLASS_EMBEDDED),
+actual enum class ClassFlag(override val nativeEnum: realm_class_flags) : NativeEnumerated<realm_class_flags> {
+    RLM_CLASS_NORMAL(realm_class_flags.RLM_CLASS_NORMAL),
+    RLM_CLASS_EMBEDDED(realm_class_flags.RLM_CLASS_EMBEDDED),
 }
 
-actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_PROPERTY_TYPE_INT(realm_wrapper.RLM_PROPERTY_TYPE_INT),
-    RLM_PROPERTY_TYPE_BOOL(realm_wrapper.RLM_PROPERTY_TYPE_BOOL),
-    RLM_PROPERTY_TYPE_STRING(realm_wrapper.RLM_PROPERTY_TYPE_STRING),
-    RLM_PROPERTY_TYPE_OBJECT(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT),
-    RLM_PROPERTY_TYPE_FLOAT(realm_wrapper.RLM_PROPERTY_TYPE_FLOAT),
-    RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE),
+actual enum class PropertyType(override val nativeEnum: realm_property_type) : NativeEnumerated<realm_property_type> {
+    RLM_PROPERTY_TYPE_INT(realm_property_type.RLM_PROPERTY_TYPE_INT),
+    RLM_PROPERTY_TYPE_BOOL(realm_property_type.RLM_PROPERTY_TYPE_BOOL),
+    RLM_PROPERTY_TYPE_STRING(realm_property_type.RLM_PROPERTY_TYPE_STRING),
+    RLM_PROPERTY_TYPE_OBJECT(realm_property_type.RLM_PROPERTY_TYPE_OBJECT),
+    RLM_PROPERTY_TYPE_FLOAT(realm_property_type.RLM_PROPERTY_TYPE_FLOAT),
+    RLM_PROPERTY_TYPE_DOUBLE(realm_property_type.RLM_PROPERTY_TYPE_DOUBLE),
 }
 
-actual enum class CollectionType(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_COLLECTION_TYPE_NONE(realm_wrapper.RLM_COLLECTION_TYPE_NONE),
-    RLM_COLLECTION_TYPE_LIST(realm_wrapper.RLM_COLLECTION_TYPE_LIST),
-    RLM_COLLECTION_TYPE_SET(realm_wrapper.RLM_COLLECTION_TYPE_SET),
-    RLM_COLLECTION_TYPE_DICTIONARY(realm_wrapper.RLM_COLLECTION_TYPE_DICTIONARY),
+actual enum class CollectionType(override val nativeEnum: realm_collection_type) : NativeEnumerated<realm_collection_type> {
+    RLM_COLLECTION_TYPE_NONE(realm_collection_type.RLM_COLLECTION_TYPE_NONE),
+    RLM_COLLECTION_TYPE_LIST(realm_collection_type.RLM_COLLECTION_TYPE_LIST),
+    RLM_COLLECTION_TYPE_SET(realm_collection_type.RLM_COLLECTION_TYPE_SET),
+    RLM_COLLECTION_TYPE_DICTIONARY(realm_collection_type.RLM_COLLECTION_TYPE_DICTIONARY),
 }
 
-actual enum class PropertyFlag(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_PROPERTY_NORMAL(realm_wrapper.RLM_PROPERTY_NORMAL),
-    RLM_PROPERTY_NULLABLE(realm_wrapper.RLM_PROPERTY_NULLABLE),
-    RLM_PROPERTY_PRIMARY_KEY(realm_wrapper.RLM_PROPERTY_PRIMARY_KEY),
-    RLM_PROPERTY_INDEXED(realm_wrapper.RLM_PROPERTY_INDEXED),
+actual enum class PropertyFlag(override val nativeEnum: realm_property_flags) : NativeEnumerated<realm_property_flags> {
+    RLM_PROPERTY_NORMAL(realm_property_flags.RLM_PROPERTY_NORMAL),
+    RLM_PROPERTY_NULLABLE(realm_property_flags.RLM_PROPERTY_NULLABLE),
+    RLM_PROPERTY_PRIMARY_KEY(realm_property_flags.RLM_PROPERTY_PRIMARY_KEY),
+    RLM_PROPERTY_INDEXED(realm_property_flags.RLM_PROPERTY_INDEXED),
 }
 
-actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_SCHEMA_VALIDATION_BASIC(realm_wrapper.RLM_SCHEMA_VALIDATION_BASIC),
-    RLM_SCHEMA_VALIDATION_SYNC(realm_wrapper.RLM_SCHEMA_VALIDATION_SYNC),
-    RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_wrapper.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),
+actual enum class SchemaValidationMode(override val nativeEnum: realm_schema_validation_mode) : NativeEnumerated<realm_schema_validation_mode> {
+    RLM_SCHEMA_VALIDATION_BASIC(realm_schema_validation_mode.RLM_SCHEMA_VALIDATION_BASIC),
+    RLM_SCHEMA_VALIDATION_SYNC(realm_schema_validation_mode.RLM_SCHEMA_VALIDATION_SYNC),
+    RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_schema_validation_mode.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),
 }

@@ -222,7 +222,7 @@ actual object RealmInterop {
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags =
-                        clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                        clazz.flags.fold(0) { flags, element -> flags or element.nativeEnum.value.toInt() }
                 }
                 cproperties[i] =
                     allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
@@ -232,10 +232,10 @@ actual object RealmInterop {
                         public_name = "".cstr.ptr
                         link_target = property.linkTarget.cstr.ptr
                         link_origin_property_name = "".cstr.ptr
-                        type = property.type.nativeValue
-                        collection_type = property.collectionType.nativeValue
+                        type = property.type.nativeEnum
+                        collection_type = property.collectionType.nativeEnum
                         flags =
-                            property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                            property.flags.fold(0) { flags, element -> flags or element.nativeEnum.value.toInt() }
                     }
                 }
             }
@@ -260,7 +260,7 @@ actual object RealmInterop {
     actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
         realm_wrapper.realm_config_set_schema_mode(
             config.cptr(),
-            mode.nativeValue
+            mode.nativeEnum
         )
     }
 
@@ -315,7 +315,7 @@ actual object RealmInterop {
         return checkedBooleanResult(
             realm_wrapper.realm_schema_validate(
                 schema.cptr(),
-                mode.nativeValue.toULong()
+                mode.nativeEnum.value.toULong()
             )
         )
     }
