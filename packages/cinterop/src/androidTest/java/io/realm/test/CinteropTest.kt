@@ -569,7 +569,7 @@ class CinteropTest {
     @Test
     fun errorTypes_watchdog() {
         val coreErrorNativeValues = realm_errno_e::class.java.fields
-            .map { it.getInt(null) }
+            .map { (it.get(null) as realm_errno_e).swigValue() }
             .toIntArray()
 
         val mappedKotlinClasses = coreErrorNativeValues
