@@ -30,4 +30,4 @@ add_library(realmc SHARED
         ${swig_SRC}
         ${jni_SRC}
         )
-target_link_libraries(realmc RealmFFI Realm::ObjectStore)
+target_link_libraries(realmc RealmFFIStatic Realm::ObjectStore)
