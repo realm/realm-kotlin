@@ -272,6 +272,8 @@ interface RealmConfiguration {
          */
         internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
 
+        fun newMethodToFailApiCheck() {}
+
         /**
          * Creates the RealmConfiguration based on the builder properties.
          *

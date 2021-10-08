@@ -95,6 +95,7 @@ pipeline {
                     steps {
                         runScm()
                         setBuildDetails()
+                        apiCheck()
                     }
                 }
 
@@ -254,6 +255,15 @@ def setBuildDetails() {
             setBuildName("Tag ${gitTag}")
             publishBuild = true
         }
+    }
+}
+
+def apiCheck() {
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        sh """
+        cd packages
+        gradlew apiCheck
+        """
     }
 }
 
