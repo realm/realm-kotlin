@@ -44,11 +44,9 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
-import realm_wrapper.RLM_CLASS_NORMAL
-import realm_wrapper.RLM_COLLECTION_TYPE_NONE
-import realm_wrapper.RLM_PROPERTY_NORMAL
-import realm_wrapper.RLM_PROPERTY_TYPE_INT
+import realm_wrapper.realm_class_flags
 import realm_wrapper.realm_class_info_t
+import realm_wrapper.realm_collection_type
 import realm_wrapper.realm_config_new
 import realm_wrapper.realm_config_set_path
 import realm_wrapper.realm_config_set_schema
@@ -61,7 +59,9 @@ import realm_wrapper.realm_get_library_version
 import realm_wrapper.realm_get_num_classes
 import realm_wrapper.realm_get_schema
 import realm_wrapper.realm_open
+import realm_wrapper.realm_property_flags
 import realm_wrapper.realm_property_info_t
+import realm_wrapper.realm_property_type
 import realm_wrapper.realm_schema_mode_e
 import realm_wrapper.realm_schema_new
 import realm_wrapper.realm_schema_t
@@ -94,9 +94,9 @@ class CinteropTest {
                 public_name = "".cstr.ptr
                 link_target = "".cstr.ptr
                 link_origin_property_name = "".cstr.ptr
-                type = RLM_PROPERTY_TYPE_INT
-                collection_type = RLM_COLLECTION_TYPE_NONE
-                flags = RLM_PROPERTY_NORMAL.toInt()
+                type = realm_property_type.RLM_PROPERTY_TYPE_INT
+                collection_type = realm_collection_type.RLM_COLLECTION_TYPE_NONE
+                flags = realm_property_flags.RLM_PROPERTY_NORMAL.value.toInt()
             }
 
             val classes: CPointer<realm_class_info_t> = allocArray(1)
@@ -105,14 +105,14 @@ class CinteropTest {
                 primary_key = "".cstr.ptr
                 num_properties = 1.toULong()
                 num_computed_properties = 0.toULong()
-                flags = RLM_CLASS_NORMAL.toInt()
+                flags = realm_class_flags.RLM_CLASS_NORMAL.value.toInt()
             }
 
             val classProperties: CPointer<CPointerVarOf<CPointer<realm_property_info_t>>> = cValuesOf(prop_1_1.ptr).ptr
             val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
 
             assertNoError()
-            assertTrue(realm_schema_validate(realmSchemaNew, SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC.nativeValue.toULong()))
+            assertTrue(realm_schema_validate(realmSchemaNew, SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC.nativeEnum.value.toULong()))
 
             val config = realm_config_new()
             realm_config_set_path(config, "c_api_test.realm")
