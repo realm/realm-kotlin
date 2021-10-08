@@ -38,7 +38,6 @@ import io.ktor.utils.io.errors.IOException
 import io.realm.internal.RealmLog
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
-import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME

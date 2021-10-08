@@ -22,8 +22,6 @@ import io.realm.RealmObject
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.sync.PartitionValue
-import io.realm.internal.platform.createDefaultSystemLogger
-import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
