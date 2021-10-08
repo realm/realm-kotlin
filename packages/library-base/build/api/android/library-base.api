@@ -4,13 +4,6 @@ public abstract interface class io/realm/BaseRealm : io/realm/Versioned {
 	public abstract fun isClosed ()Z
 }
 
-public final class io/realm/BuildConfig {
-	public static final field BUILD_TYPE Ljava/lang/String;
-	public static final field DEBUG Z
-	public static final field LIBRARY_PACKAGE_NAME Ljava/lang/String;
-	public fun <init> ()V
-}
-
 public final class io/realm/LogConfiguration {
 	public fun <init> (Lio/realm/log/LogLevel;Ljava/util/List;)V
 	public final fun component1 ()Lio/realm/log/LogLevel;
@@ -155,85 +148,6 @@ public abstract interface annotation class io/realm/annotations/Index : java/lan
 }
 
 public abstract interface annotation class io/realm/annotations/PrimaryKey : java/lang/annotation/Annotation {
-}
-
-public final class io/realm/internal/NotificationToken : io/realm/Cancellable {
-	public fun <init> (Ljava/lang/Object;Lio/realm/internal/interop/NativePointer;)V
-	public fun cancel ()V
-}
-
-public final class io/realm/internal/RealmConfigurationImpl : io/realm/RealmConfiguration {
-	public fun getDeleteRealmIfMigrationNeeded ()Z
-	public fun getEncryptionKey ()[B
-	public fun getLog ()Lio/realm/LogConfiguration;
-	public fun getMaxNumberOfActiveVersions ()J
-	public fun getName ()Ljava/lang/String;
-	public final fun getNotificationDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
-	public fun getPath ()Ljava/lang/String;
-	public fun getSchema ()Ljava/util/Set;
-	public fun getSchemaVersion ()J
-	public final fun getWriteDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
-}
-
-public abstract interface class io/realm/internal/RealmObjectCompanion {
-	public abstract fun $realm$newInstance ()Ljava/lang/Object;
-	public abstract fun $realm$schema ()Lio/realm/internal/interop/Table;
-	public abstract fun get$realm$fields ()Ljava/util/List;
-	public abstract fun get$realm$primaryKey ()Lkotlin/reflect/KMutableProperty1;
-}
-
-public final class io/realm/internal/RealmObjectHelper {
-	public static final field INSTANCE Lio/realm/internal/RealmObjectHelper;
-}
-
-public final class io/realm/internal/RealmUtilsKt {
-	public static final fun genericRealmCoreExceptionHandler (Ljava/lang/String;Lio/realm/internal/interop/RealmCoreException;)Ljava/lang/Throwable;
-}
-
-public final class io/realm/internal/UnmanagedState : io/realm/internal/RealmState {
-	public static final field INSTANCE Lio/realm/internal/UnmanagedState;
-	public fun isClosed ()Z
-	public fun isFrozen ()Z
-	public fun version ()Lio/realm/VersionId;
-}
-
-public final class io/realm/internal/platform/CoroutineKt {
-	public static final fun runBlocking (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
-	public static synthetic fun runBlocking$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
-	public static final fun singleThreadDispatcher (Ljava/lang/String;)Lkotlinx/coroutines/CoroutineDispatcher;
-}
-
-public final class io/realm/internal/platform/RealmInitializer : androidx/startup/Initializer {
-	public static final field Companion Lio/realm/internal/platform/RealmInitializer$Companion;
-	public static field filesDir Ljava/io/File;
-	public fun <init> ()V
-	public fun create (Landroid/content/Context;)Landroid/content/Context;
-	public synthetic fun create (Landroid/content/Context;)Ljava/lang/Object;
-	public fun dependencies ()Ljava/util/List;
-}
-
-public final class io/realm/internal/platform/RealmInitializer$Companion {
-	public final fun getFilesDir ()Ljava/io/File;
-	public final fun setFilesDir (Ljava/io/File;)V
-}
-
-public final class io/realm/internal/platform/SystemUtilsAndroidKt {
-	public static final fun appFilesDirectory ()Ljava/lang/String;
-	public static final fun createDefaultSystemLogger (Ljava/lang/String;)Lio/realm/log/RealmLogger;
-}
-
-public final class io/realm/internal/platform/SystemUtilsKt {
-	public static final fun ensureNeverFrozen (Ljava/lang/Object;)V
-	public static final fun freeze (Ljava/lang/Object;)Ljava/lang/Object;
-	public static final fun isFrozen (Ljava/lang/Object;)Z
-	public static final fun threadId ()J
-}
-
-public final class io/realm/internal/util/Validation {
-	public static final field INSTANCE Lio/realm/internal/util/Validation;
-	public final fun checkEmpty (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-	public final fun illegalArgument (Ljava/lang/String;)Ljava/lang/Void;
-	public final fun isEmptyString (Ljava/lang/String;)Z
 }
 
 public final class io/realm/log/LogLevel : java/lang/Enum {

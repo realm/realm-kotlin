@@ -51,23 +51,3 @@ public final class io/realm/mongodb/Credentials$Companion {
 public abstract interface class io/realm/mongodb/User {
 }
 
-public final class io/realm/mongodb/internal/EmailPasswordAuthImpl {
-	public fun <init> (Lio/realm/mongodb/App;)V
-	public final fun registerUser-0E7RQCE (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
-public final class io/realm/mongodb/internal/KtorNetworkTransport : io/realm/internal/interop/sync/NetworkTransport {
-	public static final field Companion Lio/realm/mongodb/internal/KtorNetworkTransport$Companion;
-	public static final field ERROR_INTERRUPTED I
-	public static final field ERROR_IO I
-	public static final field ERROR_UNKNOWN I
-	public fun <init> (Ljava/lang/String;Ljava/util/Map;JLkotlinx/coroutines/CoroutineDispatcher;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;JLkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun getAuthorizationHeaderName ()Ljava/lang/String;
-	public fun getCustomHeaders ()Ljava/util/Map;
-	public fun sendRequest (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/internal/interop/sync/Response;
-}
-
-public final class io/realm/mongodb/internal/KtorNetworkTransport$Companion {
-}
-

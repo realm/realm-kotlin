@@ -272,3 +272,8 @@ publishing {
     // completely, hence the .get() below.
     common.artifact(tasks.named("dokkaJar").get())
 }
+
+apiValidation {
+    ignoredPackages.add("io.realm.internal")
+    ignoredClasses.add("io.realm.BuildConfig")
+}

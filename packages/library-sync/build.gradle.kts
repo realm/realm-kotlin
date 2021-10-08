@@ -303,3 +303,8 @@ publishing {
 //    // completely, hence the .get() below.
 //    common.artifact(tasks.named("dokkaJar").get())
 }
+
+apiValidation {
+    ignoredPackages.add("io.realm.mongodb.internal")
+    ignoredClasses.add("io.realm.mongodb.BuildConfig")
+}
