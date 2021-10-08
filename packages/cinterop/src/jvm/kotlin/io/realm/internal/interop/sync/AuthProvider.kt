@@ -19,7 +19,7 @@ package io.realm.internal.interop.sync
 import io.realm.internal.interop.NativeEnumerated
 import io.realm.internal.interop.realm_auth_provider_e
 
-actual enum class AuthProvider(override val nativeValue: Int) : NativeEnumerated {
+actual enum class AuthProvider(override val nativeEnum: realm_auth_provider_e) : NativeEnumerated<realm_auth_provider_e> {
     RLM_AUTH_PROVIDER_ANONYMOUS(realm_auth_provider_e.RLM_AUTH_PROVIDER_ANONYMOUS),
     RLM_AUTH_PROVIDER_FACEBOOK(realm_auth_provider_e.RLM_AUTH_PROVIDER_FACEBOOK),
     RLM_AUTH_PROVIDER_GOOGLE(realm_auth_provider_e.RLM_AUTH_PROVIDER_GOOGLE),
@@ -32,13 +32,13 @@ actual enum class AuthProvider(override val nativeValue: Int) : NativeEnumerated
 
     companion object {
         // TODO Optimize
-        fun of(id: Int): AuthProvider {
-            for (value in AuthProvider.values()) {
-                if (value.nativeValue == id) {
+        fun of(provider: realm_auth_provider_e): AuthProvider {
+            for (value in values()) {
+                if (value.nativeEnum == provider) {
                     return value
                 }
             }
-            error("Unknown authentication provider $id")
+            error("Unknown authentication provider $provider")
         }
     }
 }
