@@ -16,7 +16,6 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.InternalRealmConfiguration
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -27,7 +26,7 @@ internal class SyncConfigurationImpl(
     localConfiguration: RealmConfigurationImpl,
     override val partitionValue: PartitionValue,
     override val user: UserImpl,
-) : InternalRealmConfiguration by localConfiguration, SyncConfiguration {
+) : SyncConfiguration, RealmConfigurationImpl(localConfiguration) {
 
     private val nativeSyncConfig: NativePointer =
         RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())

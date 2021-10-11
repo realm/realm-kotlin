@@ -16,6 +16,7 @@
 
 package io.realm.mongodb
 
+import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
@@ -23,6 +24,7 @@ import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
@@ -91,14 +93,22 @@ interface SyncConfiguration : RealmConfiguration {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
-            @Suppress("invisible_member")
-            val localConfiguration = RealmConfiguration.Builder(path, name, schema)
-                .build(companionMap)
-            return SyncConfigurationImpl(
-                localConfiguration as RealmConfigurationImpl,
-                partitionValue,
-                user as UserImpl
+
+            val localConfiguration = RealmConfigurationImpl(
+                companionMap,
+                path,
+                name,
+                schema,
+                LogConfiguration(logLevel, allLoggers),
+                maxNumberOfActiveVersions,
+                notificationDispatcher ?: singleThreadDispatcher(name),
+                writeDispatcher ?: singleThreadDispatcher(name),
+                schemaVersion,
+                deleteRealmIfMigrationNeeded,
+                encryptionKey
             )
+
+            return SyncConfigurationImpl(localConfiguration, partitionValue, user as UserImpl)
         }
     }
 }
