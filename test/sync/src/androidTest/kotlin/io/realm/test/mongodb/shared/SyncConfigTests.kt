@@ -82,7 +82,7 @@ class SyncConfigTests {
     ).build()
 
     @Test
-    fun canOpenRealm() {
+    fun canSync() {
         val user = createTestUser()
 
         val dir1 = PlatformUtils.createTempDir()
