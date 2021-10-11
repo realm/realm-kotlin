@@ -82,7 +82,7 @@ class RealmObjectTests : RealmStateTest {
 
     @Test
     fun isValid() {
-        val unmanagedParent = Parent().apply { _id = "Foo" }
+        val unmanagedParent = Parent()
         assertTrue(unmanagedParent.isValid())
         val obj: Parent = realm.writeBlocking { copyToRealm(unmanagedParent) }
         assertTrue(obj.isValid())
@@ -94,7 +94,7 @@ class RealmObjectTests : RealmStateTest {
     override fun isFrozen() {
         assertTrue { parent.isFrozen() }
         realm.writeBlocking {
-            val parent = copyToRealm(Parent().apply { _id = "Foo" })
+            val parent = copyToRealm(Parent())
             assertFalse { parent.isFrozen() }
         }
     }

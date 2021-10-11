@@ -60,7 +60,7 @@ class SyncedRealmTests {
 
         tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = SyncConfiguration.Builder(
-            path = "$tmpDir/${createRandomString(16)}.realm",
+            path = "$tmpDir/test.realm",
             schema = setOf(Parent::class, Child::class),
             partitionValue = "default",
             user = user
@@ -72,7 +72,7 @@ class SyncedRealmTests {
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)

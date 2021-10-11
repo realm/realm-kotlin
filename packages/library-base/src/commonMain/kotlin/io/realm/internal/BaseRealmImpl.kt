@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
 abstract class BaseRealmImpl internal constructor(
-    final override val configuration: RealmConfiguration,
+    final override val configuration: InternalRealmConfiguration,
     dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {
 
@@ -75,7 +75,7 @@ abstract class BaseRealmImpl internal constructor(
                 "TRUEPREDICATE"
             ),
             clazz,
-            (configuration as InternalRealmConfiguration).mediator
+            configuration.mediator
         )
     }
 

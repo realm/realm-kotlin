@@ -257,8 +257,12 @@ interface RealmConfiguration {
          * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
          * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
          */
-        fun schemaVersion(schemaVersion: Long) =
-            apply { this.schemaVersion = validateSchemaVersion(schemaVersion) } as S
+        fun schemaVersion(schemaVersion: Long): S {
+            if (schemaVersion < 0) {
+                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
+            }
+            return apply { this.schemaVersion = schemaVersion } as S
+        }
 
         /**
          * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file
@@ -281,13 +285,6 @@ interface RealmConfiguration {
          * @see [RealmConfiguration.Builder.log]
          */
         internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
-
-        protected fun validateSchemaVersion(schemaVersion: Long): Long {
-            if (schemaVersion < 0) {
-                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
-            }
-            return schemaVersion
-        }
 
         protected fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
             if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {

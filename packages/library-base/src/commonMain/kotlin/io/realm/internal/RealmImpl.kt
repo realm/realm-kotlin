@@ -26,21 +26,20 @@ import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
-    configuration: RealmConfiguration,
+    configuration: InternalRealmConfiguration,
     dbPointer: NativePointer
 ) : BaseRealmImpl(configuration, dbPointer), Realm {
 
     private val realmPointerMutex = Mutex()
-    private val internalConfiguration = configuration as InternalRealmConfiguration
 
     internal val realmScope =
-        CoroutineScope(SupervisorJob() + internalConfiguration.notificationDispatcher)
+        CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow =
         MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
     private val notifier =
-        SuspendableNotifier(this, internalConfiguration.notificationDispatcher)
+        SuspendableNotifier(this, configuration.notificationDispatcher)
     private val writer =
-        SuspendableWriter(this, internalConfiguration.writeDispatcher)
+        SuspendableWriter(this, configuration.writeDispatcher)
 
     private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
 
@@ -78,7 +77,7 @@ internal class RealmImpl private constructor(
         }
     }
 
-    constructor(configuration: RealmConfiguration) :
+    constructor(configuration: InternalRealmConfiguration) :
         this(
             configuration,
             try {

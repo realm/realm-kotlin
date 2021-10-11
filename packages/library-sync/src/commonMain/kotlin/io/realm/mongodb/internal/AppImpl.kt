@@ -32,11 +32,19 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val nativePointer: NativePointer = RealmInterop.realm_app_new(
-        appConfig = configuration.nativePointer,
-        syncClientConfig = RealmInterop.realm_sync_client_config_new(),
-        basePath = appFilesDirectory()
-    )
+    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
+        .also { syncClientConfig ->
+            RealmInterop.realm_sync_client_config_set_metadata_mode(
+                syncClientConfig,
+                configuration.metadataMode
+            )
+        }.let { syncClientConfig ->
+            RealmInterop.realm_app_get(
+                appConfig = configuration.nativePointer,
+                syncClientConfig = syncClientConfig,
+                basePath = appFilesDirectory()
+            )
+        }
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->

@@ -18,6 +18,7 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration
@@ -27,7 +28,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 internal class AppConfigurationImpl(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
-    override val networkTransportDispatcher: CoroutineDispatcher
+    override val networkTransportDispatcher: CoroutineDispatcher,
+    override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
 ) : AppConfiguration {
 
     private val networkTransport: NetworkTransport = KtorNetworkTransport(

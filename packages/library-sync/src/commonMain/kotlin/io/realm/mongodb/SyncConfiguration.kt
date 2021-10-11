@@ -48,66 +48,40 @@ interface SyncConfiguration : RealmConfiguration {
     val user: User
     val partitionValue: PartitionValue
 
-    companion object {
-        fun defaultConfig(
-            user: User,
-            partitionValue: Int,
-            schema: Set<KClass<out RealmObject>>
-        ): SyncConfiguration {
-            TODO("Add compiler plugin IR modification for this method")
-        }
-
-        fun defaultConfig(
-            user: User,
-            partitionValue: Long,
-            schema: Set<KClass<out RealmObject>>
-        ): SyncConfiguration {
-            TODO("Add compiler plugin IR modification for this method")
-        }
-
-        fun defaultConfig(
-            user: User,
-            partitionValue: String,
-            schema: Set<KClass<out RealmObject>>
-        ): SyncConfiguration {
-            TODO("Add compiler plugin IR modification for this method")
-        }
-    }
-
     /**
      * TODO
      */
     class Builder private constructor(
+        private var user: User,
+        private var partitionValue: PartitionValue,
         path: String?, // Full path for Realm (directory + name)
         name: String, // Optional Realm name (default is 'default')
-        schema: Set<KClass<out RealmObject>>,
-        private var user: User,
-        private var partitionValue: PartitionValue
+        schema: Set<KClass<out RealmObject>>
     ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(path, name, schema) {
 
         constructor(
+            user: User,
+            partitionValue: Int,
             path: String? = null,
             name: String = Realm.DEFAULT_FILE_NAME,
-            schema: Set<KClass<out RealmObject>> = setOf(),
-            user: User,
-            partitionValue: Int
-        ) : this(path, name, schema, user, PartitionValue(partitionValue.toLong()))
+            schema: Set<KClass<out RealmObject>> = setOf()
+        ) : this(user, PartitionValue(partitionValue.toLong()), path, name, schema)
 
         constructor(
+            user: User,
+            partitionValue: Long,
             path: String? = null,
             name: String = Realm.DEFAULT_FILE_NAME,
-            schema: Set<KClass<out RealmObject>> = setOf(),
-            user: User,
-            partitionValue: Long
-        ) : this(path, name, schema, user, PartitionValue(partitionValue))
+            schema: Set<KClass<out RealmObject>> = setOf()
+        ) : this(user, PartitionValue(partitionValue), path, name, schema)
 
         constructor(
+            user: User,
+            partitionValue: String,
             path: String? = null,
             name: String = Realm.DEFAULT_FILE_NAME,
-            schema: Set<KClass<out RealmObject>> = setOf(),
-            user: User,
-            partitionValue: String
-        ) : this(path, name, schema, user, PartitionValue(partitionValue))
+            schema: Set<KClass<out RealmObject>> = setOf()
+        ) : this(user, PartitionValue(partitionValue), path, name, schema)
 
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>

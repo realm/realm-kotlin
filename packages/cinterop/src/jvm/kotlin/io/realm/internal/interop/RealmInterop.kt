@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -452,15 +453,15 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(
+    actual fun realm_app_get(
         appConfig: NativePointer,
         syncClientConfig: NativePointer,
         basePath: String
     ): NativePointer {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
 
-        // TODO add metadata mode to config
-        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
+//        // TODO add metadata mode to config
+//        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -475,6 +476,16 @@ actual object RealmInterop {
 
     actual fun realm_sync_client_config_new(): NativePointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_metadata_mode(
+        syncClientConfig: NativePointer,
+        metadataMode: MetadataMode
+    ) {
+        realmc.realm_sync_client_config_set_metadata_mode(
+            syncClientConfig.cptr(),
+            metadataMode.metadataValue
+        )
     }
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {

@@ -183,13 +183,13 @@ class RealmTests {
     fun writeBlockingAfterWrite() = runBlocking {
         val name = "Realm"
         val child: Child = realm.write {
-            this.copyToRealm(Child().apply { _id = "Foo" }).apply { this.name = name }
+            this.copyToRealm(Child()).apply { this.name = name }
         }
         assertEquals(name, child.name)
         assertEquals(1, realm.objects<Child>().size)
 
         realm.writeBlocking {
-            this.copyToRealm(Child().apply { _id = "Bar" }).apply { this.name = name }
+            this.copyToRealm(Child()).apply { this.name = name }
         }
         Unit
     }
@@ -214,7 +214,7 @@ class RealmTests {
         val jobs: List<Job> = IntRange(0, 9).map {
             launch {
                 realm.write {
-                    copyToRealm(Parent().apply { _id = "pk$it" })
+                    copyToRealm(Parent())
                 }
             }
         }
@@ -370,12 +370,12 @@ class RealmTests {
         val dispatcher = newSingleThreadContext("background")
         runBlocking {
             realm.write {
-                copyToRealm(Parent().apply { _id = "Foo" })
+                copyToRealm(Parent())
             }
         }
         runBlocking(dispatcher) {
             realm.write {
-                copyToRealm(Parent().apply { _id = "Bar" })
+                copyToRealm(Parent())
             }
         }
         assertEquals(2, realm.objects<Parent>().size)
@@ -384,7 +384,7 @@ class RealmTests {
     @Test
     fun closeClosesAllVersions() {
         runBlocking {
-            realm.write { copyToRealm(Parent().apply { _id = "Foo" }) }
+            realm.write { copyToRealm(Parent()) }
         }
         val parent: Parent = realm.objects<Parent>().first()
         runBlocking {
