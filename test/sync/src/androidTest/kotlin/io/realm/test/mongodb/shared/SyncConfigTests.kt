@@ -116,7 +116,6 @@ class SyncConfigTests {
             }
 
             realm1.write {
-                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
                 copyToRealm(child)
             }
 

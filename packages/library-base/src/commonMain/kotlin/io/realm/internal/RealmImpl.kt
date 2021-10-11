@@ -92,12 +92,12 @@ internal class RealmImpl private constructor(
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
         try {
-            val (nativePointer, versionId, result) = this.writer.write(block)
+            val (reference, result) = this.writer.write(block)
             // Update the user facing Realm before returning the result.
             // That way, querying the Realm right after the `write` completes will return
             // the written data. Otherwise, we would have to wait for the Notifier thread
             // to detect it and update the user Realm.
-            updateRealmPointer(RealmReference(this, nativePointer))
+            updateRealmPointer(reference)
             return result
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(

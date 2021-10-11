@@ -153,17 +153,13 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
-        val realmPtr = if (dispatcher != null) {
-            // create a custom Scheduler for JVM, use a lock to prevent concurrent modification of the RealmConfig
-            LongPointerWrapper(
-                realmc.open_realm_with_scheduler(
-                    (config as LongPointerWrapper).ptr,
-                    JVMScheduler(dispatcher)
-                )
+        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
+        val realmPtr = LongPointerWrapper(
+            realmc.open_realm_with_scheduler(
+                (config as LongPointerWrapper).ptr,
+                if (dispatcher != null) JVMScheduler(dispatcher) else null
             )
-        } else {
-            LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
-        }
+        )
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
