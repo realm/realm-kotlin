@@ -16,6 +16,7 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.mongodb.internal.AppConfigurationImpl
@@ -35,6 +36,7 @@ interface AppConfiguration {
     val baseUrl: String
     val logLevel: LogLevel
     val networkTransportDispatcher: CoroutineDispatcher
+    val metadataMode: MetadataMode
 
     companion object {
         /**

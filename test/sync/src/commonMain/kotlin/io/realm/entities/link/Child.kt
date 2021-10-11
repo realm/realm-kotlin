@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop
+package io.realm.entities.link
 
-interface CoreLogger {
-    fun log(level: Short, message: String)
+import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
+
+class Child : RealmObject {
+    @PrimaryKey var _id: String = ""
+    var name: String = "DEFAULT"
 }

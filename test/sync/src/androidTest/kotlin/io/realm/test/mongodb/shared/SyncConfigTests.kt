@@ -85,7 +85,7 @@ class SyncConfigTests {
     ).build()
 
     @Test
-    fun canOpenRealm() {
+    fun canSync() {
         val user = createTestUser()
 
         val dir1 = PlatformUtils.createTempDir()
@@ -119,7 +119,6 @@ class SyncConfigTests {
             }
 
             realm1.write {
-                // FIXME freezing an object created inside the write block crashes due to not having a mediator?!?!
                 copyToRealm(child)
             }
 

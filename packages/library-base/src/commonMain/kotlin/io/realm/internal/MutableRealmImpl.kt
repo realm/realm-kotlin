@@ -56,14 +56,10 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
      * - Native: Either a scheduler dispatching to the supplied dispatcher or the default Darwin
      * scheduler, that delivers notifications on the main run loop.
      */
-    internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher? = null) :
-        super(
-            configuration,
-            RealmInterop.realm_open(
-                (configuration as InternalRealmConfiguration).nativeConfig,
-                dispatcher
-            )
-        )
+    internal constructor(
+        configuration: InternalRealmConfiguration,
+        dispatcher: CoroutineDispatcher? = null
+    ) : super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     internal fun beginTransaction() {
         try {

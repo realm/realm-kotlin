@@ -24,4 +24,15 @@ class Nullability : RealmObject {
     //  https://github.com/realm/realm-kotlin/issues/133
     var stringNullable: String? = null
     var stringNonNullable: String = ""
+    var booleanNullable: Boolean? = null
+
+    var byteNullable: Byte? = null
+    var charNullable: Char? = null
+    var shortNullable: Short? = null
+    var intNullable: Int? = null
+    var longNullability: Long? = null
+
+    var floatNullable: Float? = null
+    var doubleField: Double? = null
+    var objectField: Nullability? = null
 }
