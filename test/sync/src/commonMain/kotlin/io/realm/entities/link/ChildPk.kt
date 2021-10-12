@@ -19,8 +19,7 @@ package io.realm.entities.link
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 
-class Parent : RealmObject {
+class ChildPk : RealmObject {
     @PrimaryKey var _id: String = ""
-    var name: String = "N.N."
-    var child: Child? = null
+    var name: String = "DEFAULT"
 }
