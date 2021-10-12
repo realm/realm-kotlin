@@ -4,7 +4,6 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
