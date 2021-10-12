@@ -59,75 +59,6 @@ class SyncConfigTests {
         }
     }
 
-    private fun createTestUser(): User {
-        val email = randomEmail()
-        val password = "asdfasdf"
-        app.asTestApp.createUser(email, password)
-        return runBlocking {
-            app.login(Credentials.emailPassword(email, password))
-        }
-    }
-
-    private fun createSyncConfig(
-        user: User,
-        partitionValue: String = DEFAULT_PARTITION_VALUE,
-        path: String? = null,
-        name: String = DEFAULT_NAME
-    ): SyncConfiguration = SyncConfiguration.Builder(
-        path = path,
-        name = name,
-        schema = setOf(Parent::class, Child::class),
-        user = user,
-        partitionValue = partitionValue
-    ).build()
-
-    @Test
-    fun canSync() {
-        val user = createTestUser()
-
-        val dir1 = PlatformUtils.createTempDir()
-        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user)
-        assert(config1 is SyncConfiguration)
-        val realm1 = Realm.open(config1)
-        assertNotNull(realm1)
-
-        val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user)
-        assert(config2 is SyncConfiguration)
-        val realm2 = Realm.open(config2)
-        assertNotNull(realm2)
-
-        val child = Child().apply {
-            _id = "CHILD_A"
-            name = "A"
-        }
-
-        val channel = Channel<Child>(1)
-
-        runBlocking {
-            val observer = async {
-                realm2.objects(Child::class)
-                    .observe()
-                    .collect { childResults ->
-                        println("===> RECEIVED results, size: ${childResults.size}")
-                        if (childResults.size == 1)
-                            channel.send(childResults[0])
-                    }
-            }
-
-            realm1.write {
-                copyToRealm(child)
-            }
-
-            println("===> BEFORE RECEIVE")
-            val childResult = channel.receive()
-            println("===> AFTER  RECEIVE")
-            assertEquals("CHILD_A", childResult._id)
-            observer.cancel()
-            channel.close()
-        }
-    }
-
 //    @Test
 //    fun errorHandler() {
 //        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
@@ -175,23 +106,32 @@ class SyncConfigTests {
 //        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
 //        assertFailsWith<IllegalArgumentException> { builder.clientResetHandler(TestHelper.getNull()) }
 //    }
-//
+
+    @Test
+    fun equals_sameObject() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE,
+            schema = setOf(Child::class)
+        ).build()
+        assertEquals(config, config)
+    }
+
 //    @Test
-//    fun equals() {
+//    fun equals_sameConfigurations() {
 //        val user = createTestUser()
-//        val config = SyncConfiguration.Builder(user = user, partitionValue = DEFAULT_PARTITION_VALUE)
-//            .build()
-//        assertEquals(config, config)
-//    }
-//
-//    @Test
-//    fun equals_same() {
-//        val user = createTestUser()
-//        val config1 = SyncConfiguration.Builder(user = user, partitionValue = DEFAULT_PARTITION_VALUE)
-//            .build()
-//        val config2 = SyncConfiguration.Builder(user = user, partitionValue = DEFAULT_PARTITION_VALUE)
-//            .build()
-//        assertEquals(config1, config2)
+//        val config1 = SyncConfiguration.Builder(
+//            user = user,
+//            partitionValue = DEFAULT_PARTITION_VALUE,
+//            schema = setOf(Child::class)
+//        ).build()
+//        val config2 = SyncConfiguration.Builder(
+//            user = user,
+//            partitionValue = DEFAULT_PARTITION_VALUE,
+//            schema = setOf(Child::class)
+//        ).build()
+//        assertEquals(config1.partitionValue, config2.partitionValue)
 //    }
 //
 //    @Test
@@ -683,4 +623,26 @@ class SyncConfigTests {
 //            .build()
 //        assertNotEquals(factory, configuration2.flowFactory)
 //    }
+
+    private fun createTestUser(): User {
+        val email = randomEmail()
+        val password = "asdfasdf"
+        app.asTestApp.createUser(email, password)
+        return runBlocking {
+            app.login(Credentials.emailPassword(email, password))
+        }
+    }
+
+    private fun createSyncConfig(
+        user: User,
+        partitionValue: String = DEFAULT_PARTITION_VALUE,
+        path: String? = null,
+        name: String = DEFAULT_NAME
+    ): SyncConfiguration = SyncConfiguration.Builder(
+        path = path,
+        name = name,
+        schema = setOf(Parent::class, Child::class),
+        user = user,
+        partitionValue = partitionValue
+    ).build()
 }

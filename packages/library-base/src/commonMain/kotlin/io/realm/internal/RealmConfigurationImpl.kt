@@ -115,21 +115,4 @@ open class RealmConfigurationImpl constructor(
                     ?: error("$clazz not part of this configuration schema")
         }
     }
-
-    /**
-     * Creates a new configuration based on an existing one.
-     */
-    constructor(localConfiguration: RealmConfigurationImpl) : this(
-        localConfiguration.mapOfKClassWithCompanion,
-        localConfiguration.path,
-        localConfiguration.name,
-        localConfiguration.schema,
-        localConfiguration.log,
-        localConfiguration.maxNumberOfActiveVersions,
-        localConfiguration.notificationDispatcher,
-        localConfiguration.writeDispatcher,
-        localConfiguration.schemaVersion,
-        localConfiguration.deleteRealmIfMigrationNeeded,
-        localConfiguration.encryptionKey
-    )
 }
