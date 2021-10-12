@@ -22,6 +22,7 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -34,20 +35,31 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val loggerFactory: () -> CoreLogger = {
-        createDefaultSystemLogger("SYNC", configuration.logLevel)
-    }
+    // Ensure logLevel is frozen or else we'll get an InvalidMutabilityException since it's accessed
+    // inside the logger factory lambda
+    private val loggerFactory: () -> CoreLogger = configuration.logLevel.freeze()
+        .let { logLevel -> { createDefaultSystemLogger("SYNC", logLevel) } }
 
     private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
         .also { syncClientConfig ->
-            RealmInterop.realm_sync_client_config_set_logger_factory(syncClientConfig, loggerFactory)
-            RealmInterop.realm_sync_client_config_set_log_level(syncClientConfig, configuration.logLevel.priority)
+            RealmInterop.realm_sync_client_config_set_logger_factory(
+                syncClientConfig,
+                loggerFactory
+            )
+            RealmInterop.realm_sync_client_config_set_log_level(
+                syncClientConfig,
+                configuration.logLevel.priority
+            )
             RealmInterop.realm_sync_client_config_set_metadata_mode(
                 syncClientConfig,
                 configuration.metadataMode
             )
         }.let { syncClientConfig ->
-            RealmInterop.realm_app_get(configuration.nativePointer, syncClientConfig, appFilesDirectory())
+            RealmInterop.realm_app_get(
+                configuration.nativePointer,
+                syncClientConfig,
+                appFilesDirectory()
+            )
         }
 
     override suspend fun login(credentials: Credentials): User {
