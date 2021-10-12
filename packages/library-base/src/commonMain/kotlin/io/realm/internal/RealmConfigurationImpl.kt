@@ -27,7 +27,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
-class RealmConfigurationImpl constructor(
+open class RealmConfigurationImpl constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
@@ -39,7 +39,7 @@ class RealmConfigurationImpl constructor(
     schemaVersion: Long,
     deleteRealmIfMigrationNeeded: Boolean,
     encryptionKey: ByteArray?,
-) : RealmConfiguration, InternalRealmConfiguration {
+) : InternalRealmConfiguration {
 
     override val path: String
 

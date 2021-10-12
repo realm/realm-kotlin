@@ -18,7 +18,7 @@
 
 package io.realm.test.mongodb
 
-import io.ktor.client.request.*
+import io.ktor.client.request.get
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.App
@@ -36,16 +36,12 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
  * used for testing.
  */
-// TODO Find appropriate configuration options
 class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     appId: String = runBlocking(dispatcher) { getAppId(appName) }
-) : App by App.create(
-    AppConfiguration.Builder(appId).baseUrl(TEST_SERVER_BASE_URL).dispatcher(dispatcher).build()
-), AdminApi by (runBlocking(dispatcher) {
-        AdminApiImpl(TEST_SERVER_BASE_URL, appId, dispatcher)
-}) {
+) : App by App.create(AppConfiguration.Builder(appId).baseUrl(TEST_SERVER_BASE_URL).dispatcher(dispatcher).build()),
+    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, dispatcher) }) {
 
     fun close() {
         deleteAllUsers()

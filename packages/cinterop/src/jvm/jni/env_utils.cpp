@@ -16,6 +16,7 @@
 
 #include "env_utils.h"
 #include "java_class_global_def.hpp"
+#include <stdexcept> // needed for Linux centos7 build
 
 static JavaVM *cached_jvm = 0;
 

@@ -19,6 +19,7 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.REALM_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_CONFIGURATION_BUILDER
 import io.realm.compiler.FqNames.REALM_SYNC_CONFIGURATION
+import io.realm.compiler.FqNames.SYNC_CONFIGURATION_BUILDER
 import io.realm.compiler.Names.REALM_CONFIGURATION_BUILDER_BUILD
 import io.realm.compiler.Names.REALM_CONFIGURATION_WITH
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -70,23 +71,39 @@ import org.jetbrains.kotlin.name.Name
  */
 class RealmSchemaLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-        val configurationBuilder =
+        val realmConfigurationBuilder =
             pluginContext.lookupClassOrThrow(REALM_CONFIGURATION_BUILDER)
         val configurationBuilderConstructor: IrConstructorSymbol =
             pluginContext.lookupConstructorInClass(REALM_CONFIGURATION_BUILDER) {
                 it.owner.isPrimary
             }
-        val internalBuildFunction = configurationBuilder.functions.first {
+        val realmBuildFunction = realmConfigurationBuilder.functions.first {
             it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
         }
+        // This can be null as the sync configuration builder is not available for base builds
+        val syncBuildFunction = pluginContext.referenceClass(SYNC_CONFIGURATION_BUILDER)?.let {
+            it.owner.functions.first {
+                it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
+            }
+        }
+
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
+                @Suppress("LongMethod")
                 override fun visitCall(expression: IrCall): IrExpression {
                     val name = expression.symbol.owner.name
-                    if ((expression.type.classFqName == REALM_CONFIGURATION
-                                || expression.type.classFqName == REALM_SYNC_CONFIGURATION) &&
-                        name in setOf(REALM_CONFIGURATION_BUILDER_BUILD, REALM_CONFIGURATION_WITH)
+                    if ((expression.type.classFqName == REALM_CONFIGURATION || expression.type.classFqName == REALM_SYNC_CONFIGURATION) && name in setOf(
+                            REALM_CONFIGURATION_BUILDER_BUILD,
+                            REALM_CONFIGURATION_WITH
+                        )
                     ) {
+                        val buildFunction =
+                            if (expression.type.classFqName == REALM_SYNC_CONFIGURATION) {
+                                // We only reach this if we are building a sync configuration so calling "!!" is safe
+                                syncBuildFunction!!
+                            } else {
+                                realmBuildFunction
+                            }
                         val specifiedModels =
                             mutableListOf<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>()
                         val (receiver, schemaArgument) = when (name) {
@@ -101,7 +118,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                                 val builder = IrConstructorCallImpl(
                                     startOffset = expression.startOffset,
                                     endOffset = expression.endOffset,
-                                    type = configurationBuilder.defaultType,
+                                    type = realmConfigurationBuilder.defaultType,
                                     symbol = configurationBuilderConstructor,
                                     typeArgumentsCount = 0,
                                     constructorTypeArgumentsCount = 0,
@@ -127,7 +144,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             startOffset = expression.startOffset,
                             endOffset = expression.endOffset,
                             type = expression.type,
-                            symbol = internalBuildFunction.symbol,
+                            symbol = buildFunction.symbol,
                             typeArgumentsCount = 0,
                             valueArgumentsCount = 1,
                             origin = null,
@@ -166,7 +183,11 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
  * TODO We should lift this restriction
  * ```
  */
-fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPluginContext, specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>) {
+fun findSchemaClassLiterals(
+    schemaArgument: IrExpression?,
+    pluginContext: IrPluginContext,
+    specifiedModels: MutableList<Triple<IrClassifierSymbol, IrType, IrClassSymbol>>
+) {
     when (schemaArgument) {
         is IrCallImpl -> {
             // This will iterate the full schemaArgument tree, which conveniently includes the
@@ -178,8 +199,8 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             //
             // no ARGUMENTS_REORDERING_FOR_CALL block was added by IR, CLASS_REFERENCE should
             // be available as children
-            schemaArgument.acceptChildrenVoid(object :
-                    IrElementVisitorVoid {
+            schemaArgument.acceptChildrenVoid(
+                object : IrElementVisitorVoid {
                     override fun visitElement(element: IrElement) {
                         element.acceptChildrenVoid(this)
                     }
@@ -191,7 +212,8 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
                             specifiedModels
                         )
                     }
-                })
+                }
+            )
         }
         is IrGetValueImpl -> {
             // the list of CLASS_REFERENCE were probably created in a tmp variable because of
@@ -199,28 +221,19 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
             // the CLASS_REFERENCE via the content of the tmp variable
             if (schemaArgument.symbol.owner.origin == IrDeclarationOrigin.IR_TEMPORARY_VARIABLE) {
                 schemaArgument.symbol.owner.parent.acceptChildren(
-                    object :
-                        IrElementVisitor<Unit, Name> {
-                        override fun visitElement(
-                            element: IrElement,
-                            data: Name
-                        ) {
+                    object : IrElementVisitor<Unit, Name> {
+                        override fun visitElement(element: IrElement, data: Name) {
                             element.acceptChildren(this, data)
                         }
 
-                        override fun visitVariable(
-                            declaration: IrVariable,
-                            data: Name
-                        ) {
+                        override fun visitVariable(declaration: IrVariable, data: Name) {
                             if (declaration.name == data) {
                                 // get class references
-                                declaration.acceptChildrenVoid(object :
-                                        IrElementVisitorVoid {
-
+                                declaration.acceptChildrenVoid(
+                                    object : IrElementVisitorVoid {
                                         override fun visitElement(element: IrElement) {
                                             element.acceptChildrenVoid(this)
                                         }
-
                                         override fun visitClassReference(expression: IrClassReference) {
                                             addEntryToCompanionMap(
                                                 expression,
@@ -228,7 +241,8 @@ fun findSchemaClassLiterals(schemaArgument: IrExpression?, pluginContext: IrPlug
                                                 specifiedModels
                                             )
                                         }
-                                    })
+                                    }
+                                )
                             } else {
                                 super.visitVariable(declaration, data)
                             }
@@ -269,11 +283,13 @@ private fun populateCompanion(
 
     val mapOf = pluginContext.referenceFunctions(FqNames.KOTLIN_COLLECTIONS_MAPOF)
         .first { it.owner.valueParameters.size == 1 && it.owner.valueParameters.first().isVararg }
-    val realmObjectCompanionIrClass: IrClass = pluginContext.lookupClassOrThrow(FqNames.REALM_MODEL_COMPANION)
+    val realmObjectCompanionIrClass: IrClass =
+        pluginContext.lookupClassOrThrow(FqNames.REALM_MODEL_COMPANION)
     val mapType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_MAP)
     val companionMapKeyType = pluginContext.irBuiltIns.kClassClass.starProjectedType
     val companionMapValueType = realmObjectCompanionIrClass.defaultType
-    val companionMapType: IrSimpleType = mapType.typeWith(companionMapKeyType, companionMapValueType)
+    val companionMapType: IrSimpleType =
+        mapType.typeWith(companionMapKeyType, companionMapValueType)
     val companionMapEntryType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_PAIR)
         .typeWith(companionMapKeyType, companionMapValueType)
     val pairCtor = pluginContext.lookupConstructorInClass(FqNames.KOTLIN_PAIR) {

@@ -202,12 +202,18 @@ void invoke_core_notify_callback(int64_t core_notify_function) {
     (*notify)();
 }
 
+// TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
 realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
     auto *cfg = reinterpret_cast<realm_config_t * >(config_ptr);
     // copy construct to not set the scheduler on the original Conf which could be used
     // to open Frozen Realm for instance.
     auto copyConf = *cfg;
-    copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    if (dispatchScheduler) {
+        copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    } else {
+        copyConf.scheduler = realm::util::Scheduler::make_generic();
+    }
+
     return realm_open(&copyConf);
 }
 
@@ -367,26 +373,23 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
         stacked_headers.push_back(std::move(key));
         stacked_headers.push_back(std::move(value));
 
-        realm_http_header header = {
-                .name = stacked_headers[i].c_str(),
-                .value = stacked_headers[i + 1].c_str()
-        };
+        // FIXME REFACTOR when C++20 will be available
+        realm_http_header header;
+        header.name = stacked_headers[i].c_str();
+        header.value = stacked_headers[i + 1].c_str();
 
         response_headers.push_back(header);
     }
 
-    // transform JVM response -> realm_http_response_t
-    {
-        realm_http_response_t response = {
-                .status_code = http_code,
-                .custom_status_code = custom_code,
-                .headers = response_headers.data(),
-                .num_headers = response_headers.size(),
-                .body = body.c_str(),
-                .body_size = body.size(),
-        };
-        completion_callback(completion_data, &response);
-    }
+    realm_http_response response;
+    response.status_code = http_code;
+    response.custom_status_code = custom_code;
+    response.headers = response_headers.data();
+    response.num_headers = response_headers.size();
+    response.body = body.c_str();
+    response.body_size = body.size();
+
+    completion_callback(completion_data, &response);
 }
 
 /**
@@ -458,17 +461,4 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
                                 get_env(true)->DeleteGlobalRef(
                                         static_cast<jobject>(userdata));
                             });
-}
-
-void
-sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_factory) {
-    auto jenv = get_env();
-    return realm_sync_client_config_set_logger_factory(sync_config,
-                                                       &new_logger_lambda_function,
-                                                       static_cast<jobject>(jenv->NewGlobalRef(logger_factory)),
-                                                       [](void *userdata) {
-                                                           get_env(true)->DeleteGlobalRef(
-                                                                   static_cast<jobject>(userdata));
-                                                       }
-    );
 }

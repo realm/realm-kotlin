@@ -23,6 +23,8 @@ import io.realm.entities.link.Parent
 import io.realm.objects
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.createRandomString
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -30,6 +32,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class MutableRealmTests {
 
@@ -61,6 +64,11 @@ class MutableRealmTests {
         val parents = realm.objects<Parent>()
         assertEquals(1, parents.size)
         assertEquals("N.N.", parents[0].name)
+    }
+
+    @Test
+    fun writeReturningUnmanaged() {
+        assertTrue(realm.writeBlocking { Parent() } is Parent)
     }
 
     @Test
@@ -144,6 +152,19 @@ class MutableRealmTests {
         realm.writeBlocking {
             assertFailsWith<IllegalArgumentException> {
                 val latest = findLatest(StringPropertyWithPrimaryKey())
+            }
+        }
+    }
+
+    @Test
+    fun findLatest_inLongHistory() {
+        runBlocking {
+            val child = realm.write { copyToRealm(Child()) }
+            for (i in 1..10) {
+                realm.write {
+                    assertNotNull(findLatest(child))
+                }
+                delay(100)
             }
         }
     }

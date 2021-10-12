@@ -45,6 +45,24 @@ class PartitionValue private constructor(
 
     fun asString(): String = checkValidType(ValueType.STRING).let { stringValue!! }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other is PartitionValue) {
+            if (asSyncPartition() == other.asSyncPartition()) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    override fun hashCode(): Int {
+        var result = stringValue?.hashCode() ?: 0
+        result = 31 * result + (longValue?.hashCode() ?: 0)
+        result = 31 * result + valueType.hashCode()
+        return result
+    }
+
     private fun checkValidType(expectedValueType: ValueType) {
         if (expectedValueType != valueType) {
             throw IllegalStateException("This partition value is not a ${expectedValueType.name} but a ${valueType.name}")

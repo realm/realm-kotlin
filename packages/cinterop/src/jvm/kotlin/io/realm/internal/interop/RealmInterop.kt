@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +31,7 @@ import java.lang.reflect.Method
 
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
+
 
 /**
  * JVM/Android interop implementation.
@@ -152,17 +154,13 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
-        val realmPtr = if (dispatcher != null) {
-            // create a custom Scheduler for JVM, use a lock to prevent concurrent modification of the RealmConfig
-            LongPointerWrapper(
-                realmc.open_realm_with_scheduler(
-                    (config as LongPointerWrapper).ptr,
-                    JVMScheduler(dispatcher)
-                )
+        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
+        val realmPtr = LongPointerWrapper(
+            realmc.open_realm_with_scheduler(
+                (config as LongPointerWrapper).ptr,
+                if (dispatcher != null) JVMScheduler(dispatcher) else null
             )
-        } else {
-            LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
-        }
+        )
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
@@ -452,15 +450,12 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(
+    actual fun realm_app_get(
         appConfig: NativePointer,
         syncClientConfig: NativePointer,
         basePath: String
     ): NativePointer {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
-
-        // TODO add metadata mode to config
-        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -477,11 +472,14 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
 
-    actual fun realm_sync_client_config_set_logger_factory(
+    actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,
-        loggerFactory: () -> CoreLogger
+        metadataMode: MetadataMode
     ) {
-        realmc.sync_config_set_logger(syncClientConfig.cptr(), loggerFactory)
+        realmc.realm_sync_client_config_set_metadata_mode(
+            syncClientConfig.cptr(),
+            metadataMode.metadataValue
+        )
     }
 
     actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {

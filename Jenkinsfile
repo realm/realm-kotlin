@@ -94,8 +94,42 @@ pipeline {
                 stage('SCM') {
                     steps {
                         runScm()
+                        setBuildDetails()
+                        genAndStashSwigJNI()
                     }
                 }
+
+                stage('build-jvm-native-libs') {
+                    parallel{
+                      stage('build_jvm_linux') {
+                          when { expression { shouldBuildJvmABIs() } }
+                          agent {
+                              node {
+                                  label 'docker'
+                              }
+                          }
+                          steps {
+                              // It is an order of magnitude faster to checkout the repo
+                              // rather then stashing/unstashing all files to build Linux and Win
+                              runScm()
+                              build_jvm_linux()
+                          }
+                      }
+                      stage('build_jvm_windows') {
+                          when { expression { shouldBuildJvmABIs() } }
+                          agent {
+                              node {
+                                  label 'windows'
+                              }
+                          }
+                          steps {
+                            runScm()
+                            build_jvm_windows()
+                          }
+                      }
+                    }
+                }
+
                 stage('Build') {
                     steps {
                         runBuild()
@@ -169,7 +203,6 @@ pipeline {
                 }
             }
         }
-
     }
     post {
         failure {
@@ -201,7 +234,9 @@ def runScm() {
             extensions       : scm.extensions + repoExtensions,
             userRemoteConfigs: scm.userRemoteConfigs
     ])
+}
 
+def setBuildDetails() {
     // Check type of Build. We are treating this as a release build if we are building
     // the exact Git SHA that was tagged.
     gitTag = readGitTag()
@@ -223,7 +258,23 @@ def runScm() {
     }
 }
 
+def genAndStashSwigJNI() {
+    withEnv(['PATH+USER_BIN=/usr/local/bin']) {
+        sh """
+        cd packages/jni-swig-stub
+        ../gradlew assemble
+        """
+    }
+    stash includes: 'packages/jni-swig-stub/src/main/jni/realmc.cpp,packages/jni-swig-stub/src/main/jni/realmc.h', name: 'swig_jni'
+}
 def runBuild() {
+    def buildJvmAbiFlag = "-PcopyJvmABIs=false"
+    if (shouldBuildJvmABIs()) {
+        unstash name: 'linux_so_file'
+        unstash name: 'win_dll'
+        buildJvmAbiFlag = "-PcopyJvmABIs=true"
+    }
+
     withCredentials([
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
         [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
@@ -236,10 +287,12 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew assemble ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
+    archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/resources/**/*.*', allowEmptyArchive: true
+
 }
 
 def runStaticAnalysis() {
@@ -297,7 +350,7 @@ def runPublishSnapshotToMavenCentral() {
     }
 }
 
-def  runPublishReleaseOnMavenCentral() {
+def runPublishReleaseOnMavenCentral() {
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file', variable: 'SIGN_KEY'],
             [$class: 'StringBinding', credentialsId: 'maven-central-kotlin-ring-file-password', variable: 'SIGN_KEY_PASSWORD'],
@@ -508,4 +561,44 @@ def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContai
 
 def runCommand(String command){
   return sh(script: command, returnStdout: true).trim()
+}
+
+def shouldBuildJvmABIs() {
+    if (publishBuild || shouldPublishSnapshot(version)) return true else return false
+}
+
+// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
+def build_jvm_linux() {
+    unstash name: 'swig_jni'
+    docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
+        sh """
+           cd packages/cinterop/src/jvmMain/linux/
+           rm -rf build-dir
+           mkdir build-dir
+           cd build-dir
+           cmake ..
+           make -j8
+        """
+
+        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_file'
+    }
+}
+
+def build_jvm_windows() {
+  unstash name: 'swig_jni'
+  def cmakeOptions = [
+        CMAKE_GENERATOR_PLATFORM: 'x64',
+        CMAKE_BUILD_TYPE: 'Release',
+        REALM_ENABLE_SYNC: "ON",
+        CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+        CMAKE_SYSTEM_VERSION: '8.1',
+        REALM_NO_TESTS: '1',
+        VCPKG_TARGET_TRIPLET: 'x64-windows-static'
+      ]
+
+  def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
+  dir('packages') {
+      bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
+  }
+  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dll'
 }

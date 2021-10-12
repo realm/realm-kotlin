@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
@@ -137,18 +138,18 @@ expect object RealmInterop {
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
 
     // App
-    fun realm_app_new(
+    fun realm_app_get(
         appConfig: NativePointer,
         syncClientConfig: NativePointer,
         basePath: String,
-    ): NativePointer // TODO sync config shouldn't be null
+    ): NativePointer
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
 
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer
-    fun realm_sync_client_config_set_logger_factory(
+    fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,
-        loggerFactory: () -> CoreLogger
+        metadataMode: MetadataMode
     )
     fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
 

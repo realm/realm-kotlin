@@ -4,7 +4,6 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
@@ -26,21 +25,20 @@ import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
-    configuration: RealmConfiguration,
+    configuration: InternalRealmConfiguration,
     dbPointer: NativePointer
 ) : BaseRealmImpl(configuration, dbPointer), Realm {
 
     private val realmPointerMutex = Mutex()
-    private val internalConfiguration = configuration as InternalRealmConfiguration
 
     internal val realmScope =
-        CoroutineScope(SupervisorJob() + internalConfiguration.notificationDispatcher)
+        CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow =
         MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
     private val notifier =
-        SuspendableNotifier(this, internalConfiguration.notificationDispatcher)
+        SuspendableNotifier(this, configuration.notificationDispatcher)
     private val writer =
-        SuspendableWriter(this, internalConfiguration.writeDispatcher)
+        SuspendableWriter(this, configuration.writeDispatcher)
 
     private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
 
@@ -78,11 +76,11 @@ internal class RealmImpl private constructor(
         }
     }
 
-    constructor(configuration: RealmConfiguration) :
+    constructor(configuration: InternalRealmConfiguration) :
         this(
             configuration,
             try {
-                RealmInterop.realm_open((configuration as InternalRealmConfiguration).nativeConfig)
+                RealmInterop.realm_open(configuration.nativeConfig)
             } catch (exception: RealmCoreException) {
                 throw genericRealmCoreExceptionHandler(
                     "Could not open Realm with the given configuration",
@@ -93,12 +91,12 @@ internal class RealmImpl private constructor(
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
         try {
-            val (nativePointer, versionId, result) = this.writer.write(block)
+            val (reference, result) = this.writer.write(block)
             // Update the user facing Realm before returning the result.
             // That way, querying the Realm right after the `write` completes will return
             // the written data. Otherwise, we would have to wait for the Notifier thread
             // to detect it and update the user Realm.
-            updateRealmPointer(RealmReference(this, nativePointer))
+            updateRealmPointer(reference)
             return result
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
