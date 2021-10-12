@@ -430,7 +430,8 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
     return realm_logger_new([](void* userdata, realm_log_level_e level, const char* message) {
                                 auto logger = static_cast<jobject>(userdata);
                                 auto jenv = get_env(true);
-                                static jmethodID get_logger_log_method = lookup(jenv, "io/realm/log/RealmLogger", "log", "(SLjava/lang/String;)V");
+                                static jclass realm_logger_class = jenv->FindClass("io/realm/log/RealmLogger");
+                                static jmethodID get_logger_log_method = jenv->GetMethodID(realm_logger_class, "log", "(SLjava/lang/String;)V");
                                 jenv->CallVoidMethod(logger, get_logger_log_method, level, to_jstring(jenv, message));
                             },
                             [](void* userdata) {
@@ -442,9 +443,7 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
                                 static jclass log_level_class = jenv->FindClass("io/realm/log/LogLevel");
                                 static jmethodID get_priority_method = jenv->GetMethodID(log_level_class, "getPriority", "()I");
 
-//                                jmethodID get_log_level_method = lookup(jenv, "io/realm/log/RealmLogger", "getLevel", "()Lio/realm/log/RealmLogger;");
                                 jobject log_level = jenv->CallObjectMethod(logger, get_log_level_method);
-//                                jmethodID get_priority_method = lookup(jenv, "io/realm/log/LogLeve", "getPriority", "()I");
                                 jint j_log_level = jenv->CallIntMethod(log_level, get_priority_method);
                                 if (j_log_level == RLM_LOG_LEVEL_ALL) {
                                     return RLM_LOG_LEVEL_ALL;

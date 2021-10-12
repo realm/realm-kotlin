@@ -50,6 +50,7 @@ interface RealmLogger : CoreLogger {
             LogLevel.ALL.priority -> LogLevel.ALL
             LogLevel.TRACE.priority -> LogLevel.TRACE
             LogLevel.DEBUG.priority -> LogLevel.DEBUG
+            LogLevel.DETAIL.priority -> LogLevel.DETAIL
             LogLevel.INFO.priority -> LogLevel.INFO
             LogLevel.WARN.priority -> LogLevel.WARN
             LogLevel.ERROR.priority -> LogLevel.ERROR

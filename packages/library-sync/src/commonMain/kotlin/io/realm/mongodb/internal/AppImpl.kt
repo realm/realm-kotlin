@@ -40,14 +40,14 @@ internal class AppImpl(
 
     private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
         .also { syncClientConfig ->
-            RealmInterop.realm_sync_client_config_set_logger_factory(it, loggerFactory)
-            RealmInterop.realm_sync_client_config_set_log_level(it, configuration.logLevel.priority)
+            RealmInterop.realm_sync_client_config_set_logger_factory(syncClientConfig, loggerFactory)
+            RealmInterop.realm_sync_client_config_set_log_level(syncClientConfig, configuration.logLevel.priority)
             RealmInterop.realm_sync_client_config_set_metadata_mode(
                 syncClientConfig,
                 configuration.metadataMode
             )
         }.let { syncClientConfig ->
-            RealmInterop.realm_app_new(configuration.nativePointer, it, appFilesDirectory())
+            RealmInterop.realm_app_get(configuration.nativePointer, syncClientConfig, appFilesDirectory())
         }
 
     override suspend fun login(credentials: Credentials): User {
