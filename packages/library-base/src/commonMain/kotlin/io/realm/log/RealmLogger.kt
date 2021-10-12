@@ -40,7 +40,7 @@ interface RealmLogger : CoreLogger {
         log(LogLevel.ALL, null, message, null)
     }
 
-    // FIXME: https://github.com/realm/realm-kotlin/issues/499
+    // FIXME https://github.com/realm/realm-kotlin/issues/499
     override fun log(level: Short, message: String) {
         log(LogLevel.ALL, null, message, null)
     }
