@@ -17,8 +17,8 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.VersionId
-import io.realm.entities.link.Child
-import io.realm.entities.link.Parent
+import io.realm.entities.link.ChildPk
+import io.realm.entities.link.ParentPk
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -63,7 +63,7 @@ class SyncedRealmTests {
         tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = SyncConfiguration.Builder(
             path = "$tmpDir/test.realm",
-            schema = setOf(Parent::class, Child::class),
+            schema = setOf(ParentPk::class, ChildPk::class),
             partitionValue = "default",
             user = user
         ).build()
@@ -102,16 +102,16 @@ class SyncedRealmTests {
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
-        val child = Child().apply {
+        val child = ChildPk().apply {
             _id = "CHILD_A"
             name = "A"
         }
 
-        val channel = Channel<Child>(1)
+        val channel = Channel<ChildPk>(1)
 
         runBlocking {
             val observer = async {
-                realm2.objects(Child::class)
+                realm2.objects(ChildPk::class)
                     .observe()
                     .collect { childResults ->
                         if (childResults.size == 1) {
@@ -494,7 +494,7 @@ class SyncedRealmTests {
     ): SyncConfiguration = SyncConfiguration.Builder(
         path = path,
         name = name,
-        schema = setOf(Parent::class, Child::class),
+        schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
     ).build()

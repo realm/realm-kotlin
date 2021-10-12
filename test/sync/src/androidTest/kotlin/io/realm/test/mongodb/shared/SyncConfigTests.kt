@@ -17,8 +17,8 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
-import io.realm.entities.link.Child
-import io.realm.entities.link.Parent
+import io.realm.entities.link.ChildPk
+import io.realm.entities.link.ParentPk
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -109,7 +109,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             user = user,
             partitionValue = DEFAULT_PARTITION_VALUE,
-            schema = setOf(Child::class)
+            schema = setOf(ParentPk::class, ChildPk::class)
         ).build()
         assertEquals(config, config)
     }
@@ -637,7 +637,7 @@ class SyncConfigTests {
     ): SyncConfiguration = SyncConfiguration.Builder(
         path = path,
         name = name,
-        schema = setOf(Parent::class, Child::class),
+        schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
     ).build()
