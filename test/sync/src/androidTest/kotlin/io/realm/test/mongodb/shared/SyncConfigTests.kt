@@ -28,14 +28,10 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.randomEmail
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
