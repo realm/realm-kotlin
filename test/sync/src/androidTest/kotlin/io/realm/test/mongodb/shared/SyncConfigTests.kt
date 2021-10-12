@@ -17,9 +17,11 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
+import io.realm.RealmObject
 import io.realm.entities.link.ChildPk
 import io.realm.entities.link.ParentPk
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
@@ -27,11 +29,16 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
@@ -106,11 +113,7 @@ class SyncConfigTests {
     @Test
     fun equals_sameObject() {
         val user = createTestUser()
-        val config = SyncConfiguration.Builder(
-            user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE,
-            schema = setOf(ParentPk::class, ChildPk::class)
-        ).build()
+        val config = createSyncConfig(user)
         assertEquals(config, config)
     }
 
@@ -155,16 +158,15 @@ class SyncConfigTests {
 //        val config2: SyncConfiguration = SyncConfiguration.defaultConfig(user2, DEFAULT_PARTITION)
 //        assertNotEquals(config1.hashCode(), config2.hashCode())
 //    }
-//
-//
-//    @Test
-//    fun equals_syncSpecificFields() {
-//        val user = createTestUser()
-//        val config = createSyncConfig(user = user, name = DEFAULT_NAME)
-//        assertEquals(config.name, DEFAULT_NAME)
-//        assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
-//    }
-//
+
+    @Test
+    fun equals_syncSpecificFields() {
+        val user = createTestUser()
+        val config = createSyncConfig(user = user, name = DEFAULT_NAME)
+        assertEquals(config.name, DEFAULT_NAME)
+        assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
+    }
+
 //    @Test
 //    fun name() {
 //        val user: User = createTestUser(app)
@@ -184,30 +186,21 @@ class SyncConfigTests {
 //        assertFailsWith<IllegalArgumentException> { builder.name(TestHelper.getNull()) }
 //        assertFailsWith<IllegalArgumentException> { builder.name(".realm") }
 //    }
-//
-//    @Test
-//    fun encryption() {
-//        val user: User = createTestUser(app)
-//        val config: SyncConfiguration = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//            .encryptionKey(TestHelper.getRandomKey())
-//            .build()
-//        assertNotNull(config.encryptionKey)
-//    }
-//
-//    @Test
-//    fun encryption_invalid_null() {
-//        val user: User = createTestUser(app)
-//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(TestHelper.getNull()) }
-//    }
-//
-//    @Test
-//    fun encryption_invalid_wrong_length() {
-//        val user: User = createTestUser(app)
-//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
-//    }
-//
+
+    @Test
+    fun encryption() {
+        val user = createTestUser()
+        val config = createSyncConfig(user = user, encryptionKey = getRandomKey())
+        assertNotNull(config.encryptionKey)
+    }
+
+    @Test
+    fun encryption_invalid_wrong_length() {
+        val user = createTestUser()
+        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE)
+        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
+    }
+
 //    @Test
 //    fun initialData() {
 //        val user: User = createTestUser(app)
@@ -254,19 +247,15 @@ class SyncConfigTests {
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
 //    @Test
 //    fun multipleUsersReferenceSameRealm() {
-//        val user1: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        val user2: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+//        val user1 = createTestUser()
+//        val user2 = createTestUser()
 //
-//        val config1: SyncConfiguration = SyncConfiguration.Builder(user1, DEFAULT_PARTITION)
-//            .modules(SyncStringOnlyModule())
-//            .build()
-//        val config2: SyncConfiguration = SyncConfiguration.Builder(user2, DEFAULT_PARTITION)
-//            .modules(SyncStringOnlyModule())
-//            .build()
+//        val config1 = createSyncConfig(user1, DEFAULT_PARTITION_VALUE)
+//        val config2 = createSyncConfig(user2, DEFAULT_PARTITION_VALUE)
 //
 //        // Verify that two different configurations can be used for the same URL
-//        val realm1: Realm = Realm.getInstance(config1)
-//        val realm2: Realm = Realm.getInstance(config2)
+//        val realm1 = Realm.open(config1)
+//        val realm2 = Realm.open(config2)
 //        assertNotEquals(realm1, realm2)
 //
 //        realm1.close()
@@ -303,14 +292,14 @@ class SyncConfigTests {
 //    @Ignore("Not implemented yet")
 //    fun getUrlPrefix() {
 //    }
-//
-//    @Test
-//    fun getPartitionValue() {
-//        val user: User = createTestUser(app)
-//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
-//        assertEquals(BsonString(DEFAULT_PARTITION), config.partitionValue)
-//    }
-//
+
+    @Test
+    fun getPartitionValue() {
+        val user = createTestUser()
+        val syncConfig = createSyncConfig(user)
+        assertEquals(DEFAULT_PARTITION_VALUE, syncConfig.partitionValue.asString())
+    }
+
 //    @Test
 //    fun clientResyncMode() {
 //        val user: User = createTestUser(app)
@@ -341,18 +330,18 @@ class SyncConfigTests {
 //    // resolve to different paths on disk.
 //    @Test
 //    fun differentPartitionValuesAreDifferentRealms() {
-//        val user: User = createTestUser(app)
-//        val config1 = SyncConfiguration.Builder(user, "realm1").modules(SyncStringOnlyModule()).build()
-//        val config2 = SyncConfiguration.Builder(user, "realm2").modules(SyncStringOnlyModule()).build()
+//        val user = createTestUser()
+//        val config1 = createSyncConfig(user, "realm1")
+//        val config2 = createSyncConfig(user, "realm2")
 //        assertNotEquals(config1.path, config2.path)
 //
 //        assertTrue(config1.path.endsWith("${app.configuration.appId}/${user.id}/s_realm1.realm"))
 //        assertTrue(config2.path.endsWith("${app.configuration.appId}/${user.id}/s_realm2.realm"))
 //
 //        // Check for https://github.com/realm/realm-java/issues/6882
-//        val realm1 = Realm.getInstance(config1)
+//        val realm1 = Realm.open(config1)
 //        try {
-//            val realm2 = Realm.getInstance(config2)
+//            val realm2 = Realm.open(config2)
 //            realm2.close()
 //        } finally {
 //            realm1.close()
@@ -633,12 +622,16 @@ class SyncConfigTests {
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
         path: String? = null,
+        encryptionKey: ByteArray? = null,
         name: String = DEFAULT_NAME
     ): SyncConfiguration = SyncConfiguration.Builder(
         path = path,
         name = name,
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
-        partitionValue = partitionValue
-    ).build()
+        partitionValue = partitionValue,
+    ).let { builder ->
+        if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+        builder
+    }.build()
 }
