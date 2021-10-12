@@ -23,9 +23,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
- * An InternalRealmConfiguration abstracts access to internal properties from a
- * [io.realm.RealmConfiguration]. This is needed to make "agnostic" configurations from the
- * base-sync point of view.
+ * An **internal Realm configuration** that holds internal properties from a
+ * [io.realm.RealmConfiguration]. This is needed to make "agnostic" configurations from a base-sync
+ * point of view.
  */
 interface InternalRealmConfiguration : RealmConfiguration {
     val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>

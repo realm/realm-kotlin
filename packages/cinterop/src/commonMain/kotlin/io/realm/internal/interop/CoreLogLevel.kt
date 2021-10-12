@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop.sync
+package io.realm.internal.interop
 
-expect enum class MetadataMode {
-    RLM_SYNC_CLIENT_METADATA_MODE_DISABLED,
-    RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
-    RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED
+expect enum class CoreLogLevel {
+    RLM_LOG_LEVEL_ALL,
+    RLM_LOG_LEVEL_TRACE,
+    RLM_LOG_LEVEL_DEBUG,
+    RLM_LOG_LEVEL_DETAIL,
+    RLM_LOG_LEVEL_INFO,
+    RLM_LOG_LEVEL_WARNING,
+    RLM_LOG_LEVEL_ERROR,
+    RLM_LOG_LEVEL_FATAL,
+    RLM_LOG_LEVEL_OFF;
+
+    // We need this property since it isn't allowed to have constructor params in an expect enum
+    val value: Int
 }

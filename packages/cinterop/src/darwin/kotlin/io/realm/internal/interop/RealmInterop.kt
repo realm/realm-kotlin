@@ -178,21 +178,6 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
-actual enum class CoreLogLevel(private val internalPriority: Int) {
-    RLM_LOG_LEVEL_ALL(realm_log_level_e.RLM_LOG_LEVEL_ALL.value.toInt()),
-    RLM_LOG_LEVEL_TRACE(realm_log_level_e.RLM_LOG_LEVEL_TRACE.value.toInt()),
-    RLM_LOG_LEVEL_DEBUG(realm_log_level_e.RLM_LOG_LEVEL_DEBUG.value.toInt()),
-    RLM_LOG_LEVEL_DETAIL(realm_log_level_e.RLM_LOG_LEVEL_DETAIL.value.toInt()),
-    RLM_LOG_LEVEL_INFO(realm_log_level_e.RLM_LOG_LEVEL_INFO.value.toInt()),
-    RLM_LOG_LEVEL_WARNING(realm_log_level_e.RLM_LOG_LEVEL_WARNING.value.toInt()),
-    RLM_LOG_LEVEL_ERROR(realm_log_level_e.RLM_LOG_LEVEL_ERROR.value.toInt()),
-    RLM_LOG_LEVEL_FATAL(realm_log_level_e.RLM_LOG_LEVEL_FATAL.value.toInt()),
-    RLM_LOG_LEVEL_OFF(realm_log_level_e.RLM_LOG_LEVEL_OFF.value.toInt());
-
-    actual val value: Int
-        get() = internalPriority
-}
-
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
 
@@ -904,7 +889,6 @@ actual object RealmInterop {
         basePath: String
     ): NativePointer {
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
-
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 

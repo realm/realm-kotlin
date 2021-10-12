@@ -104,11 +104,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     }
 
     override fun <T : RealmObject> copyToRealm(instance: T): T {
-        return copyToRealm(
-            (configuration as InternalRealmConfiguration).mediator,
-            realmReference,
-            instance
-        )
+        return copyToRealm(configuration.mediator, realmReference, instance)
     }
 
     override fun <T : RealmObject> delete(obj: T) {
@@ -133,11 +129,17 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    internal override fun <T : RealmObject> registerListChangeListener(
+        list: List<T>,
+        callback: Callback<List<T>>
+    ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+    internal override fun <T : RealmObject> registerObjectChangeListener(
+        obj: T,
+        callback: Callback<T?>
+    ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 }
