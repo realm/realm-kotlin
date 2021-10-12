@@ -39,7 +39,7 @@ open class RealmConfigurationImpl constructor(
     schemaVersion: Long,
     deleteRealmIfMigrationNeeded: Boolean,
     encryptionKey: ByteArray?,
-) : RealmConfiguration, InternalRealmConfiguration {
+) : InternalRealmConfiguration {
 
     override val path: String
 

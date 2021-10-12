@@ -12,6 +12,7 @@ expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
 
 /**
  * Returns a default multithread dispatcher used by Sync.
+ * TODO https://github.com/realm/realm-kotlin/issues/501 compute size based on number of cores
  */
 expect fun multiThreadDispatcher(size: Int = 3): CoroutineDispatcher
 

@@ -888,9 +888,6 @@ actual object RealmInterop {
         basePath: String
     ): NativePointer {
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
-
-//        // TODO add metadata mode to config
-//        realm_wrapper.realm_sync_client_config_set_metadata_mode(syncClientConfig.cptr(), realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
