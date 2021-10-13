@@ -17,11 +17,9 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
-import io.realm.RealmObject
 import io.realm.entities.link.ChildPk
 import io.realm.entities.link.ParentPk
 import io.realm.internal.platform.runBlocking
-import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
@@ -31,13 +29,11 @@ import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
-import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 
 const val DEFAULT_PARTITION_VALUE = "default"

@@ -32,7 +32,6 @@ import java.lang.reflect.Method
 private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
 private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
 
-
 /**
  * JVM/Android interop implementation.
  *
