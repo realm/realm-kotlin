@@ -18,7 +18,6 @@ package io.realm.internal
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.MutableRealm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
@@ -56,14 +55,10 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
      * - Native: Either a scheduler dispatching to the supplied dispatcher or the default Darwin
      * scheduler, that delivers notifications on the main run loop.
      */
-    internal constructor(configuration: RealmConfiguration, dispatcher: CoroutineDispatcher? = null) :
-        super(
-            configuration,
-            RealmInterop.realm_open(
-                (configuration as InternalRealmConfiguration).nativeConfig,
-                dispatcher
-            )
-        )
+    internal constructor(
+        configuration: InternalRealmConfiguration,
+        dispatcher: CoroutineDispatcher? = null
+    ) : super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 
     internal fun beginTransaction() {
         try {
@@ -109,11 +104,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     }
 
     override fun <T : RealmObject> copyToRealm(instance: T): T {
-        return copyToRealm(
-            (configuration as InternalRealmConfiguration).mediator,
-            realmReference,
-            instance
-        )
+        return copyToRealm(configuration.mediator, realmReference, instance)
     }
 
     override fun <T : RealmObject> delete(obj: T) {
@@ -138,11 +129,17 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
+    internal override fun <T : RealmObject> registerListChangeListener(
+        list: List<T>,
+        callback: Callback<List<T>>
+    ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
+    internal override fun <T : RealmObject> registerObjectChangeListener(
+        obj: T,
+        callback: Callback<T?>
+    ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 }

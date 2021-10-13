@@ -19,6 +19,7 @@ package io.realm.mongodb
 import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -39,6 +40,7 @@ interface AppConfiguration {
     //  requires ktor as api dependency
     val baseUrl: String
     val networkTransportDispatcher: CoroutineDispatcher
+    val metadataMode: MetadataMode
 
     companion object {
         /**

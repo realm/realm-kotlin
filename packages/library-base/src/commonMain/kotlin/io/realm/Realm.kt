@@ -15,6 +15,7 @@
  */
 package io.realm
 
+import io.realm.internal.InternalRealmConfiguration
 import io.realm.internal.RealmImpl
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -52,7 +53,7 @@ interface Realm : TypedRealm {
          * @throws IllegalArgumentException on invalid Realm configurations.
          */
         public fun open(configuration: RealmConfiguration): Realm {
-            return RealmImpl(configuration)
+            return RealmImpl(configuration as InternalRealmConfiguration)
         }
     }
 

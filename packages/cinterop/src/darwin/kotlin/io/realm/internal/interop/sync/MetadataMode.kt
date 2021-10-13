@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop
+package io.realm.internal.interop.sync
 
-interface CoreLogger {
-    fun log(level: Short, message: String)
+import realm_wrapper.realm_sync_client_metadata_mode_e
+
+actual enum class MetadataMode(val metadataValue: Int) {
+    RLM_SYNC_CLIENT_METADATA_MODE_DISABLED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED.value.toInt()),
+    RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT.value.toInt()),
+    RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED.value.toInt())
 }

@@ -99,6 +99,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                     ) {
                         val buildFunction =
                             if (expression.type.classFqName == REALM_SYNC_CONFIGURATION) {
+                                // We only reach this if we are building a sync configuration so calling "!!" is safe
                                 syncBuildFunction!!
                             } else {
                                 realmBuildFunction

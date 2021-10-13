@@ -16,7 +16,6 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.LogConfiguration
 import io.realm.internal.RealmLog
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -30,6 +29,7 @@ internal class AppConfigurationImpl(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val networkTransportDispatcher: CoroutineDispatcher,
+    override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
     logConfig: LogConfiguration,
 ) : AppConfiguration {
 
