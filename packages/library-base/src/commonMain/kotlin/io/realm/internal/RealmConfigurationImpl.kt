@@ -17,7 +17,6 @@
 package io.realm.internal
 
 import io.realm.LogConfiguration
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
