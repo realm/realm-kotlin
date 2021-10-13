@@ -44,12 +44,10 @@ private:
         : m_java_util_hashmap(env, "java/util/HashMap", false)
         , m_io_realm_network_transport(env, "io/realm/internal/interop/sync/NetworkTransport", false)
         , m_io_realm_response(env, "io/realm/internal/interop/sync/Response", false)
-        , m_io_realm_realm_logger(env, "io/realm/log/RealmLogger", false)
     {
     }
 
     jni_util::JavaClass m_java_util_hashmap;
-    jni_util::JavaClass m_io_realm_realm_logger;
     jni_util::JavaClass m_io_realm_network_transport;
     jni_util::JavaClass m_io_realm_response;
 
