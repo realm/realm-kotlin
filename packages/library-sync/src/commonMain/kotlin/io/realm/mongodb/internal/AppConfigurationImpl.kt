@@ -16,9 +16,11 @@
 
 package io.realm.mongodb.internal
 
+import io.realm.LogConfiguration
 import io.realm.internal.RealmLog
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration

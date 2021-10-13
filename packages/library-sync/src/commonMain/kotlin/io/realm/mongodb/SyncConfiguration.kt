@@ -23,7 +23,10 @@ import io.realm.RealmObject
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.sync.PartitionValue
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.log.LogLevel
+import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
@@ -91,9 +94,25 @@ interface SyncConfiguration : RealmConfiguration {
             this.removeSystemLogger = true
         }
 
+        override fun log(level: LogLevel, customLoggers: List<RealmLogger>) =
+            apply {
+                // Will clear any primed configuration
+                this.logLevel = level
+                this.userLoggers = customLoggers
+                this.removeSystemLogger = false
+            }
+
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): SyncConfiguration {
+            val allLoggers = userLoggers.toMutableList()
+            // TODO This will not remove the system logger if it was added in AppConfiguration and
+            //  no overrides are done for this builder. But as removeSystemLogger() is not public
+            //  and most people will only specify loggers on the AppConfiguration this is OK for
+            //  now.
+            if (!removeSystemLogger) {
+                allLoggers.add(0, createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+            }
             val localConfiguration = RealmConfigurationImpl(
                 companionMap,
                 path,
