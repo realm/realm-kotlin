@@ -26,6 +26,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
     return JNI_VERSION_1_2;
 }
 
+// Doesn't seem to be triggered when JVM is shutting down, at least not on MacOS JVM
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved) {
+    cached_jvm = 0;
+    realm::_impl::JavaClassGlobalDef::release();
+}
+
 namespace realm {
     namespace jni_util {
         JNIEnv * get_env(bool attach_if_needed) {
@@ -47,6 +53,21 @@ namespace realm {
             if (rc == JNI_EVERSION)
                 throw std::runtime_error("jni version not supported");
 
+            return env;
+        }
+        JNIEnv * get_env_or_null() {
+            JNIEnv *env;
+            jint rc = cached_jvm->GetEnv((void **)&env, JNI_VERSION_1_2);
+            if (rc == JNI_EDETACHED) {
+                #if defined(__ANDROID__)
+                    JNIEnv **jenv = &env;
+                #else
+                    void **jenv = (void **) &env;
+                #endif
+                cached_jvm->AttachCurrentThread(jenv, nullptr);
+            }
+            if (rc == JNI_EVERSION)
+                throw std::runtime_error("jni version not supported");
             return env;
         }
 

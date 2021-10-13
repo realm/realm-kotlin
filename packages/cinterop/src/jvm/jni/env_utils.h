@@ -24,12 +24,17 @@
 #include "java_global_ref_by_move.hpp"
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved);
+// Doesn't seem to be triggered when JVM is shutting down, at least not on MacOS JVM
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved);
 
 namespace realm {
     namespace jni_util {
         static std::vector<JavaGlobalRefByMove> m_global_refs;
 
         JNIEnv * get_env(bool attach_if_needed = false);
+        // Returns current environment (or attaches current thread) or returns null if not possible
+        // to obtain an environment, in which case we assume that the VM has shut down;
+        JNIEnv * get_env_or_null();
         // TODO Migrate java_method.{hpp,cpp} realm-java or implement similar caching mechanism to
         //  hold global references to classes and look up methods
         jmethodID lookup(JNIEnv *jenv, const char *class_name, const char *method_name,
