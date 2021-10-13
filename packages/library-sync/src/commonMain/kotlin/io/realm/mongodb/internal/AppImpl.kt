@@ -35,13 +35,14 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    // Ensure logLevel is frozen or else we'll get an InvalidMutabilityException since it's accessed
+    // Ensure logLevel is frozen or else we'll get a mutability exception as it's accessed
     // inside the logger factory lambda
     private val loggerFactory: () -> CoreLogger = configuration.logLevel.freeze()
         .let { logLevel -> { createDefaultSystemLogger("SYNC", logLevel) } }
 
     private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
         .also { syncClientConfig ->
+            // Initialize client configuration first
             RealmInterop.realm_sync_client_config_set_logger_factory(
                 syncClientConfig,
                 loggerFactory
@@ -55,6 +56,7 @@ internal class AppImpl(
                 configuration.metadataMode
             )
         }.let { syncClientConfig ->
+            // Get the app with the initialized configuration
             RealmInterop.realm_app_get(
                 configuration.nativePointer,
                 syncClientConfig,

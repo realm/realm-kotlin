@@ -17,6 +17,7 @@
 package io.realm.log
 
 import io.realm.RealmConfiguration
+import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.CoreLogger
 
 /**
@@ -26,15 +27,27 @@ import io.realm.internal.interop.CoreLogger
  */
 interface RealmLogger : CoreLogger {
 
+    override val coreLogLevel: CoreLogLevel
+        get() = when (level) {
+            LogLevel.ALL -> CoreLogLevel.RLM_LOG_LEVEL_ALL
+            LogLevel.TRACE -> CoreLogLevel.RLM_LOG_LEVEL_TRACE
+            LogLevel.DEBUG -> CoreLogLevel.RLM_LOG_LEVEL_DEBUG
+            LogLevel.INFO -> CoreLogLevel.RLM_LOG_LEVEL_INFO
+            LogLevel.WARN -> CoreLogLevel.RLM_LOG_LEVEL_WARNING
+            LogLevel.ERROR -> CoreLogLevel.RLM_LOG_LEVEL_ERROR
+            LogLevel.WTF -> CoreLogLevel.RLM_LOG_LEVEL_FATAL
+            LogLevel.NONE -> CoreLogLevel.RLM_LOG_LEVEL_OFF
+        }
+
+    /**
+     * The [LogLevel] used in this logger.
+     */
+    val level: LogLevel
+
     /**
      * Tag that can be used to describe the output.
      */
     val tag: String
-
-    /**
-     * TODO
-     */
-    val level: LogLevel
 
     /**
      * Log an event.
@@ -50,7 +63,6 @@ interface RealmLogger : CoreLogger {
             LogLevel.ALL.priority -> LogLevel.ALL
             LogLevel.TRACE.priority -> LogLevel.TRACE
             LogLevel.DEBUG.priority -> LogLevel.DEBUG
-            LogLevel.DETAIL.priority -> LogLevel.DETAIL
             LogLevel.INFO.priority -> LogLevel.INFO
             LogLevel.WARN.priority -> LogLevel.WARN
             LogLevel.ERROR.priority -> LogLevel.ERROR

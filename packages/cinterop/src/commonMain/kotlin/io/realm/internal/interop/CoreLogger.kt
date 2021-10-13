@@ -16,6 +16,17 @@
 
 package io.realm.internal.interop
 
+/**
+ * Top-level logger interface used to expose basic functionality to the interop layer. This is
+ * necessary, for example, in the Kotlin/Native layer as a logger implemented there can only access
+ * this interface and not the SDK-level interface `RealmLogger`.
+ */
 interface CoreLogger {
+
+    /**
+     * Needed by Kotlin/Native loggers to be able to communicate the level to the C-API.
+     */
+    val coreLogLevel: CoreLogLevel
+
     fun log(level: Short, message: String)
 }

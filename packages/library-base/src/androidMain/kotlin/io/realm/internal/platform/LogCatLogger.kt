@@ -39,12 +39,7 @@ internal class LogCatLogger(
 
         // Short circuit if message can fit into a single line in LogCat
         if (logMessage.length < MAX_LOG_LENGTH) {
-            if (level.priority == LogLevel.WTF.priority) {
-                Log.wtf(tag, logMessage)
-            } else {
-                // Do not use "priority" here since our values don't match Android's
-                Log.println(Log.INFO, tag, logMessage)
-            }
+            printMessage(priority, logMessage)
             return
         }
 
@@ -57,15 +52,24 @@ internal class LogCatLogger(
             do {
                 val end = Math.min(newline, i + MAX_LOG_LENGTH)
                 val part = logMessage.substring(i, end)
-                if (priority == Log.ASSERT) {
-                    Log.wtf(tag, part)
-                } else {
-                    // Do not use "priority" here since our values don't match Android's
-                    Log.println(Log.INFO, tag, part)
-                }
+                printMessage(priority, part)
                 i = end
             } while (i < newline)
             i++
+        }
+    }
+
+    private fun printMessage(priority: Int, logMessage: String) {
+        if (priority == LogLevel.WTF.priority) {
+            Log.wtf(tag, logMessage)
+        } else if (priority < LogLevel.DEBUG.priority) {
+            // ALL (0) and TRACE (1) don't exist on Android's Log so use VERBOSE instead
+            Log.v(tag, logMessage)
+        } else if (priority == LogLevel.DEBUG.priority) {
+            // Core's DEBUG (2) doesn't match Android's DEBUG (3) so match it manually
+            Log.d(tag, logMessage)
+        } else {
+            Log.println(priority, tag, logMessage)
         }
     }
 

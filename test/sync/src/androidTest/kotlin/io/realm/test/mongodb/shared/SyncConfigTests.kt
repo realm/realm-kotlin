@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.entities.link.ChildPk
 import io.realm.entities.link.ParentPk
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration

@@ -73,6 +73,7 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
+import realm_wrapper.realm_log_level
 import realm_wrapper.realm_log_level_e
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
@@ -979,14 +980,13 @@ actual object RealmInterop {
                 val realmLoggerFactory = safeUserData<() -> CoreLogger>(userData)
                 realmLoggerFactory.invoke().let { logger ->
                     realm_wrapper.realm_logger_new(
-                        staticCFunction { userData, logLevel: realm_wrapper.realm_log_level_e, message: CPointer<ByteVarOf<Byte>>? ->
-                            println(message?.toKString() ?: "")
+                        staticCFunction { userData, logLevel, message ->
                             val userDataLogger = safeUserData<CoreLogger>(userData)
                             userDataLogger.log(logLevel.value.toShort(), message?.toKString() ?: "")
                         },
                         staticCFunction { userData ->
-                            // TODO get level from kotlin logger object
-                            realm_wrapper.realm_log_level.RLM_LOG_LEVEL_ALL
+                            val userDataLogger = safeUserData<CoreLogger>(userData)
+                            realm_log_level.byValue(userDataLogger.coreLogLevel.priority.toUInt())
                         },
                         StableRef.create(logger).asCPointer(),
                         staticCFunction { userData ->

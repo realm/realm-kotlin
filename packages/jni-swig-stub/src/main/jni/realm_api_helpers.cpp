@@ -430,17 +430,24 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
     return realm_logger_new([](void* userdata, realm_log_level_e level, const char* message) {
                                 auto logger = static_cast<jobject>(userdata);
                                 auto jenv = get_env(true);
-                                static jclass realm_logger_class = jenv->FindClass("io/realm/log/RealmLogger");
+
+                                static jclass realm_logger_class = jenv->FindClass("io/realm/internal/interop/CoreLogger");
                                 static jmethodID get_logger_log_method = jenv->GetMethodID(realm_logger_class, "log", "(SLjava/lang/String;)V");
-                                jenv->CallVoidMethod(logger, get_logger_log_method, level, to_jstring(jenv, message));
+
+                                // There is no equivalent to DETAIL on the SDK side, use INFO instead
+                                if (level == RLM_LOG_LEVEL_DETAIL) {
+                                    jenv->CallVoidMethod(logger, get_logger_log_method, RLM_LOG_LEVEL_INFO, to_jstring(jenv, message));
+                                } else {
+                                    jenv->CallVoidMethod(logger, get_logger_log_method, level, to_jstring(jenv, message));
+                                }
                             },
                             [](void* userdata) {
                                 auto logger = static_cast<jobject>(userdata);
                                 auto jenv = get_env(true);
 
-                                static jclass realm_logger_class = jenv->FindClass("io/realm/log/RealmLogger");
-                                static jmethodID get_log_level_method = jenv->GetMethodID(realm_logger_class, "getLevel", "()Lio/realm/log/LogLevel;");
-                                static jclass log_level_class = jenv->FindClass("io/realm/log/LogLevel");
+                                static jclass realm_logger_class = jenv->FindClass("io/realm/internal/interop/CoreLogger");
+                                static jmethodID get_log_level_method = jenv->GetMethodID(realm_logger_class, "getCoreLogLevel", "()Lio/realm/internal/interop/CoreLogLevel;");
+                                static jclass log_level_class = jenv->FindClass("io/realm/internal/interop/CoreLogLevel");
                                 static jmethodID get_priority_method = jenv->GetMethodID(log_level_class, "getPriority", "()I");
 
                                 jobject log_level = jenv->CallObjectMethod(logger, get_log_level_method);
@@ -451,8 +458,6 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
                                     return RLM_LOG_LEVEL_TRACE;
                                 } else if (j_log_level == RLM_LOG_LEVEL_DEBUG) {
                                     return RLM_LOG_LEVEL_DEBUG;
-                                } else if (j_log_level == RLM_LOG_LEVEL_DETAIL) {
-                                    return RLM_LOG_LEVEL_DETAIL;
                                 } else if (j_log_level == RLM_LOG_LEVEL_INFO) {
                                     return RLM_LOG_LEVEL_INFO;
                                 } else if (j_log_level == RLM_LOG_LEVEL_WARNING) {
@@ -461,8 +466,6 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
                                     return RLM_LOG_LEVEL_ERROR;
                                 } else if (j_log_level == RLM_LOG_LEVEL_FATAL) {
                                     return RLM_LOG_LEVEL_FATAL;
-                                } else if (j_log_level == RLM_LOG_LEVEL_OFF) {
-                                    return RLM_LOG_LEVEL_OFF;
                                 }
                                 return RLM_LOG_LEVEL_OFF;
                             },

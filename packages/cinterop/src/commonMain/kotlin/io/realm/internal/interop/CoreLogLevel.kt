@@ -20,7 +20,6 @@ expect enum class CoreLogLevel {
     RLM_LOG_LEVEL_ALL,
     RLM_LOG_LEVEL_TRACE,
     RLM_LOG_LEVEL_DEBUG,
-    RLM_LOG_LEVEL_DETAIL,
     RLM_LOG_LEVEL_INFO,
     RLM_LOG_LEVEL_WARNING,
     RLM_LOG_LEVEL_ERROR,
@@ -28,5 +27,5 @@ expect enum class CoreLogLevel {
     RLM_LOG_LEVEL_OFF;
 
     // We need this property since it isn't allowed to have constructor params in an expect enum
-    val value: Int
+    val priority: Int
 }
