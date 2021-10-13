@@ -16,11 +16,25 @@
 
 package io.realm.test.util
 
+import io.realm.Realm
 import kotlin.random.Random
 import kotlin.random.nextULong
 
 object TestHelper {
     fun randomEmail(): String {
         return "${Random.nextULong()}@test.kotlin.realm.io"
+    }
+
+    /**
+     * Returns a random key from the given seed. Used by encrypted Realms.
+     */
+    fun getRandomKey(seed: Long? = null): ByteArray {
+        val key = ByteArray(Realm.ENCRYPTION_KEY_LENGTH)
+        if (seed != null) {
+            Random(seed).nextBytes(key)
+        } else {
+            Random.nextBytes(key)
+        }
+        return key
     }
 }
