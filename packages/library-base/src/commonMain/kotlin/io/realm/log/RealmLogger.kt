@@ -36,9 +36,8 @@ interface RealmLogger : CoreLogger {
      */
     fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
 
-    override fun log(message: String) {
-        println("---> $message")
-//        log(LogLevel.ALL, null, message, null)
+    fun log(message: String) {
+        log(LogLevel.ALL, null, message, null)
     }
 
     // FIXME https://github.com/realm/realm-kotlin/issues/499

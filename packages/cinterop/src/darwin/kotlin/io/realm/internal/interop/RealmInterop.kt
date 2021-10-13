@@ -73,7 +73,6 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
-import realm_wrapper.realm_log_level_e
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
@@ -974,13 +973,6 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
             realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
-        )
-    }
-
-    actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {
-        realm_wrapper.realm_sync_client_config_set_log_level(
-            syncClientConfig.cptr(),
-            realm_log_level_e.byValue(level.toUInt())
         )
     }
 
