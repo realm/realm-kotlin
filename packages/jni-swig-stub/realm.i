@@ -152,7 +152,7 @@ void throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **};
+%apply void** {realm_object_t **, realm_list_t **, size_t*};
 
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"
