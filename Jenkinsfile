@@ -156,7 +156,12 @@ pipeline {
                 stage('Tests Android - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "connectedAndroidTest")
+                        withLogcatTrace(
+                            "packages",
+                            {
+                                testAndCollect("packages", "connectedAndroidTest")
+                            }
+                        }
                     }
                 }
                 stage('Integration Tests') {
@@ -167,12 +172,12 @@ pipeline {
                                 testAndCollect("test", "macosTest")
                             },
                             {
-                                try {
-                                   backgroundPid = startLogCatCollector()
-                                   forwardAdbPorts()
-                                   testAndCollect("test", "connectedAndroidTest")
-                                } finally {
-                                    stopLogCatCollector(backgroundPid)
+                                forwardAdbPorts()
+                                withLogcatTrace(
+                                    "test",
+                                    {
+                                        testAndCollect("test", "connectedAndroidTest")
+                                    }
                                 }
                             }
                         ])
@@ -446,32 +451,41 @@ def testWithServer(tasks) {
     }
 }
 
-String startLogCatCollector() {
+def withLogcatTrace(name, task) {
+    try {
+       backgroundPid = startLogCatCollector(name)
+       task()
+    } finally {
+        stopLogCatCollector(backgroundPid)
+    }
+}
+String startLogCatCollector(name) {
   // Cancel build quickly if no device is available. The lock acquired already should
   // ensure we have access to a device. If not, it is most likely a more severe problem.
   timeout(time: 1, unit: 'MINUTES') {
     // Need ADB as root to clear all buffers: https://stackoverflow.com/a/47686978/1389357
-    sh 'adb devices'
-    sh """adb root
-      adb logcat -b all -c
-      adb logcat -v time > 'logcat.txt' &
+    sh '$ANDROID_SDK_ROOT/platform-tools/adb devices'
+    sh """
+      $ANDROID_SDK_ROOT/platform-tools/adb root
+      $ANDROID_SDK_ROOT/platform-tools/adb logcat -b all -c
+      $ANDROID_SDK_ROOT/platform-tools/adb logcat -v time > 'logcat-$name.txt' &
       echo \$! > pid
     """
     return readFile("pid").trim()
   }
 }
 
-def stopLogCatCollector(String backgroundPid) {
+def stopLogCatCollector(String backgroundPid, $name) {
   // The pid might not be available if the build was terminated early or stopped due to
   // a build error.
   if (backgroundPid != null) {
     sh "kill ${backgroundPid}"
     zip([
-      'zipFile': 'logcat.zip',
+      'zipFile': 'logcat-$name.zip',
       'archive': true,
-      'glob' : 'logcat.txt'
+      'glob' : 'logcat-$name.txt'
     ])
-    sh 'rm logcat.txt'
+    sh 'rm logcat-$name.txt'
   }
 }
 
