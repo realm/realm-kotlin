@@ -60,14 +60,15 @@ interface RealmLogger : CoreLogger {
 
     private fun Short.toLogLevel(): LogLevel {
         return when (this.toInt()) {
-            LogLevel.ALL.priority -> LogLevel.ALL
-            LogLevel.TRACE.priority -> LogLevel.TRACE
-            LogLevel.DEBUG.priority -> LogLevel.DEBUG
-            LogLevel.INFO.priority -> LogLevel.INFO
-            LogLevel.WARN.priority -> LogLevel.WARN
-            LogLevel.ERROR.priority -> LogLevel.ERROR
-            LogLevel.WTF.priority -> LogLevel.WTF
-            LogLevel.NONE.priority -> LogLevel.NONE
+            CoreLogLevel.RLM_LOG_LEVEL_ALL.priority -> LogLevel.ALL
+            CoreLogLevel.RLM_LOG_LEVEL_TRACE.priority -> LogLevel.TRACE
+            CoreLogLevel.RLM_LOG_LEVEL_DEBUG.priority -> LogLevel.DEBUG
+            CoreLogLevel.RLM_LOG_LEVEL_DETAIL.priority, // convert to INFO
+            CoreLogLevel.RLM_LOG_LEVEL_INFO.priority -> LogLevel.INFO
+            CoreLogLevel.RLM_LOG_LEVEL_WARNING.priority -> LogLevel.WARN
+            CoreLogLevel.RLM_LOG_LEVEL_ERROR.priority -> LogLevel.ERROR
+            CoreLogLevel.RLM_LOG_LEVEL_FATAL.priority -> LogLevel.WTF
+            CoreLogLevel.RLM_LOG_LEVEL_OFF.priority -> LogLevel.NONE
             else -> throw IllegalArgumentException("Invalid priority level: $this.")
         }
     }

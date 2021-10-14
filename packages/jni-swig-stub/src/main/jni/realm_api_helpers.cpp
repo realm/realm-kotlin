@@ -434,12 +434,7 @@ static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_leve
                                 static jclass realm_logger_class = jenv->FindClass("io/realm/internal/interop/CoreLogger");
                                 static jmethodID get_logger_log_method = jenv->GetMethodID(realm_logger_class, "log", "(SLjava/lang/String;)V");
 
-                                // There is no equivalent to DETAIL on the SDK side, use INFO instead
-                                if (level == RLM_LOG_LEVEL_DETAIL) {
-                                    jenv->CallVoidMethod(logger, get_logger_log_method, RLM_LOG_LEVEL_INFO, to_jstring(jenv, message));
-                                } else {
-                                    jenv->CallVoidMethod(logger, get_logger_log_method, level, to_jstring(jenv, message));
-                                }
+                                jenv->CallVoidMethod(logger, get_logger_log_method, level, to_jstring(jenv, message));
                             },
                             [](void* userdata) {
                                 auto logger = static_cast<jobject>(userdata);

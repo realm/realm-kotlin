@@ -35,10 +35,11 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    // Ensure logLevel is frozen or else we'll get a mutability exception as it's accessed
-    // inside the logger factory lambda
-    private val loggerFactory: () -> CoreLogger = configuration.logLevel.freeze()
-        .let { logLevel -> { createDefaultSystemLogger("SYNC", logLevel) } }
+    // Freeze logLevel or else we'll get a mutability exception as it's accessed inside the lambda
+    private val loggerFactory: () -> CoreLogger = configuration.logLevel.freeze().let { logLevel ->
+        // Freeze the actual logger instance too since it will be used from another thread
+        { createDefaultSystemLogger("SYNC", logLevel).freeze() }
+    }
 
     private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
         .also { syncClientConfig ->
