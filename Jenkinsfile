@@ -161,7 +161,7 @@ pipeline {
                             {
                                 testAndCollect("packages", "connectedAndroidTest")
                             }
-                        }
+                        )
                     }
                 }
                 stage('Integration Tests') {
@@ -178,7 +178,7 @@ pipeline {
                                     {
                                         testAndCollect("test", "connectedAndroidTest")
                                     }
-                                }
+                                )
                             }
                         ])
                     }
