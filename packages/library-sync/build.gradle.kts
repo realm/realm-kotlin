@@ -120,12 +120,7 @@ kotlin {
 
             // Observe this ktor dependency cannot be abstracted away with the ios ones
             dependencies {
-                // TODO According to https://ktor.io/docs/http-client-engines.html#desktop we should
-                //  use ktor-client-curl for desktop, but the KtorNetworkTransportTest fails with
-                //  a trace that looks like some operations are interleaved. Test works with CIO
-                //  even though it is only listed as an option for JVM/Android!?
-                // implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
             }
         }
         getByName("iosArm64Main") {
