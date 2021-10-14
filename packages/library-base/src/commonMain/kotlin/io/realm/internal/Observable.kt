@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.Flow
 //    fun emitFrozenUpdate(frozenRealm: RealmReference, change: NativePointer, channel: SendChannel<T>): ChannelResult<Unit>?
 //  - Public Observable
 //    fun observe(): Flow<T>
-internal interface Observable<T> {
+interface Observable<T> {
     fun freeze(frozenRealm: RealmReference): Observable<T>?
     fun thaw(liveRealm: RealmReference): Observable<T>?
     fun registerForNotification(callback: Callback): NativePointer

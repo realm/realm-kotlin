@@ -36,7 +36,6 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
  * used for testing.
  */
-// TODO Find appropriate configuration options
 class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.entities.sync
 
 import io.realm.RealmObject
-import kotlin.reflect.KClass
+import io.realm.annotations.PrimaryKey
 
-interface Mediator {
-    fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal
-    fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
+class ParentPk : RealmObject {
+    @PrimaryKey var _id: String = ""
+    var name: String = "N.N."
+    var child: ChildPk? = null
 }

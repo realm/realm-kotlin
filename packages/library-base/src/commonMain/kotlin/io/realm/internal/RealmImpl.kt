@@ -4,7 +4,6 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
@@ -25,16 +24,21 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
-internal class RealmImpl private constructor(configuration: RealmConfigurationImpl, dbPointer: NativePointer) :
-    BaseRealmImpl(configuration, dbPointer), Realm {
+internal class RealmImpl private constructor(
+    configuration: InternalRealmConfiguration,
+    dbPointer: NativePointer
+) : BaseRealmImpl(configuration, dbPointer), Realm {
 
-    internal val realmScope: CoroutineScope =
+    private val realmPointerMutex = Mutex()
+
+    internal val realmScope =
         CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow =
         MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
-    private val notifier = SuspendableNotifier(this, configuration.notificationDispatcher)
-    private val writer = SuspendableWriter(this, configuration.writeDispatcher)
-    private val realmPointerMutex = Mutex()
+    private val notifier =
+        SuspendableNotifier(this, configuration.notificationDispatcher)
+    private val writer =
+        SuspendableWriter(this, configuration.writeDispatcher)
 
     private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
 
@@ -72,9 +76,9 @@ internal class RealmImpl private constructor(configuration: RealmConfigurationIm
         }
     }
 
-    constructor(configuration: RealmConfiguration) :
+    constructor(configuration: InternalRealmConfiguration) :
         this(
-            configuration as RealmConfigurationImpl,
+            configuration,
             try {
                 RealmInterop.realm_open(configuration.nativeConfig)
             } catch (exception: RealmCoreException) {

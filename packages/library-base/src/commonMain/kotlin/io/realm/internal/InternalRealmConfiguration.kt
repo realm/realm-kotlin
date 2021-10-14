@@ -16,10 +16,21 @@
 
 package io.realm.internal
 
+import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.internal.interop.NativePointer
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
-interface Mediator {
-    fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal
-    fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
+/**
+ * An **internal Realm configuration** that holds internal properties from a
+ * [io.realm.RealmConfiguration]. This is needed to make "agnostic" configurations from a base-sync
+ * point of view.
+ */
+interface InternalRealmConfiguration : RealmConfiguration {
+    val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
+    val mediator: Mediator
+    val nativeConfig: NativePointer
+    val notificationDispatcher: CoroutineDispatcher
+    val writeDispatcher: CoroutineDispatcher
 }

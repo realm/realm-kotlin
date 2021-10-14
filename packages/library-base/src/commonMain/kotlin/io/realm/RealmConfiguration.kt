@@ -29,17 +29,17 @@ import kotlin.reflect.KClass
 /**
  * Configuration for log events created by a Realm instance.
  */
-public data class LogConfiguration(
+data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
      */
-    public val level: LogLevel,
+    val level: LogLevel,
 
     /**
      * Any loggers to install. They will receive all log events with a priority equal to or higher than
      * the value defined in [LogConfiguration.level].
      */
-    public val loggers: List<RealmLogger>
+    val loggers: List<RealmLogger>
 )
 
 /**
@@ -58,22 +58,22 @@ interface RealmConfiguration {
     /**
      * Path to the realm file.
      */
-    public val path: String
+    val path: String
 
     /**
      * Filename of the realm file.
      */
-    public val name: String
+    val name: String
 
     /**
      * The set of classes included in the schema for the realm.
      */
-    public val schema: Set<KClass<out RealmObject>>
+    val schema: Set<KClass<out RealmObject>>
 
     /**
      * The log configuration used for the realm instance.
      */
-    public val log: LogConfiguration
+    val log: LogConfiguration
 
     /**
      * Maximum number of active versions.
@@ -82,18 +82,18 @@ interface RealmConfiguration {
      * require keeping the data in the actual file. This can cause growth of the file. See
      * [Builder.maxNumberOfActiveVersions] for details.
      */
-    public val maxNumberOfActiveVersions: Long
+    val maxNumberOfActiveVersions: Long
 
     /**
      * The schema version.
      */
-    public val schemaVersion: Long
+    val schemaVersion: Long
 
     /**
      * Flag indicating whether the realm will be deleted if the schema has changed in a way that
      * requires schema migration.
      */
-    public val deleteRealmIfMigrationNeeded: Boolean
+    val deleteRealmIfMigrationNeeded: Boolean
 
     /**
      * 64 byte key used to encrypt and decrypt the Realm file.
@@ -121,34 +121,52 @@ interface RealmConfiguration {
     }
 
     /**
-     * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
-     * using the [RealmConfiguration] constructor.
+     * This class contains shared properties across the two types of configuration builders.
+     * Abstracting this allows for minimal rewiring by the compiler plugin since [build] is
+     * available to both builders.
+     *
+     * The property functions in this builder return the type of the builder itself, represented by
+     * [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
+     * all function return types have to be typecast as [S].
+     *
+     * @param T the type of [RealmConfiguration] the builder should generate
+     * @param S the type of builder, needed to distinguish between local and sync variants.
      */
-    class Builder(
+    @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
+    abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         var path: String? = null, // Full path for Realm (directory + name)
         var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
         var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
 
-        private var logLevel: LogLevel = LogLevel.WARN
-        private var removeSystemLogger: Boolean = false
-        private var userLoggers: List<RealmLogger> = listOf()
-        private var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
-        private var notificationDispatcher: CoroutineDispatcher? = null
-        private var writeDispatcher: CoroutineDispatcher? = null
-        private var deleteRealmIfMigrationNeeded: Boolean = false
-        private var schemaVersion: Long = 0
-        private var encryptionKey: ByteArray? = null
+        protected var logLevel: LogLevel = LogLevel.WARN
+        protected var removeSystemLogger: Boolean = false
+        protected var userLoggers: List<RealmLogger> = listOf()
+        protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
+        protected var notificationDispatcher: CoroutineDispatcher? = null
+        protected var writeDispatcher: CoroutineDispatcher? = null
+        protected var deleteRealmIfMigrationNeeded: Boolean = false
+        protected var schemaVersion: Long = 0
+        protected var encryptionKey: ByteArray? = null
+
+        /**
+         * Creates the RealmConfiguration based on the builder properties.
+         *
+         * @return the created RealmConfiguration.
+         */
+        fun build(): T {
+            REPLACED_BY_IR()
+        }
 
         /**
          * Sets the absolute path of the realm file.
          */
-        fun path(path: String) = apply { this.path = path }
+        fun path(path: String): S = apply { this.path = path } as S
 
         /**
          * Sets the filename of the realm file.
          */
-        fun name(name: String) = apply { this.name = name }
+        fun name(name: String) = apply { this.name = name } as S
 
         /**
          * Sets the classes of the schema.
@@ -157,7 +175,8 @@ interface RealmConfiguration {
          *
          * @param classes The set of classes that the schema consists of.
          */
-        fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes }
+        fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes } as S
+
         /**
          * Sets the classes of the schema.
          *
@@ -166,7 +185,7 @@ interface RealmConfiguration {
          * @param classes The classes that the schema consists of.
          */
         fun schema(vararg classes: KClass<out RealmObject>) =
-            apply { this.schema = setOf(*classes) }
+            apply { this.schema = setOf(*classes) } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
@@ -187,7 +206,7 @@ interface RealmConfiguration {
                 throw IllegalArgumentException("Only positive numbers above 0 are allowed. Yours was: $maxVersions")
             }
             this.maxNumberOfActiveVersions = maxVersions
-        }
+        } as S
 
         /**
          * Configure how Realm will report log events.
@@ -201,7 +220,7 @@ interface RealmConfiguration {
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
-            }
+            } as S
 
         /**
          * Dispatcher used to run background writes to the Realm.
@@ -216,7 +235,7 @@ interface RealmConfiguration {
          */
         internal fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.notificationDispatcher = dispatcher
-        }
+        } as S
 
         /**
          * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
@@ -233,7 +252,7 @@ interface RealmConfiguration {
          */
         internal fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.writeDispatcher = dispatcher
-        }
+        } as S
 
         /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
@@ -241,14 +260,18 @@ interface RealmConfiguration {
          *
          * **WARNING!** This will result in loss of data.
          */
-        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
+        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true } as S
 
         /**
          * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
          * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
          */
-        fun schemaVersion(schemaVersion: Long) =
-            apply { this.schemaVersion = validateSchemaVersion(schemaVersion) }
+        fun schemaVersion(schemaVersion: Long): S {
+            if (schemaVersion < 0) {
+                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
+            }
+            return apply { this.schemaVersion = schemaVersion } as S
+        }
 
         /**
          * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file
@@ -259,7 +282,7 @@ interface RealmConfiguration {
          * @param encryptionKey 64-byte encryption key.
          */
         fun encryptionKey(encryptionKey: ByteArray) =
-            apply { this.encryptionKey = validateEncryptionKey(encryptionKey) }
+            apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
 
         /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
@@ -270,19 +293,32 @@ interface RealmConfiguration {
          *
          * @see [RealmConfiguration.Builder.log]
          */
-        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
+        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
 
-        /**
-         * Creates the RealmConfiguration based on the builder properties.
-         *
-         * @return the created RealmConfiguration.
-         */
-        fun build(): RealmConfiguration {
-            REPLACED_BY_IR()
+        protected fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
+            if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
+                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. The provided key was ${encryptionKey.size} bytes.")
+            }
+            return encryptionKey
         }
+    }
+
+    /**
+     * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be
+     * created using the [RealmConfiguration.with] function.
+     */
+    // TODO so far this is the least-effort implementation for supporting sync configurations too
+    //  though interfacing the builder is also an option
+    class Builder(
+        path: String? = null, // Full path for Realm (directory + name)
+        name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
+        schema: Set<KClass<out RealmObject>> = setOf()
+    ) : SharedBuilder<RealmConfiguration, Builder>(path, name, schema) {
 
         // Called from the compiler plugin
-        internal fun build(companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>): RealmConfiguration {
+        internal fun build(
+            companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
+        ): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
@@ -301,20 +337,6 @@ interface RealmConfiguration {
                 deleteRealmIfMigrationNeeded,
                 encryptionKey
             )
-        }
-
-        private fun validateSchemaVersion(schemaVersion: Long): Long {
-            if (schemaVersion < 0) {
-                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
-            }
-            return schemaVersion
-        }
-
-        private fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
-            if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
-                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. The provided key was ${encryptionKey.size} bytes.")
-            }
-            return encryptionKey
         }
     }
 }

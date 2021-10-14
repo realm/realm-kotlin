@@ -17,7 +17,6 @@
 package io.realm.internal
 
 import io.realm.LogConfiguration
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -27,7 +26,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
-public class RealmConfigurationImpl internal constructor(
+open class RealmConfigurationImpl constructor(
     companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
@@ -39,7 +38,7 @@ public class RealmConfigurationImpl internal constructor(
     schemaVersion: Long,
     deleteRealmIfMigrationNeeded: Boolean,
     encryptionKey: ByteArray?,
-) : RealmConfiguration {
+) : InternalRealmConfiguration {
 
     override val path: String
 
@@ -51,21 +50,21 @@ public class RealmConfigurationImpl internal constructor(
 
     override val maxNumberOfActiveVersions: Long
 
-    val notificationDispatcher: CoroutineDispatcher
-
-    val writeDispatcher: CoroutineDispatcher
-
     override val schemaVersion: Long
 
     override val deleteRealmIfMigrationNeeded: Boolean
 
     override val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
-    // Internal properties used by other Realm components, but does not make sense for the end user to know about
-    internal var mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
-    internal var mediator: Mediator
+    override val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
 
-    internal val nativeConfig: NativePointer = RealmInterop.realm_config_new()
+    override val mediator: Mediator
+
+    override val nativeConfig: NativePointer = RealmInterop.realm_config_new()
+
+    override val notificationDispatcher: CoroutineDispatcher
+
+    override val writeDispatcher: CoroutineDispatcher
 
     init {
         this.path = if (path == null || path.isEmpty()) {

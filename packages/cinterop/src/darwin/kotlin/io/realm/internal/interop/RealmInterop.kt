@@ -20,6 +20,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
 import kotlinx.atomicfu.AtomicRef
@@ -78,6 +79,7 @@ import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
+import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -880,13 +882,13 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
-        val syncClientConfig = realm_wrapper.realm_sync_client_config_new()
-        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
-
-        // TODO add metadata mode to config
-        realm_wrapper.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
-        return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig))
+    actual fun realm_app_get(
+        appConfig: NativePointer,
+        syncClientConfig: NativePointer,
+        basePath: String
+    ): NativePointer {
+        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
+        return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
@@ -960,6 +962,20 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_sync_client_config_new(): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_metadata_mode(
+        syncClientConfig: NativePointer,
+        metadataMode: MetadataMode
+    ) {
+        realm_wrapper.realm_sync_client_config_set_metadata_mode(
+            syncClientConfig.cptr(),
+            realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
+        )
+    }
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return CPointerWrapper(
             realm_wrapper.realm_http_transport_new(
@@ -1008,8 +1024,13 @@ actual object RealmInterop {
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
     }
+
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
-        TODO()
+        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition))
+    }
+
+    actual fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer) {
+        realm_wrapper.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

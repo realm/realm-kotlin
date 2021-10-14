@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.internal.interop.sync
 
-import io.realm.RealmObject
-import kotlin.reflect.KClass
-
-interface Mediator {
-    fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal
-    fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
+expect enum class MetadataMode {
+    RLM_SYNC_CLIENT_METADATA_MODE_DISABLED,
+    RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
+    RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED
 }
