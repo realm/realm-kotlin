@@ -172,10 +172,10 @@ pipeline {
                                 testAndCollect("test", "macosTest")
                             },
                             {
-                                forwardAdbPorts()
                                 withLogcatTrace(
                                     "integrationtest",
                                     {
+                                        forwardAdbPorts()
                                         testAndCollect("test", "connectedAndroidTest")
                                     }
                                 )
