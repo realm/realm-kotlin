@@ -162,7 +162,20 @@ pipeline {
                 stage('Integration Tests') {
                     when { expression { runTests } }
                     steps {
-                        testWithServer("test", ["macosTest", "connectedAndroidTest"])
+                        testWithServer([
+                            {
+                                testAndCollect("test", "macosTest")
+                            },
+                            {
+                                try {
+                                   backgroundPid = startLogCatCollector()
+                                   forwardAdbPorts()
+                                   testAndCollect("test", "connectedAndroidTest")
+                                } finally {
+                                    stopLogCatCollector(backgroundPid)
+                                }
+                            }
+                        ])
                     }
                 }
                 stage('Tests JVM') {
@@ -384,7 +397,7 @@ def runCompilerPluginTest() {
     }
 }
 
-def testWithServer(dir, tasks) {
+def testWithServer(tasks) {
     // Work-around for https://github.com/docker/docker-credential-helpers/issues/82
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'realm-kotlin-ci-password', variable: 'PASSWORD'],
@@ -417,7 +430,7 @@ def testWithServer(dir, tasks) {
         forwardAdbPorts()
 
         tasks.each { task ->
-            testAndCollect(dir, task)
+            task()
         }
     } finally {
         // We assume that creating these containers and the docker network can be considered an atomic operation.
@@ -431,6 +444,35 @@ def testWithServer(dir, tasks) {
             }
         }
     }
+}
+
+String startLogCatCollector() {
+  // Cancel build quickly if no device is available. The lock acquired already should
+  // ensure we have access to a device. If not, it is most likely a more severe problem.
+  timeout(time: 1, unit: 'MINUTES') {
+    // Need ADB as root to clear all buffers: https://stackoverflow.com/a/47686978/1389357
+    sh 'adb devices'
+    sh """adb root
+      adb logcat -b all -c
+      adb logcat -v time > 'logcat.txt' &
+      echo \$! > pid
+    """
+    return readFile("pid").trim()
+  }
+}
+
+def stopLogCatCollector(String backgroundPid) {
+  // The pid might not be available if the build was terminated early or stopped due to
+  // a build error.
+  if (backgroundPid != null) {
+    sh "kill ${backgroundPid}"
+    zip([
+      'zipFile': 'logcat.zip',
+      'archive': true,
+      'glob' : 'logcat.txt'
+    ])
+    sh 'rm logcat.txt'
+  }
 }
 
 def forwardAdbPorts() {
