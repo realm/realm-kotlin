@@ -147,9 +147,9 @@ void throw_as_java_exception(JNIEnv *jenv) {
 %typemap(argout) void** {
     // Original
     %#if defined(__ANDROID__)
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)&$1, $input);
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
     %#else
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)&$1, $input);
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
 %apply void** {realm_object_t **, realm_list_t **};

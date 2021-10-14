@@ -32,7 +32,6 @@ import io.realm.internal.interop.realm_property_info_t
 import io.realm.internal.interop.realm_property_type_e
 import io.realm.internal.interop.realm_schema_mode_e
 import io.realm.internal.interop.realm_schema_validation_mode_e
-import io.realm.internal.interop.realm_size_t
 import io.realm.internal.interop.realm_value_t
 import io.realm.internal.interop.realm_value_type_e
 import io.realm.internal.interop.realmc
