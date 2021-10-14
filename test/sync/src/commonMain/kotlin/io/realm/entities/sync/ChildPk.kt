@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.entities.link
+package io.realm.entities.sync
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey

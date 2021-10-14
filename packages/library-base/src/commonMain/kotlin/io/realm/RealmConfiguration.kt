@@ -29,17 +29,17 @@ import kotlin.reflect.KClass
 /**
  * Configuration for log events created by a Realm instance.
  */
-public data class LogConfiguration(
+data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
      */
-    public val level: LogLevel,
+    val level: LogLevel,
 
     /**
      * Any loggers to install. They will receive all log events with a priority equal to or higher than
      * the value defined in [LogConfiguration.level].
      */
-    public val loggers: List<RealmLogger>
+    val loggers: List<RealmLogger>
 )
 
 /**
@@ -58,22 +58,22 @@ interface RealmConfiguration {
     /**
      * Path to the realm file.
      */
-    public val path: String
+    val path: String
 
     /**
      * Filename of the realm file.
      */
-    public val name: String
+    val name: String
 
     /**
      * The set of classes included in the schema for the realm.
      */
-    public val schema: Set<KClass<out RealmObject>>
+    val schema: Set<KClass<out RealmObject>>
 
     /**
      * The log configuration used for the realm instance.
      */
-    public val log: LogConfiguration
+    val log: LogConfiguration
 
     /**
      * Maximum number of active versions.
@@ -82,18 +82,18 @@ interface RealmConfiguration {
      * require keeping the data in the actual file. This can cause growth of the file. See
      * [Builder.maxNumberOfActiveVersions] for details.
      */
-    public val maxNumberOfActiveVersions: Long
+    val maxNumberOfActiveVersions: Long
 
     /**
      * The schema version.
      */
-    public val schemaVersion: Long
+    val schemaVersion: Long
 
     /**
      * Flag indicating whether the realm will be deleted if the schema has changed in a way that
      * requires schema migration.
      */
-    public val deleteRealmIfMigrationNeeded: Boolean
+    val deleteRealmIfMigrationNeeded: Boolean
 
     /**
      * 64 byte key used to encrypt and decrypt the Realm file.
@@ -121,7 +121,16 @@ interface RealmConfiguration {
     }
 
     /**
-     * TODO
+     * This class contains shared properties across the two types of configuration builders.
+     * Abstracting this allows for minimal rewiring by the compiler plugin since [build] is
+     * available to both builders.
+     *
+     * The property functions in this builder return the type of the builder itself, represented by
+     * [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
+     * all function return types have to be typecast as [S].
+     *
+     * @param T the type of [RealmConfiguration] the builder should generate
+     * @param S the type of builder, needed to distinguish between local and sync variants.
      */
     @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
     abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
@@ -295,8 +304,8 @@ interface RealmConfiguration {
     }
 
     /**
-     * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
-     * using the [RealmConfiguration] constructor.
+     * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be
+     * created using the [RealmConfiguration.with] function.
      */
     // TODO so far this is the least-effort implementation for supporting sync configurations too
     //  though interfacing the builder is also an option
