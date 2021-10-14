@@ -980,14 +980,37 @@ actual object RealmInterop {
                 val realmLoggerFactory = safeUserData<() -> CoreLogger>(userData)
                 realmLoggerFactory.invoke().let { logger ->
                     realm_wrapper.realm_logger_new(
-                        staticCFunction { userData, logLevel, message ->
+                        staticCFunction { userData, logLevel: realm_wrapper.realm_log_level_e, message: CPointer<ByteVarOf<Byte>>? ->
+                            println("--- MESSAGE: ${message?.toKString() ?: "NO MESSAGE"}")
                             val userDataLogger = safeUserData<CoreLogger>(userData)
                             userDataLogger.log(logLevel.value.toShort(), message?.toKString() ?: "")
                         },
                         staticCFunction { userData ->
-                            val userDataLogger = safeUserData<CoreLogger>(userData)
-                            realm_log_level.byValue(userDataLogger.coreLogLevel.priority.toUInt())
+                            // TODO get level from kotlin logger object
+                            realm_wrapper.realm_log_level.RLM_LOG_LEVEL_ALL
                         },
+//                        staticCFunction { userData, logLevel, message ->
+//                            println("--------------> LOG callback - before referencing 'userData'")
+//                            val userDataLogger = safeUserData<CoreLogger>(userData)
+//                            println("--------------> LOG callback - after  referencing 'userData'")
+//                            println("--------------> LOG callback - before referencing 'logLevel'")
+//                            val level = logLevel.value.toShort()
+//                            println("--------------> LOG callback - after  referencing 'logLevel'")
+//                            println("--------------> LOG callback - before LOGGING")
+//                            userDataLogger.log(level, message?.toKString() ?: "")
+//                            println("--------------> LOG callback - after  LOG")
+//                        },
+//                        staticCFunction { userData ->
+////                            println("--------------> THRESHOLD callback - before referencing 'userData'")
+////                            val userDataLogger = safeUserData<CoreLogger>(userData)
+////                            println("--------------> THRESHOLD callback - after  referencing 'userData'")
+////                            println("--------------> THRESHOLD callback - before referencing 'coreLogLevel'")
+////                            val level = userDataLogger.coreLogLevel.priority.toUInt()
+////                            println("--------------> THRESHOLD callback - after  referencing 'coreLogLevel'")
+////                            val output = realm_log_level.byValue(level)
+////                            output
+//                            realm_log_level.RLM_LOG_LEVEL_ALL
+//                        },
                         StableRef.create(logger).asCPointer(),
                         staticCFunction { userData ->
                             disposeUserData<CoreLogger>(userData)
