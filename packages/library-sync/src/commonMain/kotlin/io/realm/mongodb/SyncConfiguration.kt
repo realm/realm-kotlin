@@ -45,13 +45,15 @@ import kotlin.reflect.KClass
  *      val realm = Realm.getInstance(config)
  * ```
  */
+// FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
 interface SyncConfiguration : RealmConfiguration {
 
     val user: User
     val partitionValue: PartitionValue
 
     /**
-     * TODO
+     * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
+     * created using the [RealmConfiguration.with] function.
      */
     class Builder private constructor(
         private var user: User,

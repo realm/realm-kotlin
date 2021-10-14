@@ -17,8 +17,8 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.VersionId
-import io.realm.entities.link.ChildPk
-import io.realm.entities.link.ParentPk
+import io.realm.entities.sync.ChildPk
+import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials

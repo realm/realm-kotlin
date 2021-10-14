@@ -25,6 +25,7 @@ import io.realm.internal.interop.CoreLogger
  *
  * @see RealmConfiguration.Builder.log
  */
+// FIXME do not expose CoreLogger publicly: https://github.com/realm/realm-kotlin/issues/499
 interface RealmLogger : CoreLogger {
 
     override val coreLogLevel: CoreLogLevel
