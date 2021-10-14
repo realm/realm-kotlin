@@ -125,14 +125,14 @@ class CinteropTest {
             // make sure data was preserved
             val foo_class = findTable(realm, "foo").key
             var query: Long = realmc.realm_query_parse(realm, foo_class, "TRUEPREDICATE", 0, realm_value_t())
-            val count = realm_size_t()
+            val count = LongArray(1)
             realmc.realm_query_count(query, count)
-            assertEquals(1, count.value)
+            assertEquals(1, count[0])
 
             // but data will not be migrated on the new column
             query = realmc.realm_query_parse(realm, foo_class, "int_renamed == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_INT; integer = 42 })
             realmc.realm_query_count(query, count)
-            assertEquals(0, count.value)
+            assertEquals(0, count[0])
 
             // old column was removed
             assertFailsWith<RealmCoreInvalidQueryException> {
@@ -176,9 +176,9 @@ class CinteropTest {
         realmc.realm_open(config_2).also { realm ->
             // make sure data was preserved
             val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
-            val count = realm_size_t()
+            val count = LongArray(1)
             realmc.realm_query_count(query, count)
-            assertEquals(1, count.value)
+            assertEquals(1, count[0])
 
             // close Realm
             realmc.realm_release(config_2)
@@ -211,9 +211,9 @@ class CinteropTest {
         realmc.realm_open(config_3).also { realm ->
             // make sure data was preserved
             val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
-            val count = realm_size_t()
+            val count = LongArray(1)
             realmc.realm_query_count(query, count)
-            assertEquals(1, count.value)
+            assertEquals(1, count[0])
 
             // close Realm
             realmc.realm_release(config_3)
@@ -235,14 +235,14 @@ class CinteropTest {
         realmc.realm_open(config_4).also { realm ->
             // make sure data was preserved
             var query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
-            val count = realm_size_t()
+            val count = LongArray(1)
             realmc.realm_query_count(query, count)
-            assertEquals(1, count.value)
+            assertEquals(1, count[0])
 
             // new class is available
             query = realmc.realm_query_parse(realm, findTable(realm, "baz").key, "TRUEPREDICATE", 0, realm_value_t())
             realmc.realm_query_count(query, count)
-            assertEquals(0, count.value)
+            assertEquals(0, count[0])
 
             // close Realm
             realmc.realm_release(config_4)
@@ -262,9 +262,9 @@ class CinteropTest {
         realmc.realm_open(config_5).also { realm ->
             // make sure data was preserved
             val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
-            val count = realm_size_t()
+            val count = LongArray(1)
             realmc.realm_query_count(query, count)
-            assertEquals(1, count.value)
+            assertEquals(1, count[0])
 
             // close Realm
             realmc.realm_release(config_5)
@@ -316,9 +316,9 @@ class CinteropTest {
             // make sure the Realm is empty (reset)
             val foo_class = findTable(realm, "foo")
             val query: Long = realmc.realm_query_parse(realm, foo_class.key, "TRUEPREDICATE", 0, realm_value_t())
-            val count = realm_size_t()
+            val count = LongArray(1)
             realmc.realm_query_count(query, count)
-            assertEquals(0, count.value)
+            assertEquals(0, count[0])
 
             // adding some data
             realmc.realm_begin_write(realm)
@@ -345,9 +345,9 @@ class CinteropTest {
         realmc.realm_open(config_3).also { realm ->
             // make sure the Realm is empty (reset)
             val query: Long = realmc.realm_query_parse(realm, findTable(realm, "foo").key, "TRUEPREDICATE", 0, realm_value_t())
-            val count = realm_size_t()
+            val count = LongArray(1)
             realmc.realm_query_count(query, count)
-            assertEquals(0, count.value)
+            assertEquals(0, count[0])
 
             // close Realm
             realmc.realm_release(config_3)
@@ -524,7 +524,7 @@ class CinteropTest {
         // Query basics
         val query: Long = realmc.realm_query_parse(realm, foo_info.key, "str == $0", 1, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_STRING; string = "Hello, World!" })
 
-        val count = realm_size_t()
+        val count = LongArray(1)
         realmc.realm_query_count(query, count)
 
         val findFirstValue = realm_value_t()
@@ -540,7 +540,7 @@ class CinteropTest {
         val results: Long = realmc.realm_query_find_all(query)
 
         realmc.realm_results_count(results, count)
-        assertEquals(1, count.value)
+        assertEquals(1, count[0])
         // TODO Query basics? min, max, sum, average
         //  https://github.com/realm/realm-kotlin/issues/64
         val minFound = booleanArrayOf(false)
