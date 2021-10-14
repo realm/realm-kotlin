@@ -486,6 +486,8 @@ def stopLogCatCollector(String backgroundPid, name) {
       'glob' : "logcat-${name}.txt"
     ])
     sh "rm logcat-${name}.txt"
+    // Zip file should already be archived by now
+    sh "rm logcat-${name}.zip"
   }
 }
 
