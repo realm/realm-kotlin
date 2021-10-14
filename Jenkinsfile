@@ -157,7 +157,7 @@ pipeline {
                     when { expression { runTests } }
                     steps {
                         withLogcatTrace(
-                            "packages",
+                            "unittest",
                             {
                                 testAndCollect("packages", "connectedAndroidTest")
                             }
@@ -174,7 +174,7 @@ pipeline {
                             {
                                 forwardAdbPorts()
                                 withLogcatTrace(
-                                    "test",
+                                    "integrationtest",
                                     {
                                         testAndCollect("test", "connectedAndroidTest")
                                     }
@@ -456,7 +456,7 @@ def withLogcatTrace(name, task) {
        backgroundPid = startLogCatCollector(name)
        task()
     } finally {
-        stopLogCatCollector(backgroundPid)
+        stopLogCatCollector(backgroundPid, name)
     }
 }
 String startLogCatCollector(name) {
@@ -468,24 +468,24 @@ String startLogCatCollector(name) {
     sh """
       $ANDROID_SDK_ROOT/platform-tools/adb root
       $ANDROID_SDK_ROOT/platform-tools/adb logcat -b all -c
-      $ANDROID_SDK_ROOT/platform-tools/adb logcat -v time > 'logcat-$name.txt' &
+      $ANDROID_SDK_ROOT/platform-tools/adb logcat -v time > 'logcat-${name}.txt' &
       echo \$! > pid
     """
     return readFile("pid").trim()
   }
 }
 
-def stopLogCatCollector(String backgroundPid, $name) {
+def stopLogCatCollector(String backgroundPid, name) {
   // The pid might not be available if the build was terminated early or stopped due to
   // a build error.
   if (backgroundPid != null) {
     sh "kill ${backgroundPid}"
     zip([
-      'zipFile': 'logcat-$name.zip',
+      'zipFile': "logcat-${name}.zip",
       'archive': true,
-      'glob' : 'logcat-$name.txt'
+      'glob' : "logcat-${name}.txt"
     ])
-    sh 'rm logcat-$name.txt'
+    sh "rm logcat-${name}.txt"
   }
 }
 
