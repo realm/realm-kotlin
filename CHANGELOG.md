@@ -1,4 +1,4 @@
-## 0.6.1-SNAPSHOT (YYYY-MM-DD)
+## 0.7.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
