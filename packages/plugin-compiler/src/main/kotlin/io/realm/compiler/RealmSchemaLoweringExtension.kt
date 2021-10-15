@@ -95,7 +95,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             }
                             // Replaces `RealmConfiguration.with(classSet)` with RealmConfiguration.Builder(...).build(companionMap)
                             REALM_CONFIGURATION_WITH -> {
-                                val schemaArgument: IrExpression? = expression.getValueArgument(2)!!
+                                val schemaArgument: IrExpression? = expression.getValueArgument(0)!!
                                 val builder = IrConstructorCallImpl(
                                     startOffset = expression.startOffset,
                                     endOffset = expression.endOffset,

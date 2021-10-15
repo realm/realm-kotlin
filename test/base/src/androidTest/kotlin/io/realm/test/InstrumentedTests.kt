@@ -25,7 +25,6 @@ import io.realm.RealmResults
 import io.realm.entities.Sample
 import io.realm.internal.platform.RealmInitializer
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.Utils.createRandomString
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -44,10 +43,9 @@ class InstrumentedTests {
     @Before
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.with(
-            path = "$tmpDir/${createRandomString(16)}.realm",
-            schema = setOf(Sample::class)
-        )
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path("$tmpDir/default.realm")
+            .build()
         realm = Realm.open(configuration)
     }
 
@@ -88,7 +86,8 @@ class InstrumentedTests {
         val objects1: RealmResults<Sample> = realm.objects(Sample::class)
         assertEquals(2, objects1.size)
 
-        val objects2: RealmResults<Sample> = realm.objects(Sample::class).query("stringField == $0", s)
+        val objects2: RealmResults<Sample> =
+            realm.objects(Sample::class).query("stringField == $0", s)
         assertEquals(1, objects2.size)
         for (sample in objects2) {
             assertEquals(s, sample.stringField)

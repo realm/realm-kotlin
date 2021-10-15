@@ -106,14 +106,10 @@ interface RealmConfiguration {
         /**
          * Create a configuration using default values except for schema, path and name.
          *
-         * @param path The full path of the realm file.
-         * @param name The filename of the realm file.
          * @param schema The classes of the schema. The elements of the set must be direct class literals.
          */
         // Should always follow Builder constructor arguments
         fun with(
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>>
         ): RealmConfiguration {
             REPLACED_BY_IR() // Will be replace by Builder(path, name, schame).build(companionMap)
@@ -125,11 +121,11 @@ interface RealmConfiguration {
      * using the [RealmConfiguration] constructor.
      */
     class Builder(
-        var path: String? = null, // Full path for Realm (directory + name)
-        var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
         var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
 
+        private var path: String? = null
+        private var name: String = Realm.DEFAULT_FILE_NAME
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
         private var userLoggers: List<RealmLogger> = listOf()
@@ -147,6 +143,8 @@ interface RealmConfiguration {
 
         /**
          * Sets the filename of the realm file.
+         *
+         * If setting the full path of the realm this name is not taken into account.
          */
         fun name(name: String) = apply { this.name = name }
 

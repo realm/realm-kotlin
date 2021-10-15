@@ -24,7 +24,6 @@ import io.realm.isFrozen
 import io.realm.isValid
 import io.realm.test.RealmStateTest
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.Utils.createRandomString
 import io.realm.version
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -49,7 +48,8 @@ class RealmObjectTests : RealmStateTest {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.with(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
         parent = realm.writeBlocking { copyToRealm(Parent()) }
     }
