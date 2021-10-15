@@ -16,6 +16,7 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
@@ -33,6 +34,7 @@ interface AppConfiguration {
     //  requires ktor as api dependency
     val baseUrl: String
     val networkTransportDispatcher: CoroutineDispatcher
+    val metadataMode: MetadataMode
 
     companion object {
         /**
@@ -55,7 +57,7 @@ interface AppConfiguration {
      * @param appId the application id of the MongoDB Realm Application.
      */
     class Builder(
-        val appId: String
+        private val appId: String
     ) {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId") // TODO

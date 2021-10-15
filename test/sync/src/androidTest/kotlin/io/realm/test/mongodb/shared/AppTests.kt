@@ -32,7 +32,7 @@ import kotlin.test.assertFailsWith
 
 class AppTests {
 
-    lateinit var app: App
+    private lateinit var app: App
 
     @BeforeTest
     fun setup() {

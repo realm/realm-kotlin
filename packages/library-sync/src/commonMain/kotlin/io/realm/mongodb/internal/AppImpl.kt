@@ -29,23 +29,28 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 internal class AppImpl(
-    configuration: AppConfigurationImpl,
+    override val configuration: AppConfigurationImpl,
 ) : App {
 
-    override val configuration: AppConfigurationImpl = configuration
-
-    val nativePointer: NativePointer =
-        RealmInterop.realm_app_new(
-            appConfig = configuration.nativePointer,
-            basePath = appFilesDirectory()
-        )
+    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
+        .also { syncClientConfig ->
+            RealmInterop.realm_sync_client_config_set_metadata_mode(
+                syncClientConfig,
+                configuration.metadataMode
+            )
+        }.let { syncClientConfig ->
+            RealmInterop.realm_app_get(
+                appConfig = configuration.nativePointer,
+                syncClientConfig = syncClientConfig,
+                basePath = appFilesDirectory()
+            )
+        }
 
     override suspend fun login(credentials: Credentials): User {
-        val credentialsInternal: CredentialImpl = Validation.checkType(credentials, "credentials")
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                (credentials as CredentialImpl).nativePointer,
+                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
                 object : CinteropCallback {
                     override fun onSuccess(pointer: NativePointer) {
                         continuation.resume(UserImpl(pointer))

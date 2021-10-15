@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.internal.interop
 
-import io.realm.RealmObject
-import kotlin.reflect.KClass
-
-interface Mediator {
-    fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal
-    fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
+interface CoreLogger {
+    fun log(level: Short, message: String)
 }
