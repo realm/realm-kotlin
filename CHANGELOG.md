@@ -1,3 +1,24 @@
+## 0.6.1-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
+
+### Internal
+* None.
+
+
 ## 0.6.0 (2021-10-15)
 
 ### Breaking Changes
