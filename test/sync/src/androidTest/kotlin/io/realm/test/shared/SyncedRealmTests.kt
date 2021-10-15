@@ -62,11 +62,10 @@ class SyncedRealmTests {
 
         tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = SyncConfiguration.Builder(
-            path = "$tmpDir/test.realm",
             schema = setOf(ParentPk::class, ChildPk::class),
             partitionValue = "default",
             user = user
-        ).build()
+        ).path(path = "$tmpDir/test.realm").build()
     }
 
     @AfterTest
@@ -492,10 +491,10 @@ class SyncedRealmTests {
         path: String? = null,
         name: String = DEFAULT_NAME
     ): SyncConfiguration = SyncConfiguration.Builder(
-        path = path,
-        name = name,
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
-    ).build()
+    ).path(path = "$tmpDir/test.realm")
+        .name(name)
+        .build()
 }

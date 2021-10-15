@@ -12,6 +12,7 @@
 * Changed `RealmObject.version` into method `RealmObject.version()`.
 * Replaced `RuntimeException`s by the explicit exceptions: `IllegalArgumentException`, `IllegalStateException` and `IndexOutOfBoundsException`.
 * Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
+* Removed optional arguments to `RealmConfiguration.with(...)` and `RealmConfiguration.Builder(...)`. Name and path can now only be set through the builder methods.
 
 ### Enhancements
 * Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) supported platforms are: Linux (since Centos7 x86_64), Windows (since 8.1 x86_64) and Macos (x86_64).

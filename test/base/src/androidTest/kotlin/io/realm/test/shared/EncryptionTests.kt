@@ -49,9 +49,9 @@ class EncryptionTests {
         val key = Random.nextBytes(64)
         val encryptedConf = RealmConfiguration
             .Builder(
-                path = "$tmpDir/default.realm",
                 schema = setOf(Sample::class)
             )
+            .path("$tmpDir/default.realm")
             .encryptionKey(key)
             .build()
 
@@ -69,9 +69,9 @@ class EncryptionTests {
         // Initialize an encrypted Realm
         val encryptedConf = RealmConfiguration
             .Builder(
-                path = "$tmpDir/default.realm",
                 schema = setOf(Sample::class)
             )
+            .path("$tmpDir/default.realm")
             .encryptionKey(actualKey)
             .build()
         Realm.open(encryptedConf).close()
@@ -104,9 +104,9 @@ class EncryptionTests {
         // Initialize an unencrypted Realm
         val unencryptedConf = RealmConfiguration
             .Builder(
-                path = "$tmpDir/default.realm",
                 schema = setOf(Sample::class)
             )
+            .path("$tmpDir/default.realm")
             .build()
         Realm.open(unencryptedConf).close()
 

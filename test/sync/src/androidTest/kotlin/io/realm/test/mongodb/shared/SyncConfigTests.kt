@@ -621,12 +621,10 @@ class SyncConfigTests {
         encryptionKey: ByteArray? = null,
         name: String = DEFAULT_NAME
     ): SyncConfiguration = SyncConfiguration.Builder(
-        path = path,
-        name = name,
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue,
-    ).let { builder ->
+    ).path(path).name(name).let { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         builder
     }.build()

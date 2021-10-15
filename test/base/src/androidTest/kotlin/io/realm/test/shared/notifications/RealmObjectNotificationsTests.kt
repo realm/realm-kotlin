@@ -46,8 +46,8 @@ class RealmObjectNotificationsTests : NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration =
-            RealmConfiguration.with(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path(path = "$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
 
