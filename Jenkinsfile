@@ -480,14 +480,16 @@ def stopLogCatCollector(String backgroundPid, name) {
   // a build error.
   if (backgroundPid != null) {
     sh "kill ${backgroundPid}"
+    // Zip file generation will fail if the file is already there 
+    // Pipeline Utility Steps Plugin 2.6.1 introduces 'overwrite' property
+    // https://issues.jenkins.io/browse/JENKINS-42591
+    sh "rm logcat-${name}.zip"
     zip([
       'zipFile': "logcat-${name}.zip",
       'archive': true,
       'glob' : "logcat-${name}.txt"
     ])
     sh "rm logcat-${name}.txt"
-    // Zip file should already be archived by now
-    sh "rm logcat-${name}.zip"
   }
 }
 
