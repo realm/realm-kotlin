@@ -53,13 +53,6 @@ class PartitionValue private constructor(
         }
     }
 
-<<<<<<< HEAD
-    fun asLong(): Long = checkValidType(ValueType.LONG).let { longValue!! }
-
-    fun asString(): String = checkValidType(ValueType.STRING).let { stringValue!! }
-
-=======
->>>>>>> master
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other is PartitionValue) {
