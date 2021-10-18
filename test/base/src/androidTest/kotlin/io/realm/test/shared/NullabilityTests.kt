@@ -20,7 +20,6 @@ import io.realm.RealmConfiguration
 import io.realm.entities.Nullability
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
-import io.realm.test.util.Utils.createRandomString
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -39,10 +38,9 @@ class NullabilityTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.with(
-            path = "$tmpDir/${createRandomString(16)}.realm",
+        val configuration = RealmConfiguration.Builder(
             schema = setOf(Nullability::class)
-        )
+        ).path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
 

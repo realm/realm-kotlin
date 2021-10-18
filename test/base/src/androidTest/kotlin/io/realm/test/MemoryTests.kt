@@ -167,7 +167,8 @@ class MemoryTests {
 
     private fun openRealmFromTmpDir(): Realm {
         val configuration =
-            RealmConfiguration.with(path = "$tmpDir/default.realm", schema = setOf(Sample::class))
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).path("$tmpDir/default.realm")
+                .build()
         return Realm.open(configuration)
     }
 }

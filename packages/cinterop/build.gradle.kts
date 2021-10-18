@@ -554,6 +554,19 @@ tasks.named("jvmMainClasses") {
     dependsOn(buildJVMSharedLibs)
 }
 
+// Maven Central requires JavaDoc so add empty javadoc artifacts
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+}
+
+publishing {
+    // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
+    publications.withType<MavenPublication> {
+        // Stub javadoc.jar artifact
+        artifact(javadocJar.get())
+    }
+}
+
 realmPublish {
     pom {
         name = "C Interop"

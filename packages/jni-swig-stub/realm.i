@@ -121,22 +121,8 @@ void throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_property_info_t*, propertyArrayArray);
 %array_functions(realm_value_t, valueArray);
 
-// size_t output parameter
-%inline %{
-struct realm_size_t {
-    size_t value;
-};
-%}
-
-// size_t output parameter
-// The below struct is used to pass size_t output parameters to Java.
-%typemap(jni) (size_t* out_count) "long"
-%typemap(jtype) (size_t* out_count) "long"
-%typemap(jstype) (size_t* out_count) "realm_size_t"
-%typemap(javain) (size_t* out_count) "realm_size_t.getCPtr($javainput)"
-// The below type maps are used to convert realm_size_t into a pointer to the same struct in JNI
-// The type maps are only applied to arguments are named exactly 'out_count'
-%apply size_t* out_count { size_t* out_size };
+// Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
+%apply int64_t[] { size_t* };
 
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found };
@@ -154,9 +140,9 @@ struct realm_size_t {
 %typemap(in) void** ( jlong *jarr ){
     // Original
     %#if defined(__ANDROID__)
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return 0;
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
     %#else
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr3, (long long **)&arg3, jarg3)) return 0;
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
     %#endif
 }
 %typemap(argout) void** {
@@ -164,10 +150,10 @@ struct realm_size_t {
     %#if defined(__ANDROID__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
     %#else
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr3, (long long *)arg3, jarg3);
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **};
+%apply void** {realm_object_t **, realm_list_t **, size_t*};
 
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"

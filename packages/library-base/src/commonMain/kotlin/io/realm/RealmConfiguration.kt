@@ -106,30 +106,34 @@ interface RealmConfiguration {
         /**
          * Create a configuration using default values except for schema, path and name.
          *
-         * @param path The full path of the realm file.
-         * @param name The filename of the realm file.
          * @param schema The classes of the schema. The elements of the set must be direct class literals.
          */
         // Should always follow Builder constructor arguments
         fun with(
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>>
         ): RealmConfiguration {
-            REPLACED_BY_IR() // Will be replace by Builder(path, name, schame).build(companionMap)
+            REPLACED_BY_IR() // Will be replace by Builder(schema).build(companionMap)
         }
     }
 
     /**
-     * TODO
+     * This class contains shared properties across the two types of configuration builders.
+     * Abstracting this allows for minimal rewiring by the compiler plugin since [build] is
+     * available to both builders.
+     *
+     * The property functions in this builder return the type of the builder itself, represented by
+     * [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
+     * all function return types have to be typecast as [S].
+     *
+     * @param T the type of [RealmConfiguration] the builder should generate
+     * @param S the type of builder, needed to distinguish between local and sync variants.
      */
     @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
     abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
-        var path: String? = null, // Full path for Realm (directory + name)
-        var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
         var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
-
+        protected var path: String? = null
+        protected var name: String = Realm.DEFAULT_FILE_NAME
         protected var logLevel: LogLevel = LogLevel.WARN
         protected var removeSystemLogger: Boolean = false
         protected var userLoggers: List<RealmLogger> = listOf()
@@ -151,11 +155,15 @@ interface RealmConfiguration {
 
         /**
          * Sets the absolute path of the realm file.
+         *
+         * If not set the realm will be stored at the default app storage location for the platform.
          */
-        fun path(path: String): S = apply { this.path = path } as S
+        fun path(path: String?): S = apply { this.path = path } as S
 
         /**
          * Sets the filename of the realm file.
+         *
+         * If setting the full path of the realm this name is not taken into account.
          */
         fun name(name: String) = apply { this.name = name } as S
 
@@ -295,16 +303,14 @@ interface RealmConfiguration {
     }
 
     /**
-     * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be created directly
-     * using the [RealmConfiguration] constructor.
+     * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be
+     * created using the [RealmConfiguration.with] function.
      */
     // TODO so far this is the least-effort implementation for supporting sync configurations too
     //  though interfacing the builder is also an option
     class Builder(
-        path: String? = null, // Full path for Realm (directory + name)
-        name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
         schema: Set<KClass<out RealmObject>> = setOf()
-    ) : SharedBuilder<RealmConfiguration, Builder>(path, name, schema) {
+    ) : SharedBuilder<RealmConfiguration, Builder>(schema) {
 
         // Called from the compiler plugin
         internal fun build(
