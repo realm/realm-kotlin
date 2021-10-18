@@ -24,8 +24,6 @@
 #include "java_global_ref_by_move.hpp"
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved);
-// Doesn't seem to be triggered when JVM is shutting down, at least not on MacOS JVM
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved);
 
 namespace realm {
     namespace jni_util {

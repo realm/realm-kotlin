@@ -30,10 +30,11 @@ class BinaryData;
 
 namespace _impl {
 
-// Manage a global static jclass pool which will be initialized when JNI_OnLoad() called.
-// FindClass is a relatively slow operation, loading all the needed classes when start is not good since usually user
-// will call Realm.init() when the app starts.
-// Instead, we only load necessary classes which might be initialized in the native thread.
+// Global static jclass pool initialized when JNI_OnLoad() called.
+//
+// Only load absolutely necessary classes which might be initialized in native threads as FindClass
+// is a relatively slow operation and this pool is initialized when our library is loaded which
+// will most often be when the app starts.
 //
 // FindClass will fail if it is called from a native thread (e.g.: the sync client thread.). But usually it is not a
 // problem if the FindClass is called from an JNI method. So keeping a static JavaClass var locally is still preferred

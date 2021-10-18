@@ -26,12 +26,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
     return JNI_VERSION_1_2;
 }
 
-// Doesn't seem to be triggered when JVM is shutting down, at least not on MacOS JVM
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved) {
-    cached_jvm = 0;
-    realm::_impl::JavaClassGlobalDef::release();
-}
-
 namespace realm {
     namespace jni_util {
         JNIEnv * get_env(bool attach_if_needed) {
