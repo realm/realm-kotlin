@@ -16,6 +16,7 @@
 
 package io.realm.mongodb.internal
 
+import io.ktor.client.features.logging.Logger
 import io.realm.LogConfiguration
 import io.realm.internal.RealmLog
 import io.realm.internal.interop.NativePointer
@@ -43,12 +44,19 @@ internal class AppConfigurationImpl(
         //  https://github.com/realm/realm-kotlin/issues/408
         timeoutMs = 5000,
         dispatcher = networkTransportDispatcher,
-        log = log
-    ).freeze()
+        logger = object : Logger {
+            override fun log(message: String) {
+                this@AppConfigurationImpl.log.debug(message)
+            }
+        }
+    )
 
     val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
         networkTransport = RealmInterop.realm_network_transport_new(networkTransport)
     )
+        // Only freeze anything after all properties are setup as this triggers freezing the actual
+        // AppConfigurationImpl instance itself
+        .freeze()
 }
