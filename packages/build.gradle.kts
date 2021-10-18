@@ -19,6 +19,7 @@ plugins {
     id("realm-lint")
     `java-gradle-plugin`
     id("realm-publisher")
+    id("org.jetbrains.dokka") version Versions.dokka
 }
 
 allprojects {

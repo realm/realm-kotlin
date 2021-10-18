@@ -20,7 +20,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("realm-publisher")
-    id("org.jetbrains.dokka") version Versions.dokka
+    id("org.jetbrains.dokka")
 }
 buildscript {
     repositories {
@@ -216,6 +216,25 @@ realmPublish {
         description = "Sync Library code for Realm Kotlin. This artifact is not " +
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+}
+
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
+    moduleName.set("Realm Kotlin Multiplatform SDK - Sync")
+    moduleVersion.set(Realm.version)
+    dokkaSourceSets {
+        configureEach {
+            moduleVersion.set(Realm.version)
+            reportUndocumented.set(true)
+            skipEmptyPackages.set(true)
+            perPackageOption {
+                matchingRegex.set(""".*\.internal.*""")
+                suppress.set(true)
+            }
+            jdkVersion.set(8)
+        }
+        val commonMain by getting {
+        }
     }
 }
 
