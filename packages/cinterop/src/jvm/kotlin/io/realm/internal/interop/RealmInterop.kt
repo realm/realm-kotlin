@@ -298,9 +298,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_list_size(list: NativePointer): Long {
-        val size = realm_size_t()
+        val size = LongArray(1)
         realmc.realm_list_size(list.cptr(), size)
-        return size.value
+        return size[0]
     }
 
     actual fun <T> realm_list_get(list: NativePointer, index: Long): T {
@@ -578,9 +578,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_results_count(results: NativePointer): Long {
-        val count = realm_size_t()
+        val count = LongArray(1)
         realmc.realm_results_count(results.cptr(), count)
-        return count.value
+        return count[0]
     }
 
     // TODO OPTIMIZE Getting a range

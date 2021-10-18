@@ -16,13 +16,8 @@
 
 package io.realm.mongodb.internal
 
-import io.ktor.client.HttpClient
 import io.ktor.client.call.receive
-import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.ServerResponseException
-import io.ktor.client.features.logging.LogLevel
-import io.ktor.client.features.logging.Logger
-import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -37,8 +32,6 @@ import io.ktor.http.HttpMethod
 import io.ktor.utils.io.errors.IOException
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
-import io.realm.internal.platform.createDefaultSystemLogger
-import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
@@ -55,7 +48,8 @@ class KtorNetworkTransport(
     private val dispatcher: CoroutineDispatcher,
 ) : NetworkTransport {
 
-    private val client: HttpClient = getClient()
+    // FIXME Figure out how to reuse the HttpClient across all network requests.
+    private val clientCache: HttpClientCache = HttpClientCache(timeoutMs)
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")
     override fun sendRequest(
@@ -66,6 +60,14 @@ class KtorNetworkTransport(
         usesRefreshToken: Boolean
     ): Response {
         try {
+            // FIXME When using a shared HttpClient we are seeing sporadic
+            //  network failures on macOS. They manifest as ClientRequestException
+            //  even though the request appear to be valid. This could indicate
+            //  that some state isn't cleaned up correctly between requests, but
+            //  it is unclear what. As a temporary work-around, we now create a
+            //  HttpClient pr. request.
+            val client = clientCache.getClient()
+
             // FIXME Ensure background jobs does not block user/main thread
             //  https://github.com/realm/realm-kotlin/issues/450
             return runBlocking(dispatcher) {
@@ -153,41 +155,6 @@ class KtorNetworkTransport(
             "post" -> this.method = HttpMethod.Post
             "put" -> this.method = HttpMethod.Put
             "get" -> this.method = HttpMethod.Get
-        }
-    }
-
-    private fun getClient(): HttpClient {
-        // Need to freeze value as it is used inside the client's init lambda block, which also
-        // freezes captured objects too, see:
-        // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
-        val frozenTimeout = timeoutMs.freeze()
-        // TODO We probably need to fix the clients, so ktor does not automatically override with
-        //  another client if people update the runtime available ones through other dependencies
-        return HttpClient() {
-            // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
-
-            install(HttpTimeout) {
-                connectTimeoutMillis = frozenTimeout
-                requestTimeoutMillis = frozenTimeout
-                socketTimeoutMillis = frozenTimeout
-            }
-
-            // TODO figure out logging and obfuscating sensitive info
-            //  https://github.com/realm/realm-kotlin/issues/410
-            install(Logging) {
-                logger = object : Logger {
-                    // TODO Hook up with AppConfiguration/RealmConfiguration logger
-                    private val logger = createDefaultSystemLogger("realm-http")
-                    override fun log(message: String) {
-                        logger.log(io.realm.log.LogLevel.DEBUG, throwable = null, message = message)
-                    }
-                }
-                level = LogLevel.BODY
-            }
-
-            followRedirects = true
-
-            // TODO connectionPool?
         }
     }
 

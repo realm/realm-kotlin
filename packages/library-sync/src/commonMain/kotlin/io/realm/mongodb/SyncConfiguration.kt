@@ -45,45 +45,39 @@ import kotlin.reflect.KClass
  *      val realm = Realm.getInstance(config)
  * ```
  */
+// FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
 interface SyncConfiguration : RealmConfiguration {
 
     val user: User
     val partitionValue: PartitionValue
 
     /**
-     * TODO
+     * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
+     * created using the [RealmConfiguration.with] function.
      */
     class Builder private constructor(
         private var user: User,
         private var partitionValue: PartitionValue,
-        path: String?, // Full path for Realm (directory + name)
-        name: String, // Optional Realm name (default is 'default')
         schema: Set<KClass<out RealmObject>>
-    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(path, name, schema) {
+    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
         constructor(
             user: User,
             partitionValue: Int,
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>> = setOf()
-        ) : this(user, PartitionValue(partitionValue.toLong()), path, name, schema)
+        ) : this(user, PartitionValue(partitionValue.toLong()), schema)
 
         constructor(
             user: User,
             partitionValue: Long,
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>> = setOf()
-        ) : this(user, PartitionValue(partitionValue), path, name, schema)
+        ) : this(user, PartitionValue(partitionValue), schema)
 
         constructor(
             user: User,
             partitionValue: String,
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>> = setOf()
-        ) : this(user, PartitionValue(partitionValue), path, name, schema)
+        ) : this(user, PartitionValue(partitionValue), schema)
 
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>

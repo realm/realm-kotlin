@@ -17,8 +17,8 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
-import io.realm.entities.link.ChildPk
-import io.realm.entities.link.ParentPk
+import io.realm.entities.sync.ChildPk
+import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -621,12 +621,10 @@ class SyncConfigTests {
         encryptionKey: ByteArray? = null,
         name: String = DEFAULT_NAME
     ): SyncConfiguration = SyncConfiguration.Builder(
-        path = path,
-        name = name,
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue,
-    ).let { builder ->
+    ).path(path).name(name).let { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         builder
     }.build()

@@ -34,7 +34,6 @@ import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.test.util.TypeDescriptor.rType
-import io.realm.test.util.Utils.createRandomString
 import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -57,12 +56,15 @@ class PrimaryKeyTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration =
-            RealmConfiguration.Builder(path = "$tmpDir/${createRandomString(16)}.realm")
-                .schema(
+            RealmConfiguration.Builder(
+                setOf(
                     PrimaryKeyString::class,
                     PrimaryKeyStringNullable::class,
                     NoPrimaryKey::class
+
                 )
+            )
+                .path("$tmpDir/default.realm")
                 .build()
         realm = Realm.open(configuration)
     }
@@ -176,7 +178,7 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
         )
 
-        val configuration = RealmConfiguration.Builder("$tmpDir/${createRandomString(16)}.realm")
+        val configuration = RealmConfiguration.Builder()
             .schema(
                 PrimaryKeyByte::class,
                 PrimaryKeyByteNullable::class,
@@ -191,6 +193,7 @@ class PrimaryKeyTests {
                 PrimaryKeyString::class,
                 PrimaryKeyStringNullable::class,
             )
+            .path("$tmpDir/default.realm")
             .build()
 
 //        @Suppress("invisible_reference", "invisible_member")
