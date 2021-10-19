@@ -32,11 +32,14 @@ configure<JavaPluginConvention> {
 
 tasks.create("realmWrapperJvm") {
     doLast {
+        // If task is actually triggered (not up to date) then we should clean up the old stuff
+        deleteGeneratedFiles()
         exec {
             workingDir(".")
             commandLine("swig", "-java", "-c++", "-package", "io.realm.internal.interop", "-I$projectDir/../external/core/src", "-o", "$projectDir/src/main/jni/realmc.cpp", "-outdir", "$projectDir/src/main/java/io/realm/internal/interop", "realm.i")
         }
     }
+    inputs.file("$projectDir/../external/core/src/realm.h")
     inputs.file("realm.i")
     outputs.dir("$projectDir/src/main/java/io/realm/internal/interop")
     outputs.dir("$projectDir/src/main/jni")
@@ -69,19 +72,19 @@ publishing {
     }
 }
 
-tasks.create("cleanJvmWrapper") {
-    doLast {
-        delete(
-            fileTree("$projectDir/src/main/java/io/realm/internal/interop/").matching {
-                include("*.java")
-                exclude("LongPointerWrapper.java") // not generated
-            }
-        )
-        delete(file("$projectDir/src/main/jni/realmc.cpp"))
-        delete(file("$projectDir/src/main/jni/realmc.h"))
-    }
+fun deleteGeneratedFiles() {
+    delete(
+        fileTree("$projectDir/src/main/java/io/realm/internal/interop/").matching {
+            include("*.java")
+            exclude("LongPointerWrapper.java") // not generated
+        }
+    )
+    delete(file("$projectDir/src/main/jni/realmc.cpp"))
+    delete(file("$projectDir/src/main/jni/realmc.h"))
 }
 
 tasks.named("clean") {
-    dependsOn("cleanJvmWrapper")
+    doLast {
+        deleteGeneratedFiles()
+    }
 }

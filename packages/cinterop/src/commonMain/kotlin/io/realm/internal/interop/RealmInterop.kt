@@ -34,7 +34,6 @@ value class ColumnKey(val key: Long)
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
-
     fun realm_get_version_id(realm: NativePointer): Long
     fun realm_get_library_version(): String
     fun realm_get_num_versions(realm: NativePointer): Long

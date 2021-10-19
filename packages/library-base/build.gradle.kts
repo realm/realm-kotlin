@@ -77,9 +77,6 @@ kotlin {
         }
         create("jvm") {
             dependsOn(getByName("commonMain"))
-//            dependencies {
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:${Versions.coroutines}")
-//            }
             kotlin.srcDir("src/jvm/kotlin")
         }
         getByName("jvmMain") {
