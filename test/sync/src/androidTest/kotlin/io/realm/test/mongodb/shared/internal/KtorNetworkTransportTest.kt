@@ -57,8 +57,7 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 mapOf(),
-                body,
-                true
+                body
             )
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
@@ -76,8 +75,7 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 mapOf(),
-                body,
-                true
+                body
             )
             assertEquals(500, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
@@ -98,8 +96,7 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 mapOf(),
-                body,
-                true
+                body
             )
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")

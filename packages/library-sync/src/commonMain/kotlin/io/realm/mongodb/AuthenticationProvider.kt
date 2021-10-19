@@ -25,17 +25,17 @@ import io.realm.internal.interop.sync.AuthProvider
  *
  * @see [Authentication Providers](https://docs.mongodb.com/realm/authentication/providers/)
  */
-enum class AuthenticationProvider(id: io.realm.internal.interop.sync.AuthProvider) {
+enum class AuthenticationProvider(id: AuthProvider) {
     ANONYMOUS(AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS),
     // API_KEY("api-key"),  // same value as API_KEY as per OS specifications
     // APPLE("oauth2-apple"),
     // CUSTOM_FUNCTION("custom-function"),
-    EMAIL_PASSWORD(AuthProvider.RLM_AUTH_PROVIDER_USERNAME_PASSWORD),
+    EMAIL_PASSWORD(AuthProvider.RLM_AUTH_PROVIDER_EMAIL_PASSWORD),
     // FACEBOOK("oauth2-facebook"),
     // GOOGLE("oauth2-google"),
     // JWT("jwt"),
     // UNKNOWN(""),
     ;
 
-    internal val id: io.realm.internal.interop.sync.AuthProvider = id
+    internal val id: AuthProvider = id
 }

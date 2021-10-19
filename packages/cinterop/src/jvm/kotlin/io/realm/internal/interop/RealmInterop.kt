@@ -513,8 +513,8 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_credentials_new_anonymous())
     }
 
-    actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_username_password(username, password))
+    actual fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_email_password(username, password))
     }
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {

@@ -19,6 +19,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.to_realm_value
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -66,9 +67,8 @@ import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
-import realm_wrapper.realm_http_completion_func_t
 import realm_wrapper.realm_http_header_t
-import realm_wrapper.realm_http_method
+import realm_wrapper.realm_http_request_method
 import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
@@ -909,11 +909,10 @@ actual object RealmInterop {
     }
 
     private val newRequestLambda = staticCFunction<COpaquePointer?,
-        CValue<realm_http_request_t>,
-        COpaquePointer?,
-        realm_http_completion_func_t?,
-        Unit>
-    { userdata, request, completionData, callback ->
+            CValue<realm_http_request_t>,
+            COpaquePointer?,
+            Unit>
+    { userdata, request, requestContext ->
         safeUserData<NetworkTransport>(userdata).let { networkTransport ->
             request.useContents { // this : realm_http_request_t ->
                 val headerMap = mutableMapOf<String, String>()
@@ -925,16 +924,15 @@ actual object RealmInterop {
 
                 val response = networkTransport.sendRequest(
                     method = when (method) {
-                        realm_http_method.RLM_HTTP_METHOD_GET -> NetworkTransport.GET
-                        realm_http_method.RLM_HTTP_METHOD_POST -> NetworkTransport.POST
-                        realm_http_method.RLM_HTTP_METHOD_PATCH -> NetworkTransport.PATCH
-                        realm_http_method.RLM_HTTP_METHOD_PUT -> NetworkTransport.PUT
-                        realm_http_method.RLM_HTTP_METHOD_DELETE -> NetworkTransport.DELETE
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_GET -> NetworkTransport.GET
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_POST -> NetworkTransport.POST
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PATCH -> NetworkTransport.PATCH
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PUT -> NetworkTransport.PUT
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_DELETE -> NetworkTransport.DELETE
                     },
                     url = url!!.toKString(),
                     headers = headerMap,
-                    body = body!!.toKString(),
-                    usesRefreshToken = uses_refresh_token
+                    body = body!!.toKString()
                 )
 
                 memScoped {
@@ -948,7 +946,7 @@ actual object RealmInterop {
                         }
                     }
 
-                    val cResponse: realm_http_response_t /* = realm_wrapper.realm_http_response */ = alloc<realm_http_response_t> {
+                    val cResponse = alloc<realm_http_response_t> {
                         body = response.body.cstr.getPointer(memScope)
                         body_size = response.body.cstr.getBytes().size.toULong()
                         custom_status_code = response.customResponseCode
@@ -956,7 +954,8 @@ actual object RealmInterop {
                         num_headers = response.headers.entries.size.toULong()
                         headers = cResponseHeaders
                     }
-                    callback?.invoke(completionData, cResponse.ptr) ?: error("Callback should never be null")
+
+                    realm_wrapper.realm_http_transport_complete_request(requestContext, cResponse.ptr)
                 }
             }
         }
@@ -979,11 +978,11 @@ actual object RealmInterop {
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return CPointerWrapper(
             realm_wrapper.realm_http_transport_new(
+                newRequestLambda,
                 StableRef.create(networkTransport).asCPointer(),
                 staticCFunction { userdata: CPointer<out CPointed>? ->
                     disposeUserData<NetworkTransport>(userdata)
-                },
-                newRequestLambda
+                }
             )
         )
     }
@@ -1017,8 +1016,16 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous())
     }
 
-    actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
-        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_username_password(username, password))
+    actual fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer {
+        memScoped {
+            val realmStringPassword = password.toRString(this)
+            return CPointerWrapper(
+                realm_wrapper.realm_app_credentials_new_email_password(
+                    username,
+                    realmStringPassword
+                )
+            )
+        }
     }
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
