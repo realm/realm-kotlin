@@ -16,9 +16,14 @@
 
 package io.realm.mongodb
 
+import io.realm.LogConfiguration
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.internal.interop.sync.MetadataMode
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
+import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.AppConfigurationImpl
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -34,7 +39,6 @@ interface AppConfiguration {
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     val baseUrl: String
-    val logLevel: LogLevel
     val networkTransportDispatcher: CoroutineDispatcher
     val metadataMode: MetadataMode
 
@@ -63,7 +67,10 @@ interface AppConfiguration {
     ) {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId") // TODO
-        private var logLevel: LogLevel = LogLevel.NONE // TODO what should this value be?
+
+        private var logLevel: LogLevel = LogLevel.WARN
+        private var removeSystemLogger: Boolean = false
+        private var userLoggers: List<RealmLogger> = listOf()
 
         /**
          * Sets the base url for the MongoDB Realm Application. The default value is
@@ -79,20 +86,47 @@ interface AppConfiguration {
         fun dispatcher(dispatcher: CoroutineDispatcher) = apply { this.dispatcher = dispatcher }
 
         /**
-         * TODO
+         * Configure how Realm will report log events for this App.
+         *
+         * @param level all events at this level or higher will be reported.
+         * @param customLoggers any custom loggers to send log events to. A default system logger is
+         * installed by default that will redirect to the common logging framework on the platform, i.e.
+         * LogCat on Android and NSLog on iOS.
          */
-        fun logLevel(logLevel: LogLevel) = apply { this.logLevel = logLevel }
+        fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
+            apply {
+                this.logLevel = level
+                this.userLoggers = customLoggers
+            }
+
+        /**
+         * TODO Evaluate if this should be part of the public API. For now keep it internal.
+         *
+         * Removes the default system logger from being installed. If no custom loggers have
+         * been configured, no log events will be reported, regardless of the configured
+         * log level.
+         *
+         * @see [RealmConfiguration.Builder.log]
+         */
+        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
 
         /**
          * Creates the AppConfiguration from the properties of the builder.
          *
          * @return the AppConfiguration that can be used to create a [App].
          */
-        fun build(): AppConfiguration = AppConfigurationImpl(
-            appId = appId,
-            baseUrl = baseUrl,
-            logLevel = logLevel,
-            networkTransportDispatcher = dispatcher
-        )
+        fun build(): AppConfiguration {
+            val allLoggers = mutableListOf<RealmLogger>()
+            if (!removeSystemLogger) {
+                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+            }
+            allLoggers.addAll(userLoggers)
+            return AppConfigurationImpl(
+                appId = appId,
+                baseUrl = baseUrl,
+                networkTransportDispatcher = dispatcher,
+                logConfig = LogConfiguration(this.logLevel, allLoggers)
+            )
+        }
     }
 }

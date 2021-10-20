@@ -22,7 +22,6 @@ import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.objects
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.Utils.createRandomString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
@@ -43,10 +42,13 @@ class MutableRealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.with(
-            path = "$tmpDir/${createRandomString(16)}.realm",
-            schema = setOf(Parent::class, Child::class, StringPropertyWithPrimaryKey::class)
-        )
+        configuration = RealmConfiguration.Builder(
+            schema = setOf(
+                Parent::class,
+                Child::class,
+                StringPropertyWithPrimaryKey::class
+            )
+        ).path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
 

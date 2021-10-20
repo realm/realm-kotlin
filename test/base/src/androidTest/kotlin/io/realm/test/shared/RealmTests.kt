@@ -65,10 +65,8 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder()
-            .path("$tmpDir/default.realm")
-            .schema(setOf(Parent::class, Child::class))
-            .build()
+        configuration = RealmConfiguration.Builder().path("$tmpDir/default.realm")
+            .schema(setOf(Parent::class, Child::class)).build()
         realm = Realm.open(configuration)
     }
 
@@ -129,9 +127,10 @@ class RealmTests {
     fun throwsIfMaxNumberOfActiveVersionsAreExceeded() {
         realm.close()
         val config = RealmConfiguration.Builder(
-            path = "$tmpDir/exceed-versions.realm",
             schema = setOf(Parent::class, Child::class)
-        ).maxNumberOfActiveVersions(1).build()
+        ).maxNumberOfActiveVersions(1)
+            .path("$tmpDir/default.realm")
+            .build()
         realm = Realm.open(config)
         // Pin the version, so when starting a new transaction on the first Realm,
         // we don't release older versions.

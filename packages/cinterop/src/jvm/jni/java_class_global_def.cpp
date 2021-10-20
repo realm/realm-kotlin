@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2017 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb.internal
+#include "java_class_global_def.hpp"
 
-import io.realm.internal.interop.NativePointer
-import io.realm.mongodb.User
+using namespace realm;
+using namespace realm::_impl;
 
-internal class UserImpl(
-    val nativePointer: NativePointer,
-    val app: AppImpl
-) : User

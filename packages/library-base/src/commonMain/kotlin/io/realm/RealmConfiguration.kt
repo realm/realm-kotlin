@@ -29,17 +29,17 @@ import kotlin.reflect.KClass
 /**
  * Configuration for log events created by a Realm instance.
  */
-data class LogConfiguration(
+public data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
      */
-    val level: LogLevel,
+    public val level: LogLevel,
 
     /**
      * Any loggers to install. They will receive all log events with a priority equal to or higher than
      * the value defined in [LogConfiguration.level].
      */
-    val loggers: List<RealmLogger>
+    public val loggers: List<RealmLogger>
 )
 
 /**
@@ -58,22 +58,22 @@ interface RealmConfiguration {
     /**
      * Path to the realm file.
      */
-    val path: String
+    public val path: String
 
     /**
      * Filename of the realm file.
      */
-    val name: String
+    public val name: String
 
     /**
      * The set of classes included in the schema for the realm.
      */
-    val schema: Set<KClass<out RealmObject>>
+    public val schema: Set<KClass<out RealmObject>>
 
     /**
      * The log configuration used for the realm instance.
      */
-    val log: LogConfiguration
+    public val log: LogConfiguration
 
     /**
      * Maximum number of active versions.
@@ -82,18 +82,18 @@ interface RealmConfiguration {
      * require keeping the data in the actual file. This can cause growth of the file. See
      * [Builder.maxNumberOfActiveVersions] for details.
      */
-    val maxNumberOfActiveVersions: Long
+    public val maxNumberOfActiveVersions: Long
 
     /**
      * The schema version.
      */
-    val schemaVersion: Long
+    public val schemaVersion: Long
 
     /**
      * Flag indicating whether the realm will be deleted if the schema has changed in a way that
      * requires schema migration.
      */
-    val deleteRealmIfMigrationNeeded: Boolean
+    public val deleteRealmIfMigrationNeeded: Boolean
 
     /**
      * 64 byte key used to encrypt and decrypt the Realm file.
@@ -106,17 +106,13 @@ interface RealmConfiguration {
         /**
          * Create a configuration using default values except for schema, path and name.
          *
-         * @param path The full path of the realm file.
-         * @param name The filename of the realm file.
          * @param schema The classes of the schema. The elements of the set must be direct class literals.
          */
         // Should always follow Builder constructor arguments
         fun with(
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>>
         ): RealmConfiguration {
-            REPLACED_BY_IR() // Will be replace by Builder(path, name, schame).build(companionMap)
+            REPLACED_BY_IR() // Will be replace by Builder(schema).build(companionMap)
         }
     }
 
@@ -134,11 +130,10 @@ interface RealmConfiguration {
      */
     @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
     abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
-        var path: String? = null, // Full path for Realm (directory + name)
-        var name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
         var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
-
+        protected var path: String? = null
+        protected var name: String = Realm.DEFAULT_FILE_NAME
         protected var logLevel: LogLevel = LogLevel.WARN
         protected var removeSystemLogger: Boolean = false
         protected var userLoggers: List<RealmLogger> = listOf()
@@ -160,11 +155,15 @@ interface RealmConfiguration {
 
         /**
          * Sets the absolute path of the realm file.
+         *
+         * If not set the realm will be stored at the default app storage location for the platform.
          */
-        fun path(path: String): S = apply { this.path = path } as S
+        fun path(path: String?): S = apply { this.path = path } as S
 
         /**
          * Sets the filename of the realm file.
+         *
+         * If setting the full path of the realm this name is not taken into account.
          */
         fun name(name: String) = apply { this.name = name } as S
 
@@ -216,7 +215,7 @@ interface RealmConfiguration {
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
          */
-        fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
+        open fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
@@ -310,10 +309,8 @@ interface RealmConfiguration {
     // TODO so far this is the least-effort implementation for supporting sync configurations too
     //  though interfacing the builder is also an option
     class Builder(
-        path: String? = null, // Full path for Realm (directory + name)
-        name: String = Realm.DEFAULT_FILE_NAME, // Optional Realm name (default is 'default')
         schema: Set<KClass<out RealmObject>> = setOf()
-    ) : SharedBuilder<RealmConfiguration, Builder>(path, name, schema) {
+    ) : SharedBuilder<RealmConfiguration, Builder>(schema) {
 
         // Called from the compiler plugin
         internal fun build(

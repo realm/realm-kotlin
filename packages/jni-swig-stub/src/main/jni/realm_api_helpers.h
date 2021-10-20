@@ -19,6 +19,7 @@
 
 #include "realm.h"
 #include "env_utils.h"
+#include "java_class_global_def.hpp"
 #include "utils.h"
 
 realm_notification_token_t *
@@ -32,8 +33,8 @@ register_object_notification_cb(realm_object_t *object, jobject callback);
 
 realm_http_transport_t *realm_network_transport_new(jobject network_transport);
 
-void
-sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_factory);
+//void
+//sync_config_set_logger(realm_sync_client_config_t* sync_config, jobject logger_factory);
 
 realm_t* open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 

@@ -18,6 +18,7 @@ package io.realm.mongodb.internal
 
 import io.ktor.client.call.receive
 import io.ktor.client.features.ServerResponseException
+import io.ktor.client.features.logging.Logger
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -38,26 +39,25 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.collections.set
 
-// TODO Consider adding a logger
 class KtorNetworkTransport(
     override val authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME,
     override val customHeaders: Map<String, String> = mapOf(),
     // FIXME Rework timeout to take a Duration instead
     //  https://github.com/realm/realm-kotlin/issues/408
-    private val timeoutMs: Long,
+    timeoutMs: Long,
     private val dispatcher: CoroutineDispatcher,
+    logger: Logger? = null,
 ) : NetworkTransport {
 
     // FIXME Figure out how to reuse the HttpClient across all network requests.
-    private val clientCache: HttpClientCache = HttpClientCache(timeoutMs)
+    private val clientCache: HttpClientCache = HttpClientCache(timeoutMs, logger)
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")
     override fun sendRequest(
         method: String,
         url: String,
         headers: Map<String, String>,
-        body: String,
-        usesRefreshToken: Boolean
+        body: String
     ): Response {
         try {
             // FIXME When using a shared HttpClient we are seeing sporadic

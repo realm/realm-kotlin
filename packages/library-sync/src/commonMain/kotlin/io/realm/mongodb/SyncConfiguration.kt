@@ -25,6 +25,7 @@ import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
@@ -58,44 +59,54 @@ interface SyncConfiguration : RealmConfiguration {
     class Builder private constructor(
         private var user: User,
         private var partitionValue: PartitionValue,
-        path: String?, // Full path for Realm (directory + name)
-        name: String, // Optional Realm name (default is 'default')
         schema: Set<KClass<out RealmObject>>
-    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(path, name, schema) {
+    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
         constructor(
             user: User,
             partitionValue: Int,
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>> = setOf()
-        ) : this(user, PartitionValue(partitionValue.toLong()), path, name, schema)
+        ) : this(user, PartitionValue(partitionValue.toLong()), schema)
 
         constructor(
             user: User,
             partitionValue: Long,
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>> = setOf()
-        ) : this(user, PartitionValue(partitionValue), path, name, schema)
+        ) : this(user, PartitionValue(partitionValue), schema)
 
         constructor(
             user: User,
             partitionValue: String,
-            path: String? = null,
-            name: String = Realm.DEFAULT_FILE_NAME,
             schema: Set<KClass<out RealmObject>> = setOf()
-        ) : this(user, PartitionValue(partitionValue), path, name, schema)
+        ) : this(user, PartitionValue(partitionValue), schema)
+
+        init {
+            // Prime builder with log configuration from AppConfiguration
+            val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
+            this.logLevel = appLogConfiguration.level
+            this.userLoggers = appLogConfiguration.loggers
+            this.removeSystemLogger = true
+        }
+
+        override fun log(level: LogLevel, customLoggers: List<RealmLogger>) =
+            apply {
+                // Will clear any primed configuration
+                this.logLevel = level
+                this.userLoggers = customLoggers
+                this.removeSystemLogger = false
+            }
 
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): SyncConfiguration {
-            val allLoggers = mutableListOf<RealmLogger>()
+            val allLoggers = userLoggers.toMutableList()
+            // TODO This will not remove the system logger if it was added in AppConfiguration and
+            //  no overrides are done for this builder. But as removeSystemLogger() is not public
+            //  and most people will only specify loggers on the AppConfiguration this is OK for
+            //  now.
             if (!removeSystemLogger) {
-                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(0, createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
-            allLoggers.addAll(userLoggers)
-
             val localConfiguration = RealmConfigurationImpl(
                 companionMap,
                 path,

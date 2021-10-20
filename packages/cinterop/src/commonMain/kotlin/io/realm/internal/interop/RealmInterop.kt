@@ -34,7 +34,6 @@ value class ColumnKey(val key: Long)
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
-
     fun realm_get_version_id(realm: NativePointer): Long
     fun realm_get_library_version(): String
     fun realm_get_num_versions(realm: NativePointer): Long
@@ -149,11 +148,12 @@ expect object RealmInterop {
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer
 
-    fun realm_sync_client_config_set_logger_factory(
-        syncClientConfig: NativePointer,
-        loggerFactory: () -> CoreLogger
-    )
-    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
+//    fun realm_sync_client_config_set_logger_factory(
+//        syncClientConfig: NativePointer,
+//        loggerFactory: () -> CoreLogger
+//    )
+//    fun realm_sync_client_config_set_log_callback(syncClientConfig: NativePointer, )
+//    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
 
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,
@@ -171,7 +171,7 @@ expect object RealmInterop {
 
     // Credentials
     fun realm_app_credentials_new_anonymous(): NativePointer
-    fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer
+    fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Sync config
