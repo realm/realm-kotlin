@@ -20,5 +20,6 @@ import io.realm.internal.interop.NativePointer
 import io.realm.mongodb.User
 
 internal class UserImpl(
-    val nativePointer: NativePointer
+    val nativePointer: NativePointer,
+    val app: AppImpl
 ) : User

@@ -53,7 +53,7 @@ internal class AppImpl(
                 Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
                 object : CinteropCallback {
                     override fun onSuccess(pointer: NativePointer) {
-                        continuation.resume(UserImpl(pointer))
+                        continuation.resume(UserImpl(pointer, this@AppImpl))
                     }
 
                     override fun onError(throwable: Throwable) {

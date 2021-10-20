@@ -25,6 +25,7 @@ import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
@@ -79,15 +80,33 @@ interface SyncConfiguration : RealmConfiguration {
             schema: Set<KClass<out RealmObject>> = setOf()
         ) : this(user, PartitionValue(partitionValue), schema)
 
+        init {
+            // Prime builder with log configuration from AppConfiguration
+            val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
+            this.logLevel = appLogConfiguration.level
+            this.userLoggers = appLogConfiguration.loggers
+            this.removeSystemLogger = true
+        }
+
+        override fun log(level: LogLevel, customLoggers: List<RealmLogger>) =
+            apply {
+                // Will clear any primed configuration
+                this.logLevel = level
+                this.userLoggers = customLoggers
+                this.removeSystemLogger = false
+            }
+
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): SyncConfiguration {
-            val allLoggers = mutableListOf<RealmLogger>()
+            val allLoggers = userLoggers.toMutableList()
+            // TODO This will not remove the system logger if it was added in AppConfiguration and
+            //  no overrides are done for this builder. But as removeSystemLogger() is not public
+            //  and most people will only specify loggers on the AppConfiguration this is OK for
+            //  now.
             if (!removeSystemLogger) {
-                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(0, createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
-            allLoggers.addAll(userLoggers)
-
             val localConfiguration = RealmConfigurationImpl(
                 companionMap,
                 path,

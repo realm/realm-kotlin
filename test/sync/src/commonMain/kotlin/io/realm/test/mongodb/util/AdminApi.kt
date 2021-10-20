@@ -59,6 +59,7 @@ interface AdminApi {
 open class AdminApiImpl internal constructor(
     baseUrl: String,
     private val appName: String,
+    private val debug: Boolean,
     val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
@@ -86,7 +87,7 @@ open class AdminApiImpl internal constructor(
         runBlocking(Dispatchers.Unconfined) {
             // Log in using unauthorized client
             loginResponse =
-                defaultClient("realm-http-admin-unauthorized").typedRequest<LoginResponse>(
+                defaultClient("$appName-unauthorized", debug).typedRequest<LoginResponse>(
                     HttpMethod.Post,
                     "$url/auth/providers/local-userpass/login"
                 ) {
@@ -96,7 +97,7 @@ open class AdminApiImpl internal constructor(
 
             // Setup authorized client for the rest of the requests
             val accessToken = loginResponse.access_token
-            client = defaultClient("realm-http-admin-authorized") {
+            client = defaultClient("$appName-authorized", debug) {
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
