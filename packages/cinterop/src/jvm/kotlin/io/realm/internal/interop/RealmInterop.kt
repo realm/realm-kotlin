@@ -448,7 +448,6 @@ actual object RealmInterop {
         )
     }
 
-    // TODO sync config shouldn't be null
     actual fun realm_app_get(
         appConfig: NativePointer,
         syncClientConfig: NativePointer,
@@ -459,12 +458,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
-        // TODO error handling for callback, producing Kotlin's Result?
-        realmc.register_login_cb(
-            app.cptr(),
-            credentials.cptr(),
-            callback
-        )
+        realmc.register_login_cb(app.cptr(), credentials.cptr(), callback)
     }
 
     actual fun realm_sync_client_config_new(): NativePointer {

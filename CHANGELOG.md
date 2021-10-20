@@ -1,4 +1,25 @@
-## 0.6.0 (YYYY-MM-DD)
+## 0.7.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
+
+### Internal
+* Updated to Ktor 1.6.4.
+
+
+## 0.6.0 (2021-10-15)
 
 ### Breaking Changes
 * Rename library dependency from `io.realm.kotlin:library:<VERSION>` to `io.realm.kotlin:library-base:<VERSION>`

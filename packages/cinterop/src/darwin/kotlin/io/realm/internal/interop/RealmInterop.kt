@@ -19,7 +19,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.to_realm_value
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -63,6 +62,7 @@ import platform.posix.strerror
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
+import realm_wrapper.realm_clone
 import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
@@ -891,16 +891,22 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
+    actual fun realm_app_log_in_with_credentials(
+        app: NativePointer,
+        credentials: NativePointer,
+        callback: CinteropCallback
+    ) {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
             staticCFunction { userdata, user, error ->
-                val callback = safeUserData<CinteropCallback>(userdata)
+                val userDataCallback = safeUserData<CinteropCallback>(userdata)
                 if (error == null) {
-                    callback.onSuccess(CPointerWrapper(user))
+                    // Remember to clone user object or else it will be invalidated right after we leave this callback
+                    val clonedUser = realm_clone(user)
+                    userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
-                    callback.onError(AppException())
+                    userDataCallback.onError(AppException())
                 }
             },
             StableRef.create(callback).asCPointer(),
