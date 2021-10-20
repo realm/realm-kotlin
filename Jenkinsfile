@@ -119,7 +119,8 @@ pipeline {
                           when { expression { shouldBuildJvmABIs() } }
                           agent {
                               node {
-                                  label 'windows'
+                                   // FIXME aws-windows-02 has issue with checking out the repo with symlinks
+                                  label 'aws-windows-01'
                               }
                           }
                           steps {
