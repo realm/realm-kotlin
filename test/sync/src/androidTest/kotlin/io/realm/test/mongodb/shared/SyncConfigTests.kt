@@ -47,16 +47,13 @@ class SyncConfigTests {
 
     @BeforeTest
     fun setup() {
-        println("---------------> setup - creating temp dir")
         tmpDir = PlatformUtils.createTempDir()
-        println("---------------> setup - creating app")
         app = TestApp()
     }
 
     @AfterTest
     fun tearDown() {
         if (this::app.isInitialized) {
-            println("---------------> tearDown - closing app (deleting users)")
             app.asTestApp.close()
         }
     }
@@ -111,14 +108,9 @@ class SyncConfigTests {
 
     @Test
     fun equals_sameObject() {
-        //platform.posix.sleep(5)
-        println("---------------> equals_sameObject - creating user")
         val user = createTestUser()
-        println("---------------> equals_sameObject - creating config")
         val config = createSyncConfig(user)
-        println("---------------> equals_sameObject - asserting")
         assertEquals(config, config)
-        println("---------------> equals_sameObject - finished")
     }
 
 //    @Test
@@ -165,15 +157,10 @@ class SyncConfigTests {
 
     @Test
     fun equals_syncSpecificFields() {
-        //platform.posix.sleep(5)
-        println("---------------> equals_syncSpecificFields - creating user")
         val user = createTestUser()
-        println("---------------> equals_syncSpecificFields - creating config")
         val config = createSyncConfig(user = user, name = DEFAULT_NAME)
-        println("---------------> equals_syncSpecificFields - asserting")
         assertEquals(config.name, DEFAULT_NAME)
         assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
-        println("---------------> equals_syncSpecificFields - finished")
     }
 
 //    @Test
@@ -198,26 +185,16 @@ class SyncConfigTests {
 
     @Test
     fun encryption() {
-        //platform.posix.sleep(5)
-        println("---------------> encryption - creating user")
         val user = createTestUser()
-        println("---------------> encryption - creating config")
         val config = createSyncConfig(user = user, encryptionKey = getRandomKey())
-        println("---------------> encryption - asserting")
         assertNotNull(config.encryptionKey)
-        println("---------------> encryption - finished")
     }
 
     @Test
     fun encryption_invalid_wrong_length() {
-        //platform.posix.sleep(5)
-        println("---------------> encryption_invalid_wrong_length - creating user")
         val user = createTestUser()
-        println("---------------> encryption_invalid_wrong_length - creating config")
         val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE)
-        println("---------------> encryption_invalid_wrong_length - asserting")
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
-        println("---------------> encryption_invalid_wrong_length - finished")
     }
 
 //    @Test
@@ -314,14 +291,9 @@ class SyncConfigTests {
 
     @Test
     fun getPartitionValue() {
-        //platform.posix.sleep(5)
-        println("---------------> getPartitionValue - creating user")
         val user = createTestUser()
-        println("---------------> getPartitionValue - creating config")
         val syncConfig = createSyncConfig(user)
-        println("---------------> getPartitionValue - asserting")
         assertEquals(DEFAULT_PARTITION_VALUE, syncConfig.partitionValue.asString())
-        println("---------------> getPartitionValue - finished")
     }
 
 //    @Test
