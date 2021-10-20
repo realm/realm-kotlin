@@ -112,7 +112,7 @@ interface RealmConfiguration {
         fun with(
             schema: Set<KClass<out RealmObject>>
         ): RealmConfiguration {
-            REPLACED_BY_IR() // Will be replace by Builder(path, name, schame).build(companionMap)
+            REPLACED_BY_IR() // Will be replace by Builder(schema).build(companionMap)
         }
     }
 
@@ -215,7 +215,7 @@ interface RealmConfiguration {
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
          */
-        fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
+        open fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
