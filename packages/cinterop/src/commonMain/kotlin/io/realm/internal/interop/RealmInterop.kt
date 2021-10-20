@@ -163,7 +163,7 @@ expect object RealmInterop {
 
     // Credentials
     fun realm_app_credentials_new_anonymous(): NativePointer
-    fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer
+    fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Sync config

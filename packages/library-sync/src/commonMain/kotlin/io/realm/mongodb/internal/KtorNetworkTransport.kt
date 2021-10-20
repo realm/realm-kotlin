@@ -57,8 +57,7 @@ class KtorNetworkTransport(
         method: String,
         url: String,
         headers: Map<String, String>,
-        body: String,
-        usesRefreshToken: Boolean
+        body: String
     ): Response {
         try {
             // FIXME When using a shared HttpClient we are seeing sporadic

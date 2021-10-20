@@ -34,7 +34,7 @@ internal open class CredentialImpl(
         }
 
         internal fun emailPassword(email: String, password: String): NativePointer {
-            return RealmInterop.realm_app_credentials_new_username_password(
+            return RealmInterop.realm_app_credentials_new_email_password(
                 io.realm.internal.util.Validation.checkEmpty(email, "email"),
                 io.realm.internal.util.Validation.checkEmpty(password, "password")
             )

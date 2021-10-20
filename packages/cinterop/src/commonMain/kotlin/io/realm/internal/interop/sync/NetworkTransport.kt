@@ -34,8 +34,7 @@ interface NetworkTransport {
         method: String,
         url: String,
         headers: Map<String, String>,
-        body: String,
-        usesRefreshToken: Boolean
+        body: String
     ): Response
 }
 

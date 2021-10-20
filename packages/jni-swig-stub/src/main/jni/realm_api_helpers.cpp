@@ -233,7 +233,7 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
             credentials,
             // FIXME Refactor into generic handling of network requests, like
             //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
-            [](void *userdata, realm_user_t *user, realm_error_t *error) {
+            [](void* userdata, realm_user_t* user, const realm_app_error_t* error) {
                 auto jenv = get_env(true);
 
                 if (jenv->ExceptionCheck()) {
@@ -258,8 +258,10 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                     jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
 
+                    // Remember to clone user object or else it will be invalidated right after we leave this callback
+                    void* cloned_user = realm_clone(user);
                     jobject pointer = jenv->NewObject(exception_class, exception_constructor,
-                                                      reinterpret_cast<jlong>(user), false);
+                                                      reinterpret_cast<jlong>(cloned_user), false);
 
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_success_method,
@@ -276,26 +278,26 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
 
 static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
     static JavaMethod m_send_request_method(jenv,
-                        JavaClassGlobalDef::network_transport_class(),
-                        "sendRequest",
-                        "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)Lio/realm/internal/interop/sync/Response;");
+                                            JavaClassGlobalDef::network_transport_class(),
+                                            "sendRequest",
+                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Lio/realm/internal/interop/sync/Response;");
 
     // Prepare request fields to be consumable by JVM
     std::string method;
     switch (request.method) {
-        case realm_http_method::RLM_HTTP_METHOD_GET:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_GET:
             method = "get";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_POST:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_POST:
             method = "post";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_PATCH:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_PATCH:
             method = "patch";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_PUT:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_PUT:
             method = "put";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_DELETE:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_DELETE:
             method = "delete";
             break;
     }
@@ -328,32 +330,26 @@ static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_tran
                                   to_jstring(jenv, method),
                                   to_jstring(jenv, request.url),
                                   request_headers,
-                                  to_jstring(jenv, request.body),
-                                  jboolean(request.uses_refresh_token)
+                                  to_jstring(jenv, request.body)
     );
 }
 
-static void pass_jvm_response_to_core(JNIEnv *jenv,
-                                      jobject j_response,
-                                      void *completion_data,
-                                      realm_http_completion_func_t completion_callback) {
-
+static void pass_jvm_response_to_core(JNIEnv *jenv, jobject j_response, void* request_context) {
     static JavaMethod get_http_code_method(jenv,
                                            JavaClassGlobalDef::network_transport_response_class(),
                                            "getHttpResponseCode",
                                            "()I");
     static JavaMethod get_custom_code_method(jenv,
-                                           JavaClassGlobalDef::network_transport_response_class(),
-                                           "getCustomResponseCode",
-                                           "()I");
+                                             JavaClassGlobalDef::network_transport_response_class(),
+                                             "getCustomResponseCode",
+                                             "()I");
     static JavaMethod get_headers_method(jenv,
-                                           JavaClassGlobalDef::network_transport_response_class(),
+                                         JavaClassGlobalDef::network_transport_response_class(),
                                          "getJNIFriendlyHeaders",
                                          "()[Ljava/lang/String;");
     static JavaMethod get_body_method(jenv,
-                                           JavaClassGlobalDef::network_transport_response_class(),
+                                      JavaClassGlobalDef::network_transport_response_class(),
                                       "getBody", "()Ljava/lang/String;");
-
 
     // Extract JVM response fields
     jint http_code = jenv->CallIntMethod(j_response, get_http_code_method);
@@ -389,7 +385,7 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
     response.body = body.c_str();
     response.body_size = body.size();
 
-    completion_callback(completion_data, &response);
+    realm_http_transport_complete_request(request_context, &response);
 }
 
 /**
@@ -398,12 +394,11 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
  * 1. Cast userdata to the network transport
  * 2. Transform core request to JVM request
  * 3. Perform request
- * 4. Transform JVM response to core respone
+ * 4. Transform JVM response to core response
  */
-static void network_request_lambda_function(void *userdata, // Network transport
-                                            const realm_http_request_t request, // Request
-                                            void *completion_data,// Call backs
-                                            realm_http_completion_func_t completion_callback) {
+static void network_request_lambda_function(void* userdata,
+                                            const realm_http_request_t request,
+                                            void* request_context) {
     auto jenv = get_env(true);
 
     // Initialize pointer to JVM class and methods
@@ -411,7 +406,7 @@ static void network_request_lambda_function(void *userdata, // Network transport
 
     try {
         jobject j_response = send_request_via_jvm_transport(jenv, network_transport, request);
-        pass_jvm_response_to_core(jenv, j_response, completion_data, completion_callback);
+        pass_jvm_response_to_core(jenv, j_response, request_context);
     } catch (std::runtime_error &e) {
         // Runtime exception while processing the request/response
         realm_http_response_t response_error;
@@ -421,15 +416,15 @@ static void network_request_lambda_function(void *userdata, // Network transport
         response_error.num_headers = 0;
         response_error.body_size = 0;
 
-        completion_callback(completion_data, &response_error);
+        realm_http_transport_complete_request(request_context, &response_error);
     }
-};
+}
 
-realm_http_transport_t *realm_network_transport_new(jobject network_transport) {
+realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
     auto jenv = get_env(false); // Always called from JVM
-    return realm_http_transport_new(jenv->NewGlobalRef(network_transport),
-                                    [](void *userdata) {
+    return realm_http_transport_new(&network_request_lambda_function,
+                                    jenv->NewGlobalRef(network_transport), // userdata is the transport object
+                                    [](void* userdata) {
                                         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-                                    },
-                                    &network_request_lambda_function);
+                                    });
 }
