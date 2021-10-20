@@ -25,3 +25,7 @@ interface CinteropCallback {
     fun onSuccess(pointer: NativePointer)
     fun onError(throwable: Throwable)
 }
+
+interface LogCallback {
+    fun log(logLevel: Short, message: String)
+}

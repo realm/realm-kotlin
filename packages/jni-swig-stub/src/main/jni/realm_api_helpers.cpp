@@ -429,6 +429,21 @@ realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
                                     });
 }
 
+void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject log_callback) {
+    auto jenv = get_env(false);
+    realm_sync_client_config_set_log_callback(sync_client_config,
+                                              [](void* userdata, realm_log_level_e level, const char* message) {
+                                                  auto jenv = get_env(false);
+                                                  static jmethodID on_success_method = lookup(jenv, "io/realm/internal/interop/LogCallback",
+                                                                                              "log",
+                                                                                              "(Lio/realm/internal/interop/NativePointer;)V");
+
+                                              },
+                                              jenv->NewGlobalRef(log_callback), // userdata is the log callback
+                                              [](void* userdata) {
+                                                  get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                              });
+}
 //static realm_logger_t* new_logger_lambda_function(void* userdata, realm_log_level_e level) {
 //    JNIEnv* jenv = get_env(true);
 //    auto logger_factory = static_cast<jobject>(userdata);
