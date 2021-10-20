@@ -915,9 +915,9 @@ actual object RealmInterop {
     }
 
     private val newRequestLambda = staticCFunction<COpaquePointer?,
-            CValue<realm_http_request_t>,
-            COpaquePointer?,
-            Unit>
+        CValue<realm_http_request_t>,
+        COpaquePointer?,
+        Unit>
     { userdata, request, requestContext ->
         safeUserData<NetworkTransport>(userdata).let { networkTransport ->
             request.useContents { // this : realm_http_request_t ->
