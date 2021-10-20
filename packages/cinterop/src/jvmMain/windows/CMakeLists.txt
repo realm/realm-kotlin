@@ -20,6 +20,10 @@ include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INC
 file(GLOB jni_SRC
         "${CINTEROP_JNI}/env_utils.cpp"
         "${CINTEROP_JNI}/utils.cpp"
+        "${CINTEROP_JNI}/java_global_ref_by_move.cpp"
+        "${CINTEROP_JNI}/java_class_global_def.cpp"
+        "${CINTEROP_JNI}/java_class.cpp"
+        "${CINTEROP_JNI}/java_method.cpp"
         )
 
 file(GLOB swig_SRC
