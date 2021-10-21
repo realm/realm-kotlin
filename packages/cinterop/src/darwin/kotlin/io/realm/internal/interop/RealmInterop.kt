@@ -981,6 +981,7 @@ actual object RealmInterop {
             syncClientConfig.cptr(),
             staticCFunction { userData, logLevel, message ->
                 val userDataLogCallback = safeUserData<LogCallback>(userData)
+                // TODO send a CoreLogLevel enum instead?
                 userDataLogCallback.log(logLevel.toShort(), message?.toKString())
             },
             StableRef.create(callback.freeze()).asCPointer(),

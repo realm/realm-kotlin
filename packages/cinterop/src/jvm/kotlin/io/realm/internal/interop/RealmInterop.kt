@@ -465,13 +465,6 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
 
-//    actual fun realm_sync_client_config_set_logger_factory(
-//        syncClientConfig: NativePointer,
-//        loggerFactory: () -> CoreLogger
-//    ) {
-//        realmc.sync_config_set_logger(syncClientConfig.cptr(), loggerFactory)
-//    }
-
     actual fun realm_sync_client_config_set_log_callback(
         syncClientConfig: NativePointer,
         callback: LogCallback

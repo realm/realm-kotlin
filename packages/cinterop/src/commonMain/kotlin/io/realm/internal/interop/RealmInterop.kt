@@ -148,11 +148,6 @@ expect object RealmInterop {
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer
 
-//    fun realm_sync_client_config_set_logger_factory(
-//        syncClientConfig: NativePointer,
-//        loggerFactory: () -> CoreLogger
-//    )
-
     fun realm_sync_client_config_set_log_callback(
         syncClientConfig: NativePointer,
         callback: LogCallback

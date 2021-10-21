@@ -438,6 +438,7 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                                   static jmethodID log_method = lookup(jenv, "io/realm/internal/interop/LogCallback",
                                                                                               "log",
                                                                                               "(SLjava/lang/String;)V");
+                                                  // TODO send a CoreLogLevel enum instead?
                                                   jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
                                               },
                                               jenv->NewGlobalRef(log_callback), // userdata is the log callback
