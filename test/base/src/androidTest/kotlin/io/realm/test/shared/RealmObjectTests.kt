@@ -24,7 +24,6 @@ import io.realm.isFrozen
 import io.realm.isValid
 import io.realm.test.RealmStateTest
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.Utils.createRandomString
 import io.realm.version
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -49,7 +48,8 @@ class RealmObjectTests : RealmStateTest {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.with(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
         parent = realm.writeBlocking { copyToRealm(Parent()) }
     }
@@ -82,7 +82,7 @@ class RealmObjectTests : RealmStateTest {
 
     @Test
     fun isValid() {
-        val unmanagedParent = Parent().apply { _id = "Foo" }
+        val unmanagedParent = Parent()
         assertTrue(unmanagedParent.isValid())
         val obj: Parent = realm.writeBlocking { copyToRealm(unmanagedParent) }
         assertTrue(obj.isValid())
@@ -94,7 +94,7 @@ class RealmObjectTests : RealmStateTest {
     override fun isFrozen() {
         assertTrue { parent.isFrozen() }
         realm.writeBlocking {
-            val parent = copyToRealm(Parent().apply { _id = "Foo" })
+            val parent = copyToRealm(Parent())
             assertFalse { parent.isFrozen() }
         }
     }

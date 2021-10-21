@@ -17,13 +17,12 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
-import io.realm.internal.interop.CoreLogger
+import io.realm.internal.interop.LogCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.util.Validation
-import io.realm.log.RealmLogger
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -35,34 +34,20 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val loggerFactory: () -> CoreLogger = {
-        createDefaultSystemLogger("SYNC")
-    }
-
-    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
-        .also { syncClientConfig ->
-            RealmInterop.realm_sync_client_config_set_logger_factory(
-                syncClientConfig,
-                loggerFactory
-            )
-            // FIXME: 0 means "ALL" - make LogLevel values somehow match realm_log_level_e values
-            RealmInterop.realm_sync_client_config_set_log_level(syncClientConfig, 0)
-        }.let { syncClientConfig ->
-            RealmInterop.realm_app_new(
-                appConfig = configuration.nativePointer,
-                syncClientConfig = syncClientConfig,
-                basePath = appFilesDirectory()
-            )
-        }
+    private val nativePointer: NativePointer = RealmInterop.realm_app_get(
+        configuration.nativePointer,
+        initializeSyncClientConfig(),
+        appFilesDirectory()
+    )
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                (credentials as CredentialImpl).nativePointer,
+                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
                 object : CinteropCallback {
                     override fun onSuccess(pointer: NativePointer) {
-                        continuation.resume(UserImpl(pointer))
+                        continuation.resume(UserImpl(pointer, this@AppImpl))
                     }
 
                     override fun onError(throwable: Throwable) {
@@ -72,4 +57,29 @@ internal class AppImpl(
             )
         }
     }
+
+    private fun initializeSyncClientConfig(): NativePointer =
+        RealmInterop.realm_sync_client_config_new()
+            .also { syncClientConfig ->
+                // TODO use separate logger for sync or piggyback on config's?
+                val syncLogger = createDefaultSystemLogger("SYNC", configuration.log.logLevel)
+
+                // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_log_callback(
+                    syncClientConfig,
+                    object : LogCallback {
+                        override fun log(logLevel: Short, message: String?) {
+                            syncLogger.log(logLevel, message ?: "")
+                        }
+                    }
+                )
+                RealmInterop.realm_sync_client_config_set_log_level(
+                    syncClientConfig,
+                    configuration.log.logLevel.priority
+                )
+                RealmInterop.realm_sync_client_config_set_metadata_mode(
+                    syncClientConfig,
+                    configuration.metadataMode
+                )
+            }
 }

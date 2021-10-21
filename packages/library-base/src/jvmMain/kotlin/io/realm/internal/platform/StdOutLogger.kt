@@ -23,29 +23,36 @@ import java.io.StringWriter
 /**
  * Logger implementation outputting to stdout.
  */
-internal class StdOutLogger(override val tag: String = "REALM") : RealmLogger {
+internal class StdOutLogger(
+    override val tag: String = "REALM",
+    override val level: LogLevel
+) : RealmLogger {
 
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val logMessage: String = prepareLogMessage(throwable, message, *args)
         println("${level.name}: [$tag] $logMessage")
     }
 
-    private fun prepareLogMessage(throwable: Throwable?, message: String?, vararg args: Any?): String {
-        var message = message
-        if (message.isNullOrEmpty()) {
+    private fun prepareLogMessage(
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?
+    ): String {
+        var messageToLog = message
+        if (messageToLog.isNullOrEmpty()) {
             if (throwable == null) {
                 return ""
             }
-            message = getStackTraceString(throwable)
+            messageToLog = getStackTraceString(throwable)
         } else {
             if (args.isNotEmpty()) {
-                message = formatMessage(message, *args)
+                messageToLog = formatMessage(messageToLog, *args)
             }
             if (throwable != null) {
-                message += "\n" + getStackTraceString(throwable)
+                messageToLog += "\n" + getStackTraceString(throwable)
             }
         }
-        return message
+        return messageToLog
     }
 
     private fun formatMessage(message: String, vararg args: Any?): String {

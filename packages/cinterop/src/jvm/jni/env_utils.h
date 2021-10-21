@@ -30,6 +30,9 @@ namespace realm {
         static std::vector<JavaGlobalRefByMove> m_global_refs;
 
         JNIEnv * get_env(bool attach_if_needed = false);
+        // Returns current environment (or attaches current thread) or returns null if not possible
+        // to obtain an environment, in which case we assume that the VM has shut down;
+        JNIEnv * get_env_or_null();
         // TODO Migrate java_method.{hpp,cpp} realm-java or implement similar caching mechanism to
         //  hold global references to classes and look up methods
         jmethodID lookup(JNIEnv *jenv, const char *class_name, const char *method_name,

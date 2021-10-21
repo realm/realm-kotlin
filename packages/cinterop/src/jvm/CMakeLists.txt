@@ -35,4 +35,4 @@ add_library(realmc SHARED
         ${jni_SRC}
         )
 
-target_link_libraries(realmc log android RealmFFI Realm::ObjectStore)
+target_link_libraries(realmc log android RealmFFIStatic Realm::ObjectStore)

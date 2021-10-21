@@ -42,16 +42,14 @@ class SchemaTests {
 
     @Test
     fun usingNamedArgument() {
-        val conf = RealmConfiguration.with(schema = setOf(Sample::class, Parent::class, Child::class))
+        val conf =
+            RealmConfiguration.with(schema = setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
     @Test
     fun usingPositionalArgument() {
-        val conf = RealmConfiguration.with(
-            "default", "path",
-            setOf(Sample::class, Parent::class, Child::class)
-        )
+        val conf = RealmConfiguration.with(setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
@@ -77,11 +75,14 @@ class SchemaTests {
     @Test
     fun usingSingleClassAsPositional() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration.with("name", "path", setOf(Sample::class))
+        val conf = RealmConfiguration.with(setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 
-    private fun assertValidCompanionMap(conf: RealmConfiguration, vararg schema: KClass<out RealmObject>) {
+    private fun assertValidCompanionMap(
+        conf: RealmConfiguration,
+        vararg schema: KClass<out RealmObject>
+    ) {
         assertEquals(schema.size, conf.companionMap.size)
         for (clazz in schema) {
             assertTrue(conf.companionMap.containsKey(clazz))

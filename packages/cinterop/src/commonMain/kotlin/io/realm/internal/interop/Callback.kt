@@ -31,3 +31,7 @@ interface CinteropCallback {
 interface ErrorHandlerCallback {
     fun onError(pointer: NativePointer, throwable: AppException)
 }
+
+interface LogCallback {
+    fun log(logLevel: Short, message: String?)
+}

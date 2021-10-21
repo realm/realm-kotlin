@@ -16,6 +16,10 @@
 
 package io.realm.internal.interop.sync
 
+/**
+ * Value container à la BsonValue. This is only meant to be used temporarily until the BSON library
+ * is ported to Kotlin multiplatform.
+ */
 class PartitionValue private constructor(
     private val stringValue: String? = null,
     private val longValue: Long? = null
@@ -34,6 +38,14 @@ class PartitionValue private constructor(
         else -> throw IllegalStateException("Wrong partition value")
     }
 
+    fun asLong(): Long = checkValidType(ValueType.LONG).let { longValue!! }
+
+    fun asString(): String = checkValidType(ValueType.STRING).let { stringValue!! }
+
+    /**
+     * Returns the corresponding value following the BSON standard for its type for its use within
+     * sync.
+     */
     fun asSyncPartition(): String {
         return when (valueType) {
             ValueType.STRING -> """"${asString()}""""
@@ -41,9 +53,23 @@ class PartitionValue private constructor(
         }
     }
 
-    fun asLong(): Long = checkValidType(ValueType.LONG).let { longValue!! }
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other is PartitionValue) {
+            if (asSyncPartition() == other.asSyncPartition()) {
+                return true
+            }
+        }
 
-    fun asString(): String = checkValidType(ValueType.STRING).let { stringValue!! }
+        return false
+    }
+
+    override fun hashCode(): Int {
+        var result = stringValue?.hashCode() ?: 0
+        result = 31 * result + (longValue?.hashCode() ?: 0)
+        result = 31 * result + valueType.hashCode()
+        return result
+    }
 
     private fun checkValidType(expectedValueType: ValueType) {
         if (expectedValueType != valueType) {

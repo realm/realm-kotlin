@@ -28,7 +28,10 @@ import java.util.Locale
  * Credit to https://github.com/JakeWharton/timber/blob/master/timber/src/main/java/timber/log/Timber.kt
  * for message creation and formatting
  */
-internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
+internal class LogCatLogger(
+    override val tag: String = "REALM",
+    override val level: LogLevel
+) : RealmLogger {
 
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val priority: Int = level.priority
@@ -36,11 +39,7 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
 
         // Short circuit if message can fit into a single line in LogCat
         if (logMessage.length < MAX_LOG_LENGTH) {
-            if (level.priority == LogLevel.WTF.priority) {
-                Log.wtf(tag, logMessage)
-            } else {
-                Log.println(priority, tag, logMessage)
-            }
+            printMessage(priority, logMessage)
             return
         }
 
@@ -53,33 +52,47 @@ internal class LogCatLogger(override val tag: String = "REALM") : RealmLogger {
             do {
                 val end = Math.min(newline, i + MAX_LOG_LENGTH)
                 val part = logMessage.substring(i, end)
-                if (priority == Log.ASSERT) {
-                    Log.wtf(tag, part)
-                } else {
-                    Log.println(priority, tag, part)
-                }
+                printMessage(priority, part)
                 i = end
             } while (i < newline)
             i++
         }
     }
 
-    private fun prepareLogMessage(throwable: Throwable?, message: String?, vararg args: Any?): String {
-        var message = message
-        if (message.isNullOrEmpty()) {
+    private fun printMessage(priority: Int, logMessage: String) {
+        if (priority == LogLevel.WTF.priority) {
+            Log.wtf(tag, logMessage)
+        } else if (priority < LogLevel.DEBUG.priority) {
+            // ALL (0) and TRACE (1) don't exist on Android's Log so use VERBOSE instead
+            Log.v(tag, logMessage)
+        } else if (priority == LogLevel.DEBUG.priority) {
+            // Core's DEBUG (2) doesn't match Android's DEBUG (3) so match it manually
+            Log.d(tag, logMessage)
+        } else {
+            Log.println(priority, tag, logMessage)
+        }
+    }
+
+    private fun prepareLogMessage(
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?
+    ): String {
+        var messageToLog = message
+        if (messageToLog.isNullOrEmpty()) {
             if (throwable == null) {
                 return ""
             }
-            message = getStackTraceString(throwable)
+            messageToLog = getStackTraceString(throwable)
         } else {
             if (args.isNotEmpty()) {
-                message = formatMessage(message, *args)
+                messageToLog = formatMessage(messageToLog, *args)
             }
             if (throwable != null) {
-                message += "\n" + getStackTraceString(throwable)
+                messageToLog += "\n" + getStackTraceString(throwable)
             }
         }
-        return message
+        return messageToLog
     }
 
     private fun formatMessage(message: String, vararg args: Any?): String {

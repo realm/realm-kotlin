@@ -26,29 +26,36 @@ import platform.Foundation.stringWithFormat
  *
  * Inspiration from: https://github.com/touchlab/Kermit/blob/master/kermit/src/darwinMain/kotlin/co/touchlab/kermit/NSLogLogger.kt
  */
-internal class NSLogLogger(override val tag: String = "REALM") : RealmLogger {
+internal class NSLogLogger(
+    override val tag: String = "REALM",
+    override val level: LogLevel
+) : RealmLogger {
 
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val logMessage: String = prepareLogMessage(throwable, message, *args)
         NSLog("%s: [%s] %s", level.name, tag, logMessage)
     }
 
-    private fun prepareLogMessage(throwable: Throwable?, message: String?, vararg args: Any?): String {
-        var message = message
-        if (message.isNullOrEmpty()) {
+    private fun prepareLogMessage(
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?
+    ): String {
+        var messageToLog = message
+        if (messageToLog.isNullOrEmpty()) {
             if (throwable == null) {
                 return ""
             }
-            message = dumpStackTrace(throwable)
+            messageToLog = dumpStackTrace(throwable)
         } else {
             if (args.isNotEmpty()) {
-                message = formatMessage(message, args)
+                messageToLog = formatMessage(messageToLog, args)
             }
             if (throwable != null) {
-                message += "\n" + dumpStackTrace(throwable)
+                messageToLog += "\n" + dumpStackTrace(throwable)
             }
         }
-        return message
+        return messageToLog
     }
 
     private fun formatMessage(message: String, args: Array<out Any?>): String {

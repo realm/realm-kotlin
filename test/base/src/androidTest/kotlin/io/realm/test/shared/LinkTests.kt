@@ -21,7 +21,6 @@ import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.objects
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.Utils.createRandomString
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -37,7 +36,8 @@ class LinkTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.with(path = "$tmpDir/${createRandomString(16)}.realm", schema = setOf(Parent::class, Child::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
 

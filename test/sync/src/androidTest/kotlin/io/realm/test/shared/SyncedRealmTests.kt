@@ -17,19 +17,29 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.VersionId
-import io.realm.entities.link.Child
-import io.realm.entities.link.Parent
-import io.realm.mongodb.App
+import io.realm.entities.sync.ChildPk
+import io.realm.entities.sync.ParentPk
+import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.shared.DEFAULT_NAME
+import io.realm.test.mongodb.shared.DEFAULT_PARTITION_VALUE
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.Utils.createRandomString
-import kotlinx.coroutines.runBlocking
+import io.realm.test.util.TestHelper.randomEmail
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
+import kotlin.coroutines.suspendCoroutine
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.time.ExperimentalTime
 
@@ -44,33 +54,29 @@ class SyncedRealmTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
     private lateinit var syncConfiguration: SyncConfiguration
-    private lateinit var app: App
+    private lateinit var app: TestApp
 
     @BeforeTest
     fun setup() {
         app = TestApp()
 
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
-        val user = runBlocking {
-            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf"))
-        }
+        val user = createTestUser()
 
         tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = SyncConfiguration.Builder(
-            path = "$tmpDir/${createRandomString(16)}.realm",
-            schema = setOf(Parent::class, Child::class),
+            schema = setOf(ParentPk::class, ChildPk::class),
             partitionValue = "default",
             user = user
-        ).build()
+        ).path(path = "$tmpDir/test.realm").build()
     }
 
     @AfterTest
     fun tearDown() {
-         if (this::app.isInitialized) {
+        if (this::app.isInitialized) {
             app.asTestApp.close()
         }
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
@@ -80,6 +86,89 @@ class SyncedRealmTests {
     fun canOpen() {
         realm = Realm.open(syncConfiguration)
         assertNotNull(realm)
+    }
+
+    @Test
+    fun canSync() {
+        // A user has two realms in different files, 1 stores an object locally and 2 receives the
+        // update from the server after the object is synchronized.
+        val user = createTestUser()
+
+        val dir1 = PlatformUtils.createTempDir()
+        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user)
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        val dir2 = PlatformUtils.createTempDir()
+        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user)
+        val realm2 = Realm.open(config2)
+        assertNotNull(realm2)
+
+        val child = ChildPk().apply {
+            _id = "CHILD_A"
+            name = "A"
+        }
+
+        val channel = Channel<ChildPk>(1)
+
+        runBlocking {
+            val observer = async {
+                realm2.objects(ChildPk::class)
+                    .observe()
+                    .collect { childResults ->
+                        if (childResults.size == 1) {
+                            channel.send(childResults[0])
+                        }
+                    }
+            }
+
+            realm1.write {
+                copyToRealm(child)
+            }
+
+            val childResult = channel.receive()
+            assertEquals("CHILD_A", childResult._id)
+            observer.cancel()
+            channel.close()
+        }
+
+        realm1.close()
+        realm2.close()
+        PlatformUtils.deleteTempDir(dir1)
+        PlatformUtils.deleteTempDir(dir2)
+    }
+
+    @Test
+    fun testErrorHandler() {
+        runBlocking {
+            val user = createTestUser()
+            val asyncAppException: Deferred<AppException> = async {
+                suspendCoroutine {
+                    // Create Sync configuration with error handler.
+                    val config = SyncConfiguration.Builder(
+                        path = "$tmpDir/$DEFAULT_NAME",
+                        name = DEFAULT_NAME,
+                        schema = setOf(ParentPk::class, ChildPk::class),
+                        user = user,
+                        partitionValue = DEFAULT_PARTITION_VALUE
+                    ).setSyncErrorHandler { _, exception ->
+                        it.resumeWith(Result.success(exception))
+                    }.build()
+
+                    realm = Realm.open(config)
+                    assertNotNull(realm)
+                }
+            }
+
+            // Restart sync
+            app.restartSync()
+
+            // Await for exception to happen
+            asyncAppException.await()
+
+            // Validate that the exception was captured
+            assertIs<AppException>(asyncAppException.getCompleted())
+        }
     }
 
 //    @Test
@@ -422,4 +511,26 @@ class SyncedRealmTests {
 //            @Suppress("invisible_member")
 //            return (realm as io.realm.internal.RealmImpl).intermediateReferences
 //        }
+
+    private fun createTestUser(): User {
+        val email = randomEmail()
+        val password = "asdfasdf"
+        app.asTestApp.createUser(email, password)
+        return runBlocking {
+            app.login(Credentials.emailPassword(email, password))
+        }
+    }
+
+    private fun createSyncConfig(
+        user: User,
+        partitionValue: String = DEFAULT_PARTITION_VALUE,
+        path: String? = null,
+        name: String = DEFAULT_NAME
+    ): SyncConfiguration = SyncConfiguration.Builder(
+        schema = setOf(ParentPk::class, ChildPk::class),
+        user = user,
+        partitionValue = partitionValue
+    ).path(path = "$tmpDir/test.realm")
+        .name(name)
+        .build()
 }

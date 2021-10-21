@@ -20,6 +20,7 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
+import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.WeakReference
 import io.realm.isManaged
@@ -64,10 +65,8 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder()
-            .path("$tmpDir/default.realm")
-            .schema(setOf(Parent::class, Child::class))
-            .build()
+        configuration = RealmConfiguration.Builder().path("$tmpDir/default.realm")
+            .schema(setOf(Parent::class, Child::class)).build()
         realm = Realm.open(configuration)
     }
 
@@ -128,9 +127,10 @@ class RealmTests {
     fun throwsIfMaxNumberOfActiveVersionsAreExceeded() {
         realm.close()
         val config = RealmConfiguration.Builder(
-            path = "$tmpDir/exceed-versions.realm",
             schema = setOf(Parent::class, Child::class)
-        ).maxNumberOfActiveVersions(1).build()
+        ).maxNumberOfActiveVersions(1)
+            .path("$tmpDir/default.realm")
+            .build()
         realm = Realm.open(config)
         // Pin the version, so when starting a new transaction on the first Realm,
         // we don't release older versions.
@@ -183,13 +183,13 @@ class RealmTests {
     fun writeBlockingAfterWrite() = runBlocking {
         val name = "Realm"
         val child: Child = realm.write {
-            this.copyToRealm(Child().apply { _id = "Foo" }).apply { this.name = name }
+            this.copyToRealm(Child()).apply { this.name = name }
         }
         assertEquals(name, child.name)
         assertEquals(1, realm.objects<Child>().size)
 
         realm.writeBlocking {
-            this.copyToRealm(Child().apply { _id = "Bar" }).apply { this.name = name }
+            this.copyToRealm(Child()).apply { this.name = name }
         }
         Unit
     }
@@ -214,7 +214,7 @@ class RealmTests {
         val jobs: List<Job> = IntRange(0, 9).map {
             launch {
                 realm.write {
-                    copyToRealm(Parent().apply { _id = "pk$it" })
+                    copyToRealm(Parent())
                 }
             }
         }
@@ -370,12 +370,12 @@ class RealmTests {
         val dispatcher = newSingleThreadContext("background")
         runBlocking {
             realm.write {
-                copyToRealm(Parent().apply { _id = "Foo" })
+                copyToRealm(Parent())
             }
         }
         runBlocking(dispatcher) {
             realm.write {
-                copyToRealm(Parent().apply { _id = "Bar" })
+                copyToRealm(Parent())
             }
         }
         assertEquals(2, realm.objects<Parent>().size)
@@ -384,7 +384,7 @@ class RealmTests {
     @Test
     fun closeClosesAllVersions() {
         runBlocking {
-            realm.write { copyToRealm(Parent().apply { _id = "Foo" }) }
+            realm.write { copyToRealm(Parent()) }
         }
         val parent: Parent = realm.objects<Parent>().first()
         runBlocking {
@@ -397,19 +397,72 @@ class RealmTests {
     }
 
     @Test
-    fun closingIntermediateVersionsWhenNoLongerReferenced() {
+    // TODO Non deterministic.
+    //  https://github.com/realm/realm-kotlin/issues/486
+    @Ignore
+    fun intermediateVersionsReleaseWhenProgressingRealm() {
         assertEquals(0, intermediateReferences.value.size)
-        var parent: Parent? = realm.writeBlocking { copyToRealm(Parent()) }
+        realm.writeBlocking { }
         assertEquals(1, intermediateReferences.value.size)
         realm.writeBlocking { }
+        assertEquals(2, intermediateReferences.value.size)
+        realm.writeBlocking { }
+        assertEquals(3, intermediateReferences.value.size)
+
+        // Trigger GC - On native we also need to trigger GC on the background thread that creates
+        // the references
+        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
+            triggerGC()
+        }
+        triggerGC()
+
+        // Close of intermediate version is currently only done when updating the realm after a write
+        realm.writeBlocking { }
+        assertEquals(1, intermediateReferences.value.size)
+    }
+
+    @Test
+    // TODO Investigate why clearing local object variable does not trigger collection of
+    //  reference on Native. Could just be that the GC somehow does not collect this when
+    //  cleared due some thresholds or outcome of GC not being predictable.
+    //  https://github.com/realm/realm-kotlin/issues/486
+    @Ignore
+    fun clearingRealmObjectReleasesRealmReference() {
+        assertEquals(0, intermediateReferences.value.size)
+        // The below code creates the object without returning it from write to show that the
+        // issue is not bound to the freezing inside write, but also happens on the same thread as
+        // the realm is constructed on.
+        realm.writeBlocking { copyToRealm(Parent()); Unit }
+        var parent: Parent? = realm.objects<Parent>()!!.first()
+        assertEquals(1, intermediateReferences.value.size)
+        realm.writeBlocking { }
+        assertEquals(2, intermediateReferences.value.size)
+        realm.writeBlocking { }
+        assertEquals(3, intermediateReferences.value.size)
+
+        // Trigger GC - On native we also need to trigger GC on the background thread that creates
+        // the references
+        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
+            triggerGC()
+        }
+        triggerGC()
+
+        // Close of intermediate version is currently only done when updating the realm after a write
+        realm.writeBlocking { }
+        // We still have the single intermediate reference as a result of the write itself
+        // and the reference kept alive by the realm object
         assertEquals(2, intermediateReferences.value.size)
 
         // Clear reference
         parent = null
-        // Trigger GC
+
+        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
+            triggerGC()
+        }
         triggerGC()
-        // Close of intermediate version is currently only done when updating the realm after a write
+
         realm.writeBlocking { }
+        // Clearing the realm object reference allowed clearing the corresponding reference
         assertEquals(1, intermediateReferences.value.size)
     }
 

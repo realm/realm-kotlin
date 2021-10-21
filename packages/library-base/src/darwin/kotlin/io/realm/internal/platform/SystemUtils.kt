@@ -1,5 +1,6 @@
 package io.realm.internal.platform
 
+import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
@@ -11,7 +12,8 @@ import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.isFrozen
 
-actual fun createDefaultSystemLogger(tag: String): RealmLogger = NSLogLogger(tag)
+actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
+    NSLogLogger(tag, logLevel)
 
 actual fun threadId(): ULong {
     memScoped {

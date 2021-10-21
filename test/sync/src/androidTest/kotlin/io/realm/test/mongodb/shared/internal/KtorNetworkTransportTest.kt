@@ -57,12 +57,11 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 mapOf(),
-                body,
-                true
+                body
             )
-            assertEquals(200, response.httpResponseCode)
-            assertEquals(0, response.customResponseCode)
-            assertEquals("${method.name}-success", response.body)
+            assertEquals(200, response.httpResponseCode, "$method failed")
+            assertEquals(0, response.customResponseCode, "$method failed")
+            assertEquals("${method.name}-success", response.body, "$method failed")
         }
     }
 
@@ -76,12 +75,11 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 mapOf(),
-                body,
-                true
+                body
             )
-            assertEquals(500, response.httpResponseCode)
-            assertEquals(0, response.customResponseCode)
-            assertEquals("${method.name}-failure", response.body)
+            assertEquals(500, response.httpResponseCode, "$method failed")
+            assertEquals(0, response.customResponseCode, "$method failed")
+            assertEquals("${method.name}-failure", response.body, "$method failed")
         }
     }
 
@@ -98,12 +96,11 @@ internal class KtorNetworkTransportTest {
                 method.nativeKey,
                 url,
                 mapOf(),
-                body,
-                true
+                body
             )
-            assertEquals(200, response.httpResponseCode)
-            assertEquals(0, response.customResponseCode)
-            assertEquals("${method.name}-success", response.body)
+            assertEquals(200, response.httpResponseCode, "$method failed")
+            assertEquals(0, response.customResponseCode, "$method failed")
+            assertEquals("${method.name}-success", response.body, "$method failed")
         }
     }
 

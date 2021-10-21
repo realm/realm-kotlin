@@ -1,4 +1,25 @@
-## 0.6.0 (YYYY-MM-DD)
+## 0.7.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
+
+### Internal
+* Updated to Ktor 1.6.4.
+
+
+## 0.6.0 (2021-10-15)
 
 ### Breaking Changes
 * Rename library dependency from `io.realm.kotlin:library:<VERSION>` to `io.realm.kotlin:library-base:<VERSION>`
@@ -12,19 +33,25 @@
 * Changed `RealmObject.version` into method `RealmObject.version()`.
 * Replaced `RuntimeException`s by the explicit exceptions: `IllegalArgumentException`, `IllegalStateException` and `IndexOutOfBoundsException`.
 * Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
+* Removed optional arguments to `RealmConfiguration.with(...)` and `RealmConfiguration.Builder(...)`. Name and path can now only be set through the builder methods.
 
 ### Enhancements
-* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) (currently only macos).
+* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) supported platforms are: Linux (since Centos7 x86_64), Windows (since 8.1 x86_64) and Macos (x86_64).
 * Added support for marking a field as indexed with `@Index`
 
 ### Fixed
-* None.
+* Fixed null pointer exceptions when returning an unmanaged object from `MutableRealm.write/writeBlocking`.
+* Fixed premature closing of underlying realm of frozen objects returned from `MutableRealm.write/writeBlocking`. (Issue [#477](https://github.com/realm/realm-kotlin/issues/477))
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
 
 ### Internal
 * Updated to Realm Core commit: 028626880253a62d1c936eed4ef73af80b64b71
+* Updated to Kotlin 1.5.31.
 
 
 ## 0.5.0 (2021-08-20)

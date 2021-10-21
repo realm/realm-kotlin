@@ -21,10 +21,12 @@
 
 using namespace realm::jni_util;
 
-JavaGlobalRefByMove::~JavaGlobalRefByMove()
-{
+JavaGlobalRefByMove::~JavaGlobalRefByMove() {
     if (m_ref) {
-        get_env()->DeleteGlobalRef(m_ref);
+        JNIEnv *env = get_env_or_null();
+        if (env) {
+            env->DeleteGlobalRef(m_ref);
+        }
     }
 }
 

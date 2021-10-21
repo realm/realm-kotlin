@@ -68,15 +68,9 @@ class RealmConfigurationTests {
     fun path() {
         val realmPath = "HowToGetPlatformPath/default.realm"
 
-        val config = RealmConfiguration.with(path = realmPath, schema = setOf(Sample::class))
+        val config =
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).path(realmPath).build()
         assertEquals(realmPath, config.path)
-
-        RealmConfiguration.Builder(path = realmPath, schema = setOf(Sample::class))
-            .path
-
-        val configFromBuilder: RealmConfiguration =
-            RealmConfiguration.Builder(path = realmPath, schema = setOf(Sample::class)).build()
-        assertEquals(realmPath, configFromBuilder.path)
     }
 
     @Test
@@ -84,16 +78,11 @@ class RealmConfigurationTests {
         val realmPath = "<HowToGetPlatformPath>/custom.realm"
         val realmName = "my.realm"
 
-        val config = RealmConfiguration.with(realmPath, realmName, setOf(Sample::class))
+        val config =
+            RealmConfiguration.Builder(setOf(Sample::class)).path(realmPath).name(realmName).build()
         assertEquals(realmPath, config.path)
         // Correct assert: assertEquals("custom.realm", config.name)
         assertEquals("my.realm", config.name) // Current result
-
-        val configFromBuilder: RealmConfiguration =
-            RealmConfiguration.Builder(realmPath, realmName, setOf(Sample::class)).build()
-        assertEquals(realmPath, configFromBuilder.path)
-        // Correct assert: assertEquals("custom.realm", configFromBuilder.name)
-        assertEquals("my.realm", configFromBuilder.name) // Current result
     }
 
     @Test
@@ -112,14 +101,9 @@ class RealmConfigurationTests {
     fun name() {
         val realmName = "my.realm"
 
-        val config = RealmConfiguration.with(name = realmName, schema = setOf(Sample::class))
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class)).name(realmName).build()
         assertEquals(realmName, config.name)
         assertTrue(config.path.endsWith(realmName))
-
-        val configFromBuilder: RealmConfiguration =
-            RealmConfiguration.Builder(name = realmName, schema = setOf(Sample::class)).build()
-        assertEquals(realmName, configFromBuilder.name)
-        assertTrue(configFromBuilder.path.endsWith(realmName))
     }
 
     @Test
@@ -200,7 +184,8 @@ class RealmConfigurationTests {
     @Suppress("invisible_member")
     fun notificationDispatcherRealmConfigurationBuilder() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
-        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).notificationDispatcher(dispatcher).build()
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .notificationDispatcher(dispatcher).build()
         assertTrue { dispatcher === (configuration as RealmConfigurationImpl).notificationDispatcher }
     }
 
@@ -220,7 +205,9 @@ class RealmConfigurationTests {
     @Suppress("invisible_member")
     fun writeDispatcherRealmConfigurationBuilder() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
-        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
+        val configuration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher)
+                .build()
         assertTrue { dispatcher === (configuration as RealmConfigurationImpl).writeDispatcher }
     }
 
@@ -228,8 +215,11 @@ class RealmConfigurationTests {
     @Suppress("invisible_member")
     fun writesExecutesOnWriteDispatcher() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
-        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher).build()
-        val threadId: ULong = runBlocking((configuration as RealmConfigurationImpl).writeDispatcher) { PlatformUtils.threadId() }
+        val configuration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher)
+                .build()
+        val threadId: ULong =
+            runBlocking((configuration as RealmConfigurationImpl).writeDispatcher) { PlatformUtils.threadId() }
         val realm = Realm.open(configuration)
         realm.writeBlocking {
             assertEquals(threadId, PlatformUtils.threadId())
@@ -245,7 +235,8 @@ class RealmConfigurationTests {
 
     @Test
     fun schemaVersionNumber() {
-        val config = RealmConfiguration.Builder(schema = setOf(Sample::class)).schemaVersion(123).build()
+        val config =
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).schemaVersion(123).build()
         assertEquals(123, config.schemaVersion)
     }
 
@@ -294,7 +285,10 @@ class RealmConfigurationTests {
 
     private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {
         val key = Random.nextBytes(keyLength)
-        assertFailsWith(IllegalArgumentException::class, "Encryption key with length $keyLength should not be valid") {
+        assertFailsWith(
+            IllegalArgumentException::class,
+            "Encryption key with length $keyLength should not be valid"
+        ) {
             builder.encryptionKey(key)
         }
     }
