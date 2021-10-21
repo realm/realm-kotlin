@@ -973,39 +973,6 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
 
-//    actual fun realm_sync_client_config_set_logger_factory(
-//        syncClientConfig: NativePointer,
-//        loggerFactory: () -> CoreLogger
-//    ) {
-//        println("Create Logger factory")
-//        realm_wrapper.realm_sync_client_config_set_logger_factory(
-//            syncClientConfig.cptr(),
-//            staticCFunction { userData, logLevel ->
-//                println("Create Logger factory callback")
-//                val realmLoggerFactory = safeUserData<() -> CoreLogger>(userData)
-//                realmLoggerFactory.invoke().let { logger ->
-//                    realm_wrapper.realm_logger_new(
-//                        staticCFunction { userData, logLevel: realm_wrapper.realm_log_level_e, message: CPointer<ByteVarOf<Byte>>? ->
-//                            val userDataLogger = safeUserData<CoreLogger>(userData)
-//                            userDataLogger.log(logLevel.value.toShort(), message?.toKString() ?: "")
-//                        },
-//                        staticCFunction { userData ->
-//                            val userDataLogger = safeUserData<CoreLogger>(userData)
-//                            val level = userDataLogger.coreLogLevel.priority.toUInt()
-//                            realm_log_level.byValue(level)
-//                        },
-//                        StableRef.create(logger).asCPointer(),
-//                        staticCFunction { userData ->
-//                            disposeUserData<CoreLogger>(userData)
-//                        }
-//                    )
-//                }
-//            },
-//            StableRef.create(loggerFactory.freeze()).asCPointer(),
-//            staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) }
-//        )
-//    }
-
     actual fun realm_sync_client_config_set_log_callback(
         syncClientConfig: NativePointer,
         callback: LogCallback
