@@ -29,4 +29,8 @@ expect enum class CoreLogLevel {
 
     // We need this property since it isn't allowed to have constructor params in an expect enum
     val priority: Int
+
+    companion object {
+        fun valueFromPriority(priority: Int): CoreLogLevel
+    }
 }

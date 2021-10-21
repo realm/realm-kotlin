@@ -33,5 +33,5 @@ interface ErrorHandlerCallback {
 }
 
 interface LogCallback {
-    fun log(logLevel: Short, message: String?)
+    fun log(logLevel: CoreLogLevel, message: String?)
 }

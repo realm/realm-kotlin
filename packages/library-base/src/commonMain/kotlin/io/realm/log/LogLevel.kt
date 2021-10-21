@@ -31,14 +31,15 @@ enum class LogLevel(val priority: Int) {
     companion object {
         fun fromValue(level: Int): LogLevel {
             return when (level) {
-                ALL.priority -> ALL
-                TRACE.priority -> TRACE
-                DEBUG.priority -> DEBUG
-                INFO.priority -> INFO
-                WARN.priority -> WARN
-                ERROR.priority -> ERROR
-                WTF.priority -> WTF
-                NONE.priority -> NONE
+                CoreLogLevel.RLM_LOG_LEVEL_ALL.priority -> ALL
+                CoreLogLevel.RLM_LOG_LEVEL_TRACE.priority -> TRACE
+                CoreLogLevel.RLM_LOG_LEVEL_DEBUG.priority -> DEBUG
+                CoreLogLevel.RLM_LOG_LEVEL_DETAIL.priority, // forward DETAIL as INFO
+                CoreLogLevel.RLM_LOG_LEVEL_INFO.priority -> INFO
+                CoreLogLevel.RLM_LOG_LEVEL_WARNING.priority -> WARN
+                CoreLogLevel.RLM_LOG_LEVEL_ERROR.priority -> ERROR
+                CoreLogLevel.RLM_LOG_LEVEL_FATAL.priority -> WTF
+                CoreLogLevel.RLM_LOG_LEVEL_OFF.priority -> NONE
                 else -> throw IllegalArgumentException("Invalid log level: $level")
             }
         }

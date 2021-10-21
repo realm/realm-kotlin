@@ -60,16 +60,13 @@ internal class LogCatLogger(
     }
 
     private fun printMessage(priority: Int, logMessage: String) {
-        if (priority == LogLevel.WTF.priority) {
-            Log.wtf(tag, logMessage)
-        } else if (priority < LogLevel.DEBUG.priority) {
-            // ALL (0) and TRACE (1) don't exist on Android's Log so use VERBOSE instead
-            Log.v(tag, logMessage)
-        } else if (priority == LogLevel.DEBUG.priority) {
-            // Core's DEBUG (2) doesn't match Android's DEBUG (3) so match it manually
-            Log.d(tag, logMessage)
-        } else {
-            Log.println(priority, tag, logMessage)
+        // ALL (0) and TRACE (1) don't exist on Android's Log so use VERBOSE instead
+        // Core's DEBUG (2) doesn't match Android's DEBUG (3) so match it manually
+        when {
+            priority <= LogLevel.TRACE.priority -> Log.v(tag, logMessage)
+            priority == LogLevel.DEBUG.priority -> Log.d(tag, logMessage)
+            priority == LogLevel.WTF.priority -> Log.wtf(tag, logMessage)
+            else -> Log.println(priority, tag, logMessage)
         }
     }
 
