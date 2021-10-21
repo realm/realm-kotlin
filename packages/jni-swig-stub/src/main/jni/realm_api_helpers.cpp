@@ -435,11 +435,19 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                               [](void* userdata, realm_log_level_e level, const char* message) {
                                                   auto log_callback = static_cast<jobject>(userdata);
                                                   auto jenv = get_env(true);
-                                                  static jmethodID log_method = lookup(jenv, "io/realm/internal/interop/LogCallback",
-                                                                                              "log",
-                                                                                              "(SLjava/lang/String;)V");
-                                                  // TODO send a CoreLogLevel enum instead?
-                                                  jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
+
+                                                  jclass core_log_level_enum_class = JavaClassGlobalDef::core_log_level();
+                                                  jclass core_log_level_companion_class = JavaClassGlobalDef::core_log_level_companion();
+                                                  jclass log_callback_class = JavaClassGlobalDef::log_callback();
+
+                                                  jmethodID log_method = jenv->GetMethodID(log_callback_class, "log", "(Lio/realm/internal/interop/CoreLogLevel;Ljava/lang/String;)V");
+                                                  jmethodID value_from_priority_method = jenv->GetMethodID(core_log_level_companion_class, "valueFromPriority", "(I)Lio/realm/internal/interop/CoreLogLevel;");
+
+                                                  jfieldID companion_field_id = jenv->GetStaticFieldID(core_log_level_enum_class, "Companion", "Lio/realm/internal/interop/CoreLogLevel$Companion;");
+
+                                                  jobject companion_object = jenv->GetStaticObjectField(core_log_level_enum_class, companion_field_id);
+                                                  jobject core_log_level = jenv->CallObjectMethod(companion_object, value_from_priority_method, level);
+                                                  jenv->CallVoidMethod(log_callback, log_method, core_log_level, to_jstring(jenv, message));
                                               },
                                               jenv->NewGlobalRef(log_callback), // userdata is the log callback
                                               [](void* userdata) {

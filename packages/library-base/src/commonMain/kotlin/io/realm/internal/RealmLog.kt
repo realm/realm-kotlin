@@ -1,6 +1,7 @@
 package io.realm.internal
 
 import io.realm.LogConfiguration
+import io.realm.internal.interop.CoreLogLevel
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 
@@ -67,8 +68,8 @@ class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
     fun wtf(message: String, vararg args: Any?) {
         doLog(LogLevel.WTF, null, message, *args)
     }
-    fun log(level: Short, message: String) {
-        doLog(LogLevel.fromValue(level.toInt()), null, message)
+    fun log(level: CoreLogLevel, message: String) {
+        doLog(LogLevel.fromValue(level.priority), null, message)
     }
 
     private fun doLog(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {

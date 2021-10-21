@@ -49,7 +49,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        app = TestApp(logLevel = LogLevel.ALL)
+        app = TestApp(logLevel = LogLevel.DEBUG)
     }
 
     @AfterTest

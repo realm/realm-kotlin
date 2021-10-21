@@ -41,22 +41,25 @@ interface RealmLogger {
      */
     fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
 
-    fun log(level: Short, message: String) {
+    /**
+     * Log an event. For internal use only.
+     */
+    fun log(level: CoreLogLevel, message: String) {
         log(level.toLogLevel(), null, message, null)
     }
 
-    private fun Short.toLogLevel(): LogLevel {
-        return when (this.toInt()) {
-            CoreLogLevel.RLM_LOG_LEVEL_ALL.priority -> LogLevel.ALL
-            CoreLogLevel.RLM_LOG_LEVEL_TRACE.priority -> LogLevel.TRACE
-            CoreLogLevel.RLM_LOG_LEVEL_DEBUG.priority -> LogLevel.DEBUG
-            CoreLogLevel.RLM_LOG_LEVEL_DETAIL.priority, // convert to INFO
-            CoreLogLevel.RLM_LOG_LEVEL_INFO.priority -> LogLevel.INFO
-            CoreLogLevel.RLM_LOG_LEVEL_WARNING.priority -> LogLevel.WARN
-            CoreLogLevel.RLM_LOG_LEVEL_ERROR.priority -> LogLevel.ERROR
-            CoreLogLevel.RLM_LOG_LEVEL_FATAL.priority -> LogLevel.WTF
-            CoreLogLevel.RLM_LOG_LEVEL_OFF.priority -> LogLevel.NONE
-            else -> throw IllegalArgumentException("Invalid priority level: $this.")
+    private fun CoreLogLevel.toLogLevel(): LogLevel {
+        return when (this) {
+            CoreLogLevel.RLM_LOG_LEVEL_ALL -> LogLevel.ALL
+            CoreLogLevel.RLM_LOG_LEVEL_TRACE -> LogLevel.TRACE
+            CoreLogLevel.RLM_LOG_LEVEL_DEBUG -> LogLevel.DEBUG
+            CoreLogLevel.RLM_LOG_LEVEL_DETAIL, // convert to INFO
+            CoreLogLevel.RLM_LOG_LEVEL_INFO -> LogLevel.INFO
+            CoreLogLevel.RLM_LOG_LEVEL_WARNING -> LogLevel.WARN
+            CoreLogLevel.RLM_LOG_LEVEL_ERROR -> LogLevel.ERROR
+            CoreLogLevel.RLM_LOG_LEVEL_FATAL -> LogLevel.WTF
+            CoreLogLevel.RLM_LOG_LEVEL_OFF -> LogLevel.NONE
+            else -> throw IllegalArgumentException("Invalid priority level: ${this.priority}.")
         }
     }
 }

@@ -978,9 +978,20 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_log_callback(
             syncClientConfig.cptr(),
             staticCFunction { userData, logLevel, message ->
+                val coreLogLevel = when (logLevel) {
+                    realm_wrapper.RLM_LOG_LEVEL_ALL -> CoreLogLevel.RLM_LOG_LEVEL_ALL
+                    realm_wrapper.RLM_LOG_LEVEL_TRACE -> CoreLogLevel.RLM_LOG_LEVEL_TRACE
+                    realm_wrapper.RLM_LOG_LEVEL_DEBUG -> CoreLogLevel.RLM_LOG_LEVEL_DEBUG
+                    realm_wrapper.RLM_LOG_LEVEL_DETAIL,
+                    realm_wrapper.RLM_LOG_LEVEL_INFO -> CoreLogLevel.RLM_LOG_LEVEL_INFO
+                    realm_wrapper.RLM_LOG_LEVEL_WARNING -> CoreLogLevel.RLM_LOG_LEVEL_WARNING
+                    realm_wrapper.RLM_LOG_LEVEL_ERROR -> CoreLogLevel.RLM_LOG_LEVEL_ERROR
+                    realm_wrapper.RLM_LOG_LEVEL_FATAL -> CoreLogLevel.RLM_LOG_LEVEL_FATAL
+                    realm_wrapper.RLM_LOG_LEVEL_OFF -> CoreLogLevel.RLM_LOG_LEVEL_OFF
+                    else -> throw IllegalArgumentException("Invalid log level: ${logLevel.toInt()}")
+                }
                 val userDataLogCallback = safeUserData<LogCallback>(userData)
-                // TODO send a CoreLogLevel enum instead?
-                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
+                userDataLogCallback.log(coreLogLevel, message?.toKString())
             },
             StableRef.create(callback.freeze()).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> LogCallback>(userData) }

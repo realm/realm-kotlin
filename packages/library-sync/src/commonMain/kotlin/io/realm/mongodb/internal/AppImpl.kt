@@ -17,6 +17,7 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.LogCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -68,7 +69,7 @@ internal class AppImpl(
                 RealmInterop.realm_sync_client_config_set_log_callback(
                     syncClientConfig,
                     object : LogCallback {
-                        override fun log(logLevel: Short, message: String?) {
+                        override fun log(logLevel: CoreLogLevel, message: String?) {
                             syncLogger.log(logLevel, message ?: "")
                         }
                     }

@@ -45,12 +45,18 @@ private:
         : m_java_util_hashmap(env, "java/util/HashMap", false)
         , m_io_realm_network_transport(env, "io/realm/internal/interop/sync/NetworkTransport", false)
         , m_io_realm_response(env, "io/realm/internal/interop/sync/Response", false)
+        , m_io_realm_core_log_level(env, "io/realm/internal/interop/CoreLogLevel", false)
+        , m_io_realm_core_log_level_companion(env, "io/realm/internal/interop/CoreLogLevel$Companion", false)
+        , m_io_realm_log_callback(env, "io/realm/internal/interop/LogCallback", false)
     {
     }
 
     jni_util::JavaClass m_java_util_hashmap;
     jni_util::JavaClass m_io_realm_network_transport;
     jni_util::JavaClass m_io_realm_response;
+    jni_util::JavaClass m_io_realm_core_log_level;
+    jni_util::JavaClass m_io_realm_core_log_level_companion;
+    jni_util::JavaClass m_io_realm_log_callback;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -85,6 +91,21 @@ public:
     inline static const jni_util::JavaClass& java_util_hashmap()
     {
         return instance()->m_java_util_hashmap;
+    }
+
+    inline static const jni_util::JavaClass& core_log_level()
+    {
+        return instance()->m_io_realm_core_log_level;
+    }
+
+    inline static const jni_util::JavaClass& core_log_level_companion()
+    {
+        return instance()->m_io_realm_core_log_level_companion;
+    }
+
+    inline static const jni_util::JavaClass& log_callback()
+    {
+        return instance()->m_io_realm_log_callback;
     }
 };
 
