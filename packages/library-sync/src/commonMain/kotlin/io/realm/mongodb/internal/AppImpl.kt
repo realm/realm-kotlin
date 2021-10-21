@@ -20,10 +20,13 @@ import io.realm.internal.interop.CinteropCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.util.Validation
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
+import kotlinx.coroutines.withContext
+import java.lang.Void
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -32,7 +35,7 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
+    internal val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
         .also { syncClientConfig ->
             RealmInterop.realm_sync_client_config_set_metadata_mode(
                 syncClientConfig,
@@ -45,6 +48,11 @@ internal class AppImpl(
                 basePath = appFilesDirectory()
             )
         }
+
+    override fun currentUser(): User? {
+        val currentUser = RealmInterop.realm_app_get_current_user(nativePointer)
+        return currentUser?.let { UserImpl(it, this) }
+    }
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->
@@ -63,4 +71,26 @@ internal class AppImpl(
             )
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || !App::class.isInstance(other)) return false
+
+        other as App
+
+        if (configuration != other.configuration) return false
+        // FIXME The documentation and implementation differs realm-java. What should actually be the
+        //  requirements
+//        if (nativePointer != other.nativePointer) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = configuration.hashCode()
+        result = 31 * result + nativePointer.hashCode()
+        return result
+    }
+
+
 }

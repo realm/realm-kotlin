@@ -460,6 +460,28 @@ actual object RealmInterop {
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
         realmc.register_login_cb(app.cptr(), credentials.cptr(), callback)
     }
+    actual fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>) {
+        realmc.realm_app_log_out(app.cptr(), user.cptr(), callback)
+    }
+
+
+    actual fun realm_app_get_current_user(app: NativePointer): NativePointer? {
+        val ptr = realmc.realm_app_get_current_user(app.cptr())
+        return nativePointerOrNull(ptr)
+    }
+
+
+    actual fun realm_user_get_identity(user: NativePointer): String {
+        return realmc.realm_user_get_identity(user.cptr())
+    }
+
+    actual fun realm_user_is_logged_in(user: NativePointer): Boolean {
+        return realmc.realm_user_is_logged_in(user.cptr())
+    }
+
+    actual fun realm_user_log_out(user: NativePointer) {
+
+    }
 
     actual fun realm_sync_client_config_new(): NativePointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())

@@ -143,7 +143,15 @@ expect object RealmInterop {
         syncClientConfig: NativePointer,
         basePath: String,
     ): NativePointer
+    fun realm_app_get_current_user(app: NativePointer): NativePointer?
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
+    fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>)
+
+    // User
+    fun realm_user_get_identity(user: NativePointer): String
+    fun realm_user_is_logged_in(user: NativePointer): Boolean
+    // FIXME Do we need these to be callback based instead
+    fun realm_user_log_out(user: NativePointer)
 
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer

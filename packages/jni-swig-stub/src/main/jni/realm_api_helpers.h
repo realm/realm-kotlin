@@ -40,4 +40,5 @@ void invoke_core_notify_callback(int64_t core_notify_function);
 void
 register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback);
 
+void app_complete_void_callback(void* userdata, const realm_app_error_t* error);
 #endif //TEST_REALM_API_HELPERS_H

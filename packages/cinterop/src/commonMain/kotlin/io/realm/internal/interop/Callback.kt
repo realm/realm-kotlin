@@ -21,6 +21,13 @@ interface Callback {
     fun onChange(change: NativePointer)
 }
 
+interface AppCallback<T> {
+    // FIXME How to send make this work for Unit without enabling null values
+    fun onSuccess(t: T?)
+    // FIXME AppException
+    fun onError(throwable: Throwable)
+}
+
 interface CinteropCallback {
     fun onSuccess(pointer: NativePointer)
     fun onError(throwable: Throwable)

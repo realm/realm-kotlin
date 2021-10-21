@@ -27,6 +27,23 @@ interface App {
 
     val configuration: AppConfiguration
 
+
+    /**
+     * Returns the current user that is logged in and still valid.
+     *
+     * A user is invalidated when he/she logs out or the user's refresh token expires or is revoked.
+     *
+     * If two or more users are logged in, it is the last valid user that is returned by this method.
+     *
+     * @return current [User] that has logged in and is still valid. `null` if no
+     * user is logged in or the user has expired.
+     */
+    fun currentUser(): User? {
+//        val osSyncUser: OsSyncUser = osApp.currentUser()
+//        return if (osSyncUser != null) User(osSyncUser, this) else null
+        TODO()
+    }
+
     /**
      * TODO
      */
@@ -34,6 +51,13 @@ interface App {
     //  https://github.com/realm/realm-kotlin/pull/447#discussion_r707344044
     //  https://github.com/realm/realm-kotlin/issues/241
     suspend fun login(credentials: Credentials): User
+
+    /**
+     * Two Apps are considered equal and will share their underlying state if they both refer
+     * to the same [AppConfiguration#getAppId()].
+     */
+//    override operator fun equals(other: Any?): Boolean
+//    override fun funequals(o: Any?): Boolean
 
     companion object {
         /**

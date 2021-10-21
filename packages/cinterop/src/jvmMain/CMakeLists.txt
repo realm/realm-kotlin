@@ -19,6 +19,7 @@ file(GLOB jni_SRC
         "${CINTEROP_JNI}/env_utils.cpp"
         "${CINTEROP_JNI}/utils.cpp"
         "${CINTEROP_JNI}/java_global_ref_by_move.cpp"
+        "${CINTEROP_JNI}/java_global_ref_by_copy.cpp"
         "${CINTEROP_JNI}/java_class_global_def.cpp"
         "${CINTEROP_JNI}/java_class.cpp"
         "${CINTEROP_JNI}/java_method.cpp"

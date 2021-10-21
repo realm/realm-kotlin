@@ -18,6 +18,7 @@
 #include <vector>
 #include <thread>
 #include <realm/object-store/c_api/util.hpp>
+#include "java_global_ref_by_copy.hpp"
 #include "java_method.hpp"
 
 using namespace realm::jni_util;
@@ -39,7 +40,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                 get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
             },
             // change callback
-            [](void *userdata, const realm_collection_changes_t *changes) {
+            [](void* userdata, const realm_collection_changes_t *changes) {
                 // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
                 //  like the C-API error callback below
                 //  https://github.com/realm/realm-kotlin/issues/303
@@ -60,6 +61,28 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
             // C-API currently uses the realm's default scheduler no matter what passed here
             NULL
     );
+}
+
+void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
+    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+                                          "(Ljava/lang/Throwable;)V");
+    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+                                            "(Ljava/lang/Object;)V");
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+    } else if (error) {
+        // TODO OPTIMIZE Make central global reference table of classes
+        //  https://github.com/realm/realm-kotlin/issues/460
+        jclass exception_class = env->FindClass("io/realm/mongodb/AppException");
+        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "()V");
+        jobject throwable = env->NewObject(exception_class, exception_constructor);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, throwable);
+    } else {
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, NULL);
+    }
 }
 
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
