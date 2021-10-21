@@ -24,7 +24,6 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.freeze
-import io.realm.log.LogLevel
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
