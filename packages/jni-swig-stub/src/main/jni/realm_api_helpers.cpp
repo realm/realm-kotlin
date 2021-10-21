@@ -433,11 +433,12 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
     auto jenv = get_env(false);
     realm_sync_client_config_set_log_callback(sync_client_config,
                                               [](void* userdata, realm_log_level_e level, const char* message) {
-                                                  auto jenv = get_env(false);
-                                                  static jmethodID on_success_method = lookup(jenv, "io/realm/internal/interop/LogCallback",
+                                                  auto log_callback = static_cast<jobject>(userdata);
+                                                  auto jenv = get_env(true);
+                                                  static jmethodID log_method = lookup(jenv, "io/realm/internal/interop/LogCallback",
                                                                                               "log",
-                                                                                              "(Lio/realm/internal/interop/NativePointer;)V");
-
+                                                                                              "(SLjava/lang/String;)V");
+                                                  jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
                                               },
                                               jenv->NewGlobalRef(log_callback), // userdata is the log callback
                                               [](void* userdata) {

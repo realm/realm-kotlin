@@ -47,7 +47,7 @@ class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
-    logLevel: LogLevel = LogLevel.WARN,
+    logLevel: LogLevel = LogLevel.DEBUG,
     builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
     debug: Boolean = false
 ) : App by App.create(builder(testAppConfigurationBuilder(appId, logLevel)).dispatcher(dispatcher).build()),

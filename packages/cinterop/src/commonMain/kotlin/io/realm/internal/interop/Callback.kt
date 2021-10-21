@@ -27,5 +27,5 @@ interface CinteropCallback {
 }
 
 interface LogCallback {
-    fun log(logLevel: Short, message: String)
+    fun log(logLevel: Short, message: String?)
 }

@@ -9,7 +9,8 @@ import io.realm.log.RealmLogger
  */
 class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
 
-    private val logLevel: LogLevel = configuration.level
+    val logLevel: LogLevel = configuration.level
+
     private val loggers: List<RealmLogger> = configuration.loggers
 
     fun trace(throwable: Throwable?) {
@@ -65,6 +66,9 @@ class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
     }
     fun wtf(message: String, vararg args: Any?) {
         doLog(LogLevel.WTF, null, message, *args)
+    }
+    fun log(level: Short, message: String) {
+        doLog(LogLevel.fromValue(level.toInt()), null, message)
     }
 
     private fun doLog(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {

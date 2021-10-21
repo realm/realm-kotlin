@@ -152,8 +152,12 @@ expect object RealmInterop {
 //        syncClientConfig: NativePointer,
 //        loggerFactory: () -> CoreLogger
 //    )
-//    fun realm_sync_client_config_set_log_callback(syncClientConfig: NativePointer, )
-//    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
+
+    fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: LogCallback
+    )
+    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
 
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,

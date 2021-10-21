@@ -17,9 +17,11 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.LogCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.util.Validation
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -32,40 +34,11 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-//    // Freeze logLevel or else we'll get a mutability exception as it's accessed inside the lambda
-//    private val loggerFactory: () -> CoreLogger = configuration.logLevel.freeze().let { logLevel ->
-//        // Freeze the actual logger instance too since it will be used from another thread
-//        { createDefaultSystemLogger("SYNC", logLevel).freeze() }
-//    }
-
-//    private val logger: RealmLogger = configuration.logLevel.freeze().let { logLevel ->
-//        // Freeze the actual logger instance too since it will be used from another thread
-//        createDefaultSystemLogger("SYNC", logLevel).freeze()
-//    }
-
-    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
-        .also { syncClientConfig ->
-            // Initialize client configuration first
-//            RealmInterop.realm_sync_client_config_set_logger_factory(
-//                syncClientConfig,
-//                loggerFactory
-//            )
-//            RealmInterop.realm_sync_client_config_set_log_level(
-//                syncClientConfig,
-//                configuration.logLevel.priority
-//            )
-            RealmInterop.realm_sync_client_config_set_metadata_mode(
-                syncClientConfig,
-                configuration.metadataMode
-            )
-        }.let { syncClientConfig ->
-            // Get the app with the initialized configuration
-            RealmInterop.realm_app_get(
-                configuration.nativePointer,
-                syncClientConfig,
-                appFilesDirectory()
-            )
-        }
+    private val nativePointer: NativePointer = RealmInterop.realm_app_get(
+        configuration.nativePointer,
+        initializeSyncClientConfig(),
+        appFilesDirectory()
+    )
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->
@@ -84,4 +57,29 @@ internal class AppImpl(
             )
         }
     }
+
+    private fun initializeSyncClientConfig(): NativePointer =
+        RealmInterop.realm_sync_client_config_new()
+            .also { syncClientConfig ->
+                // TODO use separate logger for sync or piggyback on config's?
+                val syncLogger = createDefaultSystemLogger("SYNC", configuration.log.logLevel)
+
+                // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_log_callback(
+                    syncClientConfig,
+                    object : LogCallback {
+                        override fun log(logLevel: Short, message: String?) {
+                            syncLogger.log(logLevel, message ?: "")
+                        }
+                    }
+                )
+                RealmInterop.realm_sync_client_config_set_log_level(
+                    syncClientConfig,
+                    configuration.log.logLevel.priority
+                )
+                RealmInterop.realm_sync_client_config_set_metadata_mode(
+                    syncClientConfig,
+                    configuration.metadataMode
+                )
+            }
 }

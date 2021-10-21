@@ -1,7 +1,11 @@
 package io.realm.log
 
 import io.realm.RealmConfiguration
+import io.realm.log.LogLevel.DEBUG
+import io.realm.log.LogLevel.ERROR
+import io.realm.log.LogLevel.INFO
 import io.realm.log.LogLevel.TRACE
+import io.realm.log.LogLevel.WARN
 import io.realm.log.LogLevel.WTF
 
 /**
@@ -21,7 +25,23 @@ enum class LogLevel(val priority: Int) {
     WARN(5),
     ERROR(6),
     WTF(7),
-    NONE(8)
+    NONE(8);
+
+    companion object {
+        fun fromValue(level: Int): LogLevel {
+            return when (level) {
+                ALL.priority -> ALL
+                TRACE.priority -> TRACE
+                DEBUG.priority -> DEBUG
+                INFO.priority -> INFO
+                WARN.priority -> WARN
+                ERROR.priority -> ERROR
+                WTF.priority -> WTF
+                NONE.priority -> NONE
+                else -> throw IllegalArgumentException("Invalid log level: $level")
+            }
+        }
+    }
 }
 
 
