@@ -36,7 +36,7 @@ internal class SyncConfigurationImpl(
         RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
 
     init {
-        RealmInterop.realm_sync_set_error_handler(nativeSyncConfig) { syncSessionPtr: NativePointer, error: AppException ->
+        RealmInterop.realm_sync_set_error_handler(nativeSyncConfig) { syncSessionPtr, error ->
             errorHandler(SyncSessionImpl(syncSessionPtr), error)
         }
         RealmInterop.realm_config_set_sync_config(localConfiguration.nativeConfig, nativeSyncConfig)

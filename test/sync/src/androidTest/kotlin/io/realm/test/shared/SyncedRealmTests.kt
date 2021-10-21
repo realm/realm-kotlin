@@ -146,8 +146,6 @@ class SyncedRealmTests {
                 suspendCoroutine {
                     // Create Sync configuration with error handler.
                     val config = SyncConfiguration.Builder(
-                        path = "$tmpDir/$DEFAULT_NAME",
-                        name = DEFAULT_NAME,
                         schema = setOf(ParentPk::class, ChildPk::class),
                         user = user,
                         partitionValue = DEFAULT_PARTITION_VALUE
@@ -164,11 +162,16 @@ class SyncedRealmTests {
             app.restartSync()
 
             // Await for exception to happen
+            println("-------> BEFORE    AWAIT")
             asyncAppException.await()
+            println("-------> AFTER     AWAIT")
 
             // Validate that the exception was captured
+            println("-------> BEFORE    ASSERT")
             assertIs<AppException>(asyncAppException.getCompleted())
+            println("-------> AFTER     ASSERT")
         }
+        println("-------> AFTER     runBlocking")
     }
 
 //    @Test

@@ -178,11 +178,11 @@ open class AdminApiImpl internal constructor(
     ).first().let {
         it.jsonObject["_id"]!!.jsonPrimitive.content
     }
-    
-    private suspend fun controlSync(serviceId: String, enabled: Boolean) = client
-        .request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
-                method = Patch
-                body = """
+
+    private suspend fun controlSync(serviceId: String, enabled: Boolean) =
+        client.request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
+            method = Patch
+            body = """
                     {
                       "sync": {
                         "state": "${if (enabled) "enabled" else "disabled"}",
@@ -200,11 +200,12 @@ open class AdminApiImpl internal constructor(
                     }
                 """.trimIndent()
         }.let {
-            if(!it.status.isSuccess()) throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
+            if (!it.status.isSuccess())
+                throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
         }
 
     override suspend fun restartSync() {
-        withContext (dispatcher){
+        withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, false)
             controlSync(backingDbServiceId, true)

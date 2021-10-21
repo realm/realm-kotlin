@@ -159,7 +159,6 @@ expect object RealmInterop {
         syncClientConfig: NativePointer,
         metadataMode: MetadataMode
     )
-    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
     fun realm_sync_set_error_handler(
         syncConfig: NativePointer,
         errorHandler: (syncSession: NativePointer, error: AppException) -> Unit)

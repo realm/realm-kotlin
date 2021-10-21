@@ -458,7 +458,7 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
                            managed);
 }
 
-jobject convert_exception(JNIEnv* jenv, realm_error_t &error) {
+jobject convert_exception(JNIEnv* jenv, const realm_sync_error_t error) {
     static JavaMethod pointer_wrapper_constructor(jenv,
                                                   JavaClassGlobalDef::app_exception(),
                                                   "<init>",
@@ -470,7 +470,7 @@ jobject convert_exception(JNIEnv* jenv, realm_error_t &error) {
 void
 sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler){
     realm_sync_config_set_error_handler(sync_config,
-                                        [](void* userdata, const realm_sync_session_t *session, realm_error_t error) {
+                                        [](void* userdata, realm_sync_session_t* session, const realm_sync_error_t error) {
                                             auto jenv = get_env(true);
 
                                             jobject session_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(session));

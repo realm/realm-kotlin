@@ -87,6 +87,7 @@ import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
+import realm_wrapper.realm_sync_error_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -1010,20 +1011,14 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_config_set_error_handler(
             syncConfig.cptr(),
-            staticCFunction<COpaquePointer?, CPointer<realm_sync_session_t>?, CValue<realm_error_t>, Unit>
-            { userData, syncSession, _ ->
+            staticCFunction { userData, syncSession, _ ->
                 val errorCallback = safeUserData<(NativePointer, AppException) -> Unit>(userData)
                 errorCallback(CPointerWrapper(syncSession), AppException())
             },
             StableRef.create(errorHandler).asCPointer(),
-            staticCFunction { userdata -> disposeUserData<() -> CoreLogger>(userdata) })
-    }
-
-    actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {
-        realm_wrapper.realm_sync_client_config_set_log_level(
-            syncClientConfig.cptr(),
-            realm_log_level_e.byValue(level.toUInt())
-        )
+            staticCFunction { userdata ->
+                disposeUserData<(NativePointer, AppException) -> Unit>(userdata)
+            })
     }
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
