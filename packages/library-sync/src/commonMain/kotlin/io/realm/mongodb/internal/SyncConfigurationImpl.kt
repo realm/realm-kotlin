@@ -21,6 +21,7 @@ import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.PartitionValue
+import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppException
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncSession
@@ -37,8 +38,8 @@ internal class SyncConfigurationImpl(
 
     init {
         RealmInterop.realm_sync_set_error_handler(nativeSyncConfig) { syncSessionPtr, error ->
-            errorHandler(SyncSessionImpl(syncSessionPtr), error)
-        }
+            errorHandler.invoke(SyncSessionImpl(syncSessionPtr), error)
+        }.freeze()
         RealmInterop.realm_config_set_sync_config(localConfiguration.nativeConfig, nativeSyncConfig)
     }
 }

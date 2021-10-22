@@ -19,10 +19,12 @@ import io.realm.Realm
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
+import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -74,10 +76,14 @@ class SyncedRealmTests {
     @AfterTest
     fun tearDown() {
         if (this::app.isInitialized) {
+            println("----------> BEFORE app.close")
             app.asTestApp.close()
+            println("----------> AFTER  app.close")
         }
         if (this::realm.isInitialized && !realm.isClosed()) {
+            println("----------> BEFORE realm.close")
             realm.close()
+            println("----------> AFTER  realm.close")
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }
@@ -138,40 +144,85 @@ class SyncedRealmTests {
         PlatformUtils.deleteTempDir(dir2)
     }
 
+//    @Test
+//    fun testErrorHandler() {
+//        runBlocking {
+//            val user = createTestUser()
+//            val asyncAppException: Deferred<AppException> = async {
+//                suspendCoroutine { continuation ->
+//                    println("----------> INSIDE suspendCoroutine")
+//
+//                    // Create Sync configuration with error handler.
+//                    val config = SyncConfiguration.Builder(
+//                        schema = setOf(ParentPk::class, ChildPk::class),
+//                        user = user,
+//                        partitionValue = DEFAULT_PARTITION_VALUE
+//                    ).setSyncErrorHandler { _: SyncSession, exception: AppException ->
+//                        println("----------> INSIDE error handler")
+////                        continuation.resumeWith(Result.success(exception))
+//                    }.build()
+//
+//                    realm = Realm.open(config)
+//                    assertNotNull(realm)
+//                }
+//            }
+//
+//            // Restart sync
+//            println("----------> BEFORE restartSync")
+//            app.restartSync()
+//            println("----------> AFTER  restartSync")
+//
+//            // Await for exception to happen
+//            println("----------> BEFORE await")
+//            asyncAppException.await()
+//            println("----------> AFTER  await")
+//
+//            // Validate that the exception was captured
+//            assertIs<AppException>(asyncAppException.getCompleted())
+//        }
+//    }
+
     @Test
     fun testErrorHandler() {
+        val channel = Channel<AppException>(1).freeze()
+
         runBlocking {
             val user = createTestUser()
-            val asyncAppException: Deferred<AppException> = async {
-                suspendCoroutine {
-                    // Create Sync configuration with error handler.
-                    val config = SyncConfiguration.Builder(
-                        schema = setOf(ParentPk::class, ChildPk::class),
-                        user = user,
-                        partitionValue = DEFAULT_PARTITION_VALUE
-                    ).setSyncErrorHandler { _, exception ->
-                        it.resumeWith(Result.success(exception))
-                    }.build()
+            val async: Deferred<Realm> = async {
+                println("----------> INSIDE runBlocking")
 
-                    realm = Realm.open(config)
-                    assertNotNull(realm)
-                }
+                // Create Sync configuration with error handler.
+                val config = SyncConfiguration.Builder(
+                    schema = setOf(ParentPk::class, ChildPk::class),
+                    user = user,
+                    partitionValue = DEFAULT_PARTITION_VALUE
+                ).setSyncErrorHandler { _: SyncSession, exception: AppException ->
+                    println("----------> INSIDE error handler")
+                    runBlocking {
+                        channel.send(exception)
+                    }
+                }.build()
+
+                realm = Realm.open(config)
+                assertNotNull(realm)
             }
 
             // Restart sync
+            println("----------> BEFORE restartSync")
             app.restartSync()
+            println("----------> AFTER  restartSync")
+
+            println("----------> BEFORE receive")
+            val exception = channel.receive()
+            println("----------> AFTER  receive")
 
             // Await for exception to happen
-            println("-------> BEFORE    AWAIT")
-            asyncAppException.await()
-            println("-------> AFTER     AWAIT")
+            async.cancel()
+            channel.close()
 
             // Validate that the exception was captured
-            println("-------> BEFORE    ASSERT")
-            assertIs<AppException>(asyncAppException.getCompleted())
-            println("-------> AFTER     ASSERT")
+            assertIs<AppException>(exception)
         }
-        println("-------> AFTER     runBlocking")
     }
 
 //    @Test

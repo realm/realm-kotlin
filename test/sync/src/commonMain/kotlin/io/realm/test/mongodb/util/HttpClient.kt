@@ -32,9 +32,6 @@ import kotlin.time.ExperimentalTime
 // TODO Consider moving it to util package?
 @OptIn(ExperimentalTime::class)
 fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() -> Unit = {}): HttpClient {
-    // Need to freeze value as it is used inside the client's init lambda block, which also
-    // freezes captured objects too, see:
-    // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
     val timeout = Duration.seconds(5).inWholeMilliseconds
     // TODO We probably need to fix the clients, so ktor does not automatically override with
     //  another client if people update the runtime available ones through other dependencies

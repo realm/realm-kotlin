@@ -1024,7 +1024,8 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, _ ->
                 val errorCallback = safeUserData<(NativePointer, AppException) -> Unit>(userData)
-                errorCallback(CPointerWrapper(syncSession), AppException())
+                val session = CPointerWrapper(syncSession)
+                errorCallback(session, AppException())
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->
