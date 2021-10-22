@@ -436,17 +436,42 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                                   auto log_callback = static_cast<jobject>(userdata);
                                                   auto jenv = get_env(true);
 
-                                                  jclass core_log_level_enum_class = JavaClassGlobalDef::core_log_level();
-                                                  jclass core_log_level_companion_class = JavaClassGlobalDef::core_log_level_companion();
-                                                  jclass log_callback_class = JavaClassGlobalDef::log_callback();
+                                                  static jclass core_log_level_enum_class = JavaClassGlobalDef::core_log_level();
 
-                                                  jmethodID log_method = jenv->GetMethodID(log_callback_class, "log", "(Lio/realm/internal/interop/CoreLogLevel;Ljava/lang/String;)V");
-                                                  jmethodID value_from_priority_method = jenv->GetMethodID(core_log_level_companion_class, "valueFromPriority", "(I)Lio/realm/internal/interop/CoreLogLevel;");
+                                                  jobject core_log_level;
+                                                  if (level == RLM_LOG_LEVEL_ALL) {
+                                                      static jfieldID level_all_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_ALL", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_all_field);
+                                                  } else if (level == RLM_LOG_LEVEL_TRACE) {
+                                                      static jfieldID level_trace_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_TRACE", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_trace_field);
+                                                  } else if (level == RLM_LOG_LEVEL_DEBUG) {
+                                                      static jfieldID level_debug_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_DEBUG", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_debug_field);
+                                                  } else if (level == RLM_LOG_LEVEL_DETAIL) {
+                                                      static jfieldID level_detail_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_DETAIL", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_detail_field);
+                                                  } else if (level == RLM_LOG_LEVEL_INFO) {
+                                                      static jfieldID level_info_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_INFO", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_info_field);
+                                                  } else if (level == RLM_LOG_LEVEL_WARNING) {
+                                                      static jfieldID level_warning_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_WARNING", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_warning_field);
+                                                  } else if (level == RLM_LOG_LEVEL_ERROR) {
+                                                      static jfieldID level_error_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_ERROR", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_error_field);
+                                                  } else if (level == RLM_LOG_LEVEL_FATAL) {
+                                                      static jfieldID level_fatal_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_FATAL", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_fatal_field);
+                                                  } else if (level == RLM_LOG_LEVEL_OFF) {
+                                                      static jfieldID level_off_field = jenv->GetStaticFieldID(core_log_level_enum_class, "RLM_LOG_LEVEL_OFF", "Lio/realm/internal/interop/CoreLogLevel;");
+                                                      core_log_level = jenv->GetStaticObjectField(core_log_level_enum_class, level_off_field);
+                                                  } else {
+                                                      throw std::runtime_error("Invalid core log level: " + std::to_string(level));
+                                                  }
 
-                                                  jfieldID companion_field_id = jenv->GetStaticFieldID(core_log_level_enum_class, "Companion", "Lio/realm/internal/interop/CoreLogLevel$Companion;");
-
-                                                  jobject companion_object = jenv->GetStaticObjectField(core_log_level_enum_class, companion_field_id);
-                                                  jobject core_log_level = jenv->CallObjectMethod(companion_object, value_from_priority_method, level);
+                                                  static jclass log_callback_class = JavaClassGlobalDef::log_callback();
+                                                  static jmethodID log_method = jenv->GetMethodID(log_callback_class, "log", "(Lio/realm/internal/interop/CoreLogLevel;Ljava/lang/String;)V");
                                                   jenv->CallVoidMethod(log_callback, log_method, core_log_level, to_jstring(jenv, message));
                                               },
                                               jenv->NewGlobalRef(log_callback), // userdata is the log callback

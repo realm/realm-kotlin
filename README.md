@@ -116,6 +116,8 @@ The query language supported by Realm is inspired by Apple’s [NSPredicate](htt
 
 ```Kotlin
 // All Persons
+import io.realm.objects
+
 val all = realm.objects<Person>()
 
 // Person named 'Carlo'
@@ -141,7 +143,7 @@ realm.objects<Person>().query("dog == NULL LIMIT(1)")
     ?.also { personWithoutDog ->
         // Add a dog in a transaction
         realm.writeBlocking {
-            personWithoutDog.dog = Dog().apply { name = "Laika"; age = 3 }
+            findLatest(personWithoutDog)?.dog = Dog().apply { name = "Laika"; age = 3 }
         }
     }
 ```
@@ -152,7 +154,7 @@ Use the result of a query to delete from the database
 ```Kotlin
 // delete all Dogs
 realm.writeBlocking {
-    realm.objects<Dog>().delete()
+    this.objects<Dog>().delete()
 }
 ```
 
