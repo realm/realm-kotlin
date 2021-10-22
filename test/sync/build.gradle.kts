@@ -54,6 +54,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
             }
         }
 

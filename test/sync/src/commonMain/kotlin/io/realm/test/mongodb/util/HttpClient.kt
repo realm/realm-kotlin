@@ -18,6 +18,7 @@ package io.realm.test.mongodb.util
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
@@ -35,7 +36,7 @@ fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() ->
     val timeout = Duration.seconds(5).inWholeMilliseconds
     // TODO We probably need to fix the clients, so ktor does not automatically override with
     //  another client if people update the runtime available ones through other dependencies
-    return HttpClient() {
+    return HttpClient(CIO) {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
         install(HttpTimeout) {
             connectTimeoutMillis = timeout
