@@ -18,7 +18,6 @@
 #include <vector>
 #include <thread>
 #include <realm/object-store/c_api/util.hpp>
-#include "java_global_ref_by_copy.hpp"
 #include "java_method.hpp"
 
 using namespace realm::jni_util;

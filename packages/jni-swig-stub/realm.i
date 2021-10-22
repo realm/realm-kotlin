@@ -49,7 +49,7 @@ std::string rlm_stdstr(realm_string_t val)
 %typemap(jni) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "jobject";
 %typemap(in) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
     auto jenv = get_env(true);
-    $1 = complete_void;
+    $1 = app_complete_void_callback;
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
     $3 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));

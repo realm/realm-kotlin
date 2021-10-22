@@ -19,7 +19,6 @@ file(GLOB jni_SRC
         "jni/env_utils.cpp"
         "jni/utils.cpp"
         "jni/java_global_ref_by_move.cpp"
-        "jni/java_global_ref_by_copy.cpp"
         "jni/java_class_global_def.cpp"
         "jni/java_class.cpp"
         "jni/java_method.cpp"
