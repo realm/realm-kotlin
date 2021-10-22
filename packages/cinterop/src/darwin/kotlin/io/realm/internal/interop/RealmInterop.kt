@@ -44,7 +44,6 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
@@ -74,20 +73,24 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
-import realm_wrapper.realm_log_level_e
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
-import realm_wrapper.realm_sync_session_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
-import realm_wrapper.realm_sync_error_t
+import kotlin.collections.List
+import kotlin.collections.fold
+import kotlin.collections.forEachIndexed
+import kotlin.collections.mapIndexed
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.withIndex
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -1015,7 +1018,7 @@ actual object RealmInterop {
             realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
         )
     }
-    
+
     actual fun realm_sync_set_error_handler(
         syncConfig: NativePointer,
         errorHandler: (syncSession: NativePointer, error: AppException) -> Unit
@@ -1030,7 +1033,8 @@ actual object RealmInterop {
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->
                 disposeUserData<(NativePointer, AppException) -> Unit>(userdata)
-            })
+            }
+        )
     }
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {

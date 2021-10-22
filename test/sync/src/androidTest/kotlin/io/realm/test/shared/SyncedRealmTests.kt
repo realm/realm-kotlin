@@ -36,7 +36,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
-import kotlin.coroutines.suspendCoroutine
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -159,7 +158,7 @@ class SyncedRealmTests {
 //                        partitionValue = DEFAULT_PARTITION_VALUE
 //                    ).setSyncErrorHandler { _: SyncSession, exception: AppException ->
 //                        println("----------> INSIDE error handler")
-////                        continuation.resumeWith(Result.success(exception))
+// //                        continuation.resumeWith(Result.success(exception))
 //                    }.build()
 //
 //                    realm = Realm.open(config)

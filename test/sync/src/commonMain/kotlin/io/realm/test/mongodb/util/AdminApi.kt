@@ -25,9 +25,12 @@ import io.ktor.client.request.post
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
-import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Patch
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.realm.internal.platform.runBlocking
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -179,6 +182,7 @@ open class AdminApiImpl internal constructor(
                 it.jsonObject["_id"]!!.jsonPrimitive.content
             }
 
+    @Suppress("TooGenericExceptionThrown")
     private suspend fun controlSync(serviceId: String, enabled: Boolean) =
         client.request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
             method = Patch
@@ -198,7 +202,7 @@ open class AdminApiImpl internal constructor(
                         "last_disabled": 1633520376
                       }
                     }
-                """.trimIndent()
+            """.trimIndent()
         }.let {
             if (!it.status.isSuccess())
                 throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
