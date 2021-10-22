@@ -39,7 +39,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                 get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
             },
             // change callback
-            [](void* userdata, const realm_collection_changes_t *changes) {
+            [](void *userdata, const realm_collection_changes_t *changes) {
                 // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
                 //  like the C-API error callback below
                 //  https://github.com/realm/realm-kotlin/issues/303
