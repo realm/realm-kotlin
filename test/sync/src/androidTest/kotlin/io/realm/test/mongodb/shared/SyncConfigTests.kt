@@ -21,8 +21,10 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
+import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -62,16 +64,14 @@ class SyncConfigTests {
         }
     }
 
-//    @Test
-//    fun errorHandler() {
-//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
-//        val errorHandler: SyncSession.ErrorHandler = object : SyncSession.ErrorHandler {
-//            override fun onError(session: SyncSession, error: AppException) {}
-//        }
-//        val config = builder.errorHandler(errorHandler).build()
-//        assertEquals(errorHandler, config.errorHandler)
-//    }
-//
+    @Test
+    fun errorHandler() {
+        val errorHandler = { _: SyncSession, _: AppException -> /* No-op */ }
+        val user = createTestUser()
+        val config = createSyncConfig(user = user, name = DEFAULT_NAME, errorHandler = errorHandler)
+        assertEquals(errorHandler, config.errorHandler)
+    }
+
 //    @Test
 //    fun errorHandler_fromAppConfiguration() {
 //        val user: User = createTestUser(app)
@@ -622,14 +622,18 @@ class SyncConfigTests {
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
         path: String? = null,
+        name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
-        name: String = DEFAULT_NAME
+        errorHandler: (SyncSession, AppException) -> Unit = { _, _ -> Unit }
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
-        partitionValue = partitionValue,
-    ).path(path).name(name).let { builder ->
-        if (encryptionKey != null) builder.encryptionKey(encryptionKey)
-        builder
-    }.build()
+        partitionValue = partitionValue
+    ).path(path)
+        .name(name)
+        .errorHandler(errorHandler)
+        .let { builder ->
+            if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+            builder
+        }.build()
 }

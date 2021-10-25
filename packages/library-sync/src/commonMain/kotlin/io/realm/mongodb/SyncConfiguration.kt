@@ -103,7 +103,7 @@ interface SyncConfiguration : RealmConfiguration {
          *
          * @param errorHandler lambda to handle the error.
          */
-        fun setSyncErrorHandler(errorHandler: (SyncSession, AppException) -> Unit): Builder {
+        fun errorHandler(errorHandler: (SyncSession, AppException) -> Unit): Builder {
             this.syncErrorHandler = errorHandler
             return this
         }

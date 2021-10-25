@@ -65,11 +65,11 @@ class SyncedRealmTests {
         val user = createTestUser()
 
         tmpDir = PlatformUtils.createTempDir()
-        syncConfiguration = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+        syncConfiguration = createSyncConfig(
+            user = user,
             partitionValue = "default",
-            user = user
-        ).path(path = "$tmpDir/test.realm").build()
+            path = "$tmpDir/test.realm"
+        )
     }
 
     @AfterTest
@@ -143,43 +143,6 @@ class SyncedRealmTests {
         PlatformUtils.deleteTempDir(dir2)
     }
 
-//    @Test
-//    fun testErrorHandler() {
-//        runBlocking {
-//            val user = createTestUser()
-//            val asyncAppException: Deferred<AppException> = async {
-//                suspendCoroutine { continuation ->
-//                    println("----------> INSIDE suspendCoroutine")
-//
-//                    // Create Sync configuration with error handler.
-//                    val config = SyncConfiguration.Builder(
-//                        schema = setOf(ParentPk::class, ChildPk::class),
-//                        user = user,
-//                        partitionValue = DEFAULT_PARTITION_VALUE
-//                    ).setSyncErrorHandler { _: SyncSession, exception: AppException ->
-//                        println("----------> INSIDE error handler")
-// //                        continuation.resumeWith(Result.success(exception))
-//                    }.build()
-//
-//                    realm = Realm.open(config)
-//                    assertNotNull(realm)
-//                }
-//            }
-//
-//            // Restart sync
-//            println("----------> BEFORE restartSync")
-//            app.restartSync()
-//            println("----------> AFTER  restartSync")
-//
-//            // Await for exception to happen
-//            println("----------> BEFORE await")
-//            asyncAppException.await()
-//            println("----------> AFTER  await")
-//
-//            // Validate that the exception was captured
-//            assertIs<AppException>(asyncAppException.getCompleted())
-//        }
-//    }
 
     @Test
     fun testErrorHandler() {
@@ -191,16 +154,17 @@ class SyncedRealmTests {
                 println("----------> INSIDE runBlocking")
 
                 // Create Sync configuration with error handler.
-                val config = SyncConfiguration.Builder(
-                    schema = setOf(ParentPk::class, ChildPk::class),
+                val config = createSyncConfig(
                     user = user,
-                    partitionValue = DEFAULT_PARTITION_VALUE
-                ).setSyncErrorHandler { _: SyncSession, exception: AppException ->
-                    println("----------> INSIDE error handler")
-                    runBlocking {
-                        channel.send(exception)
+                    partitionValue = "default",
+                    path = "$tmpDir/test.realm",
+                    errorHandler = { _: SyncSession, exception: AppException ->
+                        println("----------> INSIDE error handler")
+                        runBlocking {
+                            channel.send(exception)
+                        }
                     }
-                }.build()
+                )
 
                 realm = Realm.open(config)
                 assertNotNull(realm)
@@ -578,12 +542,19 @@ class SyncedRealmTests {
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
         path: String? = null,
-        name: String = DEFAULT_NAME
+        name: String = DEFAULT_NAME,
+        encryptionKey: ByteArray? = null,
+        errorHandler: (SyncSession, AppException) -> Unit = { _, _ -> Unit }
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
-    ).path(path = "$tmpDir/test.realm")
+    ).path(path)
         .name(name)
-        .build()
+        .errorHandler(errorHandler)
+        .let { builder ->
+            if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+            builder
+        }.build()
 }
+
