@@ -16,9 +16,11 @@
 
 package io.realm.test.mongodb.shared
 
+import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
 import io.realm.mongodb.AppException
@@ -62,6 +64,20 @@ class SyncConfigTests {
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }
+    }
+
+    @Test
+    fun logConfiguration() {
+        val user = createTestUser()
+        val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
+        val customLoggers = listOf(logger)
+        val config = createSyncConfig(
+            user = user,
+            name = DEFAULT_NAME,
+            log = LogConfiguration(LogLevel.DEBUG, customLoggers)
+        )
+        assertEquals(LogLevel.DEBUG, config.log.level)
+        assertEquals(logger, config.log.loggers[1]) // Additional logger placed after default logger
     }
 
     @Test
@@ -618,12 +634,14 @@ class SyncConfigTests {
         }
     }
 
+    @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
         path: String? = null,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
+        log: LogConfiguration? = null,
         errorHandler: (SyncSession, AppException) -> Unit = { _, _ -> Unit }
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
@@ -634,6 +652,7 @@ class SyncConfigTests {
         .errorHandler(errorHandler)
         .let { builder ->
             if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+            if (log != null) builder.log(log.level, log.loggers)
             builder
         }.build()
 }

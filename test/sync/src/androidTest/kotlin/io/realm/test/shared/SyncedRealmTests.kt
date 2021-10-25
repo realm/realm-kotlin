@@ -143,7 +143,6 @@ class SyncedRealmTests {
         PlatformUtils.deleteTempDir(dir2)
     }
 
-
     @Test
     fun testErrorHandler() {
         val channel = Channel<AppException>(1).freeze()
@@ -538,6 +537,7 @@ class SyncedRealmTests {
         }
     }
 
+    @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
@@ -557,4 +557,3 @@ class SyncedRealmTests {
             builder
         }.build()
 }
-
