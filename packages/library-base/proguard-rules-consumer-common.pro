@@ -12,7 +12,7 @@
 -keep class io.realm.internal.interop.NotificationCallback {
     *;
 }
--keep class io.realm.internal.interop.CinteropCallback {
+-keep class io.realm.internal.interop.AppCallback {
     *;
 }
 

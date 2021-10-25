@@ -62,28 +62,6 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
     );
 }
 
-void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
-    auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
-    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
-                                          "(Ljava/lang/Throwable;)V");
-    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
-                                            "(Ljava/lang/Object;)V");
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-    } else if (error) {
-        // TODO OPTIMIZE Make central global reference table of classes
-        //  https://github.com/realm/realm-kotlin/issues/460
-        jclass exception_class = env->FindClass("io/realm/mongodb/AppException");
-        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "()V");
-        jobject throwable = env->NewObject(exception_class, exception_constructor);
-        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, throwable);
-    } else {
-        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, NULL);
-    }
-}
-
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
 //  changes as realm_collection_changes_t.
 realm_notification_token_t *
@@ -239,63 +217,60 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
     return realm_open(&copyConf);
 }
 
-void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
-    auto jenv = get_env();
-    // TODO OPTIMIZE Makes multiple lookups of CinteropCallback, but at least only once when
-    //  initializing static variables
-    //  https://github.com/realm/realm-kotlin/issues/460
-    static jmethodID on_success_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
-                                                "onSuccess",
-                                                "(Lio/realm/internal/interop/NativePointer;)V");
-    static jmethodID on_error_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
-                                              "onError", "(Ljava/lang/Throwable;)V");
+void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
+    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+                                          "(Ljava/lang/Throwable;)V");
+    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+                                            "(Ljava/lang/Object;)V");
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+    } else if (error) {
+        // TODO OPTIMIZE Make central global reference table of classes
+        //  https://github.com/realm/realm-kotlin/issues/460
+        jclass exception_class = env->FindClass("io/realm/mongodb/AppException");
+        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "()V");
+        jobject throwable = env->NewObject(exception_class, exception_constructor);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, throwable);
+    } else {
+        // TODO OPTIMIZE
+        jclass unit_class = env->FindClass("kotlin/Unit");
+        static jmethodID unit_constructor = env->GetMethodID(unit_class, "<init>", "()V");
+        jobject unit = env->NewObject(unit_class, unit_constructor);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, unit);
+    }
+}
 
-    realm_app_log_in_with_credentials(
-            app,
-            credentials,
-            // FIXME Refactor into generic handling of network requests, like
-            //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
-            [](void* userdata, realm_user_t* user, const realm_app_error_t* error) {
-                auto jenv = get_env(true);
+void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
+    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+                                          "(Ljava/lang/Throwable;)V");
+    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+                                            "(Ljava/lang/Object;)V");
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+    } else if (error) {
+        // TODO OPTIMIZE Make central global reference table of classes
+        //  https://github.com/realm/realm-kotlin/issues/460
+        jclass exception_class = env->FindClass("io/realm/mongodb/AppException");
+        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "()V");
+        jobject throwable = env->NewObject(exception_class, exception_constructor);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, throwable);
+    } else {
+        jclass exception_class = env->FindClass("io/realm/internal/interop/LongPointerWrapper");
+        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "(JZ)V");
 
-                if (jenv->ExceptionCheck()) {
-                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                         on_error_method,
-                                         jenv->ExceptionOccurred());
-                } else if (error) {
-                    // TODO OPTIMIZE Make central global reference table of classes
-                    //  https://github.com/realm/realm-kotlin/issues/460
-                    jclass exception_class = jenv->FindClass("io/realm/mongodb/AppException");
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
-                                                                               "()V");
+        // Remember to clone user object or else it will be invalidated right after we leave this callback
+        void* cloned_result = realm_clone(result);
+        jobject pointer = env->NewObject(exception_class, exception_constructor,
+                                          reinterpret_cast<jlong>(cloned_result), false);
 
-                    jobject throwable = jenv->NewObject(exception_class, exception_constructor);
-
-                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                         on_error_method,
-                                         throwable);
-                } else {
-                    // TODO OPTIMIZE Make central global reference table of classes
-                    //  https://github.com/realm/realm-kotlin/issues/460
-                    jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
-
-                    // Remember to clone user object or else it will be invalidated right after we leave this callback
-                    void* cloned_user = realm_clone(user);
-                    jobject pointer = jenv->NewObject(exception_class, exception_constructor,
-                                                      reinterpret_cast<jlong>(cloned_user), false);
-
-                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                         on_success_method,
-                                         pointer);
-                }
-            },
-            // Use the callback as user data
-            static_cast<jobject>(get_env()->NewGlobalRef(callback)),
-            [](void *userdata) {
-                get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-            }
-    );
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, pointer);
+    }
 }
 
 static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {

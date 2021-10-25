@@ -16,17 +16,14 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.util.Validation
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import kotlinx.coroutines.withContext
-import java.lang.Void
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -59,7 +56,7 @@ internal class AppImpl(
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
                 Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
-                object : CinteropCallback {
+                object : AppCallback<NativePointer> {
                     override fun onSuccess(pointer: NativePointer) {
                         continuation.resume(UserImpl(pointer, this@AppImpl))
                     }

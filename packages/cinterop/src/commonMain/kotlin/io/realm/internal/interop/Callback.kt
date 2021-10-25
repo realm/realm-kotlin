@@ -21,14 +21,9 @@ interface Callback {
     fun onChange(change: NativePointer)
 }
 
+// Callback from asynchronous sync methods. Use AppCallback<Unit> for void callbacks and
+// AppCallback<NativePointer> for callbacks with native pointers to core objects.
 interface AppCallback<T> {
-    // FIXME How to send make this work for Unit without enabling null values
-    fun onSuccess(t: T?)
-    // FIXME AppException
-    fun onError(throwable: Throwable)
-}
-
-interface CinteropCallback {
-    fun onSuccess(pointer: NativePointer)
+    fun onSuccess(t: T)
     fun onError(throwable: Throwable)
 }

@@ -894,13 +894,13 @@ actual object RealmInterop {
     actual fun realm_app_log_in_with_credentials(
         app: NativePointer,
         credentials: NativePointer,
-        callback: CinteropCallback
+        callback: AppCallback<NativePointer>
     ) {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
             staticCFunction { userdata, user, error ->
-                val userDataCallback = safeUserData<CinteropCallback>(userdata)
+                val userDataCallback = safeUserData<AppCallback<NativePointer>>(userdata)
                 if (error == null) {
                     // Remember to clone user object or else it will be invalidated right after we leave this callback
                     val clonedUser = realm_clone(user)
@@ -910,7 +910,7 @@ actual object RealmInterop {
                 }
             },
             StableRef.create(callback).asCPointer(),
-            staticCFunction { userdata -> disposeUserData<Callback>(userdata) }
+            staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
         )
     }
 

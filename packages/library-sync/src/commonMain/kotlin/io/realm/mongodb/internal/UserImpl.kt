@@ -37,7 +37,7 @@ internal class UserImpl(
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_out(app.nativePointer, nativePointer,
                 object : AppCallback<Unit> {
-                    override fun onSuccess(void: Unit?) {
+                    override fun onSuccess(void: Unit) {
                         continuation.resume(Unit)
                     }
 
