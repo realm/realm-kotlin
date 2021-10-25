@@ -63,7 +63,7 @@ interface RealmLogger {
                 CoreLogLevel.RLM_LOG_LEVEL_ERROR.priority -> LogLevel.ERROR
                 CoreLogLevel.RLM_LOG_LEVEL_FATAL.priority -> LogLevel.WTF
                 CoreLogLevel.RLM_LOG_LEVEL_OFF.priority -> LogLevel.NONE
-                else -> throw IllegalArgumentException("Invalid priority level: ${level}.")
+                else -> throw IllegalArgumentException("Invalid priority level: $level.")
             }
         }
     }
