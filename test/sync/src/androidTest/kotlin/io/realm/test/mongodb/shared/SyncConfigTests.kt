@@ -631,6 +631,7 @@ class SyncConfigTests {
         }
     }
 
+    @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
