@@ -21,18 +21,49 @@ import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.AppImpl
 
 /**
- * TODO
+ * An **App** is the main client-side entry point for interacting with a **MongoDB Realm App**.
+ *
+ * The **App** can be used to:
+ * - Register uses and perform various user-related operations through authentication providers
+ * - Synchronize data between the local device and a remote Realm App with Synchronized Realms
+ *
+ * To create an app that is linked with a remote **Realm App** initialize Realm and configure the
+ * **App** as shown below:
+ *
+ * ```
+ *     class MyRealmAppClass {
+ *         val configuration: AppConfiguration = AppConfiguration.Builder(<APP_ID>).build()
+ *         val app: App = App.create(configuration)
+ *         val realm: Realm
+ *
+ *         init {
+ *              realm = runBlocking {
+ *                  val user = app.login(Credentials.emailPassword("user@example.org", "password"))
+ *                  val config = SyncConfiguration.Builder(
+ *                      schema = setOf(YourRealmObject::class),
+ *                      user = user,
+ *                      partitionValue = "my-partition"
+ *                  ).build()
+ *
+ *                  Realm.open(config)
+ *              }
+ *         }
+ *     }
+ * ```
  */
 interface App {
 
     val configuration: AppConfiguration
 
     /**
-     * TODO
+     * Log in as a user with the given credentials associated with an authentication provider.
+     *
+     * The user who logs in becomes the current user.
+     *
+     * @param credentials the credentials representing the type of login.
+     * @return the logged in [User].
+     * @throws AppException if the user could not be logged in.
      */
-    // FIXME Reevaluate Result api to surface App errors more explicitly
-    //  https://github.com/realm/realm-kotlin/pull/447#discussion_r707344044
-    //  https://github.com/realm/realm-kotlin/issues/241
     suspend fun login(credentials: Credentials): User
 
     companion object {
