@@ -1,5 +1,3 @@
-import io.realm.getPropertyValue
-
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -224,15 +222,6 @@ tasks.register("dokkaJar", Jar::class) {
     dependsOn(dokkaTask)
     archiveClassifier.set("dokka")
     from(tasks.named(dokkaTask).get().outputs)
-}
-
-
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    dokkaSourceSets {
-        configureEach {
-            includes.from("overview.md")
-        }
-    }
 }
 
 val javadocJar by tasks.registering(Jar::class) {
