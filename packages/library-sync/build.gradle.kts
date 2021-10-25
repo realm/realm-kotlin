@@ -238,66 +238,19 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     }
 }
 
-// TODO: configure DOKKA so that it's only published for sync and not base
-// tasks.dokkaHtml.configure {
-//     moduleName.set("Realm Kotlin Multiplatform SDK")
-//     moduleVersion.set(Realm.version)
-//     dokkaSourceSets {
-//         configureEach {
-//             moduleVersion.set(Realm.version)
-//             reportUndocumented.set(true)
-//             skipEmptyPackages.set(true)
-//             perPackageOption {
-//                 matchingRegex.set("io\\.realm\\.internal\\.*")
-//                 suppress.set(true)
-//             }
-//             jdkVersion.set(8)
-//         }
-//         val commonMain by getting {
-//             sourceRoot("../runtime-api/src/commonMain/kotlin")
-//         }
-//     }
-// }
-//
-// tasks.register("uploadDokka") {
-//     dependsOn("dokkaHtml")
-//     group = "Release"
-//     description = "Upload SDK docs to S3"
-//     doLast {
-//         val awsAccessKey = getPropertyValue(this.project, "SDK_DOCS_AWS_ACCESS_KEY")
-//         val awsSecretKey = getPropertyValue(this.project, "SDK_DOCS_AWS_SECRET_KEY")
-//
-//         // Failsafe check, ensuring that we catch if the path ever changes, which it might since it is an
-//         // implementation detail of the Kotlin Gradle Plugin
-//         val dokkaDir = File("$rootDir/library/build/dokka/html")
-//         if (!dokkaDir.exists() || !dokkaDir.isDirectory || dokkaDir.listFiles().isEmpty()) {
-//             throw GradleException("Could not locate dir with dokka files in: ${dokkaDir.path}")
-//         }
-//
-//         // Upload two copies, to 'latest' and a versioned folder for posterity.
-//         // Symlinks would have been safer and faster, but this is not supported by S3.
-//         listOf(Realm.version, "latest").forEach { version: String ->
-//             exec {
-//                 commandLine = listOf(
-//                     "s3cmd",
-//                     "put",
-//                     "--recursive",
-//                     "--acl-public",
-//                     "--access_key=$awsAccessKey",
-//                     "--secret_key=$awsSecretKey",
-//                     "${dokkaDir.absolutePath}/", // Add / to only upload content of the folder, not the folder itself.
-//                     "s3://realm-sdks/realm-sdks/kotlin/$version/"
-//                 )
-//             }
-//         }
-//     }
-// }
-//
-// tasks.register("dokkaJar", Jar::class) {
-//     dependsOn("dokkaHtml")
-//     archiveClassifier.set("dokka")
-//     from(tasks.named("dokkaHtml").get().outputs)
-// }
+tasks.register("dokkaJar", Jar::class) {
+    val dokkaTask = "dokkaHtmlPartial"
+    dependsOn(dokkaTask)
+    archiveClassifier.set("dokka")
+    from(tasks.named(dokkaTask).get().outputs)
+}
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
+    dokkaSourceSets {
+        configureEach {
+            includes.from("overview.md")
+        }
+    }
+}
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
@@ -311,8 +264,8 @@ publishing {
     }
 
     // TODO: configure DOKKA so that it's only published for sync and not base
-//    val common = publications.getByName("kotlinMultiplatform") as MavenPublication
+    val common = publications.getByName("kotlinMultiplatform") as MavenPublication
 //    // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
 //    // completely, hence the .get() below.
-//    common.artifact(tasks.named("dokkaJar").get())
+    common.artifact(tasks.named("dokkaJar").get())
 }
