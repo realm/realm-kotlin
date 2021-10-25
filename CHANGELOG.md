@@ -16,7 +16,7 @@
   * AtomicFu 0.16.3
 
 ### Internal
-* None.
+* Updated to Ktor 1.6.4.
 
 
 ## 0.6.0 (2021-10-15)

@@ -119,7 +119,8 @@ pipeline {
                           when { expression { shouldBuildJvmABIs() } }
                           agent {
                               node {
-                                  label 'windows'
+                                   // FIXME aws-windows-02 has issue with checking out the repo with symlinks
+                                  label 'aws-windows-01'
                               }
                           }
                           steps {
@@ -156,13 +157,31 @@ pipeline {
                 stage('Tests Android - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "connectedAndroidTest")
+                        withLogcatTrace(
+                            "unittest",
+                            {
+                                testAndCollect("packages", "connectedAndroidTest")
+                            }
+                        )
                     }
                 }
                 stage('Integration Tests') {
                     when { expression { runTests } }
                     steps {
-                        testWithServer("test", ["macosTest", "connectedAndroidTest"])
+                        testWithServer([
+                            {
+                                testAndCollect("test", "macosTest")
+                            },
+                            {
+                                withLogcatTrace(
+                                    "integrationtest",
+                                    {
+                                        forwardAdbPorts()
+                                        testAndCollect("test", "connectedAndroidTest")
+                                    }
+                                )
+                            }
+                        ])
                     }
                 }
                 stage('Tests JVM') {
@@ -384,7 +403,7 @@ def runCompilerPluginTest() {
     }
 }
 
-def testWithServer(dir, tasks) {
+def testWithServer(tasks) {
     // Work-around for https://github.com/docker/docker-credential-helpers/issues/82
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'realm-kotlin-ci-password', variable: 'PASSWORD'],
@@ -417,7 +436,7 @@ def testWithServer(dir, tasks) {
         forwardAdbPorts()
 
         tasks.each { task ->
-            testAndCollect(dir, task)
+            task()
         }
     } finally {
         // We assume that creating these containers and the docker network can be considered an atomic operation.
@@ -431,6 +450,48 @@ def testWithServer(dir, tasks) {
             }
         }
     }
+}
+
+def withLogcatTrace(name, task) {
+    try {
+       backgroundPid = startLogCatCollector(name)
+       task()
+    } finally {
+        stopLogCatCollector(backgroundPid, name)
+    }
+}
+String startLogCatCollector(name) {
+  // Cancel build quickly if no device is available. The lock acquired already should
+  // ensure we have access to a device. If not, it is most likely a more severe problem.
+  timeout(time: 1, unit: 'MINUTES') {
+    // Need ADB as root to clear all buffers: https://stackoverflow.com/a/47686978/1389357
+    sh '$ANDROID_SDK_ROOT/platform-tools/adb devices'
+    sh """
+      $ANDROID_SDK_ROOT/platform-tools/adb root
+      $ANDROID_SDK_ROOT/platform-tools/adb logcat -b all -c
+      $ANDROID_SDK_ROOT/platform-tools/adb logcat -v time > 'logcat-${name}.txt' &
+      echo \$! > pid
+    """
+    return readFile("pid").trim()
+  }
+}
+
+def stopLogCatCollector(String backgroundPid, name) {
+  // The pid might not be available if the build was terminated early or stopped due to
+  // a build error.
+  if (backgroundPid != null) {
+    sh "kill ${backgroundPid}"
+    // Zip file generation will fail if the file is already there 
+    // Pipeline Utility Steps Plugin 2.6.1 introduces 'overwrite' property
+    // https://issues.jenkins.io/browse/JENKINS-42591
+    sh "rm -f logcat-${name}.zip"
+    zip([
+      'zipFile': "logcat-${name}.zip",
+      'archive': true,
+      'glob' : "logcat-${name}.txt"
+    ])
+    sh "rm logcat-${name}.txt"
+  }
 }
 
 def forwardAdbPorts() {

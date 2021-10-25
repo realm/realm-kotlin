@@ -199,6 +199,9 @@ void throw_as_java_exception(JNIEnv *jenv) {
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
 %ignore "realm_results_freeze";
 
+// Still missing from sync implementation
+%ignore "realm_sync_client_config_set_metadata_encryption_key";
+
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)
 
