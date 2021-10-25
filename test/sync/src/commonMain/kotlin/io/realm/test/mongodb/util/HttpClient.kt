@@ -36,6 +36,8 @@ fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() ->
     val timeout = Duration.seconds(5).inWholeMilliseconds
     // TODO We probably need to fix the clients, so ktor does not automatically override with
     //  another client if people update the runtime available ones through other dependencies
+    // TODO Using CIO temporarily until we figure out what's going on with the default engine and
+    //  certain requests: https://github.com/realm/realm-kotlin/issues/519
     return HttpClient(CIO) {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
         install(HttpTimeout) {
