@@ -973,21 +973,36 @@ actual object RealmInterop {
 
     actual fun realm_sync_client_config_set_log_callback(
         syncClientConfig: NativePointer,
-        callback: LogCallback
+        callback: SyncLogCallback
     ) {
         realm_wrapper.realm_sync_client_config_set_log_callback(
             syncClientConfig.cptr(),
             staticCFunction { userData, logLevel, message ->
-                val userDataLogCallback = safeUserData<LogCallback>(userData)
-                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
+                val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
+                val intLogLevel = logLevel.toInt()
+                val shortLogLevel = when {
+                    intLogLevel <= CoreLogLevel.RLM_LOG_LEVEL_TRACE.priority ->
+                        CoreLogLevel.RLM_LOG_LEVEL_ALL.priority
+                    intLogLevel == CoreLogLevel.RLM_LOG_LEVEL_DETAIL.priority ->
+                        CoreLogLevel.RLM_LOG_LEVEL_INFO.priority
+                    else -> intLogLevel
+                }.toShort()
+
+                userDataLogCallback.log(shortLogLevel, message?.toKString())
             },
             StableRef.create(callback.freeze()).asCPointer(),
-            staticCFunction { userData -> disposeUserData<() -> LogCallback>(userData) }
+            staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
         )
     }
 
-    actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {
-        realm_wrapper.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.toUInt())
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realm_wrapper.realm_sync_client_config_set_log_level(
+            syncClientConfig.cptr(),
+            level.priority.toUInt()
+        )
     }
 
     actual fun realm_sync_client_config_set_metadata_mode(

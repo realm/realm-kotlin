@@ -38,9 +38,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class SyncedRealmTests {
 
     companion object {
@@ -495,7 +493,7 @@ class SyncedRealmTests {
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
-    ).path(path = "$tmpDir/test.realm")
+    ).path(path)
         .name(name)
         .build()
 }
