@@ -21,6 +21,7 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
+import io.realm.mongodb.SyncException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -493,9 +494,10 @@ actual object RealmInterop {
 
     actual fun realm_sync_set_error_handler(
         syncConfig: NativePointer,
-        errorHandler: (syncSession: NativePointer, error: AppException) -> Unit
+        errorHandler: SyncErrorCallback
     ) {
-        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
+//        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
+        TODO()
     }
 
     actual fun realm_app_config_new(

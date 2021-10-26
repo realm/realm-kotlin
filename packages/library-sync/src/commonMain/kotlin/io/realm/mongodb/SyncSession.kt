@@ -53,6 +53,6 @@ interface SyncSession {
          * @param session the [SyncSession] in which this error happened.
          * @param error the type of error.
          */
-        fun onError(session: SyncSession, error: AppException)
+        fun onError(session: SyncSession, error: SyncException)
     }
 }

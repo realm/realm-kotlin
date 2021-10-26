@@ -20,6 +20,7 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
+import io.realm.mongodb.SyncException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 
@@ -159,10 +160,7 @@ expect object RealmInterop {
         syncClientConfig: NativePointer,
         metadataMode: MetadataMode
     )
-    fun realm_sync_set_error_handler(
-        syncConfig: NativePointer,
-        errorHandler: (syncSession: NativePointer, error: AppException) -> Unit
-    )
+    fun realm_sync_set_error_handler(syncConfig: NativePointer, errorHandler: SyncErrorCallback)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer

@@ -23,6 +23,9 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
+import io.realm.mongodb.SyncErrorCategory
+import io.realm.mongodb.SyncErrorCode
+import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
@@ -60,6 +63,7 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.strerror
 import platform.posix.uint8_tVar
+import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
@@ -80,6 +84,8 @@ import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
+import realm_wrapper.realm_sync_error_category_e
+import realm_wrapper.realm_sync_session_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -900,13 +906,14 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error ->
+            staticCFunction { userdata, user, error: CPointer<realm_app_error_t /* = realm_wrapper.realm_app_error */>? ->
                 val userDataCallback = safeUserData<CinteropCallback>(userdata)
                 if (error == null) {
                     // Remember to clone user object or else it will be invalidated right after we leave this callback
                     val clonedUser = realm_clone(user)
                     userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
+                    error
                     userDataCallback.onError(AppException())
                 }
             },
@@ -1003,14 +1010,28 @@ actual object RealmInterop {
 
     actual fun realm_sync_set_error_handler(
         syncConfig: NativePointer,
-        errorHandler: (syncSession: NativePointer, error: AppException) -> Unit
+        errorHandler: SyncErrorCallback
     ) {
         realm_wrapper.realm_sync_config_set_error_handler(
             syncConfig.cptr(),
-            staticCFunction { userData, syncSession, _ ->
-                val errorCallback = safeUserData<(NativePointer, AppException) -> Unit>(userData)
+            staticCFunction { userData, syncSession, error ->
+                val syncException = error.useContents {
+                    SyncException(
+                        errorCode = this.error_code.let {
+                            SyncErrorCode(
+                                SyncErrorCategory.valueOf(it.category.name),
+                                it.value,
+                                it.message?.toKString() ?: ""
+                            )
+                        },
+                        detailedMessage = this.detailed_message?.toKString() ?: "",
+                        fatal = this.is_fatal,
+                        unrecognizedByClient = this.is_unrecognized_by_client
+                    )
+                }
+                val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper(syncSession)
-                errorCallback(session, AppException())
+                errorCallback.onError(session, syncException)
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->

@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.mongodb.AppException
+import io.realm.mongodb.SyncException
 
 // TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
 interface Callback {
@@ -34,4 +35,8 @@ interface ErrorHandlerCallback {
 
 interface LogCallback {
     fun log(logLevel: Short, message: String?)
+}
+
+interface SyncErrorCallback {
+    fun onError(pointer: NativePointer, throwable: SyncException)
 }
