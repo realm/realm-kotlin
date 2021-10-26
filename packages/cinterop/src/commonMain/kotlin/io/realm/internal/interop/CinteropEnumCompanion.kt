@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,9 @@
 
 package io.realm.internal.interop
 
-import io.realm.internal.interop.sync.AppError
-
-// TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
-interface Callback {
-    fun onChange(change: NativePointer)
+interface CinteropEnumCompanion<T : Enum<T>> {
+    fun from(value: Int): T
 }
 
-interface CinteropCallback {
-    fun onSuccess(pointer: NativePointer)
-    fun onError(appError: AppError)
-}
+expect inline fun <reified T: Enum<T>> enumFromValue(value: Int): T
+expect inline fun <reified T: Enum<T>> enumFromValue(value: UInt): T

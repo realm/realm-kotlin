@@ -11,7 +11,7 @@ headerFilter = realm.h
 // libraryPaths.macos_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
 // libraryPaths.ios_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
 linkerOpts = -lz -framework Foundation -framework CoreFoundation -framework Security
-strictEnums = realm_errno
+strictEnums = realm_errno realm_app_error_category_e realm_app_errno_service
 ---
 // FIXME These symbols seems to be undefined, so for now just adding them here
 #include <dirent.h>

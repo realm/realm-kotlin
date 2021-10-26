@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,11 @@
 
 package io.realm.internal.interop
 
-import io.realm.internal.interop.sync.AppError
+import kotlinx.cinterop.CEnum
 
-// TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
-interface Callback {
-    fun onChange(change: NativePointer)
+actual inline fun <reified T : Enum<T>> enumFromValue(value: Int): T = enumValues<T>().first {
+    ((it as NativeEnum<T>).nativeValue as (CEnum)).value == value
 }
-
-interface CinteropCallback {
-    fun onSuccess(pointer: NativePointer)
-    fun onError(appError: AppError)
+actual inline fun <reified T : Enum<T>> enumFromValue(value: UInt): T = enumValues<T>().first {
+    ((it as NativeEnum<T>).nativeValue as (CEnum)).value == value
 }

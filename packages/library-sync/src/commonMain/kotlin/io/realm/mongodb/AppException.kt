@@ -16,8 +16,10 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.interop.sync.AppError
+
 @Suppress("ForbiddenComment")
 // TODO: implement actual AppException with sync error codes hierarchy
-class AppException(
-    override val message: String,
-) : Exception(message)
+class AppException internal constructor(
+    internal val appError: AppError
+) : Exception(appError.message)

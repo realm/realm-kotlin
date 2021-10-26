@@ -19,10 +19,10 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
-import io.realm.mongodb.AppException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
@@ -908,7 +908,15 @@ actual object RealmInterop {
                     val clonedUser = realm_clone(user)
                     userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
-                    userDataCallback.onError(AppException(error.pointed.message!!.toKString()))
+                    val appError = with(error.pointed) {
+                        AppError.createAppError(
+                            error_category.value.toInt(),
+                            error_code,
+                            message!!.toKString(),
+                            link_to_server_logs!!.toKString()
+                        )
+                    }
+                    userDataCallback.onError(appError)
                 }
             },
             StableRef.create(callback).asCPointer(),

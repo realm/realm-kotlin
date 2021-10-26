@@ -17,11 +17,13 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.util.Validation
 import io.realm.mongodb.App
+import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import kotlin.coroutines.resume
@@ -56,8 +58,8 @@ internal class AppImpl(
                         continuation.resume(UserImpl(pointer, this@AppImpl))
                     }
 
-                    override fun onError(throwable: Throwable) {
-                        continuation.resumeWithException(throwable)
+                    override fun onError(appError: AppError) {
+                        continuation.resumeWithException(AppException(appError))
                     }
                 }
             )
