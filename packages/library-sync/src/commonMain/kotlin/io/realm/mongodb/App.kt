@@ -24,10 +24,10 @@ import io.realm.mongodb.internal.AppImpl
  * An **App** is the main client-side entry point for interacting with a **MongoDB Realm App**.
  *
  * The **App** can be used to:
- * - Register uses and perform various user-related operations through authentication providers
- * - Synchronize data between the local device and a remote Realm App with Synchronized Realms
+ * - Register and authenticate users.
+ * - Synchronize data between the local device and a backend Realm App with synchronized realms.
  *
- * To create an app that is linked with a remote **Realm App** initialize Realm and configure the
+ * To create an app that is linked with a remote **Realm App**, initialize Realm and configure the
  * **App** as shown below:
  *
  * ```
