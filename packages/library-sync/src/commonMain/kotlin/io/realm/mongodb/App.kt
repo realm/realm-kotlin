@@ -38,7 +38,7 @@ import io.realm.mongodb.internal.AppImpl
  *
  *         init {
  *              realm = runBlocking {
- *                  val user = app.login(Credentials.emailPassword("user@example.org", "password"))
+ *                  val user = app.login(Credentials.anonymous())
  *                  val config = SyncConfiguration.Builder(
  *                      schema = setOf(YourRealmObject::class),
  *                      user = user,
@@ -57,8 +57,6 @@ interface App {
 
     /**
      * Log in as a user with the given credentials associated with an authentication provider.
-     *
-     * The user who logs in becomes the current user.
      *
      * @param credentials the credentials representing the type of login.
      * @return the logged in [User].
