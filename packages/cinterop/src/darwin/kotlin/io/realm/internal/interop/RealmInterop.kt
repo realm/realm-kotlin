@@ -44,6 +44,7 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
@@ -60,6 +61,7 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.strerror
 import platform.posix.uint8_tVar
+import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
@@ -899,14 +901,14 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error ->
+            staticCFunction { userdata, user, error: CPointer<realm_app_error_t /* = realm_wrapper.realm_app_error */>? ->
                 val userDataCallback = safeUserData<CinteropCallback>(userdata)
                 if (error == null) {
                     // Remember to clone user object or else it will be invalidated right after we leave this callback
                     val clonedUser = realm_clone(user)
                     userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
-                    userDataCallback.onError(AppException())
+                    userDataCallback.onError(AppException(error.pointed.message!!.toKString()))
                 }
             },
             StableRef.create(callback).asCPointer(),

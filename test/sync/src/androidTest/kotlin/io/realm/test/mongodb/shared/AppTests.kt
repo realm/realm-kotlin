@@ -99,6 +99,8 @@ class AppTests {
             //  https://github.com/realm/realm-kotlin/issues/426
             assertFailsWith<AppException> {
                 app.login(credentials)
+            }.let { exception ->
+                assertEquals("invalid username/password", exception.message)
             }
         }
     }

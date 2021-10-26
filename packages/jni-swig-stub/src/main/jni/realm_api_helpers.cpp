@@ -244,11 +244,16 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                     // TODO OPTIMIZE Make central global reference table of classes
                     //  https://github.com/realm/realm-kotlin/issues/460
                     jclass exception_class = jenv->FindClass("io/realm/mongodb/AppException");
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
-                                                                               "()V");
 
-                    jobject throwable = jenv->NewObject(exception_class, exception_constructor);
-
+                    // TODO Propagate all error information to AppException, for now just ensure
+                    //  that we pass message to signal some kind of description
+                    // static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
+                                                                               // "(Ljava/lang/String;JJLjava/lang/String;)V");
+                    // long i = error->error_category;
+                    // long code = error->error_code;
+                    // jobject throwable = jenv->NewObject(exception_class, exception_constructor, to_jstring(jenv, error->message), i, code, to_jstring(jenv, error->link_to_server_logs));
+                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(Ljava/lang/String;)V");
+                    jobject throwable = jenv->NewObject(exception_class, exception_constructor, to_jstring(jenv, error->message));
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,
                                          throwable);
@@ -361,19 +366,18 @@ static void pass_jvm_response_to_core(JNIEnv *jenv, jobject j_response, void* re
             j_response, get_headers_method)));
 
     auto stacked_headers = std::vector<std::string>(); // Pins headers to function stack
-    auto response_headers = std::vector<realm_http_header_t>();
-
     for (int i = 0; i < java_headers.size(); i = i + 2) {
         JStringAccessor key = java_headers[i];
         JStringAccessor value = java_headers[i + 1];
         stacked_headers.push_back(std::move(key));
         stacked_headers.push_back(std::move(value));
-
+    }
+    auto response_headers = std::vector<realm_http_header_t>();
+    for (int i = 0; i < java_headers.size(); i = i + 2) {
         // FIXME REFACTOR when C++20 will be available
         realm_http_header header;
         header.name = stacked_headers[i].c_str();
         header.value = stacked_headers[i + 1].c_str();
-
         response_headers.push_back(header);
     }
 
