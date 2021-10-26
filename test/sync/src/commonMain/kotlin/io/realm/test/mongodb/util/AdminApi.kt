@@ -210,15 +210,9 @@ open class AdminApiImpl internal constructor(
 
     override suspend fun restartSync() {
         withContext(dispatcher) {
-            println("----------> BEFORE getBackingDBServiceId")
             val backingDbServiceId = getBackingDBServiceId()
-            println("----------> AFTER  getBackingDBServiceId")
-            println("----------> BEFORE controlSync false")
             controlSync(backingDbServiceId, false)
-            println("----------> AFTER  controlSync false")
-            println("----------> BEFORE controlSync true")
             controlSync(backingDbServiceId, true)
-            println("----------> AFTER  controlSync true")
         }
     }
 

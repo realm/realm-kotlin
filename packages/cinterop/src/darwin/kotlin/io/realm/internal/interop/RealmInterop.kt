@@ -84,13 +84,7 @@ import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
-import kotlin.collections.List
-import kotlin.collections.fold
-import kotlin.collections.forEachIndexed
-import kotlin.collections.mapIndexed
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
-import kotlin.collections.withIndex
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 

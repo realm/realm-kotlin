@@ -15,6 +15,7 @@
  */
 package io.realm.test.shared
 
+import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
@@ -25,6 +26,7 @@ import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncSession
+import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -32,7 +34,6 @@ import io.realm.test.mongodb.shared.DEFAULT_NAME
 import io.realm.test.mongodb.shared.DEFAULT_PARTITION_VALUE
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.randomEmail
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
@@ -75,14 +76,10 @@ class SyncedRealmTests {
     @AfterTest
     fun tearDown() {
         if (this::app.isInitialized) {
-            println("----------> BEFORE app.close")
             app.asTestApp.close()
-            println("----------> AFTER  app.close")
         }
         if (this::realm.isInitialized && !realm.isClosed()) {
-            println("----------> BEFORE realm.close")
             realm.close()
-            println("----------> AFTER  realm.close")
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }
@@ -149,37 +146,31 @@ class SyncedRealmTests {
 
         runBlocking {
             val user = createTestUser()
-            val async: Deferred<Realm> = async {
-                println("----------> INSIDE runBlocking")
+            println("----------> INSIDE runBlocking")
 
-                // Create Sync configuration with error handler.
-                val config = createSyncConfig(
-                    user = user,
-                    partitionValue = "default",
-                    path = "$tmpDir/test.realm",
-                    errorHandler = { _: SyncSession, exception: AppException ->
-                        println("----------> INSIDE error handler")
+            // Create Sync configuration with error handler.
+            val config = createSyncConfig(
+                user = user,
+                partitionValue = "default",
+                path = "$tmpDir/test.realm",
+                errorHandler = object : ErrorHandler {
+                    override fun onError(session: SyncSession, error: AppException) {
                         runBlocking {
-                            channel.send(exception)
+                            channel.send(error)
                         }
                     }
-                )
+                }
+            )
 
-                realm = Realm.open(config)
-                assertNotNull(realm)
-            }
+            realm = Realm.open(config)
+            assertNotNull(realm)
 
             // Restart sync
-            println("----------> BEFORE restartSync")
             app.restartSync()
-            println("----------> AFTER  restartSync")
-
-            println("----------> BEFORE receive")
-            val exception = channel.receive()
-            println("----------> AFTER  receive")
 
             // Await for exception to happen
-            async.cancel()
+            val exception = channel.receive()
+
             channel.close()
 
             // Validate that the exception was captured
@@ -544,16 +535,18 @@ class SyncedRealmTests {
         path: String? = null,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
-        errorHandler: (SyncSession, AppException) -> Unit = { _, _ -> Unit }
+        log: LogConfiguration? = null,
+        errorHandler: SyncSession.ErrorHandler? = null
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
     ).path(path)
         .name(name)
-        .errorHandler(errorHandler)
         .let { builder ->
             if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+            if (errorHandler != null) builder.errorHandler(errorHandler)
+            if (log != null) builder.log(log.level, log.loggers)
             builder
         }.build()
 }

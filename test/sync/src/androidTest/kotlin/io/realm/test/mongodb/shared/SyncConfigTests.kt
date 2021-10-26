@@ -40,12 +40,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.time.ExperimentalTime
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
 
-@ExperimentalTime
 @ExperimentalCoroutinesApi
 class SyncConfigTests {
 
@@ -71,20 +69,32 @@ class SyncConfigTests {
         val user = createTestUser()
         val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
         val customLoggers = listOf(logger)
-        val config = createSyncConfig(
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            name = DEFAULT_NAME,
-            log = LogConfiguration(LogLevel.DEBUG, customLoggers)
-        )
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).also { builder ->
+            builder.log(LogLevel.DEBUG, customLoggers)
+        }.build()
         assertEquals(LogLevel.DEBUG, config.log.level)
         assertEquals(logger, config.log.loggers[1]) // Additional logger placed after default logger
     }
 
     @Test
     fun errorHandler() {
-        val errorHandler = { _: SyncSession, _: AppException -> /* No-op */ }
+        val errorHandler = object : SyncSession.ErrorHandler {
+            override fun onError(session: SyncSession, error: AppException) {
+                // No-op
+            }
+        }
         val user = createTestUser()
-        val config = createSyncConfig(user = user, name = DEFAULT_NAME, errorHandler = errorHandler)
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).also { builder ->
+            builder.errorHandler(errorHandler)
+        }.build()
         assertEquals(errorHandler, config.errorHandler)
     }
 
@@ -642,16 +652,16 @@ class SyncConfigTests {
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
-        errorHandler: (SyncSession, AppException) -> Unit = { _, _ -> Unit }
+        errorHandler: SyncSession.ErrorHandler? = null
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
     ).path(path)
         .name(name)
-        .errorHandler(errorHandler)
         .let { builder ->
             if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+            if (errorHandler != null) builder.errorHandler(errorHandler)
             if (log != null) builder.log(log.level, log.loggers)
             builder
         }.build()

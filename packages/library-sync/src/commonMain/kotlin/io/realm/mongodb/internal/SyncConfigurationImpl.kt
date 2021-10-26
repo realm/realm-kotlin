@@ -30,7 +30,7 @@ internal class SyncConfigurationImpl(
     localConfiguration: RealmConfigurationImpl,
     override val partitionValue: PartitionValue,
     override val user: UserImpl,
-    override val errorHandler: (SyncSession, AppException) -> Unit
+    override val errorHandler: SyncSession.ErrorHandler?
 ) : InternalRealmConfiguration by localConfiguration, SyncConfiguration {
 
     private val nativeSyncConfig: NativePointer =
@@ -38,7 +38,7 @@ internal class SyncConfigurationImpl(
 
     init {
         val errorCallback = { syncSession: NativePointer, error: AppException ->
-            errorHandler.invoke(SyncSessionImpl(syncSession), error)
+            errorHandler?.onError(SyncSessionImpl(syncSession), error) ?: Unit
         }.freeze()
         RealmInterop.realm_sync_set_error_handler(nativeSyncConfig, errorCallback)
         RealmInterop.realm_config_set_sync_config(localConfiguration.nativeConfig, nativeSyncConfig)
