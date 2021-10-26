@@ -987,16 +987,7 @@ actual object RealmInterop {
             syncClientConfig.cptr(),
             staticCFunction { userData, logLevel, message ->
                 val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
-                val intLogLevel = logLevel.toInt()
-                val shortLogLevel = when {
-                    intLogLevel <= CoreLogLevel.RLM_LOG_LEVEL_TRACE.priority ->
-                        CoreLogLevel.RLM_LOG_LEVEL_ALL.priority
-                    intLogLevel == CoreLogLevel.RLM_LOG_LEVEL_DETAIL.priority ->
-                        CoreLogLevel.RLM_LOG_LEVEL_INFO.priority
-                    else -> intLogLevel
-                }.toShort()
-
-                userDataLogCallback.log(shortLogLevel, message?.toKString())
+                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
             },
             StableRef.create(callback.freeze()).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
