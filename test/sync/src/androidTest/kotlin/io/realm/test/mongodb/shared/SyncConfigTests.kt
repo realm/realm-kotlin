@@ -16,16 +16,15 @@
 
 package io.realm.test.mongodb.shared
 
-import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
-import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
@@ -54,7 +53,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        app = TestApp(logLevel = LogLevel.DEBUG)
+        app = TestApp()
     }
 
     @AfterTest
@@ -83,7 +82,7 @@ class SyncConfigTests {
     @Test
     fun errorHandler() {
         val errorHandler = object : SyncSession.ErrorHandler {
-            override fun onError(session: SyncSession, error: AppException) {
+            override fun onError(session: SyncSession, error: SyncException) {
                 // No-op
             }
         }
@@ -139,7 +138,11 @@ class SyncConfigTests {
     @Test
     fun equals_sameObject() {
         val user = createTestUser()
-        val config = createSyncConfig(user)
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
         assertEquals(config, config)
     }
 
@@ -188,8 +191,11 @@ class SyncConfigTests {
     @Test
     fun equals_syncSpecificFields() {
         val user = createTestUser()
-        val config = createSyncConfig(user = user, name = DEFAULT_NAME)
-        assertEquals(config.name, DEFAULT_NAME)
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
         assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
     }
 
@@ -216,7 +222,13 @@ class SyncConfigTests {
     @Test
     fun encryption() {
         val user = createTestUser()
-        val config = createSyncConfig(user = user, encryptionKey = getRandomKey())
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).also { builder ->
+            builder.encryptionKey(getRandomKey())
+        }.build()
         assertNotNull(config.encryptionKey)
     }
 
@@ -322,8 +334,12 @@ class SyncConfigTests {
     @Test
     fun getPartitionValue() {
         val user = createTestUser()
-        val syncConfig = createSyncConfig(user)
-        assertEquals(DEFAULT_PARTITION_VALUE, syncConfig.partitionValue.asString())
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
+        assertEquals(DEFAULT_PARTITION_VALUE, config.partitionValue.asString())
     }
 
 //    @Test
@@ -643,26 +659,4 @@ class SyncConfigTests {
             app.login(Credentials.emailPassword(email, password))
         }
     }
-
-    @Suppress("LongParameterList")
-    private fun createSyncConfig(
-        user: User,
-        partitionValue: String = DEFAULT_PARTITION_VALUE,
-        path: String? = null,
-        name: String = DEFAULT_NAME,
-        encryptionKey: ByteArray? = null,
-        log: LogConfiguration? = null,
-        errorHandler: SyncSession.ErrorHandler? = null
-    ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = setOf(ParentPk::class, ChildPk::class),
-        user = user,
-        partitionValue = partitionValue
-    ).path(path)
-        .name(name)
-        .let { builder ->
-            if (encryptionKey != null) builder.encryptionKey(encryptionKey)
-            if (errorHandler != null) builder.errorHandler(errorHandler)
-            if (log != null) builder.log(log.level, log.loggers)
-            builder
-        }.build()
 }

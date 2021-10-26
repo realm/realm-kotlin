@@ -50,7 +50,7 @@ interface RealmLogger {
 
     companion object {
         /**
-         * Converts a Core log level to a [LogLevel]. For internal use only.
+         * Converts a Core log level to a library [LogLevel]. For internal use only.
          */
         fun toLogLevel(level: Short): LogLevel {
             return when (level.toInt()) {

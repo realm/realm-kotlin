@@ -60,8 +60,7 @@ internal class LogCatLogger(
     }
 
     private fun printMessage(priority: Int, logMessage: String) {
-        // ALL (0) and TRACE (1) don't exist on Android's Log so use VERBOSE instead
-        // Core's DEBUG (2) doesn't match Android's DEBUG (3) so match it manually
+        // ALL (0) and TRACE (1) do not exist on Android's Log so use VERBOSE instead
         when {
             priority <= LogLevel.TRACE.priority -> Log.v(tag, logMessage)
             priority == LogLevel.DEBUG.priority -> Log.d(tag, logMessage)

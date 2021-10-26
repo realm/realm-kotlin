@@ -469,13 +469,16 @@ actual object RealmInterop {
 
     actual fun realm_sync_client_config_set_log_callback(
         syncClientConfig: NativePointer,
-        callback: LogCallback
+        callback: SyncLogCallback
     ) {
         realmc.set_log_callback(syncClientConfig.cptr(), callback)
     }
 
-    actual fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int) {
-        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level)
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.priority)
     }
 
     actual fun realm_sync_client_config_set_metadata_mode(
@@ -497,7 +500,7 @@ actual object RealmInterop {
         errorHandler: SyncErrorCallback
     ) {
 //        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
-        TODO()
+        // TODO
     }
 
     actual fun realm_app_config_new(

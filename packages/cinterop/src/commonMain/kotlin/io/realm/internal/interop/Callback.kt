@@ -33,10 +33,11 @@ interface ErrorHandlerCallback {
     fun onError(pointer: NativePointer, throwable: AppException)
 }
 
-interface LogCallback {
-    fun log(logLevel: Short, message: String?)
-}
-
 interface SyncErrorCallback {
     fun onError(pointer: NativePointer, throwable: SyncException)
+}
+
+interface SyncLogCallback {
+    // Passes core log levels as shorts to avoid unnecessary jumping between the SDK and JNI
+    fun log(logLevel: Short, message: String?)
 }

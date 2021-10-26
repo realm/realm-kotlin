@@ -8,7 +8,7 @@ import io.realm.log.RealmLogger
  */
 class TestLogger : RealmLogger {
     override val tag: String = "IGNORE"
-    override val level: LogLevel = LogLevel.ALL
+    override val level: LogLevel = LogLevel.NONE
     var logLevel: LogLevel = LogLevel.NONE
     var throwable: Throwable? = null
     var message: String? = null

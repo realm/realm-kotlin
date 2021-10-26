@@ -152,9 +152,9 @@ expect object RealmInterop {
 
     fun realm_sync_client_config_set_log_callback(
         syncClientConfig: NativePointer,
-        callback: LogCallback
+        callback: SyncLogCallback
     )
-    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: Int)
+    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: CoreLogLevel)
 
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,

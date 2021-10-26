@@ -22,9 +22,9 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
@@ -43,9 +43,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class SyncedRealmTests {
 
     companion object {
@@ -142,7 +140,7 @@ class SyncedRealmTests {
 
     @Test
     fun testErrorHandler() {
-        val channel = Channel<AppException>(1).freeze()
+        val channel = Channel<SyncException>(1).freeze()
 
         runBlocking {
             val user = createTestUser()
@@ -154,7 +152,7 @@ class SyncedRealmTests {
                 partitionValue = "default",
                 path = "$tmpDir/test.realm",
                 errorHandler = object : ErrorHandler {
-                    override fun onError(session: SyncSession, error: AppException) {
+                    override fun onError(session: SyncSession, error: SyncException) {
                         runBlocking {
                             channel.send(error)
                         }
@@ -174,7 +172,7 @@ class SyncedRealmTests {
             channel.close()
 
             // Validate that the exception was captured
-            assertIs<AppException>(exception)
+            assertIs<SyncException>(exception)
         }
     }
 
