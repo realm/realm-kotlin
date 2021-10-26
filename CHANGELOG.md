@@ -16,6 +16,7 @@
   * AtomicFu 0.16.3
 
 ### Internal
+* Updated to Realm Core commit: ecfc1bbb734a8520d08f04f12f083641309799b3
 * Updated to Ktor 1.6.4.
 
 
