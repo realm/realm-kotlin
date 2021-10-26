@@ -103,10 +103,8 @@ interface SyncConfiguration : RealmConfiguration {
          *
          * @param errorHandler lambda to handle the error.
          */
-        fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder {
-            this.errorHandler = errorHandler
-            return this
-        }
+        fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
+            apply { this.errorHandler = errorHandler }
 
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -133,7 +131,12 @@ interface SyncConfiguration : RealmConfiguration {
                 encryptionKey
             )
 
-            return SyncConfigurationImpl(localConfiguration, partitionValue, user as UserImpl, errorHandler)
+            return SyncConfigurationImpl(
+                localConfiguration,
+                partitionValue,
+                user as UserImpl,
+                errorHandler
+            )
         }
     }
 }

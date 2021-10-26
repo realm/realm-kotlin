@@ -23,7 +23,6 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
-import io.realm.mongodb.SyncErrorCategory
 import io.realm.mongodb.SyncErrorCode
 import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
@@ -84,8 +83,6 @@ import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
-import realm_wrapper.realm_sync_error_category_e
-import realm_wrapper.realm_sync_session_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -1025,9 +1022,9 @@ actual object RealmInterop {
                     SyncException(
                         errorCode = this.error_code.let {
                             SyncErrorCode(
-                                SyncErrorCategory.valueOf(it.category.name),
                                 it.value,
-                                it.message?.toKString() ?: ""
+                                it.message?.toKString() ?: "",
+                                it.category.value.toShort()
                             )
                         },
                         detailedMessage = this.detailed_message?.toKString() ?: "",
@@ -1037,7 +1034,7 @@ actual object RealmInterop {
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper(syncSession)
-                errorCallback.onError(session, syncException)
+                errorCallback.onSyncError(session, syncException)
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->

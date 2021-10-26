@@ -34,7 +34,7 @@ interface ErrorHandlerCallback {
 }
 
 interface SyncErrorCallback {
-    fun onError(pointer: NativePointer, throwable: SyncException)
+    fun onSyncError(pointer: NativePointer, throwable: SyncException)
 }
 
 interface SyncLogCallback {

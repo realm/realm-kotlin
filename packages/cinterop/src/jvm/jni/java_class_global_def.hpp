@@ -45,18 +45,24 @@ private:
         : m_java_util_hashmap(env, "java/util/HashMap", false)
         , m_io_realm_network_transport(env, "io/realm/internal/interop/sync/NetworkTransport", false)
         , m_io_realm_response(env, "io/realm/internal/interop/sync/Response", false)
-        , m_kotlin_function2(env, "kotlin/jvm/functions/Function2", false)
         , m_io_realm_long_pointer_wrapper(env, "io/realm/internal/interop/LongPointerWrapper", false)
         , m_io_realm_app_exception(env, "io/realm/mongodb/AppException", false)
+        , m_io_realm_sync_exception(env, "io/realm/mongodb/SyncException", false)
+        , m_io_realm_sync_error_code(env, "io/realm/mongodb/SyncErrorCode", false)
+        , m_io_realm_sync_log_callback(env, "io/realm/internal/interop/SyncLogCallback", false)
+        , m_io_realm_sync_error_callback(env, "io/realm/internal/interop/SyncErrorCallback", false)
     {
     }
 
     jni_util::JavaClass m_java_util_hashmap;
-    jni_util::JavaClass m_kotlin_function2;
-    jni_util::JavaClass m_io_realm_long_pointer_wrapper;
-    jni_util::JavaClass m_io_realm_app_exception;
     jni_util::JavaClass m_io_realm_network_transport;
     jni_util::JavaClass m_io_realm_response;
+    jni_util::JavaClass m_io_realm_long_pointer_wrapper;
+    jni_util::JavaClass m_io_realm_app_exception;
+    jni_util::JavaClass m_io_realm_sync_exception;
+    jni_util::JavaClass m_io_realm_sync_error_code;
+    jni_util::JavaClass m_io_realm_sync_log_callback;
+    jni_util::JavaClass m_io_realm_sync_error_callback;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -93,11 +99,6 @@ public:
         return instance()->m_java_util_hashmap;
     }
 
-    inline static const jni_util::JavaClass& kotlin_function2()
-    {
-        return instance()->m_kotlin_function2;
-    }
-
     inline static const jni_util::JavaClass& long_pointer_wrapper()
     {
         return instance()->m_io_realm_long_pointer_wrapper;
@@ -106,6 +107,26 @@ public:
     inline static const jni_util::JavaClass& app_exception()
     {
         return instance()->m_io_realm_app_exception;
+    }
+
+    inline static const jni_util::JavaClass& sync_exception()
+    {
+        return instance()->m_io_realm_sync_exception;
+    }
+
+    inline static const jni_util::JavaClass& sync_error_code()
+    {
+        return instance()->m_io_realm_sync_error_code;
+    }
+
+    inline static const jni_util::JavaClass& sync_log_callback()
+    {
+        return instance()->m_io_realm_sync_log_callback;
+    }
+
+    inline static const jni_util::JavaClass& sync_error_callback()
+    {
+        return instance()->m_io_realm_sync_error_callback;
     }
 };
 

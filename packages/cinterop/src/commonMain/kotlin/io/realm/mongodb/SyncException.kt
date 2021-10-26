@@ -7,18 +7,24 @@ class SyncException(
     val unrecognizedByClient: Boolean,
 
     // TODO user_info_map?
-): Exception(detailedMessage)
+) : Exception(detailedMessage)
 
-data class SyncErrorCode(
-    val category: SyncErrorCategory,
+class SyncErrorCode(
     val value: Int,
-    val message: String
-)
+    val message: String,
+    coreCategory: Short
+) {
+    val category: SyncErrorCategory = SyncErrorCategory.fromValue(coreCategory)
+}
 
-enum class SyncErrorCategory {
+expect enum class SyncErrorCategory {
     RLM_SYNC_ERROR_CATEGORY_CLIENT,
     RLM_SYNC_ERROR_CATEGORY_CONNECTION,
     RLM_SYNC_ERROR_CATEGORY_SESSION,
     RLM_SYNC_ERROR_CATEGORY_SYSTEM,
-    RLM_SYNC_ERROR_CATEGORY_UNKNOWN
+    RLM_SYNC_ERROR_CATEGORY_UNKNOWN;
+
+    companion object {
+        fun fromValue(value: Short): SyncErrorCategory
+    }
 }

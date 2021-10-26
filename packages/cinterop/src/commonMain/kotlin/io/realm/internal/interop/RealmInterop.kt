@@ -19,8 +19,6 @@ package io.realm.internal.interop
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
-import io.realm.mongodb.AppException
-import io.realm.mongodb.SyncException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 

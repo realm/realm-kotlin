@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.realm.test.shared
 
 import io.realm.LogConfiguration
@@ -22,6 +23,7 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncException
@@ -66,7 +68,7 @@ class SyncedRealmTests {
         tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = createSyncConfig(
             user = user,
-            partitionValue = "default",
+            partitionValue = DEFAULT_PARTITION_VALUE,
             path = "$tmpDir/test.realm"
         )
     }
@@ -144,21 +146,21 @@ class SyncedRealmTests {
 
         runBlocking {
             val user = createTestUser()
-            println("----------> INSIDE runBlocking")
-
-            // Create Sync configuration with error handler.
-            val config = createSyncConfig(
+            val config = SyncConfiguration.Builder(
+                schema = setOf(ParentPk::class, ChildPk::class),
                 user = user,
-                partitionValue = "default",
-                path = "$tmpDir/test.realm",
-                errorHandler = object : ErrorHandler {
-                    override fun onError(session: SyncSession, error: SyncException) {
-                        runBlocking {
-                            channel.send(error)
+                partitionValue = DEFAULT_PARTITION_VALUE
+            ).path("$tmpDir/test.realm")
+                .log(LogLevel.DEBUG)
+                .also { builder ->
+                    builder.errorHandler(object : ErrorHandler {
+                        override fun onError(session: SyncSession, error: SyncException) {
+                            runBlocking {
+                                channel.send(error)
+                            }
                         }
-                    }
-                }
-            )
+                    })
+                }.build()
 
             realm = Realm.open(config)
             assertNotNull(realm)

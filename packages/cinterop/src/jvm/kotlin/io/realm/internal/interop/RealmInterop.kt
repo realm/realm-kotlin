@@ -20,8 +20,6 @@ import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
-import io.realm.mongodb.AppException
-import io.realm.mongodb.SyncException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -499,8 +497,7 @@ actual object RealmInterop {
         syncConfig: NativePointer,
         errorHandler: SyncErrorCallback
     ) {
-//        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
-        // TODO
+        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
     }
 
     actual fun realm_app_config_new(

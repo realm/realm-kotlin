@@ -435,9 +435,10 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                               [](void* userdata, realm_log_level_e level, const char* message) {
                                                   auto log_callback = static_cast<jobject>(userdata);
                                                   auto jenv = get_env(true);
-                                                  static jmethodID log_method = lookup(jenv, "io/realm/internal/interop/SyncLogCallback",
-                                                                                       "log",
-                                                                                       "(SLjava/lang/String;)V");
+                                                  static JavaMethod log_method(jenv,
+                                                                               JavaClassGlobalDef::sync_log_callback(),
+                                                                               "log",
+                                                                               "(SLjava/lang/String;)V");
                                                   jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
                                               },
                                               jenv->NewGlobalRef(log_callback), // userdata is the log callback
@@ -457,33 +458,47 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
                            managed);
 }
 
-jobject convert_exception(JNIEnv* jenv, const realm_sync_error_t error) {
+jobject convert_sync_exception(JNIEnv* jenv, const realm_sync_error_t error) {
+    static JavaMethod error_code_constructor(jenv,
+                                             JavaClassGlobalDef::sync_error_code(),
+                                             "<init>",
+                                             "(ILjava/lang/String;S)V");
+    jobject error_code = jenv->NewObject(JavaClassGlobalDef::sync_error_code(),
+                                         error_code_constructor,
+                                         error.error_code.value,
+                                         to_jstring(jenv, error.error_code.message),
+                                         error.error_code.category);
+
     static JavaMethod pointer_wrapper_constructor(jenv,
-                                                  JavaClassGlobalDef::app_exception(),
+                                                  JavaClassGlobalDef::sync_exception(),
                                                   "<init>",
-                                                  "()V");
-    return jenv->NewObject(JavaClassGlobalDef::app_exception(),
-                           pointer_wrapper_constructor);
+                                                  "(Lio/realm/mongodb/SyncErrorCode;Ljava/lang/String;ZZ)V");
+
+    return jenv->NewObject(JavaClassGlobalDef::sync_exception(),
+                           pointer_wrapper_constructor,
+                           error_code,
+                           to_jstring(jenv, error.detailed_message),
+                           error.is_fatal,
+                           error.is_unrecognized_by_client);
 }
 
-void
-sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler){
+void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
     realm_sync_config_set_error_handler(sync_config,
                                         [](void* userdata, realm_sync_session_t* session, const realm_sync_error_t error) {
                                             auto jenv = get_env(true);
+                                            auto sync_error_callback = static_cast<jobject>(userdata);
 
                                             jobject session_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(session));
-                                            jobject app_exception = convert_exception(jenv, error);
+                                            jobject sync_exception = convert_sync_exception(jenv, error);
 
-                                            static JavaMethod function2_invoke(jenv,
-                                                                               JavaClassGlobalDef::kotlin_function2(),
-                                                                               "invoke",
-                                                                               "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-
-                                            jenv->CallObjectMethod(static_cast<jobject>(userdata), // Function0 type
-                                                                 function2_invoke,
+                                            static JavaMethod sync_error_method(jenv,
+                                                                                JavaClassGlobalDef::sync_error_callback(),
+                                                                                "onSyncError",
+                                                                                "(Lio/realm/internal/interop/NativePointer;Lio/realm/mongodb/SyncException;)V");
+                                            jenv->CallVoidMethod(sync_error_callback,
+                                                                 sync_error_method,
                                                                  session_pointer_wrapper,
-                                                                 app_exception);
+                                                                 sync_exception);
                                         },
                                         static_cast<jobject>(get_env()->NewGlobalRef(error_handler)),
                                         [](void *userdata) {
