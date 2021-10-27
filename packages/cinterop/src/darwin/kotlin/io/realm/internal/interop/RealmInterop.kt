@@ -1019,12 +1019,12 @@ actual object RealmInterop {
             staticCFunction { userData, syncSession, error ->
                 val syncException = error.useContents {
                     val message = "${this.detailed_message} [" +
-                            "error_code.category='${this.error_code.category}', " +
-                            "error_code.value='${this.error_code.value}', " +
-                            "error_code.message='${this.error_code.message}', " +
-                            "is_fatal='${this.is_fatal}', " +
-                            "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
-                            "]"
+                        "error_code.category='${this.error_code.category}', " +
+                        "error_code.value='${this.error_code.value}', " +
+                        "error_code.message='${this.error_code.message}', " +
+                        "is_fatal='${this.is_fatal}', " +
+                        "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
+                        "]"
                     SyncException(message)
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
