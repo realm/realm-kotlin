@@ -22,7 +22,7 @@ import io.realm.mongodb.internal.CredentialImpl
  * Credentials represent a login with a given login provider.
  *
  * Credentials are used by the MongoDB Realm to verify the user and grant access. The credentials
- * are only useable if the corresponding authentication provider is enabled in the
+ * are only usable if the corresponding authentication provider is enabled in the
  * [MongoDB Realm UI]{https://docs.mongodb.com/realm/authentication/providers/}
  */
 interface Credentials {

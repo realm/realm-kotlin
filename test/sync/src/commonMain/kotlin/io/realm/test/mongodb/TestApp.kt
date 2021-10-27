@@ -37,11 +37,11 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
  * used for testing.
  *
- * @param logLevel Log level used to prime the AppConfiguration.Builder.
- * @param builder The builder used to build the final app. The builder is already primed with the
+ * @param logLevel log level used to prime the AppConfiguration.Builder.
+ * @param builder the builder used to build the final app. The builder is already primed with the
  * default test app configuration, but can be used to override the defaults and add additional
  * options.
- * @param debug Enable trace of command server and rest api calls in the test app.
+ * @param debug enable trace of command server and rest api calls in the test app.
  */
 class TestApp(
     appName: String = TEST_APP_1,
