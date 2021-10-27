@@ -435,9 +435,10 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                               [](void* userdata, realm_log_level_e level, const char* message) {
                                                   auto log_callback = static_cast<jobject>(userdata);
                                                   auto jenv = get_env(true);
-                                                  static jmethodID log_method = lookup(jenv, "io/realm/internal/interop/SyncLogCallback",
-                                                                                       "log",
-                                                                                       "(SLjava/lang/String;)V");
+                                                  static JavaMethod log_method(jenv,
+                                                                               JavaClassGlobalDef::sync_log_callback(),
+                                                                               "log",
+                                                                               "(SLjava/lang/String;)V");
                                                   jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
                                               },
                                               jenv->NewGlobalRef(log_callback), // userdata is the log callback
