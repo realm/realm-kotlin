@@ -32,17 +32,16 @@ import io.realm.mongodb.internal.AppImpl
  *
  * ```
  *     class MyRealmAppClass {
- *         val configuration: AppConfiguration = AppConfiguration.Builder(<APP_ID>).build()
- *         val app: App = App.create(configuration)
+ *         val app: App = App.create(<APP_ID>)
  *         val realm: Realm
  *
  *         init {
  *              realm = runBlocking {
  *                  val user = app.login(Credentials.anonymous())
  *                  val config = SyncConfiguration.Builder(
- *                      schema = setOf(YourRealmObject::class),
  *                      user = user,
  *                      partitionValue = "my-partition"
+ *                      schema = setOf(YourRealmObject::class),
  *                  ).build()
  *
  *                  Realm.open(config)
