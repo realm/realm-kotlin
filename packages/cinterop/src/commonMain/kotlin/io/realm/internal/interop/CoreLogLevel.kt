@@ -16,6 +16,21 @@
 
 package io.realm.internal.interop
 
-interface CoreLogger {
-    fun log(level: Short, message: String)
+expect enum class CoreLogLevel {
+    RLM_LOG_LEVEL_ALL,
+    RLM_LOG_LEVEL_TRACE,
+    RLM_LOG_LEVEL_DEBUG,
+    RLM_LOG_LEVEL_DETAIL,
+    RLM_LOG_LEVEL_INFO,
+    RLM_LOG_LEVEL_WARNING,
+    RLM_LOG_LEVEL_ERROR,
+    RLM_LOG_LEVEL_FATAL,
+    RLM_LOG_LEVEL_OFF;
+
+    // We need this property since it isn't allowed to have constructor params in an expect enum
+    val priority: Int
+
+    companion object {
+        fun valueFromPriority(priority: Short): CoreLogLevel
+    }
 }

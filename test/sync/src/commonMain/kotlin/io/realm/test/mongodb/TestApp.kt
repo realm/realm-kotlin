@@ -49,7 +49,7 @@ class TestApp(
     appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
     logLevel: LogLevel = LogLevel.WARN,
     builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-    debug: Boolean = false,
+    debug: Boolean = false
 ) : App by App.create(builder(testAppConfigurationBuilder(appId, logLevel)).dispatcher(dispatcher).build()),
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, debug, dispatcher) }) {
 

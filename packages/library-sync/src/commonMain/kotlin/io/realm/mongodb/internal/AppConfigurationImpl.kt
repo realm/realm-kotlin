@@ -51,12 +51,11 @@ internal class AppConfigurationImpl(
         }
     )
 
+    // Only freeze anything after all properties are setup as this triggers freezing the actual
+    // AppConfigurationImpl instance itself
     val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
         networkTransport = RealmInterop.realm_network_transport_new(networkTransport)
-    )
-        // Only freeze anything after all properties are setup as this triggers freezing the actual
-        // AppConfigurationImpl instance itself
-        .freeze()
+    ).freeze()
 }

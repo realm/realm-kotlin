@@ -971,6 +971,31 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
 
+    actual fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: SyncLogCallback
+    ) {
+        realm_wrapper.realm_sync_client_config_set_log_callback(
+            syncClientConfig.cptr(),
+            staticCFunction { userData, logLevel, message ->
+                val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
+                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
+            },
+            StableRef.create(callback.freeze()).asCPointer(),
+            staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
+        )
+    }
+
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realm_wrapper.realm_sync_client_config_set_log_level(
+            syncClientConfig.cptr(),
+            level.priority.toUInt()
+        )
+    }
+
     actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,
         metadataMode: MetadataMode
