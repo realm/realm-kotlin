@@ -219,14 +219,9 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
     auto jenv = get_env();
-    // TODO OPTIMIZE Makes multiple lookups of CinteropCallback, but at least only once when
-    //  initializing static variables
-    //  https://github.com/realm/realm-kotlin/issues/460
-    static jmethodID on_success_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
-                                                "onSuccess",
-                                                "(Lio/realm/internal/interop/NativePointer;)V");
-    static jmethodID on_error_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
-                                              "onError", "(Ljava/lang/Throwable;)V");
+    JavaClass cinterop_callback(jenv, "io/realm/internal/interop/CinteropCallback");
+    static JavaMethod on_success_method(jenv, cinterop_callback, "onSuccess", "(Lio/realm/internal/interop/NativePointer;)V");
+    static JavaMethod on_error_method(jenv, cinterop_callback, "onError", "(Ljava/lang/Throwable;)V");
 
     realm_app_log_in_with_credentials(
             app,
@@ -241,25 +236,24 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                                          on_error_method,
                                          jenv->ExceptionOccurred());
                 } else if (error) {
-                    // TODO OPTIMIZE Make central global reference table of classes
-                    //  https://github.com/realm/realm-kotlin/issues/460
-                    jclass exception_class = jenv->FindClass("io/realm/mongodb/AppException");
+                    static JavaMethod app_exception_constructor(jenv,
+                                                                JavaClassGlobalDef::app_exception_class(),
+                                                                "<init>",
+                                                                "(Ljava/lang/String;IILjava/lang/String;)V");
 
-                    // TODO Propagate all error information to AppException, for now just ensure
-                    //  that we pass message to signal some kind of description
-                    // static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
-                                                                               // "(Ljava/lang/String;JJLjava/lang/String;)V");
-                    // long i = error->error_category;
-                    // long code = error->error_code;
-                    // jobject throwable = jenv->NewObject(exception_class, exception_constructor, to_jstring(jenv, error->message), i, code, to_jstring(jenv, error->link_to_server_logs));
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(Ljava/lang/String;)V");
-                    jobject throwable = jenv->NewObject(exception_class, exception_constructor, to_jstring(jenv, error->message));
+                    jobject throwable = jenv->NewObject(JavaClassGlobalDef::app_exception_class(), app_exception_constructor,
+                                                        to_jstring(jenv, error->message),
+                                                        static_cast<int>(error->error_category),
+                                                        error->error_code,
+                                                        to_jstring(jenv, error->link_to_server_logs));
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,
                                          throwable);
                 } else {
                     // TODO OPTIMIZE Make central global reference table of classes
                     //  https://github.com/realm/realm-kotlin/issues/460
+                    //  Use wrap_pointer of https://github.com/realm/realm-kotlin/pull/493/files#diff-c71ff0791782da90014db6f7000bdeea6c883ca9729f17bd1b11041d1e7711faR450
+                    //  when merged
                     jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
 

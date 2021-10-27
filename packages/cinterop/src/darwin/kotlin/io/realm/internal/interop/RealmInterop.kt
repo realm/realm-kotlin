@@ -908,7 +908,16 @@ actual object RealmInterop {
                     val clonedUser = realm_clone(user)
                     userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
-                    userDataCallback.onError(AppException(error.pointed.message!!.toKString()))
+                    with(error.pointed) {
+                        userDataCallback.onError(
+                            AppException(
+                                message?.toKString(),
+                                error_category.value.toInt(),
+                                error_code,
+                                link_to_server_logs?.toKString()
+                            )
+                        )
+                    }
                 }
             },
             StableRef.create(callback).asCPointer(),

@@ -29,6 +29,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class AppTests {
 
@@ -95,12 +97,13 @@ class AppTests {
     fun loginInvalidUserThrows() {
         val credentials = Credentials.emailPassword("foo", "bar")
         runBlocking {
-            // TODO AppException (ErrorCode.INVALID_EMAIL_PASSWORD, ex.errorCode)
-            //  https://github.com/realm/realm-kotlin/issues/426
             assertFailsWith<AppException> {
                 app.login(credentials)
-            }.let { exception ->
+            }.let { exception: AppException ->
                 assertEquals("invalid username/password", exception.message)
+                assertEquals(3, exception.errorCategory)
+                assertEquals(50, exception.errorCode)
+                assertNotNull(exception.serverLogUrl)
             }
         }
     }
