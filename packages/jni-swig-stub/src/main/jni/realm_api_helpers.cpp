@@ -239,13 +239,18 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                     static JavaMethod app_exception_constructor(jenv,
                                                                 JavaClassGlobalDef::app_exception_class(),
                                                                 "<init>",
-                                                                "(Ljava/lang/String;IILjava/lang/String;)V");
+                                                                "(Ljava/lang/String;)V");
 
-                    jobject throwable = jenv->NewObject(JavaClassGlobalDef::app_exception_class(), app_exception_constructor,
-                                                        to_jstring(jenv, error->message),
-                                                        static_cast<int>(error->error_category),
-                                                        error->error_code,
-                                                        to_jstring(jenv, error->link_to_server_logs));
+                    std::stringstream message;
+                    message << error->message << " ["
+                            << "error_category=" << error->error_category << ", "
+                            << "error_code=" << error->error_code << ", "
+                            << "link_to_server_logs=" << error->link_to_server_logs
+                            << "]";
+
+                    jobject throwable = jenv->NewObject(JavaClassGlobalDef::app_exception_class(),
+                                                        app_exception_constructor,
+                                                        to_jstring(jenv, message.str()));
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,
                                          throwable);

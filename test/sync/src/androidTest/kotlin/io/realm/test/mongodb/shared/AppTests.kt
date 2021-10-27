@@ -29,7 +29,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class AppTests {
@@ -100,10 +99,7 @@ class AppTests {
             assertFailsWith<AppException> {
                 app.login(credentials)
             }.let { exception: AppException ->
-                assertEquals("invalid username/password", exception.message)
-                assertEquals(3, exception.errorCategory)
-                assertEquals(50, exception.errorCode)
-                assertNotNull(exception.serverLogUrl)
+                assertTrue(exception.message!!.startsWith("invalid username/password [error_category=3, error_code=50, link_to_server_logs="))
             }
         }
     }
