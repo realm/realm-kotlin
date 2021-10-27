@@ -23,7 +23,6 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
-import io.realm.mongodb.SyncErrorCode
 import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -1019,18 +1018,14 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
                 val syncException = error.useContents {
-                    SyncException(
-                        errorCode = this.error_code.let {
-                            SyncErrorCode(
-                                it.value,
-                                it.message?.toKString() ?: "",
-                                it.category.value.toShort()
-                            )
-                        },
-                        detailedMessage = this.detailed_message?.toKString() ?: "",
-                        fatal = this.is_fatal,
-                        unrecognizedByClient = this.is_unrecognized_by_client
-                    )
+                    val message = "${this.detailed_message} [" +
+                            "error_code.category='${this.error_code.category}', " +
+                            "error_code.value='${this.error_code.value}', " +
+                            "error_code.message='${this.error_code.message}', " +
+                            "is_fatal='${this.is_fatal}', " +
+                            "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
+                            "]"
+                    SyncException(message)
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper(syncSession)

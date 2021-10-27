@@ -48,7 +48,6 @@ private:
         , m_io_realm_long_pointer_wrapper(env, "io/realm/internal/interop/LongPointerWrapper", false)
         , m_io_realm_app_exception(env, "io/realm/mongodb/AppException", false)
         , m_io_realm_sync_exception(env, "io/realm/mongodb/SyncException", false)
-        , m_io_realm_sync_error_code(env, "io/realm/mongodb/SyncErrorCode", false)
         , m_io_realm_sync_log_callback(env, "io/realm/internal/interop/SyncLogCallback", false)
         , m_io_realm_sync_error_callback(env, "io/realm/internal/interop/SyncErrorCallback", false)
     {
@@ -60,7 +59,6 @@ private:
     jni_util::JavaClass m_io_realm_long_pointer_wrapper;
     jni_util::JavaClass m_io_realm_app_exception;
     jni_util::JavaClass m_io_realm_sync_exception;
-    jni_util::JavaClass m_io_realm_sync_error_code;
     jni_util::JavaClass m_io_realm_sync_log_callback;
     jni_util::JavaClass m_io_realm_sync_error_callback;
 
@@ -112,11 +110,6 @@ public:
     inline static const jni_util::JavaClass& sync_exception()
     {
         return instance()->m_io_realm_sync_exception;
-    }
-
-    inline static const jni_util::JavaClass& sync_error_code()
-    {
-        return instance()->m_io_realm_sync_error_code;
     }
 
     inline static const jni_util::JavaClass& sync_log_callback()

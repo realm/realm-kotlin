@@ -459,27 +459,28 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
 }
 
 jobject convert_sync_exception(JNIEnv* jenv, const realm_sync_error_t error) {
-    static JavaMethod error_code_constructor(jenv,
-                                             JavaClassGlobalDef::sync_error_code(),
-                                             "<init>",
-                                             "(ILjava/lang/String;S)V");
-    jobject error_code = jenv->NewObject(JavaClassGlobalDef::sync_error_code(),
-                                         error_code_constructor,
-                                         error.error_code.value,
-                                         to_jstring(jenv, error.error_code.message),
-                                         error.error_code.category);
+    static JavaMethod app_exception_constructor(jenv,
+                                                JavaClassGlobalDef::sync_exception(),
+                                                "<init>",
+                                                "(Ljava/lang/String;)V");
+
+    std::stringstream message;
+    message << error.detailed_message << " ["
+            << "error_code.category='" << error.error_code.category << "', "
+            << "error_code.value='" << error.error_code.value << "', "
+            << "error_code.message='" << error.error_code.message << "', "
+            << "is_fatal='" << std::boolalpha << error.is_fatal << std::noboolalpha << "', "
+            << "is_unrecognized_by_client='" << std::boolalpha << error.is_unrecognized_by_client << std::noboolalpha << "'"
+            << "]";
 
     static JavaMethod pointer_wrapper_constructor(jenv,
                                                   JavaClassGlobalDef::sync_exception(),
                                                   "<init>",
-                                                  "(Lio/realm/mongodb/SyncErrorCode;Ljava/lang/String;ZZ)V");
+                                                  "(Ljava/lang/String;)V");
 
     return jenv->NewObject(JavaClassGlobalDef::sync_exception(),
                            pointer_wrapper_constructor,
-                           error_code,
-                           to_jstring(jenv, error.detailed_message),
-                           error.is_fatal,
-                           error.is_unrecognized_by_client);
+                           to_jstring(jenv, message.str()));
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {

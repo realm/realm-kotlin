@@ -44,6 +44,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class SyncedRealmTests {
 
@@ -171,8 +172,16 @@ class SyncedRealmTests {
 
             channel.close()
 
-            // Validate that the exception was captured
+            // Validate that the exception was captured and contains serialized fields
             assertIs<SyncException>(exception)
+            exception.message.let { errorMessage ->
+                assertNotNull(errorMessage)
+                assertTrue(errorMessage.contains("error_code.category="))
+                assertTrue(errorMessage.contains("error_code.value="))
+                assertTrue(errorMessage.contains("error_code.message="))
+                assertTrue(errorMessage.contains("is_fatal="))
+                assertTrue(errorMessage.contains("is_unrecognized_by_client="))
+            }
         }
     }
 
