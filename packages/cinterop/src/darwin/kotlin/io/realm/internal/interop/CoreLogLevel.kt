@@ -15,7 +15,7 @@ actual enum class CoreLogLevel(private val internalPriority: Int) {
         get() = internalPriority
 
     actual companion object {
-        actual fun valueFromPriority(priority: Int): CoreLogLevel = when (priority) {
+        actual fun valueFromPriority(priority: Short): CoreLogLevel = when (priority.toInt()) {
             RLM_LOG_LEVEL_ALL.priority -> RLM_LOG_LEVEL_ALL
             RLM_LOG_LEVEL_TRACE.priority -> RLM_LOG_LEVEL_TRACE
             RLM_LOG_LEVEL_DEBUG.priority -> RLM_LOG_LEVEL_DEBUG

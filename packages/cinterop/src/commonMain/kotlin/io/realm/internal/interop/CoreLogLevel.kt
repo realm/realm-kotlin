@@ -31,6 +31,6 @@ expect enum class CoreLogLevel {
     val priority: Int
 
     companion object {
-        fun valueFromPriority(priority: Int): CoreLogLevel
+        fun valueFromPriority(priority: Short): CoreLogLevel
     }
 }
