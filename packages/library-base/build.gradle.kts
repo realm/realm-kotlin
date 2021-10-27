@@ -44,6 +44,9 @@ repositories {
     mavenLocal()
 }
 
+// Directory for generated Version.kt holding VERSION constant
+val versionDirectory = "$buildDir/generated/source/version/"
+
 // Common Kotlin configuration
 kotlin {
     jvm()
@@ -67,6 +70,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
+            kotlin.srcDir(versionDirectory)
         }
 
         commonTest {
@@ -271,3 +275,24 @@ publishing {
     // completely, hence the .get() below.
     common.artifact(tasks.named("dokkaJar").get())
 }
+
+// Generate code with version constant
+tasks.create("pluginVersion") {
+    val outputDir = file(versionDirectory)
+
+    inputs.property("version", project.version)
+    outputs.dir(outputDir)
+
+    doLast {
+        val versionFile = file("$outputDir/io/realm/internal/Version.kt")
+        versionFile.parentFile.mkdirs()
+        versionFile.writeText(
+            """
+            // Generated file. Do not edit!
+            package io.realm.internal
+            internal const val SDK_VERSION = "${project.version}"
+            """.trimIndent()
+        )
+    }
+}
+tasks.getByName("compileKotlinMetadata").dependsOn("pluginVersion")

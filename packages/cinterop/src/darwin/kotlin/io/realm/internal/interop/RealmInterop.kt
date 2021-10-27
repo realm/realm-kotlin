@@ -1018,18 +1018,21 @@ actual object RealmInterop {
         )
     }
 
+    @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
         networkTransport: NativePointer,
-        baseUrl: String?
+        baseUrl: String?,
+        platform: String,
+        platformVersion: String,
+        sdkVersion: String
     ): NativePointer {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
 
-        // TODO Fill in appropriate meta data
-        //  https://github.com/realm/realm-kotlin/issues/449
-        realm_wrapper.realm_app_config_set_platform(appConfig, "kotlin")
-        realm_wrapper.realm_app_config_set_platform_version(appConfig, "PLATFORM_VERSION")
-        realm_wrapper.realm_app_config_set_sdk_version(appConfig, "SDK_VERSION")
+        realm_wrapper.realm_app_config_set_platform(appConfig, platform)
+        realm_wrapper.realm_app_config_set_platform_version(appConfig, platformVersion)
+        realm_wrapper.realm_app_config_set_sdk_version(appConfig, sdkVersion)
+
         // TODO Fill in appropriate app meta data
         //  https://github.com/realm/realm-kotlin/issues/407
         realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
