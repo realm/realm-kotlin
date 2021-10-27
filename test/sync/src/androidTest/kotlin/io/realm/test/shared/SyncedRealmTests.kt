@@ -23,7 +23,6 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.log.LogLevel
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncException
@@ -151,7 +150,6 @@ class SyncedRealmTests {
                 user = user,
                 partitionValue = DEFAULT_PARTITION_VALUE
             ).path("$tmpDir/test.realm")
-                .log(LogLevel.DEBUG)
                 .also { builder ->
                     builder.errorHandler(object : ErrorHandler {
                         override fun onError(session: SyncSession, error: SyncException) {
