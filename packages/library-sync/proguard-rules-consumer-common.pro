@@ -16,7 +16,7 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.SyncException {
+-keep class io.realm.mongodb.SyncException {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
