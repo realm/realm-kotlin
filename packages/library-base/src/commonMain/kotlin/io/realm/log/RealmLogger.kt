@@ -47,24 +47,4 @@ interface RealmLogger {
     fun log(level: LogLevel, message: String) {
         log(level, null, message, null)
     }
-
-    companion object {
-        /**
-         * Converts a Core log level to a library [LogLevel]. For internal use only.
-         */
-        fun toLogLevel(level: Short): LogLevel {
-            return when (level.toInt()) {
-                CoreLogLevel.RLM_LOG_LEVEL_ALL.priority -> LogLevel.ALL
-                CoreLogLevel.RLM_LOG_LEVEL_TRACE.priority -> LogLevel.TRACE
-                CoreLogLevel.RLM_LOG_LEVEL_DEBUG.priority -> LogLevel.DEBUG
-                CoreLogLevel.RLM_LOG_LEVEL_DETAIL.priority, // convert to INFO
-                CoreLogLevel.RLM_LOG_LEVEL_INFO.priority -> LogLevel.INFO
-                CoreLogLevel.RLM_LOG_LEVEL_WARNING.priority -> LogLevel.WARN
-                CoreLogLevel.RLM_LOG_LEVEL_ERROR.priority -> LogLevel.ERROR
-                CoreLogLevel.RLM_LOG_LEVEL_FATAL.priority -> LogLevel.WTF
-                CoreLogLevel.RLM_LOG_LEVEL_OFF.priority -> LogLevel.NONE
-                else -> throw IllegalArgumentException("Invalid priority level: $level.")
-            }
-        }
-    }
 }

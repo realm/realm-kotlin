@@ -24,7 +24,7 @@ import io.realm.internal.interop.SyncLogCallback
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.util.Validation
-import io.realm.log.RealmLogger.Companion.toLogLevel
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -71,13 +71,14 @@ internal class AppImpl(
                     syncClientConfig,
                     object : SyncLogCallback {
                         override fun log(logLevel: Short, message: String?) {
-                            syncLogger.log(toLogLevel(logLevel), message ?: "")
+                            val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)
+                            syncLogger.log(LogLevel.fromCoreLogLevel(coreLogLevel), message ?: "")
                         }
                     }
                 )
                 RealmInterop.realm_sync_client_config_set_log_level(
                     syncClientConfig,
-                    CoreLogLevel.valueFromPriority(configuration.log.logLevel.priority)
+                    CoreLogLevel.valueFromPriority(configuration.log.logLevel.priority.toShort())
                 )
                 RealmInterop.realm_sync_client_config_set_metadata_mode(
                     syncClientConfig,

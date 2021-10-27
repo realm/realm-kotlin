@@ -20,6 +20,7 @@ import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
@@ -53,7 +54,7 @@ class SyncedRealmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        app = TestApp(logLevel = LogLevel.DEBUG)
 
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         val user = createTestUser()

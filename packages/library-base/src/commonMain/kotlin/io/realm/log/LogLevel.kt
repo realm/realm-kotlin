@@ -15,12 +15,33 @@ import io.realm.log.LogLevel.WTF
  * @see RealmConfiguration.Builder.log
  */
 enum class LogLevel(val priority: Int) {
-    ALL(CoreLogLevel.RLM_LOG_LEVEL_ALL.priority),
-    TRACE(CoreLogLevel.RLM_LOG_LEVEL_TRACE.priority),
-    DEBUG(CoreLogLevel.RLM_LOG_LEVEL_DEBUG.priority),
-    INFO(CoreLogLevel.RLM_LOG_LEVEL_INFO.priority),
-    WARN(CoreLogLevel.RLM_LOG_LEVEL_WARNING.priority),
-    ERROR(CoreLogLevel.RLM_LOG_LEVEL_ERROR.priority),
-    WTF(CoreLogLevel.RLM_LOG_LEVEL_FATAL.priority),
-    NONE(CoreLogLevel.RLM_LOG_LEVEL_OFF.priority);
+    ALL(0),
+    TRACE(1),
+    DEBUG(2),
+    INFO(3),
+    WARN(4),
+    ERROR(5),
+    WTF(6),
+    NONE(7);
+
+    companion object {
+        /**
+         * Converts a Core log level value to a library log level value. Values that represent the
+         * same level from the library perspective are folded together.
+         *
+         * For internal use only.
+         */
+        fun fromCoreLogLevel(coreLogLevel: CoreLogLevel): LogLevel = when (coreLogLevel) {
+            CoreLogLevel.RLM_LOG_LEVEL_ALL,
+            CoreLogLevel.RLM_LOG_LEVEL_TRACE -> TRACE
+            CoreLogLevel.RLM_LOG_LEVEL_DEBUG -> DEBUG
+            CoreLogLevel.RLM_LOG_LEVEL_DETAIL,
+            CoreLogLevel.RLM_LOG_LEVEL_INFO -> INFO
+            CoreLogLevel.RLM_LOG_LEVEL_WARNING -> WARN
+            CoreLogLevel.RLM_LOG_LEVEL_ERROR -> ERROR
+            CoreLogLevel.RLM_LOG_LEVEL_FATAL -> WTF
+            CoreLogLevel.RLM_LOG_LEVEL_OFF -> NONE
+            else -> throw IllegalArgumentException("Invalid core log level: $coreLogLevel")
+        }
+    }
 }
