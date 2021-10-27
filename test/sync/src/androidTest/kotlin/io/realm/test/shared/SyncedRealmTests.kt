@@ -54,7 +54,7 @@ class SyncedRealmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(logLevel = LogLevel.DEBUG)
+        app = TestApp()
 
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         val user = createTestUser()
