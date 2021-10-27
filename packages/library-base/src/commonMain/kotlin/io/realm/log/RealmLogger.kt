@@ -17,7 +17,6 @@
 package io.realm.log
 
 import io.realm.RealmConfiguration
-import io.realm.internal.interop.CoreLogLevel
 
 /**
  * Interface describing a logger implementation.
