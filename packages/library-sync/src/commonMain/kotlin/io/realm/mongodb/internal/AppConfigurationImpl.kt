@@ -45,11 +45,16 @@ internal class AppConfigurationImpl(
         timeoutMs = 5000,
         dispatcher = networkTransportDispatcher,
         logger = object : Logger {
+            // This should ideally be the AppConfigurationImpl.log but iOS ktor client seems to
+            // pass all configuration to another thread which freezes it. Having two logs with the
+            // same configuration is not ideal but would yield the same result when the
+            // configuration and loggers itself are frozen.
+            val log: RealmLog = RealmLog(configuration = logConfig)
             override fun log(message: String) {
-                this@AppConfigurationImpl.log.debug(message)
+                this.log.debug(message)
             }
         }
-    )
+    ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
