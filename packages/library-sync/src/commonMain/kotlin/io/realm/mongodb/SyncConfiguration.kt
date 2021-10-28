@@ -63,15 +63,7 @@ interface SyncConfiguration : RealmConfiguration {
         schema: Set<KClass<out RealmObject>>,
     ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
-        private var errorHandler: SyncSession.ErrorHandler = object : SyncSession.ErrorHandler {
-            override fun onError(session: SyncSession, error: SyncException) {
-                error.message?.let {
-                    if (userLoggers.isNotEmpty()) {
-                        userLoggers[0].log(LogLevel.DEBUG, it)
-                    }
-                }
-            }
-        }
+        private var errorHandler: SyncSession.ErrorHandler
 
         constructor(
             user: User,
@@ -97,6 +89,17 @@ interface SyncConfiguration : RealmConfiguration {
             this.logLevel = appLogConfiguration.level
             this.userLoggers = appLogConfiguration.loggers
             this.removeSystemLogger = true
+
+            // Set default error handler after setting config logging logic
+            this.errorHandler = object : SyncSession.ErrorHandler {
+                override fun onError(session: SyncSession, error: SyncException) {
+                    error.message?.let {
+                        if (userLoggers.isNotEmpty()) {
+                            userLoggers[0].log(LogLevel.DEBUG, it)
+                        }
+                    }
+                }
+            }
         }
 
         override fun log(level: LogLevel, customLoggers: List<RealmLogger>) =
