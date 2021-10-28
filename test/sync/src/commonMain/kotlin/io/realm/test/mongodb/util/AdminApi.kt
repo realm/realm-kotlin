@@ -59,7 +59,8 @@ interface AdminApi {
     fun deleteAllUsers()
 
     /**
-     * Triggers a restart of the sync service.
+     * Terminate Sync on the server and re-enable it. Any existing sync sessions will throw an
+     * error.
      */
     suspend fun restartSync()
 }

@@ -503,7 +503,6 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                         },
                                         static_cast<jobject>(get_env()->NewGlobalRef(error_handler)),
                                         [](void *userdata) {
-                                            get_env(true)->DeleteGlobalRef(
-                                                    static_cast<jobject>(userdata));
+                                            get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                         });
 }

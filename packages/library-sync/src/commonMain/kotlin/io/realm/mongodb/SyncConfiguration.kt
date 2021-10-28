@@ -61,8 +61,13 @@ interface SyncConfiguration : RealmConfiguration {
         private var user: User,
         private var partitionValue: PartitionValue,
         schema: Set<KClass<out RealmObject>>,
-        private var errorHandler: SyncSession.ErrorHandler? = null
     ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
+
+        private var errorHandler: SyncSession.ErrorHandler = object : SyncSession.ErrorHandler {
+            override fun onError(session: SyncSession, error: SyncException) {
+                error.message?.let { userLoggers[0].log(LogLevel.DEBUG, it) }
+            }
+        }
 
         constructor(
             user: User,

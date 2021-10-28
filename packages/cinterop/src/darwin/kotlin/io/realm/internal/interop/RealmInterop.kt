@@ -450,7 +450,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
-        val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> =
+        val link: CValue<realm_link_t> =
             realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
             return Link(this.target_table.toLong(), this.target)
@@ -902,14 +902,13 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error: CPointer<realm_app_error_t /* = realm_wrapper.realm_app_error */>? ->
+            staticCFunction { userdata, user, error ->
                 val userDataCallback = safeUserData<CinteropCallback>(userdata)
                 if (error == null) {
                     // Remember to clone user object or else it will be invalidated right after we leave this callback
                     val clonedUser = realm_clone(user)
                     userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
-                    error
                     userDataCallback.onError(AppException())
                 }
             },

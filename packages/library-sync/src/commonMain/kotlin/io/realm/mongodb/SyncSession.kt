@@ -19,12 +19,12 @@ package io.realm.mongodb
 import io.realm.Realm
 
 /**
- * A session controls how data is synchronized between a single Realm on the device and the server
- * Realm on the Realm Object Server.
+ * A session controls how data is synchronized between a single Realm on the device and MongoDB on
+ * the server.
  *
  * A `SyncSession` is created by opening a Realm instance using a [SyncConfiguration]. Once a
- * session has been created, it will continue to exist until the app is closed or all threads using
- * this [SyncConfiguration] close their respective [Realm]s.
+ * session has been created, it will continue to exist until the app is closed or the [Realm] is
+ * closed.
  *
  * A session is controlled by Realm, but can provide additional information in case of errors.
  * These errors are passed along in the [ErrorHandler].
@@ -45,13 +45,13 @@ interface SyncSession {
      */
     interface ErrorHandler {
         /**
-         * Callback for errors on a session object. It is not allowed to throw an exception inside
-         * an error handler. If the operations in an error handler can throw, it is safer to catch
-         * any exception in the error handler. When an exception is thrown in the error handler, the
-         * occurrence will be logged and the exception will be ignored.
+         * Callback for errors on a session object. It is not recommended to throw an exception
+         * inside an error handler, as the exception will be caught, logged, and ignored by Realm.
+         * Instead, it is better to manually catch all exceptions and manually handle these
+         * exceptions.
          *
          * @param session the [SyncSession] in which this error happened.
-         * @param error the type of error.
+         * @param error the [SyncException] being reported by the server.
          */
         fun onError(session: SyncSession, error: SyncException)
     }
