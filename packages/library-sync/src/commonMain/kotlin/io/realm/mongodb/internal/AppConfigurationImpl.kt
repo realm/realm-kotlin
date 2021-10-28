@@ -54,7 +54,7 @@ internal class AppConfigurationImpl(
                 this.log.debug(message)
             }
         }
-    )
+    ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
