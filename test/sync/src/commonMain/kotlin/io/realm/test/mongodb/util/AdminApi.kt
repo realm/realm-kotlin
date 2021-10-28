@@ -208,6 +208,9 @@ open class AdminApiImpl internal constructor(
                 throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
         }
 
+    // These calls work but we should not use them to alter the state of a sync session as Ktor's
+    // default HttpClient doesn't like PATCH requests on Native:
+    // https://github.com/realm/realm-kotlin/issues/519
     override suspend fun restartSync() {
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()

@@ -54,10 +54,6 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
-
-                // TODO Using CIO temporarily until we figure out what's going on with the default engine and
-                //  certain requests: https://github.com/realm/realm-kotlin/issues/519
-                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
             }
         }
 

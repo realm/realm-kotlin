@@ -142,15 +142,28 @@ class SyncedRealmTests {
 
     @Test
     fun testErrorHandler() {
+        // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()
+        val user = createTestUser(app)
+        val tmpDir = PlatformUtils.createTempDir()
 
+        val config1 = SyncConfiguration.Builder(
+            schema = setOf(ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).path("$tmpDir/test1.realm")
+            .build()
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        // Open another realm with the same entities but change a field in an entity to trigger
+        // a sync error to be caught be the error handler
         runBlocking {
-            val user = createTestUser()
-            val config = SyncConfiguration.Builder(
-                schema = setOf(ParentPk::class, ChildPk::class),
+            val config2 = SyncConfiguration.Builder(
+                schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
                 user = user,
                 partitionValue = DEFAULT_PARTITION_VALUE
-            ).path("$tmpDir/test.realm")
+            ).path("$tmpDir/test2.realm")
                 .also { builder ->
                     builder.errorHandler(object : ErrorHandler {
                         override fun onError(session: SyncSession, error: SyncException) {
@@ -160,12 +173,8 @@ class SyncedRealmTests {
                         }
                     })
                 }.build()
-
-            realm = Realm.open(config)
-            assertNotNull(realm)
-
-            // Restart sync
-            app.restartSync()
+            val realm2 = Realm.open(config2)
+            assertNotNull(realm2)
 
             // Await for exception to happen
             val exception = channel.receive()
@@ -182,6 +191,11 @@ class SyncedRealmTests {
                 assertTrue(errorMessage.contains("is_fatal="))
                 assertTrue(errorMessage.contains("is_unrecognized_by_client="))
             }
+
+            // Housekeeping for test Realms
+            realm1.close()
+            realm2.close()
+            PlatformUtils.deleteTempDir(tmpDir)
         }
     }
 
@@ -527,6 +541,15 @@ class SyncedRealmTests {
 //        }
 
     private fun createTestUser(): User {
+        val email = randomEmail()
+        val password = "asdfasdf"
+        app.asTestApp.createUser(email, password)
+        return runBlocking {
+            app.login(Credentials.emailPassword(email, password))
+        }
+    }
+
+    private fun createTestUser(app: TestApp): User {
         val email = randomEmail()
         val password = "asdfasdf"
         app.asTestApp.createUser(email, password)
