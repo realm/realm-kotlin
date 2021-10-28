@@ -232,8 +232,6 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
             jdkVersion.set(8)
             includes.from("overview.md")
         }
-        val commonMain by getting {
-        }
     }
 }
 
