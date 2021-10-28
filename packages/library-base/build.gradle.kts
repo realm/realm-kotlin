@@ -290,9 +290,11 @@ tasks.create("pluginVersion") {
             """
             // Generated file. Do not edit!
             package io.realm.internal
-            internal const val SDK_VERSION = "${project.version}"
+            const val SDK_VERSION = "${project.version}"
             """.trimIndent()
         )
     }
 }
-tasks.getByName("compileKotlinMetadata").dependsOn("pluginVersion")
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    dependsOn("pluginVersion")
+}
