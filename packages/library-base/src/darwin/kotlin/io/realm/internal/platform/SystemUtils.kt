@@ -15,8 +15,9 @@ import kotlin.native.concurrent.isFrozen
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 actual val RUNTIME: String = "Native"
-actual val OS_NAME: String = NSProcessInfo.Companion.processInfo().operatingSystemName()
-actual val OS_VERSION: String = NSProcessInfo.Companion.processInfo().operatingSystemVersionString
+// These causes memory mapping rendering MemoryTests to fail, so only initialize them if actually needed
+actual val OS_NAME: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemName() }
+actual val OS_VERSION: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemVersionString }
 
 actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
     NSLogLogger(tag, logLevel)
