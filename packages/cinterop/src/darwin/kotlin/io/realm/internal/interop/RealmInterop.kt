@@ -901,7 +901,7 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error: CPointer<realm_app_error_t /* = realm_wrapper.realm_app_error */>? ->
+            staticCFunction { userdata, user, error: CPointer<realm_app_error_t>? ->
                 val userDataCallback = safeUserData<CinteropCallback>(userdata)
                 if (error == null) {
                     // Remember to clone user object or else it will be invalidated right after we leave this callback
@@ -909,7 +909,7 @@ actual object RealmInterop {
                     userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
                     val message = with(error.pointed) {
-                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs"
+                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
                     }
                     userDataCallback.onError(AppException(message))
                 }

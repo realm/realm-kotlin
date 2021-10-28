@@ -219,7 +219,7 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
     auto jenv = get_env();
-    JavaClass cinterop_callback(jenv, "io/realm/internal/interop/CinteropCallback");
+    static JavaClass cinterop_callback(jenv, "io/realm/internal/interop/CinteropCallback");
     static JavaMethod on_success_method(jenv, cinterop_callback, "onSuccess", "(Lio/realm/internal/interop/NativePointer;)V");
     static JavaMethod on_error_method(jenv, cinterop_callback, "onError", "(Ljava/lang/Throwable;)V");
 
