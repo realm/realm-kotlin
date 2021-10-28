@@ -61,7 +61,6 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.strerror
 import platform.posix.uint8_tVar
-import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone

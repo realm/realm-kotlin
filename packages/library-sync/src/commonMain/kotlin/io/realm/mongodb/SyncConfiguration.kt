@@ -65,7 +65,11 @@ interface SyncConfiguration : RealmConfiguration {
 
         private var errorHandler: SyncSession.ErrorHandler = object : SyncSession.ErrorHandler {
             override fun onError(session: SyncSession, error: SyncException) {
-                error.message?.let { userLoggers[0].log(LogLevel.DEBUG, it) }
+                error.message?.let {
+                    if (userLoggers.isNotEmpty()) {
+                        userLoggers[0].log(LogLevel.DEBUG, it)
+                    }
+                }
             }
         }
 

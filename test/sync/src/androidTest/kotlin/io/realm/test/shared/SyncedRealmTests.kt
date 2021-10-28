@@ -156,8 +156,8 @@ class SyncedRealmTests {
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
-        // Open another realm with the same entities but change a field in an entity to trigger
-        // a sync error to be caught be the error handler
+        // Open another realm with the same entity but change the type of a field in the schema to
+        // trigger a sync error to be caught by the error handler
         runBlocking {
             val config2 = SyncConfiguration.Builder(
                 schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
