@@ -31,21 +31,18 @@ internal class SyncConfigurationImpl(
     localConfiguration: RealmConfigurationImpl,
     override val partitionValue: PartitionValue,
     override val user: UserImpl,
-    override val errorHandler: SyncSession.ErrorHandler?
+    override val errorHandler: SyncSession.ErrorHandler
 ) : InternalRealmConfiguration by localConfiguration, SyncConfiguration {
 
     private val nativeSyncConfig: NativePointer =
         RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
 
     init {
-        if (errorHandler != null) {
-            val errorCallback = object : SyncErrorCallback {
-                override fun onSyncError(pointer: NativePointer, throwable: SyncException) {
-                    errorHandler.onError(SyncSessionImpl(pointer), throwable)
-                }
-            }.freeze()
-            RealmInterop.realm_sync_set_error_handler(nativeSyncConfig, errorCallback)
-        }
+        RealmInterop.realm_sync_set_error_handler(nativeSyncConfig, object : SyncErrorCallback {
+            override fun onSyncError(pointer: NativePointer, throwable: SyncException) {
+                errorHandler.onError(SyncSessionImpl(pointer), throwable)
+            }
+        }.freeze())
         RealmInterop.realm_config_set_sync_config(localConfiguration.nativeConfig, nativeSyncConfig)
     }
 }
