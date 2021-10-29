@@ -19,6 +19,7 @@ package io.realm.gradle
 import com.android.build.gradle.BaseExtension
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.execution.TaskExecutionAdapter
 import org.gradle.api.tasks.TaskState
 import java.io.File
@@ -101,6 +102,26 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
         val minSDK = projectAndroidExtension?.defaultConfig?.minSdkVersion?.apiString
         val targetSDK = projectAndroidExtension?.defaultConfig?.targetSdkVersion?.apiString
 
+        // Should be safe to iterate the configurations as we have left the configuration
+        // phase when this is called.
+        var usesSync = false
+        outer@
+        for (conf in project.configurations) {
+            try {
+                for (artifact: ResolvedArtifact in conf.resolvedConfiguration.resolvedArtifacts) {
+                    // In Java we can detect Sync because we enable it through a Gradle closure.
+                    // In Kotlin, this choice is currently determined by which dependency
+                    // people include
+                    if (artifact.name.startsWith("library-sync")) {
+                        usesSync = true
+                        break@outer
+                    }
+                }
+            } catch (ignore: Exception) {
+                // Some artifacts might not be able to resolve, in this case, just ignore them.
+            }
+        }
+
         // FIXME Improve metrics with details about targets, etc.
         //  https://github.com/realm/realm-kotlin/issues/127
         return """{
@@ -113,6 +134,7 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
                       "Binding": "kotlin",
                       "Language": "kotlin",
                       "Realm Version": "${RealmCompilerSubplugin.version}",
+                      "Sync Enabled": ${if (usesSync) "true" else "false"},
                       "Host OS Type": "$osType",
                       "Host OS Version": "$osVersion",
                       "Target OS Minimum Version": "$minSDK",
