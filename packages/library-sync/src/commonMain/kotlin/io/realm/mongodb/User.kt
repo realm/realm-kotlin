@@ -24,7 +24,7 @@ package io.realm.mongodb
  * @see App.login
  * @see SyncConfiguration.Builder
  */
-@Suppress("EqualsWithHashCodeExist") // Only overwriting to make docs available to user
+@Suppress("EqualsWithHashCodeExist") // Only overwriting equals to make docs available to user
 interface User {
 
     /**
@@ -32,8 +32,12 @@ interface User {
      */
     val app: App
 
-    // TODO Property or method? Can maybe fail, but we could also cache the return value?
-    fun identity(): String
+    /**
+     * Returns true if the user is currently logged in.
+     * Returns whether or not this user is still logged into the MongoDB Realm App.
+     *
+     * @return `true`  if still logged in, `false` if not.
+     */
     fun isLoggedIn(): Boolean
 
     // FIXME Review around user state

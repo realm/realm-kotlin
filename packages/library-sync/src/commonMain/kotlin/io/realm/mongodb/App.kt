@@ -64,11 +64,7 @@ interface App {
      * @return current [User] that has logged in and is still valid. `null` if no
      * user is logged in or the user has expired.
      */
-    fun currentUser(): User? {
-//        val osSyncUser: OsSyncUser = osApp.currentUser()
-//        return if (osSyncUser != null) User(osSyncUser, this) else null
-        TODO()
-    }
+    fun currentUser(): User?
 
     /**
      * Log in as a user with the given credentials associated with an authentication provider.

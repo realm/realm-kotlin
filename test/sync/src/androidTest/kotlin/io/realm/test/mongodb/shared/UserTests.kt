@@ -28,6 +28,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 // val CUSTOM_USER_DATA_FIELD = "custom_field"
@@ -75,22 +77,25 @@ class UserTests {
 //
     @Test
     fun logOut() = runBlocking {
-//        // Anonymous users are removed upon log out
-//        assertEquals(anonUser, app.currentUser())
+        // Anonymous users are removed upon log out
+        assertEquals(anonUser, app.currentUser())
         anonUser.logOut()
-//        assertEquals(User.State.REMOVED, anonUser.state)
-//        assertNull(app.currentUser())
-//
-//        // Users registered with Email/Password will register as Logged Out
-//        val user2: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        val current: User = app.currentUser()!!
-//        assertEquals(user2, current)
-//        user2.logOut()
-//        assertEquals(User.State.LOGGED_OUT, user2.state)
-//        // Same effect on all instances
-//        assertEquals(User.State.LOGGED_OUT, current.state)
-//        // And no current user anymore
-//        assertNull(app.currentUser())
+        // assertEquals(User.State.REMOVED, anonUser.state)
+        assertNull(app.currentUser())
+
+        // Users registered with Email/Password will register as Logged Out
+        // val user2: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+        val email = TestHelper.randomEmail()
+        app.asTestApp.createUser(email, "123456")
+        val user2 = app.login(Credentials.emailPassword(email, "123456"))
+        val current: User = app.currentUser()!!
+        assertEquals(user2, current)
+        user2.logOut()
+        // assertEquals(User.State.LOGGED_OUT, user2.state)
+        // Same effect on all instances
+        // assertEquals(User.State.LOGGED_OUT, current.state)
+        // And no current user anymore
+        assertNull(app.currentUser())
     }
 //
 //    @Test
@@ -391,33 +396,44 @@ class UserTests {
         assertFalse(user.isLoggedIn())
     }
 
-//    @Test
-//    fun equals() {
-//        val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        assertEquals(user, user)
-//        assertNotEquals(user, app)
-//        user.logOut()
-//
-//        val sameUserNewLogin = app.login(Credentials.emailPassword(user.profile.email!!, "123456"))
-//        // Verify that it is not same object but uses underlying OSSyncUser equality on identity
-//        assertFalse(user === sameUserNewLogin)
-//        assertEquals(user, sameUserNewLogin)
-//
-//        val differentUser: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        assertNotEquals(user, differentUser)
-//    }
-//
-//    @Test
-//    fun hashCode_user() {
-//        val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        user.logOut()
-//
-//        val sameUserNewLogin = app.login(Credentials.emailPassword(user.profile.email!!, "123456"))
-//        // Verify that two equal users also returns same hashCode
-//        assertFalse(user === sameUserNewLogin)
-//        assertEquals(user.hashCode(), sameUserNewLogin.hashCode())
-//    }
-//
+    @Test
+    fun equals() = runBlocking {
+        // val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+        val email = TestHelper.randomEmail()
+        val password = "123456"
+        app.asTestApp.createUser(email, password)
+        val user = app.login(Credentials.emailPassword(email, password))
+        assertEquals(user, user)
+        assertFalse(user == app)
+        user.logOut()
+
+        val sameUserNewLogin = app.login(Credentials.emailPassword(email, "123456"))
+        // Verify that it is not same object but uses underlying OSSyncUser equality on identity
+        assertFalse(user === sameUserNewLogin)
+        assertEquals(user, sameUserNewLogin)
+
+        // val differentUser: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+        val differentEmail = TestHelper.randomEmail()
+        app.asTestApp.createUser(differentEmail, password)
+        val differentUser = app.login(Credentials.emailPassword(differentEmail, password))
+        assertNotEquals(user, differentUser)
+    }
+
+    @Test
+    fun hashCode_user() = runBlocking {
+        // val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+        val email = TestHelper.randomEmail()
+        val password = "123456"
+        app.asTestApp.createUser(email, password)
+        val user = app.login(Credentials.emailPassword(email, password))
+        user.logOut()
+
+        val sameUserNewLogin = app.login(Credentials.emailPassword(email, password))
+        // Verify that two equal users also returns same hashCode
+        assertFalse(user === sameUserNewLogin)
+        assertEquals(user.hashCode(), sameUserNewLogin.hashCode())
+    }
+
 //    @Test
 //    fun customData_initiallyEmpty() {
 //        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")

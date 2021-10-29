@@ -29,7 +29,9 @@ internal class UserImpl(
     override val app: AppImpl
 ) : User {
 
-    override fun identity(): String = RealmInterop.realm_user_get_identity(nativePointer)
+    // TODO Property or method? Can maybe fail, but we could also cache the return value? Keep
+    //  private for now
+    private fun identity(): String = RealmInterop.realm_user_get_identity(nativePointer)
 
     override fun isLoggedIn(): Boolean = RealmInterop.realm_user_is_logged_in(nativePointer)
 
@@ -58,11 +60,12 @@ internal class UserImpl(
         other as UserImpl
 
         if (identity() != (other.identity())) return false
-        return app.configuration.appId.equals(other.app.configuration.appId)
+        return app.configuration.equals(other.app.configuration)
     }
 
     override fun hashCode(): Int {
-        // FIXME
-        return nativePointer.hashCode()
+        var result = identity().hashCode()
+        result = 31 * result + app.configuration.appId.hashCode()
+        return result
     }
 }
