@@ -110,7 +110,7 @@ class EmailPasswordAuthTests {
 //    fun resendConfirmationEmail() {
 //        // We only test that the server successfully accepts the request. We have no way of knowing
 //        // if the Email was actually sent.
-//        // FIXME: Figure out a way to check if this actually happened. Perhaps a custom SMTP server?
+//        // FIXME Figure out a way to check if this actually happened. Perhaps a custom SMTP server?
 //        val email = "test@10gen.com"
 //        admin.setAutomaticConfirmation(false)
 //        try {
