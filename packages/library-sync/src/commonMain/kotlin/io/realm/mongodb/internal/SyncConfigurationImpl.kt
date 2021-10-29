@@ -38,11 +38,14 @@ internal class SyncConfigurationImpl(
         RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
 
     init {
-        RealmInterop.realm_sync_set_error_handler(nativeSyncConfig, object : SyncErrorCallback {
-            override fun onSyncError(pointer: NativePointer, throwable: SyncException) {
-                errorHandler.onError(SyncSessionImpl(pointer), throwable)
-            }
-        }.freeze())
+        RealmInterop.realm_sync_set_error_handler(
+            nativeSyncConfig,
+            object : SyncErrorCallback {
+                override fun onSyncError(pointer: NativePointer, throwable: SyncException) {
+                    errorHandler.onError(SyncSessionImpl(pointer), throwable)
+                }
+            }.freeze()
+        )
         RealmInterop.realm_config_set_sync_config(localConfiguration.nativeConfig, nativeSyncConfig)
     }
 }
