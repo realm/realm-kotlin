@@ -21,6 +21,8 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.execution.TaskExecutionAdapter
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.TaskState
 import java.io.File
 import java.io.FileNotFoundException
@@ -86,7 +88,7 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
             val disableAnalytics: Boolean = project.gradle.startParameter.isOffline || "true".equals(System.getenv()["REALM_DISABLE_ANALYTICS"], ignoreCase = true)
             if (!disableAnalytics) {
                 val json = jsonPayload(project)
-                sendAnalytics(json)
+                sendAnalytics(json, project.logger)
             }
             METRIC_PROCESSED = true
         }
@@ -158,17 +160,21 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun sendAnalytics(json: String) {
+    private fun sendAnalytics(json: String, logger: Logger) {
         try {
+            logger.log(LogLevel.DEBUG, "REALM ANALYTICS: sending payload\n$json")
             val pool = Executors.newSingleThreadExecutor()
             try {
                 pool.execute { networkQuery(json) }
                 pool.awaitTermination(CONNECT_TIMEOUT + READ_TIMEOUT, TimeUnit.MILLISECONDS)
+                logger.log(LogLevel.DEBUG, "REALM ANALYTICS: transfer completed")
             } catch (e: InterruptedException) {
+                logger.log(LogLevel.DEBUG, "REALM ANALYTICS: transfer interrupted")
                 pool.shutdownNow()
             }
         } catch (e: Exception) {
             // Analytics failing for any reason should not crash the build
+            logger.log(LogLevel.DEBUG, "REALM ANALYTICS: transfer failed")
             System.err.println("Could not send analytics: $e")
         }
     }
