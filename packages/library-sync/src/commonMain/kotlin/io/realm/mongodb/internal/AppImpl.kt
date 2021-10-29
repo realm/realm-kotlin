@@ -90,24 +90,4 @@ internal class AppImpl(
                     configuration.metadataMode
                 )
             }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || !App::class.isInstance(other)) return false
-
-        other as App
-
-        if (configuration != other.configuration) return false
-        // FIXME The documentation and implementation differs realm-java. What should actually be the
-        //  requirements
-//        if (nativePointer != other.nativePointer) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = configuration.hashCode()
-        result = 31 * result + nativePointer.hashCode()
-        return result
-    }
 }

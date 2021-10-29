@@ -75,13 +75,6 @@ interface App {
      */
     suspend fun login(credentials: Credentials): User
 
-    /**
-     * Two Apps are considered equal and will share their underlying state if they both refer
-     * to the same [AppConfiguration#getAppId()].
-     */
-//    override operator fun equals(other: Any?): Boolean
-//    override fun funequals(o: Any?): Boolean
-
     companion object {
         /**
          * Create an [App] with default settings.
