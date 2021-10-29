@@ -375,7 +375,7 @@ fun genHashFile(platform: String, prefix: String, suffix: String) {
     """.trimIndent()
 
     Paths.get(resourceDir, platform, "dynamic_libraries.properties").also {
-        Files.writeString(it, macosHashes)
+        Files.write(it, macosHashes.toByteArray())
     }
 }
 

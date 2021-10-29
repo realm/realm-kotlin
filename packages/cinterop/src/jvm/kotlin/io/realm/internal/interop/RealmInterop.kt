@@ -465,6 +465,20 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
 
+    actual fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: SyncLogCallback
+    ) {
+        realmc.set_log_callback(syncClientConfig.cptr(), callback)
+    }
+
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.priority)
+    }
+
     actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,
         metadataMode: MetadataMode

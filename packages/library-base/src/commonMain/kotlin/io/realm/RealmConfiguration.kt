@@ -106,7 +106,7 @@ interface RealmConfiguration {
         /**
          * Create a configuration using default values except for schema, path and name.
          *
-         * @param schema The classes of the schema. The elements of the set must be direct class literals.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
         // Should always follow Builder constructor arguments
         fun with(
@@ -172,7 +172,7 @@ interface RealmConfiguration {
          *
          * The elements of the set must be direct class literals.
          *
-         * @param classes The set of classes that the schema consists of.
+         * @param classes the set of classes that the schema consists of.
          */
         fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes } as S
 
@@ -181,7 +181,7 @@ interface RealmConfiguration {
          *
          * The `classes` arguments must be direct class literals.
          *
-         * @param classes The classes that the schema consists of.
+         * @param classes the classes that the schema consists of.
          */
         fun schema(vararg classes: KClass<out RealmObject>) =
             apply { this.schema = setOf(*classes) } as S
@@ -215,11 +215,13 @@ interface RealmConfiguration {
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
          */
-        open fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
-            apply {
-                this.logLevel = level
-                this.userLoggers = customLoggers
-            } as S
+        open fun log(
+            level: LogLevel = LogLevel.WARN,
+            customLoggers: List<RealmLogger> = emptyList()
+        ) = apply {
+            this.logLevel = level
+            this.userLoggers = customLoggers
+        } as S
 
         /**
          * Dispatcher used to run background writes to the Realm.
@@ -229,7 +231,7 @@ interface RealmConfiguration {
          * NOTE On Android the dispatcher's thread must have an initialized
          * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
          *
-         * @param dispatcher Dispatcher on which writes are run. It is required to be backed by a
+         * @param dispatcher dispatcher on which writes are run. It is required to be backed by a
          * single thread only.
          */
         internal fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {

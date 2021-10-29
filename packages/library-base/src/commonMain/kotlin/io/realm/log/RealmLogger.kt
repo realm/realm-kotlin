@@ -17,15 +17,18 @@
 package io.realm.log
 
 import io.realm.RealmConfiguration
-import io.realm.internal.interop.CoreLogger
 
 /**
  * Interface describing a logger implementation.
  *
  * @see RealmConfiguration.Builder.log
  */
-// FIXME do not expose CoreLogger publicly: https://github.com/realm/realm-kotlin/issues/499
-interface RealmLogger : CoreLogger {
+interface RealmLogger {
+
+    /**
+     * The [LogLevel] used in this logger.
+     */
+    val level: LogLevel
 
     /**
      * Tag that can be used to describe the output.
@@ -37,12 +40,10 @@ interface RealmLogger : CoreLogger {
      */
     fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
 
-    fun log(message: String) {
-        log(LogLevel.ALL, null, message, null)
-    }
-
-    // FIXME https://github.com/realm/realm-kotlin/issues/499
-    override fun log(level: Short, message: String) {
-        log(LogLevel.ALL, null, message, null)
+    /**
+     * Log an event.
+     */
+    fun log(level: LogLevel, message: String) {
+        log(level, null, message, null)
     }
 }

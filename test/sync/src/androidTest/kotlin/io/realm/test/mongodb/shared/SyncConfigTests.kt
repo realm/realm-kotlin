@@ -19,7 +19,9 @@ package io.realm.test.mongodb.shared
 import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
@@ -56,6 +58,22 @@ class SyncConfigTests {
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }
+    }
+
+    @Test
+    fun logConfiguration() {
+        val user = createTestUser()
+        val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
+        val customLoggers = listOf(logger)
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).also { builder ->
+            builder.log(LogLevel.DEBUG, customLoggers)
+        }.build()
+        assertEquals(LogLevel.DEBUG, config.log.level)
+        assertEquals(logger, config.log.loggers[1]) // Additional logger placed after default logger
     }
 
 //    @Test
@@ -109,7 +127,11 @@ class SyncConfigTests {
     @Test
     fun equals_sameObject() {
         val user = createTestUser()
-        val config = createSyncConfig(user)
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
         assertEquals(config, config)
     }
 
@@ -158,8 +180,11 @@ class SyncConfigTests {
     @Test
     fun equals_syncSpecificFields() {
         val user = createTestUser()
-        val config = createSyncConfig(user = user, name = DEFAULT_NAME)
-        assertEquals(config.name, DEFAULT_NAME)
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
         assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
     }
 
@@ -186,7 +211,13 @@ class SyncConfigTests {
     @Test
     fun encryption() {
         val user = createTestUser()
-        val config = createSyncConfig(user = user, encryptionKey = getRandomKey())
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).also { builder ->
+            builder.encryptionKey(getRandomKey())
+        }.build()
         assertNotNull(config.encryptionKey)
     }
 
@@ -292,8 +323,12 @@ class SyncConfigTests {
     @Test
     fun getPartitionValue() {
         val user = createTestUser()
-        val syncConfig = createSyncConfig(user)
-        assertEquals(DEFAULT_PARTITION_VALUE, syncConfig.partitionValue.asString())
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
+        assertEquals(DEFAULT_PARTITION_VALUE, config.partitionValue.asString())
     }
 
 //    @Test
@@ -613,19 +648,4 @@ class SyncConfigTests {
             app.login(Credentials.emailPassword(email, password))
         }
     }
-
-    private fun createSyncConfig(
-        user: User,
-        partitionValue: String = DEFAULT_PARTITION_VALUE,
-        path: String? = null,
-        encryptionKey: ByteArray? = null,
-        name: String = DEFAULT_NAME
-    ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = setOf(ParentPk::class, ChildPk::class),
-        user = user,
-        partitionValue = partitionValue,
-    ).path(path).name(name).let { builder ->
-        if (encryptionKey != null) builder.encryptionKey(encryptionKey)
-        builder
-    }.build()
 }

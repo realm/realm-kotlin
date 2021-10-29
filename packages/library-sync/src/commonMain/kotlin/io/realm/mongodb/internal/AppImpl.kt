@@ -17,10 +17,14 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.SyncLogCallback
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.util.Validation
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -32,19 +36,11 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val nativePointer: NativePointer = RealmInterop.realm_sync_client_config_new()
-        .also { syncClientConfig ->
-            RealmInterop.realm_sync_client_config_set_metadata_mode(
-                syncClientConfig,
-                configuration.metadataMode
-            )
-        }.let { syncClientConfig ->
-            RealmInterop.realm_app_get(
-                appConfig = configuration.nativePointer,
-                syncClientConfig = syncClientConfig,
-                basePath = appFilesDirectory()
-            )
-        }
+    private val nativePointer: NativePointer = RealmInterop.realm_app_get(
+        configuration.nativePointer,
+        initializeSyncClientConfig(),
+        appFilesDirectory()
+    )
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->
@@ -63,4 +59,30 @@ internal class AppImpl(
             )
         }
     }
+
+    private fun initializeSyncClientConfig(): NativePointer =
+        RealmInterop.realm_sync_client_config_new()
+            .also { syncClientConfig ->
+                // TODO use separate logger for sync or piggyback on config's?
+                val syncLogger = createDefaultSystemLogger("SYNC", configuration.log.logLevel)
+
+                // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_log_callback(
+                    syncClientConfig,
+                    object : SyncLogCallback {
+                        override fun log(logLevel: Short, message: String?) {
+                            val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)
+                            syncLogger.log(LogLevel.fromCoreLogLevel(coreLogLevel), message ?: "")
+                        }
+                    }
+                )
+                RealmInterop.realm_sync_client_config_set_log_level(
+                    syncClientConfig,
+                    CoreLogLevel.valueFromPriority(configuration.log.logLevel.priority.toShort())
+                )
+                RealmInterop.realm_sync_client_config_set_metadata_mode(
+                    syncClientConfig,
+                    configuration.metadataMode
+                )
+            }
 }
