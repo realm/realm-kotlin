@@ -30,8 +30,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-val CUSTOM_USER_DATA_FIELD = "custom_field"
-val CUSTOM_USER_DATA_VALUE = "custom_data"
+// val CUSTOM_USER_DATA_FIELD = "custom_field"
+// val CUSTOM_USER_DATA_VALUE = "custom_data"
 
 class UserTests {
 
@@ -165,7 +165,7 @@ class UserTests {
 //
 //        val email = TestHelper.getRandomEmail()
 //        val password = "123456"
-//        app.emailPassword.registerUser(email, password) // TODO: Test what happens if auto-confirm is enabled
+//        app.emailPassword.registerUser(email, password) // TODO Test what happens if auto-confirm is enabled
 //        var linkedUser: User = anonUser.linkCredentials(Credentials.emailPassword(email, password))
 //
 //        assertTrue(anonUser === linkedUser)
@@ -251,7 +251,7 @@ class UserTests {
 //        assertEquals(1, anonUser.identities.size)
 //        val email = TestHelper.getRandomEmail()
 //        val password = "123456"
-//        app.emailPassword.registerUser(email, password) // TODO: Test what happens if auto-confirm is enabled
+//        app.emailPassword.registerUser(email, password) // TODO Test what happens if auto-confirm is enabled
 //
 //        anonUser.linkCredentialsAsync(Credentials.emailPassword(email, password)) { result ->
 //            val linkedUser: User = result.orThrow
@@ -381,14 +381,14 @@ class UserTests {
         val user = app.login(Credentials.emailPassword(email, password))
 
         assertTrue(anonUser.isLoggedIn())
-            assertTrue(user.isLoggedIn())
+        assertTrue(user.isLoggedIn())
 
-    //        anonUser.logOut()
+        anonUser.logOut()
         assertFalse(anonUser.isLoggedIn())
-            assertTrue(user.isLoggedIn())
+        assertTrue(user.isLoggedIn())
 
-    //        user.logOut()
-    //        assertFalse(user.isLoggedIn)
+        user.logOut()
+        assertFalse(user.isLoggedIn())
     }
 
 //    @Test
@@ -491,5 +491,4 @@ class UserTests {
 //            }
 //        }
 //    }
-
 }

@@ -35,7 +35,9 @@ internal class UserImpl(
 
     override suspend fun logOut() {
         return suspendCoroutine { continuation ->
-            RealmInterop.realm_app_log_out(app.nativePointer, nativePointer,
+            RealmInterop.realm_app_log_out(
+                app.nativePointer,
+                nativePointer,
                 object : AppCallback<Unit> {
                     override fun onSuccess(void: Unit) {
                         continuation.resume(Unit)
@@ -55,12 +57,12 @@ internal class UserImpl(
 
         other as UserImpl
 
-        if (identity() != (other.identity())) return false;
+        if (identity() != (other.identity())) return false
         return app.configuration.appId.equals(other.app.configuration.appId)
     }
 
     override fun hashCode(): Int {
+        // FIXME
         return nativePointer.hashCode()
     }
 }
-

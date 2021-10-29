@@ -243,16 +243,14 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
     static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
                                             "(Ljava/lang/Object;)V");
     static JavaClass unit_class(env, "kotlin/Unit");
-    static JavaMethod unit_constructor(env, unit_class , "<init>", "()V");
+    static JavaMethod unit_constructor(env, unit_class, "<init>", "()V");
 
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
         jobject app_exception = app_exception_from_app_error(env, error);
-        env->CallVoidMethod(static_cast<jobject>(userdata),
-                             java_notify_onerror,
-                             app_exception);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
     } else {
         jobject unit = env->NewObject(unit_class, unit_constructor);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, unit);
@@ -275,9 +273,7 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
         jobject app_exception = app_exception_from_app_error(env, error);
-        env->CallVoidMethod(static_cast<jobject>(userdata),
-                            java_notify_onerror,
-                            app_exception);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
     } else {
         // Remember to clone user object or else it will be invalidated right after we leave this callback
         void* cloned_result = realm_clone(result);

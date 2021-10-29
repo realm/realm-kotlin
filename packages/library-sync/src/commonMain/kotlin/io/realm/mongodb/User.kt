@@ -24,6 +24,7 @@ package io.realm.mongodb
  * @see App.login
  * @see SyncConfiguration.Builder
  */
+@Suppress("EqualsWithHashCodeExist") // Only overwriting to make docs available to user
 interface User {
 
     /**
@@ -62,4 +63,3 @@ interface User {
      */
     override fun equals(o: Any?): Boolean
 }
-

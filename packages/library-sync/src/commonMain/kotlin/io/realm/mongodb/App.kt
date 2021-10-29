@@ -54,7 +54,6 @@ interface App {
 
     val configuration: AppConfiguration
 
-
     /**
      * Returns the current user that is logged in and still valid.
      *

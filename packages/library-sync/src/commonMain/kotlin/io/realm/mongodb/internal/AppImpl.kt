@@ -110,6 +110,4 @@ internal class AppImpl(
         result = 31 * result + nativePointer.hashCode()
         return result
     }
-
-
 }

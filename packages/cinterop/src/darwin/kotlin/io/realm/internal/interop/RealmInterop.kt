@@ -893,6 +893,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
+    actual fun realm_app_get_current_user(app: NativePointer): NativePointer? {
+        return CPointerWrapper(realm_wrapper.realm_app_get_current_user(app.cptr()))
+    }
+
     actual fun realm_app_log_in_with_credentials(
         app: NativePointer,
         credentials: NativePointer,
@@ -917,6 +921,38 @@ actual object RealmInterop {
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
         )
+    }
+
+    actual fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>) {
+        realm_wrapper.realm_app_log_out(
+            app.cptr(),
+            user.cptr(),
+            staticCFunction { userdata, error: CPointer<realm_app_error_t>? ->
+                val userDataCallback = safeUserData<AppCallback<Unit>>(userdata)
+                if (error == null) {
+                    userDataCallback.onSuccess(Unit)
+                } else {
+                    val message = with(error.pointed) {
+                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
+                    }
+                    userDataCallback.onError(AppException(message))
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
+        )
+    }
+
+    actual fun realm_user_get_identity(user: NativePointer): String {
+        return realm_wrapper.realm_user_get_identity(user.cptr())!!.toKString()
+    }
+
+    actual fun realm_user_is_logged_in(user: NativePointer): Boolean {
+        return realm_wrapper.realm_user_is_logged_in(user.cptr())
+    }
+
+    actual fun realm_user_log_out(user: NativePointer) {
+        realm_wrapper.realm_user_log_out(user.cptr())
     }
 
     private val newRequestLambda = staticCFunction<COpaquePointer?,
