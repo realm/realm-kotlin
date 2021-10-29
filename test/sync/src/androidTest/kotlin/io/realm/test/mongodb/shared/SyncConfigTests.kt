@@ -22,15 +22,17 @@ import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
-import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.SyncException
+import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -41,10 +43,11 @@ import kotlin.test.assertNotNull
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
 
+@ExperimentalCoroutinesApi
 class SyncConfigTests {
 
     private lateinit var tmpDir: String
-    private lateinit var app: App
+    private lateinit var app: TestApp
     private lateinit var realm: Realm
 
     @BeforeTest
@@ -76,16 +79,35 @@ class SyncConfigTests {
         assertEquals(logger, config.log.loggers[1]) // Additional logger placed after default logger
     }
 
-//    @Test
-//    fun errorHandler() {
-//        val builder: SyncConfiguration.Builder = SyncConfiguration.Builder(createTestUser(app), DEFAULT_PARTITION)
-//        val errorHandler: SyncSession.ErrorHandler = object : SyncSession.ErrorHandler {
-//            override fun onError(session: SyncSession, error: AppException) {}
-//        }
-//        val config = builder.errorHandler(errorHandler).build()
-//        assertEquals(errorHandler, config.errorHandler)
-//    }
-//
+    @Test
+    fun errorHandler() {
+        val errorHandler = object : SyncSession.ErrorHandler {
+            override fun onError(session: SyncSession, error: SyncException) {
+                // No-op
+            }
+        }
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).also { builder ->
+            builder.errorHandler(errorHandler)
+        }.build()
+        assertEquals(errorHandler, config.errorHandler)
+    }
+
+    @Test
+    fun errorHandler_default() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
+        assertNotNull(config.errorHandler)
+    }
+
 //    @Test
 //    fun errorHandler_fromAppConfiguration() {
 //        val user: User = createTestUser(app)
@@ -222,7 +244,7 @@ class SyncConfigTests {
     }
 
     @Test
-    fun encryption_invalid_wrong_length() {
+    fun encryption_wrongLength() {
         val user = createTestUser()
         val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE)
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }

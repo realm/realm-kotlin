@@ -30,6 +30,7 @@ expect enum class CoreLogLevel {
     // We need this property since it isn't allowed to have constructor params in an expect enum
     val priority: Int
 
+    // TODO Use approach from https://github.com/realm/realm-kotlin/pull/522/files#diff-78c7e4d23c4a144e89ea26c34b8f97ff2111e39db5cdf0f9724deb79f5634194R32 once it gets merged
     companion object {
         fun valueFromPriority(priority: Short): CoreLogLevel
     }

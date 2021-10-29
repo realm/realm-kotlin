@@ -16,6 +16,8 @@
 
 package io.realm.internal.interop
 
+import io.realm.mongodb.SyncException
+
 // TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
 interface Callback {
     fun onChange(change: NativePointer)
@@ -24,6 +26,10 @@ interface Callback {
 interface CinteropCallback {
     fun onSuccess(pointer: NativePointer)
     fun onError(throwable: Throwable)
+}
+
+interface SyncErrorCallback {
+    fun onSyncError(pointer: NativePointer, throwable: SyncException)
 }
 
 interface SyncLogCallback {

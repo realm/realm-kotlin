@@ -51,6 +51,7 @@ interface SyncConfiguration : RealmConfiguration {
 
     val user: User
     val partitionValue: PartitionValue
+    val errorHandler: SyncSession.ErrorHandler?
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
@@ -59,8 +60,10 @@ interface SyncConfiguration : RealmConfiguration {
     class Builder private constructor(
         private var user: User,
         private var partitionValue: PartitionValue,
-        schema: Set<KClass<out RealmObject>>
+        schema: Set<KClass<out RealmObject>>,
     ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
+
+        private var errorHandler: SyncSession.ErrorHandler? = null
 
         constructor(
             user: User,
@@ -96,6 +99,14 @@ interface SyncConfiguration : RealmConfiguration {
                 this.removeSystemLogger = false
             }
 
+        /**
+         * Sets the error handler used by Synced Realms when reporting errors with their session.
+         *
+         * @param errorHandler lambda to handle the error.
+         */
+        fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
+            apply { this.errorHandler = errorHandler }
+
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
         ): SyncConfiguration {
@@ -107,6 +118,29 @@ interface SyncConfiguration : RealmConfiguration {
             if (!removeSystemLogger) {
                 allLoggers.add(0, createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
+
+            // Set default error handler after setting config logging logic
+            if (this.errorHandler == null) {
+                this.errorHandler = object : SyncSession.ErrorHandler {
+
+                    private val fallbackErrorLogger: RealmLogger by lazy {
+                        createDefaultSystemLogger("SYNC_ERROR")
+                    }
+
+                    override fun onError(session: SyncSession, error: SyncException) {
+                        error.message?.let {
+                            // Grab user logger if present or use fallback to at least show something
+                            // in case no loggers are to be found
+                            if (userLoggers.isNotEmpty()) {
+                                userLoggers[0].log(LogLevel.WARN, it)
+                            } else {
+                                fallbackErrorLogger.log(LogLevel.WARN, it)
+                            }
+                        }
+                    }
+                }
+            }
+
             val localConfiguration = RealmConfigurationImpl(
                 companionMap,
                 path,
@@ -121,7 +155,12 @@ interface SyncConfiguration : RealmConfiguration {
                 encryptionKey
             )
 
-            return SyncConfigurationImpl(localConfiguration, partitionValue, user as UserImpl)
+            return SyncConfigurationImpl(
+                localConfiguration,
+                partitionValue,
+                user as UserImpl,
+                errorHandler!! // It will never be null: either default or user-provided
+            )
         }
     }
 }

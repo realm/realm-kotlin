@@ -158,6 +158,7 @@ expect object RealmInterop {
         syncClientConfig: NativePointer,
         metadataMode: MetadataMode
     )
+    fun realm_sync_set_error_handler(syncConfig: NativePointer, errorHandler: SyncErrorCallback)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer

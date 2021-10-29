@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.realm.test.shared
 
+import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
+import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.SyncException
+import io.realm.mongodb.SyncSession
+import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -37,7 +42,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class SyncedRealmTests {
 
@@ -49,7 +56,7 @@ class SyncedRealmTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
     private lateinit var syncConfiguration: SyncConfiguration
-    private lateinit var app: App
+    private lateinit var app: TestApp
 
     @BeforeTest
     fun setup() {
@@ -59,11 +66,11 @@ class SyncedRealmTests {
         val user = createTestUser()
 
         tmpDir = PlatformUtils.createTempDir()
-        syncConfiguration = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
-            partitionValue = "default",
-            user = user
-        ).path(path = "$tmpDir/test.realm").build()
+        syncConfiguration = createSyncConfig(
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE,
+            path = "$tmpDir/test.realm"
+        )
     }
 
     @AfterTest
@@ -131,6 +138,65 @@ class SyncedRealmTests {
         realm2.close()
         PlatformUtils.deleteTempDir(dir1)
         PlatformUtils.deleteTempDir(dir2)
+    }
+
+    @Test
+    fun testErrorHandler() {
+        // Open a realm with a schema. Close it without doing anything else
+        val channel = Channel<SyncException>(1).freeze()
+        val user = createTestUser(app)
+        val tmpDir = PlatformUtils.createTempDir()
+
+        val config1 = SyncConfiguration.Builder(
+            schema = setOf(ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).path("$tmpDir/test1.realm")
+            .build()
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        // Open another realm with the same entity but change the type of a field in the schema to
+        // trigger a sync error to be caught by the error handler
+        runBlocking {
+            val config2 = SyncConfiguration.Builder(
+                schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
+                user = user,
+                partitionValue = DEFAULT_PARTITION_VALUE
+            ).path("$tmpDir/test2.realm")
+                .also { builder ->
+                    builder.errorHandler(object : ErrorHandler {
+                        override fun onError(session: SyncSession, error: SyncException) {
+                            runBlocking {
+                                channel.send(error)
+                            }
+                        }
+                    })
+                }.build()
+            val realm2 = Realm.open(config2)
+            assertNotNull(realm2)
+
+            // Await for exception to happen
+            val exception = channel.receive()
+
+            channel.close()
+
+            // Validate that the exception was captured and contains serialized fields
+            assertIs<SyncException>(exception)
+            exception.message.let { errorMessage ->
+                assertNotNull(errorMessage)
+                assertTrue(errorMessage.contains("error_code.category="))
+                assertTrue(errorMessage.contains("error_code.value="))
+                assertTrue(errorMessage.contains("error_code.message="))
+                assertTrue(errorMessage.contains("is_fatal="))
+                assertTrue(errorMessage.contains("is_unrecognized_by_client="))
+            }
+
+            // Housekeeping for test Realms
+            realm1.close()
+            realm2.close()
+            PlatformUtils.deleteTempDir(tmpDir)
+        }
     }
 
 //    @Test
@@ -483,17 +549,34 @@ class SyncedRealmTests {
         }
     }
 
+    private fun createTestUser(app: TestApp): User {
+        val email = randomEmail()
+        val password = "asdfasdf"
+        app.asTestApp.createUser(email, password)
+        return runBlocking {
+            app.login(Credentials.emailPassword(email, password))
+        }
+    }
+
     @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
         path: String? = null,
-        name: String = DEFAULT_NAME
+        name: String = DEFAULT_NAME,
+        encryptionKey: ByteArray? = null,
+        log: LogConfiguration? = null,
+        errorHandler: SyncSession.ErrorHandler? = null
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
     ).path(path)
         .name(name)
-        .build()
+        .let { builder ->
+            if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+            if (errorHandler != null) builder.errorHandler(errorHandler)
+            if (log != null) builder.log(log.level, log.loggers)
+            builder
+        }.build()
 }

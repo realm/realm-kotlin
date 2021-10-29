@@ -493,6 +493,13 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
 
+    actual fun realm_sync_set_error_handler(
+        syncConfig: NativePointer,
+        errorHandler: SyncErrorCallback
+    ) {
+        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
+    }
+
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
