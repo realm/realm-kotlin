@@ -228,6 +228,7 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
             credentials,
             // FIXME Refactor into generic handling of network requests, like
             //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
+            //  see 'app_register_email_password'
             [](void* userdata, realm_user_t* user, const realm_app_error_t* error) {
                 auto jenv = get_env(true);
 
