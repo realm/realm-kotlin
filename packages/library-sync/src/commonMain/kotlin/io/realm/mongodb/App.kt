@@ -21,24 +21,52 @@ import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.AppImpl
 
 /**
- * TODO
+ * An **App** is the main client-side entry point for interacting with a **MongoDB Realm App**.
+ *
+ * The **App** can be used to:
+ * - Register and authenticate users.
+ * - Synchronize data between the local device and a backend Realm App with synchronized realms.
+ *
+ * To create an app that is linked with a remote **Realm App**, initialize Realm and configure the
+ * **App** as shown below:
+ *
+ * ```
+ *     class MyRealmAppClass {
+ *         val app: App = App.create(<APP_ID>)
+ *         val realm: Realm
+ *
+ *         init {
+ *              realm = runBlocking {
+ *                  val user = app.login(Credentials.anonymous())
+ *                  val config = SyncConfiguration.Builder(
+ *                      user = user,
+ *                      partitionValue = "my-partition"
+ *                      schema = setOf(YourRealmObject::class),
+ *                  ).build()
+ *
+ *                  Realm.open(config)
+ *              }
+ *         }
+ *     }
+ * ```
  */
 interface App {
 
     val configuration: AppConfiguration
 
     /**
-     * TODO
+     * Log in as a user with the given credentials associated with an authentication provider.
+     *
+     * @param credentials the credentials representing the type of login.
+     * @return the logged in [User].
+     * @throws AppException if the user could not be logged in.
      */
-    // FIXME Reevaluate Result api to surface App errors more explicitly
-    //  https://github.com/realm/realm-kotlin/pull/447#discussion_r707344044
-    //  https://github.com/realm/realm-kotlin/issues/241
     suspend fun login(credentials: Credentials): User
 
     companion object {
         /**
          * Create an [App] with default settings.
-         * @param appId The MongoDB Realm App ID.
+         * @param appId the MongoDB Realm App ID.
          */
         fun create(appId: String): App {
             Validation.checkEmpty(appId, "appId")
@@ -48,7 +76,7 @@ interface App {
         /**
          * Create an [App] according to the given [AppConfiguration].
          *
-         * @param configuration The configuration to use for this [App] instance.
+         * @param configuration the configuration to use for this [App] instance.
          * @see AppConfiguration.Builder
          */
         fun create(configuration: AppConfiguration): App =

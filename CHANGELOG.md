@@ -4,7 +4,13 @@
 * None.
 
 ### Enhancements
-* None.
+* Basic MongoDB Realm sync support: 
+  * Enabled by using library dependency `io.realm.kotlin:library-sync:<VERSION>`
+  * Build `AppConfiguration`s through `AppConfiguration.Builder(appId).build()`
+  * Linking your app with a MongoDB Realm App through `App.create(appConfiguration)`
+  * Log in to a MongoDB Realm App through `App.login(credentials)`. Currently only supports `Credentials.anonymous()` and `Credentials.emailPassword(...)`
+  * Create `SyncConfiguration`s through `SyncConfiguration.Builder(user, partitionValue, schema).build()`
+  * Create synchronized realm by `Realm.open(syncConfiguration)`
 
 ### Fixed
 * None.

@@ -81,7 +81,7 @@ interface AppConfiguration {
         fun baseUrl(baseUrl: String) = apply { this.baseUrl = baseUrl }
 
         /**
-         * TODO
+         * The dispatcher used to execute internal tasks; most notably remote HTTP requests.
          */
         fun dispatcher(dispatcher: CoroutineDispatcher) = apply { this.dispatcher = dispatcher }
 

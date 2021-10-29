@@ -40,10 +40,10 @@ import kotlin.reflect.KClass
  *
  * A minimal [SyncConfiguration] can be found below.
  * ```
- *      val app = App.create(AppConfiguration.Builder(appId))
+ *      val app = App.create(appId)
  *      val user = app.login(Credentials.anonymous())
- *      val config = SyncConfiguration.Builder(user, "partition-value")
- *      val realm = Realm.getInstance(config)
+ *      val config = SyncConfiguration.Builder(user, "partition-value", setOf(YourRealmObject::class)).build()
+ *      val realm = Realm.open(config)
  * ```
  */
 // FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504

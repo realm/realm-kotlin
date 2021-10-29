@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.test
 
-/**
- * A **user** holds the user's metadata and tokens for accessing Realm App functionality.
- *
- * The user is used to configure synchronized realms with [SyncConfiguration.Builder].
- *
- * @see App.login
- * @see SyncConfiguration.Builder
- */
-interface User
+import io.realm.internal.platform.OS_NAME
+import io.realm.internal.platform.OS_VERSION
+import io.realm.internal.platform.RUNTIME
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+class PlatformInfoTest {
+    @Test
+    fun platformInfo() {
+        assertEquals("Native", RUNTIME)
+        assertEquals("NSMACHOperatingSystem", OS_NAME)
+        assertTrue(OS_VERSION.startsWith("Version "))
+    }
+}

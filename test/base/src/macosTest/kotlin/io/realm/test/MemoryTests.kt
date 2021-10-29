@@ -94,6 +94,11 @@ class MemoryTests {
         triggerGC()
 
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process references
+
+        // We should find a way to just meassure the increase over these tests. Referencing
+        //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
+        // as done in Darwin SystemUtils.kt can also cause allocations. Thus, just lazy evaluating
+        // those system constants for now to avoid affecting the tests.
         assertEquals(
             "",
             runSystemCommand(amountOfMemoryMappedInProcessCMD),
@@ -133,6 +138,11 @@ class MemoryTests {
 
         triggerGC()
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
+
+        // We should find a way to just meassure the increase over these tests. Referencing
+        //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
+        // as done in Darwin SystemUtils.kt can also cause allocations. Thus, just lazy evaluating
+        // those system constants for now to avoid affecting the tests.
         assertEquals(
             "",
             runSystemCommand(amountOfMemoryMappedInProcessCMD),

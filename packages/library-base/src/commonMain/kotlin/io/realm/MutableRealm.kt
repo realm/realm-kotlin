@@ -26,7 +26,7 @@ interface MutableRealm : TypedRealm {
      * *Note:* This object is not readable outside the write block unless it has been explicitly
      * returned from the write.
      *
-     * @param obj Realm object to look up. Its latest state will be returned. If the object
+     * @param obj realm object to look up. Its latest state will be returned. If the object
      * has been deleted, `null` will be returned.
      *
      * @throws IllegalArgumentException if called on an unmanaged object.
@@ -47,8 +47,8 @@ interface MutableRealm : TypedRealm {
      * not be copied, including the root `instance`. So invoking this with an already managed
      * object is a no-operation.
      *
-     * @param instance The object to create a copy from.
-     * @return The managed version of the `instance`.
+     * @param instance the object to create a copy from.
+     * @return the managed version of the `instance`.
      *
      * @throws IllegalArgumentException if the class has a primary key field and an object with the same
      * primary key already exists.
@@ -62,8 +62,8 @@ interface MutableRealm : TypedRealm {
      *
      * The result is only valid on the calling thread.
      *
-     * @param clazz The class of the objects to query for.
-     * @return The result of the query, reflecting future updates to the mutable realm.
+     * @param clazz the class of the objects to query for.
+     * @return the result of the query, reflecting future updates to the mutable realm.
      */
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
 
