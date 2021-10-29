@@ -94,6 +94,7 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
         }
     }
 
+    @Suppress("NestedBlockDepth")
     private fun jsonPayload(project: Project): String {
         val userId = ComputerIdentifierGenerator.get()
         val appId = anonymousAppId(project)
