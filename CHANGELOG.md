@@ -1,4 +1,4 @@
-## 0.7.0-SNAPSHOT (YYYY-MM-DD)
+## 0.7.0-SNAPSHOT (2021-10-29)
 
 ### Breaking Changes
 * None.
