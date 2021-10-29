@@ -164,7 +164,10 @@ expect object RealmInterop {
     fun realm_app_config_new(
         appId: String,
         networkTransport: NativePointer,
-        baseUrl: String? = null
+        baseUrl: String? = null,
+        platform: String,
+        platformVersion: String,
+        sdkVersion: String
     ): NativePointer
     fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String)
 

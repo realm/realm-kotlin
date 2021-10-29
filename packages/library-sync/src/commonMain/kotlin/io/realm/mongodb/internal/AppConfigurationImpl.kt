@@ -23,6 +23,9 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.platform.OS_NAME
+import io.realm.internal.platform.OS_VERSION
+import io.realm.internal.platform.RUNTIME
 import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
@@ -61,6 +64,9 @@ internal class AppConfigurationImpl(
     val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
-        networkTransport = RealmInterop.realm_network_transport_new(networkTransport)
+        networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
+        platform = "$OS_NAME/$RUNTIME",
+        platformVersion = OS_VERSION,
+        sdkVersion = io.realm.internal.SDK_VERSION
     ).freeze()
 }
