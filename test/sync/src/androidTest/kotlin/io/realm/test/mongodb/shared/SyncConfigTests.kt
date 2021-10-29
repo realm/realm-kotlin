@@ -97,6 +97,17 @@ class SyncConfigTests {
         assertEquals(errorHandler, config.errorHandler)
     }
 
+    @Test
+    fun errorHandler_default() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
+        assertNotNull(config.errorHandler)
+    }
+
 //    @Test
 //    fun errorHandler_fromAppConfiguration() {
 //        val user: User = createTestUser(app)

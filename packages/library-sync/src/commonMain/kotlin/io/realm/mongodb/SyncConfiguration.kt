@@ -120,20 +120,22 @@ interface SyncConfiguration : RealmConfiguration {
             }
 
             // Set default error handler after setting config logging logic
-            this.errorHandler = object : SyncSession.ErrorHandler {
+            if (this.errorHandler == null) {
+                this.errorHandler = object : SyncSession.ErrorHandler {
 
-                private val fallbackErrorLogger: RealmLogger by lazy {
-                    createDefaultSystemLogger("SYNC_ERROR")
-                }
+                    private val fallbackErrorLogger: RealmLogger by lazy {
+                        createDefaultSystemLogger("SYNC_ERROR")
+                    }
 
-                override fun onError(session: SyncSession, error: SyncException) {
-                    error.message?.let {
-                        // Grab user logger if present or use fallback to at least show something
-                        // in case no loggers are to be found
-                        if (userLoggers.isNotEmpty()) {
-                            userLoggers[0].log(LogLevel.WARN, it)
-                        } else {
-                            fallbackErrorLogger.log(LogLevel.WARN, it)
+                    override fun onError(session: SyncSession, error: SyncException) {
+                        error.message?.let {
+                            // Grab user logger if present or use fallback to at least show something
+                            // in case no loggers are to be found
+                            if (userLoggers.isNotEmpty()) {
+                                userLoggers[0].log(LogLevel.WARN, it)
+                            } else {
+                                fallbackErrorLogger.log(LogLevel.WARN, it)
+                            }
                         }
                     }
                 }
