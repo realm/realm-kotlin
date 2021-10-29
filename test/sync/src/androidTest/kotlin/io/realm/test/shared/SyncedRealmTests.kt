@@ -540,14 +540,7 @@ class SyncedRealmTests {
 //            return (realm as io.realm.internal.RealmImpl).intermediateReferences
 //        }
 
-    private fun createTestUser(): User {
-        val email = randomEmail()
-        val password = "asdfasdf"
-        app.asTestApp.createUser(email, password)
-        return runBlocking {
-            app.login(Credentials.emailPassword(email, password))
-        }
-    }
+    private fun createTestUser(): User = createTestUser(app)
 
     private fun createTestUser(app: TestApp): User {
         val email = randomEmail()

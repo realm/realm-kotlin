@@ -55,6 +55,12 @@ interface App {
     val configuration: AppConfiguration
 
     /**
+     * Wrapper for interacting with functionality related to users either being created or logged
+     * in using the [AuthenticationProvider.EMAIL_PASSWORD] identity provider.
+     */
+    val emailPasswordAuth: EmailPasswordAuth
+
+    /**
      * Log in as a user with the given credentials associated with an authentication provider.
      *
      * @param credentials the credentials representing the type of login.

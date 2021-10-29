@@ -509,3 +509,54 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                             get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                         });
 }
+
+void app_register_email_password(realm_app_t* app,
+                                 const char* email,
+                                 realm_string_t password,
+                                 jobject registered_user_callback) {
+    auto jenv = get_env();
+    static JavaClass cinterop_void_callback(jenv, "io/realm/internal/interop/CinteropVoidCallback");
+    static JavaMethod on_success_method(jenv, cinterop_void_callback, "onSuccess", "()V");
+    static JavaMethod on_error_method(jenv, cinterop_void_callback, "onError", "(Ljava/lang/Throwable;)V");
+
+    realm_app_email_password_provider_client_register_email(app,
+                                                            email,
+                                                            password,
+                                                            [](void* userdata, const realm_app_error_t* error) {
+                                                                auto jenv = get_env(true);
+
+                                                                // TODO first two branches of if statement can be abstracted together with register_login_cb's
+                                                                if (jenv->ExceptionCheck()) {
+                                                                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                                                                                         on_error_method,
+                                                                                         jenv->ExceptionOccurred());
+                                                                } else if (error) {
+                                                                    static JavaMethod app_exception_constructor(jenv,
+                                                                                                                JavaClassGlobalDef::app_exception_class(),
+                                                                                                                "<init>",
+                                                                                                                "(Ljava/lang/String;)V");
+
+                                                                    std::stringstream message;
+                                                                    message << error->message << " ["
+                                                                            << "error_category=" << error->error_category << ", "
+                                                                            << "error_code=" << error->error_code << ", "
+                                                                            << "link_to_server_logs=" << error->link_to_server_logs
+                                                                            << "]";
+
+                                                                    jobject throwable = jenv->NewObject(JavaClassGlobalDef::app_exception_class(),
+                                                                                                        app_exception_constructor,
+                                                                                                        to_jstring(jenv, message.str()));
+                                                                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                                                                                         on_error_method,
+                                                                                         throwable);
+                                                                } else {
+                                                                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                                                                                         on_success_method);
+                                                                }
+                                                            },
+                                                            static_cast<jobject>(get_env()->NewGlobalRef(registered_user_callback)),
+                                                            [](void *userdata) {
+                                                                get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                                            });
+
+}

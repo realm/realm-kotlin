@@ -1101,6 +1101,34 @@ actual object RealmInterop {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
     }
 
+    actual fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: CinteropVoidCallback
+    ) {
+        memScoped {
+            realm_wrapper.realm_app_email_password_provider_client_register_email(
+                app.cptr(),
+                email,
+                password.toRString(this),
+                staticCFunction { userData, error ->
+                    val userDataCallback = safeUserData<CinteropVoidCallback>(userData)
+                    if (error == null) {
+                        userDataCallback.onSuccess()
+                    } else {
+                        val message = with(error.pointed) {
+                            "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
+                        }
+                        userDataCallback.onError(AppException(message))
+                    }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userData -> disposeUserData<CinteropVoidCallback>(userData) }
+            )
+        }
+    }
+
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition))
     }

@@ -27,6 +27,7 @@ import io.realm.internal.util.Validation
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
+import io.realm.mongodb.EmailPasswordAuth
 import io.realm.mongodb.User
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -41,6 +42,8 @@ internal class AppImpl(
         initializeSyncClientConfig(),
         appFilesDirectory()
     )
+
+    override val emailPasswordAuth: EmailPasswordAuth = EmailPasswordAuth(nativePointer)
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->

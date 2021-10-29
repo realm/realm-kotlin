@@ -539,6 +539,15 @@ actual object RealmInterop {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
 
+    actual fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: CinteropVoidCallback
+    ) {
+        realmc.app_register_email_password(app.cptr(), email, password, callback)
+    }
+
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
         return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }
