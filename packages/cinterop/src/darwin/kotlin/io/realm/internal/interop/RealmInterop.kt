@@ -44,6 +44,7 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
@@ -60,6 +61,7 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.strerror
 import platform.posix.uint8_tVar
+import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
@@ -899,14 +901,17 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error ->
+            staticCFunction { userdata, user, error: CPointer<realm_app_error_t>? ->
                 val userDataCallback = safeUserData<AppCallback<NativePointer>>(userdata)
                 if (error == null) {
                     // Remember to clone user object or else it will be invalidated right after we leave this callback
                     val clonedUser = realm_clone(user)
                     userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
-                    userDataCallback.onError(AppException())
+                    val message = with(error.pointed) {
+                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
+                    }
+                    userDataCallback.onError(AppException(message))
                 }
             },
             StableRef.create(callback).asCPointer(),
@@ -971,6 +976,31 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
 
+    actual fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: SyncLogCallback
+    ) {
+        realm_wrapper.realm_sync_client_config_set_log_callback(
+            syncClientConfig.cptr(),
+            staticCFunction { userData, logLevel, message ->
+                val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
+                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
+            },
+            StableRef.create(callback.freeze()).asCPointer(),
+            staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
+        )
+    }
+
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realm_wrapper.realm_sync_client_config_set_log_level(
+            syncClientConfig.cptr(),
+            level.priority.toUInt()
+        )
+    }
+
     actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,
         metadataMode: MetadataMode
@@ -993,18 +1023,21 @@ actual object RealmInterop {
         )
     }
 
+    @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
         networkTransport: NativePointer,
-        baseUrl: String?
+        baseUrl: String?,
+        platform: String,
+        platformVersion: String,
+        sdkVersion: String
     ): NativePointer {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
 
-        // TODO Fill in appropriate meta data
-        //  https://github.com/realm/realm-kotlin/issues/449
-        realm_wrapper.realm_app_config_set_platform(appConfig, "kotlin")
-        realm_wrapper.realm_app_config_set_platform_version(appConfig, "PLATFORM_VERSION")
-        realm_wrapper.realm_app_config_set_sdk_version(appConfig, "SDK_VERSION")
+        realm_wrapper.realm_app_config_set_platform(appConfig, platform)
+        realm_wrapper.realm_app_config_set_platform_version(appConfig, platformVersion)
+        realm_wrapper.realm_app_config_set_sdk_version(appConfig, sdkVersion)
+
         // TODO Fill in appropriate app meta data
         //  https://github.com/realm/realm-kotlin/issues/407
         realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")

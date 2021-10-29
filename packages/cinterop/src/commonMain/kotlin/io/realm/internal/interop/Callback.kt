@@ -27,3 +27,8 @@ interface AppCallback<T> {
     fun onSuccess(t: T)
     fun onError(throwable: Throwable)
 }
+
+interface SyncLogCallback {
+    // Passes core log levels as shorts to avoid unnecessary jumping between the SDK and JNI
+    fun log(logLevel: Short, message: String?)
+}

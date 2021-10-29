@@ -45,12 +45,16 @@ private:
         : m_java_util_hashmap(env, "java/util/HashMap", false)
         , m_io_realm_network_transport(env, "io/realm/internal/interop/sync/NetworkTransport", false)
         , m_io_realm_response(env, "io/realm/internal/interop/sync/Response", false)
+        , m_io_realm_mongodb_app_exception(env, "io/realm/mongodb/AppException", false)
+        , m_io_realm_sync_log_callback(env, "io/realm/internal/interop/SyncLogCallback", false)
     {
     }
 
     jni_util::JavaClass m_java_util_hashmap;
     jni_util::JavaClass m_io_realm_network_transport;
     jni_util::JavaClass m_io_realm_response;
+    jni_util::JavaClass m_io_realm_mongodb_app_exception;
+    jni_util::JavaClass m_io_realm_sync_log_callback;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -85,6 +89,16 @@ public:
     inline static const jni_util::JavaClass& java_util_hashmap()
     {
         return instance()->m_java_util_hashmap;
+    }
+
+    inline static const jni_util::JavaClass& app_exception_class()
+    {
+        return instance()->m_io_realm_mongodb_app_exception;
+    }
+
+    inline static const jni_util::JavaClass& sync_log_callback()
+    {
+        return instance()->m_io_realm_sync_log_callback;
     }
 };
 

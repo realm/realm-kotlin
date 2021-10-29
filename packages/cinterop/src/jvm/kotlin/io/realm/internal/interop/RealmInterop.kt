@@ -488,6 +488,20 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
 
+    actual fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: SyncLogCallback
+    ) {
+        realmc.set_log_callback(syncClientConfig.cptr(), callback)
+    }
+
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.priority)
+    }
+
     actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: NativePointer,
         metadataMode: MetadataMode
@@ -502,20 +516,23 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
 
+    @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
         networkTransport: NativePointer,
-        baseUrl: String?
+        baseUrl: String?,
+        platform: String,
+        platformVersion: String,
+        sdkVersion: String,
     ): NativePointer {
         val config = realmc.realm_app_config_new(appId, networkTransport.cptr())
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
-        // TODO Fill in appropriate meta data
-        //  https://github.com/realm/realm-kotlin/issues/449
-        realmc.realm_app_config_set_platform(config, "kotlin")
-        realmc.realm_app_config_set_platform_version(config, "PLATFORM_VERSION")
-        realmc.realm_app_config_set_sdk_version(config, "SDK_VERSION")
+        realmc.realm_app_config_set_platform(config, platform)
+        realmc.realm_app_config_set_platform_version(config, platformVersion)
+        realmc.realm_app_config_set_sdk_version(config, sdkVersion)
+
         // TODO Fill in appropriate app meta data
         //  https://github.com/realm/realm-kotlin/issues/407
         realmc.realm_app_config_set_local_app_version(config, "APP_VERSION")

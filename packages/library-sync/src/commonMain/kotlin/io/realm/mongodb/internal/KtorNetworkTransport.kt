@@ -17,6 +17,7 @@
 package io.realm.mongodb.internal
 
 import io.ktor.client.call.receive
+import io.ktor.client.features.ClientRequestException
 import io.ktor.client.features.ServerResponseException
 import io.ktor.client.features.logging.Logger
 import io.ktor.client.request.HttpRequestBuilder
@@ -113,6 +114,8 @@ class KtorNetworkTransport(
                     }.let {
                         processHttpResponse(it)
                     }
+                } catch (e: ClientRequestException) {
+                    processHttpResponse(e.response)
                 } catch (e: ServerResponseException) {
                     // 500s are thrown as ServerResponseException
                     processHttpResponse(e.response)

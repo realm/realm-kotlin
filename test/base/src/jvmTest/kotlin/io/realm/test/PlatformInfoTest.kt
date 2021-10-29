@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.test
 
-@Suppress("ForbiddenComment")
-// TODO: implement actual AppException with sync error codes hierarchy
-class AppException(message: String?) : Exception(message)
+import io.realm.internal.platform.OS_NAME
+import io.realm.internal.platform.OS_VERSION
+import io.realm.internal.platform.RUNTIME
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class PlatformInfoTest {
+    @Test
+    fun platformInfo() {
+        assertEquals("JVM", RUNTIME)
+        assertEquals(System.getProperty("os.name"), OS_NAME)
+        assertEquals(System.getProperty("os.version"), OS_VERSION)
+    }
+}

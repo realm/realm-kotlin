@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop
+package io.realm.test
 
-interface CoreLogger {
-    fun log(level: Short, message: String)
+import io.realm.internal.platform.OS_NAME
+import io.realm.internal.platform.OS_VERSION
+import io.realm.internal.platform.RUNTIME
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+class PlatformInfoTest {
+    @Test
+    fun platformInfo() {
+        assertEquals("Native", RUNTIME)
+        assertEquals("NSMACHOperatingSystem", OS_NAME)
+        assertTrue(OS_VERSION.startsWith("Version "))
+    }
 }

@@ -8,3 +8,7 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
+-keep class io.realm.internal.interop.SyncLogCallback {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}

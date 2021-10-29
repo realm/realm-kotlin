@@ -14,8 +14,23 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.internal.interop
 
-@Suppress("ForbiddenComment")
-// TODO: implement actual AppException with sync error codes hierarchy
-class AppException(message: String?) : Exception(message)
+expect enum class CoreLogLevel {
+    RLM_LOG_LEVEL_ALL,
+    RLM_LOG_LEVEL_TRACE,
+    RLM_LOG_LEVEL_DEBUG,
+    RLM_LOG_LEVEL_DETAIL,
+    RLM_LOG_LEVEL_INFO,
+    RLM_LOG_LEVEL_WARNING,
+    RLM_LOG_LEVEL_ERROR,
+    RLM_LOG_LEVEL_FATAL,
+    RLM_LOG_LEVEL_OFF;
+
+    // We need this property since it isn't allowed to have constructor params in an expect enum
+    val priority: Int
+
+    companion object {
+        fun valueFromPriority(priority: Short): CoreLogLevel
+    }
+}

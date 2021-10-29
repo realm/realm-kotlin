@@ -217,6 +217,24 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
     return realm_open(&copyConf);
 }
 
+jobject app_exception_from_app_error(JNIEnv* env, const realm_app_error_t* error) {
+    static JavaMethod app_exception_constructor(env,
+                                                JavaClassGlobalDef::app_exception_class(),
+                                                "<init>",
+                                                "(Ljava/lang/String;)V");
+
+    std::stringstream message;
+    message << error->message << " ["
+            << "error_category=" << error->error_category << ", "
+            << "error_code=" << error->error_code << ", "
+            << "link_to_server_logs=" << error->link_to_server_logs
+            << "]";
+
+    return env->NewObject(JavaClassGlobalDef::app_exception_class(),
+                                       app_exception_constructor,
+                                       to_jstring(env, message.str()));
+}
+
 void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
     auto env = get_env(true);
     static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
@@ -224,20 +242,18 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
                                           "(Ljava/lang/Throwable;)V");
     static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
                                             "(Ljava/lang/Object;)V");
+    static JavaClass unit_class(env, "kotlin/Unit");
+    static JavaMethod unit_constructor(env, unit_class , "<init>", "()V");
+
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
-        // TODO OPTIMIZE Make central global reference table of classes
-        //  https://github.com/realm/realm-kotlin/issues/460
-        jclass exception_class = env->FindClass("io/realm/mongodb/AppException");
-        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "()V");
-        jobject throwable = env->NewObject(exception_class, exception_constructor);
-        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, throwable);
+        jobject app_exception = app_exception_from_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata),
+                             java_notify_onerror,
+                             app_exception);
     } else {
-        // TODO OPTIMIZE
-        jclass unit_class = env->FindClass("kotlin/Unit");
-        static jmethodID unit_constructor = env->GetMethodID(unit_class, "<init>", "()V");
         jobject unit = env->NewObject(unit_class, unit_constructor);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, unit);
     }
@@ -250,28 +266,27 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
                                           "(Ljava/lang/Throwable;)V");
     static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
                                             "(Ljava/lang/Object;)V");
+
+    static JavaClass native_pointer_class(env, "io/realm/internal/interop/LongPointerWrapper");
+    static JavaMethod native_pointer_constructor(env, native_pointer_class, "<init>", "(JZ)V");
+
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
-        // TODO OPTIMIZE Make central global reference table of classes
-        //  https://github.com/realm/realm-kotlin/issues/460
-        jclass exception_class = env->FindClass("io/realm/mongodb/AppException");
-        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "()V");
-        jobject throwable = env->NewObject(exception_class, exception_constructor);
-        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, throwable);
+        jobject app_exception = app_exception_from_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata),
+                            java_notify_onerror,
+                            app_exception);
     } else {
-        jclass exception_class = env->FindClass("io/realm/internal/interop/LongPointerWrapper");
-        static jmethodID exception_constructor = env->GetMethodID(exception_class, "<init>", "(JZ)V");
-
         // Remember to clone user object or else it will be invalidated right after we leave this callback
         void* cloned_result = realm_clone(result);
-        jobject pointer = env->NewObject(exception_class, exception_constructor,
-                                          reinterpret_cast<jlong>(cloned_result), false);
-
+        jobject pointer = env->NewObject(native_pointer_class, native_pointer_constructor,
+                                         reinterpret_cast<jlong>(cloned_result), false);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, pointer);
     }
 }
+
 
 static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
     static JavaMethod m_send_request_method(jenv,
@@ -358,19 +373,18 @@ static void pass_jvm_response_to_core(JNIEnv *jenv, jobject j_response, void* re
             j_response, get_headers_method)));
 
     auto stacked_headers = std::vector<std::string>(); // Pins headers to function stack
-    auto response_headers = std::vector<realm_http_header_t>();
-
     for (int i = 0; i < java_headers.size(); i = i + 2) {
         JStringAccessor key = java_headers[i];
         JStringAccessor value = java_headers[i + 1];
         stacked_headers.push_back(std::move(key));
         stacked_headers.push_back(std::move(value));
-
+    }
+    auto response_headers = std::vector<realm_http_header_t>();
+    for (int i = 0; i < java_headers.size(); i = i + 2) {
         // FIXME REFACTOR when C++20 will be available
         realm_http_header header;
         header.name = stacked_headers[i].c_str();
         header.value = stacked_headers[i + 1].c_str();
-
         response_headers.push_back(header);
     }
 
@@ -424,4 +438,22 @@ realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
                                     [](void* userdata) {
                                         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                     });
+}
+
+void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject log_callback) {
+    auto jenv = get_env(false);
+    realm_sync_client_config_set_log_callback(sync_client_config,
+                                              [](void* userdata, realm_log_level_e level, const char* message) {
+                                                  auto log_callback = static_cast<jobject>(userdata);
+                                                  auto jenv = get_env(true);
+                                                  static JavaMethod log_method(jenv,
+                                                                               JavaClassGlobalDef::sync_log_callback(),
+                                                                               "log",
+                                                                               "(SLjava/lang/String;)V");
+                                                  jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
+                                              },
+                                              jenv->NewGlobalRef(log_callback), // userdata is the log callback
+                                              [](void* userdata) {
+                                                  get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                              });
 }
