@@ -1,3 +1,24 @@
+## 0.8.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
+
+### Internal
+* Updated to Gradle 7.2.
+
+
 ## 0.7.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
