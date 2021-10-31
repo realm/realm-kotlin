@@ -17,6 +17,7 @@
 
 ### Internal
 * Updated to Gradle 7.2.
+* Updated to Android Gradle Plugin 7.1.0-beta02.
 
 
 ## 0.7.0-SNAPSHOT (YYYY-MM-DD)

@@ -79,8 +79,6 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
-        versionCode = 1
-        versionName = Realm.version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {

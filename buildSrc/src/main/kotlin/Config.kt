@@ -55,12 +55,7 @@ object Versions {
         const val targetSdk = 30
         const val compileSdkVersion = 30
         const val buildToolsVersion = "30.0.2"
-        // When updating buildTools, we also need to manually update the following files
-        // - examples/kmm-sample/settings.gradle.kts
-        // - packages/settings.gradle.kts
-        // Cannot upgrade past 4.1.0 due to https://issuetracker.google.com/issues/187134648
-        // Fix has not been released in lastest 7.1.0-alpha06.
-        const val buildTools = "4.1.0" //
+        const val buildTools = "7.1.0-beta02" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "22.1.7171670"
     }
     const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
