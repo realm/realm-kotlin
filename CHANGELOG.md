@@ -1,4 +1,4 @@
-## 0.7.0-SNAPSHOT (2021-10-29)
+## 0.7.0 (2021-10-31)
 
 ### Breaking Changes
 * None.
