@@ -64,9 +64,9 @@ object Versions {
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
     const val atomicfu = "0.16.3" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
-    // Cannot upgrade past this due to https://stackoverflow.com/questions/67120904/cannot-properly-link-c-project-with-gradle-exception-during-working-with-exte
-    // Upgrading might be possible if we can bump Android Gradle Plugin, but that is blocked on another bug.
-    const val cmake = "3.18.1" // Core requires minimum 3.15, but 3.18.1 is available through the Android SDK
+    // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.18.1 is available through the Android SDK.
+    // Build also tested successfully with 3.21.4 (latest release).
+    const val cmake = "3.18.1"
     const val coroutines = "1.5.2-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val detektPlugin = "1.17.1" // https://github.com/detekt/detekt
     const val dokka = "1.5.30" // https://github.com/Kotlin/dokka
