@@ -64,7 +64,6 @@ internal class KtorNetworkTransportTest {
                     url,
                     mapOf(),
                     body,
-                    true,
                     object : ResponseCallback {
                         override fun response(response: Response) {
                             it.resume(response)
@@ -90,7 +89,6 @@ internal class KtorNetworkTransportTest {
                     url,
                     mapOf(),
                     body,
-                    true,
                     object : ResponseCallback {
                         override fun response(response: Response) {
                             it.resume(response)
@@ -119,7 +117,6 @@ internal class KtorNetworkTransportTest {
                     url,
                     mapOf(),
                     body,
-                    true,
                     object : ResponseCallback {
                         override fun response(response: Response) {
                             it.resume(response)

@@ -16,8 +16,6 @@
 
 package io.realm.mongodb.internal
 
-import io.ktor.client.HttpClient
-import io.realm.internal.platform.runBlocking
 import io.ktor.client.call.receive
 import io.ktor.client.features.ClientRequestException
 import io.ktor.client.features.ServerResponseException
@@ -37,9 +35,6 @@ import io.ktor.utils.io.errors.IOException
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
 import io.realm.internal.interop.sync.ResponseCallback
-import io.realm.internal.platform.createDefaultSystemLogger
-import io.realm.internal.platform.freeze
-import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -66,7 +61,6 @@ class KtorNetworkTransport(
         url: String,
         headers: Map<String, String>,
         body: String,
-        usesRefreshToken: Boolean,
         callback: ResponseCallback,
     ) {
         // FIXME When using a shared HttpClient we are seeing sporadic

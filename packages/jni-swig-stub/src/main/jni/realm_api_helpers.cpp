@@ -284,7 +284,7 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
     static JavaMethod m_send_request_method(jenv,
                                             JavaClassGlobalDef::network_transport_class(),
                                             "sendRequest",
-                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Lio/realm/internal/interop/sync/Response;");
+                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Lio/realm/internal/interop/sync/ResponseCallback;)V");
 
     // Prepare request fields to be consumable by JVM
     std::string method;
@@ -335,7 +335,6 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
                                   to_jstring(jenv, request.url),
                                   request_headers,
                                   to_jstring(jenv, request.body),
-                                  jboolean(request.uses_refresh_token),
                                   j_response_callback
     );
 }
@@ -414,11 +413,11 @@ static void network_request_lambda_function(void* userdata,
                 "io/realm/internal/interop/sync/ResponseCallbackImpl");
         static jmethodID response_callback_constructor = jenv->GetMethodID(response_callback_class,
                                                                            "<init>",
-                                                                           "(JJ)V");
+                                                                           "(Lio/realm/internal/interop/sync/NetworkTransport;J)V");
         jobject response_callback = jenv->NewObject(response_callback_class,
                                                     response_callback_constructor,
-                                                    reinterpret_cast<jlong>(completion_callback),
-                                                    reinterpret_cast<jlong>(completion_data));
+                                                    reinterpret_cast<jobject>(userdata),
+                                                    reinterpret_cast<jlong>(request_context));
 
         send_request_via_jvm_transport(jenv, network_transport, request, response_callback);
     } catch (std::runtime_error &e) {
@@ -522,7 +521,7 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
 }
 
 void
-native_response_callback(realm_http_completion_func_t completion_callback, void* completion_data, jobject j_response) {
+native_response_callback(void* request_context, jobject j_response) {
     auto jenv = get_env(false); // should always be attached
-    pass_jvm_response_to_core(jenv, j_response, completion_data, completion_callback);
+    pass_jvm_response_to_core(jenv, j_response, request_context);
 }

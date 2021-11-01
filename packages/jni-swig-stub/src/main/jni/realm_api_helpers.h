@@ -50,6 +50,6 @@ void
 sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);
 
 void
-native_response_callback(realm_http_completion_func_t callback, void* userdata, jobject response);
+native_response_callback(void* request_context, jobject response);
 
 #endif //TEST_REALM_API_HELPERS_H

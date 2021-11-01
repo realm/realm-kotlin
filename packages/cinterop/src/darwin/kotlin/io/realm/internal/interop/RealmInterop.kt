@@ -958,8 +958,6 @@ actual object RealmInterop {
                         ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
                 }
 
-                val callback = callback ?: error("Callback should never be null")
-
                 networkTransport.sendRequest(
                     method = when (method) {
                         realm_http_request_method.RLM_HTTP_REQUEST_METHOD_GET -> NetworkTransport.GET
@@ -971,7 +969,6 @@ actual object RealmInterop {
                     url = url!!.toKString(),
                     headers = headerMap,
                     body = body!!.toKString(),
-                    usesRefreshToken = uses_refresh_token,
                     object : ResponseCallback {
                         override fun response(response: Response) {
                             memScoped {
@@ -1124,10 +1121,11 @@ actual object RealmInterop {
         password: String
     ): NativePointer {
         memScoped {
-            val realmStringPassword = password.toRString(this)return CPointerWrapper(
-            realm_wrapper.realm_app_credentials_new_email_password(
-                username,
-                realmStringPassword
+            val realmStringPassword = password.toRString(this)
+            return CPointerWrapper(
+                realm_wrapper.realm_app_credentials_new_email_password(
+                    username,
+                    realmStringPassword
                 )
             )
         }

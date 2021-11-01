@@ -18,9 +18,9 @@ package io.realm.internal.interop.sync
 
 import io.realm.internal.interop.realmc
 
-class ResponseCallbackImpl(val nativeCallbackPointer: Long, val callbackUserData: Long):
+class ResponseCallbackImpl(val userData: NetworkTransport, val requestContext: Long):
     ResponseCallback {
     override fun response(response: Response) {
-        realmc.native_response_callback(nativeCallbackPointer, callbackUserData, response)
+        realmc.native_response_callback(requestContext, response)
     }
 }

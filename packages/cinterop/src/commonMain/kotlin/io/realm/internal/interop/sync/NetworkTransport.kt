@@ -35,7 +35,6 @@ interface NetworkTransport {
         url: String,
         headers: Map<String, String>,
         body: String,
-        usesRefreshToken: Boolean,
         callback: ResponseCallback
     )
 }
