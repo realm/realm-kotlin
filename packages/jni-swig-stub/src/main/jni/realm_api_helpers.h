@@ -46,4 +46,6 @@ invoke_core_notify_callback(int64_t core_notify_function);
 void app_complete_void_callback(void* userdata, const realm_app_error_t* error);
 void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error);
 
+void
+sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);
 #endif //TEST_REALM_API_HELPERS_H

@@ -49,6 +49,7 @@ namespace realm {
 
             return env;
         }
+
         JNIEnv * get_env_or_null() {
             JNIEnv *env;
             jint rc = cached_jvm->GetEnv((void **)&env, JNI_VERSION_1_2);

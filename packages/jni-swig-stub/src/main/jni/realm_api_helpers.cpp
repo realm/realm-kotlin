@@ -453,3 +453,63 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                                   get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                               });
 }
+
+jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
+    static JavaMethod pointer_wrapper_constructor(jenv,
+                                                  JavaClassGlobalDef::long_pointer_wrapper(),
+                                                  "<init>",
+                                                  "(JZ)V");
+    return jenv->NewObject(JavaClassGlobalDef::long_pointer_wrapper(),
+                           pointer_wrapper_constructor,
+                           pointer,
+                           managed);
+}
+
+jobject convert_sync_exception(JNIEnv* jenv, const realm_sync_error_t error) {
+    static JavaMethod app_exception_constructor(jenv,
+                                                JavaClassGlobalDef::sync_exception(),
+                                                "<init>",
+                                                "(Ljava/lang/String;)V");
+
+    std::stringstream message;
+    message << error.detailed_message << " ["
+            << "error_code.category='" << error.error_code.category << "', "
+            << "error_code.value='" << error.error_code.value << "', "
+            << "error_code.message='" << error.error_code.message << "', "
+            << "is_fatal='" << std::boolalpha << error.is_fatal << std::noboolalpha << "', "
+            << "is_unrecognized_by_client='" << std::boolalpha << error.is_unrecognized_by_client << std::noboolalpha << "'"
+            << "]";
+
+    static JavaMethod pointer_wrapper_constructor(jenv,
+                                                  JavaClassGlobalDef::sync_exception(),
+                                                  "<init>",
+                                                  "(Ljava/lang/String;)V");
+
+    return jenv->NewObject(JavaClassGlobalDef::sync_exception(),
+                           pointer_wrapper_constructor,
+                           to_jstring(jenv, message.str()));
+}
+
+void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
+    realm_sync_config_set_error_handler(sync_config,
+                                        [](void* userdata, realm_sync_session_t* session, const realm_sync_error_t error) {
+                                            auto jenv = get_env(true);
+                                            auto sync_error_callback = static_cast<jobject>(userdata);
+
+                                            jobject session_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(session));
+                                            jobject sync_exception = convert_sync_exception(jenv, error);
+
+                                            static JavaMethod sync_error_method(jenv,
+                                                                                JavaClassGlobalDef::sync_error_callback(),
+                                                                                "onSyncError",
+                                                                                "(Lio/realm/internal/interop/NativePointer;Lio/realm/mongodb/SyncException;)V");
+                                            jenv->CallVoidMethod(sync_error_callback,
+                                                                 sync_error_method,
+                                                                 session_pointer_wrapper,
+                                                                 sync_exception);
+                                        },
+                                        static_cast<jobject>(get_env()->NewGlobalRef(error_handler)),
+                                        [](void *userdata) {
+                                            get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                        });
+}

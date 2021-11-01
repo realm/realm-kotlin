@@ -23,6 +23,7 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
+import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
@@ -86,6 +87,7 @@ import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
+import kotlin.collections.set
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -449,7 +451,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
-        val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> =
+        val link: CValue<realm_link_t> =
             realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
             return Link(this.target_table.toLong(), this.target)
@@ -1044,6 +1046,34 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
             realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
+        )
+    }
+
+    actual fun realm_sync_set_error_handler(
+        syncConfig: NativePointer,
+        errorHandler: SyncErrorCallback
+    ) {
+        realm_wrapper.realm_sync_config_set_error_handler(
+            syncConfig.cptr(),
+            staticCFunction { userData, syncSession, error ->
+                val syncException = error.useContents {
+                    val message = "${this.detailed_message} [" +
+                        "error_code.category='${this.error_code.category}', " +
+                        "error_code.value='${this.error_code.value}', " +
+                        "error_code.message='${this.error_code.message}', " +
+                        "is_fatal='${this.is_fatal}', " +
+                        "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
+                        "]"
+                    SyncException(message)
+                }
+                val errorCallback = safeUserData<SyncErrorCallback>(userData)
+                val session = CPointerWrapper(syncSession)
+                errorCallback.onSyncError(session, syncException)
+            },
+            StableRef.create(errorHandler).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<(NativePointer, AppException) -> Unit>(userdata)
+            }
         )
     }
 
