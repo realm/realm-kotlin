@@ -21,6 +21,7 @@ package io.realm.test.mongodb
 import io.ktor.client.request.get
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
 import io.realm.test.mongodb.util.AdminApi
@@ -35,22 +36,36 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
 /**
  * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
  * used for testing.
+ *
+ * @param logLevel log level used to prime the AppConfiguration.Builder.
+ * @param builder the builder used to build the final app. The builder is already primed with the
+ * default test app configuration, but can be used to override the defaults and add additional
+ * options.
+ * @param debug enable trace of command server and rest api calls in the test app.
  */
-// TODO Find appropriate configuration options
 class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    appId: String = runBlocking(dispatcher) { getAppId(appName) }
-) : App by App.create(AppConfiguration.Builder(appId).baseUrl(TEST_SERVER_BASE_URL).dispatcher(dispatcher).build()),
-    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, dispatcher) }) {
+    appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
+    logLevel: LogLevel = LogLevel.WARN,
+    builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
+    debug: Boolean = false
+) : App by App.create(builder(testAppConfigurationBuilder(appId, logLevel)).dispatcher(dispatcher).build()),
+    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, debug, dispatcher) }) {
 
     fun close() {
         deleteAllUsers()
     }
 
     companion object {
-        suspend fun getAppId(appName: String): String {
-            return defaultClient("test-app-initializer").get("$COMMAND_SERVER_BASE_URL/$appName")
+        suspend fun getAppId(appName: String, debug: Boolean): String {
+            return defaultClient("$appName-initializer", debug).get("$COMMAND_SERVER_BASE_URL/$appName")
+        }
+
+        fun testAppConfigurationBuilder(appName: String, logLevel: LogLevel): AppConfiguration.Builder {
+            return AppConfiguration.Builder(appName)
+                .baseUrl(TEST_SERVER_BASE_URL)
+                .log(logLevel)
         }
     }
 }

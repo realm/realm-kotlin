@@ -17,6 +17,11 @@
 package io.realm.mongodb
 
 /**
- * TODO
+ * A **user** holds the user's metadata and tokens for accessing Realm App functionality.
+ *
+ * The user is used to configure synchronized realms with [SyncConfiguration.Builder].
+ *
+ * @see App.login
+ * @see SyncConfiguration.Builder
  */
 interface User

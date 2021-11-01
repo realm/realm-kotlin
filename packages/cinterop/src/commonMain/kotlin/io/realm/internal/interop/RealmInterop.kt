@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
@@ -33,7 +34,6 @@ value class ColumnKey(val key: Long)
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
-
     fun realm_get_version_id(realm: NativePointer): Long
     fun realm_get_library_version(): String
     fun realm_get_num_versions(realm: NativePointer): Long
@@ -138,23 +138,46 @@ expect object RealmInterop {
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
 
     // App
-    fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer // TODO sync config shouldn't be null
+    fun realm_app_get(
+        appConfig: NativePointer,
+        syncClientConfig: NativePointer,
+        basePath: String,
+    ): NativePointer
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
+
+    // Sync client config
+    fun realm_sync_client_config_new(): NativePointer
+
+    fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: SyncLogCallback
+    )
+    fun realm_sync_client_config_set_log_level(syncClientConfig: NativePointer, level: CoreLogLevel)
+
+    fun realm_sync_client_config_set_metadata_mode(
+        syncClientConfig: NativePointer,
+        metadataMode: MetadataMode
+    )
+    fun realm_sync_set_error_handler(syncConfig: NativePointer, errorHandler: SyncErrorCallback)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer
     fun realm_app_config_new(
         appId: String,
         networkTransport: NativePointer,
-        baseUrl: String? = null
+        baseUrl: String? = null,
+        platform: String,
+        platformVersion: String,
+        sdkVersion: String
     ): NativePointer
     fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String)
 
     // Credentials
     fun realm_app_credentials_new_anonymous(): NativePointer
-    fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer
+    fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Sync config
     fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer
+    fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer)
 }

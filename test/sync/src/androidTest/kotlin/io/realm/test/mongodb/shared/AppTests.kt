@@ -17,6 +17,7 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppException
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
@@ -27,11 +28,13 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class AppTests {
 
-    lateinit var app: App
+    private lateinit var app: App
 
     @BeforeTest
     fun setup() {
@@ -42,6 +45,20 @@ class AppTests {
     fun teadDown() {
         if (this::app.isInitialized) {
             app.asTestApp.close()
+        }
+    }
+
+    @Test
+    fun defaultApp() {
+        val defaultApp = App.create("foo")
+        assertEquals("foo", defaultApp.configuration.appId)
+        assertEquals(AppConfiguration.DEFAULT_BASE_URL, defaultApp.configuration.baseUrl)
+    }
+
+    @Test
+    fun defaultApp_emptyIdThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            App.create("")
         }
     }
 
@@ -81,10 +98,10 @@ class AppTests {
     fun loginInvalidUserThrows() {
         val credentials = Credentials.emailPassword("foo", "bar")
         runBlocking {
-            // TODO AppException (ErrorCode.INVALID_EMAIL_PASSWORD, ex.errorCode)
-            //  https://github.com/realm/realm-kotlin/issues/426
             assertFailsWith<AppException> {
                 app.login(credentials)
+            }.let { exception: AppException ->
+                assertTrue(exception.message!!.startsWith("invalid username/password [error_category=3, error_code=50, link_to_server_logs="))
             }
         }
     }

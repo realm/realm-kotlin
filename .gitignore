@@ -327,3 +327,4 @@ DerivedData/
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 # End of https://www.gitignore.io/api/c,git,c++,java,cmake,xcode,kotlin,android,intellij,visualstudiocode
+dynamic_libraries.properties

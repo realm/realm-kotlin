@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -152,17 +153,13 @@ actual object RealmInterop {
     }
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
-        val realmPtr = if (dispatcher != null) {
-            // create a custom Scheduler for JVM, use a lock to prevent concurrent modification of the RealmConfig
-            LongPointerWrapper(
-                realmc.open_realm_with_scheduler(
-                    (config as LongPointerWrapper).ptr,
-                    JVMScheduler(dispatcher)
-                )
+        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
+        val realmPtr = LongPointerWrapper(
+            realmc.open_realm_with_scheduler(
+                (config as LongPointerWrapper).ptr,
+                if (dispatcher != null) JVMScheduler(dispatcher) else null
             )
-        } else {
-            LongPointerWrapper(realmc.realm_open((config as LongPointerWrapper).ptr))
-        }
+        )
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return realmPtr
@@ -301,9 +298,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_list_size(list: NativePointer): Long {
-        val size = realm_size_t()
+        val size = LongArray(1)
         realmc.realm_list_size(list.cptr(), size)
-        return size.value
+        return size[0]
     }
 
     actual fun <T> realm_list_get(list: NativePointer, index: Long): T {
@@ -451,42 +448,75 @@ actual object RealmInterop {
         )
     }
 
-    // TODO sync config shouldn't be null
-    actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
-        val syncClientConfig = realmc.realm_sync_client_config_new()
-        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
-
-        // TODO add metadata mode to config
-        realmc.realm_sync_client_config_set_metadata_mode(syncClientConfig, realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT)
-        return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig))
+    actual fun realm_app_get(
+        appConfig: NativePointer,
+        syncClientConfig: NativePointer,
+        basePath: String
+    ): NativePointer {
+        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
+        return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
     actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
-        // TODO error handling for callback, producing Kotlin's Result?
-        realmc.register_login_cb(
-            app.cptr(),
-            credentials.cptr(),
-            callback
+        realmc.register_login_cb(app.cptr(), credentials.cptr(), callback)
+    }
+
+    actual fun realm_sync_client_config_new(): NativePointer {
+        return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: SyncLogCallback
+    ) {
+        realmc.set_log_callback(syncClientConfig.cptr(), callback)
+    }
+
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.priority)
+    }
+
+    actual fun realm_sync_client_config_set_metadata_mode(
+        syncClientConfig: NativePointer,
+        metadataMode: MetadataMode
+    ) {
+        realmc.realm_sync_client_config_set_metadata_mode(
+            syncClientConfig.cptr(),
+            metadataMode.metadataValue
         )
     }
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
+
+    actual fun realm_sync_set_error_handler(
+        syncConfig: NativePointer,
+        errorHandler: SyncErrorCallback
+    ) {
+        realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
+    }
+
+    @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
         networkTransport: NativePointer,
-        baseUrl: String?
+        baseUrl: String?,
+        platform: String,
+        platformVersion: String,
+        sdkVersion: String,
     ): NativePointer {
         val config = realmc.realm_app_config_new(appId, networkTransport.cptr())
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
-        // TODO Fill in appropriate meta data
-        //  https://github.com/realm/realm-kotlin/issues/449
-        realmc.realm_app_config_set_platform(config, "kotlin")
-        realmc.realm_app_config_set_platform_version(config, "PLATFORM_VERSION")
-        realmc.realm_app_config_set_sdk_version(config, "SDK_VERSION")
+        realmc.realm_app_config_set_platform(config, platform)
+        realmc.realm_app_config_set_platform_version(config, platformVersion)
+        realmc.realm_app_config_set_sdk_version(config, sdkVersion)
+
         // TODO Fill in appropriate app meta data
         //  https://github.com/realm/realm-kotlin/issues/407
         realmc.realm_app_config_set_local_app_version(config, "APP_VERSION")
@@ -501,8 +531,8 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_credentials_new_anonymous())
     }
 
-    actual fun realm_app_credentials_new_username_password(username: String, password: String): NativePointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_username_password(username, password))
+    actual fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_email_password(username, password))
     }
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
@@ -510,7 +540,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
-        TODO()
+        return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
+    }
+
+    actual fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer) {
+        realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
     private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
@@ -562,9 +596,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_results_count(results: NativePointer): Long {
-        val count = realm_size_t()
+        val count = LongArray(1)
         realmc.realm_results_count(results.cptr(), count)
-        return count.value
+        return count[0]
     }
 
     // TODO OPTIMIZE Getting a range

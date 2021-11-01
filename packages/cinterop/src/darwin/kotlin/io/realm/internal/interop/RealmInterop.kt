@@ -20,10 +20,12 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
 import io.realm.internal.interop.sync.ResponseCallback
 import io.realm.mongodb.AppException
+import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
@@ -45,6 +47,7 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
@@ -61,15 +64,16 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.strerror
 import platform.posix.uint8_tVar
+import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
+import realm_wrapper.realm_clone
 import realm_wrapper.realm_config_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_get_last_error
-import realm_wrapper.realm_http_completion_func_t
 import realm_wrapper.realm_http_header_t
-import realm_wrapper.realm_http_method
+import realm_wrapper.realm_http_request_method
 import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
@@ -80,10 +84,12 @@ import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
+import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
+import kotlin.collections.set
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -461,7 +467,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
-        val link: CValue<realm_link_t /* = realm_wrapper.realm_link */> =
+        val link: CValue<realm_link_t> =
             realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
             return Link(this.target_table.toLong(), this.target)
@@ -900,16 +906,15 @@ actual object RealmInterop {
     }
 
     // TODO sync config shouldn't be null
-    actual fun realm_app_new(appConfig: NativePointer, basePath: String): NativePointer {
-        val syncClientConfig = realm_wrapper.realm_sync_client_config_new()
-        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig, basePath)
-
-        // TODO add metadata mode to config
-        realm_wrapper.realm_sync_client_config_set_metadata_mode(
-            syncClientConfig,
-            realm_wrapper.realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
+    actual fun realm_app_get(
+        appConfig: NativePointer,
+        syncClientConfig: NativePointer,
+        basePath: String
+    ): NativePointer {
+        realm_wrapper.realm_sync_client_config_set_base_file_path(
+            syncClientConfig.cptr(), basePath
         )
-        return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig))
+        return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
     actual fun realm_app_log_in_with_credentials(
@@ -920,12 +925,17 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error ->
-                val callback = safeUserData<CinteropCallback>(userdata)
+            staticCFunction { userdata, user, error: CPointer<realm_app_error_t>? ->
+                val userDataCallback = safeUserData<CinteropCallback>(userdata)
                 if (error == null) {
-                    callback.onSuccess(CPointerWrapper(user))
+                    // Remember to clone user object or else it will be invalidated right after we leave this callback
+                    val clonedUser = realm_clone(user)
+                    userDataCallback.onSuccess(CPointerWrapper(clonedUser))
                 } else {
-                    callback.onError(AppException())
+                    val message = with(error.pointed) {
+                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
+                    }
+                    userDataCallback.onError(AppException(message))
                 }
             },
             StableRef.create(callback).asCPointer(),
@@ -936,9 +946,8 @@ actual object RealmInterop {
     private val newRequestLambda = staticCFunction<COpaquePointer?,
         CValue<realm_http_request_t>,
         COpaquePointer?,
-        realm_http_completion_func_t?,
         Unit>
-    { userdata, request, completionData, callback ->
+    { userdata, request, requestContext ->
         safeUserData<NetworkTransport>(userdata).let { networkTransport ->
             request.useContents { // this : realm_http_request_t ->
                 val headerMap = mutableMapOf<String, String>()
@@ -953,11 +962,11 @@ actual object RealmInterop {
 
                 networkTransport.sendRequest(
                     method = when (method) {
-                        realm_http_method.RLM_HTTP_METHOD_GET -> NetworkTransport.GET
-                        realm_http_method.RLM_HTTP_METHOD_POST -> NetworkTransport.POST
-                        realm_http_method.RLM_HTTP_METHOD_PATCH -> NetworkTransport.PATCH
-                        realm_http_method.RLM_HTTP_METHOD_PUT -> NetworkTransport.PUT
-                        realm_http_method.RLM_HTTP_METHOD_DELETE -> NetworkTransport.DELETE
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_GET -> NetworkTransport.GET
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_POST -> NetworkTransport.POST
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PATCH -> NetworkTransport.PATCH
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PUT -> NetworkTransport.PUT
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_DELETE -> NetworkTransport.DELETE
                     },
                     url = url!!.toKString(),
                     headers = headerMap,
@@ -977,7 +986,7 @@ actual object RealmInterop {
                                     }
                                 }
 
-                                val cResponse: realm_http_response_t /* = realm_wrapper.realm_http_response */ =
+                                val cResponse =
                                     alloc<realm_http_response_t> {
                                         body = response.body.cstr.getPointer(memScope)
                                         body_size = response.body.cstr.getBytes().size.toULong()
@@ -987,8 +996,8 @@ actual object RealmInterop {
                                         headers = cResponseHeaders
                                     }
                                 println("capi-responding")
-                                callback?.invoke(completionData, cResponse.ptr)
-                                    ?: error("Callback should never be null")
+                                realm_wrapper.realm_http_transport_complete_request(requestContext, cResponse.ptr)
+
 
                                 println("capi-responded")
                             }
@@ -999,30 +1008,100 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_sync_client_config_new(): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_log_callback(
+        syncClientConfig: NativePointer,
+        callback: SyncLogCallback
+    ) {
+        realm_wrapper.realm_sync_client_config_set_log_callback(
+            syncClientConfig.cptr(),
+            staticCFunction { userData, logLevel, message ->
+                val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
+                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
+            },
+            StableRef.create(callback.freeze()).asCPointer(),
+            staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
+        )
+    }
+
+    actual fun realm_sync_client_config_set_log_level(
+        syncClientConfig: NativePointer,
+        level: CoreLogLevel
+    ) {
+        realm_wrapper.realm_sync_client_config_set_log_level(
+            syncClientConfig.cptr(),
+            level.priority.toUInt()
+        )
+    }
+
+    actual fun realm_sync_client_config_set_metadata_mode(
+        syncClientConfig: NativePointer,
+        metadataMode: MetadataMode
+    ) {
+        realm_wrapper.realm_sync_client_config_set_metadata_mode(
+            syncClientConfig.cptr(),
+            realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
+        )
+    }
+
+    actual fun realm_sync_set_error_handler(
+        syncConfig: NativePointer,
+        errorHandler: SyncErrorCallback
+    ) {
+        realm_wrapper.realm_sync_config_set_error_handler(
+            syncConfig.cptr(),
+            staticCFunction { userData, syncSession, error ->
+                val syncException = error.useContents {
+                    val message = "${this.detailed_message} [" +
+                        "error_code.category='${this.error_code.category}', " +
+                        "error_code.value='${this.error_code.value}', " +
+                        "error_code.message='${this.error_code.message}', " +
+                        "is_fatal='${this.is_fatal}', " +
+                        "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
+                        "]"
+                    SyncException(message)
+                }
+                val errorCallback = safeUserData<SyncErrorCallback>(userData)
+                val session = CPointerWrapper(syncSession)
+                errorCallback.onSyncError(session, syncException)
+            },
+            StableRef.create(errorHandler).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<(NativePointer, AppException) -> Unit>(userdata)
+            }
+        )
+    }
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return CPointerWrapper(
             realm_wrapper.realm_http_transport_new(
+                newRequestLambda,
                 StableRef.create(networkTransport).asCPointer(),
                 staticCFunction { userdata: CPointer<out CPointed>? ->
                     disposeUserData<NetworkTransport>(userdata)
-                },
-                newRequestLambda
+                }
             )
         )
     }
 
+    @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
         networkTransport: NativePointer,
-        baseUrl: String?
+        baseUrl: String?,
+        platform: String,
+        platformVersion: String,
+        sdkVersion: String
     ): NativePointer {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
 
-        // TODO Fill in appropriate meta data
-        //  https://github.com/realm/realm-kotlin/issues/449
-        realm_wrapper.realm_app_config_set_platform(appConfig, "kotlin")
-        realm_wrapper.realm_app_config_set_platform_version(appConfig, "PLATFORM_VERSION")
-        realm_wrapper.realm_app_config_set_sdk_version(appConfig, "SDK_VERSION")
+        realm_wrapper.realm_app_config_set_platform(appConfig, platform)
+        realm_wrapper.realm_app_config_set_platform_version(appConfig, platformVersion)
+        realm_wrapper.realm_app_config_set_sdk_version(appConfig, sdkVersion)
+
         // TODO Fill in appropriate app meta data
         //  https://github.com/realm/realm-kotlin/issues/407
         realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
@@ -1040,16 +1119,18 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous())
     }
 
-    actual fun realm_app_credentials_new_username_password(
+    actual fun realm_app_credentials_new_email_password(
         username: String,
         password: String
     ): NativePointer {
-        return CPointerWrapper(
-            realm_wrapper.realm_app_credentials_new_username_password(
+        memScoped {
+            val realmStringPassword = password.toRString(this)return CPointerWrapper(
+            realm_wrapper.realm_app_credentials_new_email_password(
                 username,
-                password
+                realmStringPassword
+                )
             )
-        )
+        }
     }
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
@@ -1060,7 +1141,11 @@ actual object RealmInterop {
         user: NativePointer,
         partition: String
     ): NativePointer {
-        TODO()
+        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition))
+    }
+
+    actual fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer) {
+        realm_wrapper.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
     private fun MemScope.classInfo(

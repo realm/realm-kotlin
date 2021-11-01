@@ -151,7 +151,7 @@ private enum class Platform(
         defaultSystemLocation = "${System.getProperty("user.home")}/.cache/io.realm.kotlin/"
     ),
     WINDOWS(
-        shortName = "/jni/win",
+        shortName = "/jni/windows",
         prefix = "",
         suffix = "dll",
         defaultSystemLocation = (

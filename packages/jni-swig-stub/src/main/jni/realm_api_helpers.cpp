@@ -18,8 +18,10 @@
 #include <vector>
 #include <thread>
 #include <realm/object-store/c_api/util.hpp>
+#include "java_method.hpp"
 
 using namespace realm::jni_util;
+using namespace realm::_impl;
 
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
 //  changes as realm_collection_changes_t.
@@ -200,32 +202,33 @@ void invoke_core_notify_callback(int64_t core_notify_function) {
     (*notify)();
 }
 
+// TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
 realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
     auto *cfg = reinterpret_cast<realm_config_t * >(config_ptr);
     // copy construct to not set the scheduler on the original Conf which could be used
     // to open Frozen Realm for instance.
     auto copyConf = *cfg;
-    copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    if (dispatchScheduler) {
+        copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+    } else {
+        copyConf.scheduler = realm::util::Scheduler::make_generic();
+    }
+
     return realm_open(&copyConf);
 }
 
 void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
     auto jenv = get_env();
-    // TODO OPTIMIZE Makes multiple lookups of CinteropCallback, but at least only once when
-    //  initializing static variables
-    //  https://github.com/realm/realm-kotlin/issues/460
-    static jmethodID on_success_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
-                                                "onSuccess",
-                                                "(Lio/realm/internal/interop/NativePointer;)V");
-    static jmethodID on_error_method = lookup(jenv, "io/realm/internal/interop/CinteropCallback",
-                                              "onError", "(Ljava/lang/Throwable;)V");
+    static JavaClass cinterop_callback(jenv, "io/realm/internal/interop/CinteropCallback");
+    static JavaMethod on_success_method(jenv, cinterop_callback, "onSuccess", "(Lio/realm/internal/interop/NativePointer;)V");
+    static JavaMethod on_error_method(jenv, cinterop_callback, "onError", "(Ljava/lang/Throwable;)V");
 
     realm_app_log_in_with_credentials(
             app,
             credentials,
             // FIXME Refactor into generic handling of network requests, like
             //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
-            [](void *userdata, realm_user_t *user, realm_error_t *error) {
+            [](void* userdata, realm_user_t* user, const realm_app_error_t* error) {
                 auto jenv = get_env(true);
 
                 if (jenv->ExceptionCheck()) {
@@ -233,25 +236,36 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
                                          on_error_method,
                                          jenv->ExceptionOccurred());
                 } else if (error) {
-                    // TODO OPTIMIZE Make central global reference table of classes
-                    //  https://github.com/realm/realm-kotlin/issues/460
-                    jclass exception_class = jenv->FindClass("io/realm/mongodb/AppException");
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>",
-                                                                               "()V");
+                    static JavaMethod app_exception_constructor(jenv,
+                                                                JavaClassGlobalDef::app_exception_class(),
+                                                                "<init>",
+                                                                "(Ljava/lang/String;)V");
 
-                    jobject throwable = jenv->NewObject(exception_class, exception_constructor);
+                    std::stringstream message;
+                    message << error->message << " ["
+                            << "error_category=" << error->error_category << ", "
+                            << "error_code=" << error->error_code << ", "
+                            << "link_to_server_logs=" << error->link_to_server_logs
+                            << "]";
 
+                    jobject throwable = jenv->NewObject(JavaClassGlobalDef::app_exception_class(),
+                                                        app_exception_constructor,
+                                                        to_jstring(jenv, message.str()));
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_error_method,
                                          throwable);
                 } else {
                     // TODO OPTIMIZE Make central global reference table of classes
                     //  https://github.com/realm/realm-kotlin/issues/460
+                    //  Use wrap_pointer of https://github.com/realm/realm-kotlin/pull/493/files#diff-c71ff0791782da90014db6f7000bdeea6c883ca9729f17bd1b11041d1e7711faR450
+                    //  when merged
                     jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
                     static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
 
+                    // Remember to clone user object or else it will be invalidated right after we leave this callback
+                    void* cloned_user = realm_clone(user);
                     jobject pointer = jenv->NewObject(exception_class, exception_constructor,
-                                                      reinterpret_cast<jlong>(user), false);
+                                                      reinterpret_cast<jlong>(cloned_user), false);
 
                     jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                          on_success_method,
@@ -267,41 +281,43 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
-    static jmethodID m_send_request_method = lookup(jenv,
-            "io/realm/internal/interop/sync/NetworkTransport",
-            "sendRequest",
-            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ZLio/realm/internal/interop/sync/ResponseCallback;)V"
-    );
+    static JavaMethod m_send_request_method(jenv,
+                                            JavaClassGlobalDef::network_transport_class(),
+                                            "sendRequest",
+                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Lio/realm/internal/interop/sync/Response;");
 
     // Prepare request fields to be consumable by JVM
     std::string method;
     switch (request.method) {
-        case realm_http_method::RLM_HTTP_METHOD_GET:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_GET:
             method = "get";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_POST:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_POST:
             method = "post";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_PATCH:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_PATCH:
             method = "patch";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_PUT:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_PUT:
             method = "put";
             break;
-        case realm_http_method::RLM_HTTP_METHOD_DELETE:
+        case realm_http_request_method::RLM_HTTP_REQUEST_METHOD_DELETE:
             method = "delete";
             break;
     }
 
-    // TODO OPTIMIZE Make central global reference table of classes
-    //  https://github.com/realm/realm-kotlin/issues/460
-    jclass mapClass = jenv->FindClass("java/util/HashMap");
-    static jmethodID init = jenv->GetMethodID(mapClass, "<init>", "(I)V");
-    static jmethodID put_method = jenv->GetMethodID(mapClass, "put",
-                                             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    static JavaMethod init(jenv,
+                           JavaClassGlobalDef::java_util_hashmap(),
+                           "<init>",
+                           "(I)V");
+
+    static JavaMethod put_method(jenv,
+                                 JavaClassGlobalDef::java_util_hashmap(),
+                                 "put",
+                                 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     size_t map_size = request.num_headers;
-    jobject request_headers = jenv->NewObject(mapClass, init, (jsize) map_size);
+    jobject request_headers = jenv->NewObject(JavaClassGlobalDef::java_util_hashmap(), init, (jsize) map_size);
     for (int i = 0; i < map_size; i++) {
         realm_http_header_t header_pair = request.headers[i];
 
@@ -324,16 +340,22 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
     );
 }
 
-static void pass_jvm_response_to_core(JNIEnv *jenv,
-                                      jobject j_response,
-                                      void *completion_data,
-                                      realm_http_completion_func_t completion_callback) {
-    static jclass response_class = jenv->FindClass("io/realm/internal/interop/sync/Response");
-    static jmethodID get_http_code_method = jenv->GetMethodID(response_class, "getHttpResponseCode", "()I");
-    static jmethodID get_custom_code_method = jenv->GetMethodID(response_class, "getCustomResponseCode", "()I");
-    static jmethodID get_headers_method = jenv->GetMethodID(response_class, "getJNIFriendlyHeaders",
-                                                            "()[Ljava/lang/String;");
-    static jmethodID get_body_method = jenv->GetMethodID(response_class, "getBody", "()Ljava/lang/String;");
+static void pass_jvm_response_to_core(JNIEnv *jenv, jobject j_response, void* request_context) {
+    static JavaMethod get_http_code_method(jenv,
+                                           JavaClassGlobalDef::network_transport_response_class(),
+                                           "getHttpResponseCode",
+                                           "()I");
+    static JavaMethod get_custom_code_method(jenv,
+                                             JavaClassGlobalDef::network_transport_response_class(),
+                                             "getCustomResponseCode",
+                                             "()I");
+    static JavaMethod get_headers_method(jenv,
+                                         JavaClassGlobalDef::network_transport_response_class(),
+                                         "getJNIFriendlyHeaders",
+                                         "()[Ljava/lang/String;");
+    static JavaMethod get_body_method(jenv,
+                                      JavaClassGlobalDef::network_transport_response_class(),
+                                      "getBody", "()Ljava/lang/String;");
 
     // Extract JVM response fields
     jint http_code = jenv->CallIntMethod(j_response, get_http_code_method);
@@ -345,34 +367,30 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
             j_response, get_headers_method)));
 
     auto stacked_headers = std::vector<std::string>(); // Pins headers to function stack
-    auto response_headers = std::vector<realm_http_header_t>();
-
     for (int i = 0; i < java_headers.size(); i = i + 2) {
         JStringAccessor key = java_headers[i];
         JStringAccessor value = java_headers[i + 1];
         stacked_headers.push_back(std::move(key));
         stacked_headers.push_back(std::move(value));
-
-        realm_http_header header = {
-                .name = stacked_headers[i].c_str(),
-                .value = stacked_headers[i + 1].c_str()
-        };
-
+    }
+    auto response_headers = std::vector<realm_http_header_t>();
+    for (int i = 0; i < java_headers.size(); i = i + 2) {
+        // FIXME REFACTOR when C++20 will be available
+        realm_http_header header;
+        header.name = stacked_headers[i].c_str();
+        header.value = stacked_headers[i + 1].c_str();
         response_headers.push_back(header);
     }
 
-    // transform JVM response -> realm_http_response_t
-    {
-        realm_http_response_t response = {
-                .status_code = http_code,
-                .custom_status_code = custom_code,
-                .headers = response_headers.data(),
-                .num_headers = response_headers.size(),
-                .body = body.c_str(),
-                .body_size = body.size(),
-        };
-        completion_callback(completion_data, &response);
-    }
+    realm_http_response response;
+    response.status_code = http_code;
+    response.custom_status_code = custom_code;
+    response.headers = response_headers.data();
+    response.num_headers = response_headers.size();
+    response.body = body.c_str();
+    response.body_size = body.size();
+
+    realm_http_transport_complete_request(request_context, &response);
 }
 
 /**
@@ -381,12 +399,11 @@ static void pass_jvm_response_to_core(JNIEnv *jenv,
  * 1. Cast userdata to the network transport
  * 2. Transform core request to JVM request
  * 3. Perform request
- * 4. Transform JVM response to core respone
+ * 4. Transform JVM response to core response
  */
-static void network_request_lambda_function(void *userdata, // Network transport
-                                            const realm_http_request_t request, // Request
-                                            void *completion_data,// Call backs
-                                            realm_http_completion_func_t completion_callback) {
+static void network_request_lambda_function(void* userdata,
+                                            const realm_http_request_t request,
+                                            void* request_context) {
     auto jenv = get_env(true);
 
     // Initialize pointer to JVM class and methods
@@ -413,18 +430,95 @@ static void network_request_lambda_function(void *userdata, // Network transport
         response_error.num_headers = 0;
         response_error.body_size = 0;
 
-        completion_callback(completion_data, &response_error);
+        realm_http_transport_complete_request(request_context, &response_error);
     }
-};
+}
 
-realm_http_transport_t *realm_network_transport_new(jobject network_transport) {
+realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
     auto jenv = get_env(false); // Always called from JVM
-    return realm_http_transport_new(jenv->NewGlobalRef(network_transport),
-            [](void *userdata) {
-                get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-            },
-            &network_request_lambda_function);
+    return realm_http_transport_new(&network_request_lambda_function,
+                                    jenv->NewGlobalRef(network_transport), // userdata is the transport object
+                                    [](void* userdata) {
+                                        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                    });
+}
 
+void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject log_callback) {
+    auto jenv = get_env(false);
+    realm_sync_client_config_set_log_callback(sync_client_config,
+                                              [](void* userdata, realm_log_level_e level, const char* message) {
+                                                  auto log_callback = static_cast<jobject>(userdata);
+                                                  auto jenv = get_env(true);
+                                                  static JavaMethod log_method(jenv,
+                                                                               JavaClassGlobalDef::sync_log_callback(),
+                                                                               "log",
+                                                                               "(SLjava/lang/String;)V");
+                                                  jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
+                                              },
+                                              jenv->NewGlobalRef(log_callback), // userdata is the log callback
+                                              [](void* userdata) {
+                                                  get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                              });
+}
+
+jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
+    static JavaMethod pointer_wrapper_constructor(jenv,
+                                                  JavaClassGlobalDef::long_pointer_wrapper(),
+                                                  "<init>",
+                                                  "(JZ)V");
+    return jenv->NewObject(JavaClassGlobalDef::long_pointer_wrapper(),
+                           pointer_wrapper_constructor,
+                           pointer,
+                           managed);
+}
+
+jobject convert_sync_exception(JNIEnv* jenv, const realm_sync_error_t error) {
+    static JavaMethod app_exception_constructor(jenv,
+                                                JavaClassGlobalDef::sync_exception(),
+                                                "<init>",
+                                                "(Ljava/lang/String;)V");
+
+    std::stringstream message;
+    message << error.detailed_message << " ["
+            << "error_code.category='" << error.error_code.category << "', "
+            << "error_code.value='" << error.error_code.value << "', "
+            << "error_code.message='" << error.error_code.message << "', "
+            << "is_fatal='" << std::boolalpha << error.is_fatal << std::noboolalpha << "', "
+            << "is_unrecognized_by_client='" << std::boolalpha << error.is_unrecognized_by_client << std::noboolalpha << "'"
+            << "]";
+
+    static JavaMethod pointer_wrapper_constructor(jenv,
+                                                  JavaClassGlobalDef::sync_exception(),
+                                                  "<init>",
+                                                  "(Ljava/lang/String;)V");
+
+    return jenv->NewObject(JavaClassGlobalDef::sync_exception(),
+                           pointer_wrapper_constructor,
+                           to_jstring(jenv, message.str()));
+}
+
+void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
+    realm_sync_config_set_error_handler(sync_config,
+                                        [](void* userdata, realm_sync_session_t* session, const realm_sync_error_t error) {
+                                            auto jenv = get_env(true);
+                                            auto sync_error_callback = static_cast<jobject>(userdata);
+
+                                            jobject session_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(session));
+                                            jobject sync_exception = convert_sync_exception(jenv, error);
+
+                                            static JavaMethod sync_error_method(jenv,
+                                                                                JavaClassGlobalDef::sync_error_callback(),
+                                                                                "onSyncError",
+                                                                                "(Lio/realm/internal/interop/NativePointer;Lio/realm/mongodb/SyncException;)V");
+                                            jenv->CallVoidMethod(sync_error_callback,
+                                                                 sync_error_method,
+                                                                 session_pointer_wrapper,
+                                                                 sync_exception);
+                                        },
+                                        static_cast<jobject>(get_env()->NewGlobalRef(error_handler)),
+                                        [](void *userdata) {
+                                            get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                        });
 }
 
 void

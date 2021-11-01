@@ -28,10 +28,13 @@ import io.ktor.client.statement.readText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
+import io.ktor.http.HttpMethod.Companion.Patch
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.realm.internal.platform.runBlocking
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -54,11 +57,18 @@ interface AdminApi {
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
     fun deleteAllUsers()
+
+    /**
+     * Terminate Sync on the server and re-enable it. Any existing sync sessions will throw an
+     * error.
+     */
+    suspend fun restartSync()
 }
 
 open class AdminApiImpl internal constructor(
     baseUrl: String,
     private val appName: String,
+    private val debug: Boolean,
     val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
@@ -86,7 +96,7 @@ open class AdminApiImpl internal constructor(
         runBlocking(Dispatchers.Unconfined) {
             // Log in using unauthorized client
             loginResponse =
-                defaultClient("realm-http-admin-unauthorized").typedRequest<LoginResponse>(
+                defaultClient("$appName-unauthorized", debug).typedRequest<LoginResponse>(
                     HttpMethod.Post,
                     "$url/auth/providers/local-userpass/login"
                 ) {
@@ -96,7 +106,7 @@ open class AdminApiImpl internal constructor(
 
             // Setup authorized client for the rest of the requests
             val accessToken = loginResponse.access_token
-            client = defaultClient("realm-http-admin-authorized") {
+            client = defaultClient("$appName-authorized", debug) {
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
@@ -163,6 +173,50 @@ open class AdminApiImpl internal constructor(
             users.map {
                 client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
             }
+        }
+    }
+
+    private suspend fun getBackingDBServiceId(): String =
+        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
+            .first()
+            .let {
+                it.jsonObject["_id"]!!.jsonPrimitive.content
+            }
+
+    @Suppress("TooGenericExceptionThrown")
+    private suspend fun controlSync(serviceId: String, enabled: Boolean) =
+        client.request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
+            method = Patch
+            body = """
+                    {
+                      "sync": {
+                        "state": "${if (enabled) "enabled" else "disabled"}",
+                        "database_name": "test_data",
+                        "partition": {
+                          "key": "realm_id",
+                          "type": "string",
+                          "permissions": {
+                            "read": true,
+                            "write": true
+                          }
+                        },
+                        "last_disabled": 1633520376
+                      }
+                    }
+            """.trimIndent()
+        }.let {
+            if (!it.status.isSuccess())
+                throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
+        }
+
+    // These calls work but we should not use them to alter the state of a sync session as Ktor's
+    // default HttpClient doesn't like PATCH requests on Native:
+    // https://github.com/realm/realm-kotlin/issues/519
+    override suspend fun restartSync() {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
+            controlSync(backingDbServiceId, false)
+            controlSync(backingDbServiceId, true)
         }
     }
 

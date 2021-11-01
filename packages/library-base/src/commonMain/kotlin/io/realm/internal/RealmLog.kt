@@ -7,9 +7,10 @@ import io.realm.log.RealmLogger
 /**
  * Logger class used by Realm components. One logger is created for each Realm instance.
  */
-internal class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
+class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
 
-    private val logLevel: LogLevel = configuration.level
+    val logLevel: LogLevel = configuration.level
+
     private val loggers: List<RealmLogger> = configuration.loggers
 
     fun trace(throwable: Throwable?) {

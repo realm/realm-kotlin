@@ -107,7 +107,7 @@ verify_changelog() {
 create_javadoc() {
   echo "Creating JavaDoc/KDoc..."
   cd $REALM_KOTLIN_PATH/packages
-  ./gradlew dokkaHtml
+  ./gradlew dokkaHtmlMultiModule --info --stacktrace --no-daemon
   cd $HERE
 }
 
@@ -130,7 +130,7 @@ upload_debug_symbols() {
 upload_dokka() {
   echo "Uploading docs..."
   cd $REALM_KOTLIN_PATH/packages
-  ./gradlew :library:uploadDokka -PSDK_DOCS_AWS_ACCESS_KEY=$DOCS_S3_ACCESS_KEY -PSDK_DOCS_AWS_SECRET_KEY=$DOCS_S3_SECRET_KEY
+  ./gradlew :uploadDokka -PSDK_DOCS_AWS_ACCESS_KEY=$DOCS_S3_ACCESS_KEY -PSDK_DOCS_AWS_SECRET_KEY=$DOCS_S3_SECRET_KEY
   cd $HERE
 }
 

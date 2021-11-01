@@ -15,12 +15,13 @@
  */
 package io.realm
 
+import io.realm.internal.InternalRealmConfiguration
 import io.realm.internal.RealmImpl
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
- * A Realm instance is the main entry point for interacting with a persisted Realm.
+ * A Realm instance is the main entry point for interacting with a persisted realm.
  *
  * @see RealmConfiguration
  */
@@ -29,7 +30,7 @@ interface Realm : TypedRealm {
     // FIXME Should this go to the end according to Kotlin conventions
     companion object {
         /**
-         * Default name for Realm files unless overridden by [RealmConfiguration.Builder.name].
+         * Default name for realm files unless overridden by [RealmConfiguration.Builder.name].
          */
         public const val DEFAULT_FILE_NAME = "default.realm"
 
@@ -44,15 +45,16 @@ interface Realm : TypedRealm {
         public const val ENCRYPTION_KEY_LENGTH = io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 
         /**
-         * Open a Realm instance. This instance grants access to an underlying Realm file defined by
-         * the provided [RealmConfiguration].
+         * Open a realm instance.
          *
-         * @param configuration The RealmConfiguration used to open the Realm.
+         * This instance grants access to an underlying realm file defined by the provided [RealmConfiguration].
+         *
+         * @param configuration the RealmConfiguration used to open the Realm.
          *
          * @throws IllegalArgumentException on invalid Realm configurations.
          */
         public fun open(configuration: RealmConfiguration): Realm {
-            return RealmImpl(configuration)
+            return RealmImpl(configuration as InternalRealmConfiguration)
         }
     }
 
@@ -62,7 +64,7 @@ interface Realm : TypedRealm {
      * The result reflects the state of the realm at invocation time, so the results
      * do not change when the realm updates. You can access these results from any thread.
      *
-     * @param clazz The class of the objects to query for.
+     * @param clazz the class of the objects to query for.
      * @return The result of the query as of the time of invoking this method.
      */
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>

@@ -19,25 +19,35 @@
 
 #include "realm.h"
 #include "env_utils.h"
+#include "java_class_global_def.hpp"
 #include "utils.h"
 
-realm_notification_token_t *
+realm_notification_token_t*
 register_results_notification_cb(realm_results_t *results, jobject callback);
 
-realm_notification_token_t *
+realm_notification_token_t*
 register_list_notification_cb(realm_list_t *list, jobject callback);
 
-realm_notification_token_t *
+realm_notification_token_t*
 register_object_notification_cb(realm_object_t *object, jobject callback);
 
-realm_http_transport_t *realm_network_transport_new(jobject network_transport);
+realm_http_transport_t*
+realm_network_transport_new(jobject network_transport);
 
-realm_t* open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
+void
+set_log_callback(realm_sync_client_config_t* sync_client_config, jobject log_callback);
 
-void invoke_core_notify_callback(int64_t core_notify_function);
+realm_t*
+open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
+
+void
+invoke_core_notify_callback(int64_t core_notify_function);
 
 void
 register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback);
+
+void
+sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);
 
 void
 native_response_callback(realm_http_completion_func_t callback, void* userdata, jobject response);

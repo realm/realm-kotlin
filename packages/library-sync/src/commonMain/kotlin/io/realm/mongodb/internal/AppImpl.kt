@@ -17,37 +17,33 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.SyncLogCallback
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.util.Validation
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 internal class AppImpl(
-    configuration: AppConfigurationImpl,
+    override val configuration: AppConfigurationImpl,
 ) : App {
 
-    override val configuration: AppConfigurationImpl = configuration
-
-    val nativePointer: NativePointer =
-        RealmInterop.realm_app_new(
-            appConfig = configuration.nativePointer,
-            basePath = appFilesDirectory()
-        )
+    private val nativePointer: NativePointer = RealmInterop.realm_app_get(
+        configuration.nativePointer,
+        initializeSyncClientConfig(),
+        appFilesDirectory()
+    )
 
     override suspend fun login(credentials: Credentials): User {
         val credentialsInternal: CredentialImpl = Validation.checkType(credentials, "credentials")
@@ -83,12 +79,12 @@ internal class AppImpl(
         coroutineScope.async {
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                credentialsInternal.nativePointer,
+                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
                 object : CinteropCallback {
                     override fun onSuccess(pointer: NativePointer) {
 
                         println("loging-resuming")
-//                        continuation.resume(UserImpl(pointer))
+//                        continuation.resume(UserImpl(pointer, this@AppImpl))
                         channel.trySend(UserImpl(pointer))
                         println("loging-resumed")
 //                            channel.send(UserImpl(pointer))
@@ -145,4 +141,30 @@ internal class AppImpl(
 //            )
 //        }
     }
+
+    private fun initializeSyncClientConfig(): NativePointer =
+        RealmInterop.realm_sync_client_config_new()
+            .also { syncClientConfig ->
+                // TODO use separate logger for sync or piggyback on config's?
+                val syncLogger = createDefaultSystemLogger("SYNC", configuration.log.logLevel)
+
+                // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_log_callback(
+                    syncClientConfig,
+                    object : SyncLogCallback {
+                        override fun log(logLevel: Short, message: String?) {
+                            val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)
+                            syncLogger.log(LogLevel.fromCoreLogLevel(coreLogLevel), message ?: "")
+                        }
+                    }
+                )
+                RealmInterop.realm_sync_client_config_set_log_level(
+                    syncClientConfig,
+                    CoreLogLevel.valueFromPriority(configuration.log.logLevel.priority.toShort())
+                )
+                RealmInterop.realm_sync_client_config_set_metadata_mode(
+                    syncClientConfig,
+                    configuration.metadataMode
+                )
+            }
 }

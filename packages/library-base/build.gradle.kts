@@ -1,5 +1,3 @@
-import io.realm.getPropertyValue
-
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -20,7 +18,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("realm-publisher")
-    id("org.jetbrains.dokka") version Versions.dokka
+    id("org.jetbrains.dokka")
 }
 buildscript {
     repositories {
@@ -43,6 +41,9 @@ repositories {
     mavenCentral()
     mavenLocal()
 }
+
+// Directory for generated Version.kt holding VERSION constant
+val versionDirectory = "$buildDir/generated/source/version/"
 
 // Common Kotlin configuration
 kotlin {
@@ -67,6 +68,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
+            kotlin.srcDir(versionDirectory)
         }
 
         commonTest {
@@ -190,7 +192,7 @@ realmPublish {
     }
 }
 
-tasks.dokkaHtml.configure {
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     moduleName.set("Realm Kotlin Multiplatform SDK")
     moduleVersion.set(Realm.version)
     dokkaSourceSets {
@@ -199,7 +201,7 @@ tasks.dokkaHtml.configure {
             reportUndocumented.set(true)
             skipEmptyPackages.set(true)
             perPackageOption {
-                matchingRegex.set("io\\.realm\\.internal\\.*")
+                matchingRegex.set(""".*\.internal.*""")
                 suppress.set(true)
             }
             jdkVersion.set(8)
@@ -207,6 +209,10 @@ tasks.dokkaHtml.configure {
         val commonMain by getting {
             includes.from(
                 "overview.md",
+                // TODO We could actually include package descriptions in top level overview file
+                //  with:
+                //    # Package io.realm
+                //  Maybe worth a consideration
                 "src/commonMain/kotlin/io/realm/info.md",
                 "src/commonMain/kotlin/io/realm/log/info.md"
             )
@@ -215,44 +221,11 @@ tasks.dokkaHtml.configure {
     }
 }
 
-tasks.register("uploadDokka") {
-    dependsOn("dokkaHtml")
-    group = "Release"
-    description = "Upload SDK docs to S3"
-    doLast {
-        val awsAccessKey = getPropertyValue(this.project, "SDK_DOCS_AWS_ACCESS_KEY")
-        val awsSecretKey = getPropertyValue(this.project, "SDK_DOCS_AWS_SECRET_KEY")
-
-        // Failsafe check, ensuring that we catch if the path ever changes, which it might since it is an
-        // implementation detail of the Kotlin Gradle Plugin
-        val dokkaDir = File("$rootDir/library-base/build/dokka/html")
-        if (!dokkaDir.exists() || !dokkaDir.isDirectory || dokkaDir.listFiles().isEmpty()) {
-            throw GradleException("Could not locate dir with dokka files in: ${dokkaDir.path}")
-        }
-
-        // Upload two copies, to 'latest' and a versioned folder for posterity.
-        // Symlinks would have been safer and faster, but this is not supported by S3.
-        listOf(Realm.version, "latest").forEach { version: String ->
-            exec {
-                commandLine = listOf(
-                    "s3cmd",
-                    "put",
-                    "--recursive",
-                    "--acl-public",
-                    "--access_key=$awsAccessKey",
-                    "--secret_key=$awsSecretKey",
-                    "${dokkaDir.absolutePath}/", // Add / to only upload content of the folder, not the folder itself.
-                    "s3://realm-sdks/realm-sdks/kotlin/$version/"
-                )
-            }
-        }
-    }
-}
-
 tasks.register("dokkaJar", Jar::class) {
-    dependsOn("dokkaHtml")
+    val dokkaTask = "dokkaHtmlPartial"
+    dependsOn(dokkaTask)
     archiveClassifier.set("dokka")
-    from(tasks.named("dokkaHtml").get().outputs)
+    from(tasks.named(dokkaTask).get().outputs)
 }
 
 val javadocJar by tasks.registering(Jar::class) {
@@ -270,4 +243,27 @@ publishing {
     // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
     // completely, hence the .get() below.
     common.artifact(tasks.named("dokkaJar").get())
+}
+
+// Generate code with version constant
+tasks.create("pluginVersion") {
+    val outputDir = file(versionDirectory)
+
+    inputs.property("version", project.version)
+    outputs.dir(outputDir)
+
+    doLast {
+        val versionFile = file("$outputDir/io/realm/internal/Version.kt")
+        versionFile.parentFile.mkdirs()
+        versionFile.writeText(
+            """
+            // Generated file. Do not edit!
+            package io.realm.internal
+            const val SDK_VERSION = "${project.version}"
+            """.trimIndent()
+        )
+    }
+}
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    dependsOn("pluginVersion")
 }
