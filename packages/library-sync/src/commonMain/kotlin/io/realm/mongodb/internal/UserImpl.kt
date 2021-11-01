@@ -29,9 +29,8 @@ internal class UserImpl(
     override val app: AppImpl
 ) : User {
 
-    // TODO Property or method? Can maybe fail, but we could also cache the return value? Keep
-    //  private for now
-    private fun identity(): String = RealmInterop.realm_user_get_identity(nativePointer)
+    override val state: User.State
+        get() = User.State.fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
     override fun isLoggedIn(): Boolean = RealmInterop.realm_user_is_logged_in(nativePointer)
 
@@ -41,7 +40,7 @@ internal class UserImpl(
                 app.nativePointer,
                 nativePointer,
                 object : AppCallback<Unit> {
-                    override fun onSuccess(void: Unit) {
+                    override fun onSuccess(result: Unit) {
                         continuation.resume(Unit)
                     }
 
@@ -68,4 +67,8 @@ internal class UserImpl(
         result = 31 * result + app.configuration.appId.hashCode()
         return result
     }
+
+    // TODO Property or method? Can maybe fail, but we could also cache the return value? Keep
+    //  private for now
+    private fun identity(): String = RealmInterop.realm_user_get_identity(nativePointer)
 }

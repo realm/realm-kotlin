@@ -20,6 +20,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.AppException
@@ -957,57 +958,8 @@ actual object RealmInterop {
         realm_wrapper.realm_user_log_out(user.cptr())
     }
 
-    private val newRequestLambda = staticCFunction<COpaquePointer?,
-        CValue<realm_http_request_t>,
-        COpaquePointer?,
-        Unit>
-    { userdata, request, requestContext ->
-        safeUserData<NetworkTransport>(userdata).let { networkTransport ->
-            request.useContents { // this : realm_http_request_t ->
-                val headerMap = mutableMapOf<String, String>()
-                for (i in 0 until num_headers.toInt()) {
-                    headers?.get(i)?.let { header ->
-                        headerMap[header.name!!.toKString()] = header.value!!.toKString()
-                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
-                }
-
-                val response = networkTransport.sendRequest(
-                    method = when (method) {
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_GET -> NetworkTransport.GET
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_POST -> NetworkTransport.POST
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PATCH -> NetworkTransport.PATCH
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PUT -> NetworkTransport.PUT
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_DELETE -> NetworkTransport.DELETE
-                    },
-                    url = url!!.toKString(),
-                    headers = headerMap,
-                    body = body!!.toKString()
-                )
-
-                memScoped {
-                    val headersSize = response.headers.entries.size
-                    val cResponseHeaders = allocArray<realm_http_header_t>(headersSize)
-
-                    response.headers.entries.forEachIndexed { i, entry ->
-                        cResponseHeaders[i].let { header ->
-                            header.name = entry.key.cstr.getPointer(memScope)
-                            header.value = entry.value.cstr.getPointer(memScope)
-                        }
-                    }
-
-                    val cResponse = alloc<realm_http_response_t> {
-                        body = response.body.cstr.getPointer(memScope)
-                        body_size = response.body.cstr.getBytes().size.toULong()
-                        custom_status_code = response.customResponseCode
-                        status_code = response.httpResponseCode
-                        num_headers = response.headers.entries.size.toULong()
-                        headers = cResponseHeaders
-                    }
-
-                    realm_wrapper.realm_http_transport_complete_request(requestContext, cResponse.ptr)
-                }
-            }
-        }
+    actual fun realm_user_get_state(user: NativePointer): CoreUserState {
+        return CoreUserState.of(realm_wrapper.realm_user_get_state(user.cptr()))
     }
 
     actual fun realm_sync_client_config_new(): NativePointer {
@@ -1246,6 +1198,59 @@ actual object RealmInterop {
                 }
             }
         )
+    }
+
+    private val newRequestLambda = staticCFunction<COpaquePointer?,
+        CValue<realm_http_request_t>,
+        COpaquePointer?,
+        Unit>
+    { userdata, request, requestContext ->
+        safeUserData<NetworkTransport>(userdata).let { networkTransport ->
+            request.useContents { // this : realm_http_request_t ->
+                val headerMap = mutableMapOf<String, String>()
+                for (i in 0 until num_headers.toInt()) {
+                    headers?.get(i)?.let { header ->
+                        headerMap[header.name!!.toKString()] = header.value!!.toKString()
+                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
+                }
+
+                val response = networkTransport.sendRequest(
+                    method = when (method) {
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_GET -> NetworkTransport.GET
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_POST -> NetworkTransport.POST
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PATCH -> NetworkTransport.PATCH
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PUT -> NetworkTransport.PUT
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_DELETE -> NetworkTransport.DELETE
+                    },
+                    url = url!!.toKString(),
+                    headers = headerMap,
+                    body = body!!.toKString()
+                )
+
+                memScoped {
+                    val headersSize = response.headers.entries.size
+                    val cResponseHeaders = allocArray<realm_http_header_t>(headersSize)
+
+                    response.headers.entries.forEachIndexed { i, entry ->
+                        cResponseHeaders[i].let { header ->
+                            header.name = entry.key.cstr.getPointer(memScope)
+                            header.value = entry.value.cstr.getPointer(memScope)
+                        }
+                    }
+
+                    val cResponse = alloc<realm_http_response_t> {
+                        body = response.body.cstr.getPointer(memScope)
+                        body_size = response.body.cstr.getBytes().size.toULong()
+                        custom_status_code = response.customResponseCode
+                        status_code = response.httpResponseCode
+                        num_headers = response.headers.entries.size.toULong()
+                        headers = cResponseHeaders
+                    }
+
+                    realm_wrapper.realm_http_transport_complete_request(requestContext, cResponse.ptr)
+                }
+            }
+        }
     }
 
     data class CoreCallback(

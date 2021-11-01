@@ -53,8 +53,8 @@ internal class AppImpl(
                 nativePointer,
                 Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
                 object : AppCallback<NativePointer> {
-                    override fun onSuccess(pointer: NativePointer) {
-                        continuation.resume(UserImpl(pointer, this@AppImpl))
+                    override fun onSuccess(result: NativePointer) {
+                        continuation.resume(UserImpl(result, this@AppImpl))
                     }
 
                     override fun onError(throwable: Throwable) {

@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
@@ -150,8 +151,9 @@ expect object RealmInterop {
     // User
     fun realm_user_get_identity(user: NativePointer): String
     fun realm_user_is_logged_in(user: NativePointer): Boolean
-    // FIXME Do we need these to be callback based instead
+    // FIXME Do we need this to be callback based instead?
     fun realm_user_log_out(user: NativePointer)
+    fun realm_user_get_state(user: NativePointer): CoreUserState
 
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer

@@ -90,6 +90,10 @@ open class AdminApiImpl internal constructor(
     @Serializable
     data class ServerApp(val client_app_id: String, val _id: String)
 
+    // FIXME once we instantiate this class the admin user stays logged in as long as the app is
+    //  alive. Deleting existing users doesn't reset the sessions properly so relying on this
+    //  helper for creating users/"resetting" sync should be avoided as soon as the
+    //  EmailPasswordAuth wrapper is ready - https://github.com/realm/realm-kotlin/issues/433
     init {
         // Must be initialized on same thread as the constructor to allow initializing the lateinit
         // properties on native

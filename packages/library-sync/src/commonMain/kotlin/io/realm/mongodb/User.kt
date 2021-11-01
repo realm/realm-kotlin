@@ -16,6 +16,8 @@
 
 package io.realm.mongodb
 
+import io.realm.internal.interop.sync.CoreUserState
+
 /**
  * A **user** holds the user's metadata and tokens for accessing Realm App functionality.
  *
@@ -33,11 +35,17 @@ interface User {
     val app: App
 
     /**
+     * TODO
+     */
+    val state: State
+
+    /**
      * Returns true if the user is currently logged in.
      * Returns whether or not this user is still logged into the MongoDB Realm App.
      *
      * @return `true`  if still logged in, `false` if not.
      */
+    // FIXME convert to property since it is state and not functionality?
     fun isLoggedIn(): Boolean
 
     // FIXME Review around user state
@@ -65,5 +73,27 @@ interface User {
      * Two Users are considered equal if they have the same user identity and are associated
      * with the same app.
      */
-    override fun equals(o: Any?): Boolean
+    override fun equals(other: Any?): Boolean
+
+    /**
+     * TODO
+     */
+    enum class State {
+        LOGGED_OUT,
+        LOGGED_IN,
+        REMOVED;
+
+        companion object {
+
+            /**
+             * TODO
+             */
+            fun fromCoreState(coreState: CoreUserState): State = when (coreState) {
+                CoreUserState.RLM_USER_STATE_LOGGED_OUT -> LOGGED_OUT
+                CoreUserState.RLM_USER_STATE_LOGGED_IN -> LOGGED_IN
+                CoreUserState.RLM_USER_STATE_REMOVED -> REMOVED
+                else -> throw IllegalArgumentException("Invalid user state: ${coreState.name}")
+            }
+        }
+    }
 }

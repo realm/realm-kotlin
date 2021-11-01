@@ -59,10 +59,11 @@ interface App {
      *
      * A user is invalidated when he/she logs out or the user's refresh token expires or is revoked.
      *
-     * If two or more users are logged in, it is the last valid user that is returned by this method.
+     * If two or more users are logged in, it is the last valid user that is returned by this
+     * method.
      *
-     * @return current [User] that has logged in and is still valid. `null` if no
-     * user is logged in or the user has expired.
+     * @return current [User] that has logged in and is still valid or `null` if no user is logged
+     * in or the user has expired.
      */
     fun currentUser(): User?
 

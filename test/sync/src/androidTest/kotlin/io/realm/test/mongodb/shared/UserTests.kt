@@ -48,6 +48,13 @@ class UserTests {
 
     @AfterTest
     fun tearDown() {
+        // TODO hack: this is needed to properly "reset" all sessions across tests since deleting
+        //  users directly using the REST API doesn't fully work
+        runBlocking {
+            while (app.currentUser() != null) {
+                app.currentUser()?.logOut()
+            }
+        }
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }
@@ -55,94 +62,79 @@ class UserTests {
 
     @Test
     fun getApp() {
-        assertEquals(anonUser.app, app)
+        assertEquals(anonUser.app, app.asTestApp.app)
     }
 
-//    @Test
-//    fun getState_anonymousUser() {
-//        assertEquals(User.State.LOGGED_IN, anonUser.state)
-//        anonUser.logOut()
-//        assertEquals(User.State.REMOVED, anonUser.state)
-//    }
-//
-//    @Test
-//    fun getState_emailUser() {
-//        val emailUser = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        assertEquals(User.State.LOGGED_IN, emailUser.state)
-//        emailUser.logOut()
-//        assertEquals(User.State.LOGGED_OUT, emailUser.state)
+    @Test
+    fun getState_anonymousUser() = runBlocking {
+        assertEquals(User.State.LOGGED_IN, anonUser.state)
+        anonUser.logOut()
+        assertEquals(User.State.REMOVED, anonUser.state)
+    }
+
+    @Test
+    fun getState_emailUser() = runBlocking {
+        val emailUser = createUserAndLogin()
+        assertEquals(User.State.LOGGED_IN, emailUser.state)
+        emailUser.logOut()
+        assertEquals(User.State.LOGGED_OUT, emailUser.state)
+        // TODO wait for EmailPasswordAuth
 //        app.removeUser(emailUser)
 //        assertEquals(User.State.REMOVED, emailUser.state)
-//    }
-//
+    }
+
     @Test
     fun logOut() = runBlocking {
         // Anonymous users are removed upon log out
         assertEquals(anonUser, app.currentUser())
+        assertEquals(User.State.LOGGED_IN, anonUser.state)
         anonUser.logOut()
-        // assertEquals(User.State.REMOVED, anonUser.state)
+        assertEquals(User.State.REMOVED, anonUser.state)
         assertNull(app.currentUser())
 
         // Users registered with Email/Password will register as Logged Out
-        // val user2: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-        val email = TestHelper.randomEmail()
-        app.asTestApp.createUser(email, "123456")
-        val user2 = app.login(Credentials.emailPassword(email, "123456"))
+        val user2 = createUserAndLogin()
         val current: User = app.currentUser()!!
         assertEquals(user2, current)
         user2.logOut()
-        // assertEquals(User.State.LOGGED_OUT, user2.state)
+        assertEquals(User.State.LOGGED_OUT, user2.state)
         // Same effect on all instances
-        // assertEquals(User.State.LOGGED_OUT, current.state)
+        assertEquals(User.State.LOGGED_OUT, current.state)
         // And no current user anymore
         assertNull(app.currentUser())
     }
-//
+
+    @Test
+    fun logOutUserInstanceImpactsCurrentUser() = runBlocking {
+        val currentUser = app.currentUser()!!
+        assertEquals(User.State.LOGGED_IN, currentUser.state)
+        assertEquals(User.State.LOGGED_IN, anonUser.state)
+        assertEquals(currentUser, anonUser)
+
+        anonUser.logOut()
+
+        assertNotEquals(User.State.LOGGED_OUT, currentUser.state)
+        assertNotEquals(User.State.LOGGED_OUT, anonUser.state)
+        assertNull(app.currentUser())
+    }
+
+    @Test
+    fun logOutCurrentUserImpactsOtherInstances() = runBlocking {
+        val currentUser = app.currentUser()!!
+        assertEquals(User.State.LOGGED_IN, currentUser.state)
+        assertEquals(User.State.LOGGED_IN, anonUser.state)
+        assertEquals(currentUser, anonUser)
+
+        currentUser.logOut()
+
+        assertNotEquals(User.State.LOGGED_OUT, currentUser.state)
+        assertNotEquals(User.State.LOGGED_OUT, anonUser.state)
+        assertNull(app.currentUser())
+    }
+
 //    @Test
-//    fun logOutAsync() = looperThread.runBlocking {
-//        assertEquals(anonUser, app.currentUser())
-//        anonUser.logOutAsync() { result ->
-//            val callbackUser: User = result.orThrow
-//            assertNull(app.currentUser())
-//            assertEquals(anonUser, callbackUser)
-//            assertEquals(User.State.REMOVED, anonUser.state)
-//            assertEquals(User.State.REMOVED, callbackUser.state)
-//            looperThread.testComplete()
-//        }
-//    }
-//
-//    @Test
-//    fun logOutUserInstanceImpactsCurrentUser() {
-//        val currentUser = app.currentUser()!!
-//        assertEquals(User.State.LOGGED_IN, currentUser.state)
-//        assertEquals(User.State.LOGGED_IN, anonUser.state)
-//        assertEquals(currentUser, anonUser)
-//
-//        anonUser!!.logOut()
-//
-//        assertNotEquals(User.State.LOGGED_OUT, currentUser.state)
-//        assertNotEquals(User.State.LOGGED_OUT, anonUser.state)
-//        assertNull(app.currentUser())
-//    }
-//
-//    @Test
-//    fun logOutCurrentUserImpactsOtherInstances() {
-//        val currentUser = app.currentUser()!!
-//        assertEquals(User.State.LOGGED_IN, currentUser.state)
-//        assertEquals(User.State.LOGGED_IN, anonUser.state)
-//        assertEquals(currentUser, anonUser)
-//
-//        currentUser!!.logOut()
-//
-//        assertNotEquals(User.State.LOGGED_OUT, currentUser.state)
-//        assertNotEquals(User.State.LOGGED_OUT, anonUser.state)
-//        assertNull(app.currentUser())
-//    }
-//
-//    @Test
-//    fun repeatedLogInAndOut() {
-//        val password = "123456"
-//        val initialUser = app.registerUserAndLogin(TestHelper.getRandomEmail(), password)
+//    fun repeatedLogInAndOut() = runBlocking {
+//        val initialUser = createUserAndLogin()
 //        assertEquals(User.State.LOGGED_IN, initialUser.state)
 //        initialUser.logOut()
 //        assertEquals(User.State.LOGGED_OUT, initialUser.state)
@@ -152,15 +144,6 @@ class UserTests {
 //            assertEquals(User.State.LOGGED_IN, user.state)
 //            user.logOut()
 //            assertEquals(User.State.LOGGED_OUT, user.state)
-//        }
-//    }
-//
-//    @Test
-//    fun logOutAsync_throwsOnNonLooperThread() {
-//        try {
-//            anonUser.logOutAsync { fail() }
-//            fail()
-//        } catch (ignore: IllegalStateException) {
 //        }
 //    }
 //
@@ -300,46 +283,6 @@ class UserTests {
 //    }
 //
 //    @Test
-//    fun removeUserAsync() {
-//        anonUser.logOut() // Remove user used by other tests
-//
-//        // Removing logged in user
-//        looperThread.runBlocking {
-//            val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//            assertEquals(user, app.currentUser())
-//            assertEquals(1, app.allUsers().size)
-//            user.removeAsync { result ->
-//                assertEquals(User.State.REMOVED, result.orThrow.state)
-//                assertNull(app.currentUser())
-//                assertEquals(0, app.allUsers().size)
-//                looperThread.testComplete()
-//            }
-//        }
-//
-//        // Removing logged out user
-//        looperThread.runBlocking {
-//            val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//            user.logOut()
-//            assertNull(app.currentUser())
-//            assertEquals(1, app.allUsers().size)
-//            user.removeAsync { result ->
-//                assertEquals(User.State.REMOVED, result.orThrow.state)
-//                assertEquals(0, app.allUsers().size)
-//                looperThread.testComplete()
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun removeUserAsync_nonLooperThreadThrows() {
-//        val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "1234567")
-//        try {
-//            user.removeAsync { fail() }
-//        } catch (ignore: IllegalStateException) {
-//        }
-//    }
-//
-//    @Test
 //    fun getApiKeyAuthProvider() {
 //        val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
 //        val provider1: ApiKeyAuth = user.apiKeys
@@ -378,7 +321,7 @@ class UserTests {
 
     @Test
     fun isLoggedIn() = runBlocking {
-        var anonUser = app.login(Credentials.anonymous())
+        val anonUser = app.login(Credentials.anonymous())
 
         val email = TestHelper.randomEmail()
         val password = "123456"
@@ -507,4 +450,12 @@ class UserTests {
 //            }
 //        }
 //    }
+
+    private suspend fun createUserAndLogin(
+        email: String = TestHelper.randomEmail(),
+        password: String = "123456"
+    ): User {
+        app.asTestApp.createUser(email, password)
+        return app.login(Credentials.emailPassword(email, password))
+    }
 }

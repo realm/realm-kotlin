@@ -26,7 +26,7 @@ interface Callback {
 // Callback from asynchronous sync methods. Use AppCallback<Unit> for void callbacks and
 // AppCallback<NativePointer> for callbacks with native pointers to core objects.
 interface AppCallback<T> {
-    fun onSuccess(t: T)
+    fun onSuccess(result: T)
     fun onError(throwable: Throwable)
 }
 

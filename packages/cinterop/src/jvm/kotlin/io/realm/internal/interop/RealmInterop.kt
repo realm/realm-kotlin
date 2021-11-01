@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
@@ -480,6 +481,10 @@ actual object RealmInterop {
 
     actual fun realm_user_log_out(user: NativePointer) {
         realmc.realm_user_log_out(user.cptr())
+    }
+
+    actual fun realm_user_get_state(user: NativePointer): CoreUserState {
+        return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
     }
 
     actual fun realm_sync_client_config_new(): NativePointer {
