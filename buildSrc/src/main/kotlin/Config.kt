@@ -56,7 +56,7 @@ object Versions {
         const val compileSdkVersion = 30
         const val buildToolsVersion = "30.0.2"
         const val buildTools = "7.1.0-beta02" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
-        const val ndkVersion = "22.1.7171670"
+        const val ndkVersion = "23.1.7779620"
     }
     const val androidxStartup = "1.1.0-beta01" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3-beta02" // https://maven.google.com/web/index.html#androidx.test.ext:junit
