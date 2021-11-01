@@ -68,7 +68,7 @@ pipeline {
 
         // lock resource: 'kotlin_build_lock'
         // Overall job timeout. This doesn't include time for waiting on the agent.
-        // Setting 'activity'-timeouts here doesn clear the overall job timeout, so
+        // Setting 'activity'-timeouts here doesn't clear the overall job timeout, so
         // not an option. More finegrained timeouts can be targeted at specific
         // stages, but these will include the time waiting for resources/nodes.
         timeout(time: 60, unit: 'MINUTES')
