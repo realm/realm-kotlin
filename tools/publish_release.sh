@@ -107,7 +107,7 @@ verify_changelog() {
 create_javadoc() {
   echo "Creating JavaDoc/KDoc..."
   cd $REALM_KOTLIN_PATH/packages
-  ./gradlew dokkaHtmlMultiModule
+  ./gradlew dokkaHtmlMultiModule --info --stracktrace --no-daemon
   cd $HERE
 }
 
