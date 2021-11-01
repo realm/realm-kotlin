@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.4.1)
 project(RealmKotlin)
 set(CAPI "${CMAKE_SOURCE_DIR}/../../../external/core")
 set(CAPI_BUILD "${CAPI}/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
-set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
+set(SWIG_JNI_GENERATED "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/build/sources/jni")
+set(SWIG_JNI_HELPERS "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 
 # Build Realm Core
 # Set option flags for Core.
@@ -25,8 +26,8 @@ file(GLOB jni_SRC
         )
 
 file(GLOB swig_SRC
-        ${SWIG_JNI}/realmc.cpp
-        ${SWIG_JNI}/realm_api_helpers.cpp
+        ${SWIG_JNI_GENERATED}/realmc.cpp
+        ${SWIG_JNI_HELPERS}/realm_api_helpers.cpp
         )
 
 # Create shared FFI library that is consumed by the C-Interop layer.
