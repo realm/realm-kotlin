@@ -1,4 +1,4 @@
-## 0.8.0-SNAPSHOT (YYYY-MM-DD)
+## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -24,7 +24,7 @@
 * Updated to Android Build Tools 31.0.0.
 
 
-## 0.7.0-SNAPSHOT (YYYY-MM-DD)
+## 0.7.0 (2021-10-31)
 
 ### Breaking Changes
 * None.
