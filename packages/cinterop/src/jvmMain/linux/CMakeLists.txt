@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.4.1)
 project(RealmKotlin)
 find_package(JNI)
-set(SWIG_JNI "${CMAKE_SOURCE_DIR}/../../../../jni-swig-stub/src/main/jni")
+set(SWIG_JNI_GENERATED "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/build/sources/jni")
+set(SWIG_JNI_HELPERS "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 set(CINTEROP_JNI "${CMAKE_SOURCE_DIR}/../../jvm/jni")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
@@ -26,8 +27,8 @@ file(GLOB jni_SRC
         )
 
 file(GLOB swig_SRC
-        ${SWIG_JNI}/realm_api_helpers.cpp
-        ${SWIG_JNI}/realmc.cpp
+        ${SWIG_JNI_GENERATED}/realmc.cpp
+        ${SWIG_JNI_HELPERS}/realm_api_helpers.cpp
         )
 
 
