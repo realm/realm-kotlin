@@ -212,10 +212,8 @@ class CredentialsTests {
 //                        assertNotNull(functionUser)
 //                    }
                     AuthenticationProvider.EMAIL_PASSWORD -> {
-                        val email = TestHelper.randomEmail()
-                        val password = "123456"
-                        app.asTestApp.createUser(email, password)
-                        val user = app.login(Credentials.emailPassword(email, password))
+                        val (email, password) = TestHelper.randomEmail() to "password1234"
+                        val user = app.asTestApp.createUserAndLogIn(email, password)
                         assertNotNull(user)
                     }
 

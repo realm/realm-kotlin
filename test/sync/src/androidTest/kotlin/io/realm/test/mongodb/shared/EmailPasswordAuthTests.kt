@@ -1,21 +1,21 @@
 package io.realm.test.mongodb.shared
 
+import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.App
 import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper
-import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.fail
 
 class EmailPasswordAuthTests {
 
-    private lateinit var app: TestApp
+    private lateinit var app: App
 
     @BeforeTest
     fun setup() {
@@ -32,25 +32,35 @@ class EmailPasswordAuthTests {
     @Test
     fun registerUser() {
         runBlocking {
-            val email = TestHelper.randomEmail()
-            val password = "password1234"
-            app.emailPasswordAuth.registerUser(email, password)
-            val credentials = Credentials.emailPassword(email, password)
-            val user = app.login(credentials)
+            val (email, password) = TestHelper.randomEmail() to "password1234"
+            app.asTestApp.createUser(email, password)
+            val user = app.login(Credentials.emailPassword(email, password))
             assertNotNull(user)
         }
     }
 
     @Test
-    fun registerUser_invalidServerArgsThrows() {
+    fun registerUser_invalidServerArgsThrows_invalidUser() {
         runBlocking {
-            val email = "invalid-email"
-            val password = "1234"
+            // Invalid mail and too short password
+            val (email, password) = "invalid-email" to "1234"
 
             // TODO do exhaustive exception assertion once we have all AppException fields in place
             assertFailsWith<AppException> {
-                app.emailPasswordAuth.registerUser(email, password)
-                fail("Should never reach this.")
+                app.asTestApp.createUser(email, password)
+            }
+        }
+    }
+
+    @Test
+    fun registerUser_invalidServerArgsThrows_invalidPassword() {
+        runBlocking {
+            // Valid mail but too short password
+            val (email, password) = TestHelper.randomEmail() to "1234"
+
+            // TODO do exhaustive exception assertion once we have all AppException fields in place
+            assertFailsWith<AppException> {
+                app.asTestApp.createUser(email, password)
             }
         }
     }

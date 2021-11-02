@@ -23,6 +23,7 @@ import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.util.TestHelper
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -74,9 +75,9 @@ class AppTests {
     @Test
     fun loginEmailPassword() {
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
         runBlocking {
-            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf"))
+            val (email, password) = TestHelper.randomEmail() to "password1234"
+            app.asTestApp.createUserAndLogIn(email, password)
         }
     }
 

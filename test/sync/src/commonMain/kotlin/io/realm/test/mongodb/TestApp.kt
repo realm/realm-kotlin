@@ -24,6 +24,8 @@ import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.Credentials
+import io.realm.mongodb.User
 import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
@@ -56,6 +58,15 @@ class TestApp(
     fun close() {
         deleteAllUsers()
     }
+
+    suspend fun createUserAndLogIn(email: String, password: String): User =
+        createUser(email, password).run { logIn(email, password) }
+
+    suspend fun createUser(email: String, password: String) =
+        this.emailPasswordAuth.registerUser(email, password)
+
+    suspend fun logIn(email: String, password: String): User =
+        this.login(Credentials.emailPassword(email, password))
 
     companion object {
         suspend fun getAppId(appName: String, debug: Boolean): String {

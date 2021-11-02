@@ -43,7 +43,7 @@ internal class AppImpl(
         appFilesDirectory()
     )
 
-    override val emailPasswordAuth: EmailPasswordAuth = EmailPasswordAuth(nativePointer)
+    override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuth(nativePointer) }
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->

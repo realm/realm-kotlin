@@ -9,7 +9,7 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 /**
- * Class encapsulating functionality provided when [User]s are logged in through the
+ * Class encapsulating functionality for managing [User]s through the
  * [AuthenticationProvider.EMAIL_PASSWORD] provider.
  */
 class EmailPasswordAuth(

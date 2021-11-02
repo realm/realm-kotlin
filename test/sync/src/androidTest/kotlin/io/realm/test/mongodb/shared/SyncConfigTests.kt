@@ -22,7 +22,7 @@ import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
-import io.realm.mongodb.Credentials
+import io.realm.mongodb.App
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
@@ -47,7 +47,7 @@ const val DEFAULT_NAME = "test.realm"
 class SyncConfigTests {
 
     private lateinit var tmpDir: String
-    private lateinit var app: TestApp
+    private lateinit var app: App
     private lateinit var realm: Realm
 
     @BeforeTest
@@ -662,12 +662,8 @@ class SyncConfigTests {
 //        assertNotEquals(factory, configuration2.flowFactory)
 //    }
 
-    private fun createTestUser(): User {
-        val email = randomEmail()
-        val password = "asdfasdf"
-        app.asTestApp.createUser(email, password)
-        return runBlocking {
-            app.login(Credentials.emailPassword(email, password))
-        }
+    private fun createTestUser(): User = runBlocking {
+        val (email, password) = randomEmail() to "password1234"
+        app.asTestApp.createUserAndLogIn(email, password)
     }
 }
