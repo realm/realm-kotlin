@@ -35,7 +35,7 @@ interface User {
     val app: App
 
     /**
-     * TODO
+     * The [State] this user is in.
      */
     val state: State
 
@@ -76,7 +76,7 @@ interface User {
     override fun equals(other: Any?): Boolean
 
     /**
-     * TODO
+     * A user's potential states.
      */
     enum class State {
         LOGGED_OUT,
@@ -86,7 +86,9 @@ interface User {
         companion object {
 
             /**
-             * TODO
+             * Converts a Core state value to a library state value.
+             *
+             * For internal use only.
              */
             fun fromCoreState(coreState: CoreUserState): State = when (coreState) {
                 CoreUserState.RLM_USER_STATE_LOGGED_OUT -> LOGGED_OUT

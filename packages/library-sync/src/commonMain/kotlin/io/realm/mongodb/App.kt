@@ -65,6 +65,7 @@ interface App {
      * @return current [User] that has logged in and is still valid or `null` if no user is logged
      * in or the user has expired.
      */
+    // FIXME convert to property since it is state and not functionality?
     fun currentUser(): User?
 
     /**

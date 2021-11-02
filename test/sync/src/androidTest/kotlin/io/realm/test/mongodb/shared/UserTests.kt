@@ -38,12 +38,10 @@ import kotlin.test.assertTrue
 class UserTests {
 
     private lateinit var app: App
-    private lateinit var anonUser: User
 
     @BeforeTest
-    fun setUp() = runBlocking {
+    fun setUp() {
         app = TestApp()
-        anonUser = app.login(Credentials.anonymous())
     }
 
     @AfterTest
@@ -62,12 +60,14 @@ class UserTests {
     }
 
     @Test
-    fun getApp() {
+    fun getApp() = runBlocking {
+        val anonUser = app.login(Credentials.anonymous())
         assertEquals(anonUser.app, app.asTestApp.app)
     }
 
     @Test
     fun getState_anonymousUser() = runBlocking {
+        val anonUser = app.login(Credentials.anonymous())
         assertEquals(User.State.LOGGED_IN, anonUser.state)
         anonUser.logOut()
         assertEquals(User.State.REMOVED, anonUser.state)
@@ -86,6 +86,8 @@ class UserTests {
 
     @Test
     fun logOut() = runBlocking {
+        val anonUser = app.login(Credentials.anonymous())
+
         // Anonymous users are removed upon log out
         assertEquals(anonUser, app.currentUser())
         assertEquals(User.State.LOGGED_IN, anonUser.state)
@@ -107,6 +109,8 @@ class UserTests {
 
     @Test
     fun logOutUserInstanceImpactsCurrentUser() = runBlocking {
+        val anonUser = app.login(Credentials.anonymous())
+
         val currentUser = app.currentUser()!!
         assertEquals(User.State.LOGGED_IN, currentUser.state)
         assertEquals(User.State.LOGGED_IN, anonUser.state)
@@ -121,6 +125,8 @@ class UserTests {
 
     @Test
     fun logOutCurrentUserImpactsOtherInstances() = runBlocking {
+        val anonUser = app.login(Credentials.anonymous())
+
         val currentUser = app.currentUser()!!
         assertEquals(User.State.LOGGED_IN, currentUser.state)
         assertEquals(User.State.LOGGED_IN, anonUser.state)
@@ -324,9 +330,7 @@ class UserTests {
     fun isLoggedIn() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
 
-        val (email, password) = TestHelper.randomEmail() to "123456"
-        app.asTestApp.createUser(email, password)
-        val user = app.login(Credentials.emailPassword(email, password))
+        val user = createUserAndLogin()
 
         assertTrue(anonUser.isLoggedIn())
         assertTrue(user.isLoggedIn())
@@ -341,32 +345,24 @@ class UserTests {
 
     @Test
     fun equals() = runBlocking {
-        // val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
         val (email, password) = TestHelper.randomEmail() to "123456"
-        app.asTestApp.createUser(email, password)
-        val user = app.login(Credentials.emailPassword(email, password))
+        val user = createUserAndLogin(email, password)
         assertEquals(user, user)
-        assertFalse(user == app)
         user.logOut()
 
-        val sameUserNewLogin = app.login(Credentials.emailPassword(email, "123456"))
-        // Verify that it is not same object but uses underlying OSSyncUser equality on identity
+        // Verify that it is not same object but uses underlying User equality on identity
+        val sameUserNewLogin = app.login(Credentials.emailPassword(email, password))
         assertFalse(user === sameUserNewLogin)
         assertEquals(user, sameUserNewLogin)
 
-        // val differentUser: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-        val differentEmail = TestHelper.randomEmail()
-        app.asTestApp.createUser(differentEmail, password)
-        val differentUser = app.login(Credentials.emailPassword(differentEmail, password))
+        val differentUser = createUserAndLogin(TestHelper.randomEmail(), password)
         assertNotEquals(user, differentUser)
     }
 
     @Test
     fun hashCode_user() = runBlocking {
-        // val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
         val (email, password) = TestHelper.randomEmail() to "123456"
-        app.asTestApp.createUser(email, password)
-        val user = app.login(Credentials.emailPassword(email, password))
+        val user = createUserAndLogin(email, password)
         user.logOut()
 
         val sameUserNewLogin = app.login(Credentials.emailPassword(email, password))
