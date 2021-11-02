@@ -85,6 +85,7 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_t
+import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
@@ -897,7 +898,8 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_get_current_user(app: NativePointer): NativePointer? {
-        return CPointerWrapper(realm_wrapper.realm_app_get_current_user(app.cptr()))
+        val currentUserPtr: CPointer<realm_user_t>? = realm_wrapper.realm_app_get_current_user(app.cptr())
+        return nativePointerOrNull(currentUserPtr)
     }
 
     actual fun realm_app_log_in_with_credentials(
@@ -926,7 +928,11 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>) {
+    actual fun realm_app_log_out(
+        app: NativePointer,
+        user: NativePointer,
+        callback: AppCallback<Unit>
+    ) {
         realm_wrapper.realm_app_log_out(
             app.cptr(),
             user.cptr(),
@@ -1095,6 +1101,14 @@ actual object RealmInterop {
 
     actual fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer) {
         realm_wrapper.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
+    }
+
+    private fun nativePointerOrNull(ptr: CPointer<*>?, managed: Boolean = true): NativePointer? {
+        return if (ptr != null) {
+            CPointerWrapper(ptr, managed)
+        } else {
+            null
+        }
     }
 
     private fun MemScope.classInfo(realm: NativePointer, table: String): realm_class_info_t {

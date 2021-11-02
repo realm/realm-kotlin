@@ -462,7 +462,11 @@ actual object RealmInterop {
         realmc.realm_app_log_in_with_credentials(app.cptr(), credentials.cptr(), callback)
     }
 
-    actual fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>) {
+    actual fun realm_app_log_out(
+        app: NativePointer,
+        user: NativePointer,
+        callback: AppCallback<Unit>
+    ) {
         realmc.realm_app_log_out(app.cptr(), user.cptr(), callback)
     }
 
@@ -652,16 +656,16 @@ actual object RealmInterop {
         realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
     }
 
-    fun nativePointerOrNull(ptr: Long, managed: Boolean = true): NativePointer? {
+    fun NativePointer.cptr(): Long {
+        return (this as LongPointerWrapper).ptr
+    }
+
+    private fun nativePointerOrNull(ptr: Long, managed: Boolean = true): NativePointer? {
         return if (ptr != 0L) {
             LongPointerWrapper(ptr, managed)
         } else {
             null
         }
-    }
-
-    fun NativePointer.cptr(): Long {
-        return (this as LongPointerWrapper).ptr
     }
 
     private fun realm_value_t.asLink(): Link {

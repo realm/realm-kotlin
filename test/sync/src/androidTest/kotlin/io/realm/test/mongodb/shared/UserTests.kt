@@ -52,7 +52,8 @@ class UserTests {
         //  users directly using the REST API doesn't fully work
         runBlocking {
             while (app.currentUser() != null) {
-                app.currentUser()?.logOut()
+                val currentUser = app.currentUser()
+                currentUser?.logOut()
             }
         }
         if (this::app.isInitialized) {
@@ -323,8 +324,7 @@ class UserTests {
     fun isLoggedIn() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
 
-        val email = TestHelper.randomEmail()
-        val password = "123456"
+        val (email, password) = TestHelper.randomEmail() to "123456"
         app.asTestApp.createUser(email, password)
         val user = app.login(Credentials.emailPassword(email, password))
 
@@ -342,8 +342,7 @@ class UserTests {
     @Test
     fun equals() = runBlocking {
         // val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-        val email = TestHelper.randomEmail()
-        val password = "123456"
+        val (email, password) = TestHelper.randomEmail() to "123456"
         app.asTestApp.createUser(email, password)
         val user = app.login(Credentials.emailPassword(email, password))
         assertEquals(user, user)
@@ -365,8 +364,7 @@ class UserTests {
     @Test
     fun hashCode_user() = runBlocking {
         // val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-        val email = TestHelper.randomEmail()
-        val password = "123456"
+        val (email, password) = TestHelper.randomEmail() to "123456"
         app.asTestApp.createUser(email, password)
         val user = app.login(Credentials.emailPassword(email, password))
         user.logOut()
