@@ -17,6 +17,7 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -41,7 +42,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp()
+        app = TestApp(debug = true, logLevel = LogLevel.DEBUG)
     }
 
     @AfterTest
