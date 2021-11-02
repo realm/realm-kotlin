@@ -34,6 +34,7 @@ import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValue
+import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.ULongVar
@@ -64,6 +65,7 @@ import platform.posix.pthread_threadid_np
 import platform.posix.strerror
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
+import realm_wrapper.realm_app_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
@@ -933,17 +935,24 @@ actual object RealmInterop {
         user: NativePointer,
         callback: AppCallback<Unit>
     ) {
+        println("---> realm_app_log_out 1a")
+        val appPtr: CValuesRef<realm_app_t> = app.cptr()
+        println("---> realm_app_log_out 1b, appPtr = $appPtr")
+        val userPtr: CValuesRef<realm_app_t> = user.cptr()
+        println("---> realm_app_log_out 1c, userPtr = $userPtr")
         realm_wrapper.realm_app_log_out(
             app.cptr(),
             user.cptr(),
             staticCFunction { userdata, error: CPointer<realm_app_error_t>? ->
                 val userDataCallback = safeUserData<AppCallback<Unit>>(userdata)
                 if (error == null) {
+                    println("---> realm_app_log_out 2")
                     userDataCallback.onSuccess(Unit)
                 } else {
                     val message = with(error.pointed) {
                         "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
                     }
+                    println("---> realm_app_log_out 3")
                     userDataCallback.onError(AppException(message))
                 }
             },
