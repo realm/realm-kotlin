@@ -48,7 +48,4 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
 
 void
 sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);
-
-void
-app_register_email_password(realm_app_t* app, const char* email, realm_string_t password, jobject registered_user_callback);
 #endif //TEST_REALM_API_HELPERS_H

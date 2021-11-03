@@ -1083,7 +1083,7 @@ actual object RealmInterop {
         app: NativePointer,
         email: String,
         password: String,
-        callback: CinteropVoidCallback
+        callback: AppCallback<Unit>
     ) {
         memScoped {
             realm_wrapper.realm_app_email_password_provider_client_register_email(
@@ -1091,15 +1091,7 @@ actual object RealmInterop {
                 email,
                 password.toRString(this),
                 staticCFunction { userData, error ->
-                    val userDataCallback = safeUserData<CinteropVoidCallback>(userData)
-                    if (error == null) {
-                        userDataCallback.onSuccess()
-                    } else {
-                        val message = with(error.pointed) {
-                            "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
-                        }
-                        userDataCallback.onError(AppException(message))
-                    }
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
                 StableRef.create(callback).asCPointer(),
                 staticCFunction { userData -> disposeUserData<CinteropVoidCallback>(userData) }

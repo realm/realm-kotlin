@@ -192,7 +192,7 @@ expect object RealmInterop {
         app: NativePointer,
         email: String,
         password: String,
-        callback: CinteropVoidCallback
+        callback: AppCallback<Unit>
     )
 
     // Sync config

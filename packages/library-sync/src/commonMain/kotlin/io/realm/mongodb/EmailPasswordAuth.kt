@@ -1,6 +1,6 @@
 package io.realm.mongodb
 
-import io.realm.internal.interop.CinteropVoidCallback
+import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.util.Validation
@@ -31,8 +31,8 @@ class EmailPasswordAuth(
                 app,
                 Validation.checkEmpty(email, "email"),
                 Validation.checkEmpty(password, "password"),
-                object : CinteropVoidCallback {
-                    override fun onSuccess() {
+                object : AppCallback<Unit> {
+                    override fun onSuccess(result: Unit) {
                         continuation.resume(Unit)
                     }
 
