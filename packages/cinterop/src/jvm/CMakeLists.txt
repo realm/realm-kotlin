@@ -14,7 +14,7 @@ add_subdirectory("realm-core" EXCLUDE_FROM_ALL)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
-include_directories(${CAPI_BUILD}/src jni)
+include_directories(${CAPI_BUILD}/src jni ${SWIG_JNI_GENERATED} ${SWIG_JNI_HELPERS})
 
 file(GLOB jni_SRC
         "jni/env_utils.cpp"
