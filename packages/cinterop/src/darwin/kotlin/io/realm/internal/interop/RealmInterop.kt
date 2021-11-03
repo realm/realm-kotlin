@@ -1094,7 +1094,7 @@ actual object RealmInterop {
                     handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
                 StableRef.create(callback).asCPointer(),
-                staticCFunction { userData -> disposeUserData<CinteropVoidCallback>(userData) }
+                staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
             )
         }
     }
