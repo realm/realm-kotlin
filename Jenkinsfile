@@ -284,7 +284,7 @@ def genAndStashSwigJNI() {
         ../gradlew assemble
         """
     }
-    stash includes: 'packages/jni-swig-stub/src/main/jni/realmc.cpp,packages/jni-swig-stub/src/main/jni/realmc.h', name: 'swig_jni'
+    stash includes: 'packages/jni-swig-stub/build/generated/sources/jni/realmc.cpp,packages/jni-swig-stub/build/generated/sources/jni/realmc.h', name: 'swig_jni'
 }
 def runBuild() {
     def buildJvmAbiFlag = "-PcopyJvmABIs=false"
