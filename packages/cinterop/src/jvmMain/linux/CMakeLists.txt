@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 project(RealmKotlin)
 find_package(JNI)
-set(SWIG_JNI_GENERATED "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/build/sources/jni")
+set(SWIG_JNI_GENERATED "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/build/generated/sources/jni")
 set(SWIG_JNI_HELPERS "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 set(CINTEROP_JNI "${CMAKE_SOURCE_DIR}/../../jvm/jni")
 
@@ -15,7 +15,7 @@ set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../../../external/core" core EXCLUDE_FROM_ALL)
 
-include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/linux" "${CINTEROP_JNI}" "${SWIG_JNI}")
+include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/linux" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
 
 file(GLOB jni_SRC
         "${CINTEROP_JNI}/env_utils.cpp"
