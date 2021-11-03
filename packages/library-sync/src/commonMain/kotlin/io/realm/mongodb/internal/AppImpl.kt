@@ -29,8 +29,16 @@ import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.suspendCoroutine
 
 internal class AppImpl(
@@ -44,26 +52,30 @@ internal class AppImpl(
     )
 
     override suspend fun login(credentials: Credentials): User {
-        return suspendCoroutine { continuation ->
-            val value = object : CinteropCallback {
-                override fun onSuccess(pointer: NativePointer) {
-                    println("loging-resuming")
-                    continuation.resume(UserImpl(pointer, this@AppImpl))
-                    println("loging-resumed")
-                }
+        // suspendCoroutine doesn't allow freezing callback capturing continuation
+        // ... and cannot be resumed on another thread (we probably also want to guarantee that we
+        // are resuming on the same dispatcher), so run our own implementation using a channel
+        val credentials =
+            Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer
+        withContext(configuration.networkTransportDispatcher) {
+            async {
+                RealmInterop.realm_app_log_in_with_credentials(
+                    nativePointer,
+                    credentials,
+                    object : CinteropCallback {
+                        override fun onSuccess(pointer: NativePointer) {
+                            c.trySend(Result.success(UserImpl(pointer, this@AppImpl)))
+                        }
 
-                override fun onError(throwable: Throwable) {
-                    println("loging-erroring: $throwable")
-                    continuation.resumeWithException(throwable)
-                    println("loging-errored")
-                }
-            }.freeze()
-            RealmInterop.realm_app_log_in_with_credentials(
-                nativePointer,
-                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
-                value
-            )
+                        override fun onError(throwable: Throwable) {
+                            c.trySend(Result.failure(throwable))
+                        }
+                    }.freeze()
+                )
+            }
         }
+        val result = c.receive()
+        return result.getOrThrow()
     }
 
     private fun initializeSyncClientConfig(): NativePointer =
