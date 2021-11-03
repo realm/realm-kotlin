@@ -30,11 +30,6 @@ interface AppCallback<T> {
     fun onError(throwable: Throwable)
 }
 
-interface CinteropVoidCallback {
-    fun onSuccess()
-    fun onError(throwable: Throwable)
-}
-
 interface SyncErrorCallback {
     fun onSyncError(pointer: NativePointer, throwable: SyncException)
 }
