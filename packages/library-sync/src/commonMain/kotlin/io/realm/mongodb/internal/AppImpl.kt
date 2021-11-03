@@ -16,7 +16,7 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.CinteropCallback
+import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -37,7 +37,7 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val nativePointer: NativePointer = RealmInterop.realm_app_get(
+    internal val nativePointer: NativePointer = RealmInterop.realm_app_get(
         configuration.nativePointer,
         initializeSyncClientConfig(),
         appFilesDirectory()
@@ -45,14 +45,19 @@ internal class AppImpl(
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuth(nativePointer) }
 
+    override fun currentUser(): User? {
+        val currentUser = RealmInterop.realm_app_get_current_user(nativePointer)
+        return currentUser?.let { UserImpl(it, this) }
+    }
+
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
                 Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
-                object : CinteropCallback {
-                    override fun onSuccess(pointer: NativePointer) {
-                        continuation.resume(UserImpl(pointer, this@AppImpl))
+                object : AppCallback<NativePointer> {
+                    override fun onSuccess(result: NativePointer) {
+                        continuation.resume(UserImpl(result, this@AppImpl))
                     }
 
                     override fun onError(throwable: Throwable) {

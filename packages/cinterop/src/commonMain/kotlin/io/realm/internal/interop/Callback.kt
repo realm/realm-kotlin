@@ -23,8 +23,10 @@ interface Callback {
     fun onChange(change: NativePointer)
 }
 
-interface CinteropCallback {
-    fun onSuccess(pointer: NativePointer)
+// Callback from asynchronous sync methods. Use AppCallback<Unit> for void callbacks and
+// AppCallback<NativePointer> for callbacks with native pointers to core objects.
+interface AppCallback<T> {
+    fun onSuccess(result: T)
     fun onError(throwable: Throwable)
 }
 

@@ -28,3 +28,6 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
+-keep class io.realm.internal.interop.AppCallback {
+    *;
+}

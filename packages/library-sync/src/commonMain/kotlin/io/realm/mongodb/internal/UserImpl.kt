@@ -16,10 +16,59 @@
 
 package io.realm.mongodb.internal
 
+import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.mongodb.User
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 internal class UserImpl(
     val nativePointer: NativePointer,
-    val app: AppImpl
-) : User
+    override val app: AppImpl
+) : User {
+
+    override val state: User.State
+        get() = User.State.fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
+
+    override fun isLoggedIn(): Boolean = RealmInterop.realm_user_is_logged_in(nativePointer)
+
+    override suspend fun logOut() {
+        return suspendCoroutine { continuation ->
+            RealmInterop.realm_app_log_out(
+                app.nativePointer,
+                nativePointer,
+                object : AppCallback<Unit> {
+                    override fun onSuccess(result: Unit) {
+                        continuation.resume(Unit)
+                    }
+
+                    override fun onError(throwable: Throwable) {
+                        continuation.resumeWithException(throwable)
+                    }
+                }
+            )
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as UserImpl
+
+        if (identity() != (other.identity())) return false
+        return app.configuration.equals(other.app.configuration)
+    }
+
+    override fun hashCode(): Int {
+        var result = identity().hashCode()
+        result = 31 * result + app.configuration.appId.hashCode()
+        return result
+    }
+
+    // TODO Property or method? Can maybe fail, but we could also cache the return value? Keep
+    //  private for now
+    private fun identity(): String = RealmInterop.realm_user_get_identity(nativePointer)
+}

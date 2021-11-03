@@ -1,10 +1,31 @@
-## 0.7.0-SNAPSHOT (YYYY-MM-DD)
+## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* Basic MongoDB Realm sync support: 
+* Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245))
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
+
+### Internal
+* Updated to Realm Core commit: 2183e09f40a3ce31be0f93d0665b785b5c52e975
+
+
+## 0.7.0 (2021-10-31)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Basic MongoDB Realm sync support:
   * Enabled by using library dependency `io.realm.kotlin:library-sync:<VERSION>`
   * Build `AppConfiguration`s through `AppConfiguration.Builder(appId).build()`
   * Linking your app with a MongoDB Realm App through `App.create(appConfiguration)`
