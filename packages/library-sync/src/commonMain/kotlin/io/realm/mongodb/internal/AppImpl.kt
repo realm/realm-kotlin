@@ -29,9 +29,7 @@ import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
 
 internal class AppImpl(
     override val configuration: AppConfigurationImpl,
@@ -50,23 +48,20 @@ internal class AppImpl(
         val credentials =
             Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer
         val result = Channel<Result<User>>(1)
-        withContext(configuration.networkTransportDispatcher) {
-            async {
-                RealmInterop.realm_app_log_in_with_credentials(
-                    nativePointer,
-                    credentials,
-                    object : CinteropCallback {
-                        override fun onSuccess(pointer: NativePointer) {
-                            result.trySend(Result.success(UserImpl(pointer, this@AppImpl)))
-                        }
+        // Should we do this on the users context or an internal dispatcher
+        RealmInterop.realm_app_log_in_with_credentials(
+            nativePointer,
+            credentials,
+            object : CinteropCallback {
+                override fun onSuccess(pointer: NativePointer) {
+                    result.trySend(Result.success(UserImpl(pointer, this@AppImpl)))
+                }
 
-                        override fun onError(throwable: Throwable) {
-                            result.trySend(Result.failure(throwable))
-                        }
-                    }.freeze()
-                )
-            }
-        }
+                override fun onError(throwable: Throwable) {
+                    result.trySend(Result.failure(throwable))
+                }
+            }.freeze()
+        )
         return result.receive().getOrThrow()
     }
 
