@@ -18,7 +18,9 @@ package io.realm.internal.interop.sync
 
 import io.realm.internal.interop.realmc
 
-class ResponseCallbackImpl(val userData: NetworkTransport, val requestContext: Long):
+// Implementation of network response callback that is initialized from JNI and passed to
+// NetworkTransport.sendRequest to signal response back to JNI
+class ResponseCallbackImpl(val userData: NetworkTransport, val requestContext: Long) :
     ResponseCallback {
     override fun response(response: Response) {
         realmc.native_response_callback(requestContext, response)

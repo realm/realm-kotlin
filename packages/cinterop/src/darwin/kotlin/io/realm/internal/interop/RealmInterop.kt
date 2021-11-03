@@ -992,11 +992,7 @@ actual object RealmInterop {
                                         num_headers = response.headers.entries.size.toULong()
                                         headers = cResponseHeaders
                                     }
-                                println("capi-responding")
                                 realm_wrapper.realm_http_transport_complete_request(requestContext, cResponse.ptr)
-
-
-                                println("capi-responded")
                             }
                         }
                     }

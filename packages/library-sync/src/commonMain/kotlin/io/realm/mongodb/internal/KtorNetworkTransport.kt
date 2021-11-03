@@ -71,73 +71,65 @@ class KtorNetworkTransport(
         //  HttpClient pr. request.
         val client = clientCache.getClient()
 
-        // FIXME Ensure background jobs does not block user/main thread
-        //  https://github.com/realm/realm-kotlin/issues/450
-        // FIXME Validate threading model
         CoroutineScope(dispatcher).async {
-//        runBlocking(dispatcher) {
-//            async {
-                val response = try {
-                    val requestBuilderBlock: HttpRequestBuilder.() -> Unit = {
-                        headers {
-                            // 1. First of all add all custom headers
-                            customHeaders.forEach {
-                                append(it.key, it.value)
-                            }
+            val response = try {
+                val requestBuilderBlock: HttpRequestBuilder.() -> Unit = {
+                    headers {
+                        // 1. First of all add all custom headers
+                        customHeaders.forEach {
+                            append(it.key, it.value)
+                        }
 
-                            // 2. Then add all headers received from OS
-                            headers.forEach { (key, value) ->
-                                // It is not allowed to set content type on gets https://github.com/ktorio/ktor/issues/1127
-                                if (method != "get" || key != HttpHeaders.ContentType) {
-                                    append(key, value)
-                                }
-                            }
-
-                            // 3. Finally, if we have a non-default auth header name, replace the OS
-                            // default with the custom one
-                            if (authorizationHeaderName != DEFAULT_AUTHORIZATION_HEADER_NAME &&
-                                contains(DEFAULT_AUTHORIZATION_HEADER_NAME)
-                            ) {
-                                this[DEFAULT_AUTHORIZATION_HEADER_NAME]?.let { originalAuthValue ->
-                                    this[authorizationHeaderName] = originalAuthValue
-                                }
-                                this.remove(DEFAULT_AUTHORIZATION_HEADER_NAME)
+                        // 2. Then add all headers received from OS
+                        headers.forEach { (key, value) ->
+                            // It is not allowed to set content type on gets https://github.com/ktorio/ktor/issues/1127
+                            if (method != "get" || key != HttpHeaders.ContentType) {
+                                append(key, value)
                             }
                         }
 
-                        addBody(method, body)
-                        addMethod(method)
+                        // 3. Finally, if we have a non-default auth header name, replace the OS
+                        // default with the custom one
+                        if (authorizationHeaderName != DEFAULT_AUTHORIZATION_HEADER_NAME &&
+                            contains(DEFAULT_AUTHORIZATION_HEADER_NAME)
+                        ) {
+                            this[DEFAULT_AUTHORIZATION_HEADER_NAME]?.let { originalAuthValue ->
+                                this[authorizationHeaderName] = originalAuthValue
+                            }
+                            this.remove(DEFAULT_AUTHORIZATION_HEADER_NAME)
+                        }
                     }
-                    when (method) {
-                        "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
-                        "patch" -> client.patch<HttpResponse>(url, requestBuilderBlock)
-                        "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
-                        "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
-                        "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
-                        else -> throw IllegalArgumentException("Wrong request method: '$method'")
-                    }.let {
-                        processHttpResponse(it)
-                    }
-                } catch (e: ClientRequestException) {
-                    processHttpResponse(e.response)
-                } catch (e: ServerResponseException) {
-                    // 500s are thrown as ServerResponseException
-                    processHttpResponse(e.response)
-                } catch (e: IOException) {
-                    Response(0, ERROR_IO, mapOf(), e.toString())
-                } catch (e: CancellationException) {
-                    // FIXME Validate we propagate the custom codes as an actual exception to the user
-                    //  https://github.com/realm/realm-kotlin/issues/451
-                    Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
-                } catch (e: Exception) {
-                    // FIXME Validate we propagate the custom codes as an actual exception to the user
-                    //  https://github.com/realm/realm-kotlin/issues/451
-                    Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
+
+                    addBody(method, body)
+                    addMethod(method)
                 }
-                println("ktor-responding")
-                callback.response(response)
-                println("ktor-responded")
-//            }
+                when (method) {
+                    "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
+                    "patch" -> client.patch<HttpResponse>(url, requestBuilderBlock)
+                    "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
+                    "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
+                    "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
+                    else -> throw IllegalArgumentException("Wrong request method: '$method'")
+                }.let {
+                    processHttpResponse(it)
+                }
+            } catch (e: ClientRequestException) {
+                processHttpResponse(e.response)
+            } catch (e: ServerResponseException) {
+                // 500s are thrown as ServerResponseException
+                processHttpResponse(e.response)
+            } catch (e: IOException) {
+                Response(0, ERROR_IO, mapOf(), e.toString())
+            } catch (e: CancellationException) {
+                // FIXME Validate we propagate the custom codes as an actual exception to the user
+                //  https://github.com/realm/realm-kotlin/issues/451
+                Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
+            } catch (e: Exception) {
+                // FIXME Validate we propagate the custom codes as an actual exception to the user
+                //  https://github.com/realm/realm-kotlin/issues/451
+                Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
+            }
+            callback.response(response)
         }
     }
 
