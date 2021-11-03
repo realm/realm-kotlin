@@ -64,7 +64,7 @@ internal class UserImpl(
         other as UserImpl
 
         if (identity != (other.identity)) return false
-        return app.configuration.equals(other.app.configuration)
+        return app.configuration == other.app.configuration
     }
 
     override fun hashCode(): Int {

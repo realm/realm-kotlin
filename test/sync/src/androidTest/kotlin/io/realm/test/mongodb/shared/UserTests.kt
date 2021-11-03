@@ -29,6 +29,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -344,7 +345,7 @@ class UserTests {
 
         // Verify that it is not same object but uses underlying User equality on identity
         val sameUserNewLogin = app.login(Credentials.emailPassword(email, password))
-        assertFalse(user === sameUserNewLogin)
+        assertNotSame(user, sameUserNewLogin)
         assertEquals(user, sameUserNewLogin)
 
         val differentUser = createUserAndLogin(randomEmail(), password)
