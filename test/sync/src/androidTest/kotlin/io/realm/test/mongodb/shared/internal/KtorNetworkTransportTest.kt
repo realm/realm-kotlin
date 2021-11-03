@@ -21,8 +21,7 @@ import io.realm.internal.interop.sync.ResponseCallback
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.mongodb.internal.KtorNetworkTransport
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.channels.Channel
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -53,23 +52,22 @@ internal class KtorNetworkTransportTest {
     @Test
     fun requestSuccessful() = runBlocking {
         val url = "$BASE_URL/okhttp?success=true"
-
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = suspendCoroutine<Response> {
-                transport.sendRequest(
-                    method.nativeKey,
-                    url,
-                    mapOf(),
-                    body,
-                    object : ResponseCallback {
-                        override fun response(response: Response) {
-                            it.resume(response)
-                        }
+            val result = Channel<Response>(1)
+            transport.sendRequest(
+                method.nativeKey,
+                url,
+                mapOf(),
+                body,
+                object : ResponseCallback {
+                    override fun response(response: Response) {
+                        result.trySend(response)
                     }
-                )
-            }
+                }
+            )
+            val response = result.receive()
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-success", response.body, "$method failed")
@@ -82,19 +80,19 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = suspendCoroutine<Response> {
-                transport.sendRequest(
-                    method.nativeKey,
-                    url,
-                    mapOf(),
-                    body,
-                    object : ResponseCallback {
-                        override fun response(response: Response) {
-                            it.resume(response)
-                        }
+            val result = Channel<Response>(1)
+            transport.sendRequest(
+                method.nativeKey,
+                url,
+                mapOf(),
+                body,
+                object : ResponseCallback {
+                    override fun response(response: Response) {
+                        result.trySend(response)
                     }
-                )
-            }
+                }
+            )
+            val response = result.receive()
             assertEquals(500, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-failure", response.body, "$method failed")
@@ -110,19 +108,19 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "Boom!"
 
-            val response = suspendCoroutine<Response> {
-                transport.sendRequest(
-                    method.nativeKey,
-                    url,
-                    mapOf(),
-                    body,
-                    object : ResponseCallback {
-                        override fun response(response: Response) {
-                            it.resume(response)
-                        }
+            val result = Channel<Response>(1)
+            transport.sendRequest(
+                method.nativeKey,
+                url,
+                mapOf(),
+                body,
+                object : ResponseCallback {
+                    override fun response(response: Response) {
+                        result.trySend(response)
                     }
-                )
-            }
+                }
+            )
+            val response = result.receive()
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-success", response.body, "$method failed")
