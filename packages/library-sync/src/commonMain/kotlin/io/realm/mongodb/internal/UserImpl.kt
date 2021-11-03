@@ -32,7 +32,7 @@ internal class UserImpl(
     override val state: User.State
         get() = User.State.fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
-    // TODO Property or method? Can maybe fail, but we could also cache the return value?
+    // TODO Can maybe fail, but we could also cache the return value?
     override val identity: String
         get() = RealmInterop.realm_user_get_identity(nativePointer)
 
@@ -63,12 +63,12 @@ internal class UserImpl(
 
         other as UserImpl
 
-        if (identity() != (other.identity())) return false
+        if (identity != (other.identity)) return false
         return app.configuration.equals(other.app.configuration)
     }
 
     override fun hashCode(): Int {
-        var result = identity().hashCode()
+        var result = identity.hashCode()
         result = 31 * result + app.configuration.appId.hashCode()
         return result
     }
