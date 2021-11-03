@@ -42,38 +42,20 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        println("---> setUp: 1")
         app = TestApp(debug = true, logLevel = LogLevel.DEBUG)
-        println("---> setUp: 2")
     }
 
     @AfterTest
     fun tearDown() {
-        // TODO hack: this is needed to properly "reset" all sessions across tests since deleting
-        //  users directly using the REST API doesn't fully work
-        runBlocking {
-            while (app.currentUser() != null) {
-                println("---> tearDown: 1a")
-                val currentUser = app.currentUser()
-                println("---> tearDown: 1b")
-                currentUser?.logOut()
-                println("---> tearDown: 1c")
-            }
-        }
         if (this::app.isInitialized) {
-            println("---> tearDown: 2")
             app.asTestApp.close()
-            println("---> tearDown: 3")
         }
     }
 
     @Test
     fun getApp() = runBlocking {
-        println("---> getApp: 1")
         val anonUser = app.login(Credentials.anonymous())
-        println("---> getApp: 2")
         assertEquals(anonUser.app, app.asTestApp.app)
-        println("---> getApp: DONE")
     }
 
     @Test
