@@ -17,13 +17,12 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
-import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
-import io.realm.test.util.TestHelper
+import io.realm.test.util.TestHelper.randomEmail
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -42,7 +41,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp(debug = true, logLevel = LogLevel.DEBUG)
+        app = TestApp()
     }
 
     @AfterTest
@@ -82,29 +81,29 @@ class UserTests {
         val anonUser = app.login(Credentials.anonymous())
 
         // Anonymous users are removed upon log out
-        assertEquals(anonUser, app.currentUser())
+        assertEquals(anonUser, app.currentUser)
         assertEquals(User.State.LOGGED_IN, anonUser.state)
         anonUser.logOut()
         assertEquals(User.State.REMOVED, anonUser.state)
-        assertNull(app.currentUser())
+        assertNull(app.currentUser)
 
         // Users registered with Email/Password will register as Logged Out
         val user2 = createUserAndLogin()
-        val current: User = app.currentUser()!!
+        val current: User = app.currentUser!!
         assertEquals(user2, current)
         user2.logOut()
         assertEquals(User.State.LOGGED_OUT, user2.state)
         // Same effect on all instances
         assertEquals(User.State.LOGGED_OUT, current.state)
         // And no current user anymore
-        assertNull(app.currentUser())
+        assertNull(app.currentUser)
     }
 
     @Test
     fun logOutUserInstanceImpactsCurrentUser() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
 
-        val currentUser = app.currentUser()!!
+        val currentUser = app.currentUser!!
         assertEquals(User.State.LOGGED_IN, currentUser.state)
         assertEquals(User.State.LOGGED_IN, anonUser.state)
         assertEquals(currentUser, anonUser)
@@ -113,14 +112,14 @@ class UserTests {
 
         assertNotEquals(User.State.LOGGED_OUT, currentUser.state)
         assertNotEquals(User.State.LOGGED_OUT, anonUser.state)
-        assertNull(app.currentUser())
+        assertNull(app.currentUser)
     }
 
     @Test
     fun logOutCurrentUserImpactsOtherInstances() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
 
-        val currentUser = app.currentUser()!!
+        val currentUser = app.currentUser!!
         assertEquals(User.State.LOGGED_IN, currentUser.state)
         assertEquals(User.State.LOGGED_IN, anonUser.state)
         assertEquals(currentUser, anonUser)
@@ -129,7 +128,7 @@ class UserTests {
 
         assertNotEquals(User.State.LOGGED_OUT, currentUser.state)
         assertNotEquals(User.State.LOGGED_OUT, anonUser.state)
-        assertNull(app.currentUser())
+        assertNull(app.currentUser)
     }
 
 //    @Test
@@ -265,17 +264,17 @@ class UserTests {
 //
 //        // Removing logged in user
 //        val user1 = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        assertEquals(user1, app.currentUser())
+//        assertEquals(user1, app.currentUser)
 //        assertEquals(1, app.allUsers().size)
 //        app.removeUser(user1)
 //        assertEquals(User.State.REMOVED, user1.state)
-//        assertNull(app.currentUser())
+//        assertNull(app.currentUser)
 //        assertEquals(0, app.allUsers().size)
 //
 //        // Remove logged out user
 //        val user2 = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
 //        user2.logOut()
-//        assertNull(app.currentUser())
+//        assertNull(app.currentUser)
 //        assertEquals(1, app.allUsers().size)
 //        app.removeUser(user2)
 //        assertEquals(User.State.REMOVED, user2.state)
@@ -325,20 +324,20 @@ class UserTests {
 
         val user = createUserAndLogin()
 
-        assertTrue(anonUser.isLoggedIn())
-        assertTrue(user.isLoggedIn())
+        assertTrue(anonUser.loggedIn)
+        assertTrue(user.loggedIn)
 
         anonUser.logOut()
-        assertFalse(anonUser.isLoggedIn())
-        assertTrue(user.isLoggedIn())
+        assertFalse(anonUser.loggedIn)
+        assertTrue(user.loggedIn)
 
         user.logOut()
-        assertFalse(user.isLoggedIn())
+        assertFalse(user.loggedIn)
     }
 
     @Test
     fun equals() = runBlocking {
-        val (email, password) = TestHelper.randomEmail() to "123456"
+        val (email, password) = randomEmail() to "123456"
         val user = createUserAndLogin(email, password)
         assertEquals(user, user)
         user.logOut()
@@ -348,13 +347,13 @@ class UserTests {
         assertFalse(user === sameUserNewLogin)
         assertEquals(user, sameUserNewLogin)
 
-        val differentUser = createUserAndLogin(TestHelper.randomEmail(), password)
+        val differentUser = createUserAndLogin(randomEmail(), password)
         assertNotEquals(user, differentUser)
     }
 
     @Test
     fun hashCode_user() = runBlocking {
-        val (email, password) = TestHelper.randomEmail() to "123456"
+        val (email, password) = randomEmail() to "123456"
         val user = createUserAndLogin(email, password)
         user.logOut()
 
@@ -438,8 +437,9 @@ class UserTests {
 //        }
 //    }
 
+    // TODO remove this when EmailPasswordAuth is ready
     private suspend fun createUserAndLogin(
-        email: String = TestHelper.randomEmail(),
+        email: String = randomEmail(),
         password: String = "123456"
     ): User {
         app.asTestApp.createUser(email, password)

@@ -45,10 +45,9 @@ internal class AppImpl(
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuth(nativePointer) }
 
-    override fun currentUser(): User? {
-        val currentUser = RealmInterop.realm_app_get_current_user(nativePointer)
-        return currentUser?.let { UserImpl(it, this) }
-    }
+    override val currentUser: User?
+        get() = RealmInterop.realm_app_get_current_user(nativePointer)
+            ?.let { UserImpl(it, this) }
 
     override suspend fun login(credentials: Credentials): User {
         return suspendCoroutine { continuation ->

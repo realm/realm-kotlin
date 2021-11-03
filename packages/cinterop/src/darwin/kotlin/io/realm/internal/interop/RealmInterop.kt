@@ -213,7 +213,8 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_library_version(): String {
-        return realm_wrapper.realm_get_library_version()!!.toKString()
+        return realm_wrapper.realm_get_library_version()?.toKString()
+            ?: throw NullPointerException("Library version cannot be null.")
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
@@ -910,18 +911,8 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error: CPointer<realm_app_error_t>? ->
-                val userDataCallback = safeUserData<AppCallback<NativePointer>>(userdata)
-                if (error == null) {
-                    // Remember to clone user object or else it will be invalidated right after we leave this callback
-                    val clonedUser = realm_clone(user)
-                    userDataCallback.onSuccess(CPointerWrapper(clonedUser))
-                } else {
-                    val message = with(error.pointed) {
-                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
-                    }
-                    userDataCallback.onError(AppException(message))
-                }
+            staticCFunction { userData, user, error: CPointer<realm_app_error_t>? ->
+                handleAppCallback(userData, error) { CPointerWrapper(realm_clone(user)) }
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
@@ -936,16 +927,8 @@ actual object RealmInterop {
         realm_wrapper.realm_app_log_out(
             app.cptr(),
             user.cptr(),
-            staticCFunction { userdata, error: CPointer<realm_app_error_t>? ->
-                val userDataCallback = safeUserData<AppCallback<Unit>>(userdata)
-                if (error == null) {
-                    userDataCallback.onSuccess(Unit)
-                } else {
-                    val message = with(error.pointed) {
-                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
-                    }
-                    userDataCallback.onError(AppException(message))
-                }
+            staticCFunction { userData, error ->
+                handleAppCallback(userData, error) { /* No-op, returns Unit */ }
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
@@ -953,7 +936,8 @@ actual object RealmInterop {
     }
 
     actual fun realm_user_get_identity(user: NativePointer): String {
-        return realm_wrapper.realm_user_get_identity(user.cptr())!!.toKString()
+        return realm_wrapper.realm_user_get_identity(user.cptr())?.toKString()
+            ?: throw NullPointerException("User identity cannot be null.")
     }
 
     actual fun realm_user_is_logged_in(user: NativePointer): Boolean {
@@ -1240,6 +1224,22 @@ actual object RealmInterop {
                 }
             }
         )
+    }
+
+    private fun <R> handleAppCallback(
+        userData: COpaquePointer?,
+        error: CPointer<realm_app_error_t>?,
+        getValue: () -> R
+    ) {
+        val userDataCallback = safeUserData<AppCallback<R>>(userData)
+        if (error == null) {
+            userDataCallback.onSuccess(getValue())
+        } else {
+            val message = with(error.pointed) {
+                "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
+            }
+            userDataCallback.onError(AppException(message))
+        }
     }
 
     private val newRequestLambda = staticCFunction<COpaquePointer?,

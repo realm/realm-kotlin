@@ -32,7 +32,12 @@ internal class UserImpl(
     override val state: User.State
         get() = User.State.fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
-    override fun isLoggedIn(): Boolean = RealmInterop.realm_user_is_logged_in(nativePointer)
+    // TODO Can maybe fail, but we could also cache the return value?
+    override val identity: String
+        get() = RealmInterop.realm_user_get_identity(nativePointer)
+
+    override val loggedIn: Boolean
+        get() = RealmInterop.realm_user_is_logged_in(nativePointer)
 
     override suspend fun logOut() {
         return suspendCoroutine { continuation ->
@@ -58,17 +63,13 @@ internal class UserImpl(
 
         other as UserImpl
 
-        if (identity() != (other.identity())) return false
+        if (identity != (other.identity)) return false
         return app.configuration.equals(other.app.configuration)
     }
 
     override fun hashCode(): Int {
-        var result = identity().hashCode()
+        var result = identity.hashCode()
         result = 31 * result + app.configuration.appId.hashCode()
         return result
     }
-
-    // TODO Property or method? Can maybe fail, but we could also cache the return value? Keep
-    //  private for now
-    private fun identity(): String = RealmInterop.realm_user_get_identity(nativePointer)
 }
