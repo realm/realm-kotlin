@@ -339,7 +339,8 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
     );
 }
 
-static void pass_jvm_response_to_core(JNIEnv *jenv, jobject j_response, void* request_context) {
+void complete_http_request(void* request_context, jobject j_response) {
+    auto jenv = get_env(false); // will always be attached
     static JavaMethod get_http_code_method(jenv,
                                            JavaClassGlobalDef::network_transport_response_class(),
                                            "getHttpResponseCode",
@@ -518,10 +519,4 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                         [](void *userdata) {
                                             get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                         });
-}
-
-void
-native_response_callback(void* request_context, jobject j_response) {
-    auto jenv = get_env(false); // should always be attached
-    pass_jvm_response_to_core(jenv, j_response, request_context);
 }

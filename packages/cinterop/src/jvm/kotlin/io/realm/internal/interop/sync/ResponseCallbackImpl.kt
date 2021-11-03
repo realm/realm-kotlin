@@ -23,6 +23,6 @@ import io.realm.internal.interop.realmc
 class ResponseCallbackImpl(val userData: NetworkTransport, val requestContext: Long) :
     ResponseCallback {
     override fun response(response: Response) {
-        realmc.native_response_callback(requestContext, response)
+        realmc.complete_http_request(requestContext, response)
     }
 }
