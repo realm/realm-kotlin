@@ -29,17 +29,9 @@ import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.suspendCoroutine
 
 internal class AppImpl(
     override val configuration: AppConfigurationImpl,
@@ -57,6 +49,7 @@ internal class AppImpl(
         // are resuming on the same dispatcher), so run our own implementation using a channel
         val credentials =
             Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer
+        val result = Channel<Result<User>>(1)
         withContext(configuration.networkTransportDispatcher) {
             async {
                 RealmInterop.realm_app_log_in_with_credentials(
@@ -64,18 +57,17 @@ internal class AppImpl(
                     credentials,
                     object : CinteropCallback {
                         override fun onSuccess(pointer: NativePointer) {
-                            c.trySend(Result.success(UserImpl(pointer, this@AppImpl)))
+                            result.trySend(Result.success(UserImpl(pointer, this@AppImpl)))
                         }
 
                         override fun onError(throwable: Throwable) {
-                            c.trySend(Result.failure(throwable))
+                            result.trySend(Result.failure(throwable))
                         }
                     }.freeze()
                 )
             }
         }
-        val result = c.receive()
-        return result.getOrThrow()
+        return result.receive().getOrThrow()
     }
 
     private fun initializeSyncClientConfig(): NativePointer =
