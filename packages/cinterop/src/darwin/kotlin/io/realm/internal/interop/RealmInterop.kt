@@ -935,24 +935,17 @@ actual object RealmInterop {
         user: NativePointer,
         callback: AppCallback<Unit>
     ) {
-        println("---> realm_app_log_out 1a")
-        val appPtr: CValuesRef<realm_app_t> = app.cptr()
-        println("---> realm_app_log_out 1b, appPtr = $appPtr")
-        val userPtr: CValuesRef<realm_app_t> = user.cptr()
-        println("---> realm_app_log_out 1c, userPtr = $userPtr")
         realm_wrapper.realm_app_log_out(
             app.cptr(),
             user.cptr(),
             staticCFunction { userdata, error: CPointer<realm_app_error_t>? ->
                 val userDataCallback = safeUserData<AppCallback<Unit>>(userdata)
                 if (error == null) {
-                    println("---> realm_app_log_out 2")
                     userDataCallback.onSuccess(Unit)
                 } else {
                     val message = with(error.pointed) {
                         "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
                     }
-                    println("---> realm_app_log_out 3")
                     userDataCallback.onError(AppException(message))
                 }
             },
