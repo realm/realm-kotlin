@@ -69,4 +69,24 @@ internal class AppConfigurationImpl(
         platformVersion = OS_VERSION,
         sdkVersion = io.realm.internal.SDK_VERSION
     ).freeze()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as AppConfigurationImpl
+
+        if (appId != (other.appId)) return false
+        if (baseUrl != (other.baseUrl)) return false
+        if (metadataMode != (other.metadataMode)) return false
+        return log == other.log
+    }
+
+    override fun hashCode(): Int {
+        var result = appId.hashCode()
+        result = 31 * result + baseUrl.hashCode()
+        result = 31 * result + metadataMode.hashCode()
+        result = 31 * result + log.hashCode()
+        return result
+    }
 }
