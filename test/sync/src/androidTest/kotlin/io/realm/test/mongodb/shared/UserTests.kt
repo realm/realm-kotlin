@@ -17,7 +17,6 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
-import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
@@ -42,7 +41,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp(debug = true, logLevel = LogLevel.DEBUG)
+        app = TestApp()
     }
 
     @AfterTest
@@ -325,15 +324,15 @@ class UserTests {
 
         val user = createUserAndLogin()
 
-        assertTrue(anonUser.isLoggedIn())
-        assertTrue(user.isLoggedIn())
+        assertTrue(anonUser.loggedIn)
+        assertTrue(user.loggedIn)
 
         anonUser.logOut()
-        assertFalse(anonUser.isLoggedIn())
-        assertTrue(user.isLoggedIn())
+        assertFalse(anonUser.loggedIn)
+        assertTrue(user.loggedIn)
 
         user.logOut()
-        assertFalse(user.isLoggedIn())
+        assertFalse(user.loggedIn)
     }
 
     @Test

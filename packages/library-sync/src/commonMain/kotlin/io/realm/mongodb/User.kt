@@ -40,13 +40,14 @@ interface User {
     val state: State
 
     /**
-     * Returns true if the user is currently logged in.
-     * Returns whether or not this user is still logged into the MongoDB Realm App.
-     *
-     * @return `true`  if still logged in, `false` if not.
+     * The server id of the user.
      */
-    // FIXME convert to property since it is state and not functionality?
-    fun isLoggedIn(): Boolean
+    val identity: String
+
+    /**
+     * Returns whether or not this user is still logged into the MongoDB Realm App.
+     */
+    val loggedIn: Boolean
 
     // FIXME Review around user state
     /**
@@ -60,13 +61,14 @@ interface User {
      * Logging out anonymous users will remove them immediately instead of marking them as
      * [User.State.LOGGED_OUT].
      *
-     * All other users will be marked as [User.State.LOGGED_OUT]
-     * and will still be returned by [App.allUsers]. They can be removed completely by
-     * calling [User.remove].
-     *
      * @throws AppException if an error occurred while trying to log the user out of the Realm
      * App.
      */
+    // FIXME add references to allUsers and remove when ready
+    //     * All other users will be marked as [User.State.LOGGED_OUT]
+    //     * and will still be returned by [App.allUsers]. They can be removed completely by
+    //     * calling [User.remove].asd
+
     suspend fun logOut()
 
     /**
@@ -84,7 +86,6 @@ interface User {
         REMOVED;
 
         companion object {
-
             /**
              * Converts a Core state value to a library state value.
              *

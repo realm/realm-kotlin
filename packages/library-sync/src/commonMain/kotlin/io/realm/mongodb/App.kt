@@ -57,16 +57,14 @@ interface App {
     /**
      * Returns the current user that is logged in and still valid.
      *
-     * A user is invalidated when he/she logs out or the user's refresh token expires or is revoked.
+     * Users are invalidated when they log out or when their refresh tokens expire or are revoked.
      *
      * If two or more users are logged in, it is the last valid user that is returned by this
-     * method.
+     * property.
      *
-     * @return current [User] that has logged in and is still valid or `null` if no user is logged
-     * in or the user has expired.
+     * The value of this property will be `null` if no user is logged in or the user has expired.
      */
-    // FIXME convert to property since it is state and not functionality?
-    fun currentUser(): User?
+    val currentUser: User?
 
     /**
      * Log in as a user with the given credentials associated with an authentication provider.
