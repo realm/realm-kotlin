@@ -43,7 +43,7 @@ tasks.create("realmWrapperJvm") {
         delete(fileTree(generatedSourceRoot))
         exec {
             workingDir(".")
-            commandLine("swig", "-java", "-c++", "-package", "io.realm.internal.interop", "-I$projectDir/../external/core/src", "-o", "${generatedSourceRoot}/jni/realmc.cpp", "-outdir", "${generatedSourceRoot}/java/io/realm/internal/interop", "realm.i")
+            commandLine("swig", "-java", "-c++", "-package", "io.realm.internal.interop", "-I$projectDir/../external/core/src", "-o", "$generatedSourceRoot/jni/realmc.cpp", "-outdir", "$generatedSourceRoot/java/io/realm/internal/interop", "realm.i")
         }
     }
     inputs.file("$projectDir/../external/core/src/realm.h")
