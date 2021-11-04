@@ -66,7 +66,9 @@ interface AppConfiguration {
         private val appId: String
     ) {
         private var baseUrl: String = DEFAULT_BASE_URL
-        private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId") // TODO
+        // TODO We should use a multi threaded dispatcher
+        //  https://github.com/realm/realm-kotlin/issues/501
+        private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId")
 
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false

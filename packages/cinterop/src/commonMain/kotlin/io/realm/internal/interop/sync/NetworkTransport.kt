@@ -29,7 +29,6 @@ interface NetworkTransport {
     val authorizationHeaderName: String?
     val customHeaders: Map<String, String>
 
-    // FIXME https://github.com/realm/realm-kotlin/issues/450
     fun sendRequest(
         method: String,
         url: String,
