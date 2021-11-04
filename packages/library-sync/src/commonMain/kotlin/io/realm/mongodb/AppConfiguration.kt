@@ -20,15 +20,15 @@ import io.ktor.client.features.logging.Logger
 import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.internal.interop.sync.MetadataMode
-import io.realm.internal.platform.freeze
-import io.realm.internal.platform.createDefaultSystemLogger
-import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.RealmLog
+import io.realm.internal.interop.sync.MetadataMode
+import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.freeze
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.AppConfigurationImpl
-import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 
