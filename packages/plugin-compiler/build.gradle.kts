@@ -69,6 +69,6 @@ publishing {
 java {
     withSourcesJar()
     withJavadocJar()
-    sourceCompatibility = Versions.jvmTarget
-    targetCompatibility = Versions.jvmTarget
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
