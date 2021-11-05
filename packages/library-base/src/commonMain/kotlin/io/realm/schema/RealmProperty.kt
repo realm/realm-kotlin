@@ -18,8 +18,17 @@ package io.realm.schema
 
 import kotlin.reflect.KType
 
-interface RealmSchema {
-    // Alternatively as Map<String, RealmClass>
-    val classes: Set<RealmClass>
+interface RealmProperty {
+    val name: String // val publicName: String or should we just support mappings already?
+    val index: Boolean
+    val primaryKey: Boolean
+    val type: RealmPropertyType
+    val required: Boolean
+        get() = type.required
+    // Custom typemaps
+}
+
+fun RealmProperty(name: String, type: KType, index: Boolean=false, primaryKey: Boolean=false): RealmProperty {
+    return RealmPropertyImpl(name, RealmPropertyType.fromKotlinType(type), index, primaryKey)
 }
 

@@ -16,10 +16,8 @@
 
 package io.realm.schema
 
-import kotlin.reflect.KType
-
-interface RealmSchema {
-    // Alternatively as Map<String, RealmClass>
-    val classes: Set<RealmClass>
+// In realm.h this is called PropertyType but this would overlap with RealmProperty.type?
+// Core types?
+enum class FieldType {
+    // INT, BOOL, STRING, OBJECT, FLOAT, DOUBLE, ...
 }
-

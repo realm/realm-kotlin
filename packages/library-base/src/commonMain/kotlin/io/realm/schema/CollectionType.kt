@@ -16,10 +16,9 @@
 
 package io.realm.schema
 
-import kotlin.reflect.KType
-
-interface RealmSchema {
-    // Alternatively as Map<String, RealmClass>
-    val classes: Set<RealmClass>
+// Should we try to avoid enums completely as introducing new ones breaks compatibility due to
+// requirement of exhaustive `when`s. ... but exhaustive `when`s are also extremely useful to
+// ensure test coverage, etc.
+enum class CollectionType {
+    // NONE, SET, LIST, MAP
 }
-

@@ -16,10 +16,7 @@
 
 package io.realm.schema
 
-import kotlin.reflect.KType
-
-interface RealmSchema {
-    // Alternatively as Map<String, RealmClass>
-    val classes: Set<RealmClass>
+interface MutableRealmClass : RealmClass {
+    override var name: String
+    override val properties: Set<MutableRealmProperty>
 }
-

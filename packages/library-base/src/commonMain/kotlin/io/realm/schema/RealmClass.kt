@@ -16,10 +16,10 @@
 
 package io.realm.schema
 
-import kotlin.reflect.KType
-
-interface RealmSchema {
-    // Alternatively as Map<String, RealmClass>
-    val classes: Set<RealmClass>
+interface RealmClass {
+    val name: String
+    val primaryKey : RealmProperty?
+    val embedded: Boolean
+    // Alternatively as Map<String, RealmProperty>
+    val properties: Set<RealmProperty>
 }
-
