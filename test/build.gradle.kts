@@ -27,7 +27,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath ("io.realm.kotlin:gradle-plugin:${Realm.version}")
+        classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
     }
 }
 
