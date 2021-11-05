@@ -16,15 +16,16 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.CinteropCallback
 import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SyncLogCallback
+import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
+import io.realm.internal.util.autoClose
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -47,22 +48,15 @@ internal class AppImpl(
         // are resuming on the same dispatcher), so run our own implementation using a channel
         val credentials =
             Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer
-        val result = Channel<Result<User>>(1)
-        // Should we do this on the users context or an internal dispatcher
-        RealmInterop.realm_app_log_in_with_credentials(
-            nativePointer,
-            credentials,
-            object : CinteropCallback {
-                override fun onSuccess(pointer: NativePointer) {
-                    result.trySend(Result.success(UserImpl(pointer, this@AppImpl)))
-                }
 
-                override fun onError(throwable: Throwable) {
-                    result.trySend(Result.failure(throwable))
-                }
-            }.freeze()
-        )
-        return result.receive().getOrThrow()
+        Channel<Result<User>>(1).autoClose { channel ->
+            RealmInterop.realm_app_log_in_with_credentials(
+                nativePointer,
+                credentials,
+                channelResultCallback(channel) { pointer -> UserImpl(pointer, this@AppImpl) }.freeze()
+            )
+            return channel.receive().getOrThrow()
+        }
     }
 
     private fun initializeSyncClientConfig(): NativePointer =

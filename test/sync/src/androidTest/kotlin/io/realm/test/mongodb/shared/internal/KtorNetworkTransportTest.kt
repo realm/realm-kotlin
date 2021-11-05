@@ -17,9 +17,9 @@
 package io.realm.test.mongodb.shared.internal
 
 import io.realm.internal.interop.sync.Response
-import io.realm.internal.interop.sync.ResponseCallback
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.internal.util.autoClose
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.BeforeTest
@@ -55,19 +55,15 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val result = Channel<Response>(1)
-            transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body,
-                object : ResponseCallback {
-                    override fun response(response: Response) {
-                        result.trySend(response)
-                    }
-                }
-            )
-            val response = result.receive()
+            val response = Channel<Response>(1).autoClose { channel ->
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body
+                ) { response -> channel.trySend(response) }
+                channel.receive()
+            }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-success", response.body, "$method failed")
@@ -80,19 +76,15 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val result = Channel<Response>(1)
-            transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body,
-                object : ResponseCallback {
-                    override fun response(response: Response) {
-                        result.trySend(response)
-                    }
-                }
-            )
-            val response = result.receive()
+            val response = Channel<Response>(1).autoClose { channel ->
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body
+                ) { response -> channel.trySend(response) }
+                channel.receive()
+            }
             assertEquals(500, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-failure", response.body, "$method failed")
@@ -108,19 +100,15 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "Boom!"
 
-            val result = Channel<Response>(1)
-            transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body,
-                object : ResponseCallback {
-                    override fun response(response: Response) {
-                        result.trySend(response)
-                    }
-                }
-            )
-            val response = result.receive()
+            val response = Channel<Response>(1).autoClose { channel ->
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body
+                ) { response -> channel.trySend(response) }
+                channel.receive()
+            }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-success", response.body, "$method failed")

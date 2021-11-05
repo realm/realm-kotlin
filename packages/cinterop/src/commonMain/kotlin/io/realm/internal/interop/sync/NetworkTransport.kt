@@ -38,7 +38,7 @@ interface NetworkTransport {
     )
 }
 
-interface ResponseCallback {
+fun interface ResponseCallback {
     fun response(response: Response)
 }
 

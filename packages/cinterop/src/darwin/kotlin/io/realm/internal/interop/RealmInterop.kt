@@ -23,7 +23,6 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
-import io.realm.internal.interop.sync.ResponseCallback
 import io.realm.mongodb.AppException
 import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
@@ -954,8 +953,7 @@ actual object RealmInterop {
                 for (i in 0 until num_headers.toInt()) {
                     headers?.get(i)?.let { header ->
                         headerMap[header.name!!.toKString()] = header.value!!.toKString()
-                    }
-                        ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
+                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
                 }
 
                 networkTransport.sendRequest(
@@ -968,35 +966,35 @@ actual object RealmInterop {
                     },
                     url = url!!.toKString(),
                     headers = headerMap,
-                    body = body!!.toKString(),
-                    object : ResponseCallback {
-                        override fun response(response: Response) {
-                            memScoped {
-                                val headersSize = response.headers.entries.size
-                                val cResponseHeaders =
-                                    allocArray<realm_http_header_t>(headersSize)
+                    body = body!!.toKString()
+                ) { response: Response ->
+                    memScoped {
+                        val headersSize = response.headers.entries.size
+                        val cResponseHeaders =
+                            allocArray<realm_http_header_t>(headersSize)
 
-                                response.headers.entries.forEachIndexed { i, entry ->
-                                    cResponseHeaders[i].let { header ->
-                                        header.name = entry.key.cstr.getPointer(memScope)
-                                        header.value = entry.value.cstr.getPointer(memScope)
-                                    }
-                                }
-
-                                val cResponse =
-                                    alloc<realm_http_response_t> {
-                                        body = response.body.cstr.getPointer(memScope)
-                                        body_size = response.body.cstr.getBytes().size.toULong()
-                                        custom_status_code = response.customResponseCode
-                                        status_code = response.httpResponseCode
-                                        num_headers = response.headers.entries.size.toULong()
-                                        headers = cResponseHeaders
-                                    }
-                                realm_wrapper.realm_http_transport_complete_request(requestContext, cResponse.ptr)
+                        response.headers.entries.forEachIndexed { i, entry ->
+                            cResponseHeaders[i].let { header ->
+                                header.name = entry.key.cstr.getPointer(memScope)
+                                header.value = entry.value.cstr.getPointer(memScope)
                             }
                         }
+
+                        val cResponse =
+                            alloc<realm_http_response_t> {
+                                body = response.body.cstr.getPointer(memScope)
+                                body_size = response.body.cstr.getBytes().size.toULong()
+                                custom_status_code = response.customResponseCode
+                                status_code = response.httpResponseCode
+                                num_headers = response.headers.entries.size.toULong()
+                                headers = cResponseHeaders
+                            }
+                        realm_wrapper.realm_http_transport_complete_request(
+                            requestContext,
+                            cResponse.ptr
+                        )
                     }
-                )
+                }
             }
         }
     }
