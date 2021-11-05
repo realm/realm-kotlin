@@ -19,7 +19,7 @@ package io.realm.internal.util
 import kotlinx.coroutines.channels.Channel
 
 // Conventional try-with-resource wrapper for channels
-public inline fun <T : Channel<*>, R> T.autoClose(block: (channel: T) -> R): R {
+public inline fun <T : Channel<*>, R> T.use(block: (channel: T) -> R): R {
     try {
         return block(this)
     } finally {

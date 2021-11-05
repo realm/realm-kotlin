@@ -25,7 +25,7 @@ import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
-import io.realm.internal.util.autoClose
+import io.realm.internal.util.use
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
@@ -49,7 +49,7 @@ internal class AppImpl(
         val credentials =
             Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer
 
-        Channel<Result<User>>(1).autoClose { channel ->
+        Channel<Result<User>>(1).use { channel ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
                 credentials,

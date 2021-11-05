@@ -19,7 +19,7 @@ package io.realm.test.mongodb.shared.internal
 import io.realm.internal.interop.sync.Response
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
-import io.realm.internal.util.autoClose
+import io.realm.internal.util.use
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.BeforeTest
@@ -55,7 +55,7 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = Channel<Response>(1).autoClose { channel ->
+            val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
                     method.nativeKey,
                     url,
@@ -76,7 +76,7 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = Channel<Response>(1).autoClose { channel ->
+            val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
                     method.nativeKey,
                     url,
@@ -100,7 +100,7 @@ internal class KtorNetworkTransportTest {
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "Boom!"
 
-            val response = Channel<Response>(1).autoClose { channel ->
+            val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
                     method.nativeKey,
                     url,
