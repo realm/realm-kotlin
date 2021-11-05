@@ -280,11 +280,11 @@ void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, j
     );
 }
 
-static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
+static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
     static JavaMethod m_send_request_method(jenv,
                                             JavaClassGlobalDef::network_transport_class(),
                                             "sendRequest",
-                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Lio/realm/internal/interop/sync/Response;");
+                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Lio/realm/internal/interop/sync/ResponseCallback;)V");
 
     // Prepare request fields to be consumable by JVM
     std::string method;
@@ -328,17 +328,19 @@ static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_tran
         jenv->DeleteLocalRef(value);
     }
 
-    // Send request and retrieve JVM response
-    return jenv->CallObjectMethod(network_transport,
+    // Send request
+    jenv->CallVoidMethod(network_transport,
                                   m_send_request_method,
                                   to_jstring(jenv, method),
                                   to_jstring(jenv, request.url),
                                   request_headers,
-                                  to_jstring(jenv, request.body)
+                                  to_jstring(jenv, request.body),
+                                  j_response_callback
     );
 }
 
-static void pass_jvm_response_to_core(JNIEnv *jenv, jobject j_response, void* request_context) {
+void complete_http_request(void* request_context, jobject j_response) {
+    auto jenv = get_env(false); // will always be attached
     static JavaMethod get_http_code_method(jenv,
                                            JavaClassGlobalDef::network_transport_response_class(),
                                            "getHttpResponseCode",
@@ -408,8 +410,17 @@ static void network_request_lambda_function(void* userdata,
     jobject network_transport = static_cast<jobject>(userdata);
 
     try {
-        jobject j_response = send_request_via_jvm_transport(jenv, network_transport, request);
-        pass_jvm_response_to_core(jenv, j_response, request_context);
+        jclass response_callback_class = jenv->FindClass(
+                "io/realm/internal/interop/sync/ResponseCallbackImpl");
+        static jmethodID response_callback_constructor = jenv->GetMethodID(response_callback_class,
+                                                                           "<init>",
+                                                                           "(Lio/realm/internal/interop/sync/NetworkTransport;J)V");
+        jobject response_callback = jenv->NewObject(response_callback_class,
+                                                    response_callback_constructor,
+                                                    reinterpret_cast<jobject>(userdata),
+                                                    reinterpret_cast<jlong>(request_context));
+
+        send_request_via_jvm_transport(jenv, network_transport, request, response_callback);
     } catch (std::runtime_error &e) {
         // Runtime exception while processing the request/response
         realm_http_response_t response_error;

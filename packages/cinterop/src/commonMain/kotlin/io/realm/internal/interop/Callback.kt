@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.mongodb.SyncException
+import kotlinx.coroutines.channels.Channel
 
 // TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
 interface Callback {
@@ -26,6 +27,21 @@ interface Callback {
 interface CinteropCallback {
     fun onSuccess(pointer: NativePointer)
     fun onError(throwable: Throwable)
+}
+
+fun <T> channelResultCallback(
+    result: Channel<Result<T>>,
+    success: (NativePointer) -> T
+): CinteropCallback {
+    return object : CinteropCallback {
+        override fun onSuccess(pointer: NativePointer) {
+            result.trySend(Result.success(success(pointer)))
+        }
+
+        override fun onError(throwable: Throwable) {
+            result.trySend(Result.failure(throwable))
+        }
+    }
 }
 
 interface SyncErrorCallback {

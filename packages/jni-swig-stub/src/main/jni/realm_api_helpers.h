@@ -48,4 +48,8 @@ register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobjec
 
 void
 sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);
+
+void
+complete_http_request(void* request_context, jobject j_response);
+
 #endif //TEST_REALM_API_HELPERS_H
