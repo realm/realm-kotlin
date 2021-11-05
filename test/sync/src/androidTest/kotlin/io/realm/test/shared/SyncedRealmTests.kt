@@ -35,10 +35,10 @@ import io.realm.test.mongodb.shared.DEFAULT_NAME
 import io.realm.test.mongodb.shared.DEFAULT_PARTITION_VALUE
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.randomEmail
-import okio.FileSystem
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import okio.FileSystem
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -61,7 +61,7 @@ class SyncedRealmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(FileSystem.SYSTEM)
+        app = TestApp(fileSystem = FileSystem.SYSTEM)
 
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         val user = createTestUser()
