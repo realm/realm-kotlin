@@ -47,6 +47,7 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * @param fileSystem platform-dependent entry point to allow file cleanup after the test.
  * @param debug enable trace of command server and rest api calls in the test app.
  */
+@Suppress("LongParameterList")
 class TestApp(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
