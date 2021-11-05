@@ -32,6 +32,7 @@ import io.realm.test.mongodb.asTestApp
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
+import okio.FileSystem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -53,7 +54,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        app = TestApp()
+        app = TestApp(fileSystem = FileSystem.SYSTEM)
     }
 
     @AfterTest
