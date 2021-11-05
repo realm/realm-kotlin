@@ -16,15 +16,20 @@
 
 package io.realm.mongodb
 
+import io.ktor.client.features.logging.Logger
 import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.internal.RealmLog
 import io.realm.internal.interop.sync.MetadataMode
+import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.freeze
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.AppConfigurationImpl
+import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -39,7 +44,7 @@ interface AppConfiguration {
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     val baseUrl: String
-    val networkTransportDispatcher: CoroutineDispatcher
+    val networkTransport: NetworkTransport
     val metadataMode: MetadataMode
 
     companion object {
@@ -123,11 +128,26 @@ interface AppConfiguration {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
+            val appLogger: RealmLog = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
+
+            val networkTransport: NetworkTransport = KtorNetworkTransport(
+                // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
+                //  constant in AppConfiguration.Companion
+                //  https://github.com/realm/realm-kotlin/issues/408
+                timeoutMs = 5000,
+                dispatcher = dispatcher,
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        appLogger.debug(message)
+                    }
+                }
+            ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+
             return AppConfigurationImpl(
                 appId = appId,
                 baseUrl = baseUrl,
-                networkTransportDispatcher = dispatcher,
-                logConfig = LogConfiguration(this.logLevel, allLoggers)
+                networkTransport = networkTransport,
+                log = appLogger
             )
         }
     }
