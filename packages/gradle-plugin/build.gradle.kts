@@ -86,6 +86,8 @@ publishing {
 java {
     withSourcesJar()
     withJavadocJar()
+    sourceCompatibility = Versions.jvmTarget
+    targetCompatibility = Versions.jvmTarget
 }
 
 // Make version information available at runtime

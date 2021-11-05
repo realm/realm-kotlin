@@ -61,6 +61,8 @@ realmPublish {
 java {
     withSourcesJar()
     withJavadocJar()
+    sourceCompatibility = Versions.jvmTarget
+    targetCompatibility = Versions.jvmTarget
 }
 
 publishing {
