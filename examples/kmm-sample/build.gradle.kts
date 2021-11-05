@@ -1,5 +1,8 @@
 buildscript {
     repositories {
+        if (Realm.ciBuild) {
+            maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
+        }
         google()
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
@@ -15,6 +18,9 @@ version = Realm.version
 
 allprojects {
     repositories {
+        if (Realm.ciBuild) {
+            maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
+        }
         google()
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")

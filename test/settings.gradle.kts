@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-includeBuild("../packages")
-
-include("base")
-include("sync")
+// For local development, we use composite builds.
+// For CI buils, the packages are expected to have
+// been built and deployed to a local filesystem
+// maven repo.
+if (System.getenv("JENKINS_HOME") == null) {
+    includeBuild("../packages")
+}
 
 pluginManagement {
     repositories {
@@ -25,3 +28,6 @@ pluginManagement {
         google()
     }
 }
+
+include("base")
+include("sync")

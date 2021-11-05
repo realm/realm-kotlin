@@ -20,16 +20,10 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
-    id("io.realm.kotlin")
     id("realm-lint")
 }
 
-repositories {
-    google()
-    jcenter()
-    mavenCentral()
-    mavenLocal()
-}
+apply(plugin = "io.realm.kotlin")
 
 // Common Kotlin configuration
 kotlin {
