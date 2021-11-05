@@ -19,6 +19,7 @@
 package io.realm.test.mongodb
 
 import io.ktor.client.request.get
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
@@ -61,6 +62,9 @@ class TestApp(
 
     fun close() {
         deleteAllUsers()
+
+        // Make sure to clear cached apps before deleting files
+        RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
         fileSystem.deleteRecursively((appFilesDirectory() + "/mongodb-realm").toPath())
