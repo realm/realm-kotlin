@@ -144,6 +144,7 @@ expect object RealmInterop {
         basePath: String,
     ): NativePointer
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
+    fun realm_clear_cached_apps()
 
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer

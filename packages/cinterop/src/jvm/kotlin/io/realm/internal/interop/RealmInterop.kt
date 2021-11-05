@@ -461,6 +461,10 @@ actual object RealmInterop {
         realmc.register_login_cb(app.cptr(), credentials.cptr(), callback)
     }
 
+    actual fun realm_clear_cached_apps() {
+        realmc.realm_clear_cached_apps()
+    }
+
     actual fun realm_sync_client_config_new(): NativePointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }

@@ -921,6 +921,10 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_clear_cached_apps() {
+        realm_wrapper.realm_clear_cached_apps()
+    }
+
     private val newRequestLambda = staticCFunction<COpaquePointer?,
         CValue<realm_http_request_t>,
         COpaquePointer?,

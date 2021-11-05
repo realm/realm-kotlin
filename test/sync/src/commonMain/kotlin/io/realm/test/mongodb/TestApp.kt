@@ -19,6 +19,8 @@
 package io.realm.test.mongodb
 
 import io.ktor.client.request.get
+import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -28,6 +30,8 @@ import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
 import kotlinx.coroutines.CoroutineDispatcher
+import okio.FileSystem
+import okio.Path.Companion.toPath
 
 const val COMMAND_SERVER_BASE_URL = "http://127.0.0.1:8888"
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
@@ -41,6 +45,7 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * @param builder the builder used to build the final app. The builder is already primed with the
  * default test app configuration, but can be used to override the defaults and add additional
  * options.
+ * @param fileSystem platform-dependent entry point to allow file cleanup after the test.
  * @param debug enable trace of command server and rest api calls in the test app.
  */
 class TestApp(
@@ -49,12 +54,20 @@ class TestApp(
     appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
     logLevel: LogLevel = LogLevel.WARN,
     builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
+    private val fileSystem: FileSystem,
     debug: Boolean = false
 ) : App by App.create(builder(testAppConfigurationBuilder(appId, logLevel)).dispatcher(dispatcher).build()),
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, debug, dispatcher) }) {
 
     fun close() {
         deleteAllUsers()
+
+        // Ensure we clear cached apps
+        RealmInterop.realm_clear_cached_apps()
+
+        // Delete metadata Realm files
+        fileSystem.deleteRecursively((appFilesDirectory() + "/mongodb-realm").toPath())
+
     }
 
     companion object {
