@@ -62,12 +62,8 @@ class TestApp(
     fun close() {
         deleteAllUsers()
 
-        // Ensure we clear cached apps
-        RealmInterop.realm_clear_cached_apps()
-
         // Delete metadata Realm files
         fileSystem.deleteRecursively((appFilesDirectory() + "/mongodb-realm").toPath())
-
     }
 
     companion object {
