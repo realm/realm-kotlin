@@ -49,6 +49,8 @@ internal class UserImpl(
                     // No-op
                 }.freeze()
             )
+            return channel.receive()
+                .getOrThrow()
         }
     }
 
