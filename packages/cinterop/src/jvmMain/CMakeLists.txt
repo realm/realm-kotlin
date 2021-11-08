@@ -35,16 +35,13 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "^Linux")
     string(APPEND REALM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/src ${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH}/linux ${CINTEROP_JNI} ${SWIG_JNI_GENERATED} ${SWIG_JNI_HELPERS}")
 endif ()
 
+include_directories(${REALM_INCLUDE_DIRS})
 # Build Realm Core
 # Set option flags for Core.
 # See https://github.com/realm/realm-core/blob/master/CMakeLists.txt#L174 for the full list.
 set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../../external/core" core EXCLUDE_FROM_ALL)
-
-MESSAGE(">>>>>>>>>>>>>>>>>>> REALM_INCLUDE_DIRS = ${REALM_INCLUDE_DIRS}")
-MESSAGE(">>>>>>>>>>>>>>>>>>> REALM_TARGET_LINK_LIBS = ${REALM_TARGET_LINK_LIBS}")
-include_directories(${REALM_INCLUDE_DIRS})
 
 file(GLOB jni_SRC
         "${CINTEROP_JNI}/env_utils.cpp"
