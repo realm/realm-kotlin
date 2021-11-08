@@ -16,14 +16,14 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.interop.sync.CoreUserState
+import io.realm.internal.platform.freeze
+import io.realm.internal.util.use
 import io.realm.mongodb.User
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.channels.Channel
 
 internal class UserImpl(
     val nativePointer: NativePointer,
@@ -41,19 +41,13 @@ internal class UserImpl(
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
 
     override suspend fun logOut() {
-        return suspendCoroutine { continuation ->
+        Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_log_out(
                 app.nativePointer,
                 nativePointer,
-                object : AppCallback<Unit> {
-                    override fun onSuccess(result: Unit) {
-                        continuation.resume(Unit)
-                    }
-
-                    override fun onError(throwable: Throwable) {
-                        continuation.resumeWithException(throwable)
-                    }
-                }
+                channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }.freeze()
             )
         }
     }
