@@ -24,7 +24,6 @@ import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import kotlinx.coroutines.runBlocking
-import okio.FileSystem
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -38,7 +37,7 @@ class AppTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(fileSystem = FileSystem.SYSTEM)
+        app = TestApp()
     }
 
     @AfterTest

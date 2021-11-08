@@ -38,7 +38,6 @@ import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
-import okio.FileSystem
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -61,7 +60,7 @@ class SyncedRealmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(fileSystem = FileSystem.SYSTEM)
+        app = TestApp()
 
         // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         val user = createTestUser()

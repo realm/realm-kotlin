@@ -29,6 +29,7 @@ import io.realm.mongodb.AppConfiguration
 import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
+import io.realm.test.mongodb.util.platformFileSystem
 import kotlinx.coroutines.CoroutineDispatcher
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -49,14 +50,14 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * @param debug enable trace of command server and rest api calls in the test app.
  */
 @Suppress("LongParameterList")
-class TestApp(
+class TestApp constructor(
     appName: String = TEST_APP_1,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
     logLevel: LogLevel = LogLevel.WARN,
     builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-    private val fileSystem: FileSystem,
-    debug: Boolean = false
+    debug: Boolean = false,
+    private val fileSystem: FileSystem = platformFileSystem // needed to delete Realm files after testing
 ) : App by App.create(builder(testAppConfigurationBuilder(appId, logLevel)).dispatcher(dispatcher).build()),
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, appId, debug, dispatcher) }) {
 

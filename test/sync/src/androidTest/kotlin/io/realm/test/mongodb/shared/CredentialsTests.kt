@@ -23,7 +23,6 @@ import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper
-import okio.FileSystem
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -182,7 +181,7 @@ class CredentialsTests {
 
     @Test
     fun loginUsingCredentials() {
-        app = TestApp(fileSystem = FileSystem.SYSTEM)
+        app = TestApp()
         runBlocking {
             AuthenticationProvider.values().forEach { provider ->
                 when (provider) {
