@@ -5,7 +5,7 @@ set(SWIG_JNI_GENERATED "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/build/generat
 set(SWIG_JNI_HELPERS "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 set(CINTEROP_JNI "${CMAKE_SOURCE_DIR}/../jvm/jni")
 set(REALM_INCLUDE_DIRS "")
-set(REALM_TARGET_LINK_LIBS "realmc RealmFFIStatic Realm::ObjectStore")
+set(REALM_TARGET_LINK_LIBS "RealmFFIStatic Realm::ObjectStore")
 
 if (CMAKE_SYSTEM_NAME MATCHES "^Windows")
     MESSAGE("Building JNI for Windows")
@@ -20,7 +20,7 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "^Android")
     set(CAPI_BUILD "${CMAKE_SOURCE_DIR}/../../../external/core}/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
 #    include_directories(${CAPI_BUILD}/src ${CINTEROP_JNI} ${SWIG_JNI_GENERATED} ${SWIG_JNI_HELPERS})
     string(APPEND REALM_INCLUDE_DIRS "${CAPI_BUILD}/src ${CINTEROP_JNI} ${SWIG_JNI_GENERATED} ${SWIG_JNI_HELPERS}")
-    set(REALM_TARGET_LINK_LIBS "realmc log android RealmFFIStatic Realm::ObjectStore")
+    set(REALM_TARGET_LINK_LIBS "log android RealmFFIStatic Realm::ObjectStore")
 
 elseif (CMAKE_SYSTEM_NAME MATCHES "^Darwin")
     MESSAGE("Building JNI for Darwin")
@@ -62,4 +62,4 @@ add_library(realmc SHARED
         ${jni_SRC}
         )
 
-target_link_libraries("${REALM_TARGET_LINK_LIBS}")
+target_link_libraries(realmc ${REALM_TARGET_LINK_LIBS})
