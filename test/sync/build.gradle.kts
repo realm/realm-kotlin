@@ -153,6 +153,25 @@ kotlin {
 }
 
 kotlin {
+    jvm()
+    sourceSets {
+        getByName("jvmMain") {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+                implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
+                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+            }
+        }
+        getByName("jvmTest") {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+            }
+        }
+    }
+}
+
+kotlin {
     iosX64("ios")
     macosX64("macos")
     sourceSets {
