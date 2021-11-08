@@ -12,7 +12,10 @@ if (CMAKE_SYSTEM_NAME MATCHES "^Windows")
     include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/win32" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
 
 elseif (CMAKE_SYSTEM_NAME MATCHES "^Android")
-    MESSAGE(">>>>>>>>>>>>>>>>>>>>>>>> BUILDING FOR ANDROID")
+    MESSAGE(">>>>>>>>>>>>>>>>>>>>>>>> BUILDING FOR ANDROID CINTEROP_JNI")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    set(CAPI_BUILD "${CMAKE_SOURCE_DIR}/../../../external/core}/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
+    include_directories(${CAPI_BUILD}/src ${CINTEROP_JNI} ${SWIG_JNI_GENERATED} ${SWIG_JNI_HELPERS})
 
 
 elseif (CMAKE_SYSTEM_NAME MATCHES "^Darwin")
@@ -56,4 +59,9 @@ add_library(realmc SHARED
         ${swig_SRC}
         ${jni_SRC}
         )
-target_link_libraries(realmc RealmFFIStatic Realm::ObjectStore)
+
+if (CMAKE_SYSTEM_NAME MATCHES "^Android")
+    target_link_libraries(realmc log android RealmFFIStatic Realm::ObjectStore)
+else()
+    target_link_libraries(realmc RealmFFIStatic Realm::ObjectStore)
+endif()

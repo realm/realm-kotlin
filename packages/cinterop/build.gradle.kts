@@ -276,7 +276,7 @@ android {
     externalNativeBuild {
         cmake {
             version = Versions.cmake
-            path = project.file("src/jvm/CMakeLists.txt")
+            path = project.file("src/jvmMain/CMakeLists.txt")
         }
     }
     // To avoid
