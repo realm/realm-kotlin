@@ -1037,7 +1037,7 @@ actual object RealmInterop {
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->
-                disposeUserData<(NativePointer, AppException) -> Unit>(userdata)
+                disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
             }
         )
     }
