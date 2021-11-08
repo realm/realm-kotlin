@@ -458,7 +458,11 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: AppCallback<NativePointer>) {
+    actual fun realm_app_log_in_with_credentials(
+        app: NativePointer,
+        credentials: NativePointer,
+        callback: AppCallback<NativePointer>
+    ) {
         realmc.realm_app_log_in_with_credentials(app.cptr(), credentials.cptr(), callback)
     }
 
