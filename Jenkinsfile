@@ -187,8 +187,11 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-                                        testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.compiler*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.shared*"')
+                          testWithServer([
+                              { testAndCollect("test", ':sync:jvmTest') }
+                          ])
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -481,7 +484,7 @@ def stopLogCatCollector(String backgroundPid, name) {
   // a build error.
   if (backgroundPid != null) {
     sh "kill ${backgroundPid}"
-    // Zip file generation will fail if the file is already there 
+    // Zip file generation will fail if the file is already there
     // Pipeline Utility Steps Plugin 2.6.1 introduces 'overwrite' property
     // https://issues.jenkins.io/browse/JENKINS-42591
     sh "rm -f logcat-${name}.zip"
