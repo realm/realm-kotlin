@@ -42,7 +42,11 @@ std::string rlm_stdstr(realm_string_t val)
 }
 %}
 
-// FIXME Should be AppCallback<Void> but is not available in jni-swig-stub
+// This sets up a type map for all methods with the argument pattern of:
+//    realm_void_user_completion_func_t, void* userdata, realm_free_userdata_func_t
+// This will make Swig wrap methods taking this argument pattern into:
+//  - a Java method that takes one argument of type `Object` (`jstype`) and passes this object on as `Object` to the native method (`jtype`+``javain`)
+//  - a JNI method that takes a `jobject` (`jni`) that translates the incoming single argument into the actual three arguments of the C-API method (`in`)
 %typemap(jstype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
 //%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
 %typemap(jtype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
@@ -89,7 +93,7 @@ return $jnicall;
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
-               realm_http_transport_t*};
+               realm_http_completion_func_t, realm_http_transport_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.

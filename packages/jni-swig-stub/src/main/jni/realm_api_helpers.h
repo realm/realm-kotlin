@@ -48,4 +48,8 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
 
 void
 sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);
+
+void
+complete_http_request(void* request_context, jobject j_response);
+
 #endif //TEST_REALM_API_HELPERS_H

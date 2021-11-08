@@ -19,6 +19,7 @@ package io.realm.mongodb.internal
 import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.mongodb.User
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -30,7 +31,7 @@ internal class UserImpl(
 ) : User {
 
     override val state: User.State
-        get() = User.State.fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
+        get() = UserImpl.fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
     // TODO Can maybe fail, but we could also cache the return value?
     override val identity: String
@@ -71,5 +72,19 @@ internal class UserImpl(
         var result = identity.hashCode()
         result = 31 * result + app.configuration.appId.hashCode()
         return result
+    }
+
+    companion object {
+        /**
+         * Converts a Core state value to a library state value.
+         *
+         * For internal use only.
+         */
+        fun fromCoreState(coreState: CoreUserState): User.State = when (coreState) {
+            CoreUserState.RLM_USER_STATE_LOGGED_OUT -> User.State.LOGGED_OUT
+            CoreUserState.RLM_USER_STATE_LOGGED_IN -> User.State.LOGGED_IN
+            CoreUserState.RLM_USER_STATE_REMOVED -> User.State.REMOVED
+            else -> throw IllegalArgumentException("Invalid user state: ${coreState.name}")
+        }
     }
 }

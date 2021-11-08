@@ -44,9 +44,11 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  */
 class TestApp(
     val app: App,
+    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
 ) : App by app,
-    AdminApi by (app.configuration.networkTransportDispatcher.let { dispatcher -> runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) } }) {
+    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) }) {
+//    AdminApi by (app.configuration.networkTransportDispatcher.let { dispatcher -> runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) } }) {
 
     /**
      * Creates an [App] with the given configuration parameters.
@@ -69,7 +71,9 @@ class TestApp(
             builder(testAppConfigurationBuilder(appId, logLevel))
                 .dispatcher(dispatcher)
                 .build()
-        )
+        ),
+        dispatcher,
+        debug
     )
 
     fun close() {
