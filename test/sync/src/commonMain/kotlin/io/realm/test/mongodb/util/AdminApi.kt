@@ -55,7 +55,7 @@ interface AdminApi {
      * Creates a remote user. Only call this function when `EmailPasswordAuth.registerUser` doesn't
      * make sense to use.
      */
-    fun createUser(email: String, password: String)
+    fun createUserRestApi(email: String, password: String)
 
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
@@ -133,7 +133,7 @@ open class AdminApiImpl internal constructor(
     }
 
     // Method to create remote user until we have proper EmailAuthProvider
-    override fun createUser(email: String, password: String) {
+    override fun createUserRestApi(email: String, password: String) {
         runBlocking(dispatcher) {
             client.post<Unit>("$url/groups/$groupId/apps/$appId/users") {
                 contentType(ContentType.Application.Json)
