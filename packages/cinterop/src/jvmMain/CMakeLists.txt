@@ -5,7 +5,28 @@ set(SWIG_JNI_GENERATED "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/build/generat
 set(SWIG_JNI_HELPERS "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/src/main/jni")
 set(CINTEROP_JNI "${CMAKE_SOURCE_DIR}/../jvm/jni")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+if (CMAKE_SYSTEM_NAME MATCHES "^Windows")
+    MESSAGE(">>>>>>>>>>>>>>>>>>>>>>>> BUILDING: ON WINDOWS")
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/win32" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
+
+elseif (CMAKE_SYSTEM_NAME MATCHES "^Android")
+    MESSAGE(">>>>>>>>>>>>>>>>>>>>>>>> BUILDING FOR ANDROID")
+
+
+elseif (CMAKE_SYSTEM_NAME MATCHES "^Darwin")
+    MESSAGE(">>>>>>>>>>>>>>>>>>>>>>>> BUILDING FOR DARWIN")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/darwin" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
+
+elseif (CMAKE_SYSTEM_NAME MATCHES "^Linux")
+    MESSAGE(">>>>>>>>>>>>>>>>>>>>>>>> BUILDING FOR Linux}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/linux" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
+endif ()
+
+
 
 # Build Realm Core
 # Set option flags for Core.
@@ -14,7 +35,7 @@ set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../../external/core" core EXCLUDE_FROM_ALL)
 
-include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/darwin" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
+#include_directories("${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/darwin" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
 
 file(GLOB jni_SRC
         "${CINTEROP_JNI}/env_utils.cpp"

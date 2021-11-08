@@ -633,7 +633,7 @@ def build_jvm_linux() {
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
         sh """
-           cd packages/cinterop/src/jvmMain/linux/
+           cd packages/cinterop/src/jvmMain/
            rm -rf build-dir
            mkdir build-dir
            cd build-dir
@@ -641,7 +641,7 @@ def build_jvm_linux() {
            make -j8
         """
 
-        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_file'
+        stash includes:'packages/cinterop/src/jvmMain/build-dir/librealmc.so', name: 'linux_so_file'
     }
 }
 
@@ -659,7 +659,7 @@ def build_jvm_windows() {
 
   def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
   dir('packages') {
-      bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
+      bat "cd cinterop\\src\\jvmMain && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
   }
-  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dll'
+  stash includes: 'packages/cinterop/src/jvmMain/build-dir/Release/realmc.dll', name: 'win_dll'
 }
