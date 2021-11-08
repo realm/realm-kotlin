@@ -42,6 +42,8 @@ set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../../external/core" core EXCLUDE_FROM_ALL)
 
+MESSAGE(">>>>>>>>>>>>>>>>>>> REALM_INCLUDE_DIRS = ${REALM_INCLUDE_DIRS}")
+MESSAGE(">>>>>>>>>>>>>>>>>>> REALM_TARGET_LINK_LIBS = ${REALM_TARGET_LINK_LIBS}")
 include_directories(${REALM_INCLUDE_DIRS})
 
 file(GLOB jni_SRC
@@ -63,4 +65,4 @@ add_library(realmc SHARED
         ${jni_SRC}
         )
 
-target_link_libraries(${REALM_TARGET_LINK_LIBS})
+target_link_libraries("${REALM_TARGET_LINK_LIBS}")
