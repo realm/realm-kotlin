@@ -31,7 +31,7 @@ internal class UserImpl(
 ) : User {
 
     override val state: User.State
-        get() = UserImpl.fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
+        get() = fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
     // TODO Can maybe fail, but we could also cache the return value?
     override val identity: String
@@ -49,6 +49,8 @@ internal class UserImpl(
                     // No-op
                 }.freeze()
             )
+            return channel.receive()
+                .getOrThrow()
         }
     }
 

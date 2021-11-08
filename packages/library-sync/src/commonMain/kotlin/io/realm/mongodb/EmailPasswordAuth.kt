@@ -1,12 +1,12 @@
 package io.realm.mongodb
 
-import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.channelResultCallback
+import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import io.realm.internal.util.use
+import kotlinx.coroutines.channels.Channel
 
 /**
  * Class encapsulating functionality for managing [User]s through the
@@ -26,21 +26,17 @@ class EmailPasswordAuth(
      * @throws AppException if the server failed to register the user.
      */
     suspend fun registerUser(email: String, password: String) {
-        suspendCoroutine<Unit> { continuation ->
+        Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_email_password_provider_client_register_email(
                 app,
                 Validation.checkEmpty(email, "email"),
                 Validation.checkEmpty(password, "password"),
-                object : AppCallback<Unit> {
-                    override fun onSuccess(result: Unit) {
-                        continuation.resume(Unit)
-                    }
-
-                    override fun onError(throwable: Throwable) {
-                        continuation.resumeWithException(throwable)
-                    }
-                }
+                channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }.freeze()
             )
+            return channel.receive()
+                .getOrThrow()
         }
     }
 }
