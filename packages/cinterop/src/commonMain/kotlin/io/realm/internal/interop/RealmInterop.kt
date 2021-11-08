@@ -151,7 +151,6 @@ expect object RealmInterop {
     // User
     fun realm_user_get_identity(user: NativePointer): String
     fun realm_user_is_logged_in(user: NativePointer): Boolean
-    // FIXME Do we need this to be callback based instead?
     fun realm_user_log_out(user: NativePointer)
     fun realm_user_get_state(user: NativePointer): CoreUserState
 

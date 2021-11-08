@@ -283,7 +283,6 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
     }
 }
 
-
 static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
     static JavaMethod m_send_request_method(jenv,
                                             JavaClassGlobalDef::network_transport_class(),

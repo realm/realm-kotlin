@@ -28,6 +28,7 @@ import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
+import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
@@ -213,8 +214,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_library_version(): String {
-        return realm_wrapper.realm_get_library_version()?.toKString()
-            ?: throw NullPointerException("Library version cannot be null.")
+        return realm_wrapper.realm_get_library_version().safeKString("library_version")
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
@@ -924,20 +924,21 @@ actual object RealmInterop {
         user: NativePointer,
         callback: AppCallback<Unit>
     ) {
-        realm_wrapper.realm_app_log_out(
-            app.cptr(),
-            user.cptr(),
-            staticCFunction { userData, error ->
-                handleAppCallback(userData, error) { /* No-op, returns Unit */ }
-            },
-            StableRef.create(callback).asCPointer(),
-            staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
+        checkedBooleanResult(
+            realm_wrapper.realm_app_log_out(
+                app.cptr(),
+                user.cptr(),
+                staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
+            )
         )
     }
 
     actual fun realm_user_get_identity(user: NativePointer): String {
-        return realm_wrapper.realm_user_get_identity(user.cptr())?.toKString()
-            ?: throw NullPointerException("User identity cannot be null.")
+        return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
     }
 
     actual fun realm_user_is_logged_in(user: NativePointer): Boolean {
@@ -945,7 +946,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_user_log_out(user: NativePointer) {
-        realm_wrapper.realm_user_log_out(user.cptr())
+        checkedBooleanResult(realm_wrapper.realm_user_log_out(user.cptr()))
     }
 
     actual fun realm_user_get_state(user: NativePointer): CoreUserState {
@@ -1135,7 +1136,14 @@ actual object RealmInterop {
         return Link(this.link.target_table.toLong(), this.link.target)
     }
 
-    private fun createSingleThreadDispatcherScheduler(dispatcher: CoroutineDispatcher): CPointer<realm_scheduler_t>? {
+    private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {
+        return this?.toKString()
+            ?: throw NullPointerException(identifier?.let { "'$identifier' cannot be null." })
+    }
+
+    private fun createSingleThreadDispatcherScheduler(
+        dispatcher: CoroutineDispatcher
+    ): CPointer<realm_scheduler_t>? {
         printlntid("createSingleThreadDispatcherScheduler")
         val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher).freeze()
 

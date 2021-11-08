@@ -16,8 +16,6 @@
 
 package io.realm.mongodb
 
-import io.realm.internal.interop.sync.CoreUserState
-
 /**
  * A **user** holds the user's metadata and tokens for accessing Realm App functionality.
  *
@@ -84,19 +82,5 @@ interface User {
         LOGGED_OUT,
         LOGGED_IN,
         REMOVED;
-
-        companion object {
-            /**
-             * Converts a Core state value to a library state value.
-             *
-             * For internal use only.
-             */
-            fun fromCoreState(coreState: CoreUserState): State = when (coreState) {
-                CoreUserState.RLM_USER_STATE_LOGGED_OUT -> LOGGED_OUT
-                CoreUserState.RLM_USER_STATE_LOGGED_IN -> LOGGED_IN
-                CoreUserState.RLM_USER_STATE_REMOVED -> REMOVED
-                else -> throw IllegalArgumentException("Invalid user state: ${coreState.name}")
-            }
-        }
     }
 }

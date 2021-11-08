@@ -132,21 +132,23 @@ class UserTests {
         assertNull(app.currentUser)
     }
 
-//    @Test
-//    fun repeatedLogInAndOut() = runBlocking {
-//        val initialUser = createUserAndLogin()
-//        assertEquals(User.State.LOGGED_IN, initialUser.state)
-//        initialUser.logOut()
-//        assertEquals(User.State.LOGGED_OUT, initialUser.state)
-//
-//        repeat(3) {
-//            val user = app.login(Credentials.emailPassword(initialUser.profile.email, password))
-//            assertEquals(User.State.LOGGED_IN, user.state)
-//            user.logOut()
-//            assertEquals(User.State.LOGGED_OUT, user.state)
-//        }
-//    }
-//
+    @Test
+    fun repeatedLogInAndOut() = runBlocking {
+        val (email, password) = randomEmail() to "password1234"
+        val initialUser = createUserAndLogin(email, password)
+        assertEquals(User.State.LOGGED_IN, initialUser.state)
+        initialUser.logOut()
+        assertEquals(User.State.LOGGED_OUT, initialUser.state)
+
+        repeat(3) {
+            // FIXME assert with user.profile.email instead when user.profile API is ready
+            val user = app.login(Credentials.emailPassword(email, password))
+            assertEquals(User.State.LOGGED_IN, user.state)
+            user.logOut()
+            assertEquals(User.State.LOGGED_OUT, user.state)
+        }
+    }
+
 //    @Test
 //    fun linkUser_emailPassword() {
 //        assertEquals(1, anonUser.identities.size)

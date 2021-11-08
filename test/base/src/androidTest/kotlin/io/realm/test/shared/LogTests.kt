@@ -27,6 +27,8 @@ import io.realm.test.util.Utils
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -192,5 +194,19 @@ class LogTests {
                 else -> throw IllegalArgumentException("Unknown level: $it")
             }
         }
+    }
+
+    @Test
+    fun equals_same() {
+        val loggers = listOf(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+        val other = RealmLog(configuration = LogConfiguration(LogLevel.ALL, loggers))
+        assertEquals(log, other)
+    }
+
+    @Test
+    fun equals_different() {
+        val loggers = listOf(createDefaultSystemLogger("SOME_TAG"))
+        val other = RealmLog(configuration = LogConfiguration(LogLevel.DEBUG, loggers))
+        assertNotEquals(log, other)
     }
 }
