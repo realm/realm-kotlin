@@ -61,7 +61,6 @@ class SyncedRealmTests {
     fun setup() {
         app = TestApp()
 
-        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.asTestApp.createUserAndLogIn(email, password)

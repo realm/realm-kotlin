@@ -21,6 +21,7 @@ import io.ktor.client.features.defaultRequest
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.headers
+import io.ktor.client.request.post
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
@@ -49,6 +50,13 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
  * Wrapper around MongoDB Realm Server Admin functions needed for tests.
  */
 interface AdminApi {
+
+    /**
+     * Creates a remote user. Only call this function when `EmailPasswordAuth.registerUser` doesn't
+     * make sense to use.
+     */
+    fun createUser(email: String, password: String)
+
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
@@ -121,6 +129,16 @@ open class AdminApiImpl internal constructor(
                     "_id"
                 )?.jsonPrimitive?.content
                 ?: error("App $appName not found")
+        }
+    }
+
+    // Method to create remote user until we have proper EmailAuthProvider
+    override fun createUser(email: String, password: String) {
+        runBlocking(dispatcher) {
+            client.post<Unit>("$url/groups/$groupId/apps/$appId/users") {
+                contentType(ContentType.Application.Json)
+                body = mapOf("email" to email, "password" to password)
+            }
         }
     }
 

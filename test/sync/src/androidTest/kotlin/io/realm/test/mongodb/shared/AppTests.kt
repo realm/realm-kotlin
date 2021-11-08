@@ -77,7 +77,6 @@ class AppTests {
 
     @Test
     fun login_EmailPassword() {
-        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         runBlocking {
             val (email, password) = randomEmail() to "123456"
             app.asTestApp.createUser(email, password)
