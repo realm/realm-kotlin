@@ -128,7 +128,7 @@ interface AppConfiguration {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
-            val appLogger: RealmLog = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
+            val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
 
             val networkTransport: NetworkTransport = KtorNetworkTransport(
                 // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \

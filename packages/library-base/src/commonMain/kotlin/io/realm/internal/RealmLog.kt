@@ -75,4 +75,22 @@ class RealmLog(val tag: String = "REALM", val configuration: LogConfiguration) {
             }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as RealmLog
+
+        if (tag != (other.tag)) return false
+        if (logLevel != (other.logLevel)) return false
+        return configuration.level == other.configuration.level
+    }
+
+    override fun hashCode(): Int {
+        var result = tag.hashCode()
+        result = 31 * result + configuration.level.hashCode()
+        result = 31 * result + logLevel.hashCode()
+        return result
+    }
 }

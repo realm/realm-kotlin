@@ -36,26 +36,30 @@ internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val nativePointer: NativePointer = RealmInterop.realm_app_get(
+    internal val nativePointer: NativePointer = RealmInterop.realm_app_get(
         configuration.nativePointer,
         initializeSyncClientConfig(),
         appFilesDirectory()
     )
 
+    override val currentUser: User?
+        get() = RealmInterop.realm_app_get_current_user(nativePointer)
+            ?.let { UserImpl(it, this) }
+
     override suspend fun login(credentials: Credentials): User {
         // suspendCoroutine doesn't allow freezing callback capturing continuation
         // ... and cannot be resumed on another thread (we probably also want to guarantee that we
         // are resuming on the same dispatcher), so run our own implementation using a channel
-        val credentials =
-            Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer
-
         Channel<Result<User>>(1).use { channel ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                credentials,
-                channelResultCallback(channel) { pointer -> UserImpl(pointer, this@AppImpl) }.freeze()
+                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
+                channelResultCallback<NativePointer, User>(channel) { userPointer ->
+                    UserImpl(userPointer, this)
+                }.freeze()
             )
-            return channel.receive().getOrThrow()
+            return channel.receive()
+                .getOrThrow()
         }
     }
 

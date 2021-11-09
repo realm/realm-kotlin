@@ -24,22 +24,24 @@ interface Callback {
     fun onChange(change: NativePointer)
 }
 
-interface CinteropCallback {
-    fun onSuccess(pointer: NativePointer)
+// Callback from asynchronous sync methods. Use AppCallback<Unit> for void callbacks and
+// AppCallback<NativePointer> for callbacks with native pointers to core objects.
+interface AppCallback<T> {
+    fun onSuccess(result: T)
     fun onError(throwable: Throwable)
 }
 
-fun <T> channelResultCallback(
-    result: Channel<Result<T>>,
-    success: (NativePointer) -> T
-): CinteropCallback {
-    return object : CinteropCallback {
-        override fun onSuccess(pointer: NativePointer) {
-            result.trySend(Result.success(success(pointer)))
+fun <T, R> channelResultCallback(
+    channel: Channel<Result<R>>,
+    success: (T) -> R
+): AppCallback<T> {
+    return object : AppCallback<T> {
+        override fun onSuccess(result: T) {
+            channel.trySend(Result.success(success.invoke(result)))
         }
 
         override fun onError(throwable: Throwable) {
-            result.trySend(Result.failure(throwable))
+            channel.trySend(Result.failure(throwable))
         }
     }
 }
