@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         if (Realm.ciBuild) {
-            maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
+            maven(url = "file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
         }
         google()
         mavenCentral()
@@ -19,7 +19,7 @@ version = Realm.version
 allprojects {
     repositories {
         if (Realm.ciBuild) {
-            maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
+            maven("file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
         }
         google()
         mavenCentral()

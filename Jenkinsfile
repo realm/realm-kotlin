@@ -199,13 +199,10 @@ pipeline {
                         }
                     }
                 }
-                stage('Build Android on Java 8') {
+                stage('Build Android on minimum versions') {
                     when { expression { runTests } }
-                    environment {
-                        JAVA_HOME="${JAVA_8}"
-                    }
                     steps {
-                        runBuildAndroidApp()
+                        runBuildMinAndroidApp()
                     }
                 }
                 stage('Publish SNAPSHOT to Maven Central') {
@@ -532,12 +529,12 @@ def runMonkey() {
     }
 }
 
-def runBuildAndroidApp() {
+def runBuildMinAndroidApp() {
     try {
         sh """
-            cd examples/kmm-sample
+            cd examples/min-android-sample
             java -version
-            ./gradlew :androidApp:assembleDebug --stacktrace --no-daemon
+            ./gradlew assembleDebug --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'

@@ -7,13 +7,17 @@
 * None.
 
 ### Fixed
-* None.
+* Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
 
 ### Compatibility
 * This release is compatible with:
-  * Kotlin 1.5.31
-  * Coroutines 1.5.2-native-mt
-  * AtomicFu 0.16.3
+  * Kotlin 1.5.31.
+  * Coroutines 1.5.2-native-mt.
+  * AtomicFu 0.16.3.
+* Minimum Java version: 11.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
 
 ### Internal
 * Updated to Gradle 7.2.

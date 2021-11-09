@@ -1,7 +1,8 @@
 // For local development, we use composite builds.
 // For CI buils, the packages are expected to have
 // been built and deployed to a local filesystem
-// maven repo.
+// maven repo. We cannot reference `Realm.ciBuild`
+// from buildSrc here.
 if (System.getenv("JENKINS_HOME") == null) {
     includeBuild("../../packages")
 }
