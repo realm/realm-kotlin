@@ -396,6 +396,13 @@ def runCompilerPluginTest() {
             cd packages
             ./gradlew --no-daemon :plugin-compiler:test --info --stacktrace
         """
+        // See https://stackoverflow.com/a/51206394/1389357
+        script {
+            def testResults = findFiles(glob: "packages/plugin-compiler/build/**/TEST-*.xml")
+            for(xml in testResults) {
+                touch xml.getPath()
+            }
+        }
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
 }
