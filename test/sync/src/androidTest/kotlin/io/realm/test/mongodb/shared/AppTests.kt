@@ -116,21 +116,6 @@ class AppTests {
         assertNull(app.currentUser)
     }
 
-    @Test
-    fun currentUser_multipleUsers() = runBlocking {
-        val (email1, password1) = randomEmail() to "password1234"
-        val (email2, password2) = randomEmail() to "1234password"
-
-        val user1 = createUserAndLogin(email1, password1)
-        assertEquals(app.currentUser, user1)
-        val user2 = createUserAndLogin(email2, password2)
-        assertNotEquals(app.currentUser, user1)
-        assertEquals(app.currentUser, user2)
-        user2.logOut()
-        assertNotEquals(app.currentUser, user2)
-        assertEquals(app.currentUser, user1)
-    }
-
 //    @Test
 //    fun allUsers() {
 //        assertEquals(0, app.allUsers().size)
