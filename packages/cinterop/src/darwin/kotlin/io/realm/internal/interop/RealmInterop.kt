@@ -1112,15 +1112,17 @@ actual object RealmInterop {
         callback: AppCallback<Unit>
     ) {
         memScoped {
-            realm_wrapper.realm_app_email_password_provider_client_register_email(
-                app.cptr(),
-                email,
-                password.toRString(this),
-                staticCFunction { userData, error ->
-                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
-                },
-                StableRef.create(callback).asCPointer(),
-                staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_register_email(
+                    app.cptr(),
+                    email,
+                    password.toRString(this),
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
             )
         }
     }
