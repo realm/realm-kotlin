@@ -16,7 +16,6 @@
 
 package io.realm.test.mongodb.shared
 
-import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppException
@@ -26,11 +25,13 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper.randomEmail
+import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -77,7 +78,6 @@ class AppTests {
 
     @Test
     fun login_EmailPassword() {
-        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
         runBlocking {
             val (email, password) = randomEmail() to "123456"
             app.asTestApp.createUser(email, password)
@@ -114,6 +114,21 @@ class AppTests {
         assertEquals(user, app.currentUser)
         user.logOut()
         assertNull(app.currentUser)
+    }
+
+    @Test
+    fun currentUser_multipleUsers() = runBlocking {
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "1234password"
+
+        val user1 = createUserAndLogin(email1, password1)
+        assertEquals(app.currentUser, user1)
+        val user2 = createUserAndLogin(email2, password2)
+        assertNotEquals(app.currentUser, user1)
+        assertEquals(app.currentUser, user2)
+        user2.logOut()
+        assertNotEquals(app.currentUser, user2)
+        assertEquals(app.currentUser, user1)
     }
 
 //    @Test
