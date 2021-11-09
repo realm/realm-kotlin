@@ -36,10 +36,10 @@ interface InternalRealmConfiguration : RealmConfiguration {
 
     fun debug(): String {
         return "path=$path\n" +
-                " name=$name\n" +
-                " maxNumberOfActiveVersions=$maxNumberOfActiveVersions\n" +
-                " schemaVersion=$schemaVersion\n" +
-                " deleteRealmIfMigrationNeeded=$deleteRealmIfMigrationNeeded\n" +
-                " schema=$schema"
+            " name=$name\n" +
+            " maxNumberOfActiveVersions=$maxNumberOfActiveVersions\n" +
+            " schemaVersion=$schemaVersion\n" +
+            " deleteRealmIfMigrationNeeded=$deleteRealmIfMigrationNeeded\n" +
+            " schema=$schema"
     }
 }

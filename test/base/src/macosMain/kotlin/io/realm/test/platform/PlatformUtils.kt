@@ -34,7 +34,7 @@ actual object PlatformUtils {
     actual fun createTempDir(): String {
         val mask = Utils.createRandomString(16)
         val path = "${platform.Foundation.NSTemporaryDirectory()}$mask"
-        platform.Foundation.NSFileManager.defaultManager.createDirectoryAtPath(path,   true, null, null)
+        platform.Foundation.NSFileManager.defaultManager.createDirectoryAtPath(path, true, null, null)
         return path
     }
 
