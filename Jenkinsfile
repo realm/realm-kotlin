@@ -148,10 +148,16 @@ pipeline {
                         runCompilerPluginTest()
                     }
                 }
-                stage('Tests Macos - Unit Tests') {
+                stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("packages", "macosTest")
+                    }
+                }
+                stage('Tests iOS - Unit Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("packages", "iosTest")
                     }
                 }
                 stage('Tests Android - Unit Tests') {
