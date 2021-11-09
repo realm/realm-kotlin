@@ -188,7 +188,7 @@ pipeline {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-                                        testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
+                        testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -509,6 +509,13 @@ def testAndCollect(dir, task) {
                 popd
             """
         } finally {
+            // See https://stackoverflow.com/a/51206394/1389357
+            script {
+                def testResults = findFiles(glob: "$dir/**/build/**/TEST-*.xml")
+                for(xml in testResults) {
+                    touch xml.getPath()
+                }
+            }
             step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
         }
     }
