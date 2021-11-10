@@ -1037,7 +1037,7 @@ actual object RealmInterop {
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->
-                disposeUserData<(NativePointer, AppException) -> Unit>(userdata)
+                disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
             }
         )
     }
@@ -1103,6 +1103,28 @@ actual object RealmInterop {
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
+    }
+
+    actual fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_register_email(
+                    app.cptr(),
+                    email,
+                    password.toRString(this),
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
     }
 
     actual fun realm_sync_config_new(

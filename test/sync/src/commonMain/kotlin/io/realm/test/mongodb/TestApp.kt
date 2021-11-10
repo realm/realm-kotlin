@@ -24,6 +24,8 @@ import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.Credentials
+import io.realm.mongodb.User
 import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
@@ -46,7 +48,6 @@ class TestApp(
     debug: Boolean = false
 ) : App by app,
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) }) {
-//    AdminApi by (app.configuration.networkTransportDispatcher.let { dispatcher -> runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) } }) {
 
     /**
      * Creates an [App] with the given configuration parameters.
@@ -106,3 +107,12 @@ class TestApp(
 
 val App.asTestApp: TestApp
     get() = this as TestApp
+
+suspend fun App.createUserAndLogIn(email: String, password: String): User =
+    createUser(email, password).run { logIn(email, password) }
+
+suspend fun App.createUser(email: String, password: String) =
+    this.emailPasswordAuth.registerUser(email, password)
+
+suspend fun App.logIn(email: String, password: String): User =
+    this.login(Credentials.emailPassword(email, password))

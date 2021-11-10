@@ -55,6 +55,12 @@ interface App {
     val configuration: AppConfiguration
 
     /**
+     * Wrapper for interacting with functionality related to users either being created or logged
+     * in using the [AuthenticationProvider.EMAIL_PASSWORD] identity provider.
+     */
+    val emailPasswordAuth: EmailPasswordAuth
+
+    /**
      * Returns the current user that is logged in and still valid.
      *
      * Users are invalidated when they log out or when their refresh tokens expire or are revoked.

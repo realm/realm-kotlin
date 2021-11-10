@@ -186,6 +186,14 @@ expect object RealmInterop {
     fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
+    // Email Password Authentication
+    fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: AppCallback<Unit>
+    )
+
     // Sync config
     fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer
     fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer)
