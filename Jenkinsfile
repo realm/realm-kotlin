@@ -157,7 +157,7 @@ pipeline {
                 stage('Tests iOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "iosTest")
+                        testAndCollect("packages", "iosX64Test")
                     }
                 }
                 stage('Tests Android - Unit Tests') {
@@ -177,6 +177,9 @@ pipeline {
                         testWithServer([
                             {
                                 testAndCollect("test", "macosTest")
+                            },
+                            {
+                                testAndCollect("test", "iosTest")
                             },
                             {
                                 withLogcatTrace(
