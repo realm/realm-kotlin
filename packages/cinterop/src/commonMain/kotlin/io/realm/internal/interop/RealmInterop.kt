@@ -147,6 +147,7 @@ expect object RealmInterop {
     fun realm_app_get_current_user(app: NativePointer): NativePointer?
     fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: AppCallback<NativePointer>)
     fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>)
+    fun realm_clear_cached_apps()
 
     // User
     fun realm_user_get_identity(user: NativePointer): String

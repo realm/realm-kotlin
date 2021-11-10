@@ -959,6 +959,10 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_clear_cached_apps() {
+        realm_wrapper.realm_clear_cached_apps()
+    }
+
     actual fun realm_user_get_identity(user: NativePointer): String {
         return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
     }

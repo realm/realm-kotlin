@@ -495,6 +495,10 @@ actual object RealmInterop {
         return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_clear_cached_apps() {
+        realmc.realm_clear_cached_apps()
+    }
+
     actual fun realm_sync_client_config_new(): NativePointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
