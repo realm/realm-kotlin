@@ -29,8 +29,8 @@ import java.lang.reflect.Method
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
-private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
-private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
+actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realmc.getRLM_INVALID_CLASS_KEY()) }
+actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM_INVALID_PROPERTY_KEY()) }
 
 /**
  * JVM/Android interop implementation.
@@ -77,21 +77,21 @@ actual object RealmInterop {
         return result.first()
     }
 
-    actual fun realm_schema_new(tables: List<Table>): NativePointer {
-        val count = tables.size
+    actual fun realm_schema_new(schema: List<Pair<Table, List<Property>>>): NativePointer {
+        val count = schema.size
         val cclasses = realmc.new_classArray(count)
         val cproperties = realmc.new_propertyArrayArray(count)
 
-        for ((i, clazz) in tables.withIndex()) {
-            val properties = clazz.properties
+        for ((i, entry) in schema.withIndex()) {
+            val (clazz, properties) = entry
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
                 primary_key = clazz.primaryKey ?: ""
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
-                key = INVALID_CLASS_KEY
-                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue }
+                key = INVALID_CLASS_KEY.key
+                flags = clazz.flags
             }
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
@@ -103,8 +103,8 @@ actual object RealmInterop {
                     collection_type = property.collectionType.nativeValue
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
-                    key = INVALID_PROPERTY_KEY
-                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue }
+                    key = INVALID_PROPERTY_KEY.key
+                    flags = property.flags
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
             }
@@ -190,6 +190,43 @@ actual object RealmInterop {
         return realmc.realm_get_num_classes((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_get_class_keys(realm: NativePointer): List<ClassKey> {
+        val count = realm_get_num_classes(realm)
+        val keys = LongArray(count.toInt())
+        val outCount = longArrayOf(0)
+        realmc.realm_get_class_keys(realm.cptr(), keys, count, outCount)
+        // FIXME Assert that we actually have count keys?
+        return keys.map { ClassKey(it) }
+    }
+
+    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
+        val info = realm_class_info_t()
+        val found = booleanArrayOf(false)
+        realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
+        if (!found[0]) {
+            throw IllegalArgumentException("Cannot find class: '$name")
+        }
+        return ClassKey(info.key)
+    }
+
+    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table {
+        val info = realm_class_info_t()
+        realmc.realm_get_class(realm.cptr(), classKey.key, info)
+        return with(info) {
+            Table(name, primary_key, num_properties, num_computed_properties, key, flags)
+        }
+    }
+    actual fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<Property> {
+        val properties = realmc.new_propertyArray(max.toInt())
+        val outCount = longArrayOf(0)
+        realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
+        return (0..(outCount[0]-1)).map { i ->
+            with(realmc.propertyArray_getitem(properties, i.toInt())) {
+                io.realm.internal.interop.Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)
+            }
+        }
+    }
+
     actual fun realm_release(p: NativePointer) {
         realmc.realm_release((p as LongPointerWrapper).ptr)
     }
@@ -240,26 +277,20 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
-        val info = realm_class_info_t()
-        val found = booleanArrayOf(false)
-        realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
-        if (!found[0]) {
-            throw IllegalArgumentException("Cannot find class: '$name")
-        }
-        return ClassKey(info.key)
-    }
-
     actual fun realm_object_as_link(obj: NativePointer): Link {
         val link: realm_link_t = realmc.realm_object_as_link(obj.cptr())
         return Link(link.target_table, link.target)
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
-        return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
+    actual fun realm_get_col_key(
+        realm: NativePointer,
+        table: String,
+        col: String
+    ): PropertyKey {
+        return PropertyKey(propertyInfo(realm, classInfo(realm, table), col).key)
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
+    actual fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
@@ -293,8 +324,13 @@ actual object RealmInterop {
         realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
     }
 
-    actual fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer {
-        return LongPointerWrapper(realmc.realm_get_list((obj as LongPointerWrapper).ptr, key.key))
+    actual fun realm_get_list(obj: NativePointer, key: PropertyKey): NativePointer {
+        return LongPointerWrapper(
+            realmc.realm_get_list(
+                (obj as LongPointerWrapper).ptr,
+                key.key
+            )
+        )
     }
 
     actual fun realm_list_size(list: NativePointer): Long {

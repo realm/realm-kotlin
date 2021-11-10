@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.internal.schema
 
-import io.realm.internal.interop.Table
-import io.realm.internal.interop.Property
-import kotlin.reflect.KMutableProperty1
+import io.realm.schema.RealmClass
+import io.realm.schema.RealmProperty
 
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): Pair<Table, List<Property>>
-    fun `$realm$newInstance`(): Any
+data class RealmClassImpl(
+    override val name: String,
+    override val primaryKey: RealmProperty?,
+    override val embedded: Boolean,
+    override val properties: Set<RealmProperty>
+) : RealmClass {
+//    val key: io.realm.internal.interop.ClassKey = io.realm.internal.interop.INVALID_PROPERTY_KEY
 }

@@ -28,8 +28,8 @@ actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated
     RLM_PROPERTY_TYPE_DOUBLE(realm_property_type_e.RLM_PROPERTY_TYPE_DOUBLE);
 
     // TODO OPTIMIZE
-    companion object {
-        fun of(i: Int): PropertyType {
+    actual companion object {
+        actual fun of(i: Int): PropertyType {
             return values().find { it.nativeValue == i } ?: error("Unknown type: $i")
         }
     }

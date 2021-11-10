@@ -16,8 +16,3 @@
 
 package io.realm.schema
 
-// In realm.h this is called PropertyType but this would overlap with RealmProperty.type?
-// Core types?
-enum class FieldType {
-    // INT, BOOL, STRING, OBJECT, FLOAT, DOUBLE, ...
-}

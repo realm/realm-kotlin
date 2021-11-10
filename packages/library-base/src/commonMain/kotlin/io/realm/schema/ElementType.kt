@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.schema
 
-import io.realm.internal.interop.Table
-import io.realm.internal.interop.Property
-import kotlin.reflect.KMutableProperty1
-
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): Pair<Table, List<Property>>
-    fun `$realm$newInstance`(): Any
+data class ElementType(val fieldType: FieldType, val nullable: Boolean) {
+    // In realm.h this is called PropertyType but this would overlap with RealmProperty.type?
+    // Core types?
+    // Mimics storage type. This is important to the user if we do custom type maps, etc.
+    enum class FieldType {
+        BOOL,
+        INT,
+        STRING,
+        OBJECT,
+        FLOAT,
+        DOUBLE
+    }
 }
+
+

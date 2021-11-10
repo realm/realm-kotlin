@@ -16,16 +16,21 @@
 
 package io.realm.internal.interop
 
-// FIXME API-SCHEMA Platform independent property definition. Maybe rework into utility method
-//  called in Realm object's companion schema mechanism depending on how we relate this to the
-//  actual schema/runtime realm_property_info_t.
 @Suppress("LongParameterList")
-data class Property(
+// TODO OPTIMIZE We could hold on to the native allocated memory and only read values lazily
+//  This would avoid transferring anything not need. A better option would probably be to
+//  implement as custom serializer, so that we could transfer the full struct in one bridge crossing.
+data class Property( // Kotlin variant of realm_property_info
     val name: String,
     val publicName: String = "",
     val type: PropertyType,
     val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
     val linkTarget: String = "",
     val linkOriginPropertyName: String = "",
-    val flags: Set<PropertyFlag> = setOf(PropertyFlag.RLM_PROPERTY_NORMAL)
-)
+    val key: Long, // PropertyKey
+    val flags: Int
+) {
+    val isNullable: Boolean = flags and PropertyFlags.RLM_PROPERTY_NULLABLE != 0
+    val isPrimaryKey: Boolean = flags and PropertyFlags.RLM_PROPERTY_PRIMARY_KEY != 0
+    val isIndexed: Boolean = flags and PropertyFlags.RLM_PROPERTY_INDEXED != 0
+}

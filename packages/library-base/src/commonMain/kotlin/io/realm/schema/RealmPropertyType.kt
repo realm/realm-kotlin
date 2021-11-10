@@ -16,19 +16,10 @@
 
 package io.realm.schema
 
-import kotlin.reflect.KType
-
 // We could actually create `object` for all allowed types if needed
-interface RealmPropertyType {
+data class RealmPropertyType (
     // This doesn't necessarily catch Map<K,V> when/if we open up for K!=String, but the type is at
     // least encapsulated in RealmPropertyType, so should be able to change it later
-    val collectionType: CollectionType
-    val fieldType: FieldType
-    val required: Boolean
-    companion object {
-        fun fromKotlinType(kType: KType) : RealmPropertyType { ... }
-        // Maybe not possible as KType is somehow static altenatively to KClass<*> but that will
-        // lack nullability
-        fun toKotlinType(type: RealmPropertyType) : KType { ... }
-    }
-}
+    val collectionType: CollectionType,
+    val elementType: ElementType
+)

@@ -18,7 +18,8 @@ package io.realm.schema
 
 interface MutableRealmProperty : RealmProperty {
     override var name: String
-    override var required: Boolean
+    override val type: RealmPropertyType
+//    override var nullable: Boolean
     override var index: Boolean
     override var primaryKey: Boolean
 }

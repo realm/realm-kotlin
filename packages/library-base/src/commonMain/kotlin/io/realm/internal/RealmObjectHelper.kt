@@ -18,7 +18,8 @@ package io.realm.internal
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.internal.interop.ColumnKey
+import io.realm.internal.interop.ClassKey
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
@@ -76,7 +77,7 @@ object RealmObjectHelper {
         val realm: RealmReference =
             obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key: ColumnKey =
+        val key: PropertyKey =
             RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
         val clazz: KClass<*> = R::class

@@ -91,7 +91,7 @@ internal object FqNames {
     val PROPERTY = FqName("io.realm.internal.interop.Property")
     val PROPERTY_TYPE = FqName("io.realm.internal.interop.PropertyType")
     val COLLECTION_TYPE = FqName("io.realm.internal.interop.CollectionType")
-    val PROPERTY_FLAG = FqName("io.realm.internal.interop.PropertyFlag")
+    val PROPERTY_FLAG = FqName("io.realm.internal.interop.PropertyFlags")
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.annotations.PrimaryKey")
     val INDEX_ANNOTATION = FqName("io.realm.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")

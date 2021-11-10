@@ -53,21 +53,32 @@ actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerate
     RLM_PROPERTY_TYPE_STRING(realm_wrapper.RLM_PROPERTY_TYPE_STRING),
     RLM_PROPERTY_TYPE_OBJECT(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT),
     RLM_PROPERTY_TYPE_FLOAT(realm_wrapper.RLM_PROPERTY_TYPE_FLOAT),
-    RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE),
+    RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE);
+
+    actual companion object {
+        actual fun of(i: Int): PropertyType {
+            return values().find { it.nativeValue == i.toUInt() } ?: error("Unknown type: $i")
+        }
+    }
 }
 
 actual enum class CollectionType(override val nativeValue: UInt) : NativeEnumerated {
     RLM_COLLECTION_TYPE_NONE(realm_wrapper.RLM_COLLECTION_TYPE_NONE),
     RLM_COLLECTION_TYPE_LIST(realm_wrapper.RLM_COLLECTION_TYPE_LIST),
     RLM_COLLECTION_TYPE_SET(realm_wrapper.RLM_COLLECTION_TYPE_SET),
-    RLM_COLLECTION_TYPE_DICTIONARY(realm_wrapper.RLM_COLLECTION_TYPE_DICTIONARY),
+    RLM_COLLECTION_TYPE_DICTIONARY(realm_wrapper.RLM_COLLECTION_TYPE_DICTIONARY);
+    actual companion object {
+        actual fun of(i: Int): CollectionType {
+            return CollectionType.values().find { it.nativeValue == i.toUInt() } ?: error("Unknown type: $i")
+        }
+    }
 }
 
-actual enum class PropertyFlag(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_PROPERTY_NORMAL(realm_wrapper.RLM_PROPERTY_NORMAL),
-    RLM_PROPERTY_NULLABLE(realm_wrapper.RLM_PROPERTY_NULLABLE),
-    RLM_PROPERTY_PRIMARY_KEY(realm_wrapper.RLM_PROPERTY_PRIMARY_KEY),
-    RLM_PROPERTY_INDEXED(realm_wrapper.RLM_PROPERTY_INDEXED),
+actual object PropertyFlags {
+    actual val RLM_PROPERTY_NORMAL: Int = realm_wrapper.RLM_PROPERTY_NORMAL.toInt()
+    actual val RLM_PROPERTY_NULLABLE: Int =realm_wrapper.RLM_PROPERTY_NULLABLE.toInt()
+    actual val RLM_PROPERTY_PRIMARY_KEY: Int= realm_wrapper.RLM_PROPERTY_PRIMARY_KEY.toInt()
+    actual val RLM_PROPERTY_INDEXED: Int = realm_wrapper.RLM_PROPERTY_INDEXED.toInt()
 }
 
 actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeEnumerated {

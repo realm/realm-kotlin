@@ -44,20 +44,26 @@ expect enum class PropertyType {
     // Consider adding property methods to make it easier to do generic code on all types. Or is this exactly what collection type is about
     // fun isList()
     // fun isReference()
+    companion object {
+        fun of(i: Int): PropertyType
+    }
 }
 
 expect enum class CollectionType {
     RLM_COLLECTION_TYPE_NONE,
     RLM_COLLECTION_TYPE_LIST,
     RLM_COLLECTION_TYPE_SET,
-    RLM_COLLECTION_TYPE_DICTIONARY,
+    RLM_COLLECTION_TYPE_DICTIONARY;
+    companion object {
+        fun of(i: Int): CollectionType
+    }
 }
 
-expect enum class PropertyFlag {
-    RLM_PROPERTY_NORMAL,
-    RLM_PROPERTY_NULLABLE,
-    RLM_PROPERTY_PRIMARY_KEY,
-    RLM_PROPERTY_INDEXED,
+expect object PropertyFlags {
+    val RLM_PROPERTY_NORMAL: Int
+    val RLM_PROPERTY_NULLABLE: Int
+    val RLM_PROPERTY_PRIMARY_KEY: Int
+    val RLM_PROPERTY_INDEXED: Int
 }
 
 expect enum class SchemaValidationMode {

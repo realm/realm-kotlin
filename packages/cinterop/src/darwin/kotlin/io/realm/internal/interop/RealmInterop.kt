@@ -91,6 +91,9 @@ import kotlin.collections.set
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
+actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(-1L) }
+actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(-1L) }
+
 private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
@@ -214,21 +217,22 @@ actual object RealmInterop {
         return realm_wrapper.realm_get_library_version()!!.toKString()
     }
 
-    actual fun realm_schema_new(tables: List<Table>): NativePointer {
-        val count = tables.size
+    actual fun realm_schema_new(schema: List<Pair<Table, List<Property>>>): NativePointer {
+        val count = schema.size
+
         memScoped {
             val cclasses = allocArray<realm_class_info_t>(count)
             val cproperties = allocArray<CPointerVar<realm_property_info_t>>(count)
-            for ((i, clazz) in tables.withIndex()) {
-                val properties = clazz.properties
+            for ((i, entry) in schema.withIndex()) {
+                val (clazz, properties) = entry
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
                     primary_key = (clazz.primaryKey ?: "").cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
-                    flags =
-                        clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                    flags = clazz.flags
+//                        clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                 }
                 cproperties[i] =
                     allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
@@ -240,8 +244,8 @@ actual object RealmInterop {
                         link_origin_property_name = "".cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
-                        flags =
-                            property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                        flags = property.flags
+//                            property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                     }
                 }
             }
@@ -367,6 +371,22 @@ actual object RealmInterop {
         return realm_wrapper.realm_get_num_classes(realm.cptr()).toLong()
     }
 
+    actual fun realm_get_class_keys(realm: NativePointer): List<ClassKey> {
+        TODO()
+    }
+
+    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table {
+        TODO()
+    }
+
+    actual fun realm_get_class_properties(
+        realm: NativePointer,
+        classKey: ClassKey,
+        max: Long
+    ): List<Property> {
+        TODO()
+    }
+
     actual fun realm_release(p: NativePointer) {
         realm_wrapper.realm_release((p as CPointerWrapper).ptr)
     }
@@ -458,13 +478,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
+    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): PropertyKey {
         memScoped {
-            return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
+            return PropertyKey(propertyInfo(realm, classInfo(realm, table), col).key)
         }
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
+    actual fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T {
         memScoped {
             val value: realm_value_t = alloc()
             checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
@@ -493,7 +513,7 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean) {
         memScoped {
             checkedBooleanResult(
                 realm_wrapper.realm_set_value_by_ref(
@@ -506,7 +526,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer {
+    actual fun realm_get_list(obj: NativePointer, key: PropertyKey): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
     }
 

@@ -21,6 +21,7 @@ import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.internal.interop.Table
+import io.realm.internal.interop.Property
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -87,9 +88,9 @@ class SchemaTests {
         for (clazz in schema) {
             assertTrue(conf.companionMap.containsKey(clazz))
             // make sure we can instantiate
-            val table: Table = conf.companionMap[clazz]!!.`$realm$schema`()
+            val table: Pair<Table, List<Property>> = conf.companionMap[clazz]!!.`$realm$schema`()
             val newInstance: Any = conf.companionMap[clazz]!!.`$realm$newInstance`()
-            assertEquals(clazz.simpleName, table.name)
+            assertEquals(clazz.simpleName, table.first.name)
             assertTrue(newInstance::class == clazz)
         }
     }
