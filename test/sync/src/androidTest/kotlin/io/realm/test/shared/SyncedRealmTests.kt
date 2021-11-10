@@ -30,6 +30,7 @@ import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.mongodb.shared.DEFAULT_NAME
 import io.realm.test.mongodb.shared.DEFAULT_PARTITION_VALUE
 import io.realm.test.platform.PlatformUtils
@@ -63,7 +64,7 @@ class SyncedRealmTests {
 
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
-            app.asTestApp.createUserAndLogIn(email, password)
+            app.createUserAndLogIn(email, password)
         }
 
         tmpDir = PlatformUtils.createTempDir()
@@ -97,7 +98,7 @@ class SyncedRealmTests {
         // update from the server after the object is synchronized.
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
-            app.asTestApp.createUserAndLogIn(email, password)
+            app.createUserAndLogIn(email, password)
         }
 
         val dir1 = PlatformUtils.createTempDir()
@@ -150,7 +151,7 @@ class SyncedRealmTests {
         val channel = Channel<SyncException>(1).freeze()
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
-            app.asTestApp.createUserAndLogIn(email, password)
+            app.createUserAndLogIn(email, password)
         }
         val tmpDir = PlatformUtils.createTempDir()
 

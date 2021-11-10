@@ -48,7 +48,6 @@ class TestApp(
     debug: Boolean = false
 ) : App by app,
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) }) {
-//    AdminApi by (app.configuration.networkTransportDispatcher.let { dispatcher -> runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) } }) {
 
     /**
      * Creates an [App] with the given configuration parameters.
@@ -87,15 +86,6 @@ class TestApp(
         deleteAllUsers()
     }
 
-    suspend fun createUserAndLogIn(email: String, password: String): User =
-        createUser(email, password).run { logIn(email, password) }
-
-    suspend fun createUser(email: String, password: String) =
-        this.emailPasswordAuth.registerUser(email, password)
-
-    suspend fun logIn(email: String, password: String): User =
-        this.login(Credentials.emailPassword(email, password))
-
     companion object {
         suspend fun getAppId(appName: String, debug: Boolean): String {
             return defaultClient(
@@ -117,3 +107,12 @@ class TestApp(
 
 val App.asTestApp: TestApp
     get() = this as TestApp
+
+suspend fun App.createUserAndLogIn(email: String, password: String): User =
+    createUser(email, password).run { logIn(email, password) }
+
+suspend fun App.createUser(email: String, password: String) =
+    this.emailPasswordAuth.registerUser(email, password)
+
+suspend fun App.logIn(email: String, password: String): User =
+    this.login(Credentials.emailPassword(email, password))

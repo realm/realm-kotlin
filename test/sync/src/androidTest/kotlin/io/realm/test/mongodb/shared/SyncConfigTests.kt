@@ -29,6 +29,7 @@ import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
@@ -664,6 +665,6 @@ class SyncConfigTests {
 
     private fun createTestUser(): User = runBlocking {
         val (email, password) = randomEmail() to "password1234"
-        app.asTestApp.createUserAndLogIn(email, password)
+        app.createUserAndLogIn(email, password)
     }
 }

@@ -6,6 +6,7 @@ import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.createUser
 import io.realm.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -33,7 +34,7 @@ class EmailPasswordAuthTests {
     fun registerUser() {
         runBlocking {
             val (email, password) = TestHelper.randomEmail() to "password1234"
-            app.asTestApp.createUser(email, password)
+            app.createUser(email, password)
             val user = app.login(Credentials.emailPassword(email, password))
             assertNotNull(user)
         }
@@ -47,7 +48,7 @@ class EmailPasswordAuthTests {
 
             // TODO do exhaustive exception assertion once we have all AppException fields in place
             assertFailsWith<AppException> {
-                app.asTestApp.createUser(email, password)
+                app.createUser(email, password)
             }
         }
     }
@@ -60,7 +61,7 @@ class EmailPasswordAuthTests {
 
             // TODO do exhaustive exception assertion once we have all AppException fields in place
             assertFailsWith<AppException> {
-                app.asTestApp.createUser(email, password)
+                app.createUser(email, password)
             }
         }
     }

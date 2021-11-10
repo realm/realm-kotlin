@@ -22,6 +22,7 @@ import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.createUser
 import io.realm.test.util.TestHelper.randomEmail
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -445,7 +446,7 @@ class UserTests {
         email: String = randomEmail(),
         password: String = "123456"
     ): User {
-        app.asTestApp.createUser(email, password)
+        app.createUser(email, password)
         return app.login(Credentials.emailPassword(email, password))
     }
 }
