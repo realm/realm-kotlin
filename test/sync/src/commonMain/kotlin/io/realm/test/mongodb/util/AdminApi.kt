@@ -90,6 +90,8 @@ open class AdminApiImpl internal constructor(
     @Serializable
     data class ServerApp(val client_app_id: String, val _id: String)
 
+    // FIXME Do not rely on this API to create users and use EmailPasswordAuth wrapper is ready
+    //  see https://github.com/realm/realm-kotlin/issues/433
     init {
         // Must be initialized on same thread as the constructor to allow initializing the lateinit
         // properties on native

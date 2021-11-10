@@ -16,47 +16,50 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.CinteropCallback
 import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SyncLogCallback
+import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
+import io.realm.internal.util.use
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.channels.Channel
 
 internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    private val nativePointer: NativePointer = RealmInterop.realm_app_get(
+    internal val nativePointer: NativePointer = RealmInterop.realm_app_get(
         configuration.nativePointer,
         initializeSyncClientConfig(),
         appFilesDirectory()
     )
 
+    override val currentUser: User?
+        get() = RealmInterop.realm_app_get_current_user(nativePointer)
+            ?.let { UserImpl(it, this) }
+
     override suspend fun login(credentials: Credentials): User {
-        return suspendCoroutine { continuation ->
+        // suspendCoroutine doesn't allow freezing callback capturing continuation
+        // ... and cannot be resumed on another thread (we probably also want to guarantee that we
+        // are resuming on the same dispatcher), so run our own implementation using a channel
+        Channel<Result<User>>(1).use { channel ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
                 Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
-                object : CinteropCallback {
-                    override fun onSuccess(pointer: NativePointer) {
-                        continuation.resume(UserImpl(pointer, this@AppImpl))
-                    }
-
-                    override fun onError(throwable: Throwable) {
-                        continuation.resumeWithException(throwable)
-                    }
-                }
+                channelResultCallback<NativePointer, User>(channel) { userPointer ->
+                    UserImpl(userPointer, this)
+                }.freeze()
             )
+            return channel.receive()
+                .getOrThrow()
         }
     }
 

@@ -21,14 +21,18 @@ import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppException
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
+import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AppTests {
@@ -41,7 +45,7 @@ class AppTests {
     }
 
     @AfterTest
-    fun teadDown() {
+    fun tearDown() {
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }
@@ -65,23 +69,24 @@ class AppTests {
     //  place
     // TODO Exhaustive test on io.realm.mongodb.internal.Provider
     @Test
-    fun loginAnonymous() {
+    fun login_Anonymous() {
         runBlocking {
             app.login(Credentials.anonymous())
         }
     }
 
     @Test
-    fun loginEmailPassword() {
-        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
-        app.asTestApp.createUser("asdf@asdf.com", "asdfasdf")
+    fun login_EmailPassword() {
         runBlocking {
-            app.login(Credentials.emailPassword("asdf@asdf.com", "asdfasdf"))
+            val (email, password) = randomEmail() to "123456"
+            app.asTestApp.createUser(email, password)
+            val user = app.login(Credentials.emailPassword(email, password))
+            assertNotNull(user)
         }
     }
 
     @Test
-    fun loginNonCredentialImplThrows() {
+    fun login_NonCredentialImplThrows() {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 app.login(object : Credentials {
@@ -93,14 +98,249 @@ class AppTests {
     }
 
     @Test
-    fun loginInvalidUserThrows() {
-        val credentials = Credentials.emailPassword("foo", "bar")
-        runBlocking {
-            assertFailsWith<AppException> {
-                app.login(credentials)
-            }.let { exception: AppException ->
-                assertTrue(exception.message!!.startsWith("invalid username/password [error_category=3, error_code=50, link_to_server_logs="))
-            }
+    fun login_InvalidUserThrows() = runBlocking {
+        assertFailsWith<AppException> {
+            app.login(Credentials.emailPassword("foo", "bar"))
+        }.let { exception: AppException ->
+            assertTrue(exception.message!!.startsWith("invalid username/password [error_category=3, error_code=50, link_to_server_logs="))
         }
+    }
+
+    @Test
+    fun currentUser() = runBlocking {
+        assertNull(app.currentUser)
+        val user: User = app.login(Credentials.anonymous())
+        assertEquals(user, app.currentUser)
+        user.logOut()
+        assertNull(app.currentUser)
+    }
+
+//    @Test
+//    fun allUsers() {
+//        assertEquals(0, app.allUsers().size)
+//        val user1 = app.login(Credentials.anonymous())
+//        var allUsers = app.allUsers()
+//        assertEquals(1, allUsers.size)
+//        assertTrue(allUsers.containsKey(user1.id))
+//        assertEquals(user1, allUsers[user1.id])
+//
+//        // Only 1 anonymous user exists, so logging in again just returns the old one
+//        val user2 = app.login(Credentials.anonymous())
+//        allUsers = app.allUsers()
+//        assertEquals(1, allUsers.size)
+//        assertTrue(allUsers.containsKey(user2.id))
+//
+//        val user3: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+//        allUsers = app.allUsers()
+//        assertEquals(2, allUsers.size)
+//        assertTrue(allUsers.containsKey(user3.id))
+//
+//        // Logging out users that registered with email/password will just put them in LOGGED_OUT state
+//        user3.logOut();
+//        allUsers = app.allUsers()
+//        assertEquals(2, allUsers.size)
+//        assertTrue(allUsers.containsKey(user3.id))
+//        assertEquals(User.State.LOGGED_OUT, allUsers[user3.id]!!.state)
+//
+//        // Logging out anonymous users will remove them completely
+//        user1.logOut()
+//        allUsers = app.allUsers()
+//        assertEquals(1, allUsers.size)
+//        assertFalse(allUsers.containsKey(user1.id))
+//    }
+//
+//    @Test
+//    fun allUsers_retrieveRemovedUser() {
+//        val user1: User = app.login(Credentials.anonymous())
+//        val allUsers: Map<String, User> = app.allUsers()
+//        assertEquals(1, allUsers.size)
+//        user1.logOut()
+//        assertEquals(1, allUsers.size)
+//        val userCopy: User = allUsers[user1.id] ?: error("Could not find user")
+//        assertEquals(user1, userCopy)
+//        assertEquals(User.State.REMOVED, userCopy.state)
+//        assertTrue(app.allUsers().isEmpty())
+//    }
+//
+//    @Test
+//    fun switchUser() {
+//        val user1: User = app.login(Credentials.anonymous())
+//        assertEquals(user1, app.currentUser())
+//        val user2: User = app.login(Credentials.anonymous())
+//        assertEquals(user2, app.currentUser())
+//
+//        assertEquals(user1, app.switchUser(user1))
+//        assertEquals(user1, app.currentUser())
+//    }
+//
+//    @Test
+//    fun switchUser_throwIfUserNotLoggedIn() = runBlocking {
+//        val user1 = app.login(Credentials.anonymous())
+//        val user2 = app.login(Credentials.anonymous())
+//        assertEquals(user2, app.currentUser)
+//
+//        user1.logOut()
+//        try {
+//            app.switchUser(user1)
+//            fail()
+//        } catch (ignore: IllegalArgumentException) {
+//        }
+//    }
+
+    @Test
+    fun currentUser_FallbackToNextValidUser() = runBlocking {
+        assertNull(app.currentUser)
+
+        val user1 = createUserAndLogin(randomEmail(), "123456")
+        assertEquals(user1, app.currentUser)
+
+        val user2 = createUserAndLogin(randomEmail(), "123456")
+        assertEquals(user2, app.currentUser)
+
+        user2.logOut()
+        assertEquals(user1, app.currentUser)
+
+        user1.logOut()
+        assertNull(app.currentUser)
+    }
+
+//    @Test
+//    fun switchUser_nullThrows() {
+//        try {
+//            app.switchUser(TestHelper.getNull())
+//            fail()
+//        } catch (ignore: IllegalArgumentException) {
+//        }
+//    }
+//
+//    @Ignore("Add this test once we have support for both EmailPassword and ApiKey Auth Providers")
+//    @Test
+//    fun switchUser_authProvidersLockUsers() {
+//        TODO("FIXME")
+//    }
+//
+//    @Test
+//    fun authListener() {
+//        val userRef = AtomicReference<User>(null)
+//        looperThread.runBlocking {
+//            val authenticationListener = object : AuthenticationListener {
+//                override fun loggedIn(user: User) {
+//                    userRef.set(user)
+//                    user.logOutAsync { /* Ignore */ }
+//                }
+//
+//                override fun loggedOut(user: User) {
+//                    assertEquals(userRef.get(), user)
+//                    looperThread.testComplete()
+//                }
+//            }
+//            app.addAuthenticationListener(authenticationListener)
+//            app.login(Credentials.anonymous())
+//        }
+//    }
+//
+//    @Test
+//    fun authListener_nullThrows() {
+//        assertFailsWith<IllegalArgumentException> { app.addAuthenticationListener(TestHelper.getNull()) }
+//    }
+//
+//    @Test
+//    fun authListener_remove() = looperThread.runBlocking {
+//        val failListener = object : AuthenticationListener {
+//            override fun loggedIn(user: User) { fail() }
+//            override fun loggedOut(user: User) { fail() }
+//        }
+//        val successListener = object : AuthenticationListener {
+//            override fun loggedOut(user: User) { fail() }
+//            override fun loggedIn(user: User) { looperThread.testComplete() }
+//        }
+//        // This test depends on listeners being executed in order which is an
+//        // implementation detail, but there isn't a sure fire way to do this
+//        // without depending on implementation details or assume a specific timing.
+//        app.addAuthenticationListener(failListener)
+//        app.addAuthenticationListener(successListener)
+//        app.removeAuthenticationListener(failListener)
+//        app.login(Credentials.anonymous())
+//    }
+//
+//    @Test
+//    fun functions_defaultCodecRegistry() {
+//        var user = app.login(Credentials.anonymous())
+//        assertEquals(app.configuration.defaultCodecRegistry, app.getFunctions(user).defaultCodecRegistry)
+//    }
+//
+//    @Test
+//    fun functions_customCodecRegistry() {
+//        var user = app.login(Credentials.anonymous())
+//        val registry = CodecRegistries.fromCodecs(StringCodec())
+//        assertEquals(registry, app.getFunctions(user, registry).defaultCodecRegistry)
+//    }
+//
+//    @Test
+//    fun encryption() {
+//        val context = InstrumentationRegistry.getInstrumentation().targetContext
+//
+//        // Create new test app with a random encryption key
+//        val testApp = TestApp(appName = TEST_APP_2, builder = {
+//            it.encryptionKey(TestHelper.getRandomKey())
+//        })
+//
+//        try {
+//            // Create Realm in order to create the sync metadata Realm
+//            var user = testApp.login(Credentials.anonymous())
+//
+//            val syncConfig = SyncConfiguration
+//                .Builder(user, "foo")
+//                .testSchema(SyncStringOnly::class.java)
+//                .build()
+//
+//            Realm.getInstance(syncConfig).close()
+//
+//            // Create a configuration pointing to the metadata Realm for that app
+//            val metadataDir = File(context.filesDir, "mongodb-realm/${testApp.configuration.appId}/server-utility/metadata/")
+//            val config = RealmConfiguration.Builder()
+//                .name("sync_metadata.realm")
+//                .directory(metadataDir)
+//                .build()
+//            assertTrue(File(config.path).exists())
+//
+//            // Open the metadata realm file without a valid encryption key
+//            assertFailsWith<RealmFileException> {
+//                DynamicRealm.getInstance(config)
+//            }
+//        } finally {
+//            testApp.close()
+//        }
+//    }
+//
+//    // Check that it is possible to have two Java instances of an App class, but they will
+//    // share the underlying App state.
+//    @Test
+//    fun multipleInstancesSameApp() {
+//        // Create a second copy of the test app
+//        val app2 = TestApp()
+//        try {
+//            // User handling are shared between each app
+//            val user = app.login(Credentials.anonymous());
+//            assertEquals(user, app2.currentUser())
+//            assertEquals(user, app.allUsers().values.first())
+//            assertEquals(user, app2.allUsers().values.first())
+//
+//            user.logOut();
+//
+//            assertNull(app.currentUser())
+//            assertNull(app2.currentUser())
+//        } finally {
+//            app2.close()
+//        }
+//    }
+
+    // TODO remove this when EmailPasswordAuth is ready
+    private suspend fun createUserAndLogin(
+        email: String = randomEmail(),
+        password: String = "123456"
+    ): User {
+        app.asTestApp.createUser(email, password)
+        return app.login(Credentials.emailPassword(email, password))
     }
 }
