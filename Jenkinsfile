@@ -154,12 +154,6 @@ pipeline {
                         testAndCollect("packages", "macosTest")
                     }
                 }
-                stage('Tests iOS - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("packages", "iosX64Test")
-                    }
-                }
                 stage('Tests Android - Unit Tests') {
                     when { expression { runTests } }
                     steps {
