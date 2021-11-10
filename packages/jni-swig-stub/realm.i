@@ -5,6 +5,8 @@
 #include <cstring>
 #include <string>
 #include "realm_api_helpers.h"
+
+using namespace realm::jni_util;
 %}
 
 // FIXME MEMORY Verify finalizers, etc.
@@ -39,6 +41,37 @@ std::string rlm_stdstr(realm_string_t val)
     return std::string(val.data, 0, val.size);
 }
 %}
+
+// This sets up a type map for all methods with the argument pattern of:
+//    realm_void_user_completion_func_t, void* userdata, realm_free_userdata_func_t
+// This will make Swig wrap methods taking this argument pattern into:
+//  - a Java method that takes one argument of type `Object` (`jstype`) and passes this object on as `Object` to the native method (`jtype`+``javain`)
+//  - a JNI method that takes a `jobject` (`jni`) that translates the incoming single argument into the actual three arguments of the C-API method (`in`)
+%typemap(jstype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
+//%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
+%typemap(jtype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
+%typemap(javain) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "$javainput";
+%typemap(jni) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "jobject";
+%typemap(in) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = app_complete_void_callback;
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+// Reuse void callback typemap as template for result callback
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_app_user_completion_func_t>(app_complete_result_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;

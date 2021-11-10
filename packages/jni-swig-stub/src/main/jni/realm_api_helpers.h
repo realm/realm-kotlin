@@ -43,8 +43,8 @@ open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 void
 invoke_core_notify_callback(int64_t core_notify_function);
 
-void
-register_login_cb(realm_app_t* app, realm_app_credentials_t* credentials, jobject callback);
+void app_complete_void_callback(void* userdata, const realm_app_error_t* error);
+void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error);
 
 void
 sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);

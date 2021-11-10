@@ -20,6 +20,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
@@ -28,6 +29,7 @@ import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
+import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
@@ -85,6 +87,7 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_t
+import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
@@ -218,7 +221,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_library_version(): String {
-        return realm_wrapper.realm_get_library_version()!!.toKString()
+        return realm_wrapper.realm_get_library_version().safeKString("library_version")
     }
 
     actual fun realm_schema_new(tables: List<Table>): NativePointer {
@@ -916,87 +919,60 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
+    actual fun realm_app_get_current_user(app: NativePointer): NativePointer? {
+        val currentUserPtr: CPointer<realm_user_t>? = realm_wrapper.realm_app_get_current_user(app.cptr())
+        return nativePointerOrNull(currentUserPtr)
+    }
+
     actual fun realm_app_log_in_with_credentials(
         app: NativePointer,
         credentials: NativePointer,
-        callback: CinteropCallback
+        callback: AppCallback<NativePointer>
     ) {
         realm_wrapper.realm_app_log_in_with_credentials(
             app.cptr(),
             credentials.cptr(),
-            staticCFunction { userdata, user, error: CPointer<realm_app_error_t>? ->
-                val userDataCallback = safeUserData<CinteropCallback>(userdata)
-                if (error == null) {
-                    // Remember to clone user object or else it will be invalidated right after we leave this callback
-                    val clonedUser = realm_clone(user)
-                    userDataCallback.onSuccess(CPointerWrapper(clonedUser))
-                } else {
-                    val message = with(error.pointed) {
-                        "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
-                    }
-                    userDataCallback.onError(AppException(message))
-                }
+            staticCFunction { userData, user, error: CPointer<realm_app_error_t>? ->
+                // Remember to clone user object or else it will go out of scope right after we leave this callback
+                handleAppCallback(userData, error) { CPointerWrapper(realm_clone(user)) }
             },
             StableRef.create(callback).asCPointer(),
-            staticCFunction { userdata -> disposeUserData<Callback>(userdata) }
+            staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
         )
     }
 
-    private val newRequestLambda = staticCFunction<COpaquePointer?,
-        CValue<realm_http_request_t>,
-        COpaquePointer?,
-        Unit>
-    { userdata, request, requestContext ->
-        safeUserData<NetworkTransport>(userdata).let { networkTransport ->
-            request.useContents { // this : realm_http_request_t ->
-                val headerMap = mutableMapOf<String, String>()
-                for (i in 0 until num_headers.toInt()) {
-                    headers?.get(i)?.let { header ->
-                        headerMap[header.name!!.toKString()] = header.value!!.toKString()
-                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
-                }
+    actual fun realm_app_log_out(
+        app: NativePointer,
+        user: NativePointer,
+        callback: AppCallback<Unit>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_log_out(
+                app.cptr(),
+                user.cptr(),
+                staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata -> disposeUserData<AppCallback<NativePointer>>(userdata) }
+            )
+        )
+    }
 
-                networkTransport.sendRequest(
-                    method = when (method) {
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_GET -> NetworkTransport.GET
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_POST -> NetworkTransport.POST
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PATCH -> NetworkTransport.PATCH
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PUT -> NetworkTransport.PUT
-                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_DELETE -> NetworkTransport.DELETE
-                    },
-                    url = url!!.toKString(),
-                    headers = headerMap,
-                    body = body!!.toKString()
-                ) { response: Response ->
-                    memScoped {
-                        val headersSize = response.headers.entries.size
-                        val cResponseHeaders =
-                            allocArray<realm_http_header_t>(headersSize)
+    actual fun realm_user_get_identity(user: NativePointer): String {
+        return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
+    }
 
-                        response.headers.entries.forEachIndexed { i, entry ->
-                            cResponseHeaders[i].let { header ->
-                                header.name = entry.key.cstr.getPointer(memScope)
-                                header.value = entry.value.cstr.getPointer(memScope)
-                            }
-                        }
+    actual fun realm_user_is_logged_in(user: NativePointer): Boolean {
+        return realm_wrapper.realm_user_is_logged_in(user.cptr())
+    }
 
-                        val cResponse =
-                            alloc<realm_http_response_t> {
-                                body = response.body.cstr.getPointer(memScope)
-                                body_size = response.body.cstr.getBytes().size.toULong()
-                                custom_status_code = response.customResponseCode
-                                status_code = response.httpResponseCode
-                                num_headers = response.headers.entries.size.toULong()
-                                headers = cResponseHeaders
-                            }
-                        realm_wrapper.realm_http_transport_complete_request(
-                            requestContext,
-                            cResponse.ptr
-                        )
-                    }
-                }
-            }
-        }
+    actual fun realm_user_log_out(user: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_user_log_out(user.cptr()))
+    }
+
+    actual fun realm_user_get_state(user: NativePointer): CoreUserState {
+        return CoreUserState.of(realm_wrapper.realm_user_get_state(user.cptr()))
     }
 
     actual fun realm_sync_client_config_new(): NativePointer {
@@ -1140,6 +1116,14 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
+    private fun nativePointerOrNull(ptr: CPointer<*>?, managed: Boolean = true): NativePointer? {
+        return if (ptr != null) {
+            CPointerWrapper(ptr, managed)
+        } else {
+            null
+        }
+    }
+
     private fun MemScope.classInfo(
         realm: NativePointer,
         table: String
@@ -1183,7 +1167,14 @@ actual object RealmInterop {
         return Link(this.link.target_table.toLong(), this.link.target)
     }
 
-    private fun createSingleThreadDispatcherScheduler(dispatcher: CoroutineDispatcher): CPointer<realm_scheduler_t>? {
+    private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {
+        return this?.toKString()
+            ?: throw NullPointerException(identifier?.let { "'$identifier' cannot be null." })
+    }
+
+    private fun createSingleThreadDispatcherScheduler(
+        dispatcher: CoroutineDispatcher
+    ): CPointer<realm_scheduler_t>? {
         printlntid("createSingleThreadDispatcherScheduler")
         val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher).freeze()
 
@@ -1252,6 +1243,79 @@ actual object RealmInterop {
                 }
             }
         )
+    }
+
+    private fun <R> handleAppCallback(
+        userData: COpaquePointer?,
+        error: CPointer<realm_app_error_t>?,
+        getValue: () -> R
+    ) {
+        val userDataCallback = safeUserData<AppCallback<R>>(userData)
+        if (error == null) {
+            userDataCallback.onSuccess(getValue())
+        } else {
+            val message = with(error.pointed) {
+                "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
+            }
+            userDataCallback.onError(AppException(message))
+        }
+    }
+
+    private val newRequestLambda = staticCFunction<COpaquePointer?,
+        CValue<realm_http_request_t>,
+        COpaquePointer?,
+        Unit>
+    { userdata, request, requestContext ->
+        safeUserData<NetworkTransport>(userdata).let { networkTransport ->
+            request.useContents { // this : realm_http_request_t ->
+                val headerMap = mutableMapOf<String, String>()
+                for (i in 0 until num_headers.toInt()) {
+                    headers?.get(i)?.let { header ->
+                        headerMap[header.name!!.toKString()] = header.value!!.toKString()
+                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
+                }
+
+                networkTransport.sendRequest(
+                    method = when (method) {
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_GET -> NetworkTransport.GET
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_POST -> NetworkTransport.POST
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PATCH -> NetworkTransport.PATCH
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PUT -> NetworkTransport.PUT
+                        realm_http_request_method.RLM_HTTP_REQUEST_METHOD_DELETE -> NetworkTransport.DELETE
+                    },
+                    url = url!!.toKString(),
+                    headers = headerMap,
+                    body = body!!.toKString()
+                ) { response: Response ->
+                    memScoped {
+                        val headersSize = response.headers.entries.size
+                        val cResponseHeaders =
+                            allocArray<realm_http_header_t>(headersSize)
+
+                        response.headers.entries.forEachIndexed { i, entry ->
+                            cResponseHeaders[i].let { header ->
+                                header.name = entry.key.cstr.getPointer(memScope)
+                                header.value = entry.value.cstr.getPointer(memScope)
+                            }
+                        }
+
+                        val cResponse =
+                            alloc<realm_http_response_t> {
+                                body = response.body.cstr.getPointer(memScope)
+                                body_size = response.body.cstr.getBytes().size.toULong()
+                                custom_status_code = response.customResponseCode
+                                status_code = response.httpResponseCode
+                                num_headers = response.headers.entries.size.toULong()
+                                headers = cResponseHeaders
+                            }
+                        realm_wrapper.realm_http_transport_complete_request(
+                            requestContext,
+                            cResponse.ptr
+                        )
+                    }
+                }
+            }
+        }
     }
 
     data class CoreCallback(
