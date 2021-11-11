@@ -20,6 +20,7 @@ import io.realm.test.util.Utils
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
+import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
@@ -32,9 +33,10 @@ import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     actual fun createTempDir(): String {
-        val mask = Utils.createRandomString(16)
+        // X is a special char which will be replace by mkdtemp template
+        val mask = Utils.createRandomString(16).replace('X','Z', ignoreCase = true)
         val path = "${platform.Foundation.NSTemporaryDirectory()}$mask"
-        platform.Foundation.NSFileManager.defaultManager.createDirectoryAtPath(path, true, null, null)
+        platform.posix.mkdtemp(path.cstr)
         return path
     }
 
