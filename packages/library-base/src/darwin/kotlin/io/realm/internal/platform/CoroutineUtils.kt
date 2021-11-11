@@ -21,6 +21,6 @@ actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
 }
 
 actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher {
-    // FIXME https://github.com/realm/realm-kotlin/issues/450
+    // TODO https://github.com/realm/realm-kotlin/issues/501
     return singleThreadDispatcher("singleThreadDispatcher")
 }

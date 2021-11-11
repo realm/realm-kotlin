@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
@@ -493,8 +494,45 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
-    actual fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback) {
-        realmc.register_login_cb(app.cptr(), credentials.cptr(), callback)
+    actual fun realm_app_log_in_with_credentials(
+        app: NativePointer,
+        credentials: NativePointer,
+        callback: AppCallback<NativePointer>
+    ) {
+        realmc.realm_app_log_in_with_credentials(app.cptr(), credentials.cptr(), callback)
+    }
+
+    actual fun realm_app_log_out(
+        app: NativePointer,
+        user: NativePointer,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_log_out(app.cptr(), user.cptr(), callback)
+    }
+
+    actual fun realm_app_get_current_user(app: NativePointer): NativePointer? {
+        val ptr = realmc.realm_app_get_current_user(app.cptr())
+        return nativePointerOrNull(ptr)
+    }
+
+    actual fun realm_user_get_identity(user: NativePointer): String {
+        return realmc.realm_user_get_identity(user.cptr())
+    }
+
+    actual fun realm_user_is_logged_in(user: NativePointer): Boolean {
+        return realmc.realm_user_is_logged_in(user.cptr())
+    }
+
+    actual fun realm_user_log_out(user: NativePointer) {
+        realmc.realm_user_log_out(user.cptr())
+    }
+
+    actual fun realm_user_get_state(user: NativePointer): CoreUserState {
+        return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
+    }
+
+    actual fun realm_clear_cached_apps() {
+        realmc.realm_clear_cached_apps()
     }
 
     actual fun realm_sync_client_config_new(): NativePointer {
@@ -573,6 +611,20 @@ actual object RealmInterop {
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
+    }
+
+    actual fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_register_email(
+            app.cptr(),
+            email,
+            password,
+            callback
+        )
     }
 
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
@@ -662,16 +714,16 @@ actual object RealmInterop {
         realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
     }
 
-    fun nativePointerOrNull(ptr: Long, managed: Boolean = true): NativePointer? {
+    fun NativePointer.cptr(): Long {
+        return (this as LongPointerWrapper).ptr
+    }
+
+    private fun nativePointerOrNull(ptr: Long, managed: Boolean = true): NativePointer? {
         return if (ptr != 0L) {
             LongPointerWrapper(ptr, managed)
         } else {
             null
         }
-    }
-
-    fun NativePointer.cptr(): Long {
-        return (this as LongPointerWrapper).ptr
     }
 
     private fun realm_value_t.asLink(): Link {
