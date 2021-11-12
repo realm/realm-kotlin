@@ -22,6 +22,7 @@ import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -212,10 +213,8 @@ class CredentialsTests {
 //                        assertNotNull(functionUser)
 //                    }
                     AuthenticationProvider.EMAIL_PASSWORD -> {
-                        val email = TestHelper.randomEmail()
-                        val password = "123456"
-                        app.asTestApp.createUser(email, password)
-                        val user = app.login(Credentials.emailPassword(email, password))
+                        val (email, password) = TestHelper.randomEmail() to "password1234"
+                        val user = app.createUserAndLogIn(email, password)
                         assertNotNull(user)
                     }
 

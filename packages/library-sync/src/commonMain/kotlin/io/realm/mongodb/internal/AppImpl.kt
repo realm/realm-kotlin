@@ -29,6 +29,7 @@ import io.realm.internal.util.use
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
+import io.realm.mongodb.EmailPasswordAuth
 import io.realm.mongodb.User
 import kotlinx.coroutines.channels.Channel
 
@@ -41,6 +42,8 @@ internal class AppImpl(
         initializeSyncClientConfig(),
         appFilesDirectory()
     )
+
+    override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuth(nativePointer) }
 
     override val currentUser: User?
         get() = RealmInterop.realm_app_get_current_user(nativePointer)
