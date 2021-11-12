@@ -26,3 +26,8 @@ interface MutableRealmSchema: RealmSchema {
     // - Rename: Needs specific rename that doesn't remove data, so should probably be triggered on
     // setting class.name instead
 }
+
+// FIXME WIP Just to try out migration
+fun MutableRealmSchema(schema: RealmSchema): MutableRealmSchema {
+    return (schema as RealmSchemaImpl).copy()
+}

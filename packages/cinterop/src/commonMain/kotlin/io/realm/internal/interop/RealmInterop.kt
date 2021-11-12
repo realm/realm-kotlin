@@ -36,6 +36,10 @@ value class PropertyKey(val key: Long)
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
+fun interface MigrationCallback {
+    fun onMigration(oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer)
+}
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_get_version_id(realm: NativePointer): Long
@@ -52,6 +56,7 @@ expect object RealmInterop {
     fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long)
     fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray)
     fun realm_config_get_encryption_key(config: NativePointer): ByteArray?
+    fun realm_config_set_migration_function(config: NativePointer, callback: Function3<NativePointer, NativePointer, NativePointer, Boolean>)
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
@@ -81,6 +86,10 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): ClassKey
     fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table
     fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<Property>
+    // FIXME TMP-FIX Added version to prevent error from core as realm_update_schema defaults to 0 yielding:
+    //  [18]: Provided schema version 0 is less than last set version 1.
+    //  This requires updating realm_update_schema in core to take the version too
+    fun realm_update_schema(realm: NativePointer, schema: NativePointer, version: Long)
 
     fun realm_release(p: NativePointer)
 

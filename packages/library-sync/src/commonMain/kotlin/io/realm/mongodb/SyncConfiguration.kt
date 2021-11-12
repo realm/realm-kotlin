@@ -152,7 +152,9 @@ interface SyncConfiguration : RealmConfiguration {
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
                 deleteRealmIfMigrationNeeded,
-                encryptionKey
+                encryptionKey,
+                migration
+
             )
 
             return SyncConfigurationImpl(

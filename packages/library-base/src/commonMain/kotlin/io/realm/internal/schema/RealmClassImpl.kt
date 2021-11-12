@@ -30,4 +30,13 @@ data class RealmClassImpl(
     override fun get(key: String): MutableRealmProperty? = properties.firstOrNull { it.name == key }
     override fun primaryKey(): MutableRealmProperty? = properties.firstOrNull { it.primaryKey }
 
+    // FIXME WIP Just to try out migration
+    fun toCoreClass(): io.realm.internal.interop.Table = io.realm.internal.interop.Table(
+        name,
+        properties.firstOrNull { it.primaryKey }?.name,
+        properties.size.toLong(),
+        0,
+        -1,
+        0
+    )
 }

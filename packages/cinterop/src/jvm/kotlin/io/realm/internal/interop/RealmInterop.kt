@@ -153,6 +153,10 @@ actual object RealmInterop {
         return null
     }
 
+    actual fun realm_config_set_migration_function(config: NativePointer, callback: Function3<NativePointer, NativePointer, NativePointer, Boolean>) {
+        realmc.realm_config_set_migration_function(config.cptr(), callback)
+    }
+
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
         val realmPtr = LongPointerWrapper(
@@ -226,6 +230,10 @@ actual object RealmInterop {
                 io.realm.internal.interop.Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)
             }
         }
+    }
+
+    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer, version: Long) {
+        realmc.realm_update_schema(realm.cptr(), schema.cptr(), version)
     }
 
     actual fun realm_release(p: NativePointer) {
@@ -320,7 +328,7 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean) {
         val cvalue = to_realm_value(value)
         realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
     }

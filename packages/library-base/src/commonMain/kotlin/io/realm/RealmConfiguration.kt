@@ -23,6 +23,7 @@ import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
+import io.realm.schema.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
@@ -143,6 +144,7 @@ interface RealmConfiguration {
         protected var deleteRealmIfMigrationNeeded: Boolean = false
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
+        protected var migration: RealmMigration? = null
 
         /**
          * Creates the RealmConfiguration based on the builder properties.
@@ -185,6 +187,10 @@ interface RealmConfiguration {
          */
         fun schema(vararg classes: KClass<out RealmObject>) =
             apply { this.schema = setOf(*classes) } as S
+
+        // FIXME Docs
+        // FIXME Should be internal until settled
+        fun migration(migration: RealmMigration) : S = apply { this.migration = migration } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
@@ -334,7 +340,8 @@ interface RealmConfiguration {
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
                 deleteRealmIfMigrationNeeded,
-                encryptionKey
+                encryptionKey,
+                migration
             )
         }
     }

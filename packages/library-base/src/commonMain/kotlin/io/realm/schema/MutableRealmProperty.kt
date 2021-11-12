@@ -29,3 +29,19 @@ interface MutableRealmProperty : RealmProperty {
     override var index: Boolean
     override var primaryKey: Boolean
 }
+
+// FIXME WIP Just to try out migration
+fun MutableRealmProperty(
+    name: String,
+    collectionType: CollectionType,
+    fieldType: ElementType.FieldType,
+    nullable: Boolean,
+    primaryKey: Boolean,
+    index: Boolean
+): MutableRealmProperty =
+    RealmPropertyImpl(
+        name,
+        RealmPropertyType(collectionType, ElementType(fieldType, nullable)),
+        primaryKey,
+        index
+    )

@@ -31,6 +31,9 @@ register_list_notification_cb(realm_list_t *list, jobject callback);
 realm_notification_token_t*
 register_object_notification_cb(realm_object_t *object, jobject callback);
 
+bool migration_callback(void* userdata, realm_t* old_realm, realm_t* new_realm,
+                        const realm_schema_t* schema);
+
 realm_http_transport_t*
 realm_network_transport_new(jobject network_transport);
 
