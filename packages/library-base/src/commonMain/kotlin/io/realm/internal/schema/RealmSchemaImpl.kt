@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.realm.internal.schema
 
-import io.realm.internal.RealmReference
-import io.realm.internal.interop.RealmInterop
-import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.Table
-import io.realm.internal.interop.Property
-import io.realm.schema.RealmClass
-import io.realm.schema.RealmSchema
+import io.realm.internal.interop.RealmInterop
+import io.realm.internal.RealmReference
+import io.realm.schema.MutableRealmClass
+import io.realm.schema.MutableRealmSchema
 
-data class RealmSchemaImpl(override val classes: Set<RealmClass>) : RealmSchema {
+data class RealmSchemaImpl(override val classes: MutableSet<MutableRealmClass>) : MutableRealmSchema {
+
+    override fun get(key: String): MutableRealmClass = classes.first { it.name == key }
 
     companion object {
         fun fromRealm(realmReference: RealmReference): RealmSchemaImpl {
             val dbPointer = realmReference.dbPointer
             val realmGetNumClasses = RealmInterop.realm_get_num_classes(dbPointer)
             val classKeys = RealmInterop.realm_get_class_keys(dbPointer)
-            println("SchemaKeys: $classKeys")
             val classes = classKeys.map {
                 val coreClazz: Table = RealmInterop.realm_get_class(dbPointer, it)
                 val coreProperties =
@@ -39,12 +39,11 @@ data class RealmSchemaImpl(override val classes: Set<RealmClass>) : RealmSchema 
                     RealmPropertyImpl.fromCoreProperty(it)
                 }
                 with(coreClazz) {
-                    RealmClassImpl(name, null, false, realmProperties.toSet())
+                    RealmClassImpl(name, false, realmProperties.toMutableSet())
                 }
             }
 
-            println("classes: $classes")
-            return RealmSchemaImpl(classes.toSet())
+            return RealmSchemaImpl(classes.toMutableSet())
         }
     }
 }

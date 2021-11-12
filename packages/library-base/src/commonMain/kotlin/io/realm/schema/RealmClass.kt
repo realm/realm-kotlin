@@ -18,8 +18,12 @@ package io.realm.schema
 
 interface RealmClass {
     val name: String
-    val primaryKey : RealmProperty?
     val embedded: Boolean
-    // Alternatively as Map<String, RealmProperty>
+    // Alternatively as Map<String, RealmProperty>, but would require validation of key/class.name for
+    // mutable schemas
     val properties: Set<RealmProperty>
+    // Convenience method for quick lookup (internally probably stored in map)
+    operator fun get(key: String): RealmProperty?
+    // Derived attributes, can change on updates to properties
+    fun primaryKey(): RealmProperty? // convenience for:  properties.any { it.primaryKey }
 }

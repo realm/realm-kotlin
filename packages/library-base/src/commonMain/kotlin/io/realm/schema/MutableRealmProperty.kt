@@ -16,10 +16,16 @@
 
 package io.realm.schema
 
+import io.realm.internal.schema.RealmPropertyImpl
+
 interface MutableRealmProperty : RealmProperty {
-    override var name: String
-    override val type: RealmPropertyType
-//    override var nullable: Boolean
+    override var name: String // Updates triggers rename?
+    // Type holds, collection, field type and nullability
+    // Maybe make this a data class, so it is easy to update as a single operation here
+    // Maybe nullability should be exposed as separate property as it is flip-able while it is not
+    // possible to update the types
+    override var type: RealmPropertyType
+    //    override var nullable: Boolean // Modelled in type
     override var index: Boolean
     override var primaryKey: Boolean
 }

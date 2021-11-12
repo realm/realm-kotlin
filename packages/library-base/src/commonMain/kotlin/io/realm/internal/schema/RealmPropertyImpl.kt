@@ -17,34 +17,48 @@
 package io.realm.internal.schema
 
 import io.realm.internal.interop.Property
+import io.realm.internal.interop.PropertyFlags
 import io.realm.schema.CollectionType
 import io.realm.schema.ElementType
-import io.realm.schema.RealmProperty
+import io.realm.schema.MutableRealmProperty
 import io.realm.schema.RealmPropertyType
 
 internal data class RealmPropertyImpl(
-    override val name: String,
-    override val index: Boolean,
-    override val primaryKey: Boolean,
-    override val type: RealmPropertyType
-) : RealmProperty {
+    override var name: String,
+    override var type: RealmPropertyType,
+    override var primaryKey: Boolean,
+    override var index: Boolean
+) : MutableRealmProperty {
+
+    fun toCoreProperty() = io.realm.internal.interop.Property(
+        name = name,
+        type = toCorePropertyType(type.elementType.fieldType),
+        collectionType = toCoreCollectionType(type.collectionType),
+        linkTarget = "",
+        linkOriginPropertyName = "",
+        key = -1,
+        flags = (if (type.elementType.nullable) PropertyFlags.RLM_PROPERTY_NULLABLE else 0)
+            or (if (primaryKey) PropertyFlags.RLM_PROPERTY_PRIMARY_KEY else 0)
+            or (if (index) PropertyFlags.RLM_PROPERTY_INDEXED else 0)
+    )
 
     companion object {
+
         fun fromCoreProperty(corePropertyImpl: Property): RealmPropertyImpl {
             return with(corePropertyImpl) {
                 RealmPropertyImpl(
                     name,
+                    RealmPropertyType(
+                        fromCoreCollectionType(collectionType),
+                        ElementType(fromCorePropertyType(type), isNullable)
+                    ),
                     isPrimaryKey,
                     isIndexed,
-                    RealmPropertyType(
-                        collectionTypeFromCore(collectionType),
-                        ElementType(propertyTypeFromCore(type), isNullable)
-                    )
                 )
             }
         }
 
-        fun propertyTypeFromCore(type: io.realm.internal.interop.PropertyType): ElementType.FieldType {
+        fun fromCorePropertyType(type: io.realm.internal.interop.PropertyType): ElementType.FieldType {
             return when (type) {
                 io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_INT -> ElementType.FieldType.INT
                 io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_BOOL -> ElementType.FieldType.BOOL
@@ -56,10 +70,30 @@ internal data class RealmPropertyImpl(
             }
         }
 
-        fun collectionTypeFromCore(type: io.realm.internal.interop.CollectionType): CollectionType {
+        fun toCorePropertyType(type: ElementType.FieldType): io.realm.internal.interop.PropertyType {
+            return when (type) {
+                ElementType.FieldType.BOOL -> io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_BOOL
+                ElementType.FieldType.INT -> io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_INT
+                ElementType.FieldType.STRING -> io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_STRING
+                ElementType.FieldType.OBJECT -> io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT
+                ElementType.FieldType.FLOAT -> io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_FLOAT
+                ElementType.FieldType.DOUBLE -> io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_DOUBLE
+                else -> error("Unknown type: $type")
+            }
+        }
+
+        fun fromCoreCollectionType(type: io.realm.internal.interop.CollectionType): CollectionType {
             return when (type) {
                 io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE -> CollectionType.NONE
                 io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_LIST -> CollectionType.LIST
+                else -> error("Unknown type: $type")
+            }
+        }
+
+        fun toCoreCollectionType(type: CollectionType): io.realm.internal.interop.CollectionType {
+            return when (type) {
+                CollectionType.NONE -> io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE
+                CollectionType.LIST -> io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_LIST
                 else -> error("Unknown type: $type")
             }
         }

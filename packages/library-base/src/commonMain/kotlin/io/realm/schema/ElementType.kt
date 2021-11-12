@@ -16,10 +16,12 @@
 
 package io.realm.schema
 
+// FIXME Probably dangerous to have data classes in public API
 data class ElementType(val fieldType: FieldType, val nullable: Boolean) {
-    // In realm.h this is called PropertyType but this would overlap with RealmProperty.type?
-    // Core types?
-    // Mimics storage type. This is important to the user if we do custom type maps, etc.
+
+    // This corresponds to realm_property_type in realm.h but naming would overlap with
+    // RealmPropertyType
+    // Mimics storage type. This is important to user if we do custom type maps, etc.
     enum class FieldType {
         BOOL,
         INT,
@@ -29,5 +31,3 @@ data class ElementType(val fieldType: FieldType, val nullable: Boolean) {
         DOUBLE
     }
 }
-
-

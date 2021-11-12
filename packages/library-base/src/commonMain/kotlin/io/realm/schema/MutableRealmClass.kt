@@ -16,7 +16,12 @@
 
 package io.realm.schema
 
-interface MutableRealmClass : RealmClass {
-    override var name: String
-    override val properties: Set<MutableRealmProperty>
+interface MutableRealmClass: RealmClass {
+    override var name: String // Rename would be a matter of updating the name
+    override var embedded: Boolean
+    override val properties: MutableSet<MutableRealmProperty>
+    // Convenience method for quick lookup (internally probably stored in map)
+    override operator fun get(key: String): MutableRealmProperty?
+    // Derived attributes, can change on updates to properties
+    override fun primaryKey(): MutableRealmProperty? // convenience for:  properties.any { it.primaryKey }
 }
