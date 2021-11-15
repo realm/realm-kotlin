@@ -48,6 +48,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
+                implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }
 
@@ -138,6 +139,25 @@ kotlin {
                 implementation("androidx.test:rules:${Versions.androidxTest}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
                 implementation("androidx.multidex:multidex:${Versions.multidex}")
+            }
+        }
+    }
+}
+
+kotlin {
+    jvm()
+    sourceSets {
+        getByName("jvmMain") {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+                implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
+                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+            }
+        }
+        getByName("jvmTest") {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
             }
         }
     }

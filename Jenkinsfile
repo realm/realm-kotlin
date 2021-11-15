@@ -187,8 +187,11 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-                        testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.compiler*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.shared*"')
+                          testWithServer([
+                              { testAndCollect("test", ':sync:jvmTest') }
+                          ])
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -281,7 +284,7 @@ def genAndStashSwigJNI() {
         ../gradlew assemble
         """
     }
-    stash includes: 'packages/jni-swig-stub/src/main/jni/realmc.cpp,packages/jni-swig-stub/src/main/jni/realmc.h', name: 'swig_jni'
+    stash includes: 'packages/jni-swig-stub/build/generated/sources/jni/realmc.cpp,packages/jni-swig-stub/build/generated/sources/jni/realmc.h', name: 'swig_jni'
 }
 def runBuild() {
     def buildJvmAbiFlag = "-PcopyJvmABIs=false"
@@ -485,7 +488,7 @@ def stopLogCatCollector(String backgroundPid, name) {
   // a build error.
   if (backgroundPid != null) {
     sh "kill ${backgroundPid}"
-    // Zip file generation will fail if the file is already there 
+    // Zip file generation will fail if the file is already there
     // Pipeline Utility Steps Plugin 2.6.1 introduces 'overwrite' property
     // https://issues.jenkins.io/browse/JENKINS-42591
     sh "rm -f logcat-${name}.zip"

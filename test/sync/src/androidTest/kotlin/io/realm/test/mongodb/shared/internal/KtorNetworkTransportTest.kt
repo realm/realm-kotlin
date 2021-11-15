@@ -17,8 +17,11 @@
 package io.realm.test.mongodb.shared.internal
 
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.internal.util.use
 import io.realm.mongodb.internal.KtorNetworkTransport
+import kotlinx.coroutines.channels.Channel
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -47,18 +50,20 @@ internal class KtorNetworkTransportTest {
     }
 
     @Test
-    fun requestSuccessful() {
+    fun requestSuccessful() = runBlocking {
         val url = "$BASE_URL/okhttp?success=true"
-
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body
-            )
+            val response = Channel<Response>(1).use { channel ->
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body
+                ) { response -> channel.trySend(response) }
+                channel.receive()
+            }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-success", response.body, "$method failed")
@@ -66,17 +71,20 @@ internal class KtorNetworkTransportTest {
     }
 
     @Test
-    fun requestFailedOnServer() {
+    fun requestFailedOnServer() = runBlocking {
         val url = "$BASE_URL/okhttp?success=false"
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
 
-            val response = transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body
-            )
+            val response = Channel<Response>(1).use { channel ->
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body
+                ) { response -> channel.trySend(response) }
+                channel.receive()
+            }
             assertEquals(500, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-failure", response.body, "$method failed")
@@ -87,17 +95,20 @@ internal class KtorNetworkTransportTest {
     // This is mostly a guard against Java crashing if ObjectStore serializes the wrong
     // way by accident.
     @Test
-    fun requestSendsIllegalJson() {
+    fun requestSendsIllegalJson() = runBlocking {
         val url = "$BASE_URL/okhttp?success=true"
         for (method in HTTPMethod.values()) {
             val body = if (method == HTTPMethod.GET) "" else "Boom!"
 
-            val response: Response = transport.sendRequest(
-                method.nativeKey,
-                url,
-                mapOf(),
-                body
-            )
+            val response = Channel<Response>(1).use { channel ->
+                transport.sendRequest(
+                    method.nativeKey,
+                    url,
+                    mapOf(),
+                    body
+                ) { response -> channel.trySend(response) }
+                channel.receive()
+            }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
             assertEquals("${method.name}-success", response.body, "$method failed")
