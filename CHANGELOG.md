@@ -25,7 +25,7 @@
 * Updated to Android targetSdk 31.
 * Updated to Android compileSdk 31. 
 * Updated to Android Build Tools 31.0.0.
-* Updated to Realm Core commit: 2183e09f40a3ce31be0f93d0665b785b5c52e975
+* Updated to Realm Core 11.6.1, commit: 74e2178df596d9bc4e4e95983f77a302dfd0c4b4.
 
 
 ## 0.7.0 (2021-10-31)
