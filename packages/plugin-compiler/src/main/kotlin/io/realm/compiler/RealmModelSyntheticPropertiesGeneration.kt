@@ -434,18 +434,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // key
                                     putValueArgument(arg++, irInt(-1))
                                     // flags
-                                    // FIXME Should not use constants directly
+                                    // FIXME Should not use constants directly. Await
+                                    //  https://github.com/realm/realm-kotlin/issues/390
                                     var flags = 0
-                                    if (nullable) {
-                                        flags = flags or 1
-                                    }
-                                    if (primaryKey) {
-                                        flags = flags or 2
-                                    }
+                                    if (nullable) { flags = flags or 1 }
+                                    if (primaryKey) { flags = flags or 2 }
                                     @Suppress("MagicNumber")
-                                    if (isIndexed) {
-                                        flags = flags or 4
-                                    }
+                                    if (isIndexed) { flags = flags or 4 }
                                     putValueArgument(arg++, irInt(flags))
                                 }
                             }
