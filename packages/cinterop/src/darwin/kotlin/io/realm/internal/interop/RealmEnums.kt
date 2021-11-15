@@ -76,8 +76,8 @@ actual enum class CollectionType(override val nativeValue: UInt) : NativeEnumera
 
 actual object PropertyFlags {
     actual val RLM_PROPERTY_NORMAL: Int = realm_wrapper.RLM_PROPERTY_NORMAL.toInt()
-    actual val RLM_PROPERTY_NULLABLE: Int =realm_wrapper.RLM_PROPERTY_NULLABLE.toInt()
-    actual val RLM_PROPERTY_PRIMARY_KEY: Int= realm_wrapper.RLM_PROPERTY_PRIMARY_KEY.toInt()
+    actual val RLM_PROPERTY_NULLABLE: Int = realm_wrapper.RLM_PROPERTY_NULLABLE.toInt()
+    actual val RLM_PROPERTY_PRIMARY_KEY: Int = realm_wrapper.RLM_PROPERTY_PRIMARY_KEY.toInt()
     actual val RLM_PROPERTY_INDEXED: Int = realm_wrapper.RLM_PROPERTY_INDEXED.toInt()
 }
 

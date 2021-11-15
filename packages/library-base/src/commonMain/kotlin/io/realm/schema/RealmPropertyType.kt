@@ -17,7 +17,7 @@
 package io.realm.schema
 
 // We could actually create `object` for all allowed types if needed
-data class RealmPropertyType (
+data class RealmPropertyType(
     // This doesn't necessarily catch Map<K,V> when/if we open up for K!=String, but the type is at
     // least encapsulated in RealmPropertyType, so should be able to change it later
     val collectionType: CollectionType,

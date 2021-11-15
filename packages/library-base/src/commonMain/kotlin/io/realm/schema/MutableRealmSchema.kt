@@ -16,10 +16,8 @@
 
 package io.realm.schema
 
-import io.realm.internal.schema.RealmSchemaImpl
-
-interface MutableRealmSchema: RealmSchema {
-    override val classes: MutableSet<MutableRealmClass>
+interface MutableRealmSchema : RealmSchema {
+    override val classes: MutableCollection<MutableRealmClass>
     // Convenience method for quick lookup (internally probably stored in map)
     override operator fun get(key: String): MutableRealmClass
     // - Add/remove: Could easily be achieved as operations on `classes: MutableSet<MutableRealmClass>`

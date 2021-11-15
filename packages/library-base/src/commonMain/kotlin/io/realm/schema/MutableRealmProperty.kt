@@ -16,8 +16,6 @@
 
 package io.realm.schema
 
-import io.realm.internal.schema.RealmPropertyImpl
-
 interface MutableRealmProperty : RealmProperty {
     override var name: String // Updates triggers rename?
     // Type holds, collection, field type and nullability
@@ -26,6 +24,6 @@ interface MutableRealmProperty : RealmProperty {
     // possible to update the types
     override var type: RealmPropertyType
     //    override var nullable: Boolean // Modelled in type
-    override var index: Boolean
     override var primaryKey: Boolean
+    override var index: Boolean
 }

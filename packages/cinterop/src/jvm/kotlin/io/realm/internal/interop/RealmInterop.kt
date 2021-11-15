@@ -221,7 +221,8 @@ actual object RealmInterop {
         val properties = realmc.new_propertyArray(max.toInt())
         val outCount = longArrayOf(0)
         realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
-        return (0..(outCount[0]-1)).map { i ->
+        // FIXME Can outcount be less than one?
+        return (0..(outCount[0] - 1)).map { i ->
             with(realmc.propertyArray_getitem(properties, i.toInt())) {
                 io.realm.internal.interop.Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)
             }
@@ -320,7 +321,7 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean) {
         val cvalue = to_realm_value(value)
         realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
     }

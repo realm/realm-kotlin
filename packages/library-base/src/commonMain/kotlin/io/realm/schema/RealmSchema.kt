@@ -16,12 +16,10 @@
 
 package io.realm.schema
 
-import kotlin.reflect.KType
-
 interface RealmSchema {
     // Alternatively as Map<String, RealmClass>, but would require validation of key/class.name for
     // mutable schemas
-    val classes: Set<RealmClass>
+    val classes: Collection<RealmClass>
     // Convenience method for quick lookup (internally probably stored in map)
     operator fun get(key: String): RealmClass
 }

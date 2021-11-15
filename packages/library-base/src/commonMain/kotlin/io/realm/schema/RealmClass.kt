@@ -18,7 +18,8 @@ package io.realm.schema
 
 interface RealmClass {
     val name: String
-    val embedded: Boolean
+    // TODO Not supported yet
+    // val embedded: Boolean
     // Alternatively as Map<String, RealmProperty>, but would require validation of key/class.name for
     // mutable schemas
     val properties: Set<RealmProperty>

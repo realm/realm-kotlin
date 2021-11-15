@@ -22,6 +22,6 @@ package io.realm.schema
 enum class CollectionType {
     NONE,
     LIST,
-    //SET,
-    //MAP,
+    // SET,
+    // MAP,
 }

@@ -16,13 +16,13 @@
 
 package io.realm.internal.schema
 
-import io.realm.internal.interop.Table
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.RealmReference
+import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.Table
 import io.realm.schema.MutableRealmClass
 import io.realm.schema.MutableRealmSchema
 
-data class RealmSchemaImpl(override val classes: MutableSet<MutableRealmClass>) : MutableRealmSchema {
+data class RealmSchemaImpl(override val classes: MutableList<MutableRealmClass>) : MutableRealmSchema {
 
     override fun get(key: String): MutableRealmClass = classes.first { it.name == key }
 
@@ -39,11 +39,11 @@ data class RealmSchemaImpl(override val classes: MutableSet<MutableRealmClass>) 
                     RealmPropertyImpl.fromCoreProperty(it)
                 }
                 with(coreClazz) {
-                    RealmClassImpl(name, false, realmProperties.toMutableSet())
+                    RealmClassImpl(name, /* false, */ realmProperties.toMutableSet())
                 }
             }
 
-            return RealmSchemaImpl(classes.toMutableSet())
+            return RealmSchemaImpl(classes.toMutableList())
         }
     }
 }
