@@ -16,15 +16,16 @@
 
 package io.realm.internal.schema
 
-import io.realm.schema.MutableRealmClass
-import io.realm.schema.MutableRealmProperty
+import io.realm.schema.RealmClass
+import io.realm.schema.RealmProperty
 
 data class RealmClassImpl(
     override var name: String,
-//    override var embedded: Boolean,
-    override val properties: MutableSet<MutableRealmProperty>
-) : MutableRealmClass {
+    override val properties: List<RealmProperty>
+    // TODO Embedded object support is not implemented yet
+    // override var embedded: Boolean,
+) : RealmClass {
 
-    override fun get(key: String): MutableRealmProperty? = properties.firstOrNull { it.name == key }
-    override fun primaryKey(): MutableRealmProperty? = properties.firstOrNull { it.primaryKey }
+    override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
+    override fun primaryKey(): RealmProperty? = properties.firstOrNull { it.primaryKey }
 }

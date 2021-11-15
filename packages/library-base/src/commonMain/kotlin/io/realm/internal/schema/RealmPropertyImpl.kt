@@ -20,7 +20,7 @@ import io.realm.internal.interop.Property
 import io.realm.internal.interop.PropertyFlags
 import io.realm.schema.CollectionType
 import io.realm.schema.ElementType
-import io.realm.schema.MutableRealmProperty
+import io.realm.schema.RealmProperty
 import io.realm.schema.RealmPropertyType
 
 internal data class RealmPropertyImpl(
@@ -28,7 +28,7 @@ internal data class RealmPropertyImpl(
     override var type: RealmPropertyType,
     override var primaryKey: Boolean,
     override var index: Boolean
-) : MutableRealmProperty {
+) : RealmProperty {
 
     fun toCoreProperty() = io.realm.internal.interop.Property(
         name = name,

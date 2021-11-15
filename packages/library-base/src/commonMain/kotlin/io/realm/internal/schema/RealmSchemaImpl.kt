@@ -19,12 +19,12 @@ package io.realm.internal.schema
 import io.realm.internal.RealmReference
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Table
-import io.realm.schema.MutableRealmClass
-import io.realm.schema.MutableRealmSchema
+import io.realm.schema.RealmClass
+import io.realm.schema.RealmSchema
 
-data class RealmSchemaImpl(override val classes: MutableList<MutableRealmClass>) : MutableRealmSchema {
+data class RealmSchemaImpl(override val classes: List<RealmClass>) : RealmSchema {
 
-    override fun get(key: String): MutableRealmClass = classes.first { it.name == key }
+    override fun get(key: String): RealmClass = classes.first { it.name == key }
 
     companion object {
         fun fromRealm(realmReference: RealmReference): RealmSchemaImpl {
@@ -39,7 +39,7 @@ data class RealmSchemaImpl(override val classes: MutableList<MutableRealmClass>)
                     RealmPropertyImpl.fromCoreProperty(it)
                 }
                 with(coreClazz) {
-                    RealmClassImpl(name, /* false, */ realmProperties.toMutableSet())
+                    RealmClassImpl(name, /* false, */ realmProperties)
                 }
             }
 

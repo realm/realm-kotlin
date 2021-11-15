@@ -22,7 +22,7 @@ interface RealmClass {
     // val embedded: Boolean
     // Alternatively as Map<String, RealmProperty>, but would require validation of key/class.name for
     // mutable schemas
-    val properties: Set<RealmProperty>
+    val properties: Collection<RealmProperty>
     // Convenience method for quick lookup (internally probably stored in map)
     operator fun get(key: String): RealmProperty?
     // Derived attributes, can change on updates to properties

@@ -20,8 +20,8 @@ import io.realm.RealmObject
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
-import io.realm.internal.interop.Table
 import io.realm.internal.interop.Property
+import io.realm.internal.interop.Table
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
