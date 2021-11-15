@@ -26,8 +26,6 @@ data class RealmClassImpl(
     // avoid unnecessary repeated initializations for realm_schema_new
     val cinteropTable: Table,
     val cinteropProperties: List<Property>
-    // TODO Embedded object support is not implemented yet
-    // override var embedded: Boolean,
 ) : RealmClass {
 
     override val name: String = cinteropTable.name

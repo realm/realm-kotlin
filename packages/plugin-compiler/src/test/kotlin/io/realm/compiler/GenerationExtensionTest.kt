@@ -182,8 +182,8 @@ class GenerationExtensionTest {
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
-        // FIXME Flag constants are not properly exposed yet. Await
-        //  https://github.com/realm/realm-kotlin/issues/390
+        // FIXME Technically this should check that the class is neither embedded or anything else
+        //  special, but as we don't support it yet there is nothing to check
         // assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
         assertEquals(realmFields.count(), properties.size)
         val expectedProperties = mapOf(

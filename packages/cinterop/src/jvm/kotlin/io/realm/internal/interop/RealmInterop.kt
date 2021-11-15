@@ -196,7 +196,9 @@ actual object RealmInterop {
         val keys = LongArray(count.toInt())
         val outCount = longArrayOf(0)
         realmc.realm_get_class_keys(realm.cptr(), keys, count, outCount)
-        // FIXME Assert that we actually have count keys?
+        if (count != outCount[0]) {
+            error("Invalid schema: Insufficient keys; got ${outCount[0]} expected $count")
+        }
         return keys.map { ClassKey(it) }
     }
 
@@ -221,7 +223,9 @@ actual object RealmInterop {
         val properties = realmc.new_propertyArray(max.toInt())
         val outCount = longArrayOf(0)
         realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
-        // FIXME Can outcount be less than one?
+        if (outCount[0] < 1) {
+            error("Invalid schema: Class without properties")
+        }
         return (0..(outCount[0] - 1)).map { i ->
             with(realmc.propertyArray_getitem(properties, i.toInt())) {
                 Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)

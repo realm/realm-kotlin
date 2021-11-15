@@ -242,7 +242,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(
-                // FIXME Abstract buildPair into Utils if needed in final solution, also used in RealmSchemaLoweringExtension
                 IrConstructorCallImpl(
                     startOffset, endOffset,
                     realmClassImpl.defaultType,

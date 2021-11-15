@@ -242,7 +242,6 @@ actual object RealmInterop {
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags = clazz.flags
-//                        clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                 }
                 cproperties[i] =
                     allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
@@ -255,7 +254,6 @@ actual object RealmInterop {
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
                         flags = property.flags
-//                            property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
                     }
                 }
             }
