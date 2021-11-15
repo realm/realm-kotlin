@@ -77,7 +77,7 @@ class RealmPublishPlugin : Plugin<Project> {
             repositories {
                 // Configure a local maven repository only used by this build.
                 maven {
-                    name = "LocalBuild"
+                    name = "BuildFolder"
                     url = URI("file://${project.rootProject.buildDir.absolutePath}/m2-buildrepo")
                 }
             }
