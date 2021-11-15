@@ -27,7 +27,7 @@ data class Property( // Kotlin variant of realm_property_info
     val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
     val linkTarget: String = "",
     val linkOriginPropertyName: String = "",
-    val key: Long, // PropertyKey
+    val key: Long, // PropertyKey,
     val flags: Int
 ) {
     val isNullable: Boolean = flags and PropertyFlags.RLM_PROPERTY_NULLABLE != 0

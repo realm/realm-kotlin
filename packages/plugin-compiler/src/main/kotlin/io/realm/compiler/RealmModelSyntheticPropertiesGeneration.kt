@@ -128,8 +128,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
-    val pairClass = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_PAIR)
-    val pairCtor = pluginContext.lookupConstructorInClass(FqNames.KOTLIN_PAIR) {
+    val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
+    val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
     }
 
@@ -240,21 +240,17 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val function =
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
-        val schemaType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_PAIR)
-            .typeWith(table.defaultType, listIrClass.typeWith(propertyClass.defaultType))
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(
                 // FIXME Abstract buildPair into Utils if needed in final solution, also used in RealmSchemaLoweringExtension
                 IrConstructorCallImpl(
                     startOffset, endOffset,
-                    schemaType,
-                    pairCtor,
-                    typeArgumentsCount = 2,
+                    realmClassImpl.defaultType,
+                    realmClassCtor,
+                    typeArgumentsCount = 0,
                     constructorTypeArgumentsCount = 0,
                     valueArgumentsCount = 2,
                 ).apply {
-                    putTypeArgument(0, table.defaultType)
-                    putTypeArgument(1, listIrClass.typeWith(propertyClass.defaultType))
                     putValueArgument(
                         0,
                         IrConstructorCallImpl(
@@ -288,7 +284,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             // FIXME Should be invalid class key
                             putValueArgument(arg++, irInt(-1))
                             // Flags
-                            // FIXME Should be actual constants
+                            // TODO Should be actual constants, but we only support NORMAL until we
+                            //  implemented support for embedded objects
                             putValueArgument(arg++, irInt(0))
                         }
                     )
@@ -434,13 +431,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // key
                                     putValueArgument(arg++, irInt(-1))
                                     // flags
-                                    // FIXME Should not use constants directly. Await
-                                    //  https://github.com/realm/realm-kotlin/issues/390
+                                    // FIXME This is embedding compile time constants. Is this OK?
                                     var flags = 0
-                                    if (nullable) { flags = flags or 1 }
-                                    if (primaryKey) { flags = flags or 2 }
-                                    @Suppress("MagicNumber")
-                                    if (isIndexed) { flags = flags or 4 }
+                                    if (nullable) { flags = flags or io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_NULLABLE }
+                                    if (primaryKey) { flags = flags or io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_PRIMARY_KEY }
+                                    if (isIndexed) { flags = flags or io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_INDEXED }
                                     putValueArgument(arg++, irInt(flags))
                                 }
                             }

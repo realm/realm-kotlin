@@ -224,7 +224,7 @@ actual object RealmInterop {
         // FIXME Can outcount be less than one?
         return (0..(outCount[0] - 1)).map { i ->
             with(realmc.propertyArray_getitem(properties, i.toInt())) {
-                io.realm.internal.interop.Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)
+                Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)
             }
         }
     }

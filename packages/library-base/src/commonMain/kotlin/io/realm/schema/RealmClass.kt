@@ -16,15 +16,11 @@
 
 package io.realm.schema
 
-interface RealmClass {
+interface RealmClass { // Matches realm_class_info_t except that attributes are also attached here
     val name: String
-    // TODO Not supported yet
-    // val embedded: Boolean
-    // Alternatively as Map<String, RealmProperty>, but would require validation of key/class.name for
-    // mutable schemas
     val properties: Collection<RealmProperty>
-    // Convenience method for quick lookup (internally probably stored in map)
     operator fun get(key: String): RealmProperty?
-    // Derived attributes, can change on updates to properties
-    fun primaryKey(): RealmProperty? // convenience for:  properties.any { it.primaryKey }
+    // If this is never to change we could make it a val, but if using same API for mutable schema
+    // it could actually change
+    fun primaryKey(): RealmProperty? // equivalent to:  properties.any { it.primaryKey }
 }

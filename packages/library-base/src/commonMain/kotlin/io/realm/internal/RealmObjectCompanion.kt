@@ -18,6 +18,8 @@ package io.realm.internal
 
 import io.realm.internal.interop.Property
 import io.realm.internal.interop.Table
+import io.realm.internal.schema.RealmClassImpl
+import io.realm.internal.schema.RealmSchemaImpl
 import kotlin.reflect.KMutableProperty1
 
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
@@ -25,6 +27,6 @@ import kotlin.reflect.KMutableProperty1
 interface RealmObjectCompanion {
     val `$realm$fields`: List<KMutableProperty1<*, *>>?
     val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): Pair<Table, List<Property>>
+    fun `$realm$schema`(): RealmClassImpl
     fun `$realm$newInstance`(): Any
 }

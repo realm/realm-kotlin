@@ -18,13 +18,22 @@ package io.realm.internal.schema
 
 import io.realm.schema.RealmClass
 import io.realm.schema.RealmProperty
+import io.realm.internal.interop.Table
+import io.realm.internal.interop.Property
 
 data class RealmClassImpl(
-    override var name: String,
-    override val properties: List<RealmProperty>
+    // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
+    // avoid unnecessary repeated initializations for realm_schema_new
+    val cinteropTable: Table,
+    val cinteropProperties: List<Property>
     // TODO Embedded object support is not implemented yet
     // override var embedded: Boolean,
 ) : RealmClass {
+
+    override val name: String = cinteropTable.name
+    override val properties: Collection<RealmProperty> = cinteropProperties.map {
+        RealmPropertyImpl.fromCoreProperty(it)
+    }
 
     override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
     override fun primaryKey(): RealmProperty? = properties.firstOrNull { it.primaryKey }

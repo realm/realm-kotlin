@@ -17,9 +17,6 @@
 package io.realm.schema
 
 interface RealmSchema {
-    // Alternatively as Map<String, RealmClass>, but would require validation of key/class.name for
-    // mutable schemas
     val classes: Collection<RealmClass>
-    // Convenience method for quick lookup (internally probably stored in map)
     operator fun get(key: String): RealmClass
 }

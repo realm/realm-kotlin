@@ -94,7 +94,11 @@ open class RealmConfigurationImpl constructor(
 
         RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
 
-        val nativeSchema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })
+        val nativeSchema = RealmInterop.realm_schema_new(
+            mapOfKClassWithCompanion.values.map { it ->
+                it.`$realm$schema`().let { it.cinteropTable to it.cinteropProperties }
+            }
+        )
 
         RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
         RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
