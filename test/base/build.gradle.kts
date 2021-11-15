@@ -21,9 +21,8 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("realm-lint")
+    id("io.realm.kotlin")
 }
-
-apply(plugin = "io.realm.kotlin")
 
 // Common Kotlin configuration
 kotlin {

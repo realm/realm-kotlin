@@ -20,7 +20,7 @@
 
 ### Internal
 * Updated to Gradle 7.2.
-* Updated to Android Gradle Plugin 7.1.0-beta02.
+* Updated to Android Gradle Plugin 7.1.0-beta03.
 * Updated to NDK 23.1.7779620.
 * Updated to Android targetSdk 31.
 * Updated to Android compileSdk 31. 

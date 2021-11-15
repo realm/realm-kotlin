@@ -21,8 +21,9 @@ plugins {
 }
 
 buildscript {
+    extra["ciBuild"] = Realm.ciBuild
     repositories {
-        if (Realm.ciBuild) {
+        if (extra["ciBuild"] as Boolean) {
             maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
         }
     }
@@ -33,13 +34,11 @@ buildscript {
 
 allprojects {
     repositories {
-        if (Realm.ciBuild) {
+        if (rootProject.extra["ciBuild"] as Boolean) {
             maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
         }
         google()
         jcenter()
-        mavenCentral()
-        mavenLocal()
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

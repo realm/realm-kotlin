@@ -22,9 +22,8 @@ plugins {
     id("com.android.library")
     id("realm-lint")
     kotlin("plugin.serialization") version Versions.kotlin
+    id("io.realm.kotlin")
 }
-
-apply(plugin = "io.realm.kotlin")
 
 // Common Kotlin configuration
 kotlin {

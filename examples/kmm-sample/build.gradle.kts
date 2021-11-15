@@ -1,6 +1,7 @@
 buildscript {
+    extra["ciBuild"] = Realm.ciBuild
     repositories {
-        if (Realm.ciBuild) {
+        if (extra["ciBuild"] as Boolean) {
             maven(url = "file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
         }
         google()
@@ -18,7 +19,7 @@ version = Realm.version
 
 allprojects {
     repositories {
-        if (Realm.ciBuild) {
+        if (rootProject.extra["ciBuild"] as Boolean) {
             maven("file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
         }
         google()
