@@ -22,11 +22,11 @@ package io.realm.internal.interop
 //  implement as custom serializer, so that we could transfer the full struct in one bridge crossing.
 data class Property( // Kotlin variant of realm_property_info
     val name: String,
-    val publicName: String = "",
+    val publicName: String? = null,
     val type: PropertyType,
     val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
-    val linkTarget: String = "",
-    val linkOriginPropertyName: String = "",
+    val linkTarget: String? = null,
+    val linkOriginPropertyName: String? = null,
     // FIXME Should be of type PropertyKey, but is currently initialized directly from compiler plugin
     val key: Long,
     val flags: Int

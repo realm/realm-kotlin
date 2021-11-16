@@ -16,10 +16,10 @@
 
 package io.realm.internal.schema
 
+import io.realm.internal.interop.Property
+import io.realm.internal.interop.Table
 import io.realm.schema.RealmClass
 import io.realm.schema.RealmProperty
-import io.realm.internal.interop.Table
-import io.realm.internal.interop.Property
 
 data class RealmClassImpl(
     // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to

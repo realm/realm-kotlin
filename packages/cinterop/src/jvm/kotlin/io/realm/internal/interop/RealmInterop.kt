@@ -226,7 +226,7 @@ actual object RealmInterop {
         if (outCount[0] < 1) {
             error("Invalid schema: Class without properties")
         }
-        return (0..(outCount[0] - 1)).map { i ->
+        return (0 until outCount[0]).map { i ->
             with(realmc.propertyArray_getitem(properties, i.toInt())) {
                 Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)
             }

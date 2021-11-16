@@ -34,8 +34,6 @@ internal data class RealmPropertyImpl(
         name = name,
         type = toCorePropertyType(type.elementType.fieldType),
         collectionType = toCoreCollectionType(type.collectionType),
-        linkTarget = "",
-        linkOriginPropertyName = "",
         key = -1,
         flags = (if (type.elementType.nullable) PropertyFlags.RLM_PROPERTY_NULLABLE else 0)
             or (if (primaryKey) PropertyFlags.RLM_PROPERTY_PRIMARY_KEY else 0)
