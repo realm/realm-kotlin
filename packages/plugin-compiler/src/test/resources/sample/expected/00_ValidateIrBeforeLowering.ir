@@ -1283,282 +1283,282 @@ MODULE_FRAGMENT name:<main>
                 cinteropTable: CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, numComputerProperties: kotlin.Long, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
                   name: CONST String type=kotlin.String value="Sample"
                   primaryKey: CONST String type=kotlin.String value="id"
-                  numProperties: CONST Int type=kotlin.Int value=30
-                  numComputerProperties: CONST Int type=kotlin.Int value=0
-                  key: CONST Int type=kotlin.Int value=-1
+                  numProperties: CONST Long type=kotlin.Long value=30
+                  numComputerProperties: CONST Long type=kotlin.Long value=0
+                  key: CONST Long type=kotlin.Long value=-1
                   flags: CONST Int type=kotlin.Int value=0
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
                   <T>: io.realm.internal.interop.Property
                   elements: VARARG type=kotlin.Array<io.realm.internal.interop.Property> varargElementType=kotlin.collections.List<io.realm.internal.interop.Property>
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="id"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=2
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="stringField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=5
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="byteField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="charField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="shortField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="intField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=5
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="longField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="booleanField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_BOOL' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="floatField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_FLOAT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="doubleField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DOUBLE' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="child"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value="Child"
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="stringListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="byteListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="charListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="shortListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="intListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="longListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="booleanListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_BOOL' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="floatListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_FLOAT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="doubleListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DOUBLE' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="objectListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value="Sample"
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=0
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableStringListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableByteListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableCharListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableShortListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableIntListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableLongListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableBooleanListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_BOOL' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableFloatListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_FLOAT' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="nullableDoubleListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DOUBLE' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.Any
           overridden:
@@ -1867,21 +1867,21 @@ MODULE_FRAGMENT name:<main>
                 cinteropTable: CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, numComputerProperties: kotlin.Long, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
                   name: CONST String type=kotlin.String value="Child"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
-                  numProperties: CONST Int type=kotlin.Int value=1
-                  numComputerProperties: CONST Int type=kotlin.Int value=0
-                  key: CONST Int type=kotlin.Int value=-1
+                  numProperties: CONST Long type=kotlin.Long value=1
+                  numComputerProperties: CONST Long type=kotlin.Long value=0
+                  key: CONST Long type=kotlin.Long value=-1
                   flags: CONST Int type=kotlin.Int value=0
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
                   <T>: io.realm.internal.interop.Property
                   elements: VARARG type=kotlin.Array<io.realm.internal.interop.Property> varargElementType=kotlin.collections.List<io.realm.internal.interop.Property>
-                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String, linkOriginPropertyName: kotlin.String, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
+                    CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Property' type=io.realm.internal.interop.Property origin=null
                       name: CONST String type=kotlin.String value="name"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
-                      key: CONST Int type=kotlin.Int value=-1
+                      key: CONST Long type=kotlin.Long value=-1
                       flags: CONST Int type=kotlin.Int value=1
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Child.Companion) returnType:kotlin.Any
           overridden:
