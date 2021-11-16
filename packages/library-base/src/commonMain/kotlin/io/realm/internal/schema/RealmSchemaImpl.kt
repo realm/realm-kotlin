@@ -16,34 +16,29 @@
 
 package io.realm.internal.schema
 
-import io.realm.internal.interop.Table
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.RealmReference
-import io.realm.schema.MutableRealmClass
-import io.realm.schema.MutableRealmSchema
+import io.realm.internal.interop.RealmInterop
+import io.realm.schema.RealmClass
+import io.realm.schema.RealmSchema
 
-data class RealmSchemaImpl(override val classes: MutableSet<MutableRealmClass>) : MutableRealmSchema {
+data class RealmSchemaImpl(
+    override val classes: Collection<RealmClass>
+) : RealmSchema {
 
-    override fun get(key: String): MutableRealmClass = classes.first { it.name == key }
+    override fun get(key: String): RealmClass = classes.first { it.name == key }
 
     companion object {
         fun fromRealm(realmReference: RealmReference): RealmSchemaImpl {
             val dbPointer = realmReference.dbPointer
-            val realmGetNumClasses = RealmInterop.realm_get_num_classes(dbPointer)
             val classKeys = RealmInterop.realm_get_class_keys(dbPointer)
-            val classes = classKeys.map {
-                val coreClazz: Table = RealmInterop.realm_get_class(dbPointer, it)
-                val coreProperties =
-                    RealmInterop.realm_get_class_properties(dbPointer, it, coreClazz.numProperties)
-                val realmProperties = coreProperties.map {
-                    RealmPropertyImpl.fromCoreProperty(it)
+            return RealmSchemaImpl(
+                classKeys.map {
+                    val table = RealmInterop.realm_get_class(dbPointer, it)
+                    val properties =
+                        RealmInterop.realm_get_class_properties(dbPointer, it, table.numProperties)
+                    RealmClassImpl(table, properties)
                 }
-                with(coreClazz) {
-                    RealmClassImpl(name, false, realmProperties.toMutableSet())
-                }
-            }
-
-            return RealmSchemaImpl(classes.toMutableSet())
+            )
         }
     }
 }

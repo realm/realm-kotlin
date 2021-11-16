@@ -29,16 +29,12 @@ import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.FqNames.REALM_REFERENCE
 import io.realm.compiler.FqNames.TABLE
-import io.realm.compiler.Names.CLASS_FLAG_NORMAL
 import io.realm.compiler.Names.MEDIATOR
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
-import io.realm.compiler.Names.PROPERTY_FLAG_INDEX
-import io.realm.compiler.Names.PROPERTY_FLAG_NULLABLE
-import io.realm.compiler.Names.PROPERTY_FLAG_PRIMARY_KEY
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
@@ -62,6 +58,7 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irInt
+import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
@@ -70,22 +67,17 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
-import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetObjectValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
-import org.jetbrains.kotlin.ir.expressions.putArgument
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
-import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
@@ -137,8 +129,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
-    val pairClass = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_PAIR)
-    val pairCtor = pluginContext.lookupConstructorInClass(FqNames.KOTLIN_PAIR) {
+    val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
+    val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
     }
 
@@ -249,21 +241,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val function =
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
-        val schemaType = pluginContext.lookupClassOrThrow(FqNames.KOTLIN_PAIR)
-            .typeWith(table.defaultType, listIrClass.typeWith(propertyClass.defaultType))
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(
-                // FIXME Abstract buildPair into Utils if needed in final solution, also used in RealmSchemaLoweringExtension
                 IrConstructorCallImpl(
                     startOffset, endOffset,
-                    schemaType,
-                    pairCtor,
-                    typeArgumentsCount = 2,
+                    realmClassImpl.defaultType,
+                    realmClassCtor,
+                    typeArgumentsCount = 0,
                     constructorTypeArgumentsCount = 0,
                     valueArgumentsCount = 2,
                 ).apply {
-                    putTypeArgument(0, table.defaultType)
-                    putTypeArgument(1, listIrClass.typeWith(propertyClass.defaultType))
                     putValueArgument(
                         0,
                         IrConstructorCallImpl(
@@ -290,14 +277,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 }
                             )
                             // num properties
-                            putValueArgument(arg++, irInt(fields.size))
+                            putValueArgument(arg++, irLong(fields.size.toLong()))
                             // num computer properties
-                            putValueArgument(arg++, irInt(0))
+                            putValueArgument(arg++, irLong(0))
                             // key
                             // FIXME Should be invalid class key
-                            putValueArgument(arg++, irInt(-1))
+                            putValueArgument(arg++, irLong(-1L))
                             // Flags
-                            // FIXME Should be actual constants
+                            // TODO Should be actual constants, but we only support NORMAL until we
+                            //  implemented support for embedded objects
                             putValueArgument(arg++, irInt(0))
                         }
                     )
@@ -305,145 +293,154 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         1,
                         buildListOf(
                             pluginContext, startOffset, endOffset, propertyClass.defaultType,
-                        fields.map { entry ->
-                            val value = entry.value
-                            // Extract type based on whether the field is a:
-                            // 1 - primitive type, in which case it is extracted as is
-                            // 2 - collection type, in which case the collection type(s)
-                            //     specified in value.genericTypes should be used as type
-                            val type = when (val primitiveType = getType(value.propertyType)) {
-                                null -> // Primitive type is null for collections
-                                    when (value.collectionType) {
-                                        CollectionType.LIST ->
-                                            // Extract generic type as mentioned
-                                            getType(getListType(value.coreGenericTypes))
-                                                ?: error("Unknown type ${value.propertyType} - should be a valid type for lists.")
-                                        CollectionType.SET ->
-                                            error("Sets not available yet.")
-                                        CollectionType.DICTIONARY ->
-                                            error("Dictionaries not available yet.")
-                                        else ->
-                                            error("Unknown type ${value.propertyType}.")
-                                    }
-                                else -> // Primitive type is non-null
-                                    primitiveType
-                            }
-
-                            val objectType = propertyTypes.firstOrNull {
-                                it.name == PROPERTY_TYPE_OBJECT
-                            } ?: error("Unknown type ${value.propertyType}")
-
-                            val property = value.declaration
-                            val backingField = property.backingField
-                                ?: error("Property without backing field or type.")
-                            // Nullability applies to the generic type in collections
-                            val nullable = if (value.collectionType == CollectionType.NONE) {
-                                backingField.type.isNullable()
-                            } else {
-                                value.coreGenericTypes?.get(0)?.nullable
-                                    ?: error("Missing generic type while processing a collection field.")
-                            }
-                            val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                            val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
-
-                            val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
-                                setOf(
-                                    byteType,
-                                    charType,
-                                    shortType,
-                                    intType,
-                                    longType,
-                                    stringType
-                                ).map { it.classifierOrFail }
-                            }
-                            if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
-                                logError(
-                                    "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
-                                )
-                            }
-                            val indexableTypes = with(pluginContext.irBuiltIns) {
-                                setOf(byteType, charType, shortType, intType, longType, stringType).map { it.classifierOrFail }
-                            }
-                            if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
-                                logError(
-                                    "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
-                                )
-                            }
-
-                            IrConstructorCallImpl(
-                                startOffset,
-                                endOffset,
-                                type = propertyClass.defaultType,
-                                symbol = propertyConstructor.symbol,
-                                constructorTypeArgumentsCount = 0,
-                                typeArgumentsCount = 0,
-                                valueArgumentsCount = 8
-                            ).apply {
-                                var arg = 0
-                                // Name
-                                putValueArgument(arg++, irString(entry.key))
-                                // Public name
-                                putValueArgument(arg++, irString(""))
-                                // Type
-                                putValueArgument(
-                                    arg++,
-                                    IrGetEnumValueImpl(
-                                        startOffset = UNDEFINED_OFFSET,
-                                        endOffset = UNDEFINED_OFFSET,
-                                        type = propertyType.defaultType,
-                                        symbol = type.symbol
-                                    )
-                                )
-                                // Collection type: remember to specify it correctly here - the
-                                // type of the contents itself is specified as "type" above!
-                                val collectionTypeSymbol = when (value.collectionType) {
-                                    CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
-                                    CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
-                                    else ->
-                                        error("Unsupported collection type '${value.collectionType}' for field ${entry.key}")
-                                }
-                                putValueArgument(
-                                    arg++,
-                                    IrGetEnumValueImpl(
-                                        startOffset = UNDEFINED_OFFSET,
-                                        endOffset = UNDEFINED_OFFSET,
-                                        type = collectionType.defaultType,
-                                        symbol = collectionTypes.first {
-                                            it.name == collectionTypeSymbol
-                                        }.symbol
-                                    )
-                                )
-                                // Link target
-                                putValueArgument(
-                                    arg++,
-                                    if (type == objectType) {
-                                        // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                        val linkTargetType = when (collectionTypeSymbol) {
-                                            PROPERTY_COLLECTION_TYPE_NONE ->
-                                                backingField.type
-                                            PROPERTY_COLLECTION_TYPE_LIST ->
-                                                (backingField.type as IrSimpleType).arguments[0] as IrSimpleType
+                            fields.map { entry ->
+                                val value = entry.value
+                                // Extract type based on whether the field is a:
+                                // 1 - primitive type, in which case it is extracted as is
+                                // 2 - collection type, in which case the collection type(s)
+                                //     specified in value.genericTypes should be used as type
+                                val type = when (val primitiveType = getType(value.propertyType)) {
+                                    null -> // Primitive type is null for collections
+                                        when (value.collectionType) {
+                                            CollectionType.LIST ->
+                                                // Extract generic type as mentioned
+                                                getType(getListType(value.coreGenericTypes))
+                                                    ?: error("Unknown type ${value.propertyType} - should be a valid type for lists.")
+                                            CollectionType.SET ->
+                                                error("Sets not available yet.")
+                                            CollectionType.DICTIONARY ->
+                                                error("Dictionaries not available yet.")
                                             else ->
-                                                error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                                error("Unknown type ${value.propertyType}.")
                                         }
-                                        irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
-                                    } else {
-                                        irString("")
+                                    else -> // Primitive type is non-null
+                                        primitiveType
+                                }
+
+                                val objectType = propertyTypes.firstOrNull {
+                                    it.name == PROPERTY_TYPE_OBJECT
+                                } ?: error("Unknown type ${value.propertyType}")
+
+                                val property = value.declaration
+                                val backingField = property.backingField
+                                    ?: error("Property without backing field or type.")
+                                // Nullability applies to the generic type in collections
+                                val nullable = if (value.collectionType == CollectionType.NONE) {
+                                    backingField.type.isNullable()
+                                } else {
+                                    value.coreGenericTypes?.get(0)?.nullable
+                                        ?: error("Missing generic type while processing a collection field.")
+                                }
+                                val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
+                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
+
+                                val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
+                                    setOf(
+                                        byteType,
+                                        charType,
+                                        shortType,
+                                        intType,
+                                        longType,
+                                        stringType
+                                    ).map { it.classifierOrFail }
+                                }
+                                if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
+                                    logError(
+                                        "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                    )
+                                }
+                                val indexableTypes = with(pluginContext.irBuiltIns) {
+                                    setOf(
+                                        byteType,
+                                        charType,
+                                        shortType,
+                                        intType,
+                                        longType,
+                                        stringType
+                                    ).map { it.classifierOrFail }
+                                }
+                                if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
+                                    logError(
+                                        "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                    )
+                                }
+
+                                IrConstructorCallImpl(
+                                    startOffset,
+                                    endOffset,
+                                    type = propertyClass.defaultType,
+                                    symbol = propertyConstructor.symbol,
+                                    constructorTypeArgumentsCount = 0,
+                                    typeArgumentsCount = 0,
+                                    valueArgumentsCount = 8
+                                ).apply {
+                                    var arg = 0
+                                    // Name
+                                    putValueArgument(arg++, irString(entry.key))
+                                    // Public name
+                                    putValueArgument(arg++, irString(""))
+                                    // Type
+                                    putValueArgument(
+                                        arg++,
+                                        IrGetEnumValueImpl(
+                                            startOffset = UNDEFINED_OFFSET,
+                                            endOffset = UNDEFINED_OFFSET,
+                                            type = propertyType.defaultType,
+                                            symbol = type.symbol
+                                        )
+                                    )
+                                    // Collection type: remember to specify it correctly here - the
+                                    // type of the contents itself is specified as "type" above!
+                                    val collectionTypeSymbol = when (value.collectionType) {
+                                        CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
+                                        CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
+                                        else ->
+                                            error("Unsupported collection type '${value.collectionType}' for field ${entry.key}")
                                     }
-                                )
-                                // Link property name
-                                putValueArgument(arg++, irString(""))
-                                // key
-                                putValueArgument(arg++, irInt(-1))
-                                // flags
-                                // FIXME Should not use constants directly
-                                var flags = 0
-                                if (nullable) { flags = flags or 1 }
-                                if (primaryKey) { flags = flags or 2 }
-                                if (isIndexed) { flags = flags or 4 }
-                                putValueArgument(arg++, irInt(flags))
+                                    putValueArgument(
+                                        arg++,
+                                        IrGetEnumValueImpl(
+                                            startOffset = UNDEFINED_OFFSET,
+                                            endOffset = UNDEFINED_OFFSET,
+                                            type = collectionType.defaultType,
+                                            symbol = collectionTypes.first {
+                                                it.name == collectionTypeSymbol
+                                            }.symbol
+                                        )
+                                    )
+                                    // Link target
+                                    putValueArgument(
+                                        arg++,
+                                        if (type == objectType) {
+                                            // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                            val linkTargetType = when (collectionTypeSymbol) {
+                                                PROPERTY_COLLECTION_TYPE_NONE ->
+                                                    backingField.type
+                                                PROPERTY_COLLECTION_TYPE_LIST ->
+                                                    (backingField.type as IrSimpleType).arguments[0] as IrSimpleType
+                                                else ->
+                                                    error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                            }
+                                            irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
+                                        } else {
+                                            irString("")
+                                        }
+                                    )
+                                    // Link property name
+                                    putValueArgument(arg++, irString(""))
+                                    // key
+                                    putValueArgument(arg++, irLong(-1))
+                                    // flags
+                                    // FIXME This is embedding compile time constants. Is this OK?
+                                    var flags = 0
+                                    if (nullable) { flags = flags or 1 }
+                                    if (primaryKey) { flags = flags or 2 }
+                                    @Suppress("MagicNumber")
+                                    if (isIndexed) { flags = flags or 4 }
+                                    putValueArgument(arg++, irInt(flags))
+                                }
                             }
-                        })
+                        )
                     )
                 }
             )

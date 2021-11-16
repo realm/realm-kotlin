@@ -28,18 +28,19 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
         FUN name:$realm$schema visibility:public modality:OPEN <> ($this:schema.input.A.Companion) returnType:kotlin.Any
           overridden:
-            public abstract fun $realm$schema (): io.realm.internal.interop.Table declared in io.realm.internal.RealmObjectCompanion
+            public abstract fun $realm$schema (): io.realm.internal.schema.RealmClassImpl declared in io.realm.internal.RealmObjectCompanion
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.A.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.internal.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
-                name: CONST String type=kotlin.String value="A"
-                primaryKey: CONST Null type=kotlin.Nothing? value=null
-                flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.internal.interop.ClassFlag> origin=null
-                  <T>: io.realm.internal.interop.ClassFlag
-                  elements: VARARG type=kotlin.Array<io.realm.internal.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.internal.interop.ClassFlag>
-                    GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_CLASS_NORMAL' type=io.realm.internal.interop.ClassFlag
-                properties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
+                cinteropTable: CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, numComputerProperties: kotlin.Long, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
+                  name: CONST String type=kotlin.String value="A"
+                  primaryKey: CONST Null type=kotlin.Nothing? value=null
+                  numProperties: CONST Long type=kotlin.Long value=0
+                  numComputerProperties: CONST Long type=kotlin.Long value=0
+                  key: CONST Long type=kotlin.Long value=-1
+                  flags: CONST Int type=kotlin.Int value=0
+                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
                   <T>: io.realm.internal.interop.Property
                   elements: VARARG type=kotlin.Array<io.realm.internal.interop.Property> varargElementType=kotlin.collections.List<io.realm.internal.interop.Property>
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:schema.input.A.Companion) returnType:kotlin.Any
@@ -266,18 +267,19 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
         FUN name:$realm$schema visibility:public modality:OPEN <> ($this:schema.input.B.Companion) returnType:kotlin.Any
           overridden:
-            public abstract fun $realm$schema (): io.realm.internal.interop.Table declared in io.realm.internal.RealmObjectCompanion
+            public abstract fun $realm$schema (): io.realm.internal.schema.RealmClassImpl declared in io.realm.internal.RealmObjectCompanion
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.B.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.internal.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
-                name: CONST String type=kotlin.String value="B"
-                primaryKey: CONST Null type=kotlin.Nothing? value=null
-                flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.internal.interop.ClassFlag> origin=null
-                  <T>: io.realm.internal.interop.ClassFlag
-                  elements: VARARG type=kotlin.Array<io.realm.internal.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.internal.interop.ClassFlag>
-                    GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_CLASS_NORMAL' type=io.realm.internal.interop.ClassFlag
-                properties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
+                cinteropTable: CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, numComputerProperties: kotlin.Long, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
+                  name: CONST String type=kotlin.String value="B"
+                  primaryKey: CONST Null type=kotlin.Nothing? value=null
+                  numProperties: CONST Long type=kotlin.Long value=0
+                  numComputerProperties: CONST Long type=kotlin.Long value=0
+                  key: CONST Long type=kotlin.Long value=-1
+                  flags: CONST Int type=kotlin.Int value=0
+                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
                   <T>: io.realm.internal.interop.Property
                   elements: VARARG type=kotlin.Array<io.realm.internal.interop.Property> varargElementType=kotlin.collections.List<io.realm.internal.interop.Property>
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:schema.input.B.Companion) returnType:kotlin.Any
@@ -504,18 +506,19 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
         FUN name:$realm$schema visibility:public modality:OPEN <> ($this:schema.input.C.Companion) returnType:kotlin.Any
           overridden:
-            public abstract fun $realm$schema (): io.realm.internal.interop.Table declared in io.realm.internal.RealmObjectCompanion
+            public abstract fun $realm$schema (): io.realm.internal.schema.RealmClassImpl declared in io.realm.internal.RealmObjectCompanion
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.C.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, flags: kotlin.collections.Set<io.realm.internal.interop.ClassFlag>, properties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
-                name: CONST String type=kotlin.String value="C"
-                primaryKey: CONST Null type=kotlin.Nothing? value=null
-                flags: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<io.realm.internal.interop.ClassFlag> origin=null
-                  <T>: io.realm.internal.interop.ClassFlag
-                  elements: VARARG type=kotlin.Array<io.realm.internal.interop.ClassFlag> varargElementType=kotlin.collections.Set<io.realm.internal.interop.ClassFlag>
-                    GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_CLASS_NORMAL' type=io.realm.internal.interop.ClassFlag
-                properties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
+                cinteropTable: CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, numComputerProperties: kotlin.Long, key: kotlin.Long, flags: kotlin.Int) [primary] declared in io.realm.internal.interop.Table' type=io.realm.internal.interop.Table origin=null
+                  name: CONST String type=kotlin.String value="C"
+                  primaryKey: CONST Null type=kotlin.Nothing? value=null
+                  numProperties: CONST Long type=kotlin.Long value=0
+                  numComputerProperties: CONST Long type=kotlin.Long value=0
+                  key: CONST Long type=kotlin.Long value=-1
+                  flags: CONST Int type=kotlin.Int value=0
+                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.Property> origin=null
                   <T>: io.realm.internal.interop.Property
                   elements: VARARG type=kotlin.Array<io.realm.internal.interop.Property> varargElementType=kotlin.collections.List<io.realm.internal.interop.Property>
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:schema.input.C.Companion) returnType:kotlin.Any

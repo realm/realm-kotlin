@@ -16,19 +16,25 @@
 
 package io.realm.internal.schema
 
-import io.realm.schema.MutableRealmClass
-import io.realm.schema.MutableRealmProperty
+import io.realm.internal.interop.Property
+import io.realm.internal.interop.Table
 import io.realm.schema.RealmClass
 import io.realm.schema.RealmProperty
 
 data class RealmClassImpl(
-    override var name: String,
-    override var embedded: Boolean,
-    override val properties: MutableSet<MutableRealmProperty>
-) : MutableRealmClass {
+    // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
+    // avoid unnecessary repeated initializations for realm_schema_new
+    val cinteropTable: Table,
+    val cinteropProperties: List<Property>
+) : RealmClass {
 
-    override fun get(key: String): MutableRealmProperty? = properties.firstOrNull { it.name == key }
-    override fun primaryKey(): MutableRealmProperty? = properties.firstOrNull { it.primaryKey }
+    override val name: String = cinteropTable.name
+    override val properties: Collection<RealmProperty> = cinteropProperties.map {
+        RealmPropertyImpl.fromCoreProperty(it)
+    }
+
+    override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
+    override fun primaryKey(): RealmProperty? = properties.firstOrNull { it.primaryKey }
 
     // FIXME WIP Just to try out migration
     fun toCoreClass(): io.realm.internal.interop.Table = io.realm.internal.interop.Table(

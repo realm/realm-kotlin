@@ -23,6 +23,7 @@ data class Table(
     val primaryKey: String?,
     val numProperties: Long,
     val numComputerProperties: Long,
-    val key: Long, // ClassKey, but is currently initialized directly from compiler plugin
+    // FIXME Should be of type ClassKey, but is currently initialized directly from compiler plugin
+    val key: Long,
     val flags: Int
 )

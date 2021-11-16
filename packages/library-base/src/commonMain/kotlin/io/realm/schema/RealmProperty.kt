@@ -16,17 +16,11 @@
 
 package io.realm.schema
 
-import kotlin.reflect.KType
-
 interface RealmProperty { // Matches realm_property_info_t
-    val name: String // val publicName: String or should we just support mappings already?
-    // Type holds, collection, field type and nullability
-    // Maybe make this a data class, so it is easy to update as a single operation here
-    // Maybe nullability should be exposed as separate property as it is flip-able while it is not
-    // possible to update the types
+    val name: String
     val type: RealmPropertyType
-    val index: Boolean
     val primaryKey: Boolean
+    val index: Boolean
     // Derived attributes, maybe expose as top level attribute instead of hiding it inside type?
     val nullable: Boolean get() = type.elementType.nullable
 }

@@ -72,6 +72,7 @@ internal object FqNames {
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
+    val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")
     val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
     val REALM_SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
     val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")

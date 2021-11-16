@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.test.shared;
+package io.realm.test.shared
 
 import io.realm.BaseRealm
 import io.realm.Realm
@@ -24,12 +24,18 @@ import io.realm.schema.MutableRealmProperty
 import io.realm.schema.CollectionType
 import io.realm.schema.ElementType
 import io.realm.RealmConfiguration
-import io.realm.entities.link.Child
-import io.realm.entities.link.Parent
+import io.realm.entities.Sample
+import io.realm.entities.schema.SchemaVariations
+import io.realm.schema.CollectionType
+import io.realm.schema.ElementType
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 public class RealmSchemaTests {
 
@@ -39,8 +45,9 @@ public class RealmSchemaTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
-            .path("$tmpDir/default.realm").build()
+        val configuration =
+            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
+                .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
 
@@ -53,8 +60,128 @@ public class RealmSchemaTests {
     }
 
     @Test
-    fun schemaTest() {
+    fun realmClass() {
         val schema = realm.schema()
+
+        val schemaVariationsName = "SchemaVariations"
+        val schemaVariationsDescriptor = schema[schemaVariationsName]
+        assertEquals(schemaVariationsName, schemaVariationsDescriptor.name)
+        assertEquals("string", schemaVariationsDescriptor.primaryKey()?.name)
+
+        val sampleName = "Sample"
+        val sampleDescriptor = schema[sampleName]
+        assertEquals(sampleName, sampleDescriptor.name)
+        assertNull(sampleDescriptor.primaryKey())
+    }
+
+    @Test
+    fun realmProperty() {
+        val schema = realm.schema()
+
+        val schemaVariationsName = "SchemaVariations"
+        val schemaVariationsDescriptor = schema[schemaVariationsName]
+
+        schemaVariationsDescriptor["string"]!!.run {
+            assertEquals("string", name)
+            type.run {
+                assertEquals(CollectionType.NONE, collectionType)
+                elementType.run {
+                    assertEquals(ElementType.FieldType.STRING, fieldType)
+                    assertFalse(nullable)
+                }
+                assertTrue(primaryKey)
+                assertFalse(index)
+                assertFalse(nullable)
+            }
+        }
+        schemaVariationsDescriptor["nullableString"]!!.run {
+            assertEquals("nullableString", name)
+            type.run {
+                assertEquals(CollectionType.NONE, collectionType)
+                elementType.run {
+                    assertEquals(ElementType.FieldType.STRING, fieldType)
+                    assertTrue(nullable)
+                }
+                assertFalse(primaryKey)
+                assertTrue(index)
+                assertTrue(nullable)
+            }
+        }
+        schemaVariationsDescriptor["stringList"]!!.run {
+            assertEquals("stringList", name)
+            type.run {
+                assertEquals(CollectionType.LIST, collectionType)
+                elementType.run {
+                    assertEquals(ElementType.FieldType.STRING, fieldType)
+                    assertFalse(nullable)
+                }
+                assertFalse(primaryKey)
+                assertFalse(index)
+                assertFalse(nullable)
+            }
+        }
+    }
+
+    @Test
+    @Suppress("NestedBlockDepth")
+    fun schema_optionCoverage() {
+        // Class property options
+        val primaryKeyOptionsClass = mutableSetOf(false, true)
+        // TODO Embedded object is not supported yet
+        // val embeddedOptions = setOf(false, true)
+
+        // Property options
+        val collectionTypeNullability =
+            CollectionType.values().map { it to mutableSetOf(false, true) }.toMap().toMutableMap()
+        val fieldTypes = ElementType.FieldType.values().toMutableSet()
+        val indexOptions = mutableSetOf(false, true)
+        val primaryKeyOptionProperty = mutableSetOf(false, true)
+
+        val schema = realm.schema()
+
+        // Verify class descriptors
+        for (classDescriptor in schema.classes) {
+            (classDescriptor.primaryKey() == null).let { primaryKeyOptionsClass.remove(it) }
+        }
+        assertEquals(2, schema.classes.size)
+
+        // Verify properties of SchemaVariations
+        val classDescriptor = schema["SchemaVariations"]
+        assertEquals("SchemaVariations", classDescriptor.name)
+        for (property in classDescriptor.properties) {
+            property.run {
+                type.run {
+                    collectionType.let {
+                        collectionTypeNullability.getValue(it).remove(elementType.nullable)
+                    }
+                    elementType.run {
+                        fieldType.let { fieldTypes.remove(it) }
+                        nullable.let {
+                            assertEquals(it, property.nullable)
+                        }
+                    }
+                }
+                primaryKey.let { primaryKeyOptionProperty.remove(it) }
+                index.let { indexOptions.remove(it) }
+                if (primaryKey) {
+                    assertEquals(classDescriptor.primaryKey(), this)
+                }
+            }
+        }
+
+        // Assert class options exhaustiveness
+        assertTrue(
+            primaryKeyOptionsClass.isEmpty(),
+            "Primary key options not exhausted: $primaryKeyOptionsClass"
+        )
+        // Assert property options exhaustiveness
+        assertTrue(collectionTypeNullability.none { (_, v) -> v.isNotEmpty() }, "Collection types not exhausted: $collectionTypeNullability")
+        assertTrue(fieldTypes.isEmpty(), "Field types not exhausted: $fieldTypes")
+        assertTrue(indexOptions.isEmpty(), "Index options not exhausted: $indexOptions")
+        assertTrue(
+            primaryKeyOptionProperty.isEmpty(),
+            "Primary key options for properties not exhausted: $primaryKeyOptionProperty"
+        )
     }
 
     @Test

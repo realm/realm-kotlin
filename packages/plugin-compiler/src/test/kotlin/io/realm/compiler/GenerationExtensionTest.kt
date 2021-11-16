@@ -20,7 +20,6 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.interop.ClassFlag
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyType
 import org.junit.Test
@@ -178,14 +177,16 @@ class GenerationExtensionTest {
 
         assertTrue(companionObject is RealmObjectCompanion)
 
-        val table = companionObject.`$realm$schema`()
+        val (table, properties) = companionObject.`$realm$schema`()
         val realmFields = companionObject.`$realm$fields`!!
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
-        assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
-        assertEquals(realmFields.count(), table.properties.size)
-        val properties = mapOf(
+        // FIXME Technically this should check that the class is neither embedded or anything else
+        //  special, but as we don't support it yet there is nothing to check
+        // assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
+        assertEquals(realmFields.count(), properties.size)
+        val expectedProperties = mapOf(
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
 
@@ -226,16 +227,16 @@ class GenerationExtensionTest {
             "nullableFloatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE
         )
-        assertEquals(properties.size, table.properties.size)
-        table.properties.map { property ->
+        assertEquals(expectedProperties.size, properties.size)
+        properties.map { property ->
             val expectedType =
-                properties[property.name] ?: error("Property not found: ${property.name}")
+                expectedProperties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
 
         val fields: List<KMutableProperty1<*, *>>? =
             (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
-        assertEquals(properties.size, fields?.size)
+        assertEquals(expectedProperties.size, fields?.size)
 
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)
