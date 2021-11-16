@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irInt
+import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
@@ -276,12 +277,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 }
                             )
                             // num properties
-                            putValueArgument(arg++, irInt(fields.size))
+                            putValueArgument(arg++, irLong(fields.size.toLong()))
                             // num computer properties
-                            putValueArgument(arg++, irInt(0))
+                            putValueArgument(arg++, irLong(0))
                             // key
                             // FIXME Should be invalid class key
-                            putValueArgument(arg++, irInt(-1))
+                            putValueArgument(arg++, irLong(-1L))
                             // Flags
                             // TODO Should be actual constants, but we only support NORMAL until we
                             //  implemented support for embedded objects
@@ -428,13 +429,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // Link property name
                                     putValueArgument(arg++, irString(""))
                                     // key
-                                    putValueArgument(arg++, irInt(-1))
+                                    putValueArgument(arg++, irLong(-1))
                                     // flags
                                     // FIXME This is embedding compile time constants. Is this OK?
                                     var flags = 0
-                                    if (nullable) { flags = flags or io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_NULLABLE }
-                                    if (primaryKey) { flags = flags or io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_PRIMARY_KEY }
-                                    if (isIndexed) { flags = flags or io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_INDEXED }
+                                    if (nullable) { flags = flags or 1 }
+                                    if (primaryKey) { flags = flags or 2 }
+                                    @Suppress("MagicNumber")
+                                    if (isIndexed) { flags = flags or 4 }
                                     putValueArgument(arg++, irInt(flags))
                                 }
                             }
