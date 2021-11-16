@@ -17,7 +17,7 @@
 package io.realm.schema
 
 import io.realm.BaseRealm
-import io.realm.DynamicRealm
+import io.realm.MutableRealm
 
 //
 ///**
@@ -74,5 +74,5 @@ fun interface RealmMigration {
 //     * @param oldVersion the schema version of the Realm at the start of the migration.
 //     * @param newVersion the schema version of the Realm after executing the migration.
 //     */
-    fun migrate(old: DynamicRealm?, new: DynamicRealm?)// , oldVersion: Long, newVersion: Long)
+    fun migrate(old: BaseRealm?, new: MutableRealm?)// , oldVersion: Long, newVersion: Long)
 }

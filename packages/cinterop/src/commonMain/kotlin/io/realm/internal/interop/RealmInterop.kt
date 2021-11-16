@@ -86,10 +86,7 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): ClassKey
     fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table
     fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<Property>
-    // FIXME TMP-FIX Added version to prevent error from core as realm_update_schema defaults to 0 yielding:
-    //  [18]: Provided schema version 0 is less than last set version 1.
-    //  This requires updating realm_update_schema in core to take the version too
-    fun realm_update_schema(realm: NativePointer, schema: NativePointer, version: Long)
+    fun realm_update_schema(realm: NativePointer, schema: NativePointer)
 
     fun realm_release(p: NativePointer)
 

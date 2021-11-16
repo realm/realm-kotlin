@@ -237,8 +237,8 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer, version: Long) {
-        realmc.realm_update_schema(realm.cptr(), schema.cptr(), version)
+    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer) {
+        realmc.realm_update_schema(realm.cptr(), schema.cptr())
     }
 
     actual fun realm_release(p: NativePointer) {

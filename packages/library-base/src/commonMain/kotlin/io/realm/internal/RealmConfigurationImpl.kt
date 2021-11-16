@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.DynamicRealm
 import io.realm.LogConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
@@ -90,7 +89,7 @@ open class RealmConfigurationImpl(
 
         when (deleteRealmIfMigrationNeeded) {
             true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
-            false -> SchemaMode.RLM_SCHEMA_MODE_MANUAL
+            false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
         }.also { schemaMode ->
             RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
         }
@@ -107,14 +106,12 @@ open class RealmConfigurationImpl(
         RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
 
         RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm, newRealm, schema ->
-            // FIXME Don't really know the convention here. There is no C-API test to replicate:
-            //  Triggering realm_update_schema in migration yields
-            //    [5]: Wrong transactional state (no active transaction, wrong type of transaction, or transaction already in progress)
-            //  Maybe updating the wrong realm, or something like that, but haven't investigated
-            val old = DynamicRealmImpl(this@RealmConfigurationImpl, oldRealm)
+            val old = object: BaseRealmImpl(this@RealmConfigurationImpl, oldRealm) { }
             // If we don't start a read, then we cannot det the version
             RealmInterop.realm_begin_read(oldRealm)
-            val new = DynamicRealmImpl(this@RealmConfigurationImpl, newRealm)
+            // FIXME Might have to split a new base of MutableRealm to act as live realm without
+            //  ability to register for notifications ... maybe already safe but needs to verify
+            val new = MutableRealmImpl(this@RealmConfigurationImpl, newRealm as NativePointer)
             migration!!.migrate(old, new)
             true
         }

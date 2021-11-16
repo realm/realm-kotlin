@@ -19,6 +19,7 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.RealmObject
+import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.isFrozen
@@ -44,6 +45,11 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
             }
         }
     }
+
+    internal constructor(
+        configuration: InternalRealmConfiguration,
+        dbPointer: NativePointer
+    ) : super(configuration, dbPointer)
 
     /**
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
