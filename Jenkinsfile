@@ -202,13 +202,10 @@ pipeline {
                         }
                     }
                 }
-                stage('Build Android on Java 8') {
+                stage('Build Android on minimum versions') {
                     when { expression { runTests } }
-                    environment {
-                        JAVA_HOME="${JAVA_8}"
-                    }
                     steps {
-                        runBuildAndroidApp()
+                        runBuildMinAndroidApp()
                     }
                 }
                 stage('Publish SNAPSHOT to Maven Central') {
@@ -309,7 +306,7 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} publishAllPublicationsToBuildFolderRepository --info --stacktrace --no-daemon
                """
         }
     }
@@ -402,6 +399,13 @@ def runCompilerPluginTest() {
             cd packages
             ./gradlew --no-daemon :plugin-compiler:test --info --stacktrace
         """
+        // See https://stackoverflow.com/a/51206394/1389357
+        script {
+            def testResults = findFiles(glob: "packages/plugin-compiler/build/**/TEST-*.xml")
+            for(xml in testResults) {
+                touch xml.getPath()
+            }
+        }
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
 }
@@ -515,6 +519,13 @@ def testAndCollect(dir, task) {
                 popd
             """
         } finally {
+            // See https://stackoverflow.com/a/51206394/1389357
+            script {
+                def testResults = findFiles(glob: "$dir/**/build/**/TEST-*.xml")
+                for(xml in testResults) {
+                    touch xml.getPath()
+                }
+            }
             step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
         }
     }
@@ -535,12 +546,12 @@ def runMonkey() {
     }
 }
 
-def runBuildAndroidApp() {
+def runBuildMinAndroidApp() {
     try {
         sh """
-            cd examples/kmm-sample
+            cd examples/min-android-sample
             java -version
-            ./gradlew :androidApp:assembleDebug --stacktrace --no-daemon
+            ./gradlew assembleDebug --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'

@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-includeBuild("../packages")
-
-include("base")
-include("sync")
+// For local development, we use composite builds.
+// For CI buils, the packages are expected to have
+// been built and deployed to a local filesystem
+// maven repo.
+if (System.getenv("JENKINS_HOME") == null) {
+    includeBuild("../packages")
+}
 
 pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
     }
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.namespace == "com.android") {
-                useModule("com.android.tools.build:gradle:4.1.0")
-            }
-        }
-    }
 }
+
+include("base")
+include("sync")

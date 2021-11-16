@@ -72,6 +72,18 @@ class RealmPublishPlugin : Plugin<Project> {
         configureSignedBuild(signBuild, this)
     }
 
+    private fun configureCustomRepository(project: Project) {
+        project.extensions.getByType<PublishingExtension>().apply {
+            repositories {
+                // Configure a local maven repository only used by this build.
+                maven {
+                    name = "BuildFolder"
+                    url = URI("file://${project.rootProject.buildDir.absolutePath}/m2-buildrepo")
+                }
+            }
+        }
+    }
+
     private fun configureSignedBuild(signBuild: Boolean, project: Project) {
         // The nexus publisher plugin can only be applied to top-level projects.
         // See https://github.com/gradle-nexus/publish-plugin/issues/81
@@ -82,6 +94,7 @@ class RealmPublishPlugin : Plugin<Project> {
             configureRootProject(project)
         } else {
             configureSubProject(project, signBuild)
+            configureCustomRepository(project)
         }
     }
 
