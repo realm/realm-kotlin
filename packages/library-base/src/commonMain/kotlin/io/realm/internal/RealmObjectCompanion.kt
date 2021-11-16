@@ -16,10 +16,7 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.Property
-import io.realm.internal.interop.Table
 import io.realm.internal.schema.RealmClassImpl
-import io.realm.internal.schema.RealmSchemaImpl
 import kotlin.reflect.KMutableProperty1
 
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
