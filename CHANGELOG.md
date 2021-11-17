@@ -29,6 +29,8 @@
 * Updated to Android Build Tools 31.0.0.
 * Updated to Ktlint version 0.43.0.
 * Updated to Ktlint Gradle Plugin 10.2.0.
+* Updated to Kotlin Serialization 1.3.0.
+* Updated to Detekt 1.19.0-RC1.
 * Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
 
 
