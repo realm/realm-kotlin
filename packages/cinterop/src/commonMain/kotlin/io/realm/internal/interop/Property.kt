@@ -16,6 +16,10 @@
 
 package io.realm.internal.interop
 
+import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_INDEXED
+import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_NULLABLE
+import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_PRIMARY_KEY
+
 @Suppress("LongParameterList")
 // TODO OPTIMIZE We could hold on to the native allocated memory and only read values lazily
 //  This would avoid transferring anything not need. A better option would probably be to
@@ -27,11 +31,38 @@ data class Property( // Kotlin variant of realm_property_info
     val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
     val linkTarget: String? = null,
     val linkOriginPropertyName: String? = null,
-    // FIXME Should be of type PropertyKey, but is currently initialized directly from compiler plugin
-    val key: Long,
+    val key: PropertyKey,
     val flags: Int
 ) {
     val isNullable: Boolean = flags and PropertyFlags.RLM_PROPERTY_NULLABLE != 0
     val isPrimaryKey: Boolean = flags and PropertyFlags.RLM_PROPERTY_PRIMARY_KEY != 0
     val isIndexed: Boolean = flags and PropertyFlags.RLM_PROPERTY_INDEXED != 0
+
+    companion object {
+        // Convenience wrapper to ease maintaining compiler plugin
+        fun create(
+            name: String,
+            publicName: String?,
+            type: PropertyType,
+            collectionType: CollectionType,
+            linkTarget: String?,
+            linkOriginPropertyName: String?,
+            isNullable: Boolean,
+            isPrimaryKey: Boolean,
+            isIndexed: Boolean
+        ): Property {
+            val flags =
+                (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or (if (isNullable) RLM_PROPERTY_PRIMARY_KEY else 0) or (if (isNullable) RLM_PROPERTY_INDEXED else 0)
+            return Property(
+                name,
+                publicName,
+                type,
+                collectionType,
+                linkTarget,
+                linkOriginPropertyName,
+                INVALID_PROPERTY_KEY,
+                flags
+            )
+        }
+    }
 }

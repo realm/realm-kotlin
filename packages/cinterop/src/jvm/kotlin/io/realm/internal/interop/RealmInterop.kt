@@ -216,7 +216,7 @@ actual object RealmInterop {
         val info = realm_class_info_t()
         realmc.realm_get_class(realm.cptr(), classKey.key, info)
         return with(info) {
-            Table(name, primary_key, num_properties, num_computed_properties, key, flags)
+            Table(name, primary_key, num_properties, num_computed_properties, ClassKey(key), flags)
         }
     }
     actual fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<Property> {
@@ -228,7 +228,7 @@ actual object RealmInterop {
         }
         return (0 until outCount[0]).map { i ->
             with(realmc.propertyArray_getitem(properties, i.toInt())) {
-                Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, key, flags)
+                Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, PropertyKey(key), flags)
             }
         }
     }

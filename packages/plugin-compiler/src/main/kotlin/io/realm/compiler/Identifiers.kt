@@ -45,11 +45,8 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
 
     // Schema related names
-    val CLASS_FLAG_NORMAL = Name.identifier("RLM_CLASS_NORMAL")
-    val PROPERTY_FLAG_NORMAL = Name.identifier("RLM_PROPERTY_NORMAL")
-    val PROPERTY_FLAG_NULLABLE = Name.identifier("RLM_PROPERTY_NULLABLE")
-    val PROPERTY_FLAG_PRIMARY_KEY = Name.identifier("RLM_PROPERTY_PRIMARY_KEY")
-    val PROPERTY_FLAG_INDEX = Name.identifier("RLM_PROPERTY_INDEXED")
+    val TABLE_CREATE = Name.identifier("create")
+    val PROPERTY_CREATE = Name.identifier("create")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
@@ -92,7 +89,6 @@ internal object FqNames {
     val PROPERTY = FqName("io.realm.internal.interop.Property")
     val PROPERTY_TYPE = FqName("io.realm.internal.interop.PropertyType")
     val COLLECTION_TYPE = FqName("io.realm.internal.interop.CollectionType")
-    val PROPERTY_FLAG = FqName("io.realm.internal.interop.PropertyFlags")
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.annotations.PrimaryKey")
     val INDEX_ANNOTATION = FqName("io.realm.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")

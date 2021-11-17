@@ -22,8 +22,14 @@ data class Table(
     val name: String,
     val primaryKey: String?,
     val numProperties: Long,
-    val numComputerProperties: Long,
-    // FIXME Should be of type ClassKey, but is currently initialized directly from compiler plugin
-    val key: Long,
-    val flags: Int
-)
+    val numComputerProperties: Long = 0,
+    val key: ClassKey = INVALID_CLASS_KEY,
+    val flags: Int = ClassFlags.RLM_CLASS_NORMAL
+) {
+    companion object {
+        // Convenience wrapper to ease maintaining compiler plugin
+        fun create(name: String, primaryKey: String?, numProperties: Long) {
+            Table(name, primaryKey, numProperties, 0)
+        }
+    }
+}

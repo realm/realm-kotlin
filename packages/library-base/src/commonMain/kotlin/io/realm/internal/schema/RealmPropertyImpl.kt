@@ -18,6 +18,7 @@ package io.realm.internal.schema
 
 import io.realm.internal.interop.Property
 import io.realm.internal.interop.PropertyFlags
+import io.realm.internal.interop.INVALID_PROPERTY_KEY
 import io.realm.schema.CollectionType
 import io.realm.schema.ElementType
 import io.realm.schema.RealmProperty
@@ -34,7 +35,7 @@ internal data class RealmPropertyImpl(
         name = name,
         type = toCorePropertyType(type.elementType.fieldType),
         collectionType = toCoreCollectionType(type.collectionType),
-        key = -1,
+        key = INVALID_PROPERTY_KEY,
         flags = (if (type.elementType.nullable) PropertyFlags.RLM_PROPERTY_NULLABLE else 0)
             or (if (primaryKey) PropertyFlags.RLM_PROPERTY_PRIMARY_KEY else 0)
             or (if (index) PropertyFlags.RLM_PROPERTY_INDEXED else 0)

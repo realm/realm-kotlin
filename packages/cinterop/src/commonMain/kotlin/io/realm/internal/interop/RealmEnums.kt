@@ -27,9 +27,9 @@ expect enum class SchemaMode {
     RLM_SCHEMA_MODE_MANUAL,
 }
 
-expect enum class ClassFlag {
-    RLM_CLASS_NORMAL,
-    RLM_CLASS_EMBEDDED,
+expect object ClassFlags {
+    val RLM_CLASS_NORMAL: Int
+    val RLM_CLASS_EMBEDDED: Int
 }
 
 expect enum class PropertyType {

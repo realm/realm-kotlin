@@ -16,12 +16,10 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.FqNames.CLASS_FLAG
 import io.realm.compiler.FqNames.COLLECTION_TYPE
 import io.realm.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.compiler.FqNames.PROPERTY
-import io.realm.compiler.FqNames.PROPERTY_FLAG
 import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_MEDIATOR_INTERFACE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
@@ -35,6 +33,7 @@ import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
+import io.realm.compiler.Names.PROPERTY_CREATE
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
@@ -42,6 +41,7 @@ import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OWNER
 import io.realm.compiler.Names.SET
+import io.realm.compiler.Names.TABLE_CREATE
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -55,8 +55,10 @@ import org.jetbrains.kotlin.ir.builders.declarations.addProperty
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.irBlockBody
+import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
+import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irInt
 import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
@@ -66,7 +68,10 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
+import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
@@ -102,25 +107,18 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             .symbol.createType(true, emptyList())
     private val realmObjectCompanionInterface =
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
-    private val table = pluginContext.lookupClassOrThrow(TABLE)
+    private val tableClass = pluginContext.lookupClassOrThrow(TABLE)
+    val tableCreateMethod = tableClass.lookupCompanionDeclaration<IrSimpleFunction>(TABLE_CREATE)
 
-    private val tableConstructor =
-        table.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
-    private val classFlag: IrClass = pluginContext.lookupClassOrThrow(CLASS_FLAG)
-    private val classFlags =
-        classFlag.declarations.filterIsInstance<IrEnumEntry>()
     private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY)
-    private val propertyConstructor =
-        propertyClass.primaryConstructor ?: error("Couldn't find constructor for $TABLE")
+    val propertyCreateMethod = propertyClass.lookupCompanionDeclaration<IrSimpleFunction>(PROPERTY_CREATE)
+    
     private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
     private val propertyTypes =
         propertyType.declarations.filterIsInstance<IrEnumEntry>()
     private val collectionType: IrClass = pluginContext.lookupClassOrThrow(COLLECTION_TYPE)
     private val collectionTypes =
         collectionType.declarations.filterIsInstance<IrEnumEntry>()
-    private val propertyFlag: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_FLAG)
-    private val propertyFlags =
-        propertyFlag.declarations.filterIsInstance<IrEnumEntry>()
 
     private val realmReferenceClass = pluginContext.lookupClassOrThrow(REALM_REFERENCE)
     private val mediatorInterface = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE)
@@ -253,15 +251,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 ).apply {
                     putValueArgument(
                         0,
-                        IrConstructorCallImpl(
+                        IrCallImpl(
                             startOffset,
                             endOffset,
-                            type = table.defaultType,
-                            symbol = tableConstructor.symbol,
-                            constructorTypeArgumentsCount = 0,
+                            type = tableClass.defaultType,
+                            symbol = tableCreateMethod.symbol,
                             typeArgumentsCount = 0,
-                            valueArgumentsCount = 6
+                            valueArgumentsCount = 3
                         ).apply {
+                            dispatchReceiver = irGetObject(tableClass.companionObject()!!.symbol)
                             var arg = 0
                             // Name
                             putValueArgument(arg++, irString(irClass.name.identifier))
@@ -278,15 +276,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             )
                             // num properties
                             putValueArgument(arg++, irLong(fields.size.toLong()))
-                            // num computer properties
-                            putValueArgument(arg++, irLong(0))
-                            // key
-                            // FIXME Should be invalid class key
-                            putValueArgument(arg++, irLong(-1L))
-                            // Flags
-                            // TODO Should be actual constants, but we only support NORMAL until we
-                            //  implemented support for embedded objects
-                            putValueArgument(arg++, irInt(0))
                         }
                     )
                     putValueArgument(
@@ -365,15 +354,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                 }
 
-                                IrConstructorCallImpl(
+                                IrCallImpl(
                                     startOffset,
                                     endOffset,
                                     type = propertyClass.defaultType,
-                                    symbol = propertyConstructor.symbol,
-                                    constructorTypeArgumentsCount = 0,
+                                    symbol = propertyCreateMethod.symbol,
                                     typeArgumentsCount = 0,
-                                    valueArgumentsCount = 8
+                                    valueArgumentsCount = 9
                                 ).apply {
+                                    dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
                                     // Name
                                     putValueArgument(arg++, irString(entry.key))
@@ -428,16 +417,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                     // Link property name
                                     putValueArgument(arg++, irString(""))
-                                    // key
-                                    putValueArgument(arg++, irLong(-1))
-                                    // flags
-                                    // FIXME This is embedding compile time constants. Is this OK?
-                                    var flags = 0
-                                    if (nullable) { flags = flags or 1 }
-                                    if (primaryKey) { flags = flags or 2 }
-                                    @Suppress("MagicNumber")
-                                    if (isIndexed) { flags = flags or 4 }
-                                    putValueArgument(arg++, irInt(flags))
+                                    // isNullable
+                                    putValueArgument(arg++, irBoolean(nullable))
+                                    // isPrimaryKey
+                                    putValueArgument(arg++, irBoolean(primaryKey != null))
+                                    // isIndexed
+                                    putValueArgument(arg++, irBoolean(isIndexed))
                                 }
                             }
                         )
@@ -457,16 +442,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private fun getListType(generics: List<CoreType>?): PropertyType =
         checkNotNull(generics) { "Missing type for list." }[0].propertyType
-
-    private fun propertyFlags(flags: List<Name>): List<IrGetEnumValueImpl> =
-        flags.map { flag ->
-            IrGetEnumValueImpl(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                type = propertyFlag.defaultType,
-                symbol = propertyFlags.first { flag == it.name }.symbol
-            )
-        }
 
     // Generate body for the synthetic new instance method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     fun addNewInstanceMethodBody(irClass: IrClass) {

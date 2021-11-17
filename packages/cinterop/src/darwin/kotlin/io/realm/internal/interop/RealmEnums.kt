@@ -42,9 +42,9 @@ actual enum class SchemaMode(override val nativeValue: realm_schema_mode) : Nati
     RLM_SCHEMA_MODE_MANUAL(realm_schema_mode_e.RLM_SCHEMA_MODE_MANUAL),
 }
 
-actual enum class ClassFlag(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_CLASS_NORMAL(realm_wrapper.RLM_CLASS_NORMAL),
-    RLM_CLASS_EMBEDDED(realm_wrapper.RLM_CLASS_EMBEDDED),
+actual object ClassFlags {
+    actual val RLM_CLASS_NORMAL = realm_wrapper.RLM_CLASS_NORMAL.toInt()
+    actual val RLM_CLASS_EMBEDDED = realm_wrapper.RLM_CLASS_EMBEDDED.toInt()
 }
 
 actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerated {
