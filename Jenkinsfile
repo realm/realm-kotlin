@@ -316,8 +316,9 @@ def runBuild() {
 
 def runStaticAnalysis() {
     try {
+        // ./gradlew --no-daemon ktlintCheck detekt
         sh '''
-        ./gradlew --no-daemon ktlintCheck detekt
+        ./gradlew --no-daemon detekt
         '''
     } finally {
         // CheckStyle Publisher plugin is deprecated and does not support multiple Checkstyle files

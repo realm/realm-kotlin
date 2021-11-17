@@ -37,29 +37,29 @@ fun locateConfigDir(current: File): File {
 }
 
 allprojects {
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+//    apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
-    ktlint {
-        version.set(Versions.ktlintVersion)
-        additionalEditorconfigFile.set(file("$configDir/ktlint/.editorconfig"))
-        debug.set(false)
-        verbose.set(true)
-        android.set(false)
-        outputToConsole.set(true)
-        reporters {
-            // Human readable output
-            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
-        }
-        ignoreFailures.set(false)
-        filter {
-            exclude { element ->
-                // See https://github.com/JLLeitschuh/ktlint-gradle#faq and https://github.com/gradle/gradle/issues/3417
-                element.file.path.contains("generated/")
-            }
-            include("**/kotlin/**")
-        }
-    }
+//    ktlint {
+//        version.set(Versions.ktlintVersion)
+//        additionalEditorconfigFile.set(file("$configDir/ktlint/.editorconfig"))
+//        debug.set(false)
+//        verbose.set(true)
+//        android.set(false)
+//        outputToConsole.set(true)
+//        reporters {
+//            // Human readable output
+//            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
+//        }
+//        ignoreFailures.set(false)
+//        filter {
+//            exclude { element ->
+//                // See https://github.com/JLLeitschuh/ktlint-gradle#faq and https://github.com/gradle/gradle/issues/3417
+//                element.file.path.contains("generated/")
+//            }
+//            include("**/kotlin/**")
+//        }
+//    }
 
     detekt {
         failFast = true // fail build on any finding
