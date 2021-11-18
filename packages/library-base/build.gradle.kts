@@ -56,6 +56,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
                 // If runtimeapi is merged with cinterop then we will be exposing both to the users
