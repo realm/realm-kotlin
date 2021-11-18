@@ -17,8 +17,6 @@
 package io.realm.internal.schema
 
 import io.realm.internal.interop.Property
-import io.realm.internal.interop.PropertyFlags
-import io.realm.internal.interop.INVALID_PROPERTY_KEY
 import io.realm.schema.CollectionType
 import io.realm.schema.ElementType
 import io.realm.schema.RealmProperty
