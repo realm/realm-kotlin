@@ -202,14 +202,15 @@ actual object RealmInterop {
         return keys.map { ClassKey(it) }
     }
 
-    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
+    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey? {
         val info = realm_class_info_t()
         val found = booleanArrayOf(false)
         realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
-        if (!found[0]) {
-            throw IllegalArgumentException("Cannot find class: '$name")
+        return if (found[0]) {
+            ClassKey(info.key)
+        } else {
+            null
         }
-        return ClassKey(info.key)
     }
 
     actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table {
@@ -223,13 +224,23 @@ actual object RealmInterop {
         val properties = realmc.new_propertyArray(max.toInt())
         val outCount = longArrayOf(0)
         realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
-        if (outCount[0] < 1) {
-            error("Invalid schema: Class without properties")
-        }
-        return (0 until outCount[0]).map { i ->
-            with(realmc.propertyArray_getitem(properties, i.toInt())) {
-                Property(name, public_name, PropertyType.of(type), CollectionType.of(collection_type), link_target, link_origin_property_name, PropertyKey(key), flags)
+        return if (outCount[0] > 0) {
+            (0 until outCount[0]).map { i ->
+                with(realmc.propertyArray_getitem(properties, i.toInt())) {
+                    Property(
+                        name,
+                        public_name,
+                        PropertyType.of(type),
+                        CollectionType.of(collection_type),
+                        link_target,
+                        link_origin_property_name,
+                        PropertyKey(key),
+                        flags
+                    )
+                }
             }
+        } else {
+            emptyList()
         }
     }
 

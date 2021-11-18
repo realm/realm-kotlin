@@ -98,8 +98,8 @@ import kotlin.collections.set
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
-actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(-1L) }
-actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(-1L) }
+actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
+actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realm_wrapper.RLM_INVALID_PROPERTY_KEY) }
 
 private fun throwOnError() {
     memScoped {
@@ -398,7 +398,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
+    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey? {
         memScoped {
             val found = alloc<BooleanVar>()
             val classInfo = alloc<realm_class_info_t>()
@@ -410,10 +410,11 @@ actual object RealmInterop {
                     classInfo.ptr
                 )
             )
-            if (!found.value) {
-                throw IllegalArgumentException("Class \"$name\" not found")
+            return if (found.value) {
+                ClassKey(classInfo.key.toLong())
+            } else {
+                null
             }
-            return ClassKey(classInfo.key.toLong())
         }
     }
 
@@ -449,21 +450,24 @@ actual object RealmInterop {
                 max.convert(),
                 outCount.ptr
             )
-            if (outCount.value.toLong() < 1) {
-                error("Invalid schema: Class without properties")
-            }
-            return (0 until outCount.value.toLong()).map {
-                with(properties[it]) {
-                    Property(
-                        name.safeKString("name"),
-                        public_name?.toKString(),
-                        PropertyType.of(type.toInt()),
-                        CollectionType.of(collection_type.toInt()),
-                        link_target?.toKString(),
-                        link_origin_property_name?.toKString(),
-                        key,
-                        flags
-                    )
+            outCount.value.toLong().let { count ->
+                return if (count > 0) {
+                    (0 until outCount.value.toLong()).map {
+                        with(properties[it]) {
+                            Property(
+                                name.safeKString("name"),
+                                public_name?.toKString(),
+                                PropertyType.of(type.toInt()),
+                                CollectionType.of(collection_type.toInt()),
+                                link_target?.toKString(),
+                                link_origin_property_name?.toKString(),
+                                PropertyKey(key),
+                                flags
+                            )
+                        }
+                    }
+                } else {
+                    emptyList()
                 }
             }
         }

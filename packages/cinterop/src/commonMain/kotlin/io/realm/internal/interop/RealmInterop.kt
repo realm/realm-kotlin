@@ -78,7 +78,7 @@ expect object RealmInterop {
     fun realm_get_schema(realm: NativePointer): NativePointer
     fun realm_get_num_classes(realm: NativePointer): Long
     fun realm_get_class_keys(realm: NativePointer): List<ClassKey>
-    fun realm_find_class(realm: NativePointer, name: String): ClassKey
+    fun realm_find_class(realm: NativePointer, name: String): ClassKey?
     fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table
     fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<Property>
 

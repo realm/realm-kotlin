@@ -18,5 +18,5 @@ package io.realm.schema
 
 interface RealmSchema {
     val classes: Collection<RealmClass>
-    operator fun get(key: String): RealmClass
+    operator fun get(key: String): RealmClass?
 }
