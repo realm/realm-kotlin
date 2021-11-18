@@ -19,7 +19,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-    id("org.jlleitschuh.gradle.ktlint")
     id("io.gitlab.arturbosch.detekt")
 }
 
@@ -37,29 +36,51 @@ fun locateConfigDir(current: File): File {
 }
 
 allprojects {
-//    apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
-//    ktlint {
-//        version.set(Versions.ktlintVersion)
-//        additionalEditorconfigFile.set(file("$configDir/ktlint/.editorconfig"))
-//        debug.set(false)
-//        verbose.set(true)
-//        android.set(false)
-//        outputToConsole.set(true)
-//        reporters {
-//            // Human readable output
-//            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
-//        }
-//        ignoreFailures.set(false)
-//        filter {
-//            exclude { element ->
-//                // See https://github.com/JLLeitschuh/ktlint-gradle#faq and https://github.com/gradle/gradle/issues/3417
-//                element.file.path.contains("generated/")
-//            }
-//            include("**/kotlin/**")
-//        }
-//    }
+    val ktlint by configurations.creating
+
+    dependencies {
+        ktlint("com.pinterest:ktlint:${Versions.ktlint}") {
+            attributes {
+                attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.EXTERNAL))
+            }
+        }
+    }
+
+    val outputDir = "${project.buildDir}/reports/ktlint/"
+    val inputFiles = project.fileTree(mapOf("dir" to "src", "include" to "**/*.kt"))
+
+    val ktlintCheck by tasks.creating(JavaExec::class) {
+        inputs.files(inputFiles)
+        outputs.dir(outputDir)
+
+        description = "Check Kotlin code style."
+        classpath = ktlint
+        main = "com.pinterest.ktlint.Main"
+        args = listOf(
+            "src/**/*.kt",
+            "!src/**/generated/**",
+            "!src/**/resources/**",
+            "--reporter=plain",
+            "--reporter=checkstyle,output=${project.buildDir}/reports/ktlint/ktlint.xml",
+            "--editorconfig=${configDir}/ktlint/.editorconfig"
+        )
+    }
+
+    val ktlintFormat by tasks.creating(JavaExec::class) {
+        inputs.files(inputFiles)
+        outputs.dir(outputDir)
+
+        description = "Fix Kotlin code style deviations."
+        classpath = ktlint
+        main = "com.pinterest.ktlint.Main"
+        args = listOf(
+            "-F",
+            "src/**/*.kt",
+            "!src/**/resources/**"
+        )
+    }
 
     detekt {
         failFast = true // fail build on any finding
