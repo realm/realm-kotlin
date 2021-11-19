@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
@@ -143,7 +144,16 @@ expect object RealmInterop {
         syncClientConfig: NativePointer,
         basePath: String,
     ): NativePointer
-    fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
+    fun realm_app_get_current_user(app: NativePointer): NativePointer?
+    fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: AppCallback<NativePointer>)
+    fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>)
+    fun realm_clear_cached_apps()
+
+    // User
+    fun realm_user_get_identity(user: NativePointer): String
+    fun realm_user_is_logged_in(user: NativePointer): Boolean
+    fun realm_user_log_out(user: NativePointer)
+    fun realm_user_get_state(user: NativePointer): CoreUserState
 
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer
@@ -176,6 +186,14 @@ expect object RealmInterop {
     fun realm_app_credentials_new_anonymous(): NativePointer
     fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
+
+    // Email Password Authentication
+    fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: AppCallback<Unit>
+    )
 
     // Sync config
     fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer

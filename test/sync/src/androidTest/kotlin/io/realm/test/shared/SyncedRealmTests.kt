@@ -23,7 +23,6 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.Credentials
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
@@ -31,6 +30,7 @@ import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.mongodb.shared.DEFAULT_NAME
 import io.realm.test.mongodb.shared.DEFAULT_PARTITION_VALUE
 import io.realm.test.platform.PlatformUtils
@@ -62,8 +62,10 @@ class SyncedRealmTests {
     fun setup() {
         app = TestApp()
 
-        // Create test user through REST admin api until we have EmailPasswordAuth.registerUser in place
-        val user = createTestUser()
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
 
         tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = createSyncConfig(
@@ -94,7 +96,10 @@ class SyncedRealmTests {
     fun canSync() {
         // A user has two realms in different files, 1 stores an object locally and 2 receives the
         // update from the server after the object is synchronized.
-        val user = createTestUser()
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
 
         val dir1 = PlatformUtils.createTempDir()
         val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user)
@@ -144,7 +149,10 @@ class SyncedRealmTests {
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()
-        val user = createTestUser(app)
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
         val tmpDir = PlatformUtils.createTempDir()
 
         val config1 = SyncConfiguration.Builder(
@@ -540,24 +548,6 @@ class SyncedRealmTests {
 //            return (realm as io.realm.internal.RealmImpl).intermediateReferences
 //        }
 
-    private fun createTestUser(): User {
-        val email = randomEmail()
-        val password = "asdfasdf"
-        app.asTestApp.createUser(email, password)
-        return runBlocking {
-            app.login(Credentials.emailPassword(email, password))
-        }
-    }
-
-    private fun createTestUser(app: TestApp): User {
-        val email = randomEmail()
-        val password = "asdfasdf"
-        app.asTestApp.createUser(email, password)
-        return runBlocking {
-            app.login(Credentials.emailPassword(email, password))
-        }
-    }
-
     @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
@@ -566,7 +556,7 @@ class SyncedRealmTests {
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
-        errorHandler: SyncSession.ErrorHandler? = null
+        errorHandler: ErrorHandler? = null
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,

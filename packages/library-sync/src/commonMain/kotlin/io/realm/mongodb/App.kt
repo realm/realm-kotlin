@@ -55,6 +55,24 @@ interface App {
     val configuration: AppConfiguration
 
     /**
+     * Wrapper for interacting with functionality related to users either being created or logged
+     * in using the [AuthenticationProvider.EMAIL_PASSWORD] identity provider.
+     */
+    val emailPasswordAuth: EmailPasswordAuth
+
+    /**
+     * Returns the current user that is logged in and still valid.
+     *
+     * Users are invalidated when they log out or when their refresh tokens expire or are revoked.
+     *
+     * If two or more users are logged in, it is the last valid user that is returned by this
+     * property.
+     *
+     * The value of this property will be `null` if no user is logged in or the user has expired.
+     */
+    val currentUser: User?
+
+    /**
      * Log in as a user with the given credentials associated with an authentication provider.
      *
      * @param credentials the credentials representing the type of login.

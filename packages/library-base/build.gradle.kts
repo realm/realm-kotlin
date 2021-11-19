@@ -246,7 +246,7 @@ publishing {
 }
 
 // Generate code with version constant
-tasks.create("pluginVersion") {
+tasks.create("generateSdkVersionConstant") {
     val outputDir = file(versionDirectory)
 
     inputs.property("version", project.version)
@@ -264,6 +264,6 @@ tasks.create("pluginVersion") {
         )
     }
 }
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    dependsOn("pluginVersion")
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    dependsOn("generateSdkVersionConstant")
 }

@@ -217,74 +217,77 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
     return realm_open(&copyConf);
 }
 
-void register_login_cb(realm_app_t *app, realm_app_credentials_t *credentials, jobject callback) {
-    auto jenv = get_env();
-    static JavaClass cinterop_callback(jenv, "io/realm/internal/interop/CinteropCallback");
-    static JavaMethod on_success_method(jenv, cinterop_callback, "onSuccess", "(Lio/realm/internal/interop/NativePointer;)V");
-    static JavaMethod on_error_method(jenv, cinterop_callback, "onError", "(Ljava/lang/Throwable;)V");
+jobject app_exception_from_app_error(JNIEnv* env, const realm_app_error_t* error) {
+    static JavaMethod app_exception_constructor(env,
+                                                JavaClassGlobalDef::app_exception_class(),
+                                                "<init>",
+                                                "(Ljava/lang/String;)V");
 
-    realm_app_log_in_with_credentials(
-            app,
-            credentials,
-            // FIXME Refactor into generic handling of network requests, like
-            //  https://github.com/realm/realm-java/blob/master/realm/realm-library/src/main/cpp/io_realm_internal_objectstore_OsApp.cpp#L192
-            [](void* userdata, realm_user_t* user, const realm_app_error_t* error) {
-                auto jenv = get_env(true);
+    std::stringstream message;
+    message << error->message << " ["
+            << "error_category=" << error->error_category << ", "
+            << "error_code=" << error->error_code << ", "
+            << "link_to_server_logs=" << error->link_to_server_logs
+            << "]";
 
-                if (jenv->ExceptionCheck()) {
-                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                         on_error_method,
-                                         jenv->ExceptionOccurred());
-                } else if (error) {
-                    static JavaMethod app_exception_constructor(jenv,
-                                                                JavaClassGlobalDef::app_exception_class(),
-                                                                "<init>",
-                                                                "(Ljava/lang/String;)V");
-
-                    std::stringstream message;
-                    message << error->message << " ["
-                            << "error_category=" << error->error_category << ", "
-                            << "error_code=" << error->error_code << ", "
-                            << "link_to_server_logs=" << error->link_to_server_logs
-                            << "]";
-
-                    jobject throwable = jenv->NewObject(JavaClassGlobalDef::app_exception_class(),
-                                                        app_exception_constructor,
-                                                        to_jstring(jenv, message.str()));
-                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                         on_error_method,
-                                         throwable);
-                } else {
-                    // TODO OPTIMIZE Make central global reference table of classes
-                    //  https://github.com/realm/realm-kotlin/issues/460
-                    //  Use wrap_pointer of https://github.com/realm/realm-kotlin/pull/493/files#diff-c71ff0791782da90014db6f7000bdeea6c883ca9729f17bd1b11041d1e7711faR450
-                    //  when merged
-                    jclass exception_class = jenv->FindClass("io/realm/internal/interop/LongPointerWrapper");
-                    static jmethodID exception_constructor = jenv->GetMethodID(exception_class, "<init>", "(JZ)V");
-
-                    // Remember to clone user object or else it will be invalidated right after we leave this callback
-                    void* cloned_user = realm_clone(user);
-                    jobject pointer = jenv->NewObject(exception_class, exception_constructor,
-                                                      reinterpret_cast<jlong>(cloned_user), false);
-
-                    jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                         on_success_method,
-                                         pointer);
-                }
-            },
-            // Use the callback as user data
-            static_cast<jobject>(get_env()->NewGlobalRef(callback)),
-            [](void *userdata) {
-                get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-            }
-    );
+    return env->NewObject(JavaClassGlobalDef::app_exception_class(),
+                                       app_exception_constructor,
+                                       to_jstring(env, message.str()));
 }
 
-static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request) {
+void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
+    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+                                          "(Ljava/lang/Throwable;)V");
+    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+                                            "(Ljava/lang/Object;)V");
+    static JavaClass unit_class(env, "kotlin/Unit");
+    static JavaMethod unit_constructor(env, unit_class, "<init>", "()V");
+
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+    } else if (error) {
+        jobject app_exception = app_exception_from_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
+    } else {
+        jobject unit = env->NewObject(unit_class, unit_constructor);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, unit);
+    }
+}
+
+void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
+    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+                                          "(Ljava/lang/Throwable;)V");
+    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+                                            "(Ljava/lang/Object;)V");
+
+    static JavaClass native_pointer_class(env, "io/realm/internal/interop/LongPointerWrapper");
+    static JavaMethod native_pointer_constructor(env, native_pointer_class, "<init>", "(JZ)V");
+
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+    } else if (error) {
+        jobject app_exception = app_exception_from_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
+    } else {
+        // Remember to clone user object or else it will be invalidated right after we leave this callback
+        void* cloned_result = realm_clone(result);
+        jobject pointer = env->NewObject(native_pointer_class, native_pointer_constructor,
+                                         reinterpret_cast<jlong>(cloned_result), false);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, pointer);
+    }
+}
+
+static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
     static JavaMethod m_send_request_method(jenv,
                                             JavaClassGlobalDef::network_transport_class(),
                                             "sendRequest",
-                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Lio/realm/internal/interop/sync/Response;");
+                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Lio/realm/internal/interop/sync/ResponseCallback;)V");
 
     // Prepare request fields to be consumable by JVM
     std::string method;
@@ -328,17 +331,19 @@ static jobject send_request_via_jvm_transport(JNIEnv *jenv, jobject network_tran
         jenv->DeleteLocalRef(value);
     }
 
-    // Send request and retrieve JVM response
-    return jenv->CallObjectMethod(network_transport,
+    // Send request
+    jenv->CallVoidMethod(network_transport,
                                   m_send_request_method,
                                   to_jstring(jenv, method),
                                   to_jstring(jenv, request.url),
                                   request_headers,
-                                  to_jstring(jenv, request.body)
+                                  to_jstring(jenv, request.body),
+                                  j_response_callback
     );
 }
 
-static void pass_jvm_response_to_core(JNIEnv *jenv, jobject j_response, void* request_context) {
+void complete_http_request(void* request_context, jobject j_response) {
+    auto jenv = get_env(false); // will always be attached
     static JavaMethod get_http_code_method(jenv,
                                            JavaClassGlobalDef::network_transport_response_class(),
                                            "getHttpResponseCode",
@@ -408,8 +413,17 @@ static void network_request_lambda_function(void* userdata,
     jobject network_transport = static_cast<jobject>(userdata);
 
     try {
-        jobject j_response = send_request_via_jvm_transport(jenv, network_transport, request);
-        pass_jvm_response_to_core(jenv, j_response, request_context);
+        jclass response_callback_class = jenv->FindClass(
+                "io/realm/internal/interop/sync/ResponseCallbackImpl");
+        static jmethodID response_callback_constructor = jenv->GetMethodID(response_callback_class,
+                                                                           "<init>",
+                                                                           "(Lio/realm/internal/interop/sync/NetworkTransport;J)V");
+        jobject response_callback = jenv->NewObject(response_callback_class,
+                                                    response_callback_constructor,
+                                                    reinterpret_cast<jobject>(userdata),
+                                                    reinterpret_cast<jlong>(request_context));
+
+        send_request_via_jvm_transport(jenv, network_transport, request, response_callback);
     } catch (std::runtime_error &e) {
         // Runtime exception while processing the request/response
         realm_http_response_t response_error;

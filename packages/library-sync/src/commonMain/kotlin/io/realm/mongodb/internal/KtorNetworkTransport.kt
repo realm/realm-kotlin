@@ -34,10 +34,12 @@ import io.ktor.http.HttpMethod
 import io.ktor.utils.io.errors.IOException
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
-import io.realm.internal.platform.runBlocking
+import io.realm.internal.interop.sync.ResponseCallback
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlin.collections.set
 
 class KtorNetworkTransport(
@@ -58,20 +60,19 @@ class KtorNetworkTransport(
         method: String,
         url: String,
         headers: Map<String, String>,
-        body: String
-    ): Response {
-        try {
-            // FIXME When using a shared HttpClient we are seeing sporadic
-            //  network failures on macOS. They manifest as ClientRequestException
-            //  even though the request appear to be valid. This could indicate
-            //  that some state isn't cleaned up correctly between requests, but
-            //  it is unclear what. As a temporary work-around, we now create a
-            //  HttpClient pr. request.
-            val client = clientCache.getClient()
+        body: String,
+        callback: ResponseCallback,
+    ) {
+        // FIXME When using a shared HttpClient we are seeing sporadic
+        //  network failures on macOS. They manifest as ClientRequestException
+        //  even though the request appear to be valid. This could indicate
+        //  that some state isn't cleaned up correctly between requests, but
+        //  it is unclear what. As a temporary work-around, we now create a
+        //  HttpClient pr. request.
+        val client = clientCache.getClient()
 
-            // FIXME Ensure background jobs does not block user/main thread
-            //  https://github.com/realm/realm-kotlin/issues/450
-            return runBlocking(dispatcher) {
+        CoroutineScope(dispatcher).async {
+            val response = try {
                 val requestBuilderBlock: HttpRequestBuilder.() -> Unit = {
                     headers {
                         // 1. First of all add all custom headers
@@ -102,39 +103,33 @@ class KtorNetworkTransport(
                     addBody(method, body)
                     addMethod(method)
                 }
-
-                try {
-                    when (method) {
-                        "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
-                        "patch" -> client.patch<HttpResponse>(url, requestBuilderBlock)
-                        "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
-                        "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
-                        "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
-                        else -> throw IllegalArgumentException("Wrong request method: '$method'")
-                    }.let {
-                        processHttpResponse(it)
-                    }
-                } catch (e: ClientRequestException) {
-                    processHttpResponse(e.response)
-                } catch (e: ServerResponseException) {
-                    // 500s are thrown as ServerResponseException
-                    processHttpResponse(e.response)
-                } catch (e: IOException) {
-                    Response(0, ERROR_IO, mapOf(), e.toString())
-                } catch (e: CancellationException) {
-                    // FIXME Validate we propagate the custom codes as an actual exception to the user
-                    //  https://github.com/realm/realm-kotlin/issues/451
-                    Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
-                } catch (e: Exception) {
-                    // FIXME Validate we propagate the custom codes as an actual exception to the user
-                    //  https://github.com/realm/realm-kotlin/issues/451
-                    Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
+                when (method) {
+                    "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
+                    "patch" -> client.patch<HttpResponse>(url, requestBuilderBlock)
+                    "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
+                    "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
+                    "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
+                    else -> throw IllegalArgumentException("Wrong request method: '$method'")
+                }.let {
+                    processHttpResponse(it)
                 }
+            } catch (e: ClientRequestException) {
+                processHttpResponse(e.response)
+            } catch (e: ServerResponseException) {
+                // 500s are thrown as ServerResponseException
+                processHttpResponse(e.response)
+            } catch (e: IOException) {
+                Response(0, ERROR_IO, mapOf(), e.toString())
+            } catch (e: CancellationException) {
+                // FIXME Validate we propagate the custom codes as an actual exception to the user
+                //  https://github.com/realm/realm-kotlin/issues/451
+                Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
+            } catch (e: Exception) {
+                // FIXME Validate we propagate the custom codes as an actual exception to the user
+                //  https://github.com/realm/realm-kotlin/issues/451
+                Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
             }
-        } catch (e: Exception) {
-            // FIXME Validate we propagate the custom codes as an actual exception to the user
-            //  https://github.com/realm/realm-kotlin/issues/451
-            return Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
+            callback.response(response)
         }
     }
 

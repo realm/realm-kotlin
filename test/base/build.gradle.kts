@@ -21,14 +21,6 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("io.realm.kotlin")
-    id("realm-lint")
-}
-
-repositories {
-    google()
-    jcenter()
-    mavenCentral()
-    mavenLocal()
 }
 
 // Common Kotlin configuration
@@ -79,8 +71,6 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
-        versionCode = 1
-        versionName = Realm.version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {

@@ -18,26 +18,27 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.util.Validation
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 
-internal open class CredentialImpl(
+internal open class CredentialImpl constructor(
     internal val nativePointer: NativePointer
 ) : Credentials {
 
     override val authenticationProvider: AuthenticationProvider =
-        AuthenticationProviderImpl.fromId(RealmInterop.realm_auth_credentials_get_provider(nativePointer))
+        AuthenticationProviderImpl.fromId(
+            RealmInterop.realm_auth_credentials_get_provider(nativePointer)
+        )
 
     companion object {
-        internal fun anonymous(): NativePointer {
-            return RealmInterop.realm_app_credentials_new_anonymous()
-        }
+        internal fun anonymous(): NativePointer =
+            RealmInterop.realm_app_credentials_new_anonymous()
 
-        internal fun emailPassword(email: String, password: String): NativePointer {
-            return RealmInterop.realm_app_credentials_new_email_password(
-                io.realm.internal.util.Validation.checkEmpty(email, "email"),
-                io.realm.internal.util.Validation.checkEmpty(password, "password")
+        internal fun emailPassword(email: String, password: String): NativePointer =
+            RealmInterop.realm_app_credentials_new_email_password(
+                Validation.checkEmpty(email, "email"),
+                Validation.checkEmpty(password, "password")
             )
-        }
     }
 }
