@@ -18,8 +18,10 @@ package sample.input
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
 import io.realm.annotations.Ignore
+import io.realm.annotations.Index
+import io.realm.annotations.PrimaryKey
+import io.realm.realmListOf
 import java.util.*
 
 class Sample : RealmObject {
@@ -34,10 +36,12 @@ class Sample : RealmObject {
     var transientString: String = ""
 
     // Primitive types
+    @Index
     var stringField: String? = "Realm"
     var byteField: Byte? = 0xA
     var charField: Char? = 'a'
     var shortField: Short? = 17
+    @Index
     var intField: Int? = 42
     var longField: Long? = 256
     var booleanField: Boolean? = true
@@ -46,27 +50,27 @@ class Sample : RealmObject {
     var child: Child? = null
 
     // List types
-    var stringListField: RealmList<String> = RealmList()
-    var byteListField: RealmList<Byte> = RealmList()
-    var charListField: RealmList<Char> = RealmList()
-    var shortListField: RealmList<Short> = RealmList()
-    var intListField: RealmList<Int> = RealmList()
-    var longListField: RealmList<Long> = RealmList()
-    var booleanListField: RealmList<Boolean> = RealmList()
-    var floatListField: RealmList<Float> = RealmList()
-    var doubleListField: RealmList<Double> = RealmList()
-    var objectListField: RealmList<Sample> = RealmList()
+    var stringListField: RealmList<String> = realmListOf()
+    var byteListField: RealmList<Byte> = realmListOf()
+    var charListField: RealmList<Char> = realmListOf()
+    var shortListField: RealmList<Short> = realmListOf()
+    var intListField: RealmList<Int> = realmListOf()
+    var longListField: RealmList<Long> = realmListOf()
+    var booleanListField: RealmList<Boolean> = realmListOf()
+    var floatListField: RealmList<Float> = realmListOf()
+    var doubleListField: RealmList<Double> = realmListOf()
+    var objectListField: RealmList<Sample> = realmListOf()
 
     // Nullable list types - RealmList<RealmObject?> is not supported
-    var nullableStringListField: RealmList<String?> = RealmList()
-    var nullableByteListField: RealmList<Byte?> = RealmList()
-    var nullableCharListField: RealmList<Char?> = RealmList()
-    var nullableShortListField: RealmList<Short?> = RealmList()
-    var nullableIntListField: RealmList<Int?> = RealmList()
-    var nullableLongListField: RealmList<Long?> = RealmList()
-    var nullableBooleanListField: RealmList<Boolean?> = RealmList()
-    var nullableFloatListField: RealmList<Float?> = RealmList()
-    var nullableDoubleListField: RealmList<Double?> = RealmList()
+    var nullableStringListField: RealmList<String?> = realmListOf()
+    var nullableByteListField: RealmList<Byte?> = realmListOf()
+    var nullableCharListField: RealmList<Char?> = realmListOf()
+    var nullableShortListField: RealmList<Short?> = realmListOf()
+    var nullableIntListField: RealmList<Int?> = realmListOf()
+    var nullableLongListField: RealmList<Long?> = realmListOf()
+    var nullableBooleanListField: RealmList<Boolean?> = realmListOf()
+    var nullableFloatListField: RealmList<Float?> = realmListOf()
+    var nullableDoubleListField: RealmList<Double?> = realmListOf()
 
     fun dumpSchema(): String = "${Sample.`$realm$schema`()}"
 }

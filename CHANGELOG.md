@@ -1,19 +1,101 @@
-## 0.6.0 (YYYY-MM-DD)
+## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
+* Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245))
+
+### Fixed
+* Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.5.31.
+  * Coroutines 1.5.2-native-mt.
+  * AtomicFu 0.16.3.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Ktor 1.6.5.
+* Updated to AndroidX Startup 1.1.0.
+* Updated to Gradle 7.2.
+* Updated to Android Gradle Plugin 7.1.0-beta03.
+* Updated to NDK 23.1.7779620.
+* Updated to Android targetSdk 31.
+* Updated to Android compileSdk 31. 
+* Updated to Android Build Tools 31.0.0.
+* Updated to Ktlint version 0.43.0.
+* Updated to Ktlint Gradle Plugin 10.2.0.
+* Updated to Kotlin Serialization 1.3.0.
+* Updated to Detekt 1.19.0-RC1.
+* Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
+
+
+## 0.7.0 (2021-10-31)
+
+### Breaking Changes
 * None.
+
+### Enhancements
+* Basic MongoDB Realm sync support:
+  * Enabled by using library dependency `io.realm.kotlin:library-sync:<VERSION>`
+  * Build `AppConfiguration`s through `AppConfiguration.Builder(appId).build()`
+  * Linking your app with a MongoDB Realm App through `App.create(appConfiguration)`
+  * Log in to a MongoDB Realm App through `App.login(credentials)`. Currently only supports `Credentials.anonymous()` and `Credentials.emailPassword(...)`
+  * Create `SyncConfiguration`s through `SyncConfiguration.Builder(user, partitionValue, schema).build()`
+  * Create synchronized realm by `Realm.open(syncConfiguration)`
 
 ### Fixed
 * None.
 
 ### Compatibility
-* This release is compatible with Kotlin 1.5.21 and Coroutines 1.5.0.
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
 
 ### Internal
-* None.
+* Updated to Realm Core commit: ecfc1bbb734a8520d08f04f12f083641309799b3
+* Updated to Ktor 1.6.4.
+
+
+## 0.6.0 (2021-10-15)
+
+### Breaking Changes
+* Rename library dependency from `io.realm.kotlin:library:<VERSION>` to `io.realm.kotlin:library-base:<VERSION>`
+* Abstracted public API into interfaces. The interfaces have kept the name of the previous classes so only differences are:
+  - Opening a realm: `Realm(configuration)` has changed to `Realm.open(configuration)`
+  - Easy construction of simple configurations: `RealmConfiguration(schema = ...)` has changed to `RealmConfiguration.with(schema = ...)`
+  - Instantiating a `RealmList` is now done through `realmListOf(...)` or by `Iterable<T>.toRealmList()`
+* Make argument to `findLatest` non-nullable: `MutableRealm.findLatest(obj: T?): T?` has changed to `MutableRealm.findLatest(obj: T): T?`
+* Allow query arguments to be `null`: `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any): RealmResults<T>` has change to `RealmResult.query(query: String = "TRUEPREDICATE", vararg args: Any?): RealmResults<T>`
+* Moved `objects(KClass<T>)` and `<reified T> objects()` methods from `BaseRealm` to `TypedRealm`
+* Changed `RealmObject.version` into method `RealmObject.version()`.
+* Replaced `RuntimeException`s by the explicit exceptions: `IllegalArgumentException`, `IllegalStateException` and `IndexOutOfBoundsException`.
+* Throw `Error` an unrecoverable Realm problem happen in the underlying storage engine.
+* Removed optional arguments to `RealmConfiguration.with(...)` and `RealmConfiguration.Builder(...)`. Name and path can now only be set through the builder methods.
+
+### Enhancements
+* Add support for [JVM target](https://github.com/realm/realm-kotlin/issues/62) supported platforms are: Linux (since Centos7 x86_64), Windows (since 8.1 x86_64) and Macos (x86_64).
+* Added support for marking a field as indexed with `@Index`
+
+### Fixed
+* Fixed null pointer exceptions when returning an unmanaged object from `MutableRealm.write/writeBlocking`.
+* Fixed premature closing of underlying realm of frozen objects returned from `MutableRealm.write/writeBlocking`. (Issue [#477](https://github.com/realm/realm-kotlin/issues/477))
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.5.31
+  * Coroutines 1.5.2-native-mt
+  * AtomicFu 0.16.3
+
+### Internal
+* Updated to Realm Core commit: 028626880253a62d1c936eed4ef73af80b64b71
+* Updated to Kotlin 1.5.31.
+
 
 ## 0.5.0 (2021-08-20)
 

@@ -34,12 +34,13 @@ import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
 import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.builders.irBlock
-import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
+import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irIfThenElse
+import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
@@ -70,6 +71,7 @@ import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -376,23 +378,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 putTypeArgument(0, type)
                                 putValueArgument(0, irGet(receiver))
                                 putValueArgument(1, irString(property.name.identifier))
-
-                                // Check if the collection type is a subclass of RealmObject
-                                // If so, a flag needs to be added as a parameter
-                                // This is due to Kotlin Native being unable to retrieve the related
-                                // supertypes in runtime
-                                if (collectionType != CollectionType.NONE) {
-                                    val supertypes = (type as IrSimpleType).classifier.descriptor
-                                        .typeConstructor.supertypes
-                                    if (inheritsFromRealmObject(supertypes)) {
-                                        putValueArgument(2, irBoolean(true))
-                                    }
-                                }
                             }
 
                         val cinteropExpression = if (fromLongToType != null) {
-                            irCall(fromLongToType).also {
-                                it.dispatchReceiver = cinteropCall
+                            irBlock {
+                                val temporary = scope.createTemporaryVariableDeclaration(
+                                    cinteropCall.type,
+                                    "coreValue",
+                                    false
+                                ).apply { initializer = cinteropCall }
+                                +createSafeCallConstruction(
+                                    temporary,
+                                    temporary.symbol,
+                                    irCall(fromLongToType).apply {
+                                        this.dispatchReceiver = irGet(temporary)
+                                    }
+                                )
                             }
                         } else {
                             cinteropCall
@@ -439,9 +440,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                     putValueArgument(0, irGet(receiver))
                                     putValueArgument(1, irString(property.name.identifier))
                                     val argumentExpression = if (functionTypeToLong != null) {
-                                        irCall(functionTypeToLong).also {
-                                            it.dispatchReceiver = irGet(setter.valueParameters.first())
-                                        }
+                                        irIfNull(
+                                            pluginContext.irBuiltIns.longType.makeNullable(),
+                                            irGet(setter.valueParameters.first()),
+                                            irNull(),
+                                            irCall(functionTypeToLong).also {
+                                                it.dispatchReceiver =
+                                                    irGet(setter.valueParameters.first())
+                                            },
+                                        )
                                     } else {
                                         irGet(setter.valueParameters.first())
                                     }

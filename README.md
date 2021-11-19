@@ -7,13 +7,15 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
-# Tell us about your experience
-
-We want to hear from you! Tell us about your experience using the Realm SDKs in our [short survey](http://bit.ly/3hRO5U2).
-
 # Examples 
 
 https://github.com/realm/realm-kotlin-samples
+
+## Kotlin Multiplatform Sample
+
+The folder `examples/kmm-sample` contains an example showing how to use Realm in a multiplatform
+project, sharing code for using Realm in the `shared` module. The project is based on
+`https://github.com/Kotlin/kmm-sample`.
 
 # Documentation
 
@@ -42,7 +44,7 @@ kotlin {
   sourceSets {
       val commonMain by getting {
           dependencies {
-              implementation("io.realm.kotlin:library:<VERSION>")
+              implementation("io.realm.kotlin:library-base:<VERSION>")
           }
       }
 }
@@ -52,7 +54,7 @@ kotlin {
 
 ```Gradle
 dependencies {
-    compileOnly("io.realm.kotlin:library:<VERSION>")
+    compileOnly("io.realm.kotlin:library-base:<VERSION>")
 }
 ```
 ## Define model
@@ -76,11 +78,11 @@ class Dog : RealmObject {
 Define a _RealmConfiguration_ with the database schema, then open the Realm using it.
 
 ```Kotlin
-val configuration = RealmConfiguration(schema = setOf(Person::class, Dog::class))
+val configuration = RealmConfiguration.with(schema = setOf(Person::class, Dog::class))
 ```
 
 ```Kotlin
-val realm = Realm(configuration)
+val realm = Realm.open(configuration)
 ```
 
 
@@ -114,6 +116,8 @@ The query language supported by Realm is inspired by Apple’s [NSPredicate](htt
 
 ```Kotlin
 // All Persons
+import io.realm.objects
+
 val all = realm.objects<Person>()
 
 // Person named 'Carlo'
@@ -139,7 +143,7 @@ realm.objects<Person>().query("dog == NULL LIMIT(1)")
     ?.also { personWithoutDog ->
         // Add a dog in a transaction
         realm.writeBlocking {
-            personWithoutDog.dog = Dog().apply { name = "Laika"; age = 3 }
+            findLatest(personWithoutDog)?.dog = Dog().apply { name = "Laika"; age = 3 }
         }
     }
 ```
@@ -150,7 +154,7 @@ Use the result of a query to delete from the database
 ```Kotlin
 // delete all Dogs
 realm.writeBlocking {
-    realm.objects<Dog>().delete()
+    this.objects<Dog>().delete()
 }
 ```
 
@@ -173,7 +177,7 @@ The public API of the SDK has not been finalized. Design discussions will happen
 ## Prerequisites
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
-- CMake 3.18.1. Can be installed through the Android SDK Manager.
+- CMake 3.18.1 or above. Can be installed through the Android SDK Manager.
 - Java 11.
 
 ## Commands to build from source
@@ -346,24 +350,19 @@ location for these.
 - Step out:
 `finish`
 
+## Contributing
 
-## Contributing Enhancements
-
-We love contributions to Realm! If you'd like to contribute code, documentation, or any other improvements, please [file a Pull Request](https://github.com/realm/realm-kotlin/pulls) on our GitHub repository. Make sure to accept our [CLA](#CLA)!
-
-This project adheres to the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/0/code_of_conduct/code_of_conduct.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to info@realm.io.
+We love contributions to Realm! If you'd like to contribute code, documentation, or any other improvements, please [file a Pull Request](https://github.com/realm/realm-kotlin/pulls) on our GitHub repository. Make sure to accept our CLA:
 
 ### CLA
 
-Realm welcomes all contributions! The only requirement we have is that, like many other projects, we need to have a [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement) (CLA) in place before we can accept any external code. Our own CLA is a modified version of the Apache Software Foundation’s CLA.
+We welcomes all contributions! The only requirement we have is that, like many other projects, we need to have a [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement) (CLA) in place before we can accept any external code. Our own CLA is a modified version of the Apache Software Foundation’s CLA.
 
 [Please submit your CLA electronically using our Google form](https://docs.google.com/forms/d/e/1FAIpQLSeQ9ROFaTu9pyrmPhXc-dEnLD84DbLuT_-tPNZDOL9J10tOKQ/viewform) so we can accept your submissions. The GitHub username you file there will need to match that of your Pull Requests. If you have any questions or cannot file the CLA electronically, you can email help@realm.io.
 
+## Code of Conduct
 
-# Samples
+This project adheres to the [MongoDB Code of Conduct](https://www.mongodb.com/community-code-of-conduct).
+By participating, you are expected to uphold this code. Please report
+unacceptable behavior to [community-conduct@mongodb.com](mailto:community-conduct@mongodb.com).
 
-## Kotlin Multiplatform Sample
-
-The folder `examples/kmm-sample` contains an example showing how to use Realm in a multiplatform
-project, sharing code for using Realm in the `shared` module. The project is based on
-`https://github.com/Kotlin/kmm-sample`.

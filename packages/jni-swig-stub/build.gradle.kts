@@ -21,8 +21,15 @@ plugins {
 
 val mavenPublicationName = "jniSwigStubs"
 
+val generatedSourceRoot = "$buildDir/generated/sources"
+
 java {
     withSourcesJar()
+    sourceSets {
+        main {
+            this.java.srcDir("$generatedSourceRoot/java")
+        }
+    }
 }
 
 configure<JavaPluginConvention> {
@@ -32,14 +39,19 @@ configure<JavaPluginConvention> {
 
 tasks.create("realmWrapperJvm") {
     doLast {
+        // If task is actually triggered (not up to date) then we should clean up the old stuff
+        delete(fileTree(generatedSourceRoot))
         exec {
             workingDir(".")
-            commandLine("swig", "-java", "-c++", "-package", "io.realm.interop", "-I$projectDir/../external/core/src", "-o", "$projectDir/src/main/jni/realmc.cpp", "-outdir", "$projectDir/src/main/java/io/realm/interop", "realm.i")
+            commandLine("swig", "-java", "-c++", "-package", "io.realm.internal.interop", "-I$projectDir/../external/core/src", "-o", "$generatedSourceRoot/jni/realmc.cpp", "-outdir", "$generatedSourceRoot/java/io/realm/internal/interop", "realm.i")
         }
     }
+    inputs.file("$projectDir/../external/core/src/realm.h")
     inputs.file("realm.i")
-    outputs.dir("$projectDir/src/main/java/io/realm/interop")
-    outputs.dir("$projectDir/src/main/jni")
+    inputs.dir("$projectDir/src/main/jni")
+    // Specifying full paths triggers creation of dirs, which would otherwise cause swig to fail
+    outputs.dir("$generatedSourceRoot/java/io/realm/internal/interop")
+    outputs.dir("$generatedSourceRoot/jni")
 }
 
 tasks.named("compileJava") {
@@ -58,6 +70,8 @@ realmPublish {
 java {
     withSourcesJar()
     withJavadocJar()
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 publishing {
@@ -67,20 +81,4 @@ publishing {
             from(components["java"])
         }
     }
-}
-
-tasks.create("cleanJvmWrapper") {
-    doLast {
-        delete(
-            fileTree("$projectDir/src/main/java/io/realm/interop/").matching {
-                include("*.java")
-                exclude("LongPointerWrapper.java") // not generated
-            }
-        )
-        delete("$projectDir/src/main/jni/")
-    }
-}
-
-tasks.named("clean") {
-    dependsOn("cleanJvmWrapper")
 }

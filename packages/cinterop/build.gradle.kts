@@ -15,6 +15,10 @@
  */
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.security.MessageDigest
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -60,37 +64,41 @@ val nativeLibraryIncludesMacosUniversalRelease = includeBinaries(
         "object-store/c_api/librealm-ffi-static.a",
         "librealm.a",
         "parser/librealm-parser.a",
-        "object-store/librealm-object-store.a"
-    ).map { "$absoluteCorePath/build-macos_universal/src/realm/" + it }
+        "object-store/librealm-object-store.a",
+        "sync/librealm-sync.a"
+    ).map { "$absoluteCorePath/build-macos_universal/src/realm/$it" }
 )
 val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
     listOf(
         "object-store/c_api/librealm-ffi-static-dbg.a",
         "librealm-dbg.a",
         "parser/librealm-parser-dbg.a",
-        "object-store/librealm-object-store-dbg.a"
-    ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/" + it }
+        "object-store/librealm-object-store-dbg.a",
+        "sync/librealm-sync-dbg.a"
+    ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/$it" }
 )
 val releaseLibs = listOf(
     "librealm-ffi-static.a",
     "librealm.a",
     "librealm-parser.a",
-    "librealm-object-store.a"
+    "librealm-object-store.a",
+    "librealm-sync.a"
 )
 val debugLibs = listOf(
     "librealm-ffi-static-dbg.a",
     "librealm-dbg.a",
     "librealm-parser-dbg.a",
-    "librealm-object-store-dbg.a"
+    "librealm-object-store-dbg.a",
+    "librealm-sync-dbg.a"
 )
 val nativeLibraryIncludesIosArm64Debug =
-    includeBinaries(debugLibs.map { "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/" + it })
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/$it" })
 val nativeLibraryIncludesIosArm64Release =
-    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-capi_ios_Arm64/lib/" + it })
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-capi_ios_Arm64/lib/$it" })
 val nativeLibraryIncludesIosSimulatorUniversalDebug =
-    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator_universal-dbg/lib/" + it })
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator_universal-dbg/lib/$it" })
 val nativeLibraryIncludesIosSimulatorUniversalRelease =
-    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator_universal/lib/" + it })
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator_universal/lib/$it" })
 
 kotlin {
     jvm {
@@ -169,6 +177,7 @@ kotlin {
         }
         val androidTest by getting {
             dependencies {
+                implementation(kotlin("reflect"))
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
                 implementation("junit:junit:${Versions.junit}")
@@ -211,6 +220,14 @@ kotlin {
 
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
     // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    /***
+     * Uncommenting below will cause the aritifact to not be published for cinterop-jvm coordinate:
+     * > Task :cinterop:publishJvmPublicationToMavenLocal SKIPPED
+     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Starting
+     Skipping task ':cinterop:publishJvmPublicationToMavenLocal' as task onlyIf is false.
+     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Finished
+     :cinterop:publishJvmPublicationToMavenLocal (Thread[Execution worker for ':',5,main]) completed. Took 0.0 secs.
+     */
 //    configure(listOf(targets["metadata"], jvm())) {
 //        mavenPublication {
 //            val targetPublication = this@mavenPublication
@@ -248,6 +265,8 @@ android {
         externalNativeBuild {
             cmake {
                 arguments("-DANDROID_STL=c++_shared")
+                arguments("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
+                arguments("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
                 targets.add("realmc")
             }
         }
@@ -282,6 +301,100 @@ val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(releaseBuild = isReleaseBuild)
 }
 
+val buildJVMSharedLibs by tasks.registering {
+    buildSharedLibrariesForJVM()
+}
+
+fun Task.buildSharedLibrariesForJVM() {
+    group = "Build"
+    description = "Compile dynamic libraries loaded by the JVM fat jar for supported platforms."
+    val directory = "$buildDir/jvm_fat_jar_libs"
+    val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
+
+    doLast {
+        exec {
+            commandLine("mkdir", "-p", directory)
+        }
+        exec {
+            workingDir(project.file(directory))
+            commandLine(
+                "cmake",
+                project.file("src/jvmMain/")
+            )
+        }
+        exec {
+            workingDir(project.file(directory))
+            commandLine("cmake", "--build", ".", "-j8")
+        }
+
+        // copy files (macos)
+        exec {
+            commandLine("mkdir", "-p", project.file("src/jvmMain/resources/jni/macos"))
+        }
+        File("$directory/librealmc.dylib")
+            .copyTo(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"), overwrite = true)
+
+        // build hash file
+        genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
+
+        // Only on CI for Snapshots and Releases
+        if (copyJvmABIs) {
+            // copy files (Linux)
+            project.file("src/jvmMain/linux/build-dir/librealmc.so")
+                .copyTo(project.file("src/jvmMain/resources/jni/linux/librealmc.so"), overwrite = true)
+            genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
+
+            // copy files (Windows)
+            project.file("src/jvmMain/windows/build-dir/Release/realmc.dll")
+                .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
+            genHashFile(platform = "windows", prefix = "", suffix = ".dll")
+        }
+    }
+
+    outputs.file(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"))
+    outputs.file(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"))
+    outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
+
+    if (copyJvmABIs) {
+        outputs.file(project.file("src/jvmMain/resources/jni/linux/librealmc.so"))
+        outputs.file(project.file("src/jvmMain/resources/jni/linux/dynamic_libraries.properties"))
+
+        outputs.file(project.file("src/jvmMain/resources/jni/windows/realmc.dll"))
+        outputs.file(project.file("src/jvmMain/resources/jni/windows/dynamic_libraries.properties"))
+    }
+}
+
+fun genHashFile(platform: String, prefix: String, suffix: String) {
+    val resourceDir = project.file("src/jvmMain/resources/jni").absolutePath
+    val libRealmc: Path = Paths.get(resourceDir, platform, "${prefix}realmc$suffix")
+
+    // the order matters (i.e 'realm-ffi' first then 'realmc')
+    val macosHashes = """
+            realmc ${sha1(libRealmc)}
+
+    """.trimIndent()
+
+    Paths.get(resourceDir, platform, "dynamic_libraries.properties").also {
+        Files.write(it, macosHashes.toByteArray())
+    }
+}
+
+fun sha1(file: Path): String {
+    val digest = MessageDigest.getInstance("SHA-1")
+    Files.newInputStream(file).use {
+        val buf = ByteArray(16384) // 16k
+        while (true) {
+            val bytes = it.read(buf)
+            if (bytes > 0) {
+                digest.update(buf, 0, bytes)
+            } else {
+                break
+            }
+        }
+        return digest.digest().joinToString("", transform = { "%02x".format(it) })
+    }
+}
+
 fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
@@ -296,8 +409,10 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
             commandLine(
                 "cmake",
                 "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/macosx.toolchain.cmake",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_BUILD_TYPE=$buildType",
-                "-DREALM_ENABLE_SYNC=0",
+                "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=1",
                 "-DOSX_ARM64=1",
                 ".."
@@ -312,6 +427,7 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
     outputs.file(project.file("$directory/src/realm/librealm$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/src/realm/object-store/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/src/realm/sync/librealm-sync$buildTypeSuffix.a"))
 }
 
 fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
@@ -328,10 +444,12 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
             workingDir(project.file(directory))
             commandLine(
                 "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_INSTALL_PREFIX=.",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
-                "-DREALM_ENABLE_SYNC=0",
+                "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=ON",
                 "-G",
                 "Xcode",
@@ -356,6 +474,7 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
     outputs.file(project.file("$directory/lib/librealm$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm-parser$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-sync$buildTypeSuffix.a"))
 }
 
 fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
@@ -372,9 +491,11 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
             commandLine(
                 "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_BUILD_TYPE=$buildType",
                 "-DREALM_NO_TESTS=1",
-                "-DREALM_ENABLE_SYNC=0",
+                "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=ON",
                 "-G",
                 "Xcode",
@@ -402,6 +523,7 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
     outputs.file(project.file("$directory/lib/librealm$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm-parser$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm-object-store$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/lib/librealm-sync$buildTypeSuffix.a"))
 }
 
 afterEvaluate {
@@ -426,6 +548,23 @@ tasks.named("cinteropRealm_wrapperIosArm64") {
 
 tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(capiMacosUniversal)
+}
+
+tasks.named("jvmMainClasses") {
+    dependsOn(buildJVMSharedLibs)
+}
+
+// Maven Central requires JavaDoc so add empty javadoc artifacts
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+}
+
+publishing {
+    // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
+    publications.withType<MavenPublication> {
+        // Stub javadoc.jar artifact
+        artifact(javadocJar.get())
+    }
 }
 
 realmPublish {

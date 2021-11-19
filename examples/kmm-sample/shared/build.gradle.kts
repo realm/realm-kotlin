@@ -24,16 +24,15 @@ plugins {
     id("kotlin-android-extensions")
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
+    id("io.realm.kotlin")
 }
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }
 
-// Apply Realm Kotlin plugin
-apply(plugin = "io.realm.kotlin")
-
 kotlin {
+    jvm()
     android()
     ios {
         binaries {
@@ -46,7 +45,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // TODO AUTO-SETUP
-                implementation("io.realm.kotlin:library:${Realm.version}")
+                implementation("io.realm.kotlin:library-base:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-native-mt")
             }
         }
@@ -77,8 +76,6 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
-        versionCode = 1
-        versionName = "$version"
     }
     buildTypes {
         getByName("release") {
