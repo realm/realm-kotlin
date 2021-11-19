@@ -1,6 +1,5 @@
 package io.realm.notifications
 
-import io.realm.RealmList
 import io.realm.RealmObject
 
 /**
@@ -14,27 +13,27 @@ import io.realm.RealmObject
  *
  * ```
  * // Variant 1: Switch on the sealed interface
- * realm.object(Person::class).observe()
+ * realm.filter<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       when(result) {
- *          is InitialList -> setList(it.list)
- *          is UpdatedList -> updateList(it.list)
- *          is DeletedList -> deleteList(it.list)
+ *          is InitialList -> setUIList(it.list)
+ *          is UpdatedList -> updateUIList(it) // Android RecyclerView knows how to animate ranges
+ *          is DeletedList -> deleteUIList(it.list)
  *       }
  *   }
  *
  * // Variant 2: Switch on the state property
- * realm.object(Person::class).observe()
+ * realm.filter<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       when(it.state) {
- *          INITIAL -> setList(it.list)
- *          UPDATED -> updateList(it.list)
- *          DELETED -> deleteList(it.list)
+ *          INITIAL -> setUIList(it.list)
+ *          UPDATED -> updateUIList(it.list) // Use DiffUtil to calculate and animate changes
+ *          DELETED -> deleteUIList(it.list)
  *       }
  *   }
  *
  * // Variant 3: Just pass on the list
- * realm.object(Person::class).observe()
+ * realm.filter<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       handleChange(it.list)
  *   }
@@ -47,7 +46,7 @@ import io.realm.RealmObject
  *
  * ```
  * // Variant 1: Automatic cast using sealed interface
- * realm.object(Person::class).observe()
+ * realm.filter<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       when(result) {
  *          is InitialList -> setList(it.list)
@@ -63,9 +62,10 @@ import io.realm.RealmObject
  *       }
  *   }
  * // Variant 1: Manual switch on state property
- * realm.object(Person::class).observe()
+ * realm.filter<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       when(it.state) {
+ *          INITIAL -> setList(it.list)
  *          UPDATED -> {
  *              val update = it as UpdatedList
  *              updateList(
@@ -75,6 +75,7 @@ import io.realm.RealmObject
  *                  update.changeRanges
  *             )
  *          }
+ *          DELETED -> removeList()
  *       }
  *   }
  * ```
