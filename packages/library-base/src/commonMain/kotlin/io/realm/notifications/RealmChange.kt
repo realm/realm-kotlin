@@ -2,7 +2,7 @@ package io.realm.notifications
 
 import io.realm.BaseRealm
 
-sealed interface RealmChange<R: BaseRealm> {
+sealed interface RealmChange<R : BaseRealm> {
     enum class State {
         INITIAL,
         UPDATED
@@ -13,5 +13,5 @@ sealed interface RealmChange<R: BaseRealm> {
      */
     val realm: R
 }
-interface InitialRealm<R: BaseRealm> : RealmChange<R>
-interface UpdatedRealm<R: BaseRealm> : RealmChange<R>
+interface InitialRealm<R : BaseRealm> : RealmChange<R>
+interface UpdatedRealm<R : BaseRealm> : RealmChange<R>

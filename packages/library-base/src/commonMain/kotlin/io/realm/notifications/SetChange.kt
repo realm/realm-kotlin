@@ -30,6 +30,5 @@ interface UpdatedSet<V> : SetChange<V> {
      * The number of entries that have been deleted.
      */
     val numberOfDeletions: Int
-
 }
 interface DeletedSet<V> : SetChange<V>

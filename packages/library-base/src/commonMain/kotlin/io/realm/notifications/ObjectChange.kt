@@ -2,7 +2,7 @@ package io.realm.notifications
 
 import io.realm.RealmObject
 
-sealed interface ObjectChange<O: RealmObject> {
+sealed interface ObjectChange<O : RealmObject> {
     enum class State {
         INITIAL,
         UPDATED,
@@ -21,10 +21,10 @@ sealed interface ObjectChange<O: RealmObject> {
      */
     val obj: O?
 }
-interface InitialObject<O: RealmObject> : ObjectChange<O> {
+interface InitialObject<O : RealmObject> : ObjectChange<O> {
     override val obj: O
 }
-interface UpdatedObject<O: RealmObject> : ObjectChange<O> {
+interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
     override val obj: O
     /**
      * Returns the names of properties that has changed.
@@ -39,7 +39,7 @@ interface UpdatedObject<O: RealmObject> : ObjectChange<O> {
      * or the field hasn't been changed.
      */
     fun isFieldChanged(fieldName: String): Boolean {
-        return changedFields.firstOrNull { it == fieldName} != null
+        return changedFields.firstOrNull { it == fieldName } != null
     }
 }
-interface DeletedObject<O: RealmObject> : ObjectChange<O>
+interface DeletedObject<O : RealmObject> : ObjectChange<O>

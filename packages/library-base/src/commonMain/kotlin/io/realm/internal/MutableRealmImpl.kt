@@ -19,11 +19,11 @@ import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
-import io.realm.notifications.Callback
-import io.realm.notifications.Cancellable
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
+import io.realm.notifications.Callback
+import io.realm.notifications.Cancellable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 

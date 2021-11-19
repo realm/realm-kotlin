@@ -1,6 +1,6 @@
 package io.realm.notifications
 
-sealed interface MapChange<K: String, V: String> {
+sealed interface MapChange<K : String, V : String> {
     enum class State {
         INITIAL,
         UPDATED,
@@ -19,8 +19,8 @@ sealed interface MapChange<K: String, V: String> {
      */
     val map: Map<K, V> // FIXME: Should probably be RealmMap<V> when available.
 }
-interface InitialMap<K: String, V: String> : MapChange<K, V>
-interface UpdatedMap<K: String, V: String> : MapChange<K, V> {
+interface InitialMap<K : String, V : String> : MapChange<K, V>
+interface UpdatedMap<K : String, V : String> : MapChange<K, V> {
     /**
      * Array containing the keys of entries that have been deleted in the previous version of the map.
      */
@@ -34,4 +34,4 @@ interface UpdatedMap<K: String, V: String> : MapChange<K, V> {
      */
     val changes: Array<K>
 }
-interface DeletedMap<K: String, V: String> : MapChange<K, V>
+interface DeletedMap<K : String, V : String> : MapChange<K, V>

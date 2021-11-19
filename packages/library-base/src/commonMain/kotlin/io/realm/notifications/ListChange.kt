@@ -2,7 +2,6 @@ package io.realm.notifications
 
 import io.realm.RealmObject
 
-
 /**
  * This sealed interface describe the possible changes that happen happen to a list collection,
  * currently [io.realm.RealmList] or [io.realm.RealmResults].
@@ -79,7 +78,7 @@ import io.realm.RealmObject
  *   }
  * ```
  */
-sealed interface ListChange<T: List<RealmObject>> {
+sealed interface ListChange<T : List<RealmObject>> {
 
     enum class State {
         /**
@@ -115,8 +114,8 @@ sealed interface ListChange<T: List<RealmObject>> {
     val state: State
     val list: T
 }
-interface InitialList<T: List<RealmObject>>: ListChange<T>
-interface UpdatedList<T: List<RealmObject>>: ListChange<T> {
+interface InitialList<T : List<RealmObject>> : ListChange<T>
+interface UpdatedList<T : List<RealmObject>> : ListChange<T> {
     val deletions: IntArray
     val insertions: IntArray
     val changes: IntArray
@@ -124,4 +123,4 @@ interface UpdatedList<T: List<RealmObject>>: ListChange<T> {
     val insertionRanges: Array<ListChange.Range>
     val changeRanges: Array<ListChange.Range>
 }
-interface DeletedList<T: List<RealmObject>>: ListChange<T>
+interface DeletedList<T : List<RealmObject>> : ListChange<T>
