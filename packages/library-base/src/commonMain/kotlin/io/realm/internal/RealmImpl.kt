@@ -10,6 +10,7 @@ import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
 import io.realm.notifications.Callback
 import io.realm.notifications.Cancellable
+import io.realm.notifications.RealmChange
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +35,7 @@ internal class RealmImpl private constructor(
     internal val realmScope =
         CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow =
-        MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
+        MutableSharedFlow<RealmChange<Realm>>(replay = 1) // Realm notifications emit their initial state when subscribed to
     private val notifier =
         SuspendableNotifier(this, configuration.notificationDispatcher)
     private val writer =
@@ -69,7 +70,7 @@ internal class RealmImpl private constructor(
         realmReference = RealmReference(this, frozenRealm)
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
-            realmFlow.emit(this@RealmImpl)
+            // realmFlow.emit(this@RealmImpl)
             notifier.realmChanged().collect { realmReference ->
                 updateRealmPointer(realmReference)
             }
@@ -113,7 +114,7 @@ internal class RealmImpl private constructor(
         }
     }
 
-    override fun observe(): Flow<RealmImpl> {
+    override fun observe(): Flow<RealmChange<Realm>> {
         return realmFlow.asSharedFlow()
     }
 
@@ -159,7 +160,7 @@ internal class RealmImpl private constructor(
             trackNewAndCloseExpiredReferences(untrackedReference)
 
             // Notify public observers that the Realm changed
-            realmFlow.emit(this)
+            // realmFlow.emit(this)
         }
     }
 

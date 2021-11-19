@@ -1,5 +1,6 @@
 package io.realm.notifications
 
+import io.realm.RealmList
 import io.realm.RealmObject
 
 /**
@@ -78,7 +79,7 @@ import io.realm.RealmObject
  *   }
  * ```
  */
-sealed interface ListChange<T : List<RealmObject>> {
+sealed interface ListChange<out T : List<*>> {
 
     enum class State {
         /**

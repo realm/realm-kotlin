@@ -23,6 +23,7 @@ import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.notifications.ListChange
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +33,7 @@ import kotlin.reflect.KClass
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
 internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableListOf() {
-    override fun observe(): Flow<RealmList<E>> =
+    override fun observe(): Flow<ListChange<RealmList<E>>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 }
 
@@ -42,7 +43,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     val nativePointer: NativePointer,
     val metadata: ListOperatorMetadata
-) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, Observable<ListChange<RealmList<E>>> {
 
     private val operator = ListOperator<E>(metadata)
 
@@ -112,7 +113,7 @@ internal class ManagedRealmList<E>(
         }
     }
 
-    override fun observe(): Flow<ManagedRealmList<E>> {
+    override fun observe(): Flow<ListChange<RealmList<E>>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }
@@ -136,11 +137,11 @@ internal class ManagedRealmList<E>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<ManagedRealmList<E>>
+        channel: SendChannel<ListChange<RealmList<E>>>
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            channel.trySend(frozenList)
+             channel.trySend(frozenList as ListChange<RealmList<E>>) // FIXME
         } else {
             channel.close()
             null

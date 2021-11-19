@@ -22,6 +22,7 @@ import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.notifications.ListChange
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +33,7 @@ import kotlin.reflect.KClass
 //  - Postponing execution to actually accessing the elements also prevents query parser errors to
 //    be raised. Maybe we can get an option to prevalidate queries in the C-API?
 
-internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T>, RealmStateHolder, Observable<RealmResultsImpl<T>> {
+internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults<T>, RealmStateHolder, Observable<ListChange<RealmResults<T>>> {
 
     private val mode: Mode
     private val realm: RealmReference
@@ -94,7 +95,7 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
         }
     }
 
-    override fun observe(): Flow<RealmResultsImpl<T>> {
+    override fun observe(): Flow<ListChange<RealmResults<T>>> {
         realm.checkClosed()
         return realm.owner.registerObserver(this)
     }
@@ -132,9 +133,9 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<RealmResultsImpl<T>>
+        channel: SendChannel<ListChange<RealmResults<T>>>
     ): ChannelResult<Unit>? {
         val frozenResult = freeze(frozenRealm)
-        return channel.trySend(frozenResult)
+        return channel.trySend(frozenResult as ListChange<RealmResults<T>>) // FIXME
     }
 }

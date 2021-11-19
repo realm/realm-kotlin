@@ -18,6 +18,7 @@ package io.realm
 
 import io.realm.internal.UnmanagedRealmList
 import io.realm.internal.asRealmList
+import io.realm.notifications.ListChange
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -37,7 +38,7 @@ import kotlinx.coroutines.flow.Flow
  * [MutableRealm.copyToRealm] method.
  */
 interface RealmList<E> : MutableList<E> {
-    fun observe(): Flow<RealmList<E>>
+    fun observe(): Flow<ListChange<RealmList<E>>>
 }
 
 /**

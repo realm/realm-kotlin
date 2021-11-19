@@ -1,5 +1,6 @@
 package io.realm
 
+import io.realm.notifications.ListChange
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -39,7 +40,7 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versioned {
      *
      * @return a flow representing changes to the RealmResults.
      */
-    fun observe(): Flow<RealmResults<T>>
+    fun observe(): Flow<ListChange<RealmResults<T>>>
 
     /**
      * Delete all objects from this result from the realm.

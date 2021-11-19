@@ -17,6 +17,7 @@ package io.realm
 
 import io.realm.internal.InternalRealmConfiguration
 import io.realm.internal.RealmImpl
+import io.realm.notifications.RealmChange
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -109,7 +110,7 @@ interface Realm : TypedRealm {
      *
      * @return a flow representing changes to this Realm.
      */
-    fun observe(): Flow<Realm>
+    fun observe(): Flow<RealmChange<Realm>>
 
     /**
      * Close this Realm and all underlying resources. Accessing any methods or Realm Objects after this
