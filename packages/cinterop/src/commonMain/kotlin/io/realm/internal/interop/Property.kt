@@ -52,7 +52,7 @@ data class Property( // Kotlin variant of realm_property_info
             isIndexed: Boolean
         ): Property {
             val flags =
-                (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or (if (isNullable) RLM_PROPERTY_PRIMARY_KEY else 0) or (if (isNullable) RLM_PROPERTY_INDEXED else 0)
+                (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or (if (isPrimaryKey) RLM_PROPERTY_PRIMARY_KEY else 0) or (if (isIndexed) RLM_PROPERTY_INDEXED else 0)
             return Property(
                 name,
                 publicName,

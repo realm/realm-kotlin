@@ -42,21 +42,6 @@ actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
 
-    // TODO API-CLEANUP Maybe pull library loading into separate method
-    //  https://github.com/realm/realm-kotlin/issues/56
-    init {
-        if (isAndroid()) {
-            System.loadLibrary("realmc")
-        } else {
-            // otherwise locate, using reflection, the dependency SoLoader and call load
-            // (calling SoLoader directly will create a circular dependency with `jvmMain`)
-            val classToLoad = Class.forName("io.realm.jvm.SoLoader")
-            val instance = classToLoad.newInstance()
-            val loadMethod: Method = classToLoad.getDeclaredMethod("load")
-            loadMethod.invoke(instance)
-        }
-    }
-
     actual fun realm_get_version_id(realm: NativePointer): Long {
         val version = realm_version_id_t()
         val found = BooleanArray(1)

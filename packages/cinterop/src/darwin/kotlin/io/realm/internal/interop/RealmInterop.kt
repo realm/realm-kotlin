@@ -428,7 +428,7 @@ actual object RealmInterop {
                     primary_key?.toKString(),
                     num_properties.convert(),
                     num_computed_properties.convert(),
-                    key.toLong(),
+                    ClassKey(key.toLong()),
                     flags
                 )
             }

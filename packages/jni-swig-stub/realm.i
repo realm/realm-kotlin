@@ -27,7 +27,24 @@ using namespace realm::jni_util;
 
 // Manual additions to java module class
 %pragma(java) modulecode=%{
-//  Manual addition
+    // Trigger loading of shared library when the swig wrapper is loaded
+    static {
+        // using https://developer.android.com/reference/java/lang/System#getProperties()
+        if (System.getProperty("java.specification.vendor").contains("Android")) {
+            System.loadLibrary("realmc");
+        } else {
+            // otherwise locate, using reflection, the dependency SoLoader and call load
+            // (calling SoLoader directly will create a circular dependency with `jvmMain`)
+            try {
+                Class<?> classToLoad = Class.forName("io.realm.jvm.SoLoader");
+                Object instance = classToLoad.newInstance();
+                java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
+                loadMethod.invoke(instance);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 %}
 
 // Helpers included directly in cpp file

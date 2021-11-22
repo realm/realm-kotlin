@@ -33,7 +33,7 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.A.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): kotlin.Unit declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
+                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.Table declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Table.Companion
                   name: CONST String type=kotlin.String value="A"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
@@ -270,7 +270,7 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.B.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): kotlin.Unit declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
+                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.Table declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Table.Companion
                   name: CONST String type=kotlin.String value="B"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
@@ -507,7 +507,7 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.C.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): kotlin.Unit declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
+                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.Table declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Table.Companion
                   name: CONST String type=kotlin.String value="C"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null

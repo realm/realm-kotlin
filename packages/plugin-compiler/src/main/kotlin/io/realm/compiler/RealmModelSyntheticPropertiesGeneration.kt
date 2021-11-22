@@ -418,7 +418,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // isNullable
                                     putValueArgument(arg++, irBoolean(nullable))
                                     // isPrimaryKey
-                                    putValueArgument(arg++, irBoolean(primaryKey != null))
+                                    putValueArgument(arg++, irBoolean(primaryKey))
                                     // isIndexed
                                     putValueArgument(arg++, irBoolean(isIndexed))
                                 }

@@ -30,6 +30,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 public class RealmSchemaTests {
 
@@ -58,12 +59,12 @@ public class RealmSchemaTests {
         val schema = realm.schema()
 
         val schemaVariationsName = "SchemaVariations"
-        val schemaVariationsDescriptor = schema[schemaVariationsName]
+        val schemaVariationsDescriptor = schema[schemaVariationsName] ?: fail("Couldn't find class")
         assertEquals(schemaVariationsName, schemaVariationsDescriptor.name)
         assertEquals("string", schemaVariationsDescriptor.primaryKey()?.name)
 
         val sampleName = "Sample"
-        val sampleDescriptor = schema[sampleName]
+        val sampleDescriptor = schema[sampleName] ?: fail("Couldn't find class")
         assertEquals(sampleName, sampleDescriptor.name)
         assertNull(sampleDescriptor.primaryKey())
     }
@@ -73,7 +74,7 @@ public class RealmSchemaTests {
         val schema = realm.schema()
 
         val schemaVariationsName = "SchemaVariations"
-        val schemaVariationsDescriptor = schema[schemaVariationsName]
+        val schemaVariationsDescriptor = schema[schemaVariationsName] ?: fail("Couldn't find class")
 
         schemaVariationsDescriptor["string"]!!.run {
             assertEquals("string", name)
@@ -140,7 +141,7 @@ public class RealmSchemaTests {
         assertEquals(2, schema.classes.size)
 
         // Verify properties of SchemaVariations
-        val classDescriptor = schema["SchemaVariations"]
+        val classDescriptor = schema["SchemaVariations"] ?: fail("Couldn't find class")
         assertEquals("SchemaVariations", classDescriptor.name)
         for (property in classDescriptor.properties) {
             property.run {

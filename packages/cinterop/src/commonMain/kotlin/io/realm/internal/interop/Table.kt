@@ -28,8 +28,8 @@ data class Table(
 ) {
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin
-        fun create(name: String, primaryKey: String?, numProperties: Long) {
-            Table(name, primaryKey, numProperties, 0)
+        fun create(name: String, primaryKey: String?, numProperties: Long): Table {
+            return Table(name, primaryKey, numProperties, 0)
         }
     }
 }

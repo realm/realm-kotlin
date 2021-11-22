@@ -1280,7 +1280,7 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Sample.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): kotlin.Unit declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
+                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.Table declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Table.Companion
                   name: CONST String type=kotlin.String value="Sample"
                   primaryKey: CONST String type=kotlin.String value="id"
@@ -1308,7 +1308,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=true
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1319,7 +1319,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1330,7 +1330,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1341,7 +1341,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1352,7 +1352,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=true
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1363,7 +1363,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1374,7 +1374,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1385,7 +1385,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1396,7 +1396,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1407,7 +1407,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value="Child"
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1418,7 +1418,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1429,7 +1429,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1440,7 +1440,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1451,7 +1451,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1462,7 +1462,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1473,7 +1473,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1484,7 +1484,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1495,7 +1495,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1506,7 +1506,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1517,7 +1517,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value="Sample"
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1528,7 +1528,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1539,7 +1539,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1550,7 +1550,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1561,7 +1561,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1572,7 +1572,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1583,7 +1583,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1594,7 +1594,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1605,7 +1605,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.Property declared in io.realm.internal.interop.Property.Companion' type=io.realm.internal.interop.Property origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Property.Companion
@@ -1616,7 +1616,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.Any
           overridden:
@@ -1922,7 +1922,7 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in sample.input.Child.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropTable: io.realm.internal.interop.Table, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.Property>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): kotlin.Unit declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
+                cinteropTable: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.Table declared in io.realm.internal.interop.Table.Companion' type=io.realm.internal.interop.Table origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.Table.Companion
                   name: CONST String type=kotlin.String value="Child"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
@@ -1939,7 +1939,7 @@ MODULE_FRAGMENT name:<main>
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
-                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
         FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:sample.input.Child.Companion) returnType:kotlin.Any
           overridden:
@@ -2139,5 +2139,3 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-    FUN name:test visibility:public modality:FINAL <> () returnType:kotlin.Unit
-      BLOCK_BODY
