@@ -1,6 +1,5 @@
 package io.realm.prototype
 
-import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.realmListOf
 import kotlinx.coroutines.*
@@ -30,7 +29,7 @@ inline fun <reified T: RealmObject> Realm.query(query: String = "TRUEPREDICATE")
 interface MutableRealm {
     fun <T : RealmObject> query(clazz: KClass<T>, query: String = "TRUEPREDICATE"): RealmQuery<T>
 }
-inline fun <reified T: RealmObject> MutableRealm.filter(query: String = "TRUEPREDICATE"): RealmQuery<T> { TODO() }
+inline fun <reified T: RealmObject> MutableRealm.query(query: String = "TRUEPREDICATE"): RealmQuery<T> { TODO() }
 
 /**
  * Add `query` method to RealmResults
@@ -227,33 +226,33 @@ fun writeExamples() {
         // way to avoid this using the type system.
         realm.write {
             // Use case 1: Standard simple object queries
-            val results1: RealmResults<Person> = filter<Person>("age > 42").find()
+            val results1: RealmResults<Person> = query<Person>("age > 42").find()
 
             // Use case 2: More advanced object queries
-            val results2: RealmResults<Person> = filter<Person>("age > 42")
+            val results2: RealmResults<Person> = query<Person>("age > 42")
                 .query("name BEGINSWITH 'John'")
                 .sort("name")
                 .find()
 
             // Use case 3: Selecting first match
-            val person: Person? = filter<Person>("age > 42")
+            val person: Person? = query<Person>("age > 42")
                 .query("name BEGINSWITH 'John'")
                 .sort("name")
                 .find()
                 .firstOrNull()
 
             // Use case 4: Scalar queries
-            val maxAge: Long = filter<Person>().max("age", Long::class).find()
+            val maxAge: Long = query<Person>().max("age", Long::class).find()
 
             // Use case 5: Scalar queries with type conversion. By asking users to provide the type
             // we should also do conversions for standard types, e.g. casting numbers, string/int
             // conversion, Date conversion
-            val youngestBirthday: Long = filter<Person>().max<Long>("birthday").find()
-            val maxAgeAsDouble: Double = filter<Person>().max<Double>("age").find()
+            val youngestBirthday: Long = query<Person>().max<Long>("birthday").find()
+            val maxAgeAsDouble: Double = query<Person>().max<Double>("age").find()
 
             // Use case 6: Observing queries are not supported in writes.
-            filter<Person>().asFlow() // Will throw exception
-            filter<Person>().max<Long>("age").asFlow() // Will throw exception
+            query<Person>().asFlow() // Will throw exception
+            query<Person>().max<Long>("age").asFlow() // Will throw exception
         }
     }
 }
