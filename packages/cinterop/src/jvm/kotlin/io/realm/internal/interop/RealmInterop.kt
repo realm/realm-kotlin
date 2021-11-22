@@ -62,7 +62,7 @@ actual object RealmInterop {
         return result.first()
     }
 
-    actual fun realm_schema_new(schema: List<Pair<Table, List<Property>>>): NativePointer {
+    actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer {
         val count = schema.size
         val cclasses = realmc.new_classArray(count)
         val cproperties = realmc.new_propertyArrayArray(count)
@@ -197,21 +197,21 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table {
+    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo {
         val info = realm_class_info_t()
         realmc.realm_get_class(realm.cptr(), classKey.key, info)
         return with(info) {
-            Table(name, primary_key, num_properties, num_computed_properties, ClassKey(key), flags)
+            ClassInfo(name, primary_key, num_properties, num_computed_properties, ClassKey(key), flags)
         }
     }
-    actual fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<Property> {
+    actual fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo> {
         val properties = realmc.new_propertyArray(max.toInt())
         val outCount = longArrayOf(0)
         realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
         return if (outCount[0] > 0) {
             (0 until outCount[0]).map { i ->
                 with(realmc.propertyArray_getitem(properties, i.toInt())) {
-                    Property(
+                    PropertyInfo(
                         name,
                         public_name,
                         PropertyType.of(type),
@@ -280,15 +280,15 @@ actual object RealmInterop {
 
     actual fun realm_object_as_link(obj: NativePointer): Link {
         val link: realm_link_t = realmc.realm_object_as_link(obj.cptr())
-        return Link(link.target_table, link.target)
+        return Link(ClassKey(link.target_table), link.target)
     }
 
     actual fun realm_get_col_key(
         realm: NativePointer,
-        table: String,
+        className: String,
         col: String
     ): PropertyKey {
-        return PropertyKey(propertyInfo(realm, classInfo(realm, table), col).key)
+        return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
     }
 
     actual fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T {
@@ -635,12 +635,12 @@ actual object RealmInterop {
         realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
-    private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
+    private fun classInfo(realm: NativePointer, className: String): realm_class_info_t {
         val found = booleanArrayOf(false)
         val classInfo = realm_class_info_t()
-        realmc.realm_find_class((realm as LongPointerWrapper).ptr, table, found, classInfo)
+        realmc.realm_find_class((realm as LongPointerWrapper).ptr, className, found, classInfo)
         if (!found[0]) {
-            throw IllegalArgumentException("Cannot find class: '$table")
+            throw IllegalArgumentException("Cannot find class: '$className")
         }
         return classInfo
     }
@@ -655,9 +655,9 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer {
+    actual fun realm_query_parse(realm: NativePointer, className: String, query: String, vararg args: Any?): NativePointer {
         val count = args.size
-        val classKey = classInfo(realm, table).key
+        val classKey = classInfo(realm, className).key
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
             realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
@@ -697,7 +697,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
-        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.tableKey, link.objKey))
+        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.classKey.key, link.objKey))
     }
 
     actual fun realm_object_find_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer? {
@@ -730,7 +730,7 @@ actual object RealmInterop {
         if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target_table, this.link.target)
+        return Link(ClassKey(this.link.target_table), this.link.target)
     }
 }
 

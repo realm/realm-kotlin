@@ -16,9 +16,7 @@
 
 package io.realm.internal.interop
 
-// FIXME NAMING I think the consistent naming should be the OS names, Class/Property, but guess we
-//  need to prefix it with Core/Capi to avoid Class
-data class Table(
+data class ClassInfo(
     val name: String,
     val primaryKey: String?,
     val numProperties: Long,
@@ -28,8 +26,8 @@ data class Table(
 ) {
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin
-        fun create(name: String, primaryKey: String?, numProperties: Long): Table {
-            return Table(name, primaryKey, numProperties, 0)
+        fun create(name: String, primaryKey: String?, numProperties: Long): ClassInfo {
+            return ClassInfo(name, primaryKey, numProperties, 0)
         }
     }
 }

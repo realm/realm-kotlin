@@ -16,19 +16,19 @@
 
 package io.realm.internal.schema
 
-import io.realm.internal.interop.Property
-import io.realm.internal.interop.Table
+import io.realm.internal.interop.ClassInfo
+import io.realm.internal.interop.PropertyInfo
 import io.realm.schema.RealmClass
 import io.realm.schema.RealmProperty
 
 data class RealmClassImpl(
     // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
     // avoid unnecessary repeated initializations for realm_schema_new
-    val cinteropTable: Table,
-    val cinteropProperties: List<Property>
+    val cinterosClass: ClassInfo,
+    val cinteropProperties: List<PropertyInfo>
 ) : RealmClass {
 
-    override val name: String = cinteropTable.name
+    override val name: String = cinterosClass.name
     override val properties: Collection<RealmProperty> = cinteropProperties.map {
         RealmPropertyImpl.fromCoreProperty(it)
     }

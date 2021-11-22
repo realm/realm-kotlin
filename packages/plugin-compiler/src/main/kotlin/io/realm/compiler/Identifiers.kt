@@ -32,7 +32,7 @@ internal object Names {
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
     // names must match `RealmObjectInternal` properties
     val REALM_OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Owner")
-    val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
+    val OBJECT_CLASS_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
     val MEDIATOR = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Mediator")
 
@@ -45,8 +45,8 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
 
     // Schema related names
-    val TABLE_CREATE = Name.identifier("create")
-    val PROPERTY_CREATE = Name.identifier("create")
+    val CLASS_INFO_CREATE = Name.identifier("create")
+    val PROPERTY_INFO_CREATE = Name.identifier("create")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
@@ -84,9 +84,8 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
     // Schema related types
-    val TABLE = FqName("io.realm.internal.interop.Table")
-    val CLASS_FLAG = FqName("io.realm.internal.interop.ClassFlag")
-    val PROPERTY = FqName("io.realm.internal.interop.Property")
+    val CLASS_INFO = FqName("io.realm.internal.interop.ClassInfo")
+    val PROPERTY_INFO = FqName("io.realm.internal.interop.PropertyInfo")
     val PROPERTY_TYPE = FqName("io.realm.internal.interop.PropertyType")
     val COLLECTION_TYPE = FqName("io.realm.internal.interop.CollectionType")
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.annotations.PrimaryKey")

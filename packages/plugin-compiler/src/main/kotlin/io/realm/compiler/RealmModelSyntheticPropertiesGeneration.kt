@@ -16,24 +16,25 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.CLASS_INFO
 import io.realm.compiler.FqNames.COLLECTION_TYPE
 import io.realm.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
-import io.realm.compiler.FqNames.PROPERTY
+import io.realm.compiler.FqNames.PROPERTY_INFO
 import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_MEDIATOR_INTERFACE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.FqNames.REALM_REFERENCE
-import io.realm.compiler.FqNames.TABLE
+import io.realm.compiler.Names.CLASS_INFO_CREATE
 import io.realm.compiler.Names.MEDIATOR
+import io.realm.compiler.Names.OBJECT_CLASS_NAME
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
-import io.realm.compiler.Names.OBJECT_TABLE_NAME
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
-import io.realm.compiler.Names.PROPERTY_CREATE
+import io.realm.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
@@ -41,7 +42,6 @@ import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.compiler.Names.REALM_OWNER
 import io.realm.compiler.Names.SET
-import io.realm.compiler.Names.TABLE_CREATE
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -105,11 +105,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             .symbol.createType(true, emptyList())
     private val realmObjectCompanionInterface =
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
-    private val tableClass = pluginContext.lookupClassOrThrow(TABLE)
-    val tableCreateMethod = tableClass.lookupCompanionDeclaration<IrSimpleFunction>(TABLE_CREATE)
+    private val classInfoClass = pluginContext.lookupClassOrThrow(CLASS_INFO)
+    val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
 
-    private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY)
-    val propertyCreateMethod = propertyClass.lookupCompanionDeclaration<IrSimpleFunction>(PROPERTY_CREATE)
+    private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY_INFO)
+    val propertyCreateMethod = propertyClass.lookupCompanionDeclaration<IrSimpleFunction>(PROPERTY_INFO_CREATE)
 
     private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
     private val propertyTypes =
@@ -136,7 +136,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             addVariableProperty(realmModelInternalInterface, REALM_OWNER, realmReferenceClass.defaultType.makeNullable(), ::irNull)
             addVariableProperty(
                 realmModelInternalInterface,
-                OBJECT_TABLE_NAME,
+                OBJECT_CLASS_NAME,
                 pluginContext.irBuiltIns.stringType.makeNullable(),
                 ::irNull
             )
@@ -252,12 +252,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         IrCallImpl(
                             startOffset,
                             endOffset,
-                            type = tableClass.defaultType,
-                            symbol = tableCreateMethod.symbol,
+                            type = classInfoClass.defaultType,
+                            symbol = classInfoCreateMethod.symbol,
                             typeArgumentsCount = 0,
                             valueArgumentsCount = 3
                         ).apply {
-                            dispatchReceiver = irGetObject(tableClass.companionObject()!!.symbol)
+                            dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
                             // Name
                             putValueArgument(arg++, irString(irClass.name.identifier))

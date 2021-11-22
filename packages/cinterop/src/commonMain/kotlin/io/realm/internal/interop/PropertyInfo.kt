@@ -24,7 +24,7 @@ import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_PRIMARY_KEY
 // TODO OPTIMIZE We could hold on to the native allocated memory and only read values lazily
 //  This would avoid transferring anything not need. A better option would probably be to
 //  implement as custom serializer, so that we could transfer the full struct in one bridge crossing.
-data class Property( // Kotlin variant of realm_property_info
+data class PropertyInfo( // Kotlin variant of realm_property_info
     val name: String,
     val publicName: String? = null,
     val type: PropertyType,
@@ -50,10 +50,10 @@ data class Property( // Kotlin variant of realm_property_info
             isNullable: Boolean,
             isPrimaryKey: Boolean,
             isIndexed: Boolean
-        ): Property {
+        ): PropertyInfo {
             val flags =
                 (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or (if (isPrimaryKey) RLM_PROPERTY_PRIMARY_KEY else 0) or (if (isIndexed) RLM_PROPERTY_INDEXED else 0)
-            return Property(
+            return PropertyInfo(
                 name,
                 publicName,
                 type,

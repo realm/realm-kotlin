@@ -17,14 +17,14 @@
 package io.realm.test
 
 import io.realm.internal.interop.ClassFlag
+import io.realm.internal.interop.ClassInfo
 import io.realm.internal.interop.CollectionType
-import io.realm.internal.interop.Property
 import io.realm.internal.interop.PropertyFlag
+import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.SchemaValidationMode
-import io.realm.internal.interop.Table
 import io.realm.internal.interop.coreErrorAsThrowable
 import io.realm.internal.interop.set
 import io.realm.internal.interop.toKString
@@ -145,12 +145,12 @@ class CinteropTest {
     @Test
     fun cinterop_realmInterop() {
         val tables = listOf(
-            Table(
+            ClassInfo(
                 name = "foo",
                 primaryKey = "",
                 flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
                 properties = listOf(
-                    Property(
+                    PropertyInfo(
                         name = "int",
                         type = PropertyType.RLM_PROPERTY_TYPE_INT,
                         collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,

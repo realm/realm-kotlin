@@ -16,7 +16,7 @@
 
 package io.realm.internal.schema
 
-import io.realm.internal.interop.Property
+import io.realm.internal.interop.PropertyInfo
 import io.realm.schema.CollectionType
 import io.realm.schema.ElementType
 import io.realm.schema.RealmProperty
@@ -30,7 +30,7 @@ internal data class RealmPropertyImpl(
 ) : RealmProperty {
 
     companion object {
-        fun fromCoreProperty(corePropertyImpl: Property): RealmPropertyImpl {
+        fun fromCoreProperty(corePropertyImpl: PropertyInfo): RealmPropertyImpl {
             return with(corePropertyImpl) {
                 RealmPropertyImpl(
                     name,

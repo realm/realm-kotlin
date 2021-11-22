@@ -230,7 +230,7 @@ actual object RealmInterop {
         return realm_wrapper.realm_get_library_version().safeKString("library_version")
     }
 
-    actual fun realm_schema_new(schema: List<Pair<Table, List<Property>>>): NativePointer {
+    actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer {
         val count = schema.size
 
         memScoped {
@@ -418,12 +418,12 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): Table {
+    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo {
         memScoped {
             val classInfo = alloc<realm_class_info_t>()
             realm_wrapper.realm_get_class(realm.cptr(), classKey.key.toUInt(), classInfo.ptr)
             return with(classInfo) {
-                Table(
+                ClassInfo(
                     name.safeKString("name"),
                     primary_key?.toKString(),
                     num_properties.convert(),
@@ -439,7 +439,7 @@ actual object RealmInterop {
         realm: NativePointer,
         classKey: ClassKey,
         max: Long
-    ): List<Property> {
+    ): List<PropertyInfo> {
         memScoped {
             val properties = allocArray<realm_property_info_t>(max)
             val outCount = alloc<size_tVar>()
@@ -454,7 +454,7 @@ actual object RealmInterop {
                 return if (count > 0) {
                     (0 until outCount.value.toLong()).map {
                         with(properties[it]) {
-                            Property(
+                            PropertyInfo(
                                 name.safeKString("name"),
                                 public_name?.toKString(),
                                 PropertyType.of(type.toInt()),
@@ -546,13 +546,13 @@ actual object RealmInterop {
         val link: CValue<realm_link_t> =
             realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
-            return Link(this.target_table.toLong(), this.target)
+            return Link(ClassKey(this.target_table.toLong()), this.target)
         }
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): PropertyKey {
+    actual fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey {
         memScoped {
-            return PropertyKey(propertyInfo(realm, classInfo(realm, table), col).key)
+            return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
         }
     }
 
@@ -738,7 +738,7 @@ actual object RealmInterop {
 
     actual fun realm_query_parse(
         realm: NativePointer,
-        table: String,
+        className: String,
         query: String,
         vararg args: Any?
     ): NativePointer {
@@ -753,7 +753,7 @@ actual object RealmInterop {
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
-                    classInfo(realm, table).key,
+                    classInfo(realm, className).key,
                     query,
                     count.toULong(),
                     cArgs
@@ -779,7 +779,7 @@ actual object RealmInterop {
             if (value.type != realm_value_type.RLM_TYPE_LINK) {
                 error("Query did not return link but ${value.type}")
             }
-            return Link(value.link.target, value.link.target_table.toLong())
+            return Link(ClassKey(value.link.target), value.link.target_table.toLong())
         }
     }
 
@@ -825,7 +825,7 @@ actual object RealmInterop {
         val ptr = checkedPointerResult(
             realm_wrapper.realm_get_object(
                 realm.cptr(),
-                link.tableKey.toUInt(),
+                link.classKey.key.toUInt(),
                 link.objKey
             )
         )
@@ -1264,7 +1264,7 @@ actual object RealmInterop {
         if (this.type != realm_value_type.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target_table.toLong(), this.link.target)
+        return Link(ClassKey(this.link.target_table.toLong()), this.link.target)
     }
 
     private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {

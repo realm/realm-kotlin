@@ -16,9 +16,6 @@
 
 package io.realm.schema
 
-// Should we try to avoid enums completely as introducing new ones breaks compatibility due to
-// requirement of exhaustive `when`s. ... but exhaustive `when`s are also extremely useful to
-// ensure test coverage, etc. Maybe worth following https://youtrack.jetbrains.com/issue/KT-38750
 enum class CollectionType {
     NONE,
     LIST,
