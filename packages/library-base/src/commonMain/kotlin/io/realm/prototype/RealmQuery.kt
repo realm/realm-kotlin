@@ -91,7 +91,7 @@ interface RealmElementQuery<E> {
  * NOTE: The interaction with primitive queries might be a bit akward
  */
 interface RealmSingleQuery<E: RealmObject> {
-    fun find(): E
+    fun find(): E?
     fun asFlow(): Flow<E>
     // When fine-grained notifications are merged
     // fun asFlow(): Flow<ObjectChange<E>>
