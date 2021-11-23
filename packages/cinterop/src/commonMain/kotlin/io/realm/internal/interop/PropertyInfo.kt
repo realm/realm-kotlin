@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_INDEXED
+import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_NORMAL
 import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_NULLABLE
 import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_PRIMARY_KEY
 
@@ -31,8 +32,8 @@ data class PropertyInfo( // Kotlin variant of realm_property_info
     val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
     val linkTarget: String? = null,
     val linkOriginPropertyName: String? = null,
-    val key: PropertyKey,
-    val flags: Int
+    val key: PropertyKey = INVALID_PROPERTY_KEY,
+    val flags: Int = RLM_PROPERTY_NORMAL
 ) {
     val isNullable: Boolean = flags and PropertyFlags.RLM_PROPERTY_NULLABLE != 0
     val isPrimaryKey: Boolean = flags and PropertyFlags.RLM_PROPERTY_PRIMARY_KEY != 0

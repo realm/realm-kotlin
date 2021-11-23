@@ -19,6 +19,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.propertyInfo
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -252,7 +253,7 @@ actual object RealmInterop {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
                         public_name = "".cstr.ptr
-                        link_target = property.linkTarget?.cstr?.ptr
+                        link_target = property.linkTarget?.cstr?.ptr ?: "".cstr.ptr
                         link_origin_property_name = "".cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
