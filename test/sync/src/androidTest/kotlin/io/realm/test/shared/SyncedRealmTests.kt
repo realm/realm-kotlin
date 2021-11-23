@@ -121,7 +121,7 @@ class SyncedRealmTests {
         runBlocking {
             val observer = async {
                 realm2.objects(ChildPk::class)
-                    .observe()
+                    .asFlow()
                     .collect { childResults ->
                         if (childResults.size == 1) {
                             channel.send(childResults[0])

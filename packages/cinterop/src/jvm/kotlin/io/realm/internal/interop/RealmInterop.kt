@@ -629,6 +629,21 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
     }
 
+    actual fun realm_query_parse_for_results(
+        results: NativePointer,
+        query: String,
+        vararg args: Any?
+    ): NativePointer {
+        val count = args.size
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
+        }
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_results(results.cptr(), query, count.toLong(), cArgs)
+        )
+    }
+
     actual fun realm_query_find_first(realm: NativePointer): Link? {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
@@ -643,6 +658,12 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
     }
 
+    actual fun realm_query_count(query: NativePointer): Long {
+        val count = LongArray(1)
+        realmc.realm_query_count(query.cptr(), count)
+        return count[0]
+    }
+
     actual fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_results_resolve_in(results.cptr(), realm.cptr()))
     }
@@ -653,11 +674,17 @@ actual object RealmInterop {
         return count[0]
     }
 
+    actual fun <T> realm_results_average(results: NativePointer, property: Long): T {
+        val average = realm_value_t()
+        realmc.realm_results_average(results.cptr(), property, average, BooleanArray(1))
+        return from_realm_value(average)
+    }
+
     // TODO OPTIMIZE Getting a range
-    actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
+    actual fun <T> realm_results_get(results: NativePointer, index: Long): T {
         val value = realm_value_t()
         realmc.realm_results_get(results.cptr(), index, value)
-        return value.asLink()
+        return from_realm_value(value)
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {

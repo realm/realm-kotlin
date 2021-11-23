@@ -17,6 +17,7 @@ package io.realm
 
 import io.realm.internal.InternalRealmConfiguration
 import io.realm.internal.RealmImpl
+import io.realm.internal.interop.Constants
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -42,7 +43,7 @@ interface Realm : TypedRealm {
         /**
          * The required length for encryption keys used to encrypt Realm data.
          */
-        public const val ENCRYPTION_KEY_LENGTH = io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+        public const val ENCRYPTION_KEY_LENGTH = Constants.ENCRYPTION_KEY_LENGTH
 
         /**
          * Open a realm instance.
@@ -68,6 +69,15 @@ interface Realm : TypedRealm {
      * @return The result of the query as of the time of invoking this method.
      */
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
+
+    /**
+     * TODO : query
+     */
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T>
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write

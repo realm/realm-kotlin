@@ -34,7 +34,9 @@ import kotlin.reflect.KClass
  * [RealmObject].
  */
 @Suppress("VariableNaming")
-interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal> {
+interface RealmObjectInternal : RealmObject, RealmStateHolder,
+    io.realm.internal.interop.RealmObjectInterop, Freezable<RealmObjectInternal>,
+    Thawable<RealmObjectInternal>, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
@@ -67,7 +69,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         }
     }
 
-    override fun thaw(liveRealm: RealmReference): Observable<RealmObjectInternal>? {
+    override fun thaw(liveRealm: RealmReference): RealmObjectInternal? {
         @Suppress("UNCHECKED_CAST")
         val type: KClass<*> = this::class
         val mediator = `$realm$Mediator`!!
@@ -102,7 +104,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         }
     }
 
-    override fun observe(): Flow<RealmObjectInternal> {
+    override fun asFlow(): Flow<RealmObjectInternal> {
         return this.`$realm$Owner`!!.owner.registerObserver(this)
     }
 }

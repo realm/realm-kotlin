@@ -98,7 +98,7 @@ public fun RealmObject.isValid(): Boolean {
  *
  * @return a flow representing changes to the object.
  */
-public fun <T : RealmObject> T.observe(): Flow<T> {
+public fun <T : RealmObject> T.asFlow(): Flow<T> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")

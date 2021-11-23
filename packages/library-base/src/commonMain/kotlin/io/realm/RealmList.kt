@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.Flowable
 import io.realm.internal.UnmanagedRealmList
 import io.realm.internal.asRealmList
 import kotlinx.coroutines.flow.Flow
@@ -36,8 +37,18 @@ import kotlinx.coroutines.flow.Flow
  * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
  * [MutableRealm.copyToRealm] method.
  */
-interface RealmList<E> : MutableList<E> {
-    fun observe(): Flow<RealmList<E>>
+interface RealmList<E> : MutableList<E>, Flowable<RealmList<E>> {
+    /**
+     * Observes changes to the RealmList. If there is any change to objects represented by the query
+     * backing the RealmResult, the flow will emit the updated RealmResult. The flow will continue
+     * running indefinitely until canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the list.
+     */
+    override fun asFlow(): Flow<RealmList<E>>
 }
 
 /**

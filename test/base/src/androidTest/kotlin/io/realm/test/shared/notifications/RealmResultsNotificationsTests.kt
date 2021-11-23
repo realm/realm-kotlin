@@ -63,7 +63,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<RealmResults<Sample>>(1)
             val observer = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).asFlow().collect {
                     c.trySend(it)
                 }
             }
@@ -79,7 +79,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
+                realm.objects(Sample::class).asFlow().filterNot { it.isEmpty() }.collect {
                     c.trySend(it.size)
                 }
             }
@@ -98,12 +98,12 @@ class RealmResultsNotificationsTests : NotificationTests {
             val c1 = Channel<RealmResults<Sample>>(1)
             val c2 = Channel<RealmResults<Sample>>(1)
             val observer1 = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
+                realm.objects(Sample::class).asFlow().filterNot { it.isEmpty() }.collect {
                     c1.trySend(it)
                 }
             }
             val observer2 = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
+                realm.objects(Sample::class).asFlow().filterNot { it.isEmpty() }.collect {
                     c2.trySend(it)
                 }
             }
@@ -136,7 +136,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 )
             }
             val observer = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).asFlow().collect {
                     c.trySend(it)
                 }
             }
@@ -157,7 +157,7 @@ class RealmResultsNotificationsTests : NotificationTests {
             val c = Channel<Int>(capacity = 1)
             val counter = AtomicInt(0)
             val observer1 = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).asFlow().collect {
                     when (counter.incrementAndGet()) {
                         1 -> c.trySend(it.size)
                         2 -> {
@@ -169,7 +169,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
             val observer2 = async {
-                realm.objects(Sample::class).observe().collect {
+                realm.objects(Sample::class).asFlow().collect {
                     println(it.first().stringField)
                     println("$it -> ${realm.isClosed()}")
                 }
@@ -193,7 +193,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
+                realm.objects(Sample::class).asFlow().filterNot { it.isEmpty() }.collect {
                     c.send(it.size)
                 }
                 fail("Flow should not be canceled.")

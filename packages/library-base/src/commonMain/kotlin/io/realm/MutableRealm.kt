@@ -68,6 +68,15 @@ interface MutableRealm : TypedRealm {
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
 
     /**
+     * TODO : query
+     */
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T>
+
+    /**
      * Deletes the object from the underlying Realm.
      *
      * @throws IllegalArgumentException if the object is not managed by Realm.

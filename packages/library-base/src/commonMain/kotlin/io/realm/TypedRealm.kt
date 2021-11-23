@@ -18,6 +18,15 @@ interface TypedRealm : BaseRealm {
      * @return The result of the query.
      */
     open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
+
+    /**
+     * TODO : query
+     */
+    fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String = "TRUEPREDICATE",
+        vararg args: Any?
+    ): RealmQuery<T>
 }
 
 /**

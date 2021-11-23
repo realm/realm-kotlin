@@ -19,6 +19,7 @@ import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
+import io.realm.RealmQuery
 import io.realm.RealmResults
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -66,25 +67,33 @@ abstract class BaseRealmImpl internal constructor(
         // Use same reference through out all operations to avoid locking
         val realmReference = this.realmReference
         realmReference.checkClosed()
-        return RealmResultsImpl.fromQuery(
+        return ElementResults(
             realmReference,
-            RealmInterop.realm_query_parse(
-                realmReference.dbPointer,
-                clazz.simpleName!!,
-                "TRUEPREDICATE"
+            RealmInterop.realm_query_find_all(
+                RealmInterop.realm_query_parse(
+                    realmReference.dbPointer,
+                    clazz.simpleName!!,
+                    "TRUEPREDICATE"
+                )
             ),
             clazz,
             configuration.mediator
         )
     }
 
-    internal open fun <T> registerObserver(t: Observable<T>): Flow<T> {
+    open fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T> = RealmQueryImpl(realmReference, clazz, configuration.mediator, query, *args)
+
+    internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
-        results: RealmResultsImpl<T>,
-        callback: Callback<RealmResultsImpl<T>>
+        results: ElementResults<T>,
+        callback: Callback<ElementResults<T>>
     ): Cancellable {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }

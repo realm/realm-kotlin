@@ -74,7 +74,7 @@ class RealmListNotificationsTests : NotificationTests {
             val channel = Channel<RealmList<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel.send(flowList)
                     }
@@ -103,7 +103,7 @@ class RealmListNotificationsTests : NotificationTests {
             val channel = Channel<RealmList<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel.send(flowList)
                     }
@@ -144,14 +144,14 @@ class RealmListNotificationsTests : NotificationTests {
             val channel2 = Channel<RealmList<*>>(1)
             val observer1 = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel1.trySend(flowList)
                     }
             }
             val observer2 = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel2.trySend(flowList)
                     }
@@ -207,7 +207,7 @@ class RealmListNotificationsTests : NotificationTests {
             }
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .onCompletion {
                         // Signal completion
                         channel2.send(true)
@@ -249,7 +249,7 @@ class RealmListNotificationsTests : NotificationTests {
             }
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel.trySend(flowList)
                     }

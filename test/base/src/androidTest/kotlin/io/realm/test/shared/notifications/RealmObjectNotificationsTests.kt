@@ -18,8 +18,8 @@ package io.realm.test.shared.notifications
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.asFlow
 import io.realm.entities.Sample
-import io.realm.observe
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.update
@@ -69,7 +69,7 @@ class RealmObjectNotificationsTests : NotificationTests {
                 )
             }
             val observer = async {
-                obj.observe().collect {
+                obj.asFlow().collect {
                     c.trySend(it)
                 }
             }
@@ -87,7 +87,7 @@ class RealmObjectNotificationsTests : NotificationTests {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
             val observer = async {
-                obj.observe().collect {
+                obj.asFlow().collect {
                     c.trySend(it)
                 }
             }
@@ -114,12 +114,12 @@ class RealmObjectNotificationsTests : NotificationTests {
             val c1 = Channel<Sample?>(1)
             val c2 = Channel<Sample?>(1)
             val observer1 = async {
-                obj.observe().collect {
+                obj.asFlow().collect {
                     c1.trySend(it)
                 }
             }
             val observer2 = async {
-                obj.observe().collect {
+                obj.asFlow().collect {
                     c2.trySend(it)
                 }
             }
@@ -153,7 +153,7 @@ class RealmObjectNotificationsTests : NotificationTests {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
             val observer = async {
-                obj.observe()
+                obj.asFlow()
                     .onCompletion {
                         // Emit sentinel value to signal that flow completed
                         c.send(Sample())
@@ -187,7 +187,7 @@ class RealmObjectNotificationsTests : NotificationTests {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
             val observer = async {
-                obj.observe().collect {
+                obj.asFlow().collect {
                     c.trySend(it)
                 }
                 fail("Flow should not be canceled.")

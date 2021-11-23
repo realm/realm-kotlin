@@ -33,11 +33,33 @@ import kotlinx.coroutines.flow.Flow
 //  - Public Observable
 //    fun observe(): Flow<T>
 interface Observable<T> {
-    fun freeze(frozenRealm: RealmReference): Observable<T>?
-    fun thaw(liveRealm: RealmReference): Observable<T>?
     fun registerForNotification(callback: Callback): NativePointer
+
     // FIXME Needs elaborate doc on how to signal and close channel
-    fun emitFrozenUpdate(frozenRealm: RealmReference, change: NativePointer, channel: SendChannel<T>): ChannelResult<Unit>?
-    // Should we have a similar public variant
-    fun observe(): Flow<T>
+    fun emitFrozenUpdate(
+        frozenRealm: RealmReference,
+        change: NativePointer,
+        channel: SendChannel<T>
+    ): ChannelResult<Unit>?
+}
+
+/**
+ * TODO : query
+ */
+interface Freezable<T> {
+    fun freeze(frozenRealm: RealmReference): Observable<T>?
+}
+
+/**
+ * TODO : query
+ */
+interface Thawable<T> {
+    fun thaw(liveRealm: RealmReference): Observable<T>?
+}
+
+/**
+ * TODO : query
+ */
+interface Flowable<T> {
+    fun asFlow(): Flow<T?>
 }
