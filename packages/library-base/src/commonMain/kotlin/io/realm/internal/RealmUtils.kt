@@ -92,7 +92,8 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
         val managedModel = mediator.createInstanceOf(type)
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
         key?.let {
-            return managedModel.manage( realm,
+            return managedModel.manage(
+                realm,
                 mediator,
                 type,
                 RealmInterop.realm_object_create(realm.dbPointer, key)
