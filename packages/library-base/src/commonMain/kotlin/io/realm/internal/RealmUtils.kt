@@ -17,8 +17,6 @@
 
 package io.realm.internal
 
-import io.realm.RealmList
-import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
@@ -59,8 +57,6 @@ import io.realm.internal.interop.RealmCoreUnsupportedFileFormatVersionException
 import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
-import io.realm.isManaged
-import io.realm.isValid
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -272,5 +268,28 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreKeyAlreadyUsedException,
         is RealmCoreSerializationErrorException,
         is RealmCoreCallbackException -> RuntimeException(message, cause)
+    }
+}
+/**
+ * Map known supported Kotlin types to their corresponding CInterop type.
+ * If no mapping exists, the type is just passed through, assuming that CInterop
+ * will throw an appropriate error.
+ */
+internal fun mapPublicTypesToCoreTypes(args: Array<Any?>): Array<Any?> {
+    for (i in args.indices) {
+        args[i] = mapPublicTypeToCoreType(args[i])
+    }
+    return args
+}
+
+/**
+ * Map known supported Kotlin types to their corresponding CInterop type.
+ * If no mapping exists, the type is just passed through, assuming that CInterop
+ * will throw an appropriate error.
+ */
+internal fun mapPublicTypeToCoreType(arg: Any?): Any? {
+    return when (arg) {
+        is RealmInstant -> arg.data
+        else -> arg
     }
 }

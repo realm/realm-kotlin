@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
@@ -23,6 +24,7 @@ import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.Timestamp
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -67,7 +69,7 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, element)
+                copyToRealm(metadata.mediator, metadata.realm, mapPublicTypeToCoreType(element))
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
@@ -104,7 +106,7 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    copyToRealm(metadata.mediator, metadata.realm, element)
+                    copyToRealm(metadata.mediator, metadata.realm, mapPublicTypeToCoreType(element))
                 )
             )
         } catch (exception: RealmCoreException) {
@@ -194,6 +196,7 @@ internal class ListOperator<E>(
                 Float::class,
                 Double::class,
                 String::class -> value
+                RealmInstant::class -> RealmInstant(value as Timestamp)
                 else -> (value as Link).toRealmObject(
                     clazz as KClass<out RealmObject>,
                     mediator,

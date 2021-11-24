@@ -17,6 +17,7 @@
 
 package io.realm.entities
 
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.realmListOf
@@ -31,6 +32,7 @@ class Sample : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
+    var timestampField: RealmInstant = RealmInstant(100, 1000)
     var child: Sample? = null
 
     var stringListField: RealmList<String> = realmListOf()
@@ -42,6 +44,7 @@ class Sample : RealmObject {
     var booleanListField: RealmList<Boolean> = realmListOf()
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
+    var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -53,6 +56,7 @@ class Sample : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = realmListOf()
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
+    var nullableTimestampListField: RealmList<RealmInstant> = realmListOf()
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

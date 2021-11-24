@@ -504,6 +504,8 @@ actual object RealmInterop {
                 value.fnum
             realm_value_type.RLM_TYPE_DOUBLE ->
                 value.dnum
+            realm_value_type.RLM_TYPE_TIMESTAMP ->
+                value.asTimestamp()
             realm_value_type.RLM_TYPE_LINK ->
                 value.asLink()
             else ->
@@ -1184,6 +1186,13 @@ actual object RealmInterop {
             )
         )
         return propertyInfo
+    }
+
+    private fun realm_value_t.asTimestamp(): Timestamp {
+        if (this.type != realm_value_type.RLM_TYPE_TIMESTAMP) {
+            error("Value is not of type Timestamp: $this.type")
+        }
+        return Timestamp(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
     private fun realm_value_t.asLink(): Link {

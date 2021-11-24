@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.asLink
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -279,6 +280,8 @@ actual object RealmInterop {
                 value.fnum
             realm_value_type_e.RLM_TYPE_DOUBLE ->
                 value.dnum
+            realm_value_type_e.RLM_TYPE_TIMESTAMP ->
+                value.asTimestamp()
             realm_value_type_e.RLM_TYPE_LINK ->
                 value.asLink()
             realm_value_type_e.RLM_TYPE_NULL,
@@ -389,6 +392,13 @@ actual object RealmInterop {
                 is Double -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
                     cvalue.dnum = value
+                }
+                is Timestamp -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_TIMESTAMP
+                    cvalue.timestamp = realm_timestamp_t().apply {
+                        seconds = value.epochSeconds
+                        nanoseconds = value.nanoAdjustment
+                    }
                 }
                 is RealmObjectInterop -> {
                     val nativePointer = (value as RealmObjectInterop).`$realm$ObjectPointer`
@@ -688,6 +698,13 @@ actual object RealmInterop {
         } else {
             null
         }
+    }
+
+    private fun realm_value_t.asTimestamp(): Timestamp {
+        if (this.type != realm_value_type_e.RLM_TYPE_TIMESTAMP) {
+            error("Value is not of type Timestamp: $this.type")
+        }
+        return Timestamp(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
     private fun realm_value_t.asLink(): Link {

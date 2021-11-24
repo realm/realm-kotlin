@@ -15,6 +15,7 @@
 
 package io.realm.test.util
 
+import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.PropertyType
@@ -98,6 +99,16 @@ internal object TypeDescriptor {
             indexSupport = false,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
+        ),
+        TIMESTAMP(
+            type = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            nullable = true,
+            nonNullable = true,
+            listSupport = true,
+            primaryKeySupport = false,
+            indexSupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         );
     }
 
@@ -119,6 +130,7 @@ internal object TypeDescriptor {
         Float::class to CoreFieldType.FLOAT,
         Double::class to CoreFieldType.DOUBLE,
         String::class to CoreFieldType.STRING,
+        RealmInstant::class to CoreFieldType.TIMESTAMP,
         RealmObject::class to CoreFieldType.OBJECT
     )
 

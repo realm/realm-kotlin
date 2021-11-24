@@ -16,6 +16,7 @@
 
 package sample.input
 
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.Ignore
@@ -47,6 +48,7 @@ class Sample : RealmObject {
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
+    var timestampField: RealmInstant = RealmInstant(0,0)
     var child: Child? = null
 
     // List types
@@ -59,6 +61,7 @@ class Sample : RealmObject {
     var booleanListField: RealmList<Boolean> = realmListOf()
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
+    var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
 
     // Nullable list types - RealmList<RealmObject?> is not supported
@@ -71,6 +74,7 @@ class Sample : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = realmListOf()
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
+    var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
 
     fun dumpSchema(): String = "${Sample.`$realm$schema`()}"
 }
