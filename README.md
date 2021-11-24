@@ -366,3 +366,4 @@ This project adheres to the [MongoDB Code of Conduct](https://www.mongodb.com/co
 By participating, you are expected to uphold this code. Please report
 unacceptable behavior to [community-conduct@mongodb.com](mailto:community-conduct@mongodb.com).
 
+<img style="width: 0px; height: 0px;" src="https://3eaz4mshcd.execute-api.us-east-1.amazonaws.com/prod?s=https://github.com/realm/realm-kotlin#README.md">
