@@ -177,6 +177,17 @@ pipeline {
                                 testAndCollect("test", "macosTest")
                             },
                             {
+                                withLogcatTrace(
+                                    "integrationtest",
+                                    {
+                                        forwardAdbPorts()
+                                        testAndCollect("test", "connectedAndroidTest")
+                                    }
+                                )
+                            }
+                        ])
+                        testWithServer([
+                            {
                                 testAndCollect("test", "iosTest")
                             },
                             {
