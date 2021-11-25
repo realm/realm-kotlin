@@ -61,9 +61,13 @@ interface RealmScalarQuery<E> : Flowable<E> {
 interface RealmQuery<E> : RealmElementQuery<E> {
 
     fun query(filter: String, vararg arguments: Any?): RealmQuery<E>
-    fun sort(property: String, sortOrder: Sort = Sort.ASCENDING): RealmQuery<E>
-    fun sort(vararg propertyAndSortOrder: Pair<String, Sort>): RealmQuery<E>
+    fun sort(property: String, sortOrder: QuerySort = QuerySort.ASCENDING): RealmQuery<E>
+    fun sort(
+        propertyAndSortOrder: Pair<String, QuerySort>,
+        vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
+    ): RealmQuery<E>
     fun distinct(property: String): RealmQuery<E>
+    fun limit(results: Int): RealmQuery<E>
 
     // FIXME Is there a better way to force the constraints here. Restricting RealmQuery<E> to
     //  RealmObjects would help, but would prevent this class from being used by primitive queries.
@@ -73,6 +77,7 @@ interface RealmQuery<E> : RealmElementQuery<E> {
     fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T>
     fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T>
     fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T>
+//    fun average(property: String, type: KClass<*> = Number::class): RealmScalarQuery<*> // TODO two options: use Double type or field type (assuming losing precision)
     fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<Double>
     fun count(): RealmScalarQuery<Long>
 }
@@ -92,7 +97,7 @@ inline fun <reified T : Any> RealmQuery<*>.average(property: String): RealmScala
 /**
  * TODO : query
  */
-enum class Sort {
+enum class QuerySort {
     ASCENDING,
     DESCENDING
 }

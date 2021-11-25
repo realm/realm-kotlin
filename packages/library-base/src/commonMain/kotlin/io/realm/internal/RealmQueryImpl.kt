@@ -17,13 +17,16 @@
 
 package io.realm.internal
 
+import io.realm.QuerySort
 import io.realm.RealmObject
 import io.realm.RealmQuery
 import io.realm.RealmResults
 import io.realm.RealmScalarQuery
 import io.realm.RealmSingleQuery
-import io.realm.Sort
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
+import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
@@ -36,23 +39,14 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
+    private val queryDescriptor: List<QueryDescriptor> = listOf(),
     private val query: String,
     private vararg val args: Any?
 ) : RealmQuery<E>, Thawable<BaseResults<E>> {
 
-    @Suppress("SpreadOperator")
-    private val queryPointer: Lazy<NativePointer> = lazy {
-        // TODO : query - make it so that it takes into consideration previous queries
-        RealmInterop.realm_query_parse(
-            realmReference.dbPointer,
-            clazz.simpleName!!,
-            query,
-            *args
-        )
-    }
-
+    private val queryPointer: NativePointer = parseQuery()
     private val resultsPointer: NativePointer by lazy {
-        RealmInterop.realm_query_find_all(queryPointer.value)
+        RealmInterop.realm_query_find_all(queryPointer)
     }
 
     override fun find(): RealmResults<E> =
@@ -62,16 +56,32 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         TODO("Not yet implemented")
     }
 
-    override fun sort(property: String, sortOrder: Sort): RealmQuery<E> {
-        TODO("Not yet implemented")
+    override fun sort(property: String, sortOrder: QuerySort): RealmQuery<E> {
+        val updatedDescriptors = queryDescriptor + QueryDescriptor.Sort(property to sortOrder)
+        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
 
-    override fun sort(vararg propertyAndSortOrder: Pair<String, Sort>): RealmQuery<E> {
-        TODO("Not yet implemented")
+    override fun sort(
+        propertyAndSortOrder: Pair<String, QuerySort>,
+        vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
+    ): RealmQuery<E> {
+        val updatedDescriptors = (queryDescriptor + QueryDescriptor.Sort(propertyAndSortOrder))
+            .let { sortDescriptors ->
+                sortDescriptors + additionalPropertiesAndOrders.map { (property, order) ->
+                    QueryDescriptor.Sort(property to order)
+                }
+            }
+        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
 
     override fun distinct(property: String): RealmQuery<E> {
-        TODO("Not yet implemented")
+        val updatedDescriptors = queryDescriptor + QueryDescriptor.Distinct(property)
+        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
+    }
+
+    override fun limit(results: Int): RealmQuery<E> {
+        val updatedDescriptors = queryDescriptor + QueryDescriptor.Limit(results)
+        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
 
     override fun first(): RealmSingleQuery<E> {
@@ -89,6 +99,10 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> {
         TODO("Not yet implemented")
     }
+
+//    override fun average(property: String, type: KClass<*>): RealmScalarQuery<*> {
+//        TODO("Not yet implemented")
+//    }
 
     override fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<Double> {
         if (!type.isNumber()) {
@@ -109,11 +123,59 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         .registerObserver(this)
         .onStart { realmReference.checkClosed() }
 
-    private fun KClass<*>.isNumber(): Boolean {
-        // TODO Expand to support other numeric types, e.g. Decimal128
-        return this.simpleName == Int::class.simpleName ||
-            this.simpleName == Double::class.simpleName ||
-            this.simpleName == Flow::class.simpleName ||
-            this.simpleName == Long::class.simpleName
+    // TODO Expand to support other numeric types, e.g. Decimal128
+    private fun KClass<*>.isNumber(): Boolean = this.simpleName == Int::class.simpleName ||
+        this.simpleName == Double::class.simpleName ||
+        this.simpleName == Flow::class.simpleName ||
+        this.simpleName == Long::class.simpleName
+
+    private fun parseQuery(): NativePointer = try {
+        RealmInterop.realm_query_parse(
+            realmReference.dbPointer,
+            clazz.simpleName!!,
+            addQueryDescriptors(query),
+            *args
+        )
+    } catch (exception: RealmCoreException) {
+        throw when (exception) {
+            is RealmCoreInvalidQueryException ->
+                IllegalArgumentException("Wrong query field provided or malformed query syntax for query '$query': ${exception.message}")
+            is RealmCoreIndexOutOfBoundsException ->
+                IllegalArgumentException("Have you specified all parameters for query '$query'?: ${exception.message}")
+            else ->
+                genericRealmCoreExceptionHandler("Invalid syntax for query '$query': ${exception.message}", exception)
+        }
     }
+
+    private fun addQueryDescriptors(query: String): String = StringBuilder(query).apply {
+        queryDescriptor.forEach { descriptor ->
+            when (descriptor) {
+                is QueryDescriptor.Sort -> {
+                    // Append initial sort descriptor
+                    val (firstProperty, firstSort) = descriptor.propertyAndSort
+                    this.append(" SORT($firstProperty ${firstSort.name})")
+
+                    // Append potential additional sort descriptors
+                    descriptor.additionalPropertiesAndOrders.forEach { (property, order) ->
+                        this.append(" SORT($property ${order.name})")
+                    }
+                }
+                is QueryDescriptor.Distinct -> this.append(" DISTINCT(${descriptor.property})")
+                is QueryDescriptor.Limit -> this.append(" LIMIT(${descriptor.results})")
+            }
+        }
+    }.toString()
+}
+
+/**
+ * TODO : query
+ */
+internal sealed class QueryDescriptor {
+    internal class Sort(
+        val propertyAndSort: Pair<String, QuerySort>,
+        vararg val additionalPropertiesAndOrders: Pair<String, QuerySort>
+    ) : QueryDescriptor()
+
+    internal class Distinct(val property: String) : QueryDescriptor()
+    internal class Limit(val results: Int) : QueryDescriptor()
 }

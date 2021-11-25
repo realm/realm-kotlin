@@ -85,7 +85,8 @@ abstract class BaseRealmImpl internal constructor(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
-    ): RealmQuery<T> = RealmQueryImpl(realmReference, clazz, configuration.mediator, query, *args)
+    ): RealmQuery<T> =
+        RealmQueryImpl(realmReference, clazz, configuration.mediator, listOf(), query, *args)
 
     internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
