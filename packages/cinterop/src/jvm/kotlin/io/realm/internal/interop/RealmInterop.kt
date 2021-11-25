@@ -351,6 +351,7 @@ actual object RealmInterop {
 
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
+    @Suppress("ComplexMethod", "LongMethod")
     private fun <T> to_realm_value(value: T): realm_value_t {
         val cvalue = realm_value_t()
         if (value == null) {

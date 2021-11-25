@@ -13,12 +13,10 @@ class RealmInstantImpl(seconds: Long, nanoSeconds: Int) : Timestamp(seconds, nan
         get() = nanoSeconds
 
     override fun compareTo(other: RealmInstant): Int {
-        if (this.epochSeconds < other.epochSeconds) {
-            return -1
-        } else if (this.epochSeconds > other.epochSeconds) {
-            return 1
-        } else {
-            return this.nanosecondsOfSecond.compareTo(other.nanosecondsOfSecond)
+        return when {
+            this.epochSeconds < other.epochSeconds -> -1
+            this.epochSeconds > other.epochSeconds -> 1
+            else -> this.nanosecondsOfSecond.compareTo(other.nanosecondsOfSecond)
         }
     }
 

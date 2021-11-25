@@ -598,7 +598,7 @@ actual object RealmInterop {
         return realm_wrapper.realm_list_is_valid(list.cptr())
     }
 
-    @Suppress("ComplexMethod")
+    @Suppress("ComplexMethod", "LongMethod")
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
         val cvalue: realm_value_t = alloc()
         when (value) {
@@ -640,6 +640,13 @@ actual object RealmInterop {
             is Double -> {
                 cvalue.type = realm_value_type.RLM_TYPE_DOUBLE
                 cvalue.dnum = value as Double
+            }
+            is Timestamp -> {
+                cvalue.type = realm_value_type.RLM_TYPE_TIMESTAMP
+                cvalue.timestamp.apply {
+                    seconds = value.seconds
+                    nanoseconds = value.nanoSeconds
+                }
             }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
