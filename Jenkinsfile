@@ -169,26 +169,12 @@ pipeline {
                         )
                     }
                 }
-                stage('Integration Tests') {
+                stage('Integration Tests - macOS') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
                             {
                                 testAndCollect("test", "macosTest")
-                            },
-                            {
-                                withLogcatTrace(
-                                    "integrationtest",
-                                    {
-                                        forwardAdbPorts()
-                                        testAndCollect("test", "connectedAndroidTest")
-                                    }
-                                )
-                            }
-                        ])
-                        testWithServer([
-                            {
-                                testAndCollect("test", "iosTest")
                             },
                             {
                                 withLogcatTrace(
@@ -210,6 +196,16 @@ pipeline {
                           testWithServer([
                               { testAndCollect("test", ':sync:jvmTest') }
                           ])
+                    }
+                }
+                stage('Integration Tests - iOS') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("test", "iosTest")
+                            }
+                        ])
                     }
                 }
                 stage('Tests Android Sample App') {
