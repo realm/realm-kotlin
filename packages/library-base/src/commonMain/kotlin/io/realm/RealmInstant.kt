@@ -33,7 +33,7 @@ import io.realm.internal.RealmInstantImpl
  *   - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant(1, 100000000)
  *   - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant(-1, -100000000)
  */
-public interface RealmInstant: Comparable<RealmInstant> {
+public interface RealmInstant : Comparable<RealmInstant> {
 
     companion object {
         private const val SEC_AS_NANOSECOND: Int = 1_000_000_000

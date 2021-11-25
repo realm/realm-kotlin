@@ -123,11 +123,11 @@ class RealmInstantTests {
 
     @Test
     fun compare() {
-        val ts1 = RealmInstant(0,0)
-        val ts2 = RealmInstant(0,1)
-        val ts3 = RealmInstant(0,-1)
-        val ts4 = RealmInstant(1,0)
-        val ts5 = RealmInstant(-1,0)
+        val ts1 = RealmInstant(0, 0)
+        val ts2 = RealmInstant(0, 1)
+        val ts3 = RealmInstant(0, -1)
+        val ts4 = RealmInstant(1, 0)
+        val ts5 = RealmInstant(-1, 0)
 
         assertTrue(ts1.compareTo(ts2) < 0)
         assertTrue(ts1.compareTo(ts1) == 0)
