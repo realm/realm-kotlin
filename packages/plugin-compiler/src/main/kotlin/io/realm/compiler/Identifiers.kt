@@ -32,9 +32,10 @@ internal object Names {
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
     // names must match `RealmObjectInternal` properties
     val REALM_OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Owner")
-    val OBJECT_CLASS_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
+    val OBJECT_CLASS_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ClassName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
     val MEDIATOR = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Mediator")
+    val METADATA = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}metadata")
 
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
@@ -57,6 +58,7 @@ internal object Names {
     val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
     val REALM_OBJECT_INTERNAL_REALM_STATE = Name.identifier("realmState")
     val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
+    val REALM_OBJECT_INTERNAL_PROPERTY_KEY = Name.identifier("propertyKeyOrThrow")
 }
 
 internal object FqNames {
@@ -69,6 +71,7 @@ internal object FqNames {
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
+    val CLASS_METADATA_CLASS = FqName("io.realm.internal.schema.ClassMetadata")
     val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")
     val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
     val REALM_SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")

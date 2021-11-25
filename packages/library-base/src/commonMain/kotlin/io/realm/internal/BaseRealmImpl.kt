@@ -69,7 +69,7 @@ abstract class BaseRealmImpl internal constructor(
     //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
     //  initialization it would probably be acceptable to initialize on schema updates
     override fun schema(): RealmSchema {
-        return RealmSchemaImpl.fromRealm(realmReference)
+        return RealmSchemaImpl.fromRealm(realmReference.dbPointer)
     }
 
     open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {

@@ -3,6 +3,8 @@ package io.realm.internal
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.schema.RealmSchema
 
 /**
  * A _Realm Reference_ that links a specific Kotlin BaseRealm instance with an underlying C++
@@ -24,9 +26,13 @@ import io.realm.internal.interop.RealmInterop
  */
 data class RealmReference(
     val owner: BaseRealmImpl,
-    val dbPointer: NativePointer
+    val dbPointer: NativePointer,
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
 ) : RealmState {
+
+    // FIXME We probably don't need full schema if we just want to cache property keys for
+    //  ClassMetadata, but maybe it is ok to combine it?
+    val schema: RealmSchemaImpl = RealmSchemaImpl.fromRealm(dbPointer)
 
     override fun version(): VersionId {
         checkClosed()

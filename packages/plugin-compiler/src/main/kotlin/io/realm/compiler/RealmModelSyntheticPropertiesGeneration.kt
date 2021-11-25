@@ -17,6 +17,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_INFO
+import io.realm.compiler.FqNames.CLASS_METADATA_CLASS
 import io.realm.compiler.FqNames.COLLECTION_TYPE
 import io.realm.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
@@ -29,6 +30,7 @@ import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.FqNames.REALM_REFERENCE
 import io.realm.compiler.Names.CLASS_INFO_CREATE
 import io.realm.compiler.Names.MEDIATOR
+import io.realm.compiler.Names.METADATA
 import io.realm.compiler.Names.OBJECT_CLASS_NAME
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -120,6 +122,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val realmReferenceClass = pluginContext.lookupClassOrThrow(REALM_REFERENCE)
     private val mediatorInterface = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE)
+    private val classMetadataClass = pluginContext.lookupClassOrThrow(CLASS_METADATA_CLASS)
 
     private val listIrClass: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
@@ -142,6 +145,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
             addVariableProperty(realmModelInternalInterface, OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
             addVariableProperty(realmModelInternalInterface, MEDIATOR, mediatorInterface.defaultType.makeNullable(), ::irNull)
+            addVariableProperty(realmModelInternalInterface, METADATA, classMetadataClass.defaultType.makeNullable(), ::irNull)
         }
 
     @Suppress("LongMethod")

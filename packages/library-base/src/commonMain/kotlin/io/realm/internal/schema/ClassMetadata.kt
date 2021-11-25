@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop
+package io.realm.internal.schema
 
-/**
- * This interface is added by the compiler plugin to all [RealmObject] classes, it contains
- * internal properties of the model.
- *
- * This interface is not meant to be used externally (consider using [RealmObject] instead)
- */
-@Suppress("VariableNaming")
-interface RealmObjectInterop {
-    // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
+import io.realm.internal.interop.PropertyKey
 
-    // Invariant: This is never null for managed objects!
-    var `$realm$ObjectPointer`: NativePointer?
+class ClassMetadata(private val className: String, private val keyMap: Map<String, PropertyKey>) {
+
+    operator fun get(propertyName: String): PropertyKey? = keyMap[propertyName]
+    fun getOrThrow(propertyName: String): PropertyKey = keyMap[propertyName] ?: throw IllegalArgumentException("Object of type '${className} doesn't have a property named '$propertyName'")
 }

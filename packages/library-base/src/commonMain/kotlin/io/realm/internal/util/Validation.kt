@@ -39,4 +39,8 @@ object Validation {
         }
         return value!!
     }
+
+    fun sdkError(message: String): Nothing {
+        throw RuntimeException(message)
+    }
 }

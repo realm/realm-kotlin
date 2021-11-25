@@ -151,13 +151,13 @@ class GenerationExtensionTest {
         sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
         // Cannot initialize a RealmReference without a model, so skipping this from the test
         // sampleModel.`$realm$Owner` = LongPointer(0XCAFED00D)
-        sampleModel.`$realm$TableName` = "Sample"
+        sampleModel.`$realm$ClassName` = "Sample"
 
         assertEquals(true, sampleModel.`$realm$IsManaged`)
         assertEquals(0xCAFEBABE, (sampleModel.`$realm$ObjectPointer` as LongPointer).ptr)
         // Cannot initialize a RealmReference without a model, so skipping this from the test
         // assertEquals(0XCAFED00D, (sampleModel.`$realm$Owner` as LongPointer).ptr)
-        assertEquals("Sample", sampleModel.`$realm$TableName`)
+        assertEquals("Sample", sampleModel.`$realm$ClassName`)
 
         inputs.assertGeneratedIR()
     }

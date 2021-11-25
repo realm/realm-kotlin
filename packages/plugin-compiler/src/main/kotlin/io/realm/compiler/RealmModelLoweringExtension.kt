@@ -19,6 +19,7 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_IS_FROZEN
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_PROPERTY_KEY
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REALM_STATE
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_VERSION
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
@@ -42,7 +43,8 @@ private val realmObjectInternalOverrides = setOf(
     Name.identifier("emitFrozenUpdate"),
     REALM_OBJECT_INTERNAL_IS_FROZEN,
     REALM_OBJECT_INTERNAL_REALM_STATE,
-    REALM_OBJECT_INTERNAL_VERSION
+    REALM_OBJECT_INTERNAL_VERSION,
+    REALM_OBJECT_INTERNAL_PROPERTY_KEY
 )
 
 class RealmModelLoweringExtension : IrGenerationExtension {
