@@ -15,6 +15,7 @@
  */
 package io.realm.test.shared
 
+import io.realm.QuerySort
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmQuery
@@ -26,6 +27,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
+import kotlin.math.roundToInt
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -33,6 +35,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.expect
 
 class QueryTests {
 
@@ -59,7 +63,7 @@ class QueryTests {
     fun find() {
         realm.query(Sample::class)
             .find()
-            .let { results -> assertEquals(0, results.size) }
+            .let { results: RealmResults<Sample> -> assertEquals(0, results.size) }
 
         val stringValue = "some string"
         realm.writeBlocking {
@@ -69,6 +73,12 @@ class QueryTests {
             assertEquals(0, query.find().size)
             copyToRealm(Sample().apply { stringField = stringValue })
             assertEquals(1, query.find().size)
+
+            // TODO investigate: extension function like this
+//            query.find { this: RealmResults<Sample> ->
+//
+//            }
+//            val results = query.find()
         }
 
         // No filter
@@ -81,10 +91,89 @@ class QueryTests {
             .find()
             .let { results -> assertEquals(1, results.size) }
 
-        // Filter by invalid string
+        // Filter by string that doesn't match
         realm.query(Sample::class, "stringField = $0", "invalid string")
             .find()
             .let { results -> assertEquals(0, results.size) }
+    }
+
+    @Test
+    fun find_malformedQueryThrows() {
+        // TODO investigate if these errors are correct
+        assertFailsWith<Exception> {
+            realm.query(Sample::class, "stringField = $0")
+        }.let {
+            assertTrue(it is IllegalArgumentException)
+            assertTrue(it.message!!.contains("Have you specified all parameters"))
+        }
+
+        assertFailsWith<Exception> {
+            realm.query(Sample::class, "stringField = 42")
+        }.let {
+            assertTrue(it is IllegalArgumentException)
+            assertTrue(it.message!!.contains("Wrong query field"))
+        }
+
+        assertFailsWith<Exception> {
+            realm.query(Sample::class, "nonExistingField = 13")
+        }.let {
+            assertTrue(it is IllegalArgumentException)
+            assertTrue(it.message!!.contains("Wrong query field"))
+        }
+    }
+
+    @Test
+    fun sort() {
+        val values = listOf(0 to "A", 1 to "B", 2 to "C")
+        realm.writeBlocking {
+            values.forEach { (intValue, stringValue) ->
+                copyToRealm(Sample().apply {
+                    intField = intValue
+                    stringField = stringValue
+                })
+            }
+        }
+
+        // No filter, default sorting
+        realm.query(Sample::class)
+            .sort(Sample::intField.name)
+            .find()
+            .let { results ->
+                assertEquals(3, results.size)
+                values.forEachIndexed { index, (intValue, stringValue) ->
+                    assertEquals(intValue, results[index].intField)
+                    assertEquals(stringValue, results[index].stringField)
+                }
+            }
+
+        // No filter, sort descending
+        realm.query(Sample::class)
+            .sort(Sample::intField.name, QuerySort.DESCENDING)
+            .find()
+            .let { results ->
+                assertEquals(3, results.size)
+                values.reversed()
+                    .forEachIndexed { index, (intValue, stringValue) ->
+                        assertEquals(intValue, results[index].intField)
+                        assertEquals(stringValue, results[index].stringField)
+                    }
+            }
+
+        // No filter, multiple sortings
+        realm.query(Sample::class)
+            .sort(
+                Sample::intField.name to QuerySort.DESCENDING,
+                Sample::stringField.name to QuerySort.ASCENDING
+            ).find()
+            .let { results ->
+                assertEquals(3, results.size)
+                values.forEachIndexed { index, (intValue, stringValue) ->
+                    val intField = results[index].intField
+                    val stringField = results[index].stringField
+                    assertEquals(intValue, intField)
+                    assertEquals(stringValue, stringField)
+                }
+            }
     }
 
     @Test
@@ -121,38 +210,60 @@ class QueryTests {
                 assertFailsWith<IllegalStateException> {
                     query(Sample::class)
                         .asFlow()
-                        .collect { /* No-op */ }
                 }
             }
         }
     }
 
     @Test
-    fun average_find() {
+    fun average_generic_find() {
+        val value1 = 2
+        val value2 = 7
+        val expectedAverage = ((value1 + value2) / 2.0).roundToInt()
+
         realm.query(Sample::class)
             .average(Sample::intField.name, Int::class)
             .find()
-            .let { averageValue -> assertNull(averageValue) }
+            .let { averageValue: Int? -> assertNull(averageValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
             val averageQuery = query(Sample::class).average(Sample::intField.name, Int::class)
 
             assertNull(averageQuery.find())
-            copyToRealm(Sample().apply { intField = 0 })
-            copyToRealm(Sample().apply { intField = 10 })
-            assertEquals(5.0, averageQuery.find())
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            assertEquals(expectedAverage, averageQuery.find())
         }
 
         realm.query(Sample::class)
             .average(Sample::intField.name, Int::class)
             .find()
-            .let { averageValue -> assertEquals(5.0, averageValue) }
+            .let { averageValue: Int? -> assertEquals(expectedAverage, averageValue) }
     }
 
     @Test
-    fun average_asFlow() {
-        val channel = Channel<Double?>(2)
+    fun average_generic_find_throwsIfInvalidType() {
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = 1 })
+            copyToRealm(Sample().apply { intField = 2 })
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .average(Sample::intField.name, String::class)
+                .find()
+        }.let {
+            assertTrue(it.message!!.contains("Invalid numeric type"))
+        }
+    }
+
+    @Test
+    fun average_generic_asFlow() {
+        val channel = Channel<Int?>(1)
+        val value1 = 2
+        val value2 = 7
+        val expectedAverage = ((value1 + value2) / 2.0).roundToInt()
 
         runBlocking {
             val observer = async {
@@ -167,11 +278,90 @@ class QueryTests {
             assertNull(channel.receive())
 
             realm.writeBlocking {
-                copyToRealm(Sample().apply { intField = 0 })
-                copyToRealm(Sample().apply { intField = 10 })
+                copyToRealm(Sample().apply { intField = value1 })
+                copyToRealm(Sample().apply { intField = value2 })
             }
 
-            assertEquals(5.0, channel.receive())
+            assertEquals(expectedAverage, channel.receive())
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun average_generic_asFlow_throwsIfInvalidType() {
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .average(Sample::intField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid numeric type"))
+            }
+        }
+    }
+
+    @Test
+    fun average_double_find() {
+        val value1 = 2
+        val value2 = 7
+        val expectedAverage = (value1 + value2) / 2.0
+
+        realm.query(Sample::class)
+            .average(Sample::intField.name)
+            .find()
+            .let { averageValue: Double? -> assertNull(averageValue) }
+
+        realm.writeBlocking {
+            // Queries inside a write transaction are live and can be reused within the closure
+            val averageQuery = query(Sample::class).average(Sample::intField.name)
+
+            assertNull(averageQuery.find())
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            assertEquals(expectedAverage, averageQuery.find())
+        }
+
+        realm.query(Sample::class)
+            .average(Sample::intField.name)
+            .find()
+            .let { averageValue: Double? -> assertEquals(expectedAverage, averageValue) }
+    }
+
+    @Test
+    fun average_double_asFlow() {
+        val channel = Channel<Double?>(1)
+        val value1 = 2
+        val value2 = 7
+        val expectedAverage = (value1 + value2) / 2.0
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .average(Sample::intField.name)
+                    .asFlow()
+                    .collect { averageValue ->
+                        channel.send(averageValue)
+                    }
+            }
+
+            assertNull(channel.receive())
+
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = value1 })
+                copyToRealm(Sample().apply { intField = value2 })
+            }
+
+            assertEquals(expectedAverage, channel.receive())
             observer.cancel()
             channel.close()
         }
@@ -186,7 +376,6 @@ class QueryTests {
                     query(Sample::class)
                         .average(Sample::intField.name, Int::class)
                         .asFlow()
-                        .collect { /* No-op */ }
                 }
             }
         }
@@ -250,7 +439,6 @@ class QueryTests {
                     query(Sample::class)
                         .count()
                         .asFlow()
-                        .collect { /* No-op */ }
                 }
             }
         }
