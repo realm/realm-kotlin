@@ -52,7 +52,8 @@ object RealmObjectHelper {
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
-        return RealmInstantImpl(RealmInterop.realm_get_value<Timestamp>(o, key))
+        val res = RealmInterop.realm_get_value<Timestamp>(o, key)
+        return if (res == null) null else RealmInstantImpl(res)
     }
 
     // Return type should be R? but causes compilation errors for native

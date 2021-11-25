@@ -147,7 +147,6 @@ class RealmInstantTests {
         }
     }
 
-
     @Test
     fun toString_unmanaged() {
         val ts = RealmInstant(100, 100)
@@ -158,10 +157,9 @@ class RealmInstantTests {
     fun toString_managed() {
         realm.writeBlocking {
             copyToRealm(Sample()).let {
-                it.timestampField =  RealmInstant(100, 100)
+                it.timestampField = RealmInstant(100, 100)
                 assertEquals("RealmInstant(epochSeconds=100, nanosecondsOfSecond=100)", it.timestampField.toString())
             }
         }
     }
-
 }

@@ -16,7 +16,6 @@
 package io.realm
 
 import io.realm.internal.RealmInstantImpl
-import io.realm.internal.interop.Timestamp
 
 /**
  * A representation of a Realm timestamp. A timestamp represent a single point in time defined as
@@ -94,10 +93,7 @@ public interface RealmInstant {
      * The value always lies in the range `-999_999_999..999_999_999`.
      */
     val nanosecondsOfSecond: Int
-
 }
 
 // TODO Do we want this type of constructor? How does it show up in Dokka?
 fun RealmInstant(epochSeconds: Long, nanosecondAdjustment: Int): RealmInstant = RealmInstant.fromEpochSeconds(epochSeconds, nanosecondAdjustment)
-
-
