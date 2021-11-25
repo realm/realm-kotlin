@@ -17,6 +17,9 @@
 
 package io.realm.internal
 
+import io.realm.RealmInstant
+import io.realm.RealmList
+import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
@@ -57,6 +60,8 @@ import io.realm.internal.interop.RealmCoreUnsupportedFileFormatVersionException
 import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
+import io.realm.isManaged
+import io.realm.isValid
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -289,7 +294,6 @@ internal fun mapPublicTypesToCoreTypes(args: Array<Any?>): Array<Any?> {
  */
 internal fun mapPublicTypeToCoreType(arg: Any?): Any? {
     return when (arg) {
-        is RealmInstant -> arg.data
         else -> arg
     }
 }

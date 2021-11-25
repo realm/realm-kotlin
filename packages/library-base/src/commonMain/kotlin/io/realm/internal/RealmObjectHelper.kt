@@ -52,7 +52,7 @@ object RealmObjectHelper {
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
-        return RealmInstant(RealmInterop.realm_get_value<Timestamp>(o, key))
+        return RealmInstantImpl(RealmInterop.realm_get_value<Timestamp>(o, key))
     }
 
     // Return type should be R? but causes compilation errors for native
@@ -157,7 +157,7 @@ object RealmObjectHelper {
         //  only. This relates to the overall concern of having a generic path for getter/setter
         //  instead of generating a typed path for each type.
         try {
-            RealmInterop.realm_set_value(o, key, value.data, false)
+            RealmInterop.realm_set_value(o, key, value, false)
         }
         // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
         // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related

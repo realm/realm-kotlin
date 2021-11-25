@@ -196,7 +196,7 @@ internal class ListOperator<E>(
                 Float::class,
                 Double::class,
                 String::class -> value
-                RealmInstant::class -> RealmInstant(value as Timestamp)
+                RealmInstant::class -> RealmInstantImpl(value as Timestamp)
                 else -> (value as Link).toRealmObject(
                     clazz as KClass<out RealmObject>,
                     mediator,

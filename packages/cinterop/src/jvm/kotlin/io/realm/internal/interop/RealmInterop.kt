@@ -396,8 +396,8 @@ actual object RealmInterop {
                 is Timestamp -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_TIMESTAMP
                     cvalue.timestamp = realm_timestamp_t().apply {
-                        seconds = value.epochSeconds
-                        nanoseconds = value.nanoAdjustment
+                        seconds = value.seconds
+                        nanoseconds = value.nanoSeconds
                     }
                 }
                 is RealmObjectInterop -> {
