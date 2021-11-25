@@ -152,7 +152,7 @@ pipeline {
                         runCompilerPluginTest()
                     }
                 }
-                stage('Tests Macos - Unit Tests') {
+                stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("packages", "macosTest")
@@ -169,7 +169,7 @@ pipeline {
                         )
                     }
                 }
-                stage('Integration Tests') {
+                stage('Integration Tests - macOS') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
@@ -196,6 +196,16 @@ pipeline {
                           testWithServer([
                               { testAndCollect("test", ':sync:jvmTest') }
                           ])
+                    }
+                }
+                stage('Integration Tests - iOS') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("test", "iosTest")
+                            }
+                        ])
                     }
                 }
                 stage('Tests Android Sample App') {
