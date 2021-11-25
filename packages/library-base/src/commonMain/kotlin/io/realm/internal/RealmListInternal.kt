@@ -69,7 +69,7 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, mapPublicTypeToCoreType(element))
+                copyToRealm(metadata.mediator, metadata.realm, element)
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
@@ -106,7 +106,7 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    copyToRealm(metadata.mediator, metadata.realm, mapPublicTypeToCoreType(element))
+                    copyToRealm(metadata.mediator, metadata.realm, element)
                 )
             )
         } catch (exception: RealmCoreException) {

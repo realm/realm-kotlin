@@ -274,25 +274,3 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreCallbackException -> RuntimeException(message, cause)
     }
 }
-/**
- * Map known supported Kotlin types to their corresponding CInterop type.
- * If no mapping exists, the type is just passed through, assuming that CInterop
- * will throw an appropriate error.
- */
-internal fun mapPublicTypesToCoreTypes(args: Array<Any?>): Array<Any?> {
-    for (i in args.indices) {
-        args[i] = mapPublicTypeToCoreType(args[i])
-    }
-    return args
-}
-
-/**
- * Map known supported Kotlin types to their corresponding CInterop type.
- * If no mapping exists, the type is just passed through, assuming that CInterop
- * will throw an appropriate error.
- */
-internal fun mapPublicTypeToCoreType(arg: Any?): Any? {
-    return when (arg) {
-        else -> arg
-    }
-}

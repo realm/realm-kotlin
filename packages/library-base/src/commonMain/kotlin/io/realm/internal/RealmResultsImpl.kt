@@ -85,7 +85,7 @@ internal class RealmResultsImpl<T : RealmObject> : AbstractList<T>, RealmResults
         try {
             return fromQuery(
                 realm,
-                RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *mapPublicTypesToCoreTypes(args as Array<Any?>)),
+                RealmInterop.realm_query_parse(result, clazz.simpleName!!, query, *args),
                 clazz,
                 schema,
             )
