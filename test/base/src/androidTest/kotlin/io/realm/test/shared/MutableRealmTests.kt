@@ -54,7 +54,7 @@ class MutableRealmTests {
 
     @AfterTest
     fun tearDown() {
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)

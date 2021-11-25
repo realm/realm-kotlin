@@ -20,16 +20,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
-    id("io.realm.kotlin")
-    id("realm-lint")
     kotlin("plugin.serialization") version Versions.kotlin
-}
-
-repositories {
-    google()
-    jcenter()
-    mavenCentral()
-    mavenLocal()
+    id("io.realm.kotlin")
 }
 
 // Common Kotlin configuration
@@ -54,6 +46,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
+                implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }
 
@@ -85,8 +78,6 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
-        versionCode = 1
-        versionName = Realm.version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
 
@@ -152,16 +143,35 @@ kotlin {
 }
 
 kotlin {
+    jvm()
+    sourceSets {
+        getByName("jvmMain") {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+                implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
+                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+            }
+        }
+        getByName("jvmTest") {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+            }
+        }
+    }
+}
+
+kotlin {
     iosX64("ios")
     macosX64("macos")
     sourceSets {
         val macosMain by getting
         val macosTest by getting
         getByName("iosMain") {
-            dependsOn(macosMain)
+            kotlin.srcDir("src/macosMain/kotlin")
         }
         getByName("iosTest") {
-            dependsOn(macosTest)
+            kotlin.srcDir("src/macosTest/kotlin")
         }
     }
 }
@@ -176,7 +186,10 @@ tasks.named("iosTest") {
     doLast {
         val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
         exec {
-            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
+            // use -s (standlone) option to avoid:
+            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+            //      Invalid device state
+            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
         }
     }
 }

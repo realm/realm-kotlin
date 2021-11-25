@@ -495,6 +495,10 @@ actual object RealmInterop {
         return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_clear_cached_apps() {
+        realmc.realm_clear_cached_apps()
+    }
+
     actual fun realm_sync_client_config_new(): NativePointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
@@ -571,6 +575,20 @@ actual object RealmInterop {
 
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
+    }
+
+    actual fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_register_email(
+            app.cptr(),
+            email,
+            password,
+            callback
+        )
     }
 
     actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {

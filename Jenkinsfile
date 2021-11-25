@@ -67,7 +67,11 @@ pipeline {
         // description in case we run into problems down the line.
 
         // lock resource: 'kotlin_build_lock'
-        timeout(time: 15, activity: true, unit: 'MINUTES')
+        // Overall job timeout. This doesn't include time for waiting on the agent.
+        // Setting 'activity'-timeouts here doesn't clear the overall job timeout, so
+        // not an option. More finegrained timeouts can be targeted at specific
+        // stages, but these will include the time waiting for resources/nodes.
+        timeout(time: 120, unit: 'MINUTES')
     }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
@@ -148,7 +152,7 @@ pipeline {
                         runCompilerPluginTest()
                     }
                 }
-                stage('Tests Macos - Unit Tests') {
+                stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("packages", "macosTest")
@@ -165,7 +169,7 @@ pipeline {
                         )
                     }
                 }
-                stage('Integration Tests') {
+                stage('Integration Tests - macOS') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
@@ -187,8 +191,21 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("test", 'jvmTest --tests "io.realm.test.compiler*"')
-                                        testAndCollect("test", 'jvmTest --tests "io.realm.test.shared*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.compiler*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.shared*"')
+                          testWithServer([
+                              { testAndCollect("test", ':sync:jvmTest') }
+                          ])
+                    }
+                }
+                stage('Integration Tests - iOS') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("test", "iosTest")
+                            }
+                        ])
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -199,13 +216,10 @@ pipeline {
                         }
                     }
                 }
-                stage('Build Android on Java 8') {
+                stage('Build Android on minimum versions') {
                     when { expression { runTests } }
-                    environment {
-                        JAVA_HOME="${JAVA_8}"
-                    }
                     steps {
-                        runBuildAndroidApp()
+                        runBuildMinAndroidApp()
                     }
                 }
                 stage('Publish SNAPSHOT to Maven Central') {
@@ -306,7 +320,7 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} publishAllPublicationsToBuildFolderRepository --info --stacktrace --no-daemon
                """
         }
     }
@@ -399,6 +413,13 @@ def runCompilerPluginTest() {
             cd packages
             ./gradlew --no-daemon :plugin-compiler:test --info --stacktrace
         """
+        // See https://stackoverflow.com/a/51206394/1389357
+        script {
+            def testResults = findFiles(glob: "packages/plugin-compiler/build/**/TEST-*.xml")
+            for(xml in testResults) {
+                touch xml.getPath()
+            }
+        }
         step([ $class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "packages/plugin-compiler/build/**/TEST-*.xml"])
     }
 }
@@ -481,7 +502,7 @@ def stopLogCatCollector(String backgroundPid, name) {
   // a build error.
   if (backgroundPid != null) {
     sh "kill ${backgroundPid}"
-    // Zip file generation will fail if the file is already there 
+    // Zip file generation will fail if the file is already there
     // Pipeline Utility Steps Plugin 2.6.1 introduces 'overwrite' property
     // https://issues.jenkins.io/browse/JENKINS-42591
     sh "rm -f logcat-${name}.zip"
@@ -512,6 +533,13 @@ def testAndCollect(dir, task) {
                 popd
             """
         } finally {
+            // See https://stackoverflow.com/a/51206394/1389357
+            script {
+                def testResults = findFiles(glob: "$dir/**/build/**/TEST-*.xml")
+                for(xml in testResults) {
+                    touch xml.getPath()
+                }
+            }
             step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
         }
     }
@@ -532,12 +560,12 @@ def runMonkey() {
     }
 }
 
-def runBuildAndroidApp() {
+def runBuildMinAndroidApp() {
     try {
         sh """
-            cd examples/kmm-sample
+            cd examples/min-android-sample
             java -version
-            ./gradlew :androidApp:assembleDebug --stacktrace --no-daemon
+            ./gradlew assembleDebug --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'

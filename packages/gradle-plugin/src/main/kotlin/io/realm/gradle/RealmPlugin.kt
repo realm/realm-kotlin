@@ -61,7 +61,6 @@ class RealmPlugin : Plugin<Project> {
             when (val options = compilation.kotlinOptions) {
                 is KotlinJvmOptions -> {
                     options.jvmTarget = "1.8"
-                    options.useIR = true
                 }
             }
         }

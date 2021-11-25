@@ -177,7 +177,7 @@ The public API of the SDK has not been finalized. Design discussions will happen
 ## Prerequisites
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
-- CMake 3.18.1. Can be installed through the Android SDK Manager.
+- CMake 3.18.1 or above. Can be installed through the Android SDK Manager.
 - Java 11.
 
 ## Commands to build from source
@@ -366,3 +366,4 @@ This project adheres to the [MongoDB Code of Conduct](https://www.mongodb.com/co
 By participating, you are expected to uphold this code. Please report
 unacceptable behavior to [community-conduct@mongodb.com](mailto:community-conduct@mongodb.com).
 
+<img style="width: 0px; height: 0px;" src="https://3eaz4mshcd.execute-api.us-east-1.amazonaws.com/prod?s=https://github.com/realm/realm-kotlin#README.md">
