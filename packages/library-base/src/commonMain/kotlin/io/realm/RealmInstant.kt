@@ -33,18 +33,18 @@ import io.realm.internal.RealmInstantImpl
  *   - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant(1, 100000000)
  *   - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant(-1, -100000000)
  */
-public interface RealmInstant {
+public interface RealmInstant: Comparable<RealmInstant> {
 
     companion object {
         private const val SEC_AS_NANOSECOND: Int = 1_000_000_000
 
         /*
-         * TODO
+         * Minimum timestamp that can be stored in Realm.
          */
         public val MIN = RealmInstant.fromEpochSeconds(Long.MIN_VALUE, -999_999_999)
 
         /**
-         * TODO
+         * Maximum timestamp that can be stored in Realm.
          */
         public val MAX = RealmInstant.fromEpochSeconds(Long.MAX_VALUE, 999_999_999)
 
@@ -73,9 +73,6 @@ public interface RealmInstant {
             }
             return RealmInstantImpl(s, ns)
         }
-
-        // TODO: Not possible to create a `now()` unless there is some kind of Date API available
-        //  somewhere. Does Core have one? Do we even want it?
     }
 
     /**

@@ -104,62 +104,35 @@ class RealmInstantTests {
     }
 
     @Test
-    fun equals_unmanaged() {
+    fun equals() {
         assertTrue(RealmInstant(42, 42) == (RealmInstant(42, 42)))
         assertFalse(RealmInstant(0, 0) == (RealmInstant(42, 42)))
     }
 
     @Test
-    fun hashCode_unmanaged() {
+    fun timestamp_hashCode() {
         assertEquals(RealmInstant(42, 42).hashCode(), (RealmInstant(42, 42).hashCode()))
         assertNotEquals(RealmInstant(0, 0).hashCode(), RealmInstant(42, 42).hashCode())
     }
 
     @Test
-    fun equals_managed() {
-        realm.writeBlocking {
-            copyToRealm(Sample()).let {
-                it.timestampField = RealmInstant(42, 42)
-                val ts1 = it.timestampField
-                it.timestampField = RealmInstant(42, 42)
-                val ts2 = it.timestampField
-                it.timestampField = RealmInstant(0, 0)
-                val ts3 = it.timestampField
-                assertTrue(ts1 == ts2)
-                assertFalse(ts1 == ts3)
-            }
-        }
-    }
-
-    @Test
-    fun hashCode_managed() {
-        realm.writeBlocking {
-            copyToRealm(Sample()).let {
-                it.timestampField = RealmInstant(42, 42)
-                val ts1 = it.timestampField
-                it.timestampField = RealmInstant(42, 42)
-                val ts2 = it.timestampField
-                it.timestampField = RealmInstant(0, 0)
-                val ts3 = it.timestampField
-                assertEquals(ts1.hashCode(), ts2.hashCode())
-                assertNotEquals(ts1.hashCode(), ts3.hashCode())
-            }
-        }
-    }
-
-    @Test
-    fun toString_unmanaged() {
+    fun timestamp_toString() {
         val ts = RealmInstant(100, 100)
         assertEquals("RealmInstant(epochSeconds=100, nanosecondsOfSecond=100)", ts.toString())
     }
 
     @Test
-    fun toString_managed() {
-        realm.writeBlocking {
-            copyToRealm(Sample()).let {
-                it.timestampField = RealmInstant(100, 100)
-                assertEquals("RealmInstant(epochSeconds=100, nanosecondsOfSecond=100)", it.timestampField.toString())
-            }
-        }
+    fun compare() {
+        val ts1 = RealmInstant(0,0)
+        val ts2 = RealmInstant(0,1)
+        val ts3 = RealmInstant(0,-1)
+        val ts4 = RealmInstant(1,0)
+        val ts5 = RealmInstant(-1,0)
+
+        assertTrue(ts1.compareTo(ts2) < 0)
+        assertTrue(ts1.compareTo(ts1) == 0)
+        assertTrue(ts1.compareTo(ts3) > 0)
+        assertTrue(ts1.compareTo(ts4) < 0)
+        assertTrue(ts1.compareTo(ts5) > 0)
     }
 }
