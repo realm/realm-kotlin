@@ -97,9 +97,12 @@ class RealmInstantTests {
 
         // Test managed objects
         realm.writeBlocking {
-            val sample = copyToRealm(Sample())
-            sample.timestampField = timestamp
-            function(sample.timestampField)
+            val sample = copyToRealm(Sample().apply {
+                timestampField = timestamp
+            })
+            val managedTimestamp = objects(Sample::class).first().timestampField
+            function(managedTimestamp)
+            cancelWrite() // So we can use .first()
         }
     }
 
