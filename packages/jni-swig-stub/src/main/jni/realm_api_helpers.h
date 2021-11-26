@@ -22,6 +22,9 @@
 #include "java_class_global_def.hpp"
 #include "utils.h"
 
+void
+realm_changed_callback(void* userdata);
+
 realm_notification_token_t*
 register_results_notification_cb(realm_results_t *results, jobject callback);
 

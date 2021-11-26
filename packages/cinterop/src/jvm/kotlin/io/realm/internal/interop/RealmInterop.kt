@@ -166,6 +166,14 @@ actual object RealmInterop {
         return realmPtr
     }
 
+    actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
+        return RegistrationToken(realmc.realm_add_realm_changed_callback(realm.cptr(), block))
+    }
+
+    actual fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        return realmc.realm_remove_realm_changed_callback(realm.cptr(), token.value)
+    }
+
     actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
     }

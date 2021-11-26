@@ -33,6 +33,11 @@ value class ClassKey(val key: Long)
 @JvmInline
 value class ColumnKey(val key: Long)
 
+// TODO Again it would be awesome with marker interfaces for the various realm types, so we could
+//  add it as generic parameters here ...
+@JvmInline
+value class RegistrationToken(val value: Long)
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_get_version_id(realm: NativePointer): Long
@@ -68,6 +73,10 @@ expect object RealmInterop {
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
+
+    fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken
+    fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken)
+
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_is_frozen(realm: NativePointer): Boolean
     fun realm_close(realm: NativePointer)

@@ -72,6 +72,18 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+// Reuse void callback typemap as template for `realm_on_realm_change_func_t`
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+(realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_on_realm_change_func_t>(realm_changed_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;

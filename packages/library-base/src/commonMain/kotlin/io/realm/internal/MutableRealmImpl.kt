@@ -27,7 +27,7 @@ import io.realm.isValid
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 
-internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
+internal class MutableRealmImpl : LiveRealm, MutableRealm {
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
@@ -49,6 +49,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
      * done inside the MutableRealm is not immediately reflected in the `parentRealm`.
      *
+     * // FIXME Revisit - This is not true anymore!
      * The core scheduler used to deliver notifications are:
      * - Android: The default Android scheduler, which delivers notifications on the looper of
      * the current thread.
@@ -58,7 +59,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     internal constructor(
         configuration: InternalRealmConfiguration,
         dispatcher: CoroutineDispatcher? = null
-    ) : super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
+    ) : super(configuration, dispatcher)
 
     internal fun beginTransaction() {
         try {

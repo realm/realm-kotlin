@@ -23,6 +23,20 @@
 using namespace realm::jni_util;
 using namespace realm::_impl;
 
+void
+realm_changed_callback(void* userdata) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function0");
+    static JavaMethod java_callback_method(env, java_callback_class, "invoke",
+                                           "()Ljava/lang/Object;");
+    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
+    }
+}
+
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
 //  changes as realm_collection_changes_t.
 realm_notification_token_t *
