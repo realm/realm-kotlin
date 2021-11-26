@@ -17,7 +17,6 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.entities.primarykey.NoPrimaryKey
 import io.realm.entities.primarykey.PrimaryKeyByte
