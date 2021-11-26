@@ -151,9 +151,7 @@ class PrimaryKeyTests {
             typeOf<Long>(),
             typeOf<Long?>(),
             typeOf<String>(),
-            typeOf<String?>(),
-            typeOf<RealmInstant>(),
-            typeOf<RealmInstant?>()
+            typeOf<String?>()
         ).map { it.rType() }.toMutableSet()
 
         assertTrue(expectedTypes.containsAll(allPrimaryKeyFieldTypes))
