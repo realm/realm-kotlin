@@ -231,7 +231,8 @@ class RealmConfigurationTests {
     fun writesExecutesOnWriteDispatcher() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher)
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .writeDispatcher(dispatcher)
                 .path("$tmpDir/default.realm")
                 .build()
         val threadId: ULong =

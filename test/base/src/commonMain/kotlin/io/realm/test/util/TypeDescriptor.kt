@@ -54,7 +54,7 @@ internal object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             primaryKeySupport = false,
-            indexSupport = false,
+            indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
@@ -106,7 +106,7 @@ internal object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             primaryKeySupport = false,
-            indexSupport = false,
+            indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         );
