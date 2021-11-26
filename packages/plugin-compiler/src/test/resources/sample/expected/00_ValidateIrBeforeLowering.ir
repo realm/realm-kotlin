@@ -597,7 +597,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:timestampField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:timestampField type:io.realm.RealmInstant? visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun RealmInstant (epochSeconds: kotlin.Long, nanosecondAdjustment: kotlin.Int): io.realm.RealmInstant declared in io.realm.RealmInstantKt' type=io.realm.RealmInstant origin=null
+            CALL 'public final fun fromEpochSeconds (epochSeconds: kotlin.Long, nanosecondAdjustment: kotlin.Int): io.realm.RealmInstant declared in io.realm.RealmInstant.Companion' type=io.realm.RealmInstant origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.RealmInstant.Companion
               epochSeconds: CONST Long type=kotlin.Long value=0
               nanosecondAdjustment: CONST Int type=kotlin.Int value=0
         FUN name:<get-timestampField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmInstant?
