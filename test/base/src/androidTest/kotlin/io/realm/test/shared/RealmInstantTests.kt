@@ -5,9 +5,9 @@ import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.entities.Sample
 import io.realm.test.platform.PlatformUtils
-import org.junit.Test
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
