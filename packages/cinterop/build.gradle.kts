@@ -276,7 +276,7 @@ android {
     externalNativeBuild {
         cmake {
             version = Versions.cmake
-            path = project.file("src/jvmMain/CMakeLists.txt")
+            path = project.file("src/jvm/CMakeLists.txt")
         }
     }
     // To avoid
@@ -319,7 +319,7 @@ fun Task.buildSharedLibrariesForJVM() {
             workingDir(project.file(directory))
             commandLine(
                 "cmake",
-                project.file("src/jvmMain/")
+                project.file("src/jvm/")
             )
         }
         exec {
