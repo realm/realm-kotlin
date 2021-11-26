@@ -129,6 +129,8 @@ void throw_as_java_exception(JNIEnv *jenv) {
 %typemap(out) SWIGTYPE* {
     if (!result) {
         throw_as_java_exception(jenv);
+        // Check if it works if throw_as_java_exception doesn't throw
+        return $null;
     }
     *($1_type*)&jresult = result;
 }
@@ -136,6 +138,8 @@ void throw_as_java_exception(JNIEnv *jenv) {
 %typemap(out) bool {
     if (!result) {
         throw_as_java_exception(jenv);
+        // Check if it works if throw_as_java_exception doesn't throw
+        return $null;
     }
     jresult = (jboolean)result;
 }

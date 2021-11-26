@@ -66,6 +66,7 @@ interface RealmQuery<E> : RealmElementQuery<E> {
         propertyAndSortOrder: Pair<String, QuerySort>,
         vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
     ): RealmQuery<E>
+
     fun distinct(property: String): RealmQuery<E>
     fun limit(results: Int): RealmQuery<E>
 
@@ -93,6 +94,24 @@ inline fun <reified T : Any> RealmQuery<*>.sum(property: String): RealmScalarQue
 
 inline fun <reified T : Any> RealmQuery<*>.average(property: String): RealmScalarQuery<T> =
     average(property, T::class)
+
+/**
+ * Similar to [RealmQuery.find] but it receives a block where the [RealmResults] from te query are
+ * provided.
+ */
+fun <T> RealmQuery<T>.find(block: (RealmResults<T>) -> Unit): RealmResults<T> = find().let {
+    block.invoke(it)
+    it
+}
+
+/**
+ * Similar to [RealmScalarQuery.find] but it receives a block where the scalar [T] from te query
+ * is provided.
+ */
+fun <T> RealmScalarQuery<T>.find(block: (T?) -> Unit): T? = find().let {
+    block.invoke(it)
+    it
+}
 
 /**
  * TODO : query

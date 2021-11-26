@@ -45,6 +45,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
 ) : RealmQuery<E>, Thawable<BaseResults<E>> {
 
     private val queryPointer: NativePointer = parseQuery()
+
     private val resultsPointer: NativePointer by lazy {
         RealmInterop.realm_query_find_all(queryPointer)
     }
@@ -53,6 +54,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         ElementResults(realmReference, resultsPointer, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
+        // TODO https://github.com/realm/realm-core/issues/5067
         TODO("Not yet implemented")
     }
 
@@ -104,7 +106,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         AverageGenericQuery(realmReference, queryPointer, mediator, clazz, property, type)
 
     override fun average(property: String): RealmScalarQuery<Double> =
-        AverageDoubleQuery(realmReference, queryPointer, mediator, clazz, property)
+        average(property, Double::class)
 
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator)
@@ -163,11 +165,10 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
  * TODO : query
  */
 internal sealed class QueryDescriptor {
+    internal class Distinct(val property: String) : QueryDescriptor()
+    internal class Limit(val results: Int) : QueryDescriptor()
     internal class Sort(
         val propertyAndSort: Pair<String, QuerySort>,
         vararg val additionalPropertiesAndOrders: Pair<String, QuerySort>
     ) : QueryDescriptor()
-
-    internal class Distinct(val property: String) : QueryDescriptor()
-    internal class Limit(val results: Int) : QueryDescriptor()
 }

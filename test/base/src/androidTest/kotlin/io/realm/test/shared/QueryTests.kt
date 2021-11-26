@@ -17,6 +17,7 @@ package io.realm.test.shared
 
 import io.realm.QuerySort
 import io.realm.Realm
+import io.realm.find
 import io.realm.RealmConfiguration
 import io.realm.RealmQuery
 import io.realm.RealmResults
@@ -36,7 +37,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.expect
 
 class QueryTests {
 
@@ -62,8 +62,7 @@ class QueryTests {
     @Test
     fun find() {
         realm.query(Sample::class)
-            .find()
-            .let { results: RealmResults<Sample> -> assertEquals(0, results.size) }
+            .find { results: RealmResults<Sample> -> assertEquals(0, results.size) }
 
         val stringValue = "some string"
         realm.writeBlocking {
@@ -73,51 +72,38 @@ class QueryTests {
             assertEquals(0, query.find().size)
             copyToRealm(Sample().apply { stringField = stringValue })
             assertEquals(1, query.find().size)
-
-            // TODO investigate: extension function like this
-//            query.find { this: RealmResults<Sample> ->
-//
-//            }
-//            val results = query.find()
         }
 
         // No filter
         realm.query(Sample::class)
-            .find()
-            .let { results -> assertEquals(1, results.size) }
+            .find { results -> assertEquals(1, results.size) }
 
         // Filter by string
         realm.query(Sample::class, "stringField = $0", stringValue)
-            .find()
-            .let { results -> assertEquals(1, results.size) }
+            .find { results -> assertEquals(1, results.size) }
 
         // Filter by string that doesn't match
         realm.query(Sample::class, "stringField = $0", "invalid string")
-            .find()
-            .let { results -> assertEquals(0, results.size) }
+            .find { results -> assertEquals(0, results.size) }
     }
 
     @Test
     fun find_malformedQueryThrows() {
-        // TODO investigate if these errors are correct
-        assertFailsWith<Exception> {
+        assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class, "stringField = $0")
         }.let {
-            assertTrue(it is IllegalArgumentException)
             assertTrue(it.message!!.contains("Have you specified all parameters"))
         }
 
-        assertFailsWith<Exception> {
+        assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class, "stringField = 42")
         }.let {
-            assertTrue(it is IllegalArgumentException)
             assertTrue(it.message!!.contains("Wrong query field"))
         }
 
-        assertFailsWith<Exception> {
+        assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class, "nonExistingField = 13")
         }.let {
-            assertTrue(it is IllegalArgumentException)
             assertTrue(it.message!!.contains("Wrong query field"))
         }
     }
@@ -137,8 +123,7 @@ class QueryTests {
         // No filter, default sorting
         realm.query(Sample::class)
             .sort(Sample::intField.name)
-            .find()
-            .let { results ->
+            .find { results ->
                 assertEquals(3, results.size)
                 values.forEachIndexed { index, (intValue, stringValue) ->
                     assertEquals(intValue, results[index].intField)
@@ -149,8 +134,7 @@ class QueryTests {
         // No filter, sort descending
         realm.query(Sample::class)
             .sort(Sample::intField.name, QuerySort.DESCENDING)
-            .find()
-            .let { results ->
+            .find { results ->
                 assertEquals(3, results.size)
                 values.reversed()
                     .forEachIndexed { index, (intValue, stringValue) ->
@@ -164,8 +148,7 @@ class QueryTests {
             .sort(
                 Sample::intField.name to QuerySort.DESCENDING,
                 Sample::stringField.name to QuerySort.ASCENDING
-            ).find()
-            .let { results ->
+            ).find { results ->
                 assertEquals(3, results.size)
                 values.forEachIndexed { index, (intValue, stringValue) ->
                     val intField = results[index].intField
@@ -223,8 +206,7 @@ class QueryTests {
 
         realm.query(Sample::class)
             .average(Sample::intField.name, Int::class)
-            .find()
-            .let { averageValue: Int? -> assertNull(averageValue) }
+            .find { averageValue: Int? -> assertNull(averageValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
@@ -238,8 +220,7 @@ class QueryTests {
 
         realm.query(Sample::class)
             .average(Sample::intField.name, Int::class)
-            .find()
-            .let { averageValue: Int? -> assertEquals(expectedAverage, averageValue) }
+            .find { averageValue: Int? -> assertEquals(expectedAverage, averageValue) }
     }
 
     @Test
@@ -311,6 +292,28 @@ class QueryTests {
     }
 
     @Test
+    fun average_generic_asFlow_throwsIfInvalidProperty() {
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .average(Sample::stringField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid query formulation"))
+            }
+        }
+    }
+
+    @Test
     fun average_double_find() {
         val value1 = 2
         val value2 = 7
@@ -318,8 +321,7 @@ class QueryTests {
 
         realm.query(Sample::class)
             .average(Sample::intField.name)
-            .find()
-            .let { averageValue: Double? -> assertNull(averageValue) }
+            .find { averageValue: Double? -> assertNull(averageValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
@@ -333,8 +335,23 @@ class QueryTests {
 
         realm.query(Sample::class)
             .average(Sample::intField.name)
-            .find()
-            .let { averageValue: Double? -> assertEquals(expectedAverage, averageValue) }
+            .find { averageValue: Double? -> assertEquals(expectedAverage, averageValue) }
+    }
+
+    @Test
+    fun average_double_find_throwsIfInvalidProperty() {
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = 1 })
+            copyToRealm(Sample().apply { intField = 2 })
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .average(Sample::stringField.name)
+                .find()
+        }.let {
+            assertTrue(it.message!!.contains("Invalid query formulation"))
+        }
     }
 
     @Test
@@ -368,6 +385,28 @@ class QueryTests {
     }
 
     @Test
+    fun average_double_asFlow_throwsIfInvalidType() {
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .average(Sample::stringField.name)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid query formulation"))
+            }
+        }
+    }
+
+    @Test
     fun average_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             // Check we throw when observing flows inside write transactions
@@ -385,8 +424,7 @@ class QueryTests {
     fun count_find() {
         realm.query(Sample::class)
             .count()
-            .find()
-            .let { countValue -> assertEquals(0, countValue) }
+            .find { countValue -> assertEquals(0, countValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
@@ -399,8 +437,7 @@ class QueryTests {
 
         realm.query(Sample::class)
             .count()
-            .find()
-            .let { countValue -> assertEquals(1, countValue) }
+            .find { countValue -> assertEquals(1, countValue) }
     }
 
     @Test
