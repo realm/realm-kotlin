@@ -20,18 +20,36 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.use
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 class RealmConfigurationTests {
+
+    private lateinit var tmpDir: String
+
+    @Before
+    fun setup() {
+        tmpDir = PlatformUtils.createTempDir()
+    }
+
+    @After
+    fun tearDown() {
+        PlatformUtils.deleteTempDir(tmpDir)
+    }
+
     @Test
     @Suppress("invisible_member")
     fun testDispatcherAsWriteDispatcher() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path("$tmpDir/default.realm")
             .writeDispatcher(singleThreadDispatcher("foo")).build()
-        val realm = Realm.open(configuration)
-        realm.writeBlocking {
-            copyToRealm(Sample())
+        Realm.open(configuration).use { realm: Realm ->
+            realm.writeBlocking {
+                copyToRealm(Sample())
+            }
         }
-        realm.close()
     }
 }

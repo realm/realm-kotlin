@@ -147,7 +147,7 @@ object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    internal fun <R> setTimestamp(obj: RealmObjectInternal, col: String, value: RealmInstant) {
+    internal fun <R> setTimestamp(obj: RealmObjectInternal, col: String, value: RealmInstant?) {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
