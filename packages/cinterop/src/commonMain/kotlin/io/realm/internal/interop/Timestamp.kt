@@ -25,4 +25,4 @@ interface Timestamp {
 }
 
 // Implementation that should only be used within the cinterop module.
-internal data class TimestampImpl(override val seconds: Long, override val nanoSeconds: Int): Timestamp
+internal data class TimestampImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp
