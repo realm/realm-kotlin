@@ -1206,7 +1206,7 @@ actual object RealmInterop {
         if (this.type != realm_value_type.RLM_TYPE_TIMESTAMP) {
             error("Value is not of type Timestamp: $this.type")
         }
-        return Timestamp(this.timestamp.seconds, this.timestamp.nanoseconds)
+        return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
     private fun realm_value_t.asLink(): Link {

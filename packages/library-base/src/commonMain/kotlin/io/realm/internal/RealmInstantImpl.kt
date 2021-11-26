@@ -3,7 +3,7 @@ package io.realm.internal
 import io.realm.RealmInstant
 import io.realm.internal.interop.Timestamp
 
-class RealmInstantImpl(seconds: Long, nanoSeconds: Int) : Timestamp(seconds, nanoSeconds), RealmInstant {
+data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp, RealmInstant {
     constructor(ts: Timestamp) : this(ts.seconds, ts.nanoSeconds)
 
     override val epochSeconds: Long
@@ -18,24 +18,6 @@ class RealmInstantImpl(seconds: Long, nanoSeconds: Int) : Timestamp(seconds, nan
             this.epochSeconds > other.epochSeconds -> 1
             else -> this.nanosecondsOfSecond.compareTo(other.nanosecondsOfSecond)
         }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as RealmInstantImpl
-
-        if (epochSeconds != other.epochSeconds) return false
-        if (nanosecondsOfSecond != other.nanosecondsOfSecond) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = epochSeconds.hashCode()
-        result = 31 * result + nanosecondsOfSecond
-        return result
     }
 
     override fun toString(): String {

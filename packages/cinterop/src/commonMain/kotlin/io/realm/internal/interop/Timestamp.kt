@@ -19,4 +19,10 @@ package io.realm.internal.interop
  * Wrapper around Core Timestamp values.
  * See https://github.com/realm/realm-core/blob/master/src/realm/timestamp.hpp for more information
  */
-open class Timestamp(open val seconds: Long, open val nanoSeconds: Int)
+interface Timestamp {
+    val seconds: Long
+    val nanoSeconds: Int
+}
+
+// Implementation that should only be used within the cinterop module.
+internal data class TimestampImpl(override val seconds: Long, override val nanoSeconds: Int): Timestamp
