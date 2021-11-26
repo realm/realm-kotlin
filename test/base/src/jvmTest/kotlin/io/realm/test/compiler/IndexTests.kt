@@ -41,7 +41,7 @@ class IndexTests {
             Float::class to "1.4f",
             Double::class to "1.4",
             String::class to "\"Realm\"",
-            RealmInstant::class to "RealmInstant(42, 420)"
+            RealmInstant::class to "RealmInstant.fromEpochSeconds(42, 420)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection

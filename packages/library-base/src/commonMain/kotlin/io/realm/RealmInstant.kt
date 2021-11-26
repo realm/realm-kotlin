@@ -26,19 +26,19 @@ import io.realm.internal.RealmInstantImpl
  * and all timestamps before the epoch consists of the negative numbers.
  *
  * Examples:
- * - The UNIX epoch is constructed by `RealmInstant(0, 0)`.
+ * - The UNIX epoch is constructed by `RealmInstant.fromEpochSeconds(0, 0)`.
  * - Relative times are constructed as follows:
- *   - +1 second is constructed by RealmInstant(1, 0)
- *   - +1 nanosecond is constructed by RealmInstant(0, 1)
- *   - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant(1, 100000000)
- *   - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant(-1, -100000000)
+ *      - +1 second is constructed by RealmInstant.fromEpochSeconds(1, 0)
+ *      - +1 nanosecond is constructed by RealmInstant.fromEpochSeconds(0, 1)
+ *      - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant.fromEpochSeconds(1, 100000000)
+ *      - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant.fromEpochSeconds(-1, -100000000)
  */
 public interface RealmInstant : Comparable<RealmInstant> {
 
     companion object {
         private const val SEC_AS_NANOSECOND: Int = 1_000_000_000
 
-        /*
+        /**
          * Minimum timestamp that can be stored in Realm.
          */
         public val MIN = RealmInstant.fromEpochSeconds(Long.MIN_VALUE, -999_999_999)
@@ -91,6 +91,3 @@ public interface RealmInstant : Comparable<RealmInstant> {
      */
     val nanosecondsOfSecond: Int
 }
-
-// TODO Do we want this type of constructor? How does it show up in Dokka?
-fun RealmInstant(epochSeconds: Long, nanosecondAdjustment: Int): RealmInstant = RealmInstant.fromEpochSeconds(epochSeconds, nanosecondAdjustment)

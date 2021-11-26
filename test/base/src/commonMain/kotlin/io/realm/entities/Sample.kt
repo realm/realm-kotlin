@@ -32,7 +32,7 @@ class Sample : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
-    var timestampField: RealmInstant = RealmInstant(100, 1000)
+    var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
     var child: Sample? = null
 
     var stringListField: RealmList<String> = realmListOf()

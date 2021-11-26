@@ -37,55 +37,55 @@ class RealmInstantTests {
     // Test both unmanaged and managed boundaries
     @Test
     fun timestamp_boundaries() {
-        roundTrip(RealmInstant(Long.MIN_VALUE, -999_999_999)) { min ->
+        roundTrip(RealmInstant.fromEpochSeconds(Long.MIN_VALUE, -999_999_999)) { min ->
             assertEquals(Long.MIN_VALUE, min.epochSeconds)
             assertEquals(-999_999_999, min.nanosecondsOfSecond)
             assertEquals(RealmInstant.MIN, min)
         }
 
-        roundTrip(RealmInstant(Long.MAX_VALUE, 999_999_999)) { max ->
+        roundTrip(RealmInstant.fromEpochSeconds(Long.MAX_VALUE, 999_999_999)) { max ->
             assertEquals(Long.MAX_VALUE, max.epochSeconds)
             assertEquals(999_999_999, max.nanosecondsOfSecond)
             assertEquals(RealmInstant.MAX, max)
         }
 
-        roundTrip(RealmInstant(Long.MAX_VALUE, Int.MAX_VALUE)) { maxOverflow ->
+        roundTrip(RealmInstant.fromEpochSeconds(Long.MAX_VALUE, Int.MAX_VALUE)) { maxOverflow ->
             assertEquals(RealmInstant.MAX, maxOverflow)
         }
 
-        roundTrip(RealmInstant(Long.MAX_VALUE, 1_000_000_000)) { minOverflow ->
+        roundTrip(RealmInstant.fromEpochSeconds(Long.MAX_VALUE, 1_000_000_000)) { minOverflow ->
             assertEquals(RealmInstant.MAX, minOverflow)
         }
 
-        roundTrip(RealmInstant(Long.MIN_VALUE, Int.MIN_VALUE)) { maxUnderflow ->
+        roundTrip(RealmInstant.fromEpochSeconds(Long.MIN_VALUE, Int.MIN_VALUE)) { maxUnderflow ->
             assertEquals(RealmInstant.MIN, maxUnderflow)
         }
 
-        roundTrip(RealmInstant(Long.MIN_VALUE, -1_000_000_000)) { minUnderflow ->
+        roundTrip(RealmInstant.fromEpochSeconds(Long.MIN_VALUE, -1_000_000_000)) { minUnderflow ->
             assertEquals(RealmInstant.MIN, minUnderflow)
         }
 
-        roundTrip(RealmInstant(0, 0)) { zero ->
+        roundTrip(RealmInstant.fromEpochSeconds(0, 0)) { zero ->
             assertEquals(0, zero.epochSeconds)
             assertEquals(0, zero.nanosecondsOfSecond)
         }
 
-        roundTrip(RealmInstant(0, 1)) { zeroPlusOne ->
+        roundTrip(RealmInstant.fromEpochSeconds(0, 1)) { zeroPlusOne ->
             assertEquals(0, zeroPlusOne.epochSeconds)
             assertEquals(1, zeroPlusOne.nanosecondsOfSecond)
         }
 
-        roundTrip(RealmInstant(0, -1)) { zeroMinusOne ->
+        roundTrip(RealmInstant.fromEpochSeconds(0, -1)) { zeroMinusOne ->
             assertEquals(0, zeroMinusOne.epochSeconds)
             assertEquals(-1, zeroMinusOne.nanosecondsOfSecond)
         }
 
-        roundTrip(RealmInstant(-1, 2_000_000_200)) { crossingZeroFromNegative ->
-            assertEquals(RealmInstant(1, 200), crossingZeroFromNegative)
+        roundTrip(RealmInstant.fromEpochSeconds(-1, 2_000_000_200)) { crossingZeroFromNegative ->
+            assertEquals(RealmInstant.fromEpochSeconds(1, 200), crossingZeroFromNegative)
         }
 
-        roundTrip(RealmInstant(1, -2_000_000_200)) { crossingZeroFromPositive ->
-            assertEquals(RealmInstant(-1, -200), crossingZeroFromPositive)
+        roundTrip(RealmInstant.fromEpochSeconds(1, -2_000_000_200)) { crossingZeroFromPositive ->
+            assertEquals(RealmInstant.fromEpochSeconds(-1, -200), crossingZeroFromPositive)
         }
     }
 
@@ -110,29 +110,29 @@ class RealmInstantTests {
 
     @Test
     fun equals() {
-        assertTrue(RealmInstant(42, 42) == (RealmInstant(42, 42)))
-        assertFalse(RealmInstant(0, 0) == (RealmInstant(42, 42)))
+        assertTrue(RealmInstant.fromEpochSeconds(42, 42) == (RealmInstant.fromEpochSeconds(42, 42)))
+        assertFalse(RealmInstant.fromEpochSeconds(0, 0) == (RealmInstant.fromEpochSeconds(42, 42)))
     }
 
     @Test
     fun timestamp_hashCode() {
-        assertEquals(RealmInstant(42, 42).hashCode(), (RealmInstant(42, 42).hashCode()))
-        assertNotEquals(RealmInstant(0, 0).hashCode(), RealmInstant(42, 42).hashCode())
+        assertEquals(RealmInstant.fromEpochSeconds(42, 42).hashCode(), (RealmInstant.fromEpochSeconds(42, 42).hashCode()))
+        assertNotEquals(RealmInstant.fromEpochSeconds(0, 0).hashCode(), RealmInstant.fromEpochSeconds(42, 42).hashCode())
     }
 
     @Test
     fun timestamp_toString() {
-        val ts = RealmInstant(100, 100)
+        val ts = RealmInstant.fromEpochSeconds(100, 100)
         assertEquals("RealmInstant(epochSeconds=100, nanosecondsOfSecond=100)", ts.toString())
     }
 
     @Test
     fun compare() {
-        val ts1 = RealmInstant(0, 0)
-        val ts2 = RealmInstant(0, 1)
-        val ts3 = RealmInstant(0, -1)
-        val ts4 = RealmInstant(1, 0)
-        val ts5 = RealmInstant(-1, 0)
+        val ts1 = RealmInstant.fromEpochSeconds(0, 0)
+        val ts2 = RealmInstant.fromEpochSeconds(0, 1)
+        val ts3 = RealmInstant.fromEpochSeconds(0, -1)
+        val ts4 = RealmInstant.fromEpochSeconds(1, 0)
+        val ts5 = RealmInstant.fromEpochSeconds(-1, 0)
 
         assertTrue(ts1.compareTo(ts2) < 0)
         assertTrue(ts1.compareTo(ts1) == 0)

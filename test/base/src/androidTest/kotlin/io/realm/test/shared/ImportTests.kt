@@ -75,7 +75,7 @@ class ImportTests {
                 Boolean::class -> assertEquals(true, managed.booleanField)
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
-                RealmInstant::class -> assertEquals(RealmInstant(100, 1000), managed.timestampField)
+                RealmInstant::class -> assertEquals(RealmInstant.fromEpochSeconds(100, 1000), managed.timestampField)
                 RealmObject::class -> assertEquals(null, managed.child)
                 else -> error("Untested type: $type")
             }

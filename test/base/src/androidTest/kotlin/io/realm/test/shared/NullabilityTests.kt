@@ -103,7 +103,7 @@ class NullabilityTests {
                 testProperty(Nullability::floatNullable, 123.456f)
                 testProperty(Nullability::doubleField, 123.456)
                 testProperty(Nullability::objectField, null)
-                testProperty(Nullability::timestampField, RealmInstant(42, 420))
+                testProperty(Nullability::timestampField, RealmInstant.fromEpochSeconds(42, 420))
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.
