@@ -630,7 +630,7 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampField>' type=sample.input.Sample origin=null
-                    then: CALL 'internal final fun setTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, value: io.realm.RealmInstant): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun setTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, value: io.realm.RealmInstant?): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                       <R>: io.realm.RealmInstant?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                       obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampField>' type=sample.input.Sample origin=null
