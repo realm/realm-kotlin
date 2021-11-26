@@ -98,9 +98,8 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         TODO("Not yet implemented")
     }
 
-    override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> {
-        TODO("Not yet implemented")
-    }
+    override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
+        SumQuery(realmReference, queryPointer, mediator, clazz, property, type)
 
     override fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<T> =
         AverageGenericQuery(realmReference, queryPointer, mediator, clazz, property, type)

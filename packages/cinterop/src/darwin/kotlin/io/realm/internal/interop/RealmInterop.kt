@@ -780,6 +780,21 @@ actual object RealmInterop {
         }
     }
 
+    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+        memScoped {
+            val sum = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_sum(
+                    results.cptr(),
+                    property,
+                    sum.ptr,
+                    null
+                )
+            )
+            return from_realm_value(sum)
+        }
+    }
+
     actual fun <T> realm_results_get(results: NativePointer, index: Long): T {
         memScoped {
             val value = alloc<realm_value_t>()

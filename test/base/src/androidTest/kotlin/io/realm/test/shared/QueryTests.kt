@@ -325,7 +325,8 @@ class QueryTests {
 
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
-            val averageQuery = query(Sample::class).average(Sample::intField.name)
+            val averageQuery = query(Sample::class)
+                .average(Sample::intField.name)
 
             assertNull(averageQuery.find())
             copyToRealm(Sample().apply { intField = value1 })
@@ -477,6 +478,106 @@ class QueryTests {
                         .count()
                         .asFlow()
                 }
+            }
+        }
+    }
+
+    @Test
+    fun sum_find() {
+        val value1 = 2
+        val value2 = 7
+        val expectedSum = value1 + value2
+
+        realm.query(Sample::class)
+            .sum(Sample::intField.name, Int::class)
+            .find { sumValue: Int? -> assertEquals(0, sumValue) }
+
+        realm.writeBlocking {
+            // Queries inside a write transaction are live and can be reused within the closure
+            val sumQuery = query(Sample::class)
+                .sum(Sample::intField.name, Int::class)
+
+            assertEquals(0, sumQuery.find())
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            assertEquals(expectedSum, sumQuery.find())
+        }
+
+        realm.query(Sample::class)
+            .sum(Sample::intField.name, Int::class)
+            .find { sumValue: Int? -> assertEquals(expectedSum, sumValue) }
+    }
+
+    @Test
+    fun sum_asFlow() {
+        val channel = Channel<Int?>(1)
+        val value1 = 2
+        val value2 = 7
+        val expectedSum = value1 + value2
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .sum(Sample::intField.name, Int::class)
+                    .asFlow()
+                    .collect { sumValue ->
+                        channel.send(sumValue)
+                    }
+            }
+
+            assertEquals(0, channel.receive())
+
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = value1 })
+                copyToRealm(Sample().apply { intField = value2 })
+            }
+
+            assertEquals(expectedSum, channel.receive())
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun sum_generic_asFlow_throwsIfInvalidType() {
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .sum(Sample::intField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid numeric type"))
+            }
+        }
+    }
+
+    @Test
+    fun sum_generic_asFlow_throwsIfInvalidProperty() {
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .sum(Sample::stringField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid query formulation"))
             }
         }
     }
