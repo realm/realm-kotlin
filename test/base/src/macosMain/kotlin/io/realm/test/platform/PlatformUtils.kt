@@ -16,13 +16,13 @@
 
 package io.realm.test.platform
 
+import io.realm.test.util.Utils
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 import platform.posix.nanosleep
 import platform.posix.pthread_threadid_np
@@ -33,8 +33,11 @@ import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     actual fun createTempDir(): String {
-        val mask = "${platform.Foundation.NSTemporaryDirectory()}realm_test_.XXXXXX"
-        return platform.posix.mkdtemp(mask.cstr)!!.toKString()
+        // X is a special char which will be replace by mkdtemp template
+        val mask = Utils.createRandomString(16).replace('X', 'Z', ignoreCase = true)
+        val path = "${platform.Foundation.NSTemporaryDirectory()}$mask"
+        platform.posix.mkdtemp(path.cstr)
+        return path
     }
 
     actual fun deleteTempDir(path: String) {

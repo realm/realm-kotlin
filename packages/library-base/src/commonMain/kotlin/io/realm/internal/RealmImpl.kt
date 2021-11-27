@@ -83,7 +83,7 @@ internal class RealmImpl private constructor(
                 RealmInterop.realm_open(configuration.nativeConfig)
             } catch (exception: RealmCoreException) {
                 throw genericRealmCoreExceptionHandler(
-                    "Could not open Realm with the given configuration",
+                    "Could not open Realm with the given configuration: ${configuration.debug()}",
                     exception
                 )
             }
