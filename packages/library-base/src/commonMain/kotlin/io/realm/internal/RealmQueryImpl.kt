@@ -35,11 +35,12 @@ import kotlin.reflect.KClass
 /**
  * TODO : query
  */
+@Suppress("SpreadOperator")
 internal class RealmQueryImpl<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
-    private val queryDescriptor: List<QueryDescriptor> = listOf(),
+    private val descriptors: List<QueryDescriptor> = listOf(),
     private val query: String,
     private vararg val args: Any?
 ) : RealmQuery<E>, Thawable<BaseResults<E>> {
@@ -59,7 +60,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     }
 
     override fun sort(property: String, sortOrder: QuerySort): RealmQuery<E> {
-        val updatedDescriptors = queryDescriptor + QueryDescriptor.Sort(property to sortOrder)
+        val updatedDescriptors = descriptors + QueryDescriptor.Sort(property to sortOrder)
         return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
 
@@ -67,7 +68,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         propertyAndSortOrder: Pair<String, QuerySort>,
         vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
     ): RealmQuery<E> {
-        val updatedDescriptors = (queryDescriptor + QueryDescriptor.Sort(propertyAndSortOrder))
+        val updatedDescriptors = (descriptors + QueryDescriptor.Sort(propertyAndSortOrder))
             .let { sortDescriptors ->
                 sortDescriptors + additionalPropertiesAndOrders.map { (property, order) ->
                     QueryDescriptor.Sort(property to order)
@@ -77,12 +78,12 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     }
 
     override fun distinct(property: String): RealmQuery<E> {
-        val updatedDescriptors = queryDescriptor + QueryDescriptor.Distinct(property)
+        val updatedDescriptors = descriptors + QueryDescriptor.Distinct(property)
         return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
 
     override fun limit(results: Int): RealmQuery<E> {
-        val updatedDescriptors = queryDescriptor + QueryDescriptor.Limit(results)
+        val updatedDescriptors = descriptors + QueryDescriptor.Limit(results)
         return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
 
@@ -140,24 +141,28 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         }
     }
 
-    private fun addQueryDescriptors(query: String): String = StringBuilder(query).apply {
-        queryDescriptor.forEach { descriptor ->
+    private fun addQueryDescriptors(query: String): String {
+        val stringBuilder = StringBuilder(query)
+
+        descriptors.forEach { descriptor ->
             when (descriptor) {
                 is QueryDescriptor.Sort -> {
                     // Append initial sort descriptor
                     val (firstProperty, firstSort) = descriptor.propertyAndSort
-                    this.append(" SORT($firstProperty ${firstSort.name})")
+                    stringBuilder.append(" SORT($firstProperty ${firstSort.name})")
 
                     // Append potential additional sort descriptors
                     descriptor.additionalPropertiesAndOrders.forEach { (property, order) ->
-                        this.append(" SORT($property ${order.name})")
+                        stringBuilder.append(" SORT($property ${order.name})")
                     }
                 }
-                is QueryDescriptor.Distinct -> this.append(" DISTINCT(${descriptor.property})")
-                is QueryDescriptor.Limit -> this.append(" LIMIT(${descriptor.results})")
+                is QueryDescriptor.Distinct -> stringBuilder.append(" DISTINCT(${descriptor.property})")
+                is QueryDescriptor.Limit -> stringBuilder.append(" LIMIT(${descriptor.results})")
             }
         }
-    }.toString()
+
+        return stringBuilder.toString()
+    }
 }
 
 /**

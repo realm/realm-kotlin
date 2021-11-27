@@ -34,9 +34,7 @@ import kotlin.reflect.KClass
  * [RealmObject].
  */
 @Suppress("VariableNaming")
-interface RealmObjectInternal : RealmObject, RealmStateHolder,
-    io.realm.internal.interop.RealmObjectInterop, Freezable<RealmObjectInternal>,
-    Thawable<RealmObjectInternal>, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
+interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Freezable<RealmObjectInternal>, Thawable<RealmObjectInternal>, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.

@@ -110,7 +110,7 @@ internal class SumQuery<T : Any> constructor(
                 getPropertyKey(clazz, property).key
             )
             // TODO Expand to support other numeric types, e.g. Decimal128
-            return when (type) {
+            when (type) {
                 Int::class -> (sum as Number).toInt()
                 Long::class -> (sum as Number).toLong()
                 Float::class -> (sum as Number).toFloat()

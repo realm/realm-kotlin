@@ -17,11 +17,11 @@ package io.realm.test.shared
 
 import io.realm.QuerySort
 import io.realm.Realm
-import io.realm.find
 import io.realm.RealmConfiguration
 import io.realm.RealmQuery
 import io.realm.RealmResults
 import io.realm.entities.Sample
+import io.realm.find
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
@@ -113,10 +113,12 @@ class QueryTests {
         val values = listOf(0 to "A", 1 to "B", 2 to "C")
         realm.writeBlocking {
             values.forEach { (intValue, stringValue) ->
-                copyToRealm(Sample().apply {
-                    intField = intValue
-                    stringField = stringValue
-                })
+                copyToRealm(
+                    Sample().apply {
+                        intField = intValue
+                        stringField = stringValue
+                    }
+                )
             }
         }
 
