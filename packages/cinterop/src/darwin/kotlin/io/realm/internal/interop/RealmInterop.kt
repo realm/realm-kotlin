@@ -795,6 +795,36 @@ actual object RealmInterop {
         }
     }
 
+    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+        memScoped {
+            val max = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_max(
+                    results.cptr(),
+                    property,
+                    max.ptr,
+                    null
+                )
+            )
+            return from_realm_value(max)
+        }
+    }
+
+    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+        memScoped {
+            val min = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_min(
+                    results.cptr(),
+                    property,
+                    min.ptr,
+                    null
+                )
+            )
+            return from_realm_value(min)
+        }
+    }
+
     actual fun <T> realm_results_get(results: NativePointer, index: Long): T {
         memScoped {
             val value = alloc<realm_value_t>()

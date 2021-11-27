@@ -688,6 +688,20 @@ actual object RealmInterop {
         return from_realm_value(sum)
     }
 
+    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+        val max = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_max(results.cptr(), property, max, foundArray)
+        return from_realm_value(max)
+    }
+
+    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+        val min = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_min(results.cptr(), property, min, foundArray)
+        return from_realm_value(min)
+    }
+
     // TODO OPTIMIZE Getting a range
     actual fun <T> realm_results_get(results: NativePointer, index: Long): T {
         val value = realm_value_t()

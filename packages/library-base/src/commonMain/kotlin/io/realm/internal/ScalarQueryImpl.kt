@@ -17,7 +17,6 @@
 
 package io.realm.internal
 
-import io.realm.RealmQuery
 import io.realm.RealmScalarQuery
 import io.realm.internal.interop.ColumnKey
 import io.realm.internal.interop.NativePointer
@@ -30,6 +29,13 @@ import kotlinx.coroutines.flow.onStart
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.reflect.KClass
+
+/**
+ * TODO : query
+ */
+internal enum class AggregatorQueryType {
+    MIN, MAX, SUM, AVERAGE
+}
 
 /**
  * TODO : query
@@ -81,16 +87,18 @@ internal class CountQuery constructor(
 /**
  * TODO : query
  */
-internal class SumQuery<T : Any> constructor(
+@Suppress("LongParameterList")
+internal class GenericAggregatorQuery<T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
     private val clazz: KClass<*>,
     private val property: String,
-    private val type: KClass<T>
+    private val type: KClass<T>,
+    private val queryType: AggregatorQueryType
 ) : ScalarQueryImpl<T>(realmReference, queryPointer, mediator) {
 
-    override fun find(): T = findInternal(queryPointer)
+    override fun find(): T? = findInternal(queryPointer)
 
     override fun getScalarClass(): KClass<T> = type
 
@@ -100,23 +108,18 @@ internal class SumQuery<T : Any> constructor(
         }
     }
 
-    private fun findInternal(queryPointer: NativePointer): T =
+    private fun findInternal(queryPointer: NativePointer): T? =
         findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
-    private fun findFromResults(resultsPointer: NativePointer): T {
+    private fun findFromResults(resultsPointer: NativePointer): T? {
         return try {
-            val sum = RealmInterop.realm_results_sum<T>(
-                resultsPointer,
-                getPropertyKey(clazz, property).key
-            )
-            // TODO Expand to support other numeric types, e.g. Decimal128
-            when (type) {
-                Int::class -> (sum as Number).toInt()
-                Long::class -> (sum as Number).toLong()
-                Float::class -> (sum as Number).toFloat()
-                Double::class -> (sum as Number).toDouble()
-                else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}'.")
-            } as T
+            val colKey = getPropertyKey(clazz, property).key
+            when (queryType) {
+                AggregatorQueryType.AVERAGE ->
+                    computeAverage(resultsPointer, colKey, property, type)
+                else ->
+                    computeOther(resultsPointer, colKey, property, type, queryType)
+            }
         } catch (exception: RealmCoreException) {
             throw when (exception) {
                 is RealmCoreLogicException ->
@@ -134,70 +137,52 @@ internal class SumQuery<T : Any> constructor(
     }
 }
 
-/**
- * This query produces the **average** of the values of a given [property] and returns its value as
- * an instance of the class specified by [type]. `type` supports all Realm numerals. If no values
- * are present for the given `property` the query will return `null`.
- *
- * If the provided `type` is something other than [Double] the computation might result in precision
- * loss under certain circumstances. For example, when calculating the average of the integers `1`
- * and `2` the output will be the [Int] resulting from calling `computedNativeAverage.roundToInt()`
- * and not `1.5`.
- *
- * If precision loss is not desired please use [RealmQuery.average] with the required `property` and
- * ignoring the `type` parameter - in which case the average will be returned in the form of a
- * [Double] - or use it providing `Double::class` as the `type` parameter.
- */
-internal class AverageGenericQuery<T : Any> constructor(
-    realmReference: RealmReference,
-    queryPointer: NativePointer,
-    mediator: Mediator,
-    private val clazz: KClass<*>,
-    private val property: String,
-    private val type: KClass<T>
-) : ScalarQueryImpl<T>(realmReference, queryPointer, mediator) {
-
-    override fun find(): T? = findInternal(queryPointer)
-
-    override fun getScalarClass(): KClass<T> = type
-
-    override fun Flow<BaseResults<T>?>.queryMapper(): Flow<T?> = this.map {
-        it?.let { results ->
-            findFromResults(results.nativePointer)
-        }
+private fun <T : Any> computeOther(
+    resultsPointer: NativePointer,
+    colKey: Long,
+    property: String,
+    type: KClass<T>,
+    queryType: AggregatorQueryType
+): T? {
+    val result: T? = when (queryType) {
+        AggregatorQueryType.MIN ->
+            RealmInterop.realm_results_min(resultsPointer, colKey)
+        AggregatorQueryType.MAX ->
+            RealmInterop.realm_results_max(resultsPointer, colKey)
+        AggregatorQueryType.SUM ->
+            RealmInterop.realm_results_sum(resultsPointer, colKey)
+        AggregatorQueryType.AVERAGE ->
+            throw UnsupportedOperationException("Wrong function, use 'computeAverage' instead.")
     }
 
-    private fun findInternal(queryPointer: NativePointer): T? =
-        findFromResults(RealmInterop.realm_query_find_all(queryPointer))
+    val numberResult: Number = result?.let { it as Number } ?: return null
 
-    private fun findFromResults(resultsPointer: NativePointer): T? {
-        try {
-            val average = RealmInterop.realm_results_average<Double?>(
-                resultsPointer,
-                getPropertyKey(clazz, property).key
-            )
+    // TODO Expand to support other numeric types, e.g. Decimal128
+    return when (type) {
+        Int::class -> numberResult.toInt()
+        Long::class -> numberResult.toLong()
+        Float::class -> numberResult.toFloat()
+        Double::class -> numberResult.toDouble()
+        else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}'.")
+    } as T?
+}
 
-            // TODO Expand to support other numeric types, e.g. Decimal128
-            return when (type) {
-                Int::class -> average?.roundToInt()
-                Long::class -> average?.roundToLong()
-                Float::class -> average?.toFloat()
-                Double::class -> average
-                else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}'.")
-            } as T?
-        } catch (exception: RealmCoreException) {
-            throw when (exception) {
-                is RealmCoreLogicException ->
-                    IllegalArgumentException(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-                else ->
-                    genericRealmCoreExceptionHandler(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-            }
-        }
-    }
+// Hard to fold together with the standard case due to type signature shenanigans
+private fun <T : Any> computeAverage(
+    resultsPointer: NativePointer,
+    colKey: Long,
+    property: String,
+    type: KClass<T>
+): T? {
+    val average =
+        RealmInterop.realm_results_average<Double?>(resultsPointer, colKey) ?: return null
+
+    // TODO Expand to support other numeric types, e.g. Decimal128
+    return when (type) {
+        Int::class -> average.roundToInt()
+        Long::class -> average.roundToLong()
+        Float::class -> average.toFloat()
+        Double::class -> average
+        else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}'.")
+    } as T?
 }
