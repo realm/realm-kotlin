@@ -567,7 +567,7 @@ def runBuildMinAndroidApp() {
         sh """
             cd examples/min-android-sample
             java -version
-            ./gradlew assembleDebug --stacktrace --no-daemon
+            ./gradlew assembleDebug jvmJar --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'
