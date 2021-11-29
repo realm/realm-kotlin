@@ -9,6 +9,7 @@ buildscript {
 
     repositories {
         maven(url = "file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
+        gradlePluginPortal()
         google()
         mavenCentral()
     }
