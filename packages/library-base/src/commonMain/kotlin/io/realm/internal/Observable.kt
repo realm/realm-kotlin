@@ -21,17 +21,6 @@ import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 
-// FIXME Could be split into various interfaces, to getter better type safety around our operations
-//  - Native reference
-//    val ref: NativePointer
-//  - Freezable
-//    fun freeze(frozenRealm: RealmReference): Frozen<T>
-//  - Thawable
-//    fun thaw(liveRealm: RealmReference): Live<T>?
-//    fun registerForNotification(callback: Callback): NativePointer
-//    fun emitFrozenUpdate(frozenRealm: RealmReference, change: NativePointer, channel: SendChannel<T>): ChannelResult<Unit>?
-//  - Public Observable
-//    fun observe(): Flow<T>
 interface Observable<T> {
     fun registerForNotification(callback: Callback): NativePointer
 

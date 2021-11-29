@@ -111,7 +111,10 @@ class QueryTests {
 
     @Test
     fun sort() {
-        val values = listOf(0 to "A", 1 to "B", 2 to "C")
+        val john = 6 to "John"
+        val mary = 10 to "Mary"
+        val ruth = 13 to "Ruth"
+        val values = listOf(john, mary, ruth)
         realm.writeBlocking {
             values.forEach { (intValue, stringValue) ->
                 copyToRealm(
@@ -123,15 +126,17 @@ class QueryTests {
             }
         }
 
-        // No filter, default sorting
+        // No filter, default ascending sorting
         realm.query(Sample::class)
             .sort(Sample::intField.name)
             .find { results ->
                 assertEquals(3, results.size)
-                values.forEachIndexed { index, (intValue, stringValue) ->
-                    assertEquals(intValue, results[index].intField)
-                    assertEquals(stringValue, results[index].stringField)
-                }
+                assertEquals(john.first, results[0].intField)
+                assertEquals(john.second, results[0].stringField)
+                assertEquals(mary.first, results[1].intField)
+                assertEquals(mary.second, results[1].stringField)
+                assertEquals(ruth.first, results[2].intField)
+                assertEquals(ruth.second, results[2].stringField)
             }
 
         // No filter, sort descending
@@ -139,27 +144,37 @@ class QueryTests {
             .sort(Sample::intField.name, QuerySort.DESCENDING)
             .find { results ->
                 assertEquals(3, results.size)
-                values.reversed()
-                    .forEachIndexed { index, (intValue, stringValue) ->
-                        assertEquals(intValue, results[index].intField)
-                        assertEquals(stringValue, results[index].stringField)
-                    }
+                assertEquals(ruth.first, results[0].intField)
+                assertEquals(ruth.second, results[0].stringField)
+                assertEquals(mary.first, results[1].intField)
+                assertEquals(mary.second, results[1].stringField)
+                assertEquals(john.first, results[2].intField)
+                assertEquals(john.second, results[2].stringField)
             }
 
         // No filter, multiple sortings
         realm.query(Sample::class)
             .sort(
-                Sample::intField.name to QuerySort.DESCENDING,
-                Sample::stringField.name to QuerySort.ASCENDING
+                Sample::stringField.name to QuerySort.DESCENDING,
+                Sample::intField.name to QuerySort.ASCENDING
             ).find { results ->
                 assertEquals(3, results.size)
-                values.forEachIndexed { index, (intValue, stringValue) ->
-                    val intField = results[index].intField
-                    val stringField = results[index].stringField
-                    assertEquals(intValue, intField)
-                    assertEquals(stringValue, stringField)
-                }
+                assertEquals(ruth.first, results[0].intField)
+                assertEquals(ruth.second, results[0].stringField)
+                assertEquals(mary.first, results[1].intField)
+                assertEquals(mary.second, results[1].stringField)
+                assertEquals(john.first, results[2].intField)
+                assertEquals(john.second, results[2].stringField)
             }
+    }
+
+    @Test
+    fun sort_throwsWhenCalledMoreThanOnce() {
+        assertFailsWith<IllegalStateException> {
+            realm.query(Sample::class)
+                .sort(Sample::intField.name)
+                .sort(Sample::stringField.name)
+        }
     }
 
     @Test
