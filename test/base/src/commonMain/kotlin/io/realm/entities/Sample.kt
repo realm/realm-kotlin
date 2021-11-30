@@ -33,6 +33,16 @@ class Sample : RealmObject {
     var doubleField: Double = 1.19840122
     var child: Sample? = null
 
+    var nullableStringField: String? = null
+    var nullableByteField: Byte? = null
+    var nullableCharField: Char? = null
+    var nullableShortField: Short? = null
+    var nullableIntField: Int? = null
+    var nullableLongField: Long? = null
+    var nullableBooleanField: Boolean? = null
+    var nullableFloatField: Float? = null
+    var nullableDoubleField: Double? = null
+
     var stringListField: RealmList<String> = realmListOf()
     var byteListField: RealmList<Byte> = realmListOf()
     var charListField: RealmList<Char> = realmListOf()

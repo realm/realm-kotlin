@@ -121,6 +121,10 @@ expect object RealmInterop {
     fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer
     fun realm_results_count(results: NativePointer): Long
     fun <T> realm_results_average(results: NativePointer, property: Long): T
+    fun <T> realm_results_average_with_found(
+        results: NativePointer,
+        property: Long
+    ): Pair<Boolean, T>
     fun <T> realm_results_sum(results: NativePointer, property: Long): T
     fun <T> realm_results_max(results: NativePointer, property: Long): T
     fun <T> realm_results_min(results: NativePointer, property: Long): T

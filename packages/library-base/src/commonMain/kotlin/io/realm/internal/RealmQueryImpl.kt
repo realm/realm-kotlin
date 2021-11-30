@@ -22,7 +22,6 @@ import io.realm.RealmObject
 import io.realm.RealmQuery
 import io.realm.RealmResults
 import io.realm.RealmScalarQuery
-import io.realm.RealmSingleQuery
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
@@ -32,9 +31,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlin.reflect.KClass
 
-/**
- * TODO : query
- */
 @Suppress("SpreadOperator")
 internal class RealmQueryImpl<E : RealmObject> constructor(
     private val realmReference: RealmReference,
@@ -60,9 +56,6 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     }
 
     override fun sort(property: String, sortOrder: QuerySort): RealmQuery<E> {
-//        descriptors.forEach {
-//            if (it is QueryDescriptor.Sort) throw IllegalStateException("Sorting order already defined.")
-//        }
         val updatedDescriptors = descriptors + QueryDescriptor.Sort(property to sortOrder)
         return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
@@ -71,9 +64,6 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         propertyAndSortOrder: Pair<String, QuerySort>,
         vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
     ): RealmQuery<E> {
-//        descriptors.forEach {
-//            if (it is QueryDescriptor.Sort) throw IllegalStateException("Sorting order already defined.")
-//        }
         val updatedDescriptors = (descriptors + QueryDescriptor.Sort(
             propertyAndSortOrder,
             *additionalPropertiesAndOrders
@@ -82,21 +72,14 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     }
 
     override fun distinct(property: String, vararg extraProperties: String): RealmQuery<E> {
-//        descriptors.forEach {
-//            if (it is QueryDescriptor.Sort) throw IllegalStateException("Distinct already defined.")
-//        }
         val updatedDescriptors =
             (descriptors + QueryDescriptor.Distinct(property, *extraProperties))
         return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
     }
 
-    override fun limit(results: Int): RealmQuery<E> {
-        val updatedDescriptors = descriptors + QueryDescriptor.Limit(results)
+    override fun limit(limit: Int): RealmQuery<E> {
+        val updatedDescriptors = descriptors + QueryDescriptor.Limit(limit)
         return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
-    }
-
-    override fun first(): RealmSingleQuery<E> {
-        TODO("Not yet implemented")
     }
 
     override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> =
@@ -132,19 +115,19 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
             AggregatorQueryType.SUM
         )
 
-    override fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        GenericAggregatorQuery(
-            realmReference,
-            queryPointer,
-            mediator,
-            clazz,
-            property,
-            type,
-            AggregatorQueryType.AVERAGE
-        )
-
-    override fun average(property: String): RealmScalarQuery<Double> =
-        average(property, Double::class)
+//    override fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<T> =
+//        GenericAggregatorQuery(
+//            realmReference,
+//            queryPointer,
+//            mediator,
+//            clazz,
+//            property,
+//            type,
+//            AggregatorQueryType.AVERAGE
+//        )
+//
+//    override fun average(property: String): RealmScalarQuery<Double> =
+//        average(property, Double::class)
 
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator)
@@ -211,7 +194,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
 
                     stringBuilder.append(")")
                 }
-                is QueryDescriptor.Limit -> stringBuilder.append(" LIMIT(${descriptor.value})")
+                is QueryDescriptor.Limit -> stringBuilder.append(" LIMIT(${descriptor.limit})")
             }
         }
 
@@ -221,9 +204,6 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     private fun escapeFieldName(fieldName: String?): String? = fieldName?.replace(" ", "\\ ")
 }
 
-/**
- * TODO : query
- */
 internal sealed class QueryDescriptor {
     internal class Distinct(
         val property: String,
@@ -235,5 +215,5 @@ internal sealed class QueryDescriptor {
         vararg val additionalPropertiesAndOrders: Pair<String, QuerySort>
     ) : QueryDescriptor()
 
-    internal class Limit(val value: Int) : QueryDescriptor()
+    internal class Limit(val limit: Int) : QueryDescriptor()
 }

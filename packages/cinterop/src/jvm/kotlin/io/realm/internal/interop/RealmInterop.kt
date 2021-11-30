@@ -681,6 +681,16 @@ actual object RealmInterop {
         return from_realm_value(average)
     }
 
+    actual fun <T> realm_results_average_with_found(
+        results: NativePointer,
+        property: Long
+    ): Pair<Boolean, T> {
+        val average = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_average(results.cptr(), property, average, foundArray)
+        return foundArray[0] to from_realm_value(average)
+    }
+
     actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
         val sum = realm_value_t()
         val foundArray = BooleanArray(1)

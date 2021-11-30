@@ -29,6 +29,7 @@ import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
+import kotlinx.cinterop.BooleanVarOf
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
@@ -767,16 +768,36 @@ actual object RealmInterop {
 
     actual fun <T> realm_results_average(results: NativePointer, property: Long): T {
         memScoped {
+            val found = cValue<BooleanVar>().ptr
             val average = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_average(
                     results.cptr(),
                     property,
                     average.ptr,
-                    null
+                    found
                 )
             )
             return from_realm_value(average)
+        }
+    }
+
+    actual fun <T> realm_results_average_with_found(
+        results: NativePointer,
+        property: Long
+    ): Pair<Boolean, T> {
+        memScoped {
+            val found = cValue<BooleanVar>().ptr
+            val average = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_average(
+                    results.cptr(),
+                    property,
+                    average.ptr,
+                    found
+                )
+            )
+            return found.pointed.value to from_realm_value(average)
         }
     }
 

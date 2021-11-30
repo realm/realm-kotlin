@@ -22,42 +22,101 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
- * Queries returning [RealmResults].
+ * Query returning [RealmResults].
  */
 interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
+
+    /**
+     * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
+     *
+     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
+     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
+     * results asynchronously using [asFlow] instead.
+     *
+     * @return a [RealmResults] instance containing objects. If no objects match the condition, an
+     * instance with zero objects is returned.
+     */
     fun find(): RealmResults<E>
 
-    // TODO missing fine-grained notifications
+    /**
+     * Finds all objects that fulfill the query conditions and returns them asynchronously as a
+     * [Flow].
+     *
+     * If there is any changes to the objects represented by the query backing the [RealmResults],
+     * the flow will emit the updated results. The flow will continue running indefinitely until
+     * canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     */
     override fun asFlow(): Flow<RealmResults<E>>
 }
 
-/**
- * Queries returning a single object.
- * NOTE: The interaction with primitive queries might be a bit akward
- */
-// TODO : query should this be done using the raw query string
-interface RealmSingleQuery<E> : Flowable<E> {
-    fun find(): E?
-    // When fine-grained notifications are merged
-    // fun asFlow(): Flow<ObjectChange<E>>
-}
+///**
+// * Queries returning a single object.
+// * NOTE: The interaction with primitive queries might be a bit awkward
+// */
+//// TODO : query - should this be done using the raw query string?
+//interface RealmSingleQuery<E> : Flowable<E> {
+//    fun find(): E?
+//}
 
 /**
- * Queries that return scalar values. We cannot express in the type-system which scalar values
- * we support, so this checks must be done by the compiler plugin or at runtime.
+ * Queries that return scalar values. This type of query is used to more accurately represent the
+ * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.min]..
  */
 interface RealmScalarQuery<E> : Flowable<E> {
+    /**
+     * Returns the value of a scalar query as an [E] in a blocking fashion. The result may be `null`
+     * depending on the type of scalar query:
+     *
+     * - `[min]`, `[max]` return [E] or `null` if no objects are present
+     * - `[count]` returns [Long]
+     *
+     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
+     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
+     * values asynchronously using [asFlow] instead.
+     *
+     * @return an [E] containing the result of the scalar query or `null` depending on the query
+     * being executed.
+     */
     fun find(): E?
 
-    // TODO : query - not sure the comment below is possible, ask!
-    // These will require a few hacks as Core changelisteners do not support these currently.
-    // Easy work-around is just calling `Results.<aggregateFunction>()` inside the NotifierThread
-//    fun asFlow(): Flow<E>
+    /**
+     * Calculates the value that fulfills the query conditions and returns it asynchronously as a
+     * [Flow].
+     *
+     * If there is any changes to the objects represented by the query backing the value, the flow
+     * will emit the updated value. The flow will continue running indefinitely until canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     */
+    override fun asFlow(): Flow<E?>
 }
 
 /**
- * TODO : query
+ * A `RealmQuery` encapsulates a query on a [Realm] or a [RealmResults] instance using the `Builder`
+ * pattern. The query is executed using either [find] or [asFlow].
+ *
+ * The input to many of the query functions take a field name as [String]. Note that this is not
+ * type safe. If a [RealmObject] class is refactored, care has to be taken to not break any queries.
+ *
+ * A [Realm] is unordered, which means that there is no guarantee that a query will return the
+ * objects in the order they where inserted. Use the [sort] functions if a specific order is
+ * required.
+ *
+ * Results are obtained quickly most of the times when using [find]. However, launching heavy
+ * queries from the UI thread may result in a drop of frames or even ANRs. If you want to prevent
+ * these behaviors, you can use [asFlow] to retrieve results asynchronously.
+ *
+ * @param E the class of the objects to be queried.
  */
+// TODO update docs when Decimal128 and RealmAny are added
 interface RealmQuery<E> : RealmElementQuery<E> {
 
     fun query(filter: String, vararg arguments: Any?): RealmQuery<E>
@@ -73,7 +132,6 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * @param property the property name to sort by.
      * @throws [IllegalArgumentException] if the property name does not exist.
      */
-//     * @throws [IllegalStateException] if a sorting order was already defined.
     fun sort(property: String, sortOrder: QuerySort = QuerySort.ASCENDING): RealmQuery<E>
 
     /**
@@ -87,7 +145,6 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * @param propertyAndSortOrder pair containing the property and the order to sort by.
      * @throws [IllegalArgumentException] if the property name does not exist.
      */
-//     * @throws [IllegalStateException] if a sorting order was already defined.
     fun sort(
         propertyAndSortOrder: Pair<String, QuerySort>,
         vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
@@ -99,77 +156,142 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * matches, it is undefined which object is returned. Unless the result is sorted, then the
      * first object will be returned.
      *
-     * @param firstFieldName      first field name to use when finding distinct objects.
-     * @param remainingFieldNames remaining field names when determining all unique combinations of field values.
-     * @throws IllegalArgumentException if field names is empty or {@code null}, does not exist,
-     *                                  is an unsupported type, or points to a linked field.
+     * @param property first field name to use when finding distinct objects.
+     * @param extraProperties remaining property names when determining all unique combinations of
+     * field values.
+     * @throws IllegalArgumentException if [property] does not exist, is an unsupported type, or
+     * points to a linked field.
      */
-//     * @throws IllegalStateException    if distinct field names were already defined.
+    // TODO "points to a linked field" doesn't apply yet
     fun distinct(property: String, vararg extraProperties: String): RealmQuery<E>
-    fun limit(results: Int): RealmQuery<E>
 
-    // FIXME Is there a better way to force the constraints here. Restricting RealmQuery<E> to
-    //  RealmObjects would help, but would prevent this class from being used by primitive queries.
-    //  We need to investigate what other SDK's do here
-    fun first(): RealmSingleQuery<E>
+    /**
+     * Limits the number of objects returned in case the query matched more objects.
+     *
+     * Note that when using this method in combination with [sort] and [distinct] they will be
+     * executed in the order they where added which can affect the end result.
+     *
+     * @param limit a limit that is greater than or equal to 1.
+     * @throws IllegalArgumentException if the provided [limit] is less than 1.
+     */
+    fun limit(limit: Int): RealmQuery<E>
 
+//    /**
+//     * TODO : query
+//     */
+//    // FIXME Is there a better way to force the constraints here. Restricting RealmQuery<E> to
+//    //  RealmObjects would help, but would prevent this class from being used by primitive queries.
+//    //  We need to investigate what other SDK's do here
+//    fun first(): RealmSingleQuery<E>
+
+    /**
+     * Finds the minimum value of a property.
+     *
+     * @param property the property on which to find the minimum value. Only [Number] properties are
+     * supported.
+     * @param type the type of the property.
+     * @return a [RealmScalarQuery] returning the minimum value for the given [property] represented
+     * as a [T]. If no objects exist or they all have `null` as the value for the given property,
+     * `null` will be returned by the query. Otherwise, the minimum value is returned. When
+     * determining the minimum value, objects with `null` values are ignored.
+     * @throws IllegalArgumentException if the field is not a [Number].
+     */
     fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T>
+
+    /**
+     * Finds the maximum value of a property.
+     *
+     * @param property the property on which to find the maximum value. Only [Number] properties are
+     * supported.
+     * @param type the type of the property.
+     * @return a [RealmScalarQuery] returning the maximum value for the given [property] represented
+     * as a [T]. If no objects exist or they all have `null` as the value for the given property,
+     * `null` will be returned by the query. Otherwise, the maximum value is returned. When
+     * determining the maximum value, objects with `null` values are ignored.
+     * @throws IllegalArgumentException if the field is not a [Number].
+     */
     fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T>
+
+    /**
+     * Calculates the sum of a given property.
+     *
+     * @param property the property to sum. Only [Number] properties are supported.
+     * @param type the type of the property.
+     * @return the sum of fields of the matching objects. If no objects exist or they all have
+     * `null` as the value for the given property, `0` will be returned. When computing the sum,
+     * objects with `null` values are ignored.
+     * @throws IllegalArgumentException if the field is not a [Number] type.
+     */
     fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T>
 
-    /**
-     * Calculates the average value for a given [property] and returns the result an instance of the
-     * class specified by [type] or throws an [IllegalArgumentException] if the type doesn't match
-     * the `property` or it is other than a [Number]. The `type` parameter supports all Realm numerals. If no values are present
-     * for the given `property` the query will return `null`.
-     *
-     * If the provided `type` is something other than [Double] the computation might result in
-     * precision loss under certain circumstances. For example, when calculating the average of the
-     * integers `1` and `2` the output will be the [Int] resulting from calling
-     * `averageValue.roundToInt()` and not `1.5`.
-     *
-     * If precision loss is not desired please use [average] with the required `property` and
-     * ignore the `type` parameter - in which case the average will be returned in the form of a
-     * [Double] - or use it providing `Double::class` as the `type` parameter.
-     *
-     * @param property the property on which the result will be computed.
-     * @param type the type of the property.
-     * @return the average value for the given property represented as a [Double].
-     * @throws [IllegalArgumentException] if the property doesn't match the type or the property
-     * is not a [Number].
-     */
-    fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<T>
+//    /**
+//     * Calculates the average value for a given [property] and returns the result as an instance of
+//     * the class specified by [T] or throws an [IllegalArgumentException] if the `property` type
+//     * doesn't match [T] or it is other than a [Number]. The `type` parameter supports all Realm
+//     * numerals. If no values are present for the given `property` the query will return `null`.
+//     *
+//     * If the provided `type` is something other than [Double] the computation might result in
+//     * precision loss under certain circumstances. For example, when calculating the average of the
+//     * integers `1` and `2` the output will be the [Int] resulting from calling
+//     * `averageValue.roundToInt()` and not `1.5`.
+//     *
+//     * If precision loss is not desired please use [average] with the required `property` and
+//     * ignore the `type` parameter - in which case the average will be returned in the form of a
+//     * [Double] - or use it providing `Double::class` as the `type` parameter.
+//     *
+//     * @param property the property on which the result will be computed.
+//     * @param type the type of the property.
+//     * @return a [RealmScalarQuery] returning the average value for the given [property] represented
+//     * as a [T].
+//     * @throws [IllegalArgumentException] if the property doesn't match [T] or the property is not
+//     * a [Number].
+//     */
+//    fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<T>
+//
+//    /**
+//     * Calculates the average value for a given [property] and returns a [Double] or throws an
+//     * [IllegalArgumentException] if the specified `property` cannot be converted to a [Double]. If
+//     * no values are present for the given `property` the query will return `null`.
+//     *
+//     * This function returns the average with the same precision provided by the native database.
+//     *
+//     * @param property the property on which the result will be computed.
+//     * @return a [RealmScalarQuery] returning the average value for the given property represented
+//     * as a [Double].
+//     * @throws [IllegalArgumentException] if the property is not a [Number].
+//     */
+//    fun average(property: String): RealmScalarQuery<Double>
 
     /**
-     * Calculates the average value for a given [property] and returns a [Double] or throws an
-     * [IllegalArgumentException] if the specified `property` cannot be converted to a [Double]. If
-     * no values are present for the given `property` the query will return `null`.
+     * Returns a [RealmScalarQuery] that counts the number of objects that fulfill the query
+     * conditions.
      *
-     * This function returns the average with the same precision provided by the native database.
-     *
-     * @param property the property on which the result will be computed.
-     * @return the average value for the given property represented as a [Double].
-     * @throws [IllegalArgumentException] if the property is not a [Number].
+     * @return a [RealmScalarQuery] that counts the number of objects for a given query.
      */
-    fun average(property: String): RealmScalarQuery<Double>
     fun count(): RealmScalarQuery<Long>
 }
 
+/**
+ * Similar to [RealmQuery.min] but the type parameter is automatically inferred.
+ */
 inline fun <reified T : Any> RealmQuery<*>.min(property: String): RealmScalarQuery<T> =
     min(property, T::class)
 
+/**
+ * Similar to [RealmQuery.max] but the type parameter is automatically inferred.
+ */
 inline fun <reified T : Any> RealmQuery<*>.max(property: String): RealmScalarQuery<T> =
     max(property, T::class)
 
+/**
+ * Similar to [RealmQuery.sum] but the type parameter is automatically inferred.
+ */
 inline fun <reified T : Any> RealmQuery<*>.sum(property: String): RealmScalarQuery<T> =
     sum(property, T::class)
 
-inline fun <reified T : Any> RealmQuery<*>.average(property: String): RealmScalarQuery<T> =
-    average(property, T::class)
-
 /**
- * Similar to [RealmQuery.find] but it receives a block where the [RealmResults] from te query are
- * provided.
+ * Similar to [RealmQuery.find] but it receives a block in which the [RealmResults] from the query
+ * are provided.
  */
 fun <T> RealmQuery<T>.find(block: (RealmResults<T>) -> Unit): RealmResults<T> = find().let {
     block.invoke(it)
@@ -177,8 +299,8 @@ fun <T> RealmQuery<T>.find(block: (RealmResults<T>) -> Unit): RealmResults<T> = 
 }
 
 /**
- * Similar to [RealmScalarQuery.find] but it receives a block where the scalar [T] from te query
- * is provided.
+ * Similar to [RealmScalarQuery.find] but it receives a block in which the scalar result from the
+ * query is provided.
  */
 fun <T> RealmScalarQuery<T>.find(block: (T?) -> Unit): T? = find().let {
     block.invoke(it)
@@ -186,22 +308,24 @@ fun <T> RealmScalarQuery<T>.find(block: (T?) -> Unit): T? = find().let {
 }
 
 /**
- * TODO : query
+ * This enum describes the sorting order used in Realm queries.
+ *
+ * @see [RealmQuery.sort]
  */
 enum class QuerySort {
     ASCENDING,
     DESCENDING
 }
 
-/**
- * TODO : query
- */
-internal class RealmSingleQueryImpl<E : RealmObject> : RealmSingleQuery<E> {
-    override fun find(): E? {
-        TODO("Not yet implemented")
-    }
-
-    override fun asFlow(): Flow<E?> {
-        TODO("Not yet implemented")
-    }
-}
+///**
+// * TODO : query
+// */
+//internal class RealmSingleQueryImpl<E : RealmObject> : RealmSingleQuery<E> {
+//    override fun find(): E? {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun asFlow(): Flow<E?> {
+//        TODO("Not yet implemented")
+//    }
+//}
