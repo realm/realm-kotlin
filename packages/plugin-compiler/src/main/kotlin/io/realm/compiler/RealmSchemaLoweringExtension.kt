@@ -74,6 +74,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
     private lateinit var realmConfigurationBuilder: IrClass
     private lateinit var configurationBuilderConstructor: IrConstructorSymbol
     private lateinit var realmBuildFunction: IrSimpleFunction
+
     // This can be null as the sync configuration builder is not available for base builds
     private var syncBuildFunction: IrSimpleFunction? = null
 
@@ -246,6 +247,7 @@ fun findSchemaClassLiterals(
                                         override fun visitElement(element: IrElement) {
                                             element.acceptChildrenVoid(this)
                                         }
+
                                         override fun visitClassReference(expression: IrClassReference) {
                                             addEntryToCompanionMap(
                                                 expression,

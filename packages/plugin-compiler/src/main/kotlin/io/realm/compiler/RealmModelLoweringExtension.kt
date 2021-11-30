@@ -77,7 +77,8 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             generator.addNewInstanceMethodBody(irClass)
         } else {
             if (irClass.isCompanion && irClass.parentAsClass.hasRealmModelInterface) {
-                val realmModelCompanion: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION).symbol
+                val realmModelCompanion: IrClassSymbol =
+                    pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION).symbol
                 irClass.superTypes += realmModelCompanion.defaultType
             }
         }

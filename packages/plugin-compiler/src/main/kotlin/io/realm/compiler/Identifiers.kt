@@ -22,14 +22,20 @@ import org.jetbrains.kotlin.name.Name
 internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
-    val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
-    val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
-    val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
-    val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
+    val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
+    val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
+    val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
+    val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
     val SET = Name.special("<set-?>")
+
     // names must match `RealmObjectInterop` properties
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
+
     // names must match `RealmObjectInternal` properties
     val REALM_OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Owner")
     val OBJECT_TABLE_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
@@ -76,6 +82,7 @@ internal object FqNames {
     val REALM_SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
     val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
     val SYNC_CONFIGURATION_BUILDER = FqName("io.realm.mongodb.SyncConfiguration.Builder")
+
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
     val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")
@@ -85,6 +92,7 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
     val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
+
     // Schema related types
     val TABLE = FqName("io.realm.internal.interop.Table")
     val CLASS_FLAG = FqName("io.realm.internal.interop.ClassFlag")
@@ -96,6 +104,7 @@ internal object FqNames {
     val INDEX_ANNOTATION = FqName("io.realm.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
+
     // Realm data types
     val REALM_LIST = FqName("io.realm.RealmList")
 }
