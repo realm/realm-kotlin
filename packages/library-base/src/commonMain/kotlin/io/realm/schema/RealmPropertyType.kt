@@ -38,11 +38,9 @@ class SingularPropertyType(
     override val isNullable: Boolean,
     val isPrimaryKey: Boolean,
     val isIndexed: Boolean
-) : RealmPropertyType {
-}
+) : RealmPropertyType
 
 class ListPropertyType(
     override val storageType: RealmStorageType,
     override val isNullable: Boolean = false
-) : RealmPropertyType {
-}
+) : RealmPropertyType

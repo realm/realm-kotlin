@@ -21,14 +21,13 @@ import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmProperty
 import io.realm.schema.RealmPropertyType
 import io.realm.schema.SingularPropertyType
-import kotlin.reflect.typeOf
 
 internal data class RealmPropertyImpl(
     override var name: String,
     override var type: RealmPropertyType,
 ) : RealmProperty {
 
-    override val isNullable: Boolean = when(type) {
+    override val isNullable: Boolean = when (type) {
         is SingularPropertyType -> type.isNullable
         is ListPropertyType -> false
     }
@@ -36,7 +35,8 @@ internal data class RealmPropertyImpl(
     companion object {
         fun fromCoreProperty(corePropertyImpl: PropertyInfo): RealmPropertyImpl {
             return with(corePropertyImpl) {
-                val storageType = io.realm.internal.schema.RealmStorageTypeImpl.fromCorePropertyType(type)
+                val storageType =
+                    io.realm.internal.schema.RealmStorageTypeImpl.fromCorePropertyType(type)
                 val type = when (collectionType) {
                     io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE -> SingularPropertyType(
                         storageType,
@@ -50,7 +50,7 @@ internal data class RealmPropertyImpl(
                     )
                     else -> error("Unsupported type $collectionType")
                 }
-                RealmPropertyImpl( name, type )
+                RealmPropertyImpl(name, type)
             }
         }
     }

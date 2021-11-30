@@ -18,12 +18,12 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.schema.SingularPropertyType
-import io.realm.schema.RealmStorageType
-import io.realm.schema.ListPropertyType
 import io.realm.entities.Sample
 import io.realm.entities.schema.SchemaVariations
+import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
+import io.realm.schema.RealmStorageType
+import io.realm.schema.SingularPropertyType
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
