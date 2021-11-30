@@ -21,14 +21,6 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("io.realm.kotlin")
-    id("realm-lint")
-}
-
-repositories {
-    google()
-    jcenter()
-    mavenCentral()
-    mavenLocal()
 }
 
 // Common Kotlin configuration
@@ -79,8 +71,6 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
-        versionCode = 1
-        versionName = Realm.version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
@@ -169,10 +159,10 @@ kotlin {
         val macosMain by getting
         val macosTest by getting
         getByName("iosMain") {
-            dependsOn(macosMain)
+            kotlin.srcDir("src/macosMain/kotlin")
         }
         getByName("iosTest") {
-            dependsOn(macosTest)
+            kotlin.srcDir("src/macosTest/kotlin")
         }
     }
 }
@@ -187,7 +177,10 @@ tasks.named("iosTest") {
     doLast {
         val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
         exec {
-            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
+            // use -s (standlone) option to avoid:
+            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+            //      Invalid device state
+            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
         }
     }
 }

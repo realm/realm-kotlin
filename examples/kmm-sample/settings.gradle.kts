@@ -1,9 +1,9 @@
-// If you want to run against the local source repository just include the source projects by
-// reincluding the below
-// includeBuild("../../packages")
-
-// Use local sources for CI builds
-if (System.getenv("JENKINS_HOME") != null) {
+// For local development, we use composite builds.
+// For CI buils, the packages are expected to have
+// been built and deployed to a local filesystem
+// maven repo. We cannot reference `Realm.ciBuild`
+// from buildSrc here.
+if (System.getenv("JENKINS_HOME") == null) {
     includeBuild("../../packages")
 }
 
@@ -13,13 +13,6 @@ pluginManagement {
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         google()
-    }
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.namespace == "com.android" || requested.id.name == "kotlin-android-extensions") {
-                useModule("com.android.tools.build:gradle:4.1.0")
-            }
-        }
     }
 }
 rootProject.name = "KmmSample"
