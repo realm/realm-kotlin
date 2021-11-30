@@ -41,5 +41,5 @@ class SchemaVariations : RealmObject {
 
     var stringList: RealmList<String> = realmListOf()
 
-    var nullableStringLinst: RealmList<String?> = realmListOf()
+    var nullableStringList: RealmList<String?> = realmListOf()
 }

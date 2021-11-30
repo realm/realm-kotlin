@@ -19,8 +19,7 @@ package io.realm.schema
 interface RealmProperty { // Matches realm_property_info_t
     val name: String
     val type: RealmPropertyType
-    val primaryKey: Boolean
-    val index: Boolean
-    // Derived attributes, maybe expose as top level attribute instead of hiding it inside type?
-    val nullable: Boolean get() = type.elementType.nullable
+    // Referring to actual Kotlin KType property nullability and not Core's nullability flag
+    // (though being the same for singular types and always false for Non-singular types)
+    val isNullable: Boolean
 }

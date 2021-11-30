@@ -20,6 +20,7 @@ import io.realm.internal.interop.ClassInfo
 import io.realm.internal.interop.PropertyInfo
 import io.realm.schema.RealmClass
 import io.realm.schema.RealmProperty
+import io.realm.schema.SingularPropertyType
 
 data class RealmClassImpl(
     // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
@@ -34,5 +35,7 @@ data class RealmClassImpl(
     }
 
     override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
-    override fun primaryKey(): RealmProperty? = properties.firstOrNull { it.primaryKey }
+    override fun primaryKey(): RealmProperty? = properties.firstOrNull {
+        it.type.run { this is SingularPropertyType && isPrimaryKey }
+    }
 }

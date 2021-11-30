@@ -18,16 +18,19 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.schema.SingularPropertyType
+import io.realm.schema.RealmStorageType
+import io.realm.schema.ListPropertyType
 import io.realm.entities.Sample
 import io.realm.entities.schema.SchemaVariations
-import io.realm.schema.CollectionType
-import io.realm.schema.ElementType
+import io.realm.schema.RealmPropertyType
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -79,41 +82,42 @@ public class RealmSchemaTests {
         schemaVariationsDescriptor["string"]!!.run {
             assertEquals("string", name)
             type.run {
-                assertEquals(CollectionType.NONE, collectionType)
-                elementType.run {
-                    assertEquals(ElementType.FieldType.STRING, fieldType)
-                    assertFalse(nullable)
-                }
-                assertTrue(primaryKey)
-                assertFalse(index)
-                assertFalse(nullable)
+                assertIs<SingularPropertyType>(this)
+                assertEquals(RealmStorageType.STRING, storageType)
+                assertFalse(isNullable)
+                assertTrue(isPrimaryKey)
+                assertFalse(isIndexed)
             }
+            assertFalse(isNullable)
         }
         schemaVariationsDescriptor["nullableString"]!!.run {
             assertEquals("nullableString", name)
             type.run {
-                assertEquals(CollectionType.NONE, collectionType)
-                elementType.run {
-                    assertEquals(ElementType.FieldType.STRING, fieldType)
-                    assertTrue(nullable)
-                }
-                assertFalse(primaryKey)
-                assertTrue(index)
-                assertTrue(nullable)
+                assertIs<SingularPropertyType>(this)
+                assertEquals(RealmStorageType.STRING, storageType)
+                assertTrue(isNullable)
+                assertFalse(isPrimaryKey)
+                assertTrue(isIndexed)
             }
+            assertTrue(isNullable)
         }
         schemaVariationsDescriptor["stringList"]!!.run {
             assertEquals("stringList", name)
             type.run {
-                assertEquals(CollectionType.LIST, collectionType)
-                elementType.run {
-                    assertEquals(ElementType.FieldType.STRING, fieldType)
-                    assertFalse(nullable)
-                }
-                assertFalse(primaryKey)
-                assertFalse(index)
-                assertFalse(nullable)
+                assertIs<ListPropertyType>(this)
+                assertEquals(RealmStorageType.STRING, storageType)
+                assertFalse(this.isNullable)
             }
+            assertFalse(isNullable)
+        }
+        schemaVariationsDescriptor["nullableStringList"]!!.run {
+            assertEquals("nullableStringList", name)
+            type.run {
+                assertIs<ListPropertyType>(this)
+                assertEquals(RealmStorageType.STRING, storageType)
+                assertTrue(this.isNullable)
+            }
+            assertFalse(isNullable)
         }
     }
 
@@ -127,8 +131,9 @@ public class RealmSchemaTests {
 
         // Property options
         val collectionTypeNullability =
-            CollectionType.values().map { it to mutableSetOf(false, true) }.toMap().toMutableMap()
-        val fieldTypes = ElementType.FieldType.values().toMutableSet()
+            RealmPropertyType.subTypes.map { it to mutableSetOf(false, true) }.toMap()
+                .toMutableMap()
+        val storageTypes = RealmStorageType.values().toMutableSet()
         val indexOptions = mutableSetOf(false, true)
         val primaryKeyOptionProperty = mutableSetOf(false, true)
 
@@ -144,22 +149,15 @@ public class RealmSchemaTests {
         val classDescriptor = schema["SchemaVariations"] ?: fail("Couldn't find class")
         assertEquals("SchemaVariations", classDescriptor.name)
         for (property in classDescriptor.properties) {
-            property.run {
-                type.run {
-                    collectionType.let {
-                        collectionTypeNullability.getValue(it).remove(elementType.nullable)
+            property.type.run {
+                collectionTypeNullability.getValue(this::class).remove(this.isNullable)
+                storageTypes.remove(storageType)
+                if (this is SingularPropertyType) {
+                    isPrimaryKey.let { primaryKeyOptionProperty.remove(it) }
+                    isIndexed.let { indexOptions.remove(it) }
+                    if (isPrimaryKey) {
+                        assertEquals(classDescriptor.primaryKey(), property)
                     }
-                    elementType.run {
-                        fieldType.let { fieldTypes.remove(it) }
-                        nullable.let {
-                            assertEquals(it, property.nullable)
-                        }
-                    }
-                }
-                primaryKey.let { primaryKeyOptionProperty.remove(it) }
-                index.let { indexOptions.remove(it) }
-                if (primaryKey) {
-                    assertEquals(classDescriptor.primaryKey(), this)
                 }
             }
         }
@@ -170,8 +168,12 @@ public class RealmSchemaTests {
             "Primary key options not exhausted: $primaryKeyOptionsClass"
         )
         // Assert property options exhaustiveness
-        assertTrue(collectionTypeNullability.none { (_, v) -> v.isNotEmpty() }, "Collection types not exhausted: $collectionTypeNullability")
-        assertTrue(fieldTypes.isEmpty(), "Field types not exhausted: $fieldTypes")
+        assertTrue(
+            collectionTypeNullability.none
+            { (_, v) -> v.isNotEmpty() },
+            "Collection types not exhausted: $collectionTypeNullability"
+        )
+        assertTrue(storageTypes.isEmpty(), "Field types not exhausted: $storageTypes")
         assertTrue(indexOptions.isEmpty(), "Index options not exhausted: $indexOptions")
         assertTrue(
             primaryKeyOptionProperty.isEmpty(),

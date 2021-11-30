@@ -17,50 +17,40 @@
 package io.realm.internal.schema
 
 import io.realm.internal.interop.PropertyInfo
-import io.realm.schema.CollectionType
-import io.realm.schema.ElementType
+import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmProperty
 import io.realm.schema.RealmPropertyType
+import io.realm.schema.SingularPropertyType
+import kotlin.reflect.typeOf
 
 internal data class RealmPropertyImpl(
     override var name: String,
     override var type: RealmPropertyType,
-    override var primaryKey: Boolean,
-    override var index: Boolean
 ) : RealmProperty {
+
+    override val isNullable: Boolean = when(type) {
+        is SingularPropertyType -> type.isNullable
+        is ListPropertyType -> false
+    }
 
     companion object {
         fun fromCoreProperty(corePropertyImpl: PropertyInfo): RealmPropertyImpl {
             return with(corePropertyImpl) {
-                RealmPropertyImpl(
-                    name,
-                    RealmPropertyType(
-                        fromCoreCollectionType(collectionType),
-                        ElementType(fromCorePropertyType(type), isNullable)
-                    ),
-                    isPrimaryKey,
-                    isIndexed,
-                )
-            }
-        }
-
-        fun fromCorePropertyType(type: io.realm.internal.interop.PropertyType): ElementType.FieldType {
-            return when (type) {
-                io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_INT -> ElementType.FieldType.INT
-                io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_BOOL -> ElementType.FieldType.BOOL
-                io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_STRING -> ElementType.FieldType.STRING
-                io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT -> ElementType.FieldType.OBJECT
-                io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_FLOAT -> ElementType.FieldType.FLOAT
-                io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> ElementType.FieldType.DOUBLE
-                else -> error("Unknown type: $type")
-            }
-        }
-
-        fun fromCoreCollectionType(type: io.realm.internal.interop.CollectionType): CollectionType {
-            return when (type) {
-                io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE -> CollectionType.NONE
-                io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_LIST -> CollectionType.LIST
-                else -> error("Unknown type: $type")
+                val storageType = io.realm.internal.schema.RealmStorageTypeImpl.fromCorePropertyType(type)
+                val type = when (collectionType) {
+                    io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE -> SingularPropertyType(
+                        storageType,
+                        isNullable,
+                        isPrimaryKey,
+                        isIndexed
+                    )
+                    io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_LIST -> ListPropertyType(
+                        storageType,
+                        isNullable
+                    )
+                    else -> error("Unsupported type $collectionType")
+                }
+                RealmPropertyImpl( name, type )
             }
         }
     }
