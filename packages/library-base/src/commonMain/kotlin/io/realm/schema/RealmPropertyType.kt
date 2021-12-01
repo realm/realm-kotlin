@@ -16,10 +16,31 @@
 
 package io.realm.schema
 
-// We could actually create `object` for all allowed types if needed
-data class RealmPropertyType(
-    // This doesn't necessarily catch Map<K,V> when/if we open up for K!=String, but the type is at
-    // least encapsulated in RealmPropertyType, so should be able to change it later
-    val collectionType: CollectionType,
-    val elementType: ElementType
-)
+import kotlin.reflect.KClass
+
+sealed interface RealmPropertyType {
+    val storageType: RealmStorageType
+    val isNullable: Boolean
+
+    companion object {
+        // TODO Not as good as RealmPropertyType::class.sealedClasses as this has to be manually
+        //  adjusted, but since KClass<T>.sealedClasses is only available for JVM this is the next
+        //  best thing (at least uncovered until now ... without writing a compiler plugin) that
+        //  allows to define the options centrally and use it to verify exhaustiveness in tests.
+        //  JUST DON'T FORGET TO UPDATE ON WHEN ADDING NEW SUBCLASSES :see_no_evil:
+        //  We could do a JVM test that verifies that it is exhaustive :thinking:
+        val subTypes: Set<KClass<out RealmPropertyType>> = setOf(SingularPropertyType::class, ListPropertyType::class)
+    }
+}
+
+class SingularPropertyType(
+    override val storageType: RealmStorageType,
+    override val isNullable: Boolean,
+    val isPrimaryKey: Boolean,
+    val isIndexed: Boolean
+) : RealmPropertyType
+
+class ListPropertyType(
+    override val storageType: RealmStorageType,
+    override val isNullable: Boolean = false
+) : RealmPropertyType

@@ -16,9 +16,11 @@
 
 package io.realm.schema
 
-enum class CollectionType {
-    NONE,
-    LIST,
-    // SET,
-    // MAP,
+enum class RealmStorageType {
+    BOOL,
+    INT,
+    STRING,
+    OBJECT,
+    FLOAT,
+    DOUBLE;
 }
