@@ -112,7 +112,7 @@ CoroutineScope(context).async {
 
 ## Query
 
-The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries)
+The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm/sdk/node/advanced/query-engine/#std-label-node-client-query-engine)
 
 ```Kotlin
 // All Persons
