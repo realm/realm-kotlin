@@ -37,27 +37,55 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     private val descriptors: List<QueryDescriptor> = listOf(),
-    private val query: String,
+    private val subQuery: NativePointer? = null,
+    private val filter: String,
     private vararg val args: Any?
 ) : RealmQuery<E>, Thawable<BaseResults<E>> {
 
-    private val queryPointer: NativePointer = parseQuery()
+    private val queryPointer: NativePointer = when {
+        subQuery != null -> subQuery
+        else -> parseQuery()
+    }
 
     private val resultsPointer: NativePointer by lazy {
         RealmInterop.realm_query_find_all(queryPointer)
     }
 
+    constructor(
+        subQueryPointer: NativePointer?,
+        queryImpl: RealmQueryImpl<E>
+    ) : this(subQueryPointer, queryImpl.descriptors, queryImpl)
+
+    constructor(
+        subQueryPointer: NativePointer?,
+        descriptors: List<QueryDescriptor>,
+        queryImpl: RealmQueryImpl<E>
+    ) : this(
+        queryImpl.realmReference,
+        queryImpl.clazz,
+        queryImpl.mediator,
+        descriptors,
+        subQueryPointer,
+        queryImpl.filter,
+        *queryImpl.args
+    )
+
     override fun find(): RealmResults<E> =
         ElementResults(realmReference, resultsPointer, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
-        // TODO https://github.com/realm/realm-core/issues/5067
-        TODO("Not yet implemented")
+        val appendedQuery = RealmInterop.realm_query_append_query(queryPointer, filter, *arguments)
+        return RealmQueryImpl(appendedQuery, this)
     }
 
     override fun sort(property: String, sortOrder: QuerySort): RealmQuery<E> {
-        val updatedDescriptors = descriptors + QueryDescriptor.Sort(property to sortOrder)
-        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
+        // This doesn't work :-(
+//        return query("SORT($property ${sortOrder.name})")
+        // This works but TRUEPREDICATE overrides previous queries :-(
+        return query("TRUEPREDICATE SORT($property ${sortOrder.name})")
+
+//        val updatedDescriptors = descriptors + QueryDescriptor.Sort(property to sortOrder)
+//        return RealmQueryImpl(subQuery, updatedDescriptors, this)
     }
 
     override fun sort(
@@ -68,18 +96,18 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
             propertyAndSortOrder,
             *additionalPropertiesAndOrders
         ))
-        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
+        return RealmQueryImpl(subQuery, updatedDescriptors, this)
     }
 
     override fun distinct(property: String, vararg extraProperties: String): RealmQuery<E> {
         val updatedDescriptors =
             (descriptors + QueryDescriptor.Distinct(property, *extraProperties))
-        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
+        return RealmQueryImpl(subQuery, updatedDescriptors, this)
     }
 
     override fun limit(limit: Int): RealmQuery<E> {
         val updatedDescriptors = descriptors + QueryDescriptor.Limit(limit)
-        return RealmQueryImpl(realmReference, clazz, mediator, updatedDescriptors, query, *args)
+        return RealmQueryImpl(subQuery, updatedDescriptors, this)
     }
 
     override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> =
@@ -145,18 +173,18 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         RealmInterop.realm_query_parse(
             realmReference.dbPointer,
             clazz.simpleName!!,
-            addQueryDescriptors(query),
+            addQueryDescriptors(filter),
             *args
         )
     } catch (exception: RealmCoreException) {
         throw when (exception) {
             is RealmCoreInvalidQueryException ->
-                IllegalArgumentException("Wrong query field provided or malformed syntax for query '$query': ${exception.message}")
+                IllegalArgumentException("Wrong query field provided or malformed syntax for query '$filter': ${exception.message}")
             is RealmCoreIndexOutOfBoundsException ->
-                IllegalArgumentException("Have you specified all parameters for query '$query'?: ${exception.message}")
+                IllegalArgumentException("Have you specified all parameters for query '$filter'?: ${exception.message}")
             else ->
                 genericRealmCoreExceptionHandler(
-                    "Invalid syntax for query '$query': ${exception.message}",
+                    "Invalid syntax for query '$filter': ${exception.message}",
                     exception
                 )
         }
@@ -164,41 +192,50 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
 
     private fun addQueryDescriptors(query: String): String {
         val stringBuilder = StringBuilder(query)
-
         descriptors.forEach { descriptor ->
             when (descriptor) {
-                is QueryDescriptor.Sort -> {
-                    stringBuilder.append(" SORT(")
-
-                    // Append initial sort
-                    val (firstProperty, firstSort) = descriptor.propertyAndSort
-                    stringBuilder.append("${escapeFieldName(firstProperty)} ${firstSort.name}")
-
-                    // Append potential additional sort descriptors
-                    descriptor.additionalPropertiesAndOrders.forEach { (property, order) ->
-                        stringBuilder.append(", ${escapeFieldName(property)} ${order.name}")
-                    }
-
-                    stringBuilder.append(")")
-                }
-                is QueryDescriptor.Distinct -> {
-                    stringBuilder.append(" DISTINCT(")
-
-                    // Append initial distinct
-                    stringBuilder.append(escapeFieldName(descriptor.property))
-
-                    // Append potential additional distinct descriptors
-                    descriptor.additionalProperties.forEach { property ->
-                        stringBuilder.append(", ${escapeFieldName(property)}")
-                    }
-
-                    stringBuilder.append(")")
-                }
+                is QueryDescriptor.Sort -> buildSortDescriptor(stringBuilder, descriptor)
+                is QueryDescriptor.Distinct -> buildDistinctDescriptor(stringBuilder, descriptor)
                 is QueryDescriptor.Limit -> stringBuilder.append(" LIMIT(${descriptor.limit})")
             }
         }
 
         return stringBuilder.toString()
+    }
+
+    private fun buildSortDescriptor(
+        stringBuilder: StringBuilder,
+        descriptor: QueryDescriptor.Sort
+    ) {
+        stringBuilder.append(" SORT(")
+
+        // Append initial sort
+        val (firstProperty, firstSort) = descriptor.propertyAndSort
+        stringBuilder.append("${escapeFieldName(firstProperty)} ${firstSort.name}")
+
+        // Append potential additional sort descriptors
+        descriptor.additionalPropertiesAndOrders.forEach { (property, order) ->
+            stringBuilder.append(", ${escapeFieldName(property)} ${order.name}")
+        }
+
+        stringBuilder.append(")")
+    }
+
+    private fun buildDistinctDescriptor(
+        stringBuilder: StringBuilder,
+        descriptor: QueryDescriptor.Distinct
+    ) {
+        stringBuilder.append(" DISTINCT(")
+
+        // Append initial distinct
+        stringBuilder.append(escapeFieldName(descriptor.property))
+
+        // Append potential additional distinct descriptors
+        descriptor.additionalProperties.forEach { property ->
+            stringBuilder.append(", ${escapeFieldName(property)}")
+        }
+
+        stringBuilder.append(")")
     }
 
     private fun escapeFieldName(fieldName: String?): String? = fieldName?.replace(" ", "\\ ")

@@ -29,7 +29,6 @@ import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
-import kotlinx.cinterop.BooleanVarOf
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.COpaquePointer
@@ -743,6 +742,30 @@ actual object RealmInterop {
             val count = alloc<ULongVar>()
             checkedBooleanResult(realm_wrapper.realm_query_count(query.cptr(), count.ptr))
             return count.value.toLong()
+        }
+    }
+
+    actual fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer {
+        memScoped {
+            val count = args.size
+            val cArgs = allocArray<realm_value_t>(count)
+            args.mapIndexed { i, arg ->
+                cArgs[i].apply {
+                    set(memScope, arg)
+                }
+            }
+            return CPointerWrapper(
+                realm_wrapper.realm_query_append_query(
+                    query.cptr(),
+                    filter,
+                    count.toULong(),
+                    cArgs
+                )
+            )
         }
     }
 

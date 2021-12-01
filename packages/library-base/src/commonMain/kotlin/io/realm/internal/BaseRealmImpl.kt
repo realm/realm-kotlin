@@ -33,7 +33,8 @@ abstract class BaseRealmImpl internal constructor(
 ) : BaseRealm, RealmStateHolder {
 
     private companion object {
-        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE = "Observing changes are not supported by this Realm."
+        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE =
+            "Observing changes are not supported by this Realm."
     }
 
     /**
@@ -86,7 +87,7 @@ abstract class BaseRealmImpl internal constructor(
         query: String,
         vararg args: Any?
     ): RealmQuery<T> =
-        RealmQueryImpl(realmReference, clazz, configuration.mediator, listOf(), query, *args)
+        RealmQueryImpl(realmReference, clazz, configuration.mediator, listOf(), null, query, *args)
 
     internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)

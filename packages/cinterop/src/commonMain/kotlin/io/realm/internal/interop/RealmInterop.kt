@@ -117,6 +117,11 @@ expect object RealmInterop {
     fun realm_query_find_first(realm: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
     fun realm_query_count(query: NativePointer): Long
+    fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer
 
     fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer
     fun realm_results_count(results: NativePointer): Long

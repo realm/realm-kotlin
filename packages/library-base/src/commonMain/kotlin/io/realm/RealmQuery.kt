@@ -119,6 +119,9 @@ interface RealmScalarQuery<E> : Flowable<E> {
 // TODO update docs when Decimal128 and RealmAny are added
 interface RealmQuery<E> : RealmElementQuery<E> {
 
+    /**
+     * TODO : query
+     */
     fun query(filter: String, vararg arguments: Any?): RealmQuery<E>
 
     /**

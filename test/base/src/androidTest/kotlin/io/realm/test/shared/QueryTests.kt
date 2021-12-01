@@ -134,59 +134,6 @@ class QueryTests {
         }
     }
 
-//    @Test
-//    fun scalarQuery_asFlow_noRepeatedUpdates() {
-//        listOf(12, 23).average()
-//
-//        val intValueA = 13
-//        val intValueB = 15
-//        val expectedAverage = (intValueA + intValueB) / 2.0
-//        val channel = Channel<Double?>(2)
-//        runBlocking {
-//
-//            val observer = async {
-//                realm.query(Sample::class)
-//                    .average(Sample::intField.name)
-//                    .asFlow()
-//                    .collect { averageValue ->
-//                        if (averageValue != null) {
-//                            channel.send(averageValue)
-//                        }
-//                    }
-//            }
-//
-//            val objectInstance = realm.writeBlocking {
-//                copyToRealm(Sample().apply {
-//                    stringField = "A"
-//                    intField = intValueA
-//                })
-//                copyToRealm(Sample().apply {
-//                    stringField = "B"
-//                    intField = intValueB
-//                })
-//            }
-//
-//            val average1 = channel.receive()
-//            assertEquals(expectedAverage, average1)
-//
-//            // Update object
-//            realm.write {
-//                val latest = findLatest(objectInstance)
-//                assertNotNull(latest)
-//                delete(latest)
-//                copyToRealm(Sample().apply {
-//                    stringField = "NEW B"
-//                    intField = intValueB
-//                })
-//            }
-//
-//            val average2 = channel.receive()
-//
-//            channel.close()
-//            observer.cancel()
-//        }
-//    }
-
     @Test
     fun asFlow_throwsInsideWrite() {
         realm.writeBlocking {
@@ -198,6 +145,70 @@ class QueryTests {
                 }
             }
         }
+    }
+
+    @Test
+    fun subQuery() {
+        val value1 = 1
+        val value2 = 2
+        val value3 = 3
+        val value4 = 4
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(Sample().apply { intField = value3 })
+            copyToRealm(Sample().apply { intField = value4 })
+        }
+
+        realm.query(Sample::class, "intField > 1")
+            .query("intField > 2")
+            .find()
+            .let { results ->
+                assertEquals(2, results.size)
+            }
+
+        realm.query(Sample::class, "intField > 1")
+            .query("intField > 2")
+            .count()
+            .find()
+            .let { countValue ->
+                assertNotNull(countValue)
+                assertEquals(2, countValue)
+            }
+
+        // This and the next query should be the same but they aren't!
+        realm.query(Sample::class, "intField > 1 && intField > 2 && TRUEPREDICATE SORT(intField DESCENDING)")
+            .find()
+            .let { results ->
+                assertEquals(2, results.size)
+                val i0 = results[0].intField
+                val i1 = results[1].intField
+                assertEquals(value4, i0)
+                assertEquals(value3, i1)
+            }
+
+        realm.query(Sample::class, "intField > 1")
+            .query("intField > 2")
+            .sort(Sample::intField.name, QuerySort.DESCENDING) // equivalent to .query("TRUEPREDICATE SORT(intField DESCENDING)") but it doesn't work :-(
+            .find()
+            .let { results ->
+                assertEquals(2, results.size)
+                val i0 = results[0].intField
+                val i1 = results[1].intField
+                assertEquals(value4, i0)
+                assertEquals(value3, i1)
+            }
+
+        realm.query(Sample::class, "intField > 1")
+            .query("intField > 2")
+            .sort(Sample::intField.name, QuerySort.DESCENDING)
+            .query("intField < 4")
+            .find()
+            .let { results ->
+                assertEquals(1, results.size)
+                assertEquals(value3, results[0].intField)
+            }
     }
 
     @Test

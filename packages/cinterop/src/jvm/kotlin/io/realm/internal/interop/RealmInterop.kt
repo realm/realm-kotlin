@@ -664,6 +664,21 @@ actual object RealmInterop {
         return count[0]
     }
 
+    actual fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer {
+        val count = args.size
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
+        }
+        return LongPointerWrapper(
+            realmc.realm_query_append_query(query.cptr(), filter, count.toLong(), cArgs)
+        )
+    }
+
     actual fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_results_resolve_in(results.cptr(), realm.cptr()))
     }
