@@ -112,18 +112,22 @@ class RealmInstantTests {
     fun equals() {
         assertTrue(RealmInstant.fromEpochSeconds(42, 42) == (RealmInstant.fromEpochSeconds(42, 42)))
         assertFalse(RealmInstant.fromEpochSeconds(0, 0) == (RealmInstant.fromEpochSeconds(42, 42)))
+        assertFalse(RealmInstant.fromEpochSeconds(42, 0) == (RealmInstant.fromEpochSeconds(42, 42)))
+        assertFalse(RealmInstant.fromEpochSeconds(0, 42) == (RealmInstant.fromEpochSeconds(42, 42)))
     }
 
     @Test
     fun timestamp_hashCode() {
         assertEquals(RealmInstant.fromEpochSeconds(42, 42).hashCode(), (RealmInstant.fromEpochSeconds(42, 42).hashCode()))
         assertNotEquals(RealmInstant.fromEpochSeconds(0, 0).hashCode(), RealmInstant.fromEpochSeconds(42, 42).hashCode())
+        assertNotEquals(RealmInstant.fromEpochSeconds(42, 0).hashCode(), RealmInstant.fromEpochSeconds(42, 42).hashCode())
+        assertNotEquals(RealmInstant.fromEpochSeconds(0, 42).hashCode(), RealmInstant.fromEpochSeconds(42, 42).hashCode())
     }
 
     @Test
     fun timestamp_toString() {
-        val ts = RealmInstant.fromEpochSeconds(100, 100)
-        assertEquals("RealmInstant(epochSeconds=100, nanosecondsOfSecond=100)", ts.toString())
+        val ts = RealmInstant.fromEpochSeconds(42, 420)
+        assertEquals("RealmInstant(epochSeconds=42, nanosecondsOfSecond=420)", ts.toString())
     }
 
     @Test
