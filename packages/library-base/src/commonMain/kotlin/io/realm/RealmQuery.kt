@@ -56,7 +56,7 @@ interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
 
 /**
  * Query returning a single [RealmObject].
- * 
+ *
  * TODO: The interaction with primitive queries might be a bit awkward
  * TODO: answer to above from C-API:
  *  Note: This function can only produce objects, not values. Use the

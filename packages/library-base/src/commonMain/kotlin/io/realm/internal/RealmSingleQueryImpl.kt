@@ -19,7 +19,7 @@ internal class RealmSingleQueryImpl<E : RealmObject>(
     private val mediator: Mediator
 ) : RealmSingleQuery<E>, Thawable<BaseResults<E>> {
 
-    override fun find(): E? = RealmInterop.realm_query_find_first(realmReference.dbPointer)
+    override fun find(): E? = RealmInterop.realm_query_find_first(queryPointer)
         ?.toRealmObject(clazz, mediator, realmReference)
 
     override fun asFlow(): Flow<E?> {

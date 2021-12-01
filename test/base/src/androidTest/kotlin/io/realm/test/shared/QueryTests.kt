@@ -963,7 +963,6 @@ class QueryTests {
     @Test
     fun first_find_empty() {
         val value1 = 1
-        val value2 = 2
 
         realm.query(Sample::class)
             .first()
@@ -971,12 +970,14 @@ class QueryTests {
 
         realm.writeBlocking {
             copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
         }
 
         realm.query(Sample::class)
             .first()
-            .find { assertNotNull(it) }
+            .find {
+                assertNotNull(it)
+                assertEquals(value1, it.intField)
+            }
     }
 
     @Test
