@@ -33,4 +33,13 @@ interface InternalRealmConfiguration : RealmConfiguration {
     val nativeConfig: NativePointer
     val notificationDispatcher: CoroutineDispatcher
     val writeDispatcher: CoroutineDispatcher
+
+    fun debug(): String {
+        return "path=$path\n" +
+            " name=$name\n" +
+            " maxNumberOfActiveVersions=$maxNumberOfActiveVersions\n" +
+            " schemaVersion=$schemaVersion\n" +
+            " deleteRealmIfMigrationNeeded=$deleteRealmIfMigrationNeeded\n" +
+            " schema=$schema"
+    }
 }

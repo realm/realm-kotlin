@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
@@ -70,22 +71,13 @@ import org.jetbrains.kotlin.name.Name
  * internal one that accepts the companion map.
  */
 class RealmSchemaLoweringExtension : IrGenerationExtension {
+    private lateinit var realmConfigurationBuilder: IrClass
+    private lateinit var configurationBuilderConstructor: IrConstructorSymbol
+    private lateinit var realmBuildFunction: IrSimpleFunction
+    // This can be null as the sync configuration builder is not available for base builds
+    private var syncBuildFunction: IrSimpleFunction? = null
+
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-        val realmConfigurationBuilder =
-            pluginContext.lookupClassOrThrow(REALM_CONFIGURATION_BUILDER)
-        val configurationBuilderConstructor: IrConstructorSymbol =
-            pluginContext.lookupConstructorInClass(REALM_CONFIGURATION_BUILDER) {
-                it.owner.isPrimary
-            }
-        val realmBuildFunction = realmConfigurationBuilder.functions.first {
-            it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
-        }
-        // This can be null as the sync configuration builder is not available for base builds
-        val syncBuildFunction = pluginContext.referenceClass(SYNC_CONFIGURATION_BUILDER)?.let {
-            it.owner.functions.first {
-                it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
-            }
-        }
 
         for (irFile in moduleFragment.files) {
             irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
@@ -97,6 +89,26 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                             REALM_CONFIGURATION_WITH
                         )
                     ) {
+                        // Lookup (once) internal API if the source set we're compiling is using Realm
+                        if (!this@RealmSchemaLoweringExtension::realmConfigurationBuilder.isInitialized) {
+                            realmConfigurationBuilder =
+                                pluginContext.lookupClassOrThrow(REALM_CONFIGURATION_BUILDER)
+                            configurationBuilderConstructor =
+                                pluginContext.lookupConstructorInClass(REALM_CONFIGURATION_BUILDER) {
+                                    it.owner.isPrimary
+                                }
+                            realmBuildFunction =
+                                realmConfigurationBuilder.functions.first {
+                                    it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
+                                }
+                            // This can be null as the sync configuration builder is not available for base builds
+                            syncBuildFunction =
+                                pluginContext.referenceClass(SYNC_CONFIGURATION_BUILDER)?.let {
+                                    it.owner.functions.first {
+                                        it.name == REALM_CONFIGURATION_BUILDER_BUILD && it.valueParameters.size == 1
+                                    }
+                                }
+                        }
                         val buildFunction =
                             if (expression.type.classFqName == REALM_SYNC_CONFIGURATION) {
                                 // We only reach this if we are building a sync configuration so calling "!!" is safe
