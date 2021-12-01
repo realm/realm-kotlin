@@ -22,6 +22,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
@@ -151,7 +152,7 @@ interface SyncConfiguration : RealmConfiguration {
                 notificationDispatcher ?: singleThreadDispatcher(name),
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
-                deleteRealmIfMigrationNeeded,
+                SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey
             )
 

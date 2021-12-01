@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.SchemaMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
@@ -33,13 +34,14 @@ interface InternalRealmConfiguration : RealmConfiguration {
     val nativeConfig: NativePointer
     val notificationDispatcher: CoroutineDispatcher
     val writeDispatcher: CoroutineDispatcher
+    val schemaMode: SchemaMode
 
     fun debug(): String {
         return "path=$path\n" +
             " name=$name\n" +
             " maxNumberOfActiveVersions=$maxNumberOfActiveVersions\n" +
             " schemaVersion=$schemaVersion\n" +
-            " deleteRealmIfMigrationNeeded=$deleteRealmIfMigrationNeeded\n" +
+            " schemaMode=$schemaMode\n" +
             " schema=$schema"
     }
 }

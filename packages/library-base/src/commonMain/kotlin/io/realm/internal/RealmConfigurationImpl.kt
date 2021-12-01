@@ -36,7 +36,7 @@ open class RealmConfigurationImpl constructor(
     notificationDispatcher: CoroutineDispatcher,
     writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
-    deleteRealmIfMigrationNeeded: Boolean,
+    schemaMode: SchemaMode,
     encryptionKey: ByteArray?,
 ) : InternalRealmConfiguration {
 
@@ -52,7 +52,7 @@ open class RealmConfigurationImpl constructor(
 
     override val schemaVersion: Long
 
-    override val deleteRealmIfMigrationNeeded: Boolean
+    override val schemaMode: SchemaMode
 
     override val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
@@ -81,17 +81,10 @@ open class RealmConfigurationImpl constructor(
         this.notificationDispatcher = notificationDispatcher
         this.writeDispatcher = writeDispatcher
         this.schemaVersion = schemaVersion
-        this.deleteRealmIfMigrationNeeded = deleteRealmIfMigrationNeeded
+        this.schemaMode = schemaMode
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
-
-        when (deleteRealmIfMigrationNeeded) {
-            true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
-            false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
-        }.also { schemaMode ->
-            RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
-        }
-
+        RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
         RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
 
         val nativeSchema = RealmInterop.realm_schema_new(mapOfKClassWithCompanion.values.map { it.`$realm$schema`() })

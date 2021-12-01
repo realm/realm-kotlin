@@ -19,6 +19,7 @@ package io.realm
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -88,12 +89,6 @@ interface RealmConfiguration {
      * The schema version.
      */
     public val schemaVersion: Long
-
-    /**
-     * Flag indicating whether the realm will be deleted if the schema has changed in a way that
-     * requires schema migration.
-     */
-    public val deleteRealmIfMigrationNeeded: Boolean
 
     /**
      * 64 byte key used to encrypt and decrypt the Realm file.
@@ -256,14 +251,6 @@ interface RealmConfiguration {
         } as S
 
         /**
-         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
-         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
-         *
-         * **WARNING!** This will result in loss of data.
-         */
-        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true } as S
-
-        /**
          * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
          * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
          */
@@ -314,6 +301,14 @@ interface RealmConfiguration {
         schema: Set<KClass<out RealmObject>> = setOf()
     ) : SharedBuilder<RealmConfiguration, Builder>(schema) {
 
+        /**
+         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
+         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
+         *
+         * **WARNING!** This will result in loss of data.
+         */
+        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
+
         // Called from the compiler plugin
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
@@ -333,7 +328,10 @@ interface RealmConfiguration {
                 notificationDispatcher ?: singleThreadDispatcher(name),
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
-                deleteRealmIfMigrationNeeded,
+                when (deleteRealmIfMigrationNeeded) {
+                    true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
+                    false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
+                },
                 encryptionKey
             )
         }
