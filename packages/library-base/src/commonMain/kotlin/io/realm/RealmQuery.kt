@@ -54,14 +54,43 @@ interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
     override fun asFlow(): Flow<RealmResults<E>>
 }
 
-///**
-// * Queries returning a single object.
-// * NOTE: The interaction with primitive queries might be a bit awkward
-// */
-//// TODO : query - should this be done using the raw query string?
-//interface RealmSingleQuery<E> : Flowable<E> {
-//    fun find(): E?
-//}
+/**
+ * Query returning a single [RealmObject].
+ * 
+ * TODO: The interaction with primitive queries might be a bit awkward
+ * TODO: answer to above from C-API:
+ *  Note: This function can only produce objects, not values. Use the
+ *       `realm_results_t` returned by `realm_query_find_all()` to retrieve
+ *        values from a list of primitive values.
+ */
+interface RealmSingleQuery<E> : Flowable<E> {
+
+    /**
+     * Finds the first object that fulfills the query conditions and returns it in a blocking
+     * fashion.
+     *
+     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
+     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
+     * object asynchronously using [asFlow] instead.
+     *
+     * @return a [RealmObject] instance or `null` if no object matches the condition.
+     */
+    fun find(): E?
+
+    /**
+     * Finds the first object that fulfills the query conditions and returns it asynchronously as a
+     * [Flow].
+     *
+     * If there is any changes to the object represented by the query, the flow will emit the
+     * updated object. The flow will continue running indefinitely until canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the [RealmObject] resulting from running this query.
+     */
+    override fun asFlow(): Flow<E?>
+}
 
 /**
  * Queries that return scalar values. This type of query is used to more accurately represent the
@@ -120,7 +149,10 @@ interface RealmScalarQuery<E> : Flowable<E> {
 interface RealmQuery<E> : RealmElementQuery<E> {
 
     /**
-     * TODO : query
+     * Appends the query represented by [filter] to an existing query using a logical `AND`.
+     *
+     * @param filter the Realm Query Language predicate to append.
+     * @param arguments Realm values for the predicate.
      */
     fun query(filter: String, vararg arguments: Any?): RealmQuery<E>
 
@@ -179,13 +211,10 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      */
     fun limit(limit: Int): RealmQuery<E>
 
-//    /**
-//     * TODO : query
-//     */
-//    // FIXME Is there a better way to force the constraints here. Restricting RealmQuery<E> to
-//    //  RealmObjects would help, but would prevent this class from being used by primitive queries.
-//    //  We need to investigate what other SDK's do here
-//    fun first(): RealmSingleQuery<E>
+    /**
+     * Returns a query that finds the first object that fulfills the query conditions.
+     */
+    fun first(): RealmSingleQuery<E>
 
     /**
      * Finds the minimum value of a property.
@@ -311,6 +340,15 @@ fun <T> RealmScalarQuery<T>.find(block: (T?) -> Unit): T? = find().let {
 }
 
 /**
+ * Similar to [RealmSingleQuery.find] but it receives a block in which the [RealmObject] from the
+ * query is provided.
+ */
+fun <T> RealmSingleQuery<T>.find(block: (T?) -> Unit): T? = find().let {
+    block.invoke(it)
+    it
+}
+
+/**
  * This enum describes the sorting order used in Realm queries.
  *
  * @see [RealmQuery.sort]
@@ -319,16 +357,3 @@ enum class QuerySort {
     ASCENDING,
     DESCENDING
 }
-
-///**
-// * TODO : query
-// */
-//internal class RealmSingleQueryImpl<E : RealmObject> : RealmSingleQuery<E> {
-//    override fun find(): E? {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun asFlow(): Flow<E?> {
-//        TODO("Not yet implemented")
-//    }
-//}

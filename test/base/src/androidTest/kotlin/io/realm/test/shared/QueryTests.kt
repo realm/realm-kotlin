@@ -961,6 +961,25 @@ class QueryTests {
     }
 
     @Test
+    fun first_find_empty() {
+        val value1 = 1
+        val value2 = 2
+
+        realm.query(Sample::class)
+            .first()
+            .find { assertNull(it) }
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        realm.query(Sample::class)
+            .first()
+            .find { assertNotNull(it) }
+    }
+
+    @Test
     fun playground_multiThreadScenario() {
         val channel = Channel<Pair<RealmResults<Sample>, Long?>>(1)
         var query: RealmQuery<Sample>? = null

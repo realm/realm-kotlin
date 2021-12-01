@@ -712,13 +712,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_query_find_first(realm: NativePointer): Link? {
+    actual fun realm_query_find_first(query: NativePointer): Link? {
         memScoped {
             val found = alloc<BooleanVar>()
             val value = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_query_find_first(
-                    realm.cptr(),
+                    query.cptr(),
                     value.ptr,
                     found.ptr
                 )

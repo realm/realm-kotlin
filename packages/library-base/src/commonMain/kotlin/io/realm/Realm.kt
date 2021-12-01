@@ -62,8 +62,8 @@ interface Realm : TypedRealm {
     /**
      * Returns the results of querying for all objects of a specific type.
      *
-     * The result reflects the state of the realm at invocation time, so the results
-     * do not change when the realm updates. You can access these results from any thread.
+     * The result reflects the state of the Realm at invocation time, so the results
+     * do not change when the Realm updates. You can access these results from any thread.
      *
      * @param clazz the class of the objects to query for.
      * @return The result of the query as of the time of invoking this method.
@@ -71,7 +71,16 @@ interface Realm : TypedRealm {
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
 
     /**
-     * TODO : query
+     * Returns a [RealmQuery] matching the predicate represented by [query].
+     *
+     * The results yielded by the query reflect the state of the Realm at invocation time, so the
+     * they do not change when the Realm updates. You can access these results from any thread.
+     *
+     * The resulting query is lazily evaluated and will not perform any calculations until
+     * [RealmQuery.find] is called or the [Flow] produced by [RealmQuery.asFlow] is collected.
+     *
+     * @param query the Realm Query Language predicate to append.
+     * @param args Realm values for the predicate.
      */
     override fun <T : RealmObject> query(
         clazz: KClass<T>,

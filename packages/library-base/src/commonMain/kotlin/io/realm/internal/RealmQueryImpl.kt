@@ -17,11 +17,7 @@
 
 package io.realm.internal
 
-import io.realm.QuerySort
-import io.realm.RealmObject
-import io.realm.RealmQuery
-import io.realm.RealmResults
-import io.realm.RealmScalarQuery
+import io.realm.*
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
@@ -109,6 +105,9 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         val updatedDescriptors = descriptors + QueryDescriptor.Limit(limit)
         return RealmQueryImpl(subQuery, updatedDescriptors, this)
     }
+
+    override fun first(): RealmSingleQuery<E> =
+        RealmSingleQueryImpl(realmReference, queryPointer, clazz, mediator)
 
     override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> =
         GenericAggregatorQuery(

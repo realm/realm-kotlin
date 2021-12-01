@@ -644,10 +644,10 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_query_find_first(realm: NativePointer): Link? {
+    actual fun realm_query_find_first(query: NativePointer): Link? {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
-        realmc.realm_query_find_first(realm.cptr(), value, found)
+        realmc.realm_query_find_first(query.cptr(), value, found)
         if (!found[0]) {
             return null
         }
@@ -691,8 +691,8 @@ actual object RealmInterop {
 
     actual fun <T> realm_results_average(results: NativePointer, property: Long): T {
         val average = realm_value_t()
-        val foundArray = BooleanArray(1)
-        realmc.realm_results_average(results.cptr(), property, average, foundArray)
+        val found = booleanArrayOf(false)
+        realmc.realm_results_average(results.cptr(), property, average, found)
         return from_realm_value(average)
     }
 
@@ -701,9 +701,9 @@ actual object RealmInterop {
         property: Long
     ): Pair<Boolean, T> {
         val average = realm_value_t()
-        val foundArray = BooleanArray(1)
-        realmc.realm_results_average(results.cptr(), property, average, foundArray)
-        return foundArray[0] to from_realm_value(average)
+        val found = booleanArrayOf(false)
+        realmc.realm_results_average(results.cptr(), property, average, found)
+        return found[0] to from_realm_value(average)
     }
 
     actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
