@@ -16,8 +16,8 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.FqNames.REALM_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_CONFIGURATION_BUILDER
+import io.realm.compiler.FqNames.REALM_LOCAL_CONFIGURATION
 import io.realm.compiler.FqNames.REALM_SYNC_CONFIGURATION
 import io.realm.compiler.FqNames.SYNC_CONFIGURATION_BUILDER
 import io.realm.compiler.Names.REALM_CONFIGURATION_BUILDER_BUILD
@@ -47,8 +47,6 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.types.starProjectedType
-import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
@@ -84,7 +82,7 @@ class RealmSchemaLoweringExtension : IrGenerationExtension {
                 @Suppress("LongMethod")
                 override fun visitCall(expression: IrCall): IrExpression {
                     val name = expression.symbol.owner.name
-                    if ((expression.type.classFqName == REALM_CONFIGURATION || expression.type.classFqName == REALM_SYNC_CONFIGURATION) && name in setOf(
+                    if ((expression.type.classFqName == REALM_LOCAL_CONFIGURATION || expression.type.classFqName == REALM_SYNC_CONFIGURATION) && name in setOf(
                             REALM_CONFIGURATION_BUILDER_BUILD,
                             REALM_CONFIGURATION_WITH
                         )

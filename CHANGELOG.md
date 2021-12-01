@@ -6,6 +6,7 @@
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added supported for dates through a new property type: `RealmInstant`.
+* Added `LocalConfiguration` to hold local-only options to avoid poluting `RealmConfiguration` with local-only options.
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.

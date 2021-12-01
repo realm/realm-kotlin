@@ -16,10 +16,9 @@
 
 package io.realm
 
+import io.realm.internal.LocalConfigurationImpl
 import io.realm.internal.REPLACED_BY_IR
-import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -106,7 +105,7 @@ interface RealmConfiguration {
         // Should always follow Builder constructor arguments
         fun with(
             schema: Set<KClass<out RealmObject>>
-        ): RealmConfiguration {
+        ): LocalConfiguration {
             REPLACED_BY_IR() // Will be replace by Builder(schema).build(companionMap)
         }
     }
@@ -299,7 +298,15 @@ interface RealmConfiguration {
     //  though interfacing the builder is also an option
     class Builder(
         schema: Set<KClass<out RealmObject>> = setOf()
-    ) : SharedBuilder<RealmConfiguration, Builder>(schema) {
+    ) : SharedBuilder<LocalConfiguration, Builder>(schema) {
+
+        /**
+         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
+         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
+         *
+         * **WARNING!** This will result in loss of data.
+         */
+        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
 
         /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
@@ -318,7 +325,7 @@ interface RealmConfiguration {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
-            return RealmConfigurationImpl(
+            return LocalConfigurationImpl(
                 companionMap,
                 path,
                 name,
@@ -328,12 +335,17 @@ interface RealmConfiguration {
                 notificationDispatcher ?: singleThreadDispatcher(name),
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
-                when (deleteRealmIfMigrationNeeded) {
-                    true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
-                    false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
-                },
-                encryptionKey
+                encryptionKey,
+                deleteRealmIfMigrationNeeded,
             )
         }
     }
+}
+
+interface LocalConfiguration : RealmConfiguration {
+    /**
+     * Flag indicating whether the realm will be deleted if the schema has changed in a way that
+     * requires schema migration.
+     */
+    public val deleteRealmIfMigrationNeeded: Boolean
 }
