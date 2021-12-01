@@ -240,8 +240,8 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreMultipleSyncAgentsException,
         is RealmCoreAddressSpaceExhaustedException,
         is RealmCoreMaximumFileSizeExceededException,
-        is RealmCoreOutOfDiskSpaceException -> Error(message, cause)
-        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException(message)
+        is RealmCoreOutOfDiskSpaceException -> Error("RealmCoreException ${cause.message} $message", cause)
+        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException("RealmCoreException ${cause.message} $message")
         is RealmCoreInvalidArgumentException,
         is RealmCoreInvalidQueryStringException,
         is RealmCoreOtherException,
@@ -250,9 +250,9 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreUnexpectedPrimaryKeyException,
         is RealmCoreWrongPrimaryKeyTypeException,
         is RealmCoreModifyPrimaryKeyException,
-        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException(message, cause)
+        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("RealmCoreException ${cause.message} $message", cause)
         is RealmCoreNotInATransactionException,
-        is RealmCoreLogicException -> IllegalStateException(message, cause)
+        is RealmCoreLogicException -> IllegalStateException("RealmCoreException ${cause.message} $message", cause)
         is RealmCoreNoneException,
         is RealmCoreUnknownException,
         is RealmCoreNotClonableException,
@@ -271,6 +271,6 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreColumnAlreadyExistsException,
         is RealmCoreKeyAlreadyUsedException,
         is RealmCoreSerializationErrorException,
-        is RealmCoreCallbackException -> RuntimeException(message, cause)
+        is RealmCoreCallbackException -> RuntimeException("RealmCoreException ${cause.message} $message", cause)
     }
 }

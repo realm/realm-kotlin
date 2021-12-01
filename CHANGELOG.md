@@ -4,11 +4,12 @@
 * None.
 
 ### Enhancements
-* [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245))
+* [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added supported for dates through a new property type: `RealmInstant`.
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
+* Compiler plugin symbol lookup happens only on Sourset using Realm ([#544](https://github.com/realm/realm-kotlin/issues/544)).
 
 ### Compatibility
 * This release is compatible with:
