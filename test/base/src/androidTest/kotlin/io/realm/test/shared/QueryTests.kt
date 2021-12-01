@@ -962,11 +962,14 @@ class QueryTests {
 
     @Test
     fun first_find_empty() {
-        val value1 = 1
-
         realm.query(Sample::class)
             .first()
             .find { assertNull(it) }
+    }
+
+    @Test
+    fun first_find() {
+        val value1 = 1
 
         realm.writeBlocking {
             copyToRealm(Sample().apply { intField = value1 })
