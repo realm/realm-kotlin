@@ -166,6 +166,13 @@ fun realm_value_t.set(memScope: MemScope, value: Any?): realm_value_t {
             type = realm_value_type.RLM_TYPE_DOUBLE
             dnum = value
         }
+        is Timestamp -> {
+            type = realm_value_type.RLM_TYPE_TIMESTAMP
+            timestamp.apply {
+                seconds = value.seconds
+                nanoseconds = value.nanoSeconds
+            }
+        }
         else ->
             TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
     }
@@ -504,6 +511,8 @@ actual object RealmInterop {
                 value.fnum
             realm_value_type.RLM_TYPE_DOUBLE ->
                 value.dnum
+            realm_value_type.RLM_TYPE_TIMESTAMP ->
+                value.asTimestamp()
             realm_value_type.RLM_TYPE_LINK ->
                 value.asLink()
             else ->
@@ -596,7 +605,7 @@ actual object RealmInterop {
         return realm_wrapper.realm_list_is_valid(list.cptr())
     }
 
-    @Suppress("ComplexMethod")
+    @Suppress("ComplexMethod", "LongMethod")
     private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
         val cvalue: realm_value_t = alloc()
         when (value) {
@@ -638,6 +647,13 @@ actual object RealmInterop {
             is Double -> {
                 cvalue.type = realm_value_type.RLM_TYPE_DOUBLE
                 cvalue.dnum = value as Double
+            }
+            is Timestamp -> {
+                cvalue.type = realm_value_type.RLM_TYPE_TIMESTAMP
+                cvalue.timestamp.apply {
+                    seconds = value.seconds
+                    nanoseconds = value.nanoSeconds
+                }
             }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
@@ -1184,6 +1200,13 @@ actual object RealmInterop {
             )
         )
         return propertyInfo
+    }
+
+    private fun realm_value_t.asTimestamp(): Timestamp {
+        if (this.type != realm_value_type.RLM_TYPE_TIMESTAMP) {
+            error("Value is not of type Timestamp: $this.type")
+        }
+        return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
     private fun realm_value_t.asLink(): Link {

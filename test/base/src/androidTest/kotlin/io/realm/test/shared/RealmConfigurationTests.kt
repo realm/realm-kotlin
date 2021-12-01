@@ -24,9 +24,12 @@ import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestLogger
+import io.realm.test.util.use
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
 import kotlin.random.Random
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -36,6 +39,18 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RealmConfigurationTests {
+
+    private lateinit var tmpDir: String
+
+    @BeforeTest
+    fun setup() {
+        tmpDir = PlatformUtils.createTempDir()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        PlatformUtils.deleteTempDir(tmpDir)
+    }
 
     @Test
     fun with() {
@@ -216,15 +231,17 @@ class RealmConfigurationTests {
     fun writesExecutesOnWriteDispatcher() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher)
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .writeDispatcher(dispatcher)
+                .path("$tmpDir/default.realm")
                 .build()
         val threadId: ULong =
             runBlocking((configuration as RealmConfigurationImpl).writeDispatcher) { PlatformUtils.threadId() }
-        val realm = Realm.open(configuration)
-        realm.writeBlocking {
-            assertEquals(threadId, PlatformUtils.threadId())
+        Realm.open(configuration).use { realm: Realm ->
+            realm.writeBlocking {
+                assertEquals(threadId, PlatformUtils.threadId())
+            }
         }
-        realm.close()
     }
 
     @Test

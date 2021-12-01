@@ -199,6 +199,7 @@ class GenerationExtensionTest {
             "booleanField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "floatField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
 
             // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -213,6 +214,7 @@ class GenerationExtensionTest {
             "booleanListField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "floatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
@@ -224,7 +226,8 @@ class GenerationExtensionTest {
             "nullableLongListField" to PropertyType.RLM_PROPERTY_TYPE_INT,
             "nullableBooleanListField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "nullableFloatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
-            "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE
+            "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
         )
         assertEquals(properties.size, table.properties.size)
         table.properties.map { property ->
