@@ -19,24 +19,15 @@ package io.realm.test.shared
 import io.realm.QuerySort
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmQuery
-import io.realm.RealmResults
 import io.realm.entities.Sample
 import io.realm.find
-import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.test.platform.PlatformUtils
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @Suppress("LargeClass")

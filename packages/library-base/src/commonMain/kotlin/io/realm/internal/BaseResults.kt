@@ -34,8 +34,7 @@ internal abstract class BaseResults<E : Any> constructor(
     protected val clazz: KClass<E>,
     protected val mediator: Mediator,
     protected val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, Freezable<BaseResults<E>>, Thawable<BaseResults<E>>,
-    Observable<BaseResults<E>>, RealmStateHolder {
+) : AbstractList<E>(), RealmResults<E>, Freezable<BaseResults<E>>, Thawable<BaseResults<E>>, Observable<BaseResults<E>>, RealmStateHolder {
 
     enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
