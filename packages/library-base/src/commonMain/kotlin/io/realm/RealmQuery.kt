@@ -22,113 +22,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
- * Query returning [RealmResults].
- */
-interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
-
-    /**
-     * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
-     *
-     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
-     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
-     * results asynchronously using [asFlow] instead.
-     *
-     * @return a [RealmResults] instance containing matching objects. If no objects match the
-     * condition, an instance with zero objects is returned.
-     */
-    fun find(): RealmResults<E>
-
-    /**
-     * Finds all objects that fulfill the query conditions and returns them asynchronously as a
-     * [Flow].
-     *
-     * If there is any changes to the objects represented by the query backing the [RealmResults],
-     * the flow will emit the updated results. The flow will continue running indefinitely until
-     * canceled.
-     *
-     * The change calculations will run on the thread represented by
-     * [RealmConfiguration.Builder.notificationDispatcher].
-     *
-     * @return a flow representing changes to the [RealmResults] resulting from running this query.
-     */
-    override fun asFlow(): Flow<RealmResults<E>>
-}
-
-/**
- * Query returning a single [RealmObject].
- *
- * TODO: The interaction with primitive queries might be a bit awkward
- * TODO: answer to above from C-API:
- *  Note: This function can only produce objects, not values. Use the
- *       `realm_results_t` returned by `realm_query_find_all()` to retrieve
- *        values from a list of primitive values.
- */
-interface RealmSingleQuery<E> : Flowable<E> {
-
-    /**
-     * Finds the first object that fulfills the query conditions and returns it in a blocking
-     * fashion.
-     *
-     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
-     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
-     * object asynchronously using [asFlow] instead.
-     *
-     * @return a [RealmObject] instance or `null` if no object matches the condition.
-     */
-    fun find(): E?
-
-    /**
-     * Finds the first object that fulfills the query conditions and returns it asynchronously as a
-     * [Flow].
-     *
-     * If there is any changes to the object represented by the query, the flow will emit the
-     * updated object. The flow will continue running indefinitely until canceled.
-     *
-     * The change calculations will run on the thread represented by
-     * [RealmConfiguration.Builder.notificationDispatcher].
-     *
-     * @return a flow representing changes to the [RealmObject] resulting from running this query.
-     */
-    override fun asFlow(): Flow<E?>
-}
-
-/**
- * Queries that return scalar values. This type of query is used to more accurately represent the
- * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.min].
- */
-interface RealmScalarQuery<E> : Flowable<E> {
-    /**
-     * Returns the value of a scalar query as an [E] in a blocking fashion. The result may be `null`
-     * depending on the type of scalar query:
-     *
-     * - `[min]`, `[max]` return [E] or `null` if no objects are present
-     * - `[count]` returns [Long]
-     *
-     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
-     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
-     * values asynchronously using [asFlow] instead.
-     *
-     * @return an [E] containing the result of the scalar query or `null` depending on the query
-     * being executed.
-     */
-    fun find(): E?
-
-    /**
-     * Calculates the value that fulfills the query conditions and returns it asynchronously as a
-     * [Flow].
-     *
-     * If there is any changes to the objects represented by the query backing the value, the flow
-     * will emit the updated value. The flow will continue running indefinitely until canceled.
-     *
-     * The change calculations will run on the thread represented by
-     * [RealmConfiguration.Builder.notificationDispatcher].
-     *
-     * @return a flow representing changes to the [RealmResults] resulting from running this query.
-     */
-    override fun asFlow(): Flow<E?>
-}
-
-/**
  * A `RealmQuery` encapsulates a query on a [Realm] or a [RealmResults] instance using the `Builder`
  * pattern. The query is executed using either [find] or subscribing to the [Flow] returned by
  * [asFlow].
@@ -303,6 +196,113 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * @return a [RealmScalarQuery] that counts the number of objects for a given query.
      */
     fun count(): RealmScalarQuery<Long>
+}
+
+/**
+ * Query returning [RealmResults].
+ */
+interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
+
+    /**
+     * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
+     *
+     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
+     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
+     * results asynchronously using [asFlow] instead.
+     *
+     * @return a [RealmResults] instance containing matching objects. If no objects match the
+     * condition, an instance with zero objects is returned.
+     */
+    fun find(): RealmResults<E>
+
+    /**
+     * Finds all objects that fulfill the query conditions and returns them asynchronously as a
+     * [Flow].
+     *
+     * If there is any changes to the objects represented by the query backing the [RealmResults],
+     * the flow will emit the updated results. The flow will continue running indefinitely until
+     * canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     */
+    override fun asFlow(): Flow<RealmResults<E>>
+}
+
+/**
+ * Query returning a single [RealmObject].
+ *
+ * TODO: The interaction with primitive queries might be a bit awkward
+ * TODO: answer to above from C-API:
+ *  Note: This function can only produce objects, not values. Use the
+ *       `realm_results_t` returned by `realm_query_find_all()` to retrieve
+ *        values from a list of primitive values.
+ */
+interface RealmSingleQuery<E> : Flowable<E> {
+
+    /**
+     * Finds the first object that fulfills the query conditions and returns it in a blocking
+     * fashion.
+     *
+     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
+     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
+     * object asynchronously using [asFlow] instead.
+     *
+     * @return a [RealmObject] instance or `null` if no object matches the condition.
+     */
+    fun find(): E?
+
+    /**
+     * Finds the first object that fulfills the query conditions and returns it asynchronously as a
+     * [Flow].
+     *
+     * If there is any changes to the object represented by the query, the flow will emit the
+     * updated object. The flow will continue running indefinitely until canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the [RealmObject] resulting from running this query.
+     */
+    override fun asFlow(): Flow<E?>
+}
+
+/**
+ * Queries that return scalar values. This type of query is used to more accurately represent the
+ * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.min].
+ */
+interface RealmScalarQuery<E> : Flowable<E> {
+    /**
+     * Returns the value of a scalar query as an [E] in a blocking fashion. The result may be `null`
+     * depending on the type of scalar query:
+     *
+     * - `[min]`, `[max]` return [E] or `null` if no objects are present
+     * - `[count]` returns [Long]
+     *
+     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
+     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
+     * values asynchronously using [asFlow] instead.
+     *
+     * @return an [E] containing the result of the scalar query or `null` depending on the query
+     * being executed.
+     */
+    fun find(): E?
+
+    /**
+     * Calculates the value that fulfills the query conditions and returns it asynchronously as a
+     * [Flow].
+     *
+     * If there is any changes to the objects represented by the query backing the value, the flow
+     * will emit the updated value. The flow will continue running indefinitely until canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     */
+    override fun asFlow(): Flow<E?>
 }
 
 /**
