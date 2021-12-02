@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.realm.test.shared
 
 import io.realm.QuerySort
@@ -117,11 +118,12 @@ class QueryTests {
                 realm.query(Sample::class, "intField = $0", intValue)
                     .asFlow()
                     .collect { results ->
-                        if (results.size == 1) {
-                            channel.send(results)
-                        }
+                        channel.send(results)
                     }
             }
+
+            assertEquals(0, channel.receive().size)
+
             realm.write {
                 copyToRealm(Sample())
                 copyToRealm(Sample().apply { intField = intValue })
@@ -178,19 +180,23 @@ class QueryTests {
             }
 
         // This and the next query should be the same but they aren't!
-        realm.query(Sample::class, "intField > 1 && intField > 2 && TRUEPREDICATE SORT(intField DESCENDING)")
-            .find()
-            .let { results ->
-                assertEquals(2, results.size)
-                val i0 = results[0].intField
-                val i1 = results[1].intField
-                assertEquals(value4, i0)
-                assertEquals(value3, i1)
-            }
+        realm.query(
+            Sample::class,
+            "intField > 1 && intField > 2 && TRUEPREDICATE SORT(intField DESCENDING)"
+        ).find().let { results ->
+            assertEquals(2, results.size)
+            val i0 = results[0].intField
+            val i1 = results[1].intField
+            assertEquals(value4, i0)
+            assertEquals(value3, i1)
+        }
 
         realm.query(Sample::class, "intField > 1")
             .query("intField > 2")
-            .sort(Sample::intField.name, QuerySort.DESCENDING) // equivalent to .query("TRUEPREDICATE SORT(intField DESCENDING)") but it doesn't work :-(
+            .sort(
+                Sample::intField.name,
+                QuerySort.DESCENDING
+            ) // equivalent to .query("TRUEPREDICATE SORT(intField DESCENDING)") but it doesn't work :-(
             .find()
             .let { results ->
                 assertEquals(2, results.size)

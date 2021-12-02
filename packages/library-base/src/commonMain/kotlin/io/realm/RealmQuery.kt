@@ -33,8 +33,8 @@ interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
      * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
      * results asynchronously using [asFlow] instead.
      *
-     * @return a [RealmResults] instance containing objects. If no objects match the condition, an
-     * instance with zero objects is returned.
+     * @return a [RealmResults] instance containing matching objects. If no objects match the
+     * condition, an instance with zero objects is returned.
      */
     fun find(): RealmResults<E>
 
@@ -94,7 +94,7 @@ interface RealmSingleQuery<E> : Flowable<E> {
 
 /**
  * Queries that return scalar values. This type of query is used to more accurately represent the
- * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.min]..
+ * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.min].
  */
 interface RealmScalarQuery<E> : Flowable<E> {
     /**
