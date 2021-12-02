@@ -17,11 +17,17 @@
 
 package io.realm.internal
 
-import io.realm.*
+import io.realm.QuerySort
+import io.realm.RealmObject
+import io.realm.RealmQuery
+import io.realm.RealmResults
+import io.realm.RealmScalarQuery
+import io.realm.RealmSingleQuery
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidQueryException
+import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
@@ -33,13 +39,13 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     private val descriptors: List<QueryDescriptor> = listOf(),
-    private val subQuery: NativePointer? = null,
+    private val composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
 ) : RealmQuery<E>, Thawable<BaseResults<E>> {
 
     private val queryPointer: NativePointer = when {
-        subQuery != null -> subQuery
+        composedQueryPointer != null -> composedQueryPointer
         else -> parseQuery()
     }
 
@@ -48,12 +54,12 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     }
 
     constructor(
-        subQueryPointer: NativePointer?,
+        composedQueryPointer: NativePointer?,
         queryImpl: RealmQueryImpl<E>
-    ) : this(subQueryPointer, queryImpl.descriptors, queryImpl)
+    ) : this(composedQueryPointer, queryImpl.descriptors, queryImpl)
 
     constructor(
-        subQueryPointer: NativePointer?,
+        composedQueryPointer: NativePointer?,
         descriptors: List<QueryDescriptor>,
         queryImpl: RealmQueryImpl<E>
     ) : this(
@@ -61,7 +67,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         queryImpl.clazz,
         queryImpl.mediator,
         descriptors,
-        subQueryPointer,
+        composedQueryPointer,
         queryImpl.filter,
         *queryImpl.args
     )
@@ -70,7 +76,9 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         ElementResults(realmReference, resultsPointer, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
-        val appendedQuery = RealmInterop.realm_query_append_query(queryPointer, filter, *arguments)
+        val appendedQuery = tryCatchCoreException {
+            RealmInterop.realm_query_append_query(queryPointer, filter, *arguments)
+        }
         return RealmQueryImpl(appendedQuery, this)
     }
 
@@ -85,19 +93,19 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
             propertyAndSortOrder,
             *additionalPropertiesAndOrders
         ))
-        return RealmQueryImpl(subQuery, updatedDescriptors, this)
+        return RealmQueryImpl(composedQueryPointer, updatedDescriptors, this)
     }
 
     override fun distinct(property: String, vararg extraProperties: String): RealmQuery<E> {
-        val updatedDescriptors =
-            (descriptors + QueryDescriptor.Distinct(property, *extraProperties))
-        return RealmQueryImpl(subQuery, updatedDescriptors, this)
+        val stringBuilder = StringBuilder().append("TRUEPREDICATE LIMIT($property")
+        extraProperties.forEach { extraProperty ->
+            stringBuilder.append(", $extraProperty")
+        }
+        stringBuilder.append(")")
+        return query(stringBuilder.toString())
     }
 
-    override fun limit(limit: Int): RealmQuery<E> {
-        val updatedDescriptors = descriptors + QueryDescriptor.Limit(limit)
-        return RealmQueryImpl(subQuery, updatedDescriptors, this)
-    }
+    override fun limit(limit: Int): RealmQuery<E> = query("TRUEPREDICATE LIMIT($limit)")
 
     override fun first(): RealmSingleQuery<E> =
         RealmSingleQueryImpl(realmReference, queryPointer, clazz, mediator)
@@ -161,15 +169,24 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         .registerObserver(this)
         .onStart { realmReference.checkClosed() }
 
-    private fun parseQuery(): NativePointer = try {
+    private fun parseQuery(): NativePointer = tryCatchCoreException(filter) {
         RealmInterop.realm_query_parse(
             realmReference.dbPointer,
             clazz.simpleName!!,
             addQueryDescriptors(filter),
             *args
         )
+    }
+
+    private fun tryCatchCoreException(
+        filter: String? = null,
+        block: () -> NativePointer
+    ): NativePointer = try {
+        block.invoke()
     } catch (exception: RealmCoreException) {
         throw when (exception) {
+            is RealmCoreInvalidQueryStringException ->
+                IllegalArgumentException("Wrong query string: ${exception.message}")
             is RealmCoreInvalidQueryException ->
                 IllegalArgumentException("Wrong query field provided or malformed syntax for query '$filter': ${exception.message}")
             is RealmCoreIndexOutOfBoundsException ->

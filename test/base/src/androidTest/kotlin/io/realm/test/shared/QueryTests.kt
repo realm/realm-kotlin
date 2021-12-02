@@ -322,17 +322,28 @@ class QueryTests {
     fun limit() {
         val value1 = 1
         val value2 = 2
+        val value3 = 3
         realm.writeBlocking {
             copyToRealm(Sample().apply { intField = value1 })
             copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(Sample().apply { intField = value3 })
         }
 
         realm.query(Sample::class)
             .sort(Sample::intField.name, QuerySort.DESCENDING)
+            .limit(2)
+            .find { results ->
+                assertEquals(2, results.size)
+                assertEquals(value3, results[0].intField)
+            }
+
+        realm.query(Sample::class)
+            .sort(Sample::intField.name, QuerySort.DESCENDING)
+            .limit(2)
             .limit(1)
             .find { results ->
                 assertEquals(1, results.size)
-                assertEquals(value2, results[0].intField)
+                assertEquals(value3, results[0].intField)
             }
     }
 
