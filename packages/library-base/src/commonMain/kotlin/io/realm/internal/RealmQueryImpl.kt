@@ -38,7 +38,6 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
-    private val descriptors: List<QueryDescriptor> = listOf(),
     private val composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
@@ -56,17 +55,10 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
     constructor(
         composedQueryPointer: NativePointer?,
         queryImpl: RealmQueryImpl<E>
-    ) : this(composedQueryPointer, queryImpl.descriptors, queryImpl)
-
-    constructor(
-        composedQueryPointer: NativePointer?,
-        descriptors: List<QueryDescriptor>,
-        queryImpl: RealmQueryImpl<E>
     ) : this(
         queryImpl.realmReference,
         queryImpl.clazz,
         queryImpl.mediator,
-        descriptors,
         composedQueryPointer,
         queryImpl.filter,
         *queryImpl.args
@@ -89,15 +81,16 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         propertyAndSortOrder: Pair<String, QuerySort>,
         vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
     ): RealmQuery<E> {
-        val updatedDescriptors = (descriptors + QueryDescriptor.Sort(
-            propertyAndSortOrder,
-            *additionalPropertiesAndOrders
-        ))
-        return RealmQueryImpl(composedQueryPointer, updatedDescriptors, this)
+        val stringBuilder = StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
+        additionalPropertiesAndOrders.forEach { extraPropertyAndOrder ->
+            stringBuilder.append(", ${extraPropertyAndOrder.first} ${extraPropertyAndOrder.second}")
+        }
+        stringBuilder.append(")")
+        return query(stringBuilder.toString())
     }
 
     override fun distinct(property: String, vararg extraProperties: String): RealmQuery<E> {
-        val stringBuilder = StringBuilder().append("TRUEPREDICATE LIMIT($property")
+        val stringBuilder = StringBuilder().append("TRUEPREDICATE DISTINCT($property")
         extraProperties.forEach { extraProperty ->
             stringBuilder.append(", $extraProperty")
         }
@@ -173,7 +166,7 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         RealmInterop.realm_query_parse(
             realmReference.dbPointer,
             clazz.simpleName!!,
-            addQueryDescriptors(filter),
+            filter,
             *args
         )
     }
@@ -199,67 +192,5 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         }
     }
 
-    private fun addQueryDescriptors(query: String): String {
-        val stringBuilder = StringBuilder(query)
-        descriptors.forEach { descriptor ->
-            when (descriptor) {
-                is QueryDescriptor.Sort -> buildSortDescriptor(stringBuilder, descriptor)
-                is QueryDescriptor.Distinct -> buildDistinctDescriptor(stringBuilder, descriptor)
-                is QueryDescriptor.Limit -> stringBuilder.append(" LIMIT(${descriptor.limit})")
-            }
-        }
-
-        return stringBuilder.toString()
-    }
-
-    private fun buildSortDescriptor(
-        stringBuilder: StringBuilder,
-        descriptor: QueryDescriptor.Sort
-    ) {
-        stringBuilder.append(" SORT(")
-
-        // Append initial sort
-        val (firstProperty, firstSort) = descriptor.propertyAndSort
-        stringBuilder.append("${escapeFieldName(firstProperty)} ${firstSort.name}")
-
-        // Append potential additional sort descriptors
-        descriptor.additionalPropertiesAndOrders.forEach { (property, order) ->
-            stringBuilder.append(", ${escapeFieldName(property)} ${order.name}")
-        }
-
-        stringBuilder.append(")")
-    }
-
-    private fun buildDistinctDescriptor(
-        stringBuilder: StringBuilder,
-        descriptor: QueryDescriptor.Distinct
-    ) {
-        stringBuilder.append(" DISTINCT(")
-
-        // Append initial distinct
-        stringBuilder.append(escapeFieldName(descriptor.property))
-
-        // Append potential additional distinct descriptors
-        descriptor.additionalProperties.forEach { property ->
-            stringBuilder.append(", ${escapeFieldName(property)}")
-        }
-
-        stringBuilder.append(")")
-    }
-
     private fun escapeFieldName(fieldName: String?): String? = fieldName?.replace(" ", "\\ ")
-}
-
-internal sealed class QueryDescriptor {
-    internal class Distinct(
-        val property: String,
-        vararg val additionalProperties: String
-    ) : QueryDescriptor()
-
-    internal class Sort(
-        val propertyAndSort: Pair<String, QuerySort>,
-        vararg val additionalPropertiesAndOrders: Pair<String, QuerySort>
-    ) : QueryDescriptor()
-
-    internal class Limit(val limit: Int) : QueryDescriptor()
 }

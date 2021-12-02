@@ -193,10 +193,7 @@ class QueryTests {
 
         realm.query(Sample::class, "intField > 1")
             .query("intField > 2")
-            .sort(
-                Sample::intField.name,
-                QuerySort.DESCENDING
-            ) // equivalent to .query("TRUEPREDICATE SORT(intField DESCENDING)") but it doesn't work :-(
+            .sort(Sample::intField.name, QuerySort.DESCENDING)
             .find()
             .let { results ->
                 assertEquals(2, results.size)
@@ -1000,34 +997,34 @@ class QueryTests {
             }
     }
 
-    @Test
-    fun first_asFlow() {
-        val channel = Channel<Sample?>(1)
-        val value1 = 1
-
-        runBlocking {
-            val observer = async {
-                realm.query(Sample::class)
-                    .first()
-                    .asFlow()
-                    .collect { firstObject ->
-                        channel.send(firstObject)
-                    }
-            }
-
-            assertNull(channel.receive())
-
-            realm.writeBlocking {
-                copyToRealm(Sample().apply { intField = value1 })
-            }
-
-            val receivedObject = channel.receive()
-            assertNotNull(receivedObject)
-            assertEquals(value1, receivedObject.intField)
-            observer.cancel()
-            channel.close()
-        }
-    }
+//    @Test
+//    fun first_asFlow() {
+//        val channel = Channel<Sample?>(1)
+//        val value1 = 1
+//
+//        runBlocking {
+//            val observer = async {
+//                realm.query(Sample::class)
+//                    .first()
+//                    .asFlow()
+//                    .collect { firstObject ->
+//                        channel.send(firstObject)
+//                    }
+//            }
+//
+//            assertNull(channel.receive())
+//
+//            realm.writeBlocking {
+//                copyToRealm(Sample().apply { intField = value1 })
+//            }
+//
+//            val receivedObject = channel.receive()
+//            assertNotNull(receivedObject)
+//            assertEquals(value1, receivedObject.intField)
+//            observer.cancel()
+//            channel.close()
+//        }
+//    }
 
     @Test
     fun playground_multiThreadScenario() {
