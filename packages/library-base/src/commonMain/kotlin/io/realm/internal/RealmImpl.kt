@@ -124,13 +124,13 @@ internal class RealmImpl private constructor(
         TODO()
     }
 
-    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
+    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         return notifier.registerObserver(t)
     }
 
     internal override fun <T : RealmObject> registerResultsChangeListener(
-        results: RealmResultsImpl<T>,
-        callback: Callback<RealmResultsImpl<T>>
+        results: BaseResults<T>,
+        callback: Callback<BaseResults<T>>
     ): Cancellable {
         TODO("Not yet implemented")
     }

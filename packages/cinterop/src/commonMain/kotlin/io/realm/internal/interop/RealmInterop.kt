@@ -113,14 +113,24 @@ expect object RealmInterop {
 
     // query
     fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer
-
-    fun realm_query_find_first(realm: NativePointer): Link?
+    fun realm_query_parse_for_results(results: NativePointer, query: String, vararg args: Any?): NativePointer
+    fun realm_query_find_first(query: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
+    fun realm_query_count(query: NativePointer): Long
+    fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer
 
     fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer
     fun realm_results_count(results: NativePointer): Long
+    fun <T> realm_results_average(results: NativePointer, property: Long): Pair<Boolean, T>
+    fun <T> realm_results_sum(results: NativePointer, property: Long): T
+    fun <T> realm_results_max(results: NativePointer, property: Long): T
+    fun <T> realm_results_min(results: NativePointer, property: Long): T
     // FIXME OPTIMIZE Get many
-    fun <T> realm_results_get(results: NativePointer, index: Long): Link
+    fun <T> realm_results_get(results: NativePointer, index: Long): T
 
     fun realm_get_object(realm: NativePointer, link: Link): NativePointer
 

@@ -68,6 +68,26 @@ interface MutableRealm : TypedRealm {
     override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
 
     /**
+     * Returns a [RealmQuery] matching the predicate represented by [query].
+     *
+     * The results yielded by the query are live and thus also reflect any update to the
+     * [MutableRealm].
+     *
+     * Said results are only valid on the calling thread.
+     *
+     * The resulting query is lazily evaluated and will not perform any calculations until
+     * [RealmQuery.find] is called.
+     *
+     * @param query the Realm Query Language predicate to append.
+     * @param args Realm values for the predicate.
+     */
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T>
+
+    /**
      * Deletes the object from the underlying Realm.
      *
      * @throws IllegalArgumentException if the object is not managed by Realm.
