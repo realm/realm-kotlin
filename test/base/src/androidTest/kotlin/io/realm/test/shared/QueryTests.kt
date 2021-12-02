@@ -133,6 +133,21 @@ class QueryTests {
             .let { results ->
                 assertEquals(2, results.size)
             }
+    }
+
+    @Test
+    fun composedQuery_withDescriptor() {
+        val value1 = 1
+        val value2 = 2
+        val value3 = 3
+        val value4 = 4
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(Sample().apply { intField = value3 })
+            copyToRealm(Sample().apply { intField = value4 })
+        }
 
         realm.query(Sample::class, "intField > 1")
             .query("intField > 2")
@@ -140,11 +155,34 @@ class QueryTests {
             .find()
             .let { results ->
                 assertEquals(2, results.size)
-                val i0 = results[0].intField
-                val i1 = results[1].intField
-                assertEquals(value4, i0)
-                assertEquals(value3, i1)
+                assertEquals(value4, results[0].intField)
+                assertEquals(value3, results[1].intField)
             }
+
+        realm.query(Sample::class, "intField > 1")
+            .query("intField > 2")
+            .sort(Sample::intField.name, QuerySort.DESCENDING)
+            .limit(1)
+            .find()
+            .let { results ->
+                assertEquals(1, results.size)
+                assertEquals(value4, results[0].intField)
+            }
+    }
+
+    @Test
+    fun composedQuery_withDescriptorAndQueryAgain() {
+        val value1 = 1
+        val value2 = 2
+        val value3 = 3
+        val value4 = 4
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(Sample().apply { intField = value3 })
+            copyToRealm(Sample().apply { intField = value4 })
+        }
 
         realm.query(Sample::class, "intField > 1")
             .query("intField > 2")
