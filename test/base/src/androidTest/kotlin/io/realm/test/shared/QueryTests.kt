@@ -984,6 +984,35 @@ class QueryTests {
     }
 
     @Test
+    fun first_asFlow() {
+        val channel = Channel<Sample?>(1)
+        val value1 = 1
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .first()
+                    .asFlow()
+                    .collect { firstObject ->
+                        channel.send(firstObject)
+                    }
+            }
+
+            assertNull(channel.receive())
+
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = value1 })
+            }
+
+            val receivedObject = channel.receive()
+            assertNotNull(receivedObject)
+            assertEquals(value1, receivedObject.intField)
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
     fun playground_multiThreadScenario() {
         val channel = Channel<Pair<RealmResults<Sample>, Long?>>(1)
         var query: RealmQuery<Sample>? = null

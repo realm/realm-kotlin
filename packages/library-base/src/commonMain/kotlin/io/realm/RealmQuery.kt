@@ -130,10 +130,12 @@ interface RealmScalarQuery<E> : Flowable<E> {
 
 /**
  * A `RealmQuery` encapsulates a query on a [Realm] or a [RealmResults] instance using the `Builder`
- * pattern. The query is executed using either [find] or [asFlow].
+ * pattern. The query is executed using either [find] or subscribing to the [Flow] returned by
+ * [asFlow].
  *
- * The input to many of the query functions take a field name as [String]. Note that this is not
- * type safe. If a [RealmObject] class is refactored, care has to be taken to not break any queries.
+ * The input to many of the query functions take a field name as [String]. Note that **this is not
+ * type safe**. If a [RealmObject] class is refactored, care has to be taken not to break any
+ * queries.
  *
  * A [Realm] is unordered, which means that there is no guarantee that a query will return the
  * objects in the order they where inserted. Use the [sort] functions if a specific order is

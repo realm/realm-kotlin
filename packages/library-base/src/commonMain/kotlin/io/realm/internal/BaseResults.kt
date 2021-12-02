@@ -18,6 +18,7 @@ package io.realm.internal
 
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.internal.interop.Callback
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
@@ -105,7 +106,7 @@ internal abstract class BaseResults<E : Any> constructor(
         return instantiateResults(liveRealm, liveResultPtr, clazz, mediator)
     }
 
-    override fun registerForNotification(callback: io.realm.internal.interop.Callback): NativePointer {
+    override fun registerForNotification(callback: Callback): NativePointer {
         return RealmInterop.realm_results_add_notification_callback(nativePointer, callback)
     }
 

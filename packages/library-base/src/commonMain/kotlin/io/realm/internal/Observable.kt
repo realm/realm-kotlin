@@ -32,23 +32,14 @@ interface Observable<T> {
     ): ChannelResult<Unit>?
 }
 
-/**
- * TODO : query
- */
 interface Freezable<T> {
     fun freeze(frozenRealm: RealmReference): Observable<T>?
 }
 
-/**
- * TODO : query
- */
 interface Thawable<T> {
     fun thaw(liveRealm: RealmReference): Observable<T>?
 }
 
-/**
- * TODO : query
- */
 interface Flowable<T> {
     fun asFlow(): Flow<T?>
 }

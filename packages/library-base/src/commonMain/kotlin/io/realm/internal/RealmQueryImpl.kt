@@ -74,15 +74,8 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         return RealmQueryImpl(appendedQuery, this)
     }
 
-    override fun sort(property: String, sortOrder: QuerySort): RealmQuery<E> {
-        // This doesn't work :-(
-//        return query("SORT($property ${sortOrder.name})")
-        // This works but TRUEPREDICATE overrides previous queries :-(
-        return query("TRUEPREDICATE SORT($property ${sortOrder.name})")
-
-//        val updatedDescriptors = descriptors + QueryDescriptor.Sort(property to sortOrder)
-//        return RealmQueryImpl(subQuery, updatedDescriptors, this)
-    }
+    override fun sort(property: String, sortOrder: QuerySort): RealmQuery<E> =
+        query("TRUEPREDICATE SORT($property ${sortOrder.name})")
 
     override fun sort(
         propertyAndSortOrder: Pair<String, QuerySort>,
