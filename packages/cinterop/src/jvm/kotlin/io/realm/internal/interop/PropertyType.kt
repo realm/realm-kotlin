@@ -29,8 +29,8 @@ actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated
 
     // TODO OPTIMIZE
     actual companion object {
-        actual fun of(i: Int): PropertyType {
-            return values().find { it.nativeValue == i } ?: error("Unknown type: $i")
+        actual fun from(nativeValue: Int): PropertyType {
+            return values().find { it.nativeValue == nativeValue } ?: error("Unknown type: $nativeValue")
         }
     }
 }

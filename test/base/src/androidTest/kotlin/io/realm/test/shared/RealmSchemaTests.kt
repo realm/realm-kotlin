@@ -23,7 +23,7 @@ import io.realm.entities.schema.SchemaVariations
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
 import io.realm.schema.RealmStorageType
-import io.realm.schema.SingularPropertyType
+import io.realm.schema.ValuePropertyType
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -35,7 +35,15 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-public class RealmSchemaTests {
+private val SCHEMA_VARIATION_CLASS_NAME = SchemaVariations::class.simpleName!!
+
+/**
+ * Test of public schema API.
+ *
+ * This test suite doesn't exhaust all modeling features, but should have full coverage of the
+ * schema API code paths.
+ */
+public class RealmSchemaTests   {
 
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
@@ -61,9 +69,8 @@ public class RealmSchemaTests {
     fun realmClass() {
         val schema = realm.schema()
 
-        val schemaVariationsName = "SchemaVariations"
-        val schemaVariationsDescriptor = schema[schemaVariationsName] ?: fail("Couldn't find class")
-        assertEquals(schemaVariationsName, schemaVariationsDescriptor.name)
+        val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME] ?: fail("Couldn't find class")
+        assertEquals(SCHEMA_VARIATION_CLASS_NAME, schemaVariationsDescriptor.name)
         assertEquals("string", schemaVariationsDescriptor.primaryKey()?.name)
 
         val sampleName = "Sample"
@@ -73,16 +80,21 @@ public class RealmSchemaTests {
     }
 
     @Test
+    fun realmClass_notFound() {
+        val schema = realm.schema()
+        assertNull(schema["non-existing_class"])
+    }
+
+    @Test
     fun realmProperty() {
         val schema = realm.schema()
 
-        val schemaVariationsName = "SchemaVariations"
-        val schemaVariationsDescriptor = schema[schemaVariationsName] ?: fail("Couldn't find class")
+        val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME] ?: fail("Couldn't find class")
 
         schemaVariationsDescriptor["string"]!!.run {
             assertEquals("string", name)
             type.run {
-                assertIs<SingularPropertyType>(this)
+                assertIs<ValuePropertyType>(this)
                 assertEquals(RealmStorageType.STRING, storageType)
                 assertFalse(isNullable)
                 assertTrue(isPrimaryKey)
@@ -93,7 +105,7 @@ public class RealmSchemaTests {
         schemaVariationsDescriptor["nullableString"]!!.run {
             assertEquals("nullableString", name)
             type.run {
-                assertIs<SingularPropertyType>(this)
+                assertIs<ValuePropertyType>(this)
                 assertEquals(RealmStorageType.STRING, storageType)
                 assertTrue(isNullable)
                 assertFalse(isPrimaryKey)
@@ -119,6 +131,13 @@ public class RealmSchemaTests {
             }
             assertFalse(isNullable)
         }
+    }
+
+    @Test
+    fun realmProperty_notFound() {
+        val schema = realm.schema()
+        val schemaVariationDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]!!
+        assertNull(schemaVariationDescriptor["non-existing-property"])
     }
 
     @Test
@@ -152,7 +171,7 @@ public class RealmSchemaTests {
             property.type.run {
                 collectionTypeNullability.getValue(this::class).remove(this.isNullable)
                 storageTypes.remove(storageType)
-                if (this is SingularPropertyType) {
+                if (this is ValuePropertyType) {
                     isPrimaryKey.let { primaryKeyOptionProperty.remove(it) }
                     isIndexed.let { indexOptions.remove(it) }
                     if (isPrimaryKey) {

@@ -23,6 +23,10 @@ import io.realm.annotations.PrimaryKey
 import io.realm.entities.Sample
 import io.realm.realmListOf
 
+/**
+ * Class used for test of the schema API; thus, doesn't exhaust modeling features but just provides
+ * sufficient model features to cover all code paths of the schema API.
+ */
 class SchemaVariations : RealmObject {
     var bool: Boolean = false
     var byte: Byte = 0

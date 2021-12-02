@@ -16,7 +16,21 @@
 
 package io.realm.schema
 
+/**
+ * A **schema** that describes the object model of the underlying realm.
+ */
+// FIXME Find out where the transaction version of the schema fits into the API ... maybe as part of
+//  https://github.com/realm/realm-kotlin/issues/600
 interface RealmSchema {
+    /**
+     * Collection of the [RealmClass]es of the schema.
+     */
     val classes: Collection<RealmClass>
-    operator fun get(key: String): RealmClass?
+
+    /**
+     * Index operator to lookup a specific [RealmClass] from it's class name.
+     *
+     * @return the [RealmClass] with the given `className` or `null` if no such class exists.
+     */
+    operator fun get(className: String): RealmClass?
 }

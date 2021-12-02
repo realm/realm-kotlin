@@ -16,10 +16,33 @@
 
 package io.realm.schema
 
+/**
+ * A [RealmClass] describes the object model of a specific class.
+ */
 interface RealmClass { // Matches realm_class_info_t except that attributes are also attached here
+    /**
+     * Returns the name of the class in the object model.
+     */
     val name: String
+
+    /**
+     * Returns the properties of the class in the object model.
+     */
     val properties: Collection<RealmProperty>
+
+    /**
+     * Index operator to lookup a specific [RealmProperty] from it's property name.
+     *
+     * @return the [RealmProperty] with the given `propertyName` or `null` if no such property exists.
+     */
     operator fun get(key: String): RealmProperty?
+
+    /**
+     * Return the class' primary key [RealmProperty].
+     *
+     * @returnn the class' primary key [RealmProperty] or `null` it the class doesn't have a primary
+     * key.
+     */
     // If this is never to change we could make it a val, but if using same API for mutable schema
     // it could actually change
     fun primaryKey(): RealmProperty? // equivalent to:  properties.any { it.primaryKey }

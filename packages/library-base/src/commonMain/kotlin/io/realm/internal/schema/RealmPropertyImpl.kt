@@ -20,7 +20,7 @@ import io.realm.internal.interop.PropertyInfo
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmProperty
 import io.realm.schema.RealmPropertyType
-import io.realm.schema.SingularPropertyType
+import io.realm.schema.ValuePropertyType
 
 internal data class RealmPropertyImpl(
     override var name: String,
@@ -28,7 +28,7 @@ internal data class RealmPropertyImpl(
 ) : RealmProperty {
 
     override val isNullable: Boolean = when (type) {
-        is SingularPropertyType -> type.isNullable
+        is ValuePropertyType -> type.isNullable
         is ListPropertyType -> false
     }
 

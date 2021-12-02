@@ -45,7 +45,7 @@ expect enum class PropertyType {
     // fun isList()
     // fun isReference()
     companion object {
-        fun of(i: Int): PropertyType
+        fun from(nativeValue: Int): PropertyType
     }
 }
 
@@ -55,7 +55,7 @@ expect enum class CollectionType {
     RLM_COLLECTION_TYPE_SET,
     RLM_COLLECTION_TYPE_DICTIONARY;
     companion object {
-        fun of(i: Int): CollectionType
+        fun from(nativeValue: Int): CollectionType
     }
 }
 

@@ -393,7 +393,7 @@ actual object RealmInterop {
             val outCount = alloc<size_tVar>()
             checkedBooleanResult(realm_wrapper.realm_get_class_keys(realm.cptr(), keys, max.convert(), outCount.ptr))
             if (max != outCount.value.toLong()) {
-                error("Invalid schema: Insufficient keys; got ${outCount.value} expected $max")
+                error("Invalid schema: Insufficient keys; got ${outCount.value}, expected $max")
             }
             return (0 until max).map { ClassKey(keys[it].toLong()) }
         }

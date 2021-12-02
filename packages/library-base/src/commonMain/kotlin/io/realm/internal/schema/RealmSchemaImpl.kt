@@ -25,7 +25,7 @@ data class RealmSchemaImpl(
     override val classes: Collection<RealmClass>
 ) : RealmSchema {
 
-    override fun get(key: String): RealmClass? = classes.firstOrNull { it.name == key }
+    override fun get(className: String): RealmClass? = classes.firstOrNull { it.name == className }
 
     companion object {
         fun fromRealm(realmReference: RealmReference): RealmSchemaImpl {

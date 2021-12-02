@@ -181,7 +181,7 @@ actual object RealmInterop {
         val outCount = longArrayOf(0)
         realmc.realm_get_class_keys(realm.cptr(), keys, count, outCount)
         if (count != outCount[0]) {
-            error("Invalid schema: Insufficient keys; got ${outCount[0]} expected $count")
+            error("Invalid schema: Insufficient keys; got ${outCount[0]}, expected $count")
         }
         return keys.map { ClassKey(it) }
     }
@@ -214,8 +214,8 @@ actual object RealmInterop {
                     PropertyInfo(
                         name,
                         public_name,
-                        PropertyType.of(type),
-                        CollectionType.of(collection_type),
+                        PropertyType.from(type),
+                        CollectionType.from(collection_type),
                         link_target,
                         link_origin_property_name,
                         PropertyKey(key),
