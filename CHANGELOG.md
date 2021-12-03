@@ -5,7 +5,8 @@
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
-* Added supported for dates through a new property type: `RealmInstant`.
+* Added support for dates through a new property type: `RealmInstant`.
+* Added support for `RealmQuery` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
@@ -27,13 +28,13 @@
 * Updated to Android Gradle Plugin 7.1.0-beta03.
 * Updated to NDK 23.1.7779620.
 * Updated to Android targetSdk 31.
-* Updated to Android compileSdk 31. 
+* Updated to Android compileSdk 31.
 * Updated to Android Build Tools 31.0.0.
 * Updated to Ktlint version 0.43.0.
 * Updated to Ktlint Gradle Plugin 10.2.0.
 * Updated to Kotlin Serialization 1.3.0.
 * Updated to Detekt 1.19.0-RC1.
-* Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
+* Updated to Realm Core commit: 039f5b10049919f5bef8931ee8af54bee6408bd7.
 
 
 ## 0.7.0 (2021-10-31)

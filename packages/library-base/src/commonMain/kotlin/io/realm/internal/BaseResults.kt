@@ -28,6 +28,15 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
+/**
+ * This class gathers all type-agnostic logic for handling [RealmResults]. This class is needed as
+ * Core can produce both objects and primitive results.
+ *
+ * Primitive results are not exposed through the public API but might be needed when implementing
+ * `RealmDictionary.values` as Core returns those as results.
+ */
+// TODO optimize - perhaps we should map the output of dictionary.values to a RealmList so that
+//  primitive typed results are never ever exposed publicly.
 internal abstract class BaseResults<E : Any> constructor(
     protected val realm: RealmReference,
     internal val nativePointer: NativePointer,

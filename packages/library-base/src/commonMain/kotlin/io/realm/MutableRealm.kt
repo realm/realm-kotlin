@@ -1,5 +1,6 @@
 package io.realm
 
+import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 
 /**
@@ -71,9 +72,9 @@ interface MutableRealm : TypedRealm {
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *
      * The results yielded by the query are live and thus also reflect any update to the
-     * [MutableRealm].
+     * [MutableRealm]. Said results are only valid on the calling thread.
      *
-     * Said results are only valid on the calling thread.
+     * **It is not allowed to call [RealmQuery.asFlow] on queries generated from a [MutableRealm].**
      *
      * The resulting query is lazily evaluated and will not perform any calculations until
      * [RealmQuery.find] is called.

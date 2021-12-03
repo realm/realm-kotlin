@@ -18,6 +18,7 @@ package io.realm
 import io.realm.internal.InternalRealmConfiguration
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.Constants
+import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 

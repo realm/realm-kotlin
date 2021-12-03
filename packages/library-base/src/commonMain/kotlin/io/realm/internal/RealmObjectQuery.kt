@@ -17,27 +17,27 @@
 
 package io.realm.internal
 
-import io.realm.QuerySort
 import io.realm.RealmObject
-import io.realm.RealmQuery
 import io.realm.RealmResults
-import io.realm.RealmScalarQuery
-import io.realm.RealmSingleQuery
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
+import io.realm.query.RealmQuery
+import io.realm.query.RealmScalarQuery
+import io.realm.query.RealmSingleQuery
+import io.realm.query.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("SpreadOperator")
-internal class RealmQueryImpl<E : RealmObject> constructor(
+internal class RealmObjectQuery<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
-    private val composedQueryPointer: NativePointer? = null,
+    composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
 ) : RealmQuery<E>, Thawable<BaseResults<E>> {
@@ -53,14 +53,14 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
 
     constructor(
         composedQueryPointer: NativePointer?,
-        queryImpl: RealmQueryImpl<E>
+        objectQuery: RealmObjectQuery<E>
     ) : this(
-        queryImpl.realmReference,
-        queryImpl.clazz,
-        queryImpl.mediator,
+        objectQuery.realmReference,
+        objectQuery.clazz,
+        objectQuery.mediator,
         composedQueryPointer,
-        queryImpl.filter,
-        *queryImpl.args
+        objectQuery.filter,
+        *objectQuery.args
     )
 
     override fun find(): RealmResults<E> =
@@ -70,15 +70,15 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
         val appendedQuery = tryCatchCoreException {
             RealmInterop.realm_query_append_query(queryPointer, filter, *arguments)
         }
-        return RealmQueryImpl(appendedQuery, this)
+        return RealmObjectQuery(appendedQuery, this)
     }
 
-    override fun sort(property: String, sortOrder: QuerySort): RealmQuery<E> =
+    override fun sort(property: String, sortOrder: Sort): RealmQuery<E> =
         query("TRUEPREDICATE SORT($property ${sortOrder.name})")
 
     override fun sort(
-        propertyAndSortOrder: Pair<String, QuerySort>,
-        vararg additionalPropertiesAndOrders: Pair<String, QuerySort>
+        propertyAndSortOrder: Pair<String, Sort>,
+        vararg additionalPropertiesAndOrders: Pair<String, Sort>
     ): RealmQuery<E> {
         val stringBuilder = StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
         additionalPropertiesAndOrders.forEach { extraPropertyAndOrder ->
@@ -109,9 +109,9 @@ internal class RealmQueryImpl<E : RealmObject> constructor(
 
     override fun count(): RealmScalarQuery<Long> = TODO()
 
-    override fun thaw(liveRealm: RealmReference): BaseResults<E> = TODO()
-
     override fun asFlow(): Flow<RealmResults<E>> = TODO()
+
+    override fun thaw(liveRealm: RealmReference): BaseResults<E> = TODO()
 
     private fun parseQuery(): NativePointer = tryCatchCoreException(filter) {
         RealmInterop.realm_query_parse(

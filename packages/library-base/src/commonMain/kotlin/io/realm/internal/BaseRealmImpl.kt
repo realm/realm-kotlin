@@ -19,10 +19,10 @@ import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
-import io.realm.RealmQuery
 import io.realm.RealmResults
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -82,7 +82,7 @@ abstract class BaseRealmImpl internal constructor(
         query: String,
         vararg args: Any?
     ): RealmQuery<T> =
-        RealmQueryImpl(realmReference, clazz, configuration.mediator, null, query, *args)
+        RealmObjectQuery(realmReference, clazz, configuration.mediator, null, query, *args)
 
     internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)

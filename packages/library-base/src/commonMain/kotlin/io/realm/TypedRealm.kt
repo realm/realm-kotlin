@@ -1,5 +1,6 @@
 package io.realm
 
+import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 
 /**
