@@ -18,8 +18,18 @@ package io.realm.schema
 
 import kotlin.reflect.KClass
 
+/**
+ * A [RealmPropertyType] describes the type of a specific property in the object model.
+ */
 sealed interface RealmPropertyType {
+    /**
+     * The type that is used when storing the property values in the realm.
+     */
     val storageType: RealmStorageType
+
+    /**
+     * Indicates whether the storage element can be `null`.
+     */
     val isNullable: Boolean
 
     companion object {
@@ -33,10 +43,18 @@ sealed interface RealmPropertyType {
     }
 }
 
+/**
+ * A [ValuePropertyType] describes singular value properties.
+ */
 data class ValuePropertyType(
-    override val storageType: RealmStorageType,
     override val isNullable: Boolean,
+    /**
+     * Indicates whether this property is the primary key of the class in the object model.
+     */
     val isPrimaryKey: Boolean,
+    /**
+     * Indicates whether there is an index associated with this property.
+     */
     val isIndexed: Boolean
 ) : RealmPropertyType
 
