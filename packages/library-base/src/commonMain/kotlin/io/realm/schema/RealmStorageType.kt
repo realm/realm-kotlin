@@ -25,5 +25,6 @@ enum class RealmStorageType {
     STRING,
     OBJECT,
     FLOAT,
-    DOUBLE;
+    DOUBLE,
+    TIMESTAMP;
 }

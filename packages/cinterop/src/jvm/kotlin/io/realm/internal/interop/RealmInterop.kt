@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.asLink
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -310,6 +311,8 @@ actual object RealmInterop {
                 value.fnum
             realm_value_type_e.RLM_TYPE_DOUBLE ->
                 value.dnum
+            realm_value_type_e.RLM_TYPE_TIMESTAMP ->
+                value.asTimestamp()
             realm_value_type_e.RLM_TYPE_LINK ->
                 value.asLink()
             realm_value_type_e.RLM_TYPE_NULL,
@@ -384,6 +387,7 @@ actual object RealmInterop {
 
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
+    @Suppress("ComplexMethod", "LongMethod")
     private fun <T> to_realm_value(value: T): realm_value_t {
         val cvalue = realm_value_t()
         if (value == null) {
@@ -425,6 +429,13 @@ actual object RealmInterop {
                 is Double -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
                     cvalue.dnum = value
+                }
+                is Timestamp -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_TIMESTAMP
+                    cvalue.timestamp = realm_timestamp_t().apply {
+                        seconds = value.seconds
+                        nanoseconds = value.nanoSeconds
+                    }
                 }
                 is RealmObjectInterop -> {
                     val nativePointer = (value as RealmObjectInterop).`$realm$ObjectPointer`
@@ -724,6 +735,13 @@ actual object RealmInterop {
         } else {
             null
         }
+    }
+
+    private fun realm_value_t.asTimestamp(): Timestamp {
+        if (this.type != realm_value_type_e.RLM_TYPE_TIMESTAMP) {
+            error("Value is not of type Timestamp: $this.type")
+        }
+        return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
     private fun realm_value_t.asLink(): Link {

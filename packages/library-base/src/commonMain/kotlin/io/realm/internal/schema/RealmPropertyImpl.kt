@@ -38,7 +38,7 @@ internal data class RealmPropertyImpl(
                 val storageType =
                     io.realm.internal.schema.RealmStorageTypeImpl.fromCorePropertyType(type)
                 val type = when (collectionType) {
-                    io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE -> SingularPropertyType(
+                    io.realm.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE -> ValuePropertyType(
                         storageType,
                         isNullable,
                         isPrimaryKey,

@@ -47,6 +47,7 @@ sealed interface RealmPropertyType {
  * A [ValuePropertyType] describes singular value properties.
  */
 data class ValuePropertyType(
+    override val storageType: RealmStorageType,
     override val isNullable: Boolean,
     /**
      * Indicates whether this property is the primary key of the class in the object model.

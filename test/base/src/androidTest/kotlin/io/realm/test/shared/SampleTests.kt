@@ -17,6 +17,7 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmInstant
 import io.realm.RealmResults
 import io.realm.delete
 import io.realm.entities.Sample
@@ -156,6 +157,7 @@ class SampleTests {
                 booleanField = false
                 floatField = 1.99f
                 doubleField = 1.19851106
+                timestampField = RealmInstant.fromEpochSeconds(42, 420)
             }
         }
 
@@ -171,6 +173,7 @@ class SampleTests {
         assertFalse(objects[0].booleanField)
         assertEquals(1.99f, objects[0].floatField)
         assertEquals(1.19851106, objects[0].doubleField)
+        assertEquals(RealmInstant.fromEpochSeconds(42, 420), objects[0].timestampField)
 
         // querying on each type
         objects = realm.objects(Sample::class).query("stringField == $0", "Realm Kotlin") // string
@@ -198,6 +201,9 @@ class SampleTests {
         assertEquals(1, objects.size)
 
         objects = realm.objects(Sample::class).query("doubleField == $0", 1.19851106)
+        assertEquals(1, objects.size)
+
+        objects = realm.objects(Sample::class).query("timestampField == $0", RealmInstant.fromEpochSeconds(42, 420))
         assertEquals(1, objects.size)
     }
 }

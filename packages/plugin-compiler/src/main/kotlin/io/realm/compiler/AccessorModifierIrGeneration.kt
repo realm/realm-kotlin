@@ -16,6 +16,7 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
@@ -23,9 +24,11 @@ import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -94,11 +97,16 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
+    private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
     private val setValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
+    private val getTimestamp: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_TIMESTAMP)
+    private val setTimestamp: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_TIMESTAMP)
     private val getObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
     private val setObject: IrSimpleFunction =
@@ -269,6 +277,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(declaration, getValue, setValue)
+                    }
+                    propertyType.isRealmInstant() -> {
+                        logInfo("RealmInstant property named ${declaration.name} is nullable $nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(declaration, getTimestamp, setTimestamp)
                     }
                     propertyType.isRealmList() -> {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
@@ -493,6 +510,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == realmListClassId
     }
 
+    private fun IrType.isRealmInstant(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmInstantClassId = realmInstantClass.descriptor.classId
+        return propertyClassId == realmInstantClassId
+    }
+
     @Suppress("ReturnCount")
     private fun getListGenericCoreType(declaration: IrProperty): CoreType? {
         // Check first if the generic is a subclass of RealmObject
@@ -543,6 +566,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
+                    "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     else ->
                         if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT

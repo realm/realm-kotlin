@@ -159,10 +159,10 @@ kotlin {
         val macosMain by getting
         val macosTest by getting
         getByName("iosMain") {
-            dependsOn(macosMain)
+            kotlin.srcDir("src/macosMain/kotlin")
         }
         getByName("iosTest") {
-            dependsOn(macosTest)
+            kotlin.srcDir("src/macosTest/kotlin")
         }
     }
 }
@@ -177,7 +177,10 @@ tasks.named("iosTest") {
     doLast {
         val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
         exec {
-            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
+            // use -s (standlone) option to avoid:
+            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+            //      Invalid device state
+            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
         }
     }
 }
