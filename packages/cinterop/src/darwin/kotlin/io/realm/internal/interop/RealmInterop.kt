@@ -373,6 +373,29 @@ actual object RealmInterop {
         return realmPtr
     }
 
+    actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
+        return RegistrationToken(realm_wrapper.realm_add_realm_changed_callback(realm.cptr(),
+            staticCFunction { userData ->
+                safeUserData<() -> Unit>(userData)()
+            },
+            StableRef.create(block).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
+            }
+        ).toLong())
+    }
+
+    actual fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        realm_wrapper.realm_remove_realm_changed_callback(realm.cptr(), token.value.toULong())
+    }
+
+    actual fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken {
+        TODO()
+    }
+    actual fun realm_remove_schema_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        TODO()
+    }
+
     actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
     }

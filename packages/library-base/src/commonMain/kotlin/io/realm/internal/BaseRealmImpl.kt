@@ -61,7 +61,7 @@ abstract class BaseRealmImpl internal constructor(
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
     init {
-        log.info("Realm opened: ${configuration.path}")
+        log.info("Realm opened: $this ${this.configuration} ${configuration.path}")
     }
 
     // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema

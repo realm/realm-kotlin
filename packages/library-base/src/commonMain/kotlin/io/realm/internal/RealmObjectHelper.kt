@@ -61,7 +61,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
+        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$ClassName`!!, col)
         val res = RealmInterop.realm_get_value<Timestamp>(o, key)
         return if (res == null) null else RealmInstantImpl(res)
     }
@@ -172,7 +172,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
+        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$ClassName`!!, col)
         // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
         //  implementations in the various platform RealmInterops here to eliminate
         //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
@@ -186,7 +186,7 @@ internal object RealmObjectHelper {
         // info that might help users to understand the exception.
         catch (exception: RealmCoreException) {
             throw IllegalStateException(
-                "Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                "Cannot set `${obj.`$realm$ClassName`}.$col` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
             )
         }

@@ -99,6 +99,7 @@ class TestApp(
         RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
+        // FIXME Wipes metadata for all realms
         fileSystem.deleteRecursively((appFilesDirectory() + "/mongodb-realm").toPath())
     }
 

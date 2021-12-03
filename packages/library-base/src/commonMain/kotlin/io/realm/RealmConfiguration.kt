@@ -16,8 +16,10 @@
 
 package io.realm
 
+import io.realm.internal.LocalConfigurationImpl
 import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.interop.SchemaMode
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
@@ -90,12 +92,6 @@ interface RealmConfiguration {
     public val schemaVersion: Long
 
     /**
-     * Flag indicating whether the realm will be deleted if the schema has changed in a way that
-     * requires schema migration.
-     */
-    public val deleteRealmIfMigrationNeeded: Boolean
-
-    /**
      * 64 byte key used to encrypt and decrypt the Realm file.
      *
      * @return null on unencrypted Realms.
@@ -111,7 +107,7 @@ interface RealmConfiguration {
         // Should always follow Builder constructor arguments
         fun with(
             schema: Set<KClass<out RealmObject>>
-        ): RealmConfiguration {
+        ): LocalConfiguration {
             REPLACED_BY_IR() // Will be replace by Builder(schema).build(companionMap)
         }
     }
@@ -256,14 +252,6 @@ interface RealmConfiguration {
         } as S
 
         /**
-         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
-         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
-         *
-         * **WARNING!** This will result in loss of data.
-         */
-        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true } as S
-
-        /**
          * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
          * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
          */
@@ -312,7 +300,15 @@ interface RealmConfiguration {
     //  though interfacing the builder is also an option
     class Builder(
         schema: Set<KClass<out RealmObject>> = setOf()
-    ) : SharedBuilder<RealmConfiguration, Builder>(schema) {
+    ) : SharedBuilder<LocalConfiguration, Builder>(schema) {
+
+        /**
+         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
+         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
+         *
+         * **WARNING!** This will result in loss of data.
+         */
+        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
 
         // Called from the compiler plugin
         internal fun build(
@@ -324,18 +320,29 @@ interface RealmConfiguration {
             }
             allLoggers.addAll(userLoggers)
             return RealmConfigurationImpl(
-                companionMap,
-                path,
-                name,
-                schema,
-                LogConfiguration(logLevel, allLoggers),
-                maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(name),
-                writeDispatcher ?: singleThreadDispatcher(name),
-                schemaVersion,
-                deleteRealmIfMigrationNeeded,
-                encryptionKey
+                    companionMap,
+                    path,
+                    name,
+                    schema,
+                    LogConfiguration(logLevel, allLoggers),
+                    maxNumberOfActiveVersions,
+                    notificationDispatcher ?: singleThreadDispatcher(name),
+                    writeDispatcher ?: singleThreadDispatcher(name),
+                    schemaVersion,
+                    when (deleteRealmIfMigrationNeeded) {
+                        true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
+                        false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
+                    },
+                    encryptionKey
             )
         }
     }
+}
+
+interface LocalConfiguration : RealmConfiguration {
+    /**
+     * Flag indicating whether the realm will be deleted if the schema has changed in a way that
+     * requires schema migration.
+     */
+    public val deleteRealmIfMigrationNeeded: Boolean
 }

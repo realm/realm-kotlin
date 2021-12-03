@@ -140,15 +140,36 @@ actual object RealmInterop {
 
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
-        val realmPtr = LongPointerWrapper(
-            realmc.open_realm_with_scheduler(
-                (config as LongPointerWrapper).ptr,
-                if (dispatcher != null) JVMScheduler(dispatcher) else null
+        try {
+            val realmPtr = LongPointerWrapper(
+                realmc.open_realm_with_scheduler(
+                    (config as LongPointerWrapper).ptr,
+                    if (dispatcher != null) JVMScheduler(dispatcher) else null
+                )
             )
-        )
-        // Ensure that we can read version information, etc.
-        realm_begin_read(realmPtr)
-        return realmPtr
+            // Ensure that we can read version information, etc.
+            realm_begin_read(realmPtr)
+            return realmPtr
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
+        return RegistrationToken(realmc.realm_add_realm_changed_callback(realm.cptr(), block))
+    }
+
+    actual fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        return realmc.realm_remove_realm_changed_callback(realm.cptr(), token.value)
+    }
+
+    actual fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken {
+        return RegistrationToken(realmc.realm_add_schema_changed_callback(realm.cptr(), block))
+    }
+
+    actual fun realm_remove_schema_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        return realmc.realm_remove_schema_changed_callback(realm.cptr(), token.value)
     }
 
     actual fun realm_freeze(liveRealm: NativePointer): NativePointer {

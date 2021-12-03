@@ -51,6 +51,10 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
 
     init {
         tid = runBlocking(dispatcher) { threadId() }
+//        runBlocking(dispatcher) {
+//            println("initializing writer realm ")
+//            realm
+//        }
     }
 
     suspend fun <R> write(block: MutableRealm.() -> R): Pair<RealmReference, R> {

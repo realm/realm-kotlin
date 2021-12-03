@@ -1,15 +1,17 @@
 ## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Removed option to build `SyncConfiguration`s with `deleteRealmIfMigrationNeeded` option.
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added supported for dates through a new property type: `RealmInstant`.
+* Added `LocalConfiguration` to hold local-only options to avoid poluting `RealmConfiguration` with local-only options.
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
 * Compiler plugin symbol lookup happens only on Sourset using Realm ([#544](https://github.com/realm/realm-kotlin/issues/544)).
+* Fixed migration exception when opening a synced realm that is already stored in the backend for the first time ([#601](https://github.com/realm/realm-kotlin/issues/604)).
 
 ### Compatibility
 * This release is compatible with:

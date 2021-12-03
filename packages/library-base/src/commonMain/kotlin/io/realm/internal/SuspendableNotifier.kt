@@ -43,6 +43,7 @@ internal class SuspendableNotifier(
         }
     }
 
+
     // FIXME Work-around for the global Realm changed listener not working.
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
@@ -59,6 +60,13 @@ internal class SuspendableNotifier(
     }
     // Must only be accessed from the dispatchers thread
     private val realm: BaseRealmImpl by realmInitializer
+
+//    init {
+//        runBlocking(dispatcher) {
+//            println("initializing notifier realm ")
+//            realm
+//        }
+//    }
 
     /**
      * FIXME Currently this is a hacked implementation that only does the correct thing if
@@ -107,6 +115,7 @@ internal class SuspendableNotifier(
                             // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
                             //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
                             //  We also send it to the owner Realm, so it can keep track of its lifecycle
+                            println("freezing: ${realm.configuration}")
                             val frozenRealm = RealmReference(
                                 owner,
                                 RealmInterop.realm_freeze(realm.realmReference.dbPointer)

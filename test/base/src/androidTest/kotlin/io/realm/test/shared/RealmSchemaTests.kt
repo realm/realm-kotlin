@@ -156,7 +156,7 @@ public class RealmSchemaTests {
     // }
     @Test
     @Suppress("NestedBlockDepth")
-    fun schema_optionCoverag() {
+    fun schema_optionCoverage() {
         // Property options
         @Suppress("invisible_member")
         val propertyTypeMap =

@@ -797,9 +797,9 @@ MODULE_FRAGMENT name:<main>
           public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
     PROPERTY name:conf1 visibility:public modality:FINAL [val]
-      FIELD PROPERTY_BACKING_FIELD name:conf1 type:io.realm.RealmConfiguration visibility:private [final,static]
+      FIELD PROPERTY_BACKING_FIELD name:conf1 type:io.realm.LocalConfiguration visibility:private [final,static]
         EXPRESSION_BODY
-          CALL 'internal final fun build (companionMap: kotlin.collections.Map<kotlin.reflect.KClass<out io.realm.RealmObject>, io.realm.internal.RealmObjectCompanion>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration origin=null
+          CALL 'internal final fun build (companionMap: kotlin.collections.Map<kotlin.reflect.KClass<out io.realm.RealmObject>, io.realm.internal.RealmObjectCompanion>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.LocalConfiguration origin=null
             $this: CALL 'public final fun schema (vararg classes: kotlin.reflect.KClass<out io.realm.RealmObject>): io.realm.RealmConfiguration.Builder [fake_override] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
               $this: CONSTRUCTOR_CALL 'public constructor <init> (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>>) [primary] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
               classes: VARARG type=kotlin.Array<out kotlin.reflect.KClass<out io.realm.RealmObject>> varargElementType=kotlin.reflect.KClass<out io.realm.RealmObject>
@@ -825,15 +825,15 @@ MODULE_FRAGMENT name:<main>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
                   second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.C.Companion
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf1> visibility:public modality:FINAL <> () returnType:io.realm.RealmConfiguration
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf1> visibility:public modality:FINAL <> () returnType:io.realm.LocalConfiguration
         correspondingProperty: PROPERTY name:conf1 visibility:public modality:FINAL [val]
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-conf1> (): io.realm.RealmConfiguration declared in schema.input'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:conf1 type:io.realm.RealmConfiguration visibility:private [final,static]' type=io.realm.RealmConfiguration origin=null
+          RETURN type=kotlin.Nothing from='public final fun <get-conf1> (): io.realm.LocalConfiguration declared in schema.input'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:conf1 type:io.realm.LocalConfiguration visibility:private [final,static]' type=io.realm.LocalConfiguration origin=null
     PROPERTY name:conf2 visibility:public modality:FINAL [val]
-      FIELD PROPERTY_BACKING_FIELD name:conf2 type:io.realm.RealmConfiguration visibility:private [final,static]
+      FIELD PROPERTY_BACKING_FIELD name:conf2 type:io.realm.LocalConfiguration visibility:private [final,static]
         EXPRESSION_BODY
-          CALL 'internal final fun build (companionMap: kotlin.collections.Map<kotlin.reflect.KClass<out io.realm.RealmObject>, io.realm.internal.RealmObjectCompanion>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration origin=null
+          CALL 'internal final fun build (companionMap: kotlin.collections.Map<kotlin.reflect.KClass<out io.realm.RealmObject>, io.realm.internal.RealmObjectCompanion>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.LocalConfiguration origin=null
             $this: CONSTRUCTOR_CALL 'public constructor <init> (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>>) [primary] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
               schema: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>> origin=null
                 <T>: kotlin.reflect.KClass<out io.realm.RealmObject>
@@ -860,15 +860,15 @@ MODULE_FRAGMENT name:<main>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
                   second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.C.Companion
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf2> visibility:public modality:FINAL <> () returnType:io.realm.RealmConfiguration
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf2> visibility:public modality:FINAL <> () returnType:io.realm.LocalConfiguration
         correspondingProperty: PROPERTY name:conf2 visibility:public modality:FINAL [val]
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-conf2> (): io.realm.RealmConfiguration declared in schema.input'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:conf2 type:io.realm.RealmConfiguration visibility:private [final,static]' type=io.realm.RealmConfiguration origin=null
+          RETURN type=kotlin.Nothing from='public final fun <get-conf2> (): io.realm.LocalConfiguration declared in schema.input'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:conf2 type:io.realm.LocalConfiguration visibility:private [final,static]' type=io.realm.LocalConfiguration origin=null
     PROPERTY name:conf3 visibility:public modality:FINAL [val]
-      FIELD PROPERTY_BACKING_FIELD name:conf3 type:io.realm.RealmConfiguration visibility:private [final,static]
+      FIELD PROPERTY_BACKING_FIELD name:conf3 type:io.realm.LocalConfiguration visibility:private [final,static]
         EXPRESSION_BODY
-          CALL 'internal final fun build (companionMap: kotlin.collections.Map<kotlin.reflect.KClass<out io.realm.RealmObject>, io.realm.internal.RealmObjectCompanion>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration origin=null
+          CALL 'internal final fun build (companionMap: kotlin.collections.Map<kotlin.reflect.KClass<out io.realm.RealmObject>, io.realm.internal.RealmObjectCompanion>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.LocalConfiguration origin=null
             $this: CONSTRUCTOR_CALL 'public constructor <init> (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>>) [primary] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
               schema: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>> origin=null
                 <T>: kotlin.reflect.KClass<out io.realm.RealmObject>
@@ -889,8 +889,8 @@ MODULE_FRAGMENT name:<main>
                   <class: B>: io.realm.internal.RealmObjectCompanion
                   first: CLASS_REFERENCE 'CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<*>
                   second: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]' type=schema.input.C.Companion
-      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf3> visibility:public modality:FINAL <> () returnType:io.realm.RealmConfiguration
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-conf3> visibility:public modality:FINAL <> () returnType:io.realm.LocalConfiguration
         correspondingProperty: PROPERTY name:conf3 visibility:public modality:FINAL [val]
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public final fun <get-conf3> (): io.realm.RealmConfiguration declared in schema.input'
-            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:conf3 type:io.realm.RealmConfiguration visibility:private [final,static]' type=io.realm.RealmConfiguration origin=null
+          RETURN type=kotlin.Nothing from='public final fun <get-conf3> (): io.realm.LocalConfiguration declared in schema.input'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:conf3 type:io.realm.LocalConfiguration visibility:private [final,static]' type=io.realm.LocalConfiguration origin=null

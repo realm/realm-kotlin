@@ -23,6 +23,46 @@
 using namespace realm::jni_util;
 using namespace realm::_impl;
 
+jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
+    static JavaMethod pointer_wrapper_constructor(jenv,
+                                                  JavaClassGlobalDef::long_pointer_wrapper(),
+                                                  "<init>",
+                                                  "(JZ)V");
+    return jenv->NewObject(JavaClassGlobalDef::long_pointer_wrapper(),
+                           pointer_wrapper_constructor,
+                           pointer,
+                           managed);
+}
+
+inline void jni_check_exception(JNIEnv *jenv = get_env()) {
+    if (jenv->ExceptionCheck()) {
+        jenv->ExceptionDescribe();
+        jenv->ExceptionClear();
+        throw std::runtime_error("An unexpected Error was thrown from Java.");
+    }
+}
+
+void
+realm_changed_callback(void* userdata) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function0");
+    static JavaMethod java_callback_method(env, java_callback_class, "invoke",
+                                           "()Ljava/lang/Object;");
+    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method);
+    jni_check_exception(env);
+}
+
+void
+schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function1");
+    static JavaMethod java_callback_method(env, java_callback_class, "invoke",
+                                           "(Ljava/lang/Object;)Ljava/lang/Object;");
+    jobject schema_pointer_wrapper = wrap_pointer(env,reinterpret_cast<jlong>(new_schema));
+    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, schema_pointer_wrapper);
+    jni_check_exception(env);
+}
+
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
 //  changes as realm_collection_changes_t.
 realm_notification_token_t *
@@ -138,12 +178,6 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
     );
 }
 
-inline void jni_check_exception(JNIEnv *jenv = get_env()) {
-    if (jenv->ExceptionCheck()) {
-        jenv->ExceptionDescribe();
-        throw std::runtime_error("An unexpected Error was thrown from Java.");
-    }
-}
 
 class CustomJVMScheduler : public realm::util::Scheduler {
 public:
@@ -462,17 +496,6 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                               [](void* userdata) {
                                                   get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                               });
-}
-
-jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
-    static JavaMethod pointer_wrapper_constructor(jenv,
-                                                  JavaClassGlobalDef::long_pointer_wrapper(),
-                                                  "<init>",
-                                                  "(JZ)V");
-    return jenv->NewObject(JavaClassGlobalDef::long_pointer_wrapper(),
-                           pointer_wrapper_constructor,
-                           pointer,
-                           managed);
 }
 
 jobject convert_sync_exception(JNIEnv* jenv, const realm_sync_error_t error) {
