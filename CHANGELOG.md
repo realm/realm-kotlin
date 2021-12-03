@@ -11,7 +11,7 @@
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
 * Compiler plugin symbol lookup happens only on Sourset using Realm ([#544](https://github.com/realm/realm-kotlin/issues/544)).
-* Fixed migration exception when opening a synced realm that is already stored in the backend for the first time. 
+* Fixed migration exception when opening a synced realm that is already stored in the backend for the first time ([#601](https://github.com/realm/realm-kotlin/issues/604)).
 
 ### Compatibility
 * This release is compatible with:
