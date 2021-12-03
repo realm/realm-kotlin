@@ -308,14 +308,6 @@ interface RealmConfiguration {
          */
         fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
 
-        /**
-         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
-         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
-         *
-         * **WARNING!** This will result in loss of data.
-         */
-        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
-
         // Called from the compiler plugin
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
