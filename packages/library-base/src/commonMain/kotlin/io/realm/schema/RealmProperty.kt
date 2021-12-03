@@ -16,10 +16,25 @@
 
 package io.realm.schema
 
+/**
+ * A [RealmProperty] describes the properties of a class property in the object model.
+ */
 interface RealmProperty { // Matches realm_property_info_t
+    /**
+     * Returns the name of the property in the object model.
+     */
     val name: String
+
+    /**
+     * Returns the type of the property in the object model.
+     */
     val type: RealmPropertyType
-    // Referring to actual Kotlin KType property nullability and not Core's nullability flag
-    // (though being the same for singular types and always false for Non-singular types)
+
+    /**
+     * Returns whether or not the property is allowed to be null in the corresponding `RealmObject`
+     *
+     * For non-[ValuePropertyType] this is different from [RealmPropertyType.isNullable]  which
+     * indicates whether the individual storage element is allowed to be `null`.
+     */
     val isNullable: Boolean
 }

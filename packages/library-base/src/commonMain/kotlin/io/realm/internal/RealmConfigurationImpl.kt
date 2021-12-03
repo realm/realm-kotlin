@@ -96,7 +96,7 @@ open class RealmConfigurationImpl constructor(
 
         val nativeSchema = RealmInterop.realm_schema_new(
             mapOfKClassWithCompanion.values.map { it ->
-                it.`$realm$schema`().let { it.cinterosClass to it.cinteropProperties }
+                it.`$realm$schema`().let { it.cinteropClass to it.cinteropProperties }
             }
         )
 

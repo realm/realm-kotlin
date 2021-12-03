@@ -39,13 +39,14 @@ expect enum class PropertyType {
     RLM_PROPERTY_TYPE_OBJECT,
     RLM_PROPERTY_TYPE_FLOAT,
     RLM_PROPERTY_TYPE_DOUBLE,
+    RLM_PROPERTY_TYPE_TIMESTAMP,
     ;
 
     // Consider adding property methods to make it easier to do generic code on all types. Or is this exactly what collection type is about
     // fun isList()
     // fun isReference()
     companion object {
-        fun of(i: Int): PropertyType
+        fun from(nativeValue: Int): PropertyType
     }
 }
 
@@ -55,7 +56,7 @@ expect enum class CollectionType {
     RLM_COLLECTION_TYPE_SET,
     RLM_COLLECTION_TYPE_DICTIONARY;
     companion object {
-        fun of(i: Int): CollectionType
+        fun from(nativeValue: Int): CollectionType
     }
 }
 

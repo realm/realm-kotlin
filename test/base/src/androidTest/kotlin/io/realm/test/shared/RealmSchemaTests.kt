@@ -23,7 +23,7 @@ import io.realm.entities.schema.SchemaVariations
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
 import io.realm.schema.RealmStorageType
-import io.realm.schema.SingularPropertyType
+import io.realm.schema.ValuePropertyType
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -35,6 +35,14 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+private val SCHEMA_VARIATION_CLASS_NAME = SchemaVariations::class.simpleName!!
+
+/**
+ * Test of public schema API.
+ *
+ * This test suite doesn't exhaust all modeling features, but should have full coverage of the
+ * schema API code paths.
+ */
 public class RealmSchemaTests {
 
     private lateinit var tmpDir: String
@@ -61,9 +69,11 @@ public class RealmSchemaTests {
     fun realmClass() {
         val schema = realm.schema()
 
-        val schemaVariationsName = "SchemaVariations"
-        val schemaVariationsDescriptor = schema[schemaVariationsName] ?: fail("Couldn't find class")
-        assertEquals(schemaVariationsName, schemaVariationsDescriptor.name)
+        assertEquals(2, schema.classes.size)
+
+        val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]
+            ?: fail("Couldn't find class")
+        assertEquals(SCHEMA_VARIATION_CLASS_NAME, schemaVariationsDescriptor.name)
         assertEquals("string", schemaVariationsDescriptor.primaryKey()?.name)
 
         val sampleName = "Sample"
@@ -73,16 +83,22 @@ public class RealmSchemaTests {
     }
 
     @Test
+    fun realmClass_notFound() {
+        val schema = realm.schema()
+        assertNull(schema["non-existing_class"])
+    }
+
+    @Test
     fun realmProperty() {
         val schema = realm.schema()
 
-        val schemaVariationsName = "SchemaVariations"
-        val schemaVariationsDescriptor = schema[schemaVariationsName] ?: fail("Couldn't find class")
+        val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]
+            ?: fail("Couldn't find class")
 
         schemaVariationsDescriptor["string"]!!.run {
             assertEquals("string", name)
             type.run {
-                assertIs<SingularPropertyType>(this)
+                assertIs<ValuePropertyType>(this)
                 assertEquals(RealmStorageType.STRING, storageType)
                 assertFalse(isNullable)
                 assertTrue(isPrimaryKey)
@@ -93,7 +109,7 @@ public class RealmSchemaTests {
         schemaVariationsDescriptor["nullableString"]!!.run {
             assertEquals("nullableString", name)
             type.run {
-                assertIs<SingularPropertyType>(this)
+                assertIs<ValuePropertyType>(this)
                 assertEquals(RealmStorageType.STRING, storageType)
                 assertTrue(isNullable)
                 assertFalse(isPrimaryKey)
@@ -122,62 +138,46 @@ public class RealmSchemaTests {
     }
 
     @Test
-    @Suppress("NestedBlockDepth")
-    fun schema_optionCoverage() {
-        // Class property options
-        val primaryKeyOptionsClass = mutableSetOf(false, true)
-        // TODO Embedded object is not supported yet
-        // val embeddedOptions = setOf(false, true)
+    fun realmProperty_notFound() {
+        val schema = realm.schema()
+        val schemaVariationDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]!!
+        assertNull(schemaVariationDescriptor["non-existing-property"])
+    }
 
+    // This test is just showing how we could use the public Schema API to perform exhaustive tests.
+    // It overlaps with the TypeDescriptor infrastructure, so we should probably just update the
+    // type descriptor infrastructure to use this information or make the various TypeDescriptor
+    // properties available through the public schema API, ex.
+    //
+    // class ValuePropertyType {
+    //     companion object {
+    //         val supportedStorageTypes: Set<RealmStorageTypes> = setOf( ....)
+    //     }
+    // }
+    @Test
+    @Suppress("NestedBlockDepth")
+    fun schema_optionCoverag() {
         // Property options
-        val collectionTypeNullability =
-            RealmPropertyType.subTypes.map { it to mutableSetOf(false, true) }.toMap()
+        @Suppress("invisible_member")
+        val propertyTypeMap =
+            RealmPropertyType.subTypes.map { it to RealmStorageType.values().toMutableSet() }.toMap()
                 .toMutableMap()
-        val storageTypes = RealmStorageType.values().toMutableSet()
-        val indexOptions = mutableSetOf(false, true)
-        val primaryKeyOptionProperty = mutableSetOf(false, true)
 
         val schema = realm.schema()
-
-        // Verify class descriptors
-        for (classDescriptor in schema.classes) {
-            (classDescriptor.primaryKey() == null).let { primaryKeyOptionsClass.remove(it) }
-        }
-        assertEquals(2, schema.classes.size)
 
         // Verify properties of SchemaVariations
         val classDescriptor = schema["SchemaVariations"] ?: fail("Couldn't find class")
         assertEquals("SchemaVariations", classDescriptor.name)
         for (property in classDescriptor.properties) {
             property.type.run {
-                collectionTypeNullability.getValue(this::class).remove(this.isNullable)
-                storageTypes.remove(storageType)
-                if (this is SingularPropertyType) {
-                    isPrimaryKey.let { primaryKeyOptionProperty.remove(it) }
-                    isIndexed.let { indexOptions.remove(it) }
-                    if (isPrimaryKey) {
-                        assertEquals(classDescriptor.primaryKey(), property)
-                    }
-                }
+                propertyTypeMap.getValue(this::class).remove(this.storageType)
             }
         }
 
-        // Assert class options exhaustiveness
         assertTrue(
-            primaryKeyOptionsClass.isEmpty(),
-            "Primary key options not exhausted: $primaryKeyOptionsClass"
-        )
-        // Assert property options exhaustiveness
-        assertTrue(
-            collectionTypeNullability.none
+            propertyTypeMap.none
             { (_, v) -> v.isNotEmpty() },
-            "Collection types not exhausted: $collectionTypeNullability"
-        )
-        assertTrue(storageTypes.isEmpty(), "Field types not exhausted: $storageTypes")
-        assertTrue(indexOptions.isEmpty(), "Index options not exhausted: $indexOptions")
-        assertTrue(
-            primaryKeyOptionProperty.isEmpty(),
-            "Primary key options for properties not exhausted: $primaryKeyOptionProperty"
+            "Field types not exhausted: $propertyTypeMap"
         )
     }
 }

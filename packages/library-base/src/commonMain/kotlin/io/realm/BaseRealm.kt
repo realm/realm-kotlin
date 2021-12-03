@@ -26,9 +26,9 @@ interface BaseRealm : Versioned {
     val configuration: RealmConfiguration
 
     /**
-     * Returns a copy of the schema of the realm at invocation time.
+     * Returns an immutable schema of the realm.
      *
-     * @return a copy of the schema of the realm.
+     * @return the schema of the realm.
      */
     fun schema(): RealmSchema
 

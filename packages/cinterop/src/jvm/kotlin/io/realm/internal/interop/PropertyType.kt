@@ -25,12 +25,13 @@ actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated
     RLM_PROPERTY_TYPE_STRING(realm_property_type_e.RLM_PROPERTY_TYPE_STRING),
     RLM_PROPERTY_TYPE_OBJECT(realm_property_type_e.RLM_PROPERTY_TYPE_OBJECT),
     RLM_PROPERTY_TYPE_FLOAT(realm_property_type_e.RLM_PROPERTY_TYPE_FLOAT),
-    RLM_PROPERTY_TYPE_DOUBLE(realm_property_type_e.RLM_PROPERTY_TYPE_DOUBLE);
+    RLM_PROPERTY_TYPE_DOUBLE(realm_property_type_e.RLM_PROPERTY_TYPE_DOUBLE),
+    RLM_PROPERTY_TYPE_TIMESTAMP(realm_property_type_e.RLM_PROPERTY_TYPE_TIMESTAMP);
 
     // TODO OPTIMIZE
     actual companion object {
-        actual fun of(i: Int): PropertyType {
-            return values().find { it.nativeValue == i } ?: error("Unknown type: $i")
+        actual fun from(nativeValue: Int): PropertyType {
+            return values().find { it.nativeValue == nativeValue } ?: error("Unknown type: $nativeValue")
         }
     }
 }

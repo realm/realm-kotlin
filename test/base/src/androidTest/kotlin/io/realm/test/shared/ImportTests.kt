@@ -17,6 +17,7 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
@@ -74,6 +75,7 @@ class ImportTests {
                 Boolean::class -> assertEquals(true, managed.booleanField)
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
+                RealmInstant::class -> assertEquals(RealmInstant.fromEpochSeconds(100, 1000), managed.timestampField)
                 RealmObject::class -> assertEquals(null, managed.child)
                 else -> error("Untested type: $type")
             }

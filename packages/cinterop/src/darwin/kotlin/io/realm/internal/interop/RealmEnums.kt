@@ -53,11 +53,12 @@ actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerate
     RLM_PROPERTY_TYPE_STRING(realm_wrapper.RLM_PROPERTY_TYPE_STRING),
     RLM_PROPERTY_TYPE_OBJECT(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT),
     RLM_PROPERTY_TYPE_FLOAT(realm_wrapper.RLM_PROPERTY_TYPE_FLOAT),
-    RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE);
+    RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE),
+    RLM_PROPERTY_TYPE_TIMESTAMP(realm_wrapper.RLM_PROPERTY_TYPE_TIMESTAMP);
 
     actual companion object {
-        actual fun of(i: Int): PropertyType {
-            return values().find { it.nativeValue == i.toUInt() } ?: error("Unknown type: $i")
+        actual fun from(nativeValue: Int): PropertyType {
+            return values().find { it.nativeValue == nativeValue.toUInt() } ?: error("Unknown type: $nativeValue")
         }
     }
 }
@@ -68,8 +69,8 @@ actual enum class CollectionType(override val nativeValue: UInt) : NativeEnumera
     RLM_COLLECTION_TYPE_SET(realm_wrapper.RLM_COLLECTION_TYPE_SET),
     RLM_COLLECTION_TYPE_DICTIONARY(realm_wrapper.RLM_COLLECTION_TYPE_DICTIONARY);
     actual companion object {
-        actual fun of(i: Int): CollectionType {
-            return CollectionType.values().find { it.nativeValue == i.toUInt() } ?: error("Unknown type: $i")
+        actual fun from(nativeValue: Int): CollectionType {
+            return values().find { it.nativeValue == nativeValue.toUInt() } ?: error("Unknown type: $nativeValue")
         }
     }
 }

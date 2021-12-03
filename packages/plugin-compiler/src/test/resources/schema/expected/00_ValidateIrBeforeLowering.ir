@@ -32,8 +32,8 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.A.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (cinterosClass: io.realm.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.PropertyInfo>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinterosClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.ClassInfo declared in io.realm.internal.interop.ClassInfo.Companion' type=io.realm.internal.interop.ClassInfo origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.PropertyInfo>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.ClassInfo declared in io.realm.internal.interop.ClassInfo.Companion' type=io.realm.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="A"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
@@ -297,8 +297,8 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.B.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (cinterosClass: io.realm.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.PropertyInfo>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinterosClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.ClassInfo declared in io.realm.internal.interop.ClassInfo.Companion' type=io.realm.internal.interop.ClassInfo origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.PropertyInfo>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.ClassInfo declared in io.realm.internal.interop.ClassInfo.Companion' type=io.realm.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="B"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
@@ -562,8 +562,8 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in schema.input.C.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (cinterosClass: io.realm.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.PropertyInfo>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
-                cinterosClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.ClassInfo declared in io.realm.internal.interop.ClassInfo.Companion' type=io.realm.internal.interop.ClassInfo origin=null
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.PropertyInfo>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.ClassInfo declared in io.realm.internal.interop.ClassInfo.Companion' type=io.realm.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="C"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null

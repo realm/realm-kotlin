@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.realm.schema
+package io.realm.internal.interop
 
 /**
- * The various types that is used when storing the property values in the realm.
+ * Wrapper around Core Timestamp values.
+ * See https://github.com/realm/realm-core/blob/master/src/realm/timestamp.hpp for more information
  */
-enum class RealmStorageType {
-    BOOL,
-    INT,
-    STRING,
-    OBJECT,
-    FLOAT,
-    DOUBLE,
-    TIMESTAMP;
+interface Timestamp {
+    val seconds: Long
+    val nanoSeconds: Int
 }
+
+// Implementation that should only be used within the cinterop module.
+internal data class TimestampImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp

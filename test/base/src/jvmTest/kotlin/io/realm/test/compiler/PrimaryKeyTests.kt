@@ -18,6 +18,7 @@ package io.realm.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.RealmInstant
 import io.realm.internal.interop.CollectionType
 import io.realm.test.util.Compiler.compileFromSource
 import io.realm.test.util.TypeDescriptor.allFieldTypes
@@ -42,6 +43,7 @@ class PrimaryKeyTests {
             Float::class to "1.4f",
             Double::class to "1.4",
             String::class to "\"Realm\"",
+            RealmInstant::class to "RealmInstant.fromEpochSeconds(42, 420)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -59,6 +61,7 @@ class PrimaryKeyTests {
                 source = SourceFile.kotlin(
                     "primaryKey.kt",
                     """
+                        import io.realm.RealmInstant
                         import io.realm.RealmObject
                         import io.realm.RealmConfiguration
                         import io.realm.annotations.PrimaryKey

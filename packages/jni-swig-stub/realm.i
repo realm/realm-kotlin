@@ -9,8 +9,6 @@
 using namespace realm::jni_util;
 %}
 
-// FIXME MEMORY Verify finalizers, etc.
-//  https://github.com/realm/realm-kotlin/issues/93
 // TODO OPTIMIZATION
 //  - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
@@ -41,7 +39,7 @@ using namespace realm::jni_util;
                 java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
                 loadMethod.invoke(instance);
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException("Couldn't load realm native libraries", e);
             }
         }
     }

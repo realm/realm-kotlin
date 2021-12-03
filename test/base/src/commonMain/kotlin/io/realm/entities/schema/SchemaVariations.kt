@@ -16,6 +16,7 @@
 
 package io.realm.entities.schema
 
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.Index
@@ -23,7 +24,12 @@ import io.realm.annotations.PrimaryKey
 import io.realm.entities.Sample
 import io.realm.realmListOf
 
+/**
+ * Class used for test of the schema API; thus, doesn't exhaust modeling features but just provides
+ * sufficient model features to cover all code paths of the schema API.
+ */
 class SchemaVariations : RealmObject {
+    // Value properties
     var bool: Boolean = false
     var byte: Byte = 0
     var char: Char = 'a'
@@ -34,12 +40,24 @@ class SchemaVariations : RealmObject {
     var double: Double = 5.0
     @PrimaryKey
     var string: String = "Realm"
-
+    var date: RealmInstant = RealmInstant.fromEpochSeconds(0, 0)
     @Index
     var nullableString: String? = "Realm"
     var nullableRealmObject: Sample? = null
 
+    // List properties
+    var boolList: RealmList<Boolean> = realmListOf()
+    var byteList: RealmList<Byte> = realmListOf()
+    var charList: RealmList<Char> = realmListOf()
+    var shortList: RealmList<Short> = realmListOf()
+    var intList: RealmList<Int> = realmListOf()
+    var longList: RealmList<Long> = realmListOf()
+    var floatList: RealmList<Float> = realmListOf()
+    var doubleList: RealmList<Double> = realmListOf()
     var stringList: RealmList<String> = realmListOf()
+    var dateList: RealmList<RealmInstant> = realmListOf()
+
+    var objectList: RealmList<Sample> = realmListOf()
 
     var nullableStringList: RealmList<String?> = realmListOf()
 }

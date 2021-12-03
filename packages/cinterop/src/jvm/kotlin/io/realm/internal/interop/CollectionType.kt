@@ -26,8 +26,8 @@ actual enum class CollectionType(override val nativeValue: Int) : NativeEnumerat
     RLM_COLLECTION_TYPE_DICTIONARY(realm_collection_type_e.RLM_COLLECTION_TYPE_DICTIONARY);
 
     actual companion object {
-        actual fun of(i: Int): CollectionType {
-            return CollectionType.values().find { it.nativeValue == i } ?: error("Unknown type: $i")
+        actual fun from(nativeValue: Int): CollectionType {
+            return values().find { it.nativeValue == nativeValue } ?: error("Unknown type: $nativeValue")
         }
     }
 }
