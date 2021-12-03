@@ -465,8 +465,8 @@ actual object RealmInterop {
                             PropertyInfo(
                                 name.safeKString("name"),
                                 public_name?.toKString(),
-                                PropertyType.of(type.toInt()),
-                                CollectionType.of(collection_type.toInt()),
+                                PropertyType.from(type.toInt()),
+                                CollectionType.from(collection_type.toInt()),
                                 link_target?.toKString(),
                                 link_origin_property_name?.toKString(),
                                 PropertyKey(key),
