@@ -103,6 +103,7 @@ interface RealmConfiguration {
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
         // TODO Consider moving this to `LocalConfiguration`
+        //  https://github.com/realm/realm-kotlin/pull/601#discussion_r762030404
         // Should always follow Builder constructor arguments
         fun with(
             schema: Set<KClass<out RealmObject>>
@@ -296,6 +297,7 @@ interface RealmConfiguration {
      * created using the [RealmConfiguration.with] function.
      */
     // TODO Consider moving this to `LocalConfiguration`
+    //  https://github.com/realm/realm-kotlin/pull/601#discussion_r762030404
     class Builder(
         schema: Set<KClass<out RealmObject>> = setOf()
     ) : SharedBuilder<LocalConfiguration, Builder>(schema) {
