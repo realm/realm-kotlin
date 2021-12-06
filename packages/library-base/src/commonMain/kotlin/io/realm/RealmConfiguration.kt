@@ -311,7 +311,7 @@ interface RealmConfiguration {
         // Called from the compiler plugin
         internal fun build(
             companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
-        ): RealmConfiguration {
+        ): LocalConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))

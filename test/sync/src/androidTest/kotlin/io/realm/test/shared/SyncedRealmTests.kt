@@ -183,6 +183,9 @@ class SyncedRealmTests {
         val realm3 = Realm.open(config3)
         assertNotNull(realm3)
 
+        realm1.close()
+        realm2.close()
+        realm3.close()
         PlatformUtils.deleteTempDir(dir1)
         PlatformUtils.deleteTempDir(dir2)
         PlatformUtils.deleteTempDir(dir3)
