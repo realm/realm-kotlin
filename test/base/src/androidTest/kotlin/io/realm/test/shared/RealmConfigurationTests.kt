@@ -36,8 +36,6 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -58,7 +56,7 @@ class RealmConfigurationTests {
     @Test
     fun localConfigAsRealmConfig() {
         val configFromBuilder: LocalConfiguration =
-                RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
         val configFromBuilderAsRealmConfig: RealmConfiguration = configFromBuilder
 
         val configFromWith: LocalConfiguration = RealmConfiguration.with(schema = setOf(Sample::class))
