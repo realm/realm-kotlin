@@ -28,6 +28,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @Suppress("LargeClass")
@@ -347,7 +348,56 @@ class QueryTests {
     }
 
     @Test
-    fun composedQuery_withDescriptorAndQueryAgain() {
+    fun composedQuery_withDescriptors() {
+        val value1 = 1
+        val value2 = 2
+        val value3 = 3
+        val value4 = 4
+        val sylvia = "Sylvia"
+        val stacy = "Stacy"
+        val ruth = "Ruth"
+
+        realm.writeBlocking {
+            copyToRealm(
+                Sample().apply {
+                    intField = value1
+                    stringField = sylvia
+                }
+            )
+            copyToRealm(
+                Sample().apply {
+                    intField = value2
+                    stringField = sylvia // intentionally repeated
+                }
+            )
+            copyToRealm(
+                Sample().apply {
+                    intField = value3
+                    stringField = stacy
+                }
+            )
+            copyToRealm(
+                Sample().apply {
+                    intField = value4
+                    stringField = ruth
+                }
+            )
+        }
+
+        // Ruth 4, Stacy 3
+        realm.query(Sample::class)
+            .distinct(Sample::stringField.name) // Sylvia, Stacy, Ruth
+            .sort(Sample::stringField.name, Sort.ASCENDING) // Ruth, Stacy, Sylvia
+            .limit(2) // Ruth 4, Stacy 3
+            .find { results ->
+                assertEquals(2, results.size)
+                assertEquals(ruth, results[0].stringField)
+                assertEquals(stacy, results[1].stringField)
+            }
+    }
+
+    @Test
+    fun composedQuery_withDescriptorsAndQueryAgain() {
         val value1 = 1
         val value2 = 2
         val value3 = 3
@@ -510,9 +560,69 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
     fun distinct() {
-        // TODO
+        val value1 = 1
+        val value2 = 2
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value1 }) // repeated intentionally
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        realm.query(Sample::class)
+            .distinct(Sample::intField.name)
+            .find { results ->
+                assertEquals(2, results.size)
+            }
+
+        realm.query(Sample::class)
+            .distinct(Sample::intField.name)
+            .sort(Sample::intField.name, Sort.ASCENDING)
+            .find { results ->
+                assertEquals(2, results.size)
+                assertEquals(value1, results[0].intField)
+                assertEquals(value2, results[1].intField)
+            }
+    }
+
+    @Test
+    fun distinct_multipleFields() {
+        val value1 = 1
+        val value2 = 2
+        realm.writeBlocking {
+            copyToRealm(
+                Sample().apply {
+                    intField = value1
+                    longField = value1.toLong()
+                }
+            )
+            copyToRealm(
+                // Mixing values for different fields in this object
+                Sample().apply {
+                    intField = value1
+                    longField = value2.toLong()
+                }
+            )
+            copyToRealm(
+                // Intentionally inserting the same values as specified in the previous object
+                Sample().apply {
+                    intField = value1
+                    longField = value2.toLong()
+                }
+            )
+            copyToRealm(
+                Sample().apply {
+                    intField = value2
+                    longField = value2.toLong()
+                }
+            )
+        }
+
+        realm.query(Sample::class)
+            .distinct(Sample::intField.name, Sample::longField.name)
+            .find { results ->
+                assertEquals(3, results.size)
+            }
     }
 
     @Test
@@ -542,12 +652,6 @@ class QueryTests {
                 assertEquals(1, results.size)
                 assertEquals(value3, results[0].intField)
             }
-    }
-
-    @Test
-    @Ignore
-    fun limit_withSortAndDistinct() {
-        // TODO
     }
 
     @Test
@@ -637,9 +741,27 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
+    fun count_find_empty() {
+        realm.query(Sample::class)
+            .count()
+            .find { countValue -> assertEquals(0, countValue) }
+    }
+
+    @Test
     fun count_find() {
-        // TODO
+        realm.writeBlocking {
+            // Queries inside a write transaction produce live results which means they can be
+            // reused within the closure
+            val countQuery = query(Sample::class).count()
+
+            assertEquals(0, countQuery.find())
+            copyToRealm(Sample())
+            assertEquals(1, countQuery.find())
+        }
+
+        realm.query(Sample::class)
+            .count()
+            .find { countValue -> assertEquals(1, countValue) }
     }
 
     @Test
@@ -655,9 +777,30 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
     fun sum_find() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+        val expectedSum = value1 + value2
+
+        realm.query(Sample::class)
+            .sum(Sample::intField.name, Int::class)
+            .find { sumValue: Int? -> assertEquals(0, sumValue) }
+
+        realm.writeBlocking {
+            // Queries inside a write transaction produce live results which means they can be
+            // reused within the closure
+            val sumQuery = query(Sample::class)
+                .sum(Sample::intField.name, Int::class)
+
+            assertEquals(0, sumQuery.find())
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            assertEquals(expectedSum, sumQuery.find())
+        }
+
+        realm.query(Sample::class)
+            .sum(Sample::intField.name, Int::class)
+            .find { sumValue: Int? -> assertEquals(expectedSum, sumValue) }
     }
 
     @Test
@@ -668,20 +811,40 @@ class QueryTests {
 
     @Test
     @Ignore
-    fun sum_generic_asFlow_throwsIfInvalidType() {
+    fun sum_asFlow_throwsIfInvalidType() {
         // TODO
     }
 
     @Test
     @Ignore
-    fun sum_generic_asFlow_throwsIfInvalidProperty() {
+    fun sum_asFlow_throwsIfInvalidProperty() {
         // TODO
     }
 
     @Test
-    @Ignore
     fun max_find() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+
+        realm.query(Sample::class)
+            .max(Sample::intField.name, Int::class)
+            .find { maxValue: Int? -> assertNull(maxValue) }
+
+        realm.writeBlocking {
+            // Queries inside a write transaction produce live results which means they can be
+            // reused within the closure
+            val maxQuery = query(Sample::class)
+                .max(Sample::intField.name, Int::class)
+
+            assertNull(maxQuery.find())
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            assertEquals(value2, maxQuery.find())
+        }
+
+        realm.query(Sample::class)
+            .max(Sample::intField.name, Int::class)
+            .find { maxValue: Int? -> assertEquals(value2, maxValue) }
     }
 
     @Test
@@ -692,20 +855,40 @@ class QueryTests {
 
     @Test
     @Ignore
-    fun max_generic_asFlow_throwsIfInvalidType() {
+    fun max_asFlow_throwsIfInvalidType() {
         // TODO
     }
 
     @Test
     @Ignore
-    fun max_generic_asFlow_throwsIfInvalidProperty() {
+    fun max_asFlow_throwsIfInvalidProperty() {
         // TODO
     }
 
     @Test
-    @Ignore
     fun min_find() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+
+        realm.query(Sample::class)
+            .min(Sample::intField.name, Int::class)
+            .find { minValue: Int? -> assertNull(minValue) }
+
+        realm.writeBlocking {
+            // Queries inside a write transaction produce live results which means they can be
+            // reused within the closure
+            val minQuery = query(Sample::class)
+                .min(Sample::intField.name, Int::class)
+
+            assertNull(minQuery.find())
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            assertEquals(value1, minQuery.find())
+        }
+
+        realm.query(Sample::class)
+            .min(Sample::intField.name, Int::class)
+            .find { minValue: Int? -> assertEquals(value1, minValue) }
     }
 
     @Test
@@ -716,13 +899,13 @@ class QueryTests {
 
     @Test
     @Ignore
-    fun min_generic_asFlow_throwsIfInvalidType() {
+    fun min_asFlow_throwsIfInvalidType() {
         // TODO
     }
 
     @Test
     @Ignore
-    fun min_generic_asFlow_throwsIfInvalidProperty() {
+    fun min_asFlow_throwsIfInvalidProperty() {
         // TODO
     }
 
