@@ -164,7 +164,7 @@ class QueryTests {
     }
 
     @Test
-    @SuppressWarnings("LongMethod")
+    @Suppress("LongMethod")
     fun composedQuery() {
         val joe = "Joe"
         val sylvia = "Sylvia"
@@ -237,7 +237,7 @@ class QueryTests {
     }
 
     @Test
-    @SuppressWarnings("LongMethod")
+    @Suppress("LongMethod")
     fun composedQuery_withDescriptor() {
         val value1 = 1
         val value2 = 2
