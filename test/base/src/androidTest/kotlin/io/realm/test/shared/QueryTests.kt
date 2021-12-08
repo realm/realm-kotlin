@@ -22,12 +22,17 @@ import io.realm.entities.Sample
 import io.realm.query.Sort
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -165,7 +170,7 @@ class QueryTests {
     }
 
     @Test
-    @SuppressWarnings("LongMethod")
+    @Suppress("LongMethod")
     fun composedQuery() {
         val joe = "Joe"
         val sylvia = "Sylvia"
@@ -238,7 +243,7 @@ class QueryTests {
     }
 
     @Test
-    @SuppressWarnings("LongMethod")
+    @Suppress("LongMethod")
     fun composedQuery_withDescriptor() {
         val value1 = 1
         val value2 = 2
@@ -765,15 +770,51 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
     fun count_asFlow() {
-        // TODO
+        val channel = Channel<Long>(1)
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .count()
+                    .asFlow()
+                    .collect { countValue ->
+                        assertNotNull(countValue)
+                        channel.send(countValue)
+                    }
+            }
+
+            assertEquals(0, channel.receive())
+
+            realm.writeBlocking {
+                copyToRealm(Sample())
+            }
+
+            assertEquals(1, channel.receive())
+            observer.cancel()
+            channel.close()
+        }
     }
 
     @Test
-    @Ignore
     fun count_asFlow_throwsInsideWrite() {
-        // TODO
+        realm.writeBlocking {
+            // Check we throw when observing flows inside write transactions
+            runBlocking {
+                assertFailsWith<IllegalStateException> {
+                    query(Sample::class)
+                        .count()
+                        .asFlow()
+                }
+            }
+        }
+    }
+
+    @Test
+    fun sum_find_empty() {
+        realm.query(Sample::class)
+            .sum(Sample::intField.name, Int::class)
+            .find { sumValue: Int? -> assertEquals(0, sumValue) }
     }
 
     @Test
@@ -781,10 +822,6 @@ class QueryTests {
         val value1 = 2
         val value2 = 7
         val expectedSum = value1 + value2
-
-        realm.query(Sample::class)
-            .sum(Sample::intField.name, Int::class)
-            .find { sumValue: Int? -> assertEquals(0, sumValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
@@ -804,21 +841,94 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
+    fun sum_find_throwsIfInvalidProperty() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .sum(Sample::stringField.name, Int::class)
+                .find()
+        }
+    }
+
+    @Test
+    fun sum_find_throwsIfInvalidType() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .sum(Sample::intField.name, String::class)
+                .find()
+        }
+    }
+
+    @Test
     fun sum_asFlow() {
-        // TODO
+        val channel = Channel<Int?>(1)
+        val value1 = 2
+        val value2 = 7
+        val expectedSum = value1 + value2
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .sum(Sample::intField.name, Int::class)
+                    .asFlow()
+                    .collect { sumValue ->
+                        channel.send(sumValue)
+                    }
+            }
+
+            assertEquals(0, channel.receive())
+
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = value1 })
+                copyToRealm(Sample().apply { intField = value2 })
+            }
+
+            assertEquals(expectedSum, channel.receive())
+            observer.cancel()
+            channel.close()
+        }
     }
 
     @Test
-    @Ignore
     fun sum_asFlow_throwsIfInvalidType() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .sum(Sample::intField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid numeric type"))
+            }
+        }
     }
 
     @Test
-    @Ignore
     fun sum_asFlow_throwsIfInvalidProperty() {
-        // TODO
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .sum(Sample::stringField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid query formulation"))
+            }
+        }
+    }
+
+    @Test
+    fun max_find_empty() {
+        realm.query(Sample::class)
+            .max(Sample::intField.name, Int::class)
+            .find { maxValue: Int? -> assertNull(maxValue) }
     }
 
     @Test
@@ -848,21 +958,108 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
+    fun max_find_throwsIfInvalidProperty() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .max(Sample::stringField.name, Int::class)
+                .find()
+        }
+    }
+
+    @Test
+    fun max_find_throwsIfInvalidType() {
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = 1 })
+            copyToRealm(Sample().apply { intField = 2 })
+        }
+
+        // TODO this won't fail unless we have previously stored something, otherwise it returns
+        //  null and nothing will trigger an exception!
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .max(Sample::intField.name, String::class)
+                .find()
+        }
+    }
+
+    @Test
     fun max_asFlow() {
-        // TODO
+        val channel = Channel<Int?>(1)
+        val value1 = 2
+        val value2 = 7
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .max(Sample::intField.name, Int::class)
+                    .asFlow()
+                    .collect { maxValue ->
+                        channel.send(maxValue)
+                    }
+            }
+
+            assertNull(channel.receive())
+
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = value1 })
+                copyToRealm(Sample().apply { intField = value2 })
+            }
+
+            assertEquals(value2, channel.receive())
+            observer.cancel()
+            channel.close()
+        }
     }
 
     @Test
-    @Ignore
     fun max_asFlow_throwsIfInvalidType() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .max(Sample::intField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid numeric type"))
+            }
+        }
     }
 
     @Test
-    @Ignore
     fun max_asFlow_throwsIfInvalidProperty() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .max(Sample::stringField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid query formulation"))
+            }
+        }
+    }
+
+    @Test
+    fun min_find_empty() {
+        realm.query(Sample::class)
+            .min(Sample::intField.name, Int::class)
+            .find { minValue: Int? -> assertNull(minValue) }
     }
 
     @Test
@@ -892,21 +1089,101 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
+    fun min_find_throwsIfInvalidProperty() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .min(Sample::stringField.name, Int::class)
+                .find()
+        }
+    }
+
+    @Test
+    fun min_find_throwsIfInvalidType() {
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = 1 })
+            copyToRealm(Sample().apply { intField = 2 })
+        }
+
+        // TODO this won't fail unless we have previously stored something, otherwise it returns
+        //  null and nothing will trigger an exception!
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(Sample::class)
+                .min(Sample::intField.name, String::class)
+                .find()
+        }
+    }
+
+    @Test
     fun min_asFlow() {
-        // TODO
+        val channel = Channel<Int?>(1)
+        val value1 = 2
+        val value2 = 7
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .min(Sample::intField.name, Int::class)
+                    .asFlow()
+                    .collect { minValue ->
+                        channel.send(minValue)
+                    }
+            }
+
+            assertNull(channel.receive())
+
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = value1 })
+                copyToRealm(Sample().apply { intField = value2 })
+            }
+
+            assertEquals(value1, channel.receive())
+            observer.cancel()
+            channel.close()
+        }
     }
 
     @Test
-    @Ignore
     fun min_asFlow_throwsIfInvalidType() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .min(Sample::intField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid numeric type"))
+            }
+        }
     }
 
     @Test
-    @Ignore
     fun min_asFlow_throwsIfInvalidProperty() {
-        // TODO
+        val value1 = 2
+        val value2 = 7
+
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+        }
+
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                realm.query(Sample::class)
+                    .min(Sample::stringField.name, String::class)
+                    .asFlow()
+                    .collect { /* No-op */ }
+            }.let {
+                assertTrue(it.message!!.contains("Invalid query formulation"))
+            }
+        }
     }
 
     @Test

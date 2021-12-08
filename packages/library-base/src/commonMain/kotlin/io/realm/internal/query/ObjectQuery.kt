@@ -142,9 +142,16 @@ internal class ObjectQuery<E : RealmObject> constructor(
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator)
 
-    override fun asFlow(): Flow<RealmResults<E>> = TODO()
+    override fun thaw(liveRealm: RealmReference): BaseResults<E> {
+        val liveResults = RealmInterop.realm_results_resolve_in(resultsPointer, liveRealm.dbPointer)
+        return ElementResults(liveRealm, liveResults, clazz, mediator)
+    }
 
-    override fun thaw(liveRealm: RealmReference): BaseResults<E> = TODO()
+    override fun asFlow(): Flow<RealmResults<E>> {
+        realmReference.checkClosed()
+        return realmReference.owner
+            .registerObserver(this)
+    }
 
     private fun parseQuery(): NativePointer = tryCatchCoreException(filter) {
         RealmInterop.realm_query_parse(
