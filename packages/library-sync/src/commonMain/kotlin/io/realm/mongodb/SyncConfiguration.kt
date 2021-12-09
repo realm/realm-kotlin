@@ -21,7 +21,6 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.RealmConfigurationImpl
-import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
@@ -107,9 +106,7 @@ interface SyncConfiguration : RealmConfiguration {
         fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
             apply { this.errorHandler = errorHandler }
 
-        internal fun build(
-            companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
-        ): SyncConfiguration {
+        override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
             // TODO This will not remove the system logger if it was added in AppConfiguration and
             //  no overrides are done for this builder. But as removeSystemLogger() is not public
@@ -142,7 +139,6 @@ interface SyncConfiguration : RealmConfiguration {
             }
 
             val localConfiguration = RealmConfigurationImpl(
-                companionMap,
                 path,
                 name,
                 schema,

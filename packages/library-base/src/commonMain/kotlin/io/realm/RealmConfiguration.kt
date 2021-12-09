@@ -16,9 +16,7 @@
 
 package io.realm
 
-import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
-import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -108,12 +106,9 @@ interface RealmConfiguration {
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        // Should always follow Builder constructor arguments
         fun with(
             schema: Set<KClass<out RealmObject>>
-        ): RealmConfiguration {
-            REPLACED_BY_IR() // Will be replace by Builder(schema).build(companionMap)
-        }
+        ): RealmConfiguration = Builder(schema).build()
     }
 
     /**
@@ -149,9 +144,7 @@ interface RealmConfiguration {
          *
          * @return the created RealmConfiguration.
          */
-        fun build(): T {
-            REPLACED_BY_IR()
-        }
+        abstract fun build(): T
 
         /**
          * Sets the absolute path of the realm file.
@@ -314,17 +307,13 @@ interface RealmConfiguration {
         schema: Set<KClass<out RealmObject>> = setOf()
     ) : SharedBuilder<RealmConfiguration, Builder>(schema) {
 
-        // Called from the compiler plugin
-        internal fun build(
-            companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
-        ): RealmConfiguration {
+        override fun build(): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
             return RealmConfigurationImpl(
-                companionMap,
                 path,
                 name,
                 schema,

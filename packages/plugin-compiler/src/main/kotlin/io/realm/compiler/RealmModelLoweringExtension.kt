@@ -26,12 +26,19 @@ import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 private val realmObjectInternalOverrides = setOf(
@@ -55,6 +62,35 @@ class RealmModelLoweringExtension : IrGenerationExtension {
 private class RealmModelLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
     override fun lower(irClass: IrClass) {
         if (irClass.hasRealmModelInterface) {
+            // For native we add @ModelObject(irClass.Companion::class) as associated object to be
+            // able to resolve the companion object during runtime due to absence of
+            // kotlin.reflect.full.companionObjectInstance
+            if (pluginContext.platform?.componentPlatforms?.first()?.platformName == "Native") {
+                // FIXME Only look this up once, but only for Native builds as ModelObject is not
+                //  available on Native
+                val modelObjectAnnotationClass =
+                    pluginContext.lookupClassOrThrow(FqName("io.realm.internal.platform.ModelObject"))
+                val modelObjectAnnotation = IrConstructorCallImpl(
+                    UNDEFINED_OFFSET,
+                    UNDEFINED_OFFSET,
+                    type = modelObjectAnnotationClass.defaultType,
+                    symbol = modelObjectAnnotationClass.primaryConstructor!!.symbol,
+                    constructorTypeArgumentsCount = 0,
+                    typeArgumentsCount = 0,
+                    valueArgumentsCount = 1
+                ).apply {
+                    putValueArgument(
+                        0,
+                        IrClassReferenceImpl(
+                            startOffset, endOffset,
+                            pluginContext.irBuiltIns.kClassClass.starProjectedType,
+                            irClass.companionObject()!!.symbol,
+                            type
+                        )
+                    )
+                }
+                irClass.annotations += modelObjectAnnotation
+            }
             // add super type RealmObjectInternal and RealmObjectInterop
             val realmObjectInternalInterface: IrClassSymbol =
                 pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE).symbol
