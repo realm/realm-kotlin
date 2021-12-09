@@ -165,21 +165,16 @@ internal class ValueChangeManager<T> {
     private val firstUpdate: AtomicBoolean = atomic(true)
     private val previousValue: AtomicRef<T?> = atomic(null)
 
-    fun shouldEmitValue(latestValue: T?): Boolean {
-        return if (firstUpdate.value) {
-            println("---> first update, value: $latestValue")
-            firstUpdate.value = false
+    fun shouldEmitValue(latestValue: T?): Boolean = if (firstUpdate.value) {
+        firstUpdate.value = false
+        previousValue.value = latestValue
+        true
+    } else {
+        if (previousValue.value == latestValue) {
+            false
+        } else {
             previousValue.value = latestValue
             true
-        } else {
-            if (previousValue.value == latestValue) {
-                println("---> value did NOT change!")
-                false
-            } else {
-                println("---> value DID change - previous: ${previousValue.value}, latest: $latestValue")
-                previousValue.value = latestValue
-                true
-            }
         }
     }
 }
