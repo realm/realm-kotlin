@@ -19,6 +19,7 @@ package io.realm.test
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
+import io.realm.query
 import io.realm.test.platform.PlatformUtils.createTempDir
 import io.realm.test.platform.PlatformUtils.deleteTempDir
 import io.realm.test.platform.PlatformUtils.triggerGC
@@ -61,7 +62,9 @@ class MemoryTests {
             val realm = openRealmFromTmpDir()
             // TODO use Realm.delete once this is implemented
             realm.writeBlocking {
-                objects(Sample::class).delete()
+                query<Sample>()
+                    .find()
+                    .delete()
             }
 
             // allocating a 1 MB string

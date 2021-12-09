@@ -21,6 +21,8 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.entities.Sample
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
@@ -33,6 +35,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -63,7 +66,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<RealmResults<Sample>>(1)
             val observer = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .collect {
                         c.trySend(it)
@@ -81,7 +84,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .filterNot {
                         it.isEmpty()
@@ -104,7 +107,7 @@ class RealmResultsNotificationsTests : NotificationTests {
             val c1 = Channel<RealmResults<Sample>>(1)
             val c2 = Channel<RealmResults<Sample>>(1)
             val observer1 = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .filterNot {
                         it.isEmpty()
@@ -113,7 +116,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
             val observer2 = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .filterNot {
                         it.isEmpty()
@@ -150,7 +153,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 )
             }
             val observer = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .collect {
                         c.trySend(it)
@@ -158,7 +161,12 @@ class RealmResultsNotificationsTests : NotificationTests {
             }
             assertEquals(1, c.receive().size)
             realm.write {
-                delete(objects(Sample::class).first())
+                query<Sample>()
+                    .first()
+                    .find { sample ->
+                        assertNotNull(sample)
+                        delete(sample)
+                    }
             }
             assertEquals(0, c.receive().size)
             observer.cancel()
@@ -167,13 +175,13 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
-    @Ignore // FIXME Not correctly imlemented yet
+    @Ignore // FIXME Not correctly implemented yet
     override fun closeRealmInsideFlowThrows() {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val counter = AtomicInt(0)
             val observer1 = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .collect {
                         when (counter.incrementAndGet()) {
@@ -187,7 +195,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
             val observer2 = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .collect {
                         println(it.first().stringField)
@@ -213,7 +221,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .filterNot {
                         it.isEmpty()

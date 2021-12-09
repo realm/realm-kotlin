@@ -57,18 +57,6 @@ interface MutableRealm : TypedRealm {
     fun <T : RealmObject> copyToRealm(instance: T): T
 
     /**
-     * Returns the results of querying for all objects of a specific type.
-     *
-     * The result is live and thus also reflects any update to the [MutableRealm].
-     *
-     * The result is only valid on the calling thread.
-     *
-     * @param clazz the class of the objects to query for.
-     * @return the result of the query, reflecting future updates to the mutable realm.
-     */
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
-
-    /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *
      * The results yielded by the query are live and thus also reflect any update to the

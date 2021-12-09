@@ -61,17 +61,6 @@ interface Realm : TypedRealm {
     }
 
     /**
-     * Returns the results of querying for all objects of a specific type.
-     *
-     * The result reflects the state of the Realm at invocation time, so the results
-     * do not change when the Realm updates. You can access these results from any thread.
-     *
-     * @param clazz the class of the objects to query for.
-     * @return The result of the query as of the time of invoking this method.
-     */
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
-
-    /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *
      * The results yielded by the query reflect the state of the Realm at invocation time, so the

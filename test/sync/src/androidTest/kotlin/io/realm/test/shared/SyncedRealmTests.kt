@@ -29,6 +29,7 @@ import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
+import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
@@ -121,7 +122,7 @@ class SyncedRealmTests {
 
         runBlocking {
             val observer = async {
-                realm2.objects(ChildPk::class)
+                realm2.query<ChildPk>()
                     .asFlow()
                     .collect { childResults ->
                         channel.send(childResults)

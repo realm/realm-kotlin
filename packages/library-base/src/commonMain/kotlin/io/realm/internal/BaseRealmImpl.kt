@@ -19,7 +19,6 @@ import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
-import io.realm.RealmResults
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.query.ObjectQuery
@@ -63,19 +62,6 @@ abstract class BaseRealmImpl internal constructor(
 
     init {
         log.info("Realm opened: ${configuration.path}")
-    }
-
-    open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        // Use same reference through out all operations to avoid locking
-        val realmReference = this.realmReference
-        realmReference.checkClosed()
-        val findAllQuery = RealmInterop.realm_query_parse(
-            realmReference.dbPointer,
-            clazz.simpleName!!,
-            "TRUEPREDICATE"
-        )
-        val resultsPointer = RealmInterop.realm_query_find_all(findAllQuery)
-        return ElementResults(realmReference, resultsPointer, clazz, configuration.mediator)
     }
 
     open fun <T : RealmObject> query(

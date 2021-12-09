@@ -21,11 +21,14 @@ import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class MigrationTests {
 
@@ -59,15 +62,20 @@ class MigrationTests {
             schema = setOf(Sample::class, Parent::class, Child::class)
         ).path(path).build().also {
             Realm.open(it).run {
-                objects(Sample::class).first().run {
-                    assertEquals("Kotlin!", stringField)
-                }
+                query<Sample>()
+                    .first()
+                    .find { sample ->
+                        assertNotNull(sample)
+                        assertEquals("Kotlin!", sample.stringField)
+                    }
                 // make sure the added classes are available in the new schema
                 writeBlocking {
                     copyToRealm(Child())
                 }
 
-                assertEquals(1, objects(Sample::class).count())
+                query<Sample>().count().find { countValue ->
+                    assertEquals(1L, countValue)
+                }
                 close()
             }
         }
@@ -92,9 +100,12 @@ class MigrationTests {
             schema = setOf(Parent::class, Child::class)
         ).path(path).build().also {
             Realm.open(it).run {
-                objects(Child::class).first().run {
-                    assertEquals("Kotlin!", name)
-                }
+                query<Child>()
+                    .first()
+                    .find { child ->
+                        assertNotNull(child)
+                        assertEquals("Kotlin!", child.name)
+                    }
                 close()
             }
         }
@@ -120,9 +131,12 @@ class MigrationTests {
             .deleteRealmIfMigrationNeeded()
             .build().also {
                 Realm.open(it).run {
-                    objects(Sample::class).first().run {
-                        assertEquals("Kotlin!", stringField)
-                    }
+                    query<Sample>()
+                        .first()
+                        .find { sample ->
+                            assertNotNull(sample)
+                            assertEquals("Kotlin!", sample.stringField)
+                        }
                     close()
                 }
             }
@@ -149,9 +163,12 @@ class MigrationTests {
             .build()
             .also {
                 Realm.open(it).run {
-                    objects(Child::class).first().run {
-                        assertEquals("Kotlin!", name)
-                    }
+                    query<Child>()
+                        .first()
+                        .find { child ->
+                            assertNotNull(child)
+                            assertEquals("Kotlin!", child.name)
+                        }
                     close()
                 }
             }

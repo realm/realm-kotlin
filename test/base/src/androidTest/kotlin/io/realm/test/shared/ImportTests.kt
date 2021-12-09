@@ -56,7 +56,7 @@ class ImportTests {
     @Test
     fun importPrimitiveDefaults() {
         realm.writeBlocking { copyToRealm(Sample()) }
-        val managed = realm.objects(Sample::class)[0]
+        val managed = realm.query(Sample::class).find()[0]
 
         // TODO Find a way to ensure that our Sample covers all types. This isn't doable right now
         //  without polluting test project configuration with cinterop dependency. Some of the
@@ -106,7 +106,7 @@ class ImportTests {
         val clone = realm.writeBlocking { copyToRealm(root) }
 
         assertNotNull(clone)
-        assertEquals(2, realm.objects(Sample::class).count())
+        assertEquals(2L, realm.query(Sample::class).count().find())
         val child = clone.child
         assertNotNull(child)
         assertNotNull(child.stringField)
@@ -183,7 +183,7 @@ class ImportTests {
         val managed = realm.writeBlocking {
             copyToRealm(Sample()).apply { stringField = v1 }
         }
-        assertEquals(1, realm.objects(Sample::class).count())
+        assertEquals(1L, realm.query(Sample::class).count().find())
 
         val unmanaged = Sample().apply {
             stringField = v2
@@ -194,7 +194,7 @@ class ImportTests {
             copyToRealm(unmanaged)
         }
 
-        assertEquals(2, realm.objects(Sample::class).count())
+        assertEquals(2L, realm.query(Sample::class).count().find())
         assertEquals(v2, importedRoot.stringField)
         assertEquals(v1, importedRoot.child?.stringField)
     }
@@ -206,6 +206,6 @@ class ImportTests {
             copyToRealm(sample)
         }
 
-        assertEquals(1, realm.objects(Sample::class).count())
+        assertEquals(1L, realm.query(Sample::class).count().find())
     }
 }
