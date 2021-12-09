@@ -17,7 +17,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.asLink
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -661,6 +660,9 @@ actual object RealmInterop {
         realmc.realm_query_find_first(query.cptr(), value, found)
         if (!found[0]) {
             return null
+        }
+        if (value.type != realm_value_type_e.RLM_TYPE_LINK) {
+            error("Query did not return link but ${value.type}")
         }
         return value.asLink()
     }
