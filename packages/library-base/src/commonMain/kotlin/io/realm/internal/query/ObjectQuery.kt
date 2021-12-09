@@ -85,7 +85,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
         propertyAndSortOrder: Pair<String, Sort>,
         vararg additionalPropertiesAndOrders: Pair<String, Sort>
     ): RealmQuery<E> {
-        val stringBuilder = StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
+        val stringBuilder =
+            StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
         additionalPropertiesAndOrders.forEach { extraPropertyAndOrder ->
             stringBuilder.append(", ${extraPropertyAndOrder.first} ${extraPropertyAndOrder.second}")
         }
@@ -104,7 +105,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun limit(limit: Int): RealmQuery<E> = query("TRUEPREDICATE LIMIT($limit)")
 
-    override fun first(): RealmSingleQuery<E> = TODO()
+    override fun first(): RealmSingleQuery<E> =
+        SingleQuery(realmReference, queryPointer, clazz, mediator)
 
     override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> =
         AggregatorQuery(
@@ -142,10 +144,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator)
 
-    override fun thaw(liveRealm: RealmReference): BaseResults<E> {
-        val liveResults = RealmInterop.realm_results_resolve_in(resultsPointer, liveRealm.dbPointer)
-        return ElementResults(liveRealm, liveResults, clazz, mediator)
-    }
+    override fun thaw(liveRealm: RealmReference): BaseResults<E> =
+        thawResults(liveRealm, resultsPointer, clazz, mediator)
 
     override fun asFlow(): Flow<RealmResults<E>> {
         realmReference.checkClosed()

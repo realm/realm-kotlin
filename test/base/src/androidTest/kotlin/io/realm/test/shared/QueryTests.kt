@@ -340,9 +340,9 @@ class QueryTests {
             .find()
             .let { results ->
                 assertEquals(3, results.size)
-                assertEquals(bob, results[2].stringField)
-                assertEquals(ruth, results[1].stringField)
                 assertEquals(stacy, results[0].stringField)
+                assertEquals(ruth, results[1].stringField)
+                assertEquals(bob, results[2].stringField)
             }
 
         // Invalid descriptor in query string
@@ -657,12 +657,6 @@ class QueryTests {
                 assertEquals(1, results.size)
                 assertEquals(value3, results[0].intField)
             }
-    }
-
-    @Test
-    @Ignore
-    fun limit_asSubQuery() {
-        // TODO
     }
 
     @Test
@@ -1187,21 +1181,69 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
-    fun first_find() {
-        // TODO
-    }
-
-    @Test
-    @Ignore
     fun first_find_empty() {
-        // TODO
+        realm.query(Sample::class)
+            .first()
+            .find { first: Sample? -> assertNull(first) }
     }
 
     @Test
-    @Ignore
+    fun first_find() {
+        val value1 = 1
+        val value2 = 2
+
+        realm.writeBlocking {
+            // Queries inside a write transaction produce live results which means they can be
+            // reused within the closure
+            val firstQuery = query(Sample::class, "intField > $0", value1)
+                .first()
+
+            assertNull(firstQuery.find())
+            copyToRealm(Sample().apply { intField = value1 })
+            copyToRealm(Sample().apply { intField = value2 })
+            val first: Sample? = firstQuery.find()
+            assertNotNull(first)
+            assertEquals(value2, first.intField)
+        }
+
+        realm.query(Sample::class, "intField > $0", value1)
+            .first()
+            .find { first: Sample? ->
+                assertNotNull(first)
+                assertEquals(value2, first.intField)
+            }
+    }
+
+    @Test
     fun first_asFlow() {
-        // TODO
+        val channel = Channel<Sample?>(1)
+        val value1 = 2
+        val value2 = 7
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class, "intField > $0", value1)
+                    .first()
+                    .asFlow()
+                    .collect { first ->
+                        channel.send(first)
+                    }
+            }
+
+            val firstNull = channel.receive()
+            assertNull(firstNull)
+
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = value1 })
+                copyToRealm(Sample().apply { intField = value2 })
+            }
+
+            val first = channel.receive()
+            assertNotNull(first)
+            assertEquals(value2, first.intField)
+            observer.cancel()
+            channel.close()
+        }
     }
 
 //    @Test
