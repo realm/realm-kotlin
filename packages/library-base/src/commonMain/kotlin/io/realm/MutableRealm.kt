@@ -102,6 +102,6 @@ interface MutableRealm : TypedRealm {
  * Reified convenience wrapper of [MutableRealm.query].
  */
 inline fun <reified T : RealmObject> MutableRealm.query(
-    query: String,
+    query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, args)

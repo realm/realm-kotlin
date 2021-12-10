@@ -153,6 +153,6 @@ interface Realm : TypedRealm {
  * Reified convenience wrapper of [Realm.query].
  */
 inline fun <reified T : RealmObject> Realm.query(
-    query: String,
+    query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, args)
