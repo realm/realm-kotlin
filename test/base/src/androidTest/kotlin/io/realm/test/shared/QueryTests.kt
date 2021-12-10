@@ -18,9 +18,13 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmResults
 import io.realm.entities.Sample
 import io.realm.query.Sort
 import io.realm.query.find
+import io.realm.query.max
+import io.realm.query.min
+import io.realm.query.sum
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -158,15 +162,39 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
     fun asFlow() {
-        // TODO
+        val channel = Channel<RealmResults<Sample>>(1)
+
+        runBlocking {
+            val observer = async {
+                realm.query(Sample::class)
+                    .asFlow()
+                    .collect { results ->
+                        assertNotNull(results)
+                        channel.send(results)
+                    }
+            }
+
+            assertTrue(channel.receive().isEmpty())
+
+            realm.writeBlocking {
+                copyToRealm(Sample())
+            }
+
+            assertEquals(1, channel.receive().size)
+            observer.cancel()
+            channel.close()
+        }
     }
 
     @Test
-    @Ignore
     fun asFlow_throwsInsideWrite() {
-        // TODO
+        realm.writeBlocking {
+            assertFailsWith<IllegalStateException> {
+                query(Sample::class)
+                    .asFlow()
+            }
+        }
     }
 
     @Test
@@ -813,7 +841,7 @@ class QueryTests {
     @Test
     fun sum_find_empty() {
         realm.query(Sample::class)
-            .sum(Sample::intField.name, Int::class)
+            .sum<Int>(Sample::intField.name)
             .find { sumValue: Int? -> assertEquals(0, sumValue) }
     }
 
@@ -827,7 +855,7 @@ class QueryTests {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
             val sumQuery = query(Sample::class)
-                .sum(Sample::intField.name, Int::class)
+                .sum<Int>(Sample::intField.name)
 
             assertEquals(0, sumQuery.find())
             copyToRealm(Sample().apply { intField = value1 })
@@ -836,7 +864,7 @@ class QueryTests {
         }
 
         realm.query(Sample::class)
-            .sum(Sample::intField.name, Int::class)
+            .sum<Int>(Sample::intField.name)
             .find { sumValue: Int? -> assertEquals(expectedSum, sumValue) }
     }
 
@@ -844,7 +872,7 @@ class QueryTests {
     fun sum_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class)
-                .sum(Sample::stringField.name, Int::class)
+                .sum<Int>(Sample::stringField.name)
                 .find()
         }
     }
@@ -853,7 +881,7 @@ class QueryTests {
     fun sum_find_throwsIfInvalidType() {
         assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class)
-                .sum(Sample::intField.name, String::class)
+                .sum<String>(Sample::intField.name)
                 .find()
         }
     }
@@ -868,7 +896,7 @@ class QueryTests {
         runBlocking {
             val observer = async {
                 realm.query(Sample::class)
-                    .sum(Sample::intField.name, Int::class)
+                    .sum<Int>(Sample::intField.name)
                     .asFlow()
                     .collect { sumValue ->
                         channel.send(sumValue)
@@ -901,7 +929,7 @@ class QueryTests {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 realm.query(Sample::class)
-                    .sum(Sample::intField.name, String::class)
+                    .sum<String>(Sample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -915,7 +943,7 @@ class QueryTests {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 realm.query(Sample::class)
-                    .sum(Sample::stringField.name, String::class)
+                    .sum<String>(Sample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -925,9 +953,20 @@ class QueryTests {
     }
 
     @Test
+    fun sum_asFlow_throwsInsideWrite() {
+        realm.writeBlocking {
+            assertFailsWith<IllegalStateException> {
+                query(Sample::class)
+                    .sum<Int>(Sample::intField.name)
+                    .asFlow()
+            }
+        }
+    }
+
+    @Test
     fun max_find_empty() {
         realm.query(Sample::class)
-            .max(Sample::intField.name, Int::class)
+            .max<Int>(Sample::intField.name)
             .find { maxValue: Int? -> assertNull(maxValue) }
     }
 
@@ -937,14 +976,14 @@ class QueryTests {
         val value2 = 7
 
         realm.query(Sample::class)
-            .max(Sample::intField.name, Int::class)
+            .max<Int>(Sample::intField.name)
             .find { maxValue: Int? -> assertNull(maxValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
             val maxQuery = query(Sample::class)
-                .max(Sample::intField.name, Int::class)
+                .max<Int>(Sample::intField.name)
 
             assertNull(maxQuery.find())
             copyToRealm(Sample().apply { intField = value1 })
@@ -953,7 +992,7 @@ class QueryTests {
         }
 
         realm.query(Sample::class)
-            .max(Sample::intField.name, Int::class)
+            .max<Int>(Sample::intField.name)
             .find { maxValue: Int? -> assertEquals(value2, maxValue) }
     }
 
@@ -961,7 +1000,7 @@ class QueryTests {
     fun max_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class)
-                .max(Sample::stringField.name, Int::class)
+                .max<Int>(Sample::stringField.name)
                 .find()
         }
     }
@@ -977,7 +1016,7 @@ class QueryTests {
         //  null and nothing will trigger an exception!
         assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class)
-                .max(Sample::intField.name, String::class)
+                .max<String>(Sample::intField.name)
                 .find()
         }
     }
@@ -991,7 +1030,7 @@ class QueryTests {
         runBlocking {
             val observer = async {
                 realm.query(Sample::class)
-                    .max(Sample::intField.name, Int::class)
+                    .max<Int>(Sample::intField.name)
                     .asFlow()
                     .collect { maxValue ->
                         channel.send(maxValue)
@@ -1024,7 +1063,7 @@ class QueryTests {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 realm.query(Sample::class)
-                    .max(Sample::intField.name, String::class)
+                    .max<String>(Sample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1046,7 +1085,7 @@ class QueryTests {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 realm.query(Sample::class)
-                    .max(Sample::stringField.name, String::class)
+                    .max<String>(Sample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1056,9 +1095,20 @@ class QueryTests {
     }
 
     @Test
+    fun max_asFlow_throwsInsideWrite() {
+        realm.writeBlocking {
+            assertFailsWith<IllegalStateException> {
+                query(Sample::class)
+                    .max<Int>(Sample::intField.name)
+                    .asFlow()
+            }
+        }
+    }
+
+    @Test
     fun min_find_empty() {
         realm.query(Sample::class)
-            .min(Sample::intField.name, Int::class)
+            .min<Int>(Sample::intField.name)
             .find { minValue: Int? -> assertNull(minValue) }
     }
 
@@ -1068,14 +1118,14 @@ class QueryTests {
         val value2 = 7
 
         realm.query(Sample::class)
-            .min(Sample::intField.name, Int::class)
+            .min<Int>(Sample::intField.name)
             .find { minValue: Int? -> assertNull(minValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
             val minQuery = query(Sample::class)
-                .min(Sample::intField.name, Int::class)
+                .min<Int>(Sample::intField.name)
 
             assertNull(minQuery.find())
             copyToRealm(Sample().apply { intField = value1 })
@@ -1084,7 +1134,7 @@ class QueryTests {
         }
 
         realm.query(Sample::class)
-            .min(Sample::intField.name, Int::class)
+            .min<Int>(Sample::intField.name)
             .find { minValue: Int? -> assertEquals(value1, minValue) }
     }
 
@@ -1092,7 +1142,7 @@ class QueryTests {
     fun min_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class)
-                .min(Sample::stringField.name, Int::class)
+                .min<Int>(Sample::stringField.name)
                 .find()
         }
     }
@@ -1108,7 +1158,7 @@ class QueryTests {
         //  null and nothing will trigger an exception!
         assertFailsWith<IllegalArgumentException> {
             realm.query(Sample::class)
-                .min(Sample::intField.name, String::class)
+                .min<String>(Sample::intField.name)
                 .find()
         }
     }
@@ -1122,7 +1172,7 @@ class QueryTests {
         runBlocking {
             val observer = async {
                 realm.query(Sample::class)
-                    .min(Sample::intField.name, Int::class)
+                    .min<Int>(Sample::intField.name)
                     .asFlow()
                     .collect { minValue ->
                         channel.send(minValue)
@@ -1155,7 +1205,7 @@ class QueryTests {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 realm.query(Sample::class)
-                    .min(Sample::intField.name, String::class)
+                    .min<String>(Sample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1177,11 +1227,22 @@ class QueryTests {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
                 realm.query(Sample::class)
-                    .min(Sample::stringField.name, String::class)
+                    .min<String>(Sample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
                 assertTrue(it.message!!.contains("Invalid query formulation"))
+            }
+        }
+    }
+
+    @Test
+    fun min_asFlow_throwsInsideWrite() {
+        realm.writeBlocking {
+            assertFailsWith<IllegalStateException> {
+                query(Sample::class)
+                    .min<Int>(Sample::intField.name)
+                    .asFlow()
             }
         }
     }
