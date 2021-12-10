@@ -34,7 +34,7 @@
 * Updated to Ktlint Gradle Plugin 10.2.0.
 * Updated to Kotlin Serialization 1.3.0.
 * Updated to Detekt 1.19.0-RC1.
-* Updated to Realm Core commit: 039f5b10049919f5bef8931ee8af54bee6408bd7.
+* Updated to Realm Core commit: 5903577608d202ad88f375c1bb2ceedb831f6d7b.
 
 
 ## 0.7.0 (2021-10-31)
