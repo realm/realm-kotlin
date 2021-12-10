@@ -95,3 +95,13 @@ interface MutableRealm : TypedRealm {
      */
     fun <T : RealmObject> delete(obj: T)
 }
+
+/**
+ * Returns a [RealmQuery] matching the predicate represented by [query].
+ *
+ * Reified convenience wrapper of [MutableRealm.query].
+ */
+inline fun <reified T : RealmObject> MutableRealm.query(
+    query: String,
+    vararg args: Any?
+): RealmQuery<T> = query(T::class, query, args)
