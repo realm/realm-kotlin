@@ -17,6 +17,7 @@
 package io.realm.test.shared
 
 import io.realm.Realm
+import io.realm.query
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.entities.Sample
@@ -64,13 +65,13 @@ class QueryTests {
 
     @Test
     fun find_realm() {
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .find { results -> assertEquals(0, results.size) }
 
         val stringValue = "some string"
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
-            val query = query(Sample::class)
+            val query = query<Sample>()
 
             assertEquals(0, query.find().size)
             copyToRealm(Sample().apply { stringField = stringValue })
@@ -78,15 +79,15 @@ class QueryTests {
         }
 
         // No filter
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .find { results -> assertEquals(1, results.size) }
 
         // Filter by string
-        realm.query(Sample::class, "stringField = $0", stringValue)
+        realm.query<Sample>( "stringField = $0", stringValue)
             .find { results -> assertEquals(1, results.size) }
 
         // Filter by string that doesn't match
-        realm.query(Sample::class, "stringField = $0", "invalid string")
+        realm.query<Sample>( "stringField = $0", "invalid string")
             .find { results -> assertEquals(0, results.size) }
     }
 
@@ -96,7 +97,7 @@ class QueryTests {
 
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
-            val query = query(Sample::class)
+            val query = query<Sample>()
 
             query.find { results -> assertEquals(0, results.size) }
 
@@ -120,19 +121,19 @@ class QueryTests {
     @Test
     fun find_realm_malformedQueryThrows() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class, "stringField = $0")
+            realm.query<Sample>( "stringField = $0")
         }.let {
             assertTrue(it.message!!.contains("Have you specified all parameters"))
         }
 
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class, "stringField = 42")
+            realm.query<Sample>( "stringField = 42")
         }.let {
             assertTrue(it.message!!.contains("Wrong query field"))
         }
 
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class, "nonExistingField = 13")
+            realm.query<Sample>( "nonExistingField = 13")
         }.let {
             assertTrue(it.message!!.contains("Wrong query field"))
         }
@@ -142,19 +143,19 @@ class QueryTests {
     fun find_mutableRealm_malformedQueryThrows() {
         realm.writeBlocking {
             assertFailsWith<IllegalArgumentException> {
-                query(Sample::class, "stringField = $0")
+                query<Sample>( "stringField = $0")
             }.let {
                 assertTrue(it.message!!.contains("Have you specified all parameters"))
             }
 
             assertFailsWith<IllegalArgumentException> {
-                query(Sample::class, "stringField = 42")
+                query<Sample>( "stringField = 42")
             }.let {
                 assertTrue(it.message!!.contains("Wrong query field"))
             }
 
             assertFailsWith<IllegalArgumentException> {
-                query(Sample::class, "nonExistingField = 13")
+                query<Sample>( "nonExistingField = 13")
             }.let {
                 assertTrue(it.message!!.contains("Wrong query field"))
             }
@@ -167,7 +168,7 @@ class QueryTests {
 
         runBlocking {
             val observer = async {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .asFlow()
                     .collect { results ->
                         assertNotNull(results)
@@ -191,7 +192,7 @@ class QueryTests {
     fun asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             assertFailsWith<IllegalStateException> {
-                query(Sample::class)
+                query<Sample>()
                     .asFlow()
             }
         }
@@ -240,7 +241,7 @@ class QueryTests {
         }
 
         // 5, 4, 3
-        realm.query(Sample::class, "intField > 1")
+        realm.query<Sample>( "intField > 1")
             .query("intField > 2")
             .sort(Sample::intField.name, Sort.DESCENDING)
             .find { results ->
@@ -251,7 +252,7 @@ class QueryTests {
             }
 
         // Sylvia, Stacy
-        realm.query(Sample::class, "intField > 1")
+        realm.query<Sample>( "intField > 1")
             .query("stringField BEGINSWITH[c] $0", "S")
             .sort(Sample::intField.name, Sort.ASCENDING)
             .find { results ->
@@ -261,7 +262,7 @@ class QueryTests {
             }
 
         // Ruth
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .query("stringField BEGINSWITH[c] $0 OR stringField BEGINSWITH[c] $1", "J", "R")
             .query("intField > 1")
             .find { results ->
@@ -317,7 +318,7 @@ class QueryTests {
             )
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .query("intField > 2")
             .sort(Sample::intField.name, Sort.DESCENDING)
             .find()
@@ -328,7 +329,7 @@ class QueryTests {
                 assertEquals(value3, results[2].intField)
             }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .query("intField > 2")
             .sort(Sample::intField.name, Sort.DESCENDING)
             .limit(1)
@@ -339,7 +340,7 @@ class QueryTests {
             }
 
         // Descriptor in query string - Bob, Ruth, Stacy
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .query("intField > 2 SORT(stringField ASCENDING)")
             .find()
             .let { results ->
@@ -350,7 +351,7 @@ class QueryTests {
             }
 
         // Descriptor as a function - Bob, Ruth, Stacy
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .query("intField > 2")
             .sort(Sample::stringField.name, Sort.ASCENDING)
             .find()
@@ -362,7 +363,7 @@ class QueryTests {
             }
 
         // Conflicting descriptors, query string vs function - Bob, Ruth, Stacy
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .query("intField > 2 SORT(stringField ASCENDING)")
             .sort(Sample::stringField.name, Sort.DESCENDING)
             .find()
@@ -375,7 +376,7 @@ class QueryTests {
 
         // Invalid descriptor in query string
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .query("intField > 2 SORT(stringField DESCENDINGGGGGGGGGG)")
         }
     }
@@ -418,7 +419,7 @@ class QueryTests {
         }
 
         // Ruth 4, Stacy 3
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .distinct(Sample::stringField.name) // Sylvia, Stacy, Ruth
             .sort(Sample::stringField.name, Sort.ASCENDING) // Ruth, Stacy, Sylvia
             .limit(2) // Ruth 4, Stacy 3
@@ -467,7 +468,7 @@ class QueryTests {
         }
 
         // Ruth 4, Stacy 3
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .distinct(Sample::stringField.name) // Sylvia, Stacy, Ruth
             .sort(Sample::stringField.name, Sort.ASCENDING) // Ruth, Stacy, Sylvia
             .limit(2) // Ruth 4, Stacy 3
@@ -480,7 +481,7 @@ class QueryTests {
         // Stacy 3, Sylvia 1
         // One would expect this to be Stacy 3 but notice the last 'query', it moves the descriptors
         // to the end - this is how it is also implemented in Java
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .distinct(Sample::stringField.name) // normal execution: Sylvia 1, Stacy 3, Ruth 4
             .sort(
                 Sample::stringField.name,
@@ -498,7 +499,7 @@ class QueryTests {
 
     @Test
     fun sort_emptyResults() {
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sort(Sample::intField.name)
             .find { results ->
                 assertTrue(results.isEmpty())
@@ -524,7 +525,7 @@ class QueryTests {
         }
 
         // No filter, default ascending sorting
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sort(Sample::intField.name)
             .find { results ->
                 assertEquals(3, results.size)
@@ -537,7 +538,7 @@ class QueryTests {
             }
 
         // No filter, sort descending
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sort(Sample::intField.name to Sort.DESCENDING)
             .find { results ->
                 assertEquals(3, results.size)
@@ -569,7 +570,7 @@ class QueryTests {
         }
 
         // No filter, multiple sortings
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sort(
                 Sample::stringField.name to Sort.DESCENDING,
                 Sample::intField.name to Sort.ASCENDING
@@ -587,7 +588,7 @@ class QueryTests {
     @Test
     fun sort_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .sort("invalid")
         }
     }
@@ -602,13 +603,13 @@ class QueryTests {
             copyToRealm(Sample().apply { intField = value2 })
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .distinct(Sample::intField.name)
             .find { results ->
                 assertEquals(2, results.size)
             }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .distinct(Sample::intField.name)
             .sort(Sample::intField.name, Sort.ASCENDING)
             .find { results ->
@@ -651,7 +652,7 @@ class QueryTests {
             )
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .distinct(Sample::intField.name, Sample::longField.name)
             .find { results ->
                 assertEquals(3, results.size)
@@ -669,7 +670,7 @@ class QueryTests {
             copyToRealm(Sample().apply { intField = value3 })
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sort(Sample::intField.name, Sort.DESCENDING)
             .limit(2)
             .find { results ->
@@ -677,7 +678,7 @@ class QueryTests {
                 assertEquals(value3, results[0].intField)
             }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sort(Sample::intField.name, Sort.DESCENDING)
             .limit(2)
             .limit(1)
@@ -696,7 +697,7 @@ class QueryTests {
     @Test
     fun limit_throwsIfInvalidValue() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .limit(-42)
         }
     }
@@ -775,7 +776,7 @@ class QueryTests {
 
     @Test
     fun count_find_empty() {
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .count()
             .find { countValue -> assertEquals(0, countValue) }
     }
@@ -785,14 +786,14 @@ class QueryTests {
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
-            val countQuery = query(Sample::class).count()
+            val countQuery = query<Sample>().count()
 
             assertEquals(0, countQuery.find())
             copyToRealm(Sample())
             assertEquals(1, countQuery.find())
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .count()
             .find { countValue -> assertEquals(1, countValue) }
     }
@@ -803,7 +804,7 @@ class QueryTests {
 
         runBlocking {
             val observer = async {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .count()
                     .asFlow()
                     .collect { countValue ->
@@ -830,7 +831,7 @@ class QueryTests {
             // Check we throw when observing flows inside write transactions
             runBlocking {
                 assertFailsWith<IllegalStateException> {
-                    query(Sample::class)
+                    query<Sample>()
                         .count()
                         .asFlow()
                 }
@@ -840,7 +841,7 @@ class QueryTests {
 
     @Test
     fun sum_find_empty() {
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sum<Int>(Sample::intField.name)
             .find { sumValue: Int? -> assertEquals(0, sumValue) }
     }
@@ -854,7 +855,7 @@ class QueryTests {
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
-            val sumQuery = query(Sample::class)
+            val sumQuery = query<Sample>()
                 .sum<Int>(Sample::intField.name)
 
             assertEquals(0, sumQuery.find())
@@ -863,7 +864,7 @@ class QueryTests {
             assertEquals(expectedSum, sumQuery.find())
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .sum<Int>(Sample::intField.name)
             .find { sumValue: Int? -> assertEquals(expectedSum, sumValue) }
     }
@@ -871,7 +872,7 @@ class QueryTests {
     @Test
     fun sum_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .sum<Int>(Sample::stringField.name)
                 .find()
         }
@@ -880,7 +881,7 @@ class QueryTests {
     @Test
     fun sum_find_throwsIfInvalidType() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .sum<String>(Sample::intField.name)
                 .find()
         }
@@ -895,7 +896,7 @@ class QueryTests {
 
         runBlocking {
             val observer = async {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .sum<Int>(Sample::intField.name)
                     .asFlow()
                     .collect { sumValue ->
@@ -928,7 +929,7 @@ class QueryTests {
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .sum<String>(Sample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
@@ -942,7 +943,7 @@ class QueryTests {
     fun sum_asFlow_throwsIfInvalidProperty() {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .sum<String>(Sample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
@@ -956,7 +957,7 @@ class QueryTests {
     fun sum_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             assertFailsWith<IllegalStateException> {
-                query(Sample::class)
+                query<Sample>()
                     .sum<Int>(Sample::intField.name)
                     .asFlow()
             }
@@ -965,7 +966,7 @@ class QueryTests {
 
     @Test
     fun max_find_empty() {
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .max<Int>(Sample::intField.name)
             .find { maxValue: Int? -> assertNull(maxValue) }
     }
@@ -975,14 +976,14 @@ class QueryTests {
         val value1 = 2
         val value2 = 7
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .max<Int>(Sample::intField.name)
             .find { maxValue: Int? -> assertNull(maxValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
-            val maxQuery = query(Sample::class)
+            val maxQuery = query<Sample>()
                 .max<Int>(Sample::intField.name)
 
             assertNull(maxQuery.find())
@@ -991,7 +992,7 @@ class QueryTests {
             assertEquals(value2, maxQuery.find())
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .max<Int>(Sample::intField.name)
             .find { maxValue: Int? -> assertEquals(value2, maxValue) }
     }
@@ -999,7 +1000,7 @@ class QueryTests {
     @Test
     fun max_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .max<Int>(Sample::stringField.name)
                 .find()
         }
@@ -1015,7 +1016,7 @@ class QueryTests {
         // TODO this won't fail unless we have previously stored something, otherwise it returns
         //  null and nothing will trigger an exception!
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .max<String>(Sample::intField.name)
                 .find()
         }
@@ -1029,7 +1030,7 @@ class QueryTests {
 
         runBlocking {
             val observer = async {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .max<Int>(Sample::intField.name)
                     .asFlow()
                     .collect { maxValue ->
@@ -1062,7 +1063,7 @@ class QueryTests {
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .max<String>(Sample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
@@ -1084,7 +1085,7 @@ class QueryTests {
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .max<String>(Sample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
@@ -1098,7 +1099,7 @@ class QueryTests {
     fun max_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             assertFailsWith<IllegalStateException> {
-                query(Sample::class)
+                query<Sample>()
                     .max<Int>(Sample::intField.name)
                     .asFlow()
             }
@@ -1107,7 +1108,7 @@ class QueryTests {
 
     @Test
     fun min_find_empty() {
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .min<Int>(Sample::intField.name)
             .find { minValue: Int? -> assertNull(minValue) }
     }
@@ -1117,14 +1118,14 @@ class QueryTests {
         val value1 = 2
         val value2 = 7
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .min<Int>(Sample::intField.name)
             .find { minValue: Int? -> assertNull(minValue) }
 
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
-            val minQuery = query(Sample::class)
+            val minQuery = query<Sample>()
                 .min<Int>(Sample::intField.name)
 
             assertNull(minQuery.find())
@@ -1133,7 +1134,7 @@ class QueryTests {
             assertEquals(value1, minQuery.find())
         }
 
-        realm.query(Sample::class)
+        realm.query<Sample>()
             .min<Int>(Sample::intField.name)
             .find { minValue: Int? -> assertEquals(value1, minValue) }
     }
@@ -1141,7 +1142,7 @@ class QueryTests {
     @Test
     fun min_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .min<Int>(Sample::stringField.name)
                 .find()
         }
@@ -1157,7 +1158,7 @@ class QueryTests {
         // TODO this won't fail unless we have previously stored something, otherwise it returns
         //  null and nothing will trigger an exception!
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query<Sample>()
                 .min<String>(Sample::intField.name)
                 .find()
         }
@@ -1171,7 +1172,7 @@ class QueryTests {
 
         runBlocking {
             val observer = async {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .min<Int>(Sample::intField.name)
                     .asFlow()
                     .collect { minValue ->
@@ -1204,7 +1205,7 @@ class QueryTests {
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .min<String>(Sample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
@@ -1226,7 +1227,7 @@ class QueryTests {
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query(Sample::class)
+                realm.query<Sample>()
                     .min<String>(Sample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
@@ -1240,7 +1241,7 @@ class QueryTests {
     fun min_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             assertFailsWith<IllegalStateException> {
-                query(Sample::class)
+                query<Sample>()
                     .min<Int>(Sample::intField.name)
                     .asFlow()
             }
@@ -1277,7 +1278,7 @@ class QueryTests {
 //            }
 //
 //            // Create a non-evaluated query (everything is lazy)
-//            query = realm.query(Sample::class, "intField == $0", 666)
+//            query = realm.query<Sample>( "intField == $0", 666)
 //
 //            // Core pointers are evaluated as soon as we get results!
 //            assertEquals(1, query!!.find().size)
