@@ -104,4 +104,4 @@ interface MutableRealm : TypedRealm {
 inline fun <reified T : RealmObject> MutableRealm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
-): RealmQuery<T> = query(T::class, query, args)
+): RealmQuery<T> = query(T::class, query, *args)
