@@ -135,3 +135,13 @@ interface Realm : TypedRealm {
      */
     fun close()
 }
+
+/**
+ * Returns a [RealmQuery] matching the predicate represented by [query].
+ *
+ * Reified convenience wrapper of [Realm.query].
+ */
+inline fun <reified T : RealmObject> Realm.query(
+    query: String = "TRUEPREDICATE",
+    vararg args: Any?
+): RealmQuery<T> = query(T::class, query, *args)
