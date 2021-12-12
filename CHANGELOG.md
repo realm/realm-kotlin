@@ -1,7 +1,7 @@
 ## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* `RealmResults.observe()` has been renamed to `RealmResults.asFlow()`.
+* `RealmResults.observe()` and `RealmList.observe()` has been renamed to `RealmResults.asFlow()`.
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).

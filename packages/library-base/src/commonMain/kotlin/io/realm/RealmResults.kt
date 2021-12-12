@@ -28,7 +28,6 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Flowable<RealmR
      *
      * @throws IllegalArgumentException on invalid queries.
      */
-    @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any?): RealmResults<T>
 
     /**
