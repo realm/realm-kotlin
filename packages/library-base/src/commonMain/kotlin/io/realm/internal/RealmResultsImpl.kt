@@ -51,13 +51,6 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
         RESULTS // RealmResults wrapping a Realm Core Results.
     }
 
-//    abstract fun instantiateResults(
-//        realmReference: RealmReference,
-//        nativePointer: NativePointer,
-//        clazz: KClass<E>,
-//        mediator: Mediator
-//    ): BaseResults<E>
-
     override val size: Int
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
@@ -127,43 +120,3 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
 
     override fun realmState(): RealmState = realm
 }
-
-//internal class ElementResults<E : RealmObject> constructor(
-//    realm: RealmReference,
-//    nativePointer: NativePointer,
-//    clazz: KClass<E>,
-//    schema: Mediator
-//) : RealmResultsImpl<E>(realm, nativePointer, clazz, schema) {
-//
-//    override fun get(index: Int): E {
-//        val link = RealmInterop.realm_results_get<Link>(nativePointer, index.toLong())
-//        val model = mediator.createInstanceOf(clazz)
-//        model.link(realm, mediator, clazz, link)
-//        @Suppress("UNCHECKED_CAST")
-//        return model as E
-//    }
-//
-//    override fun instantiateResults(
-//        realmReference: RealmReference,
-//        nativePointer: NativePointer,
-//        clazz: KClass<E>,
-//        mediator: Mediator
-//    ): RealmResultsImpl<E> = ElementResults(realmReference, nativePointer, clazz, mediator)
-//}
-//
-//internal class ScalarResults<E : Any> constructor(
-//    realm: RealmReference,
-//    nativePointer: NativePointer,
-//    clazz: KClass<E>,
-//    mediator: Mediator
-//) : BaseResults<E>(realm, nativePointer, clazz, mediator) {
-//
-//    override fun get(index: Int): E = RealmInterop.realm_results_get(nativePointer, index.toLong())
-//
-//    override fun instantiateResults(
-//        realmReference: RealmReference,
-//        nativePointer: NativePointer,
-//        clazz: KClass<E>,
-//        mediator: Mediator
-//    ): BaseResults<E> = ScalarResults(realmReference, nativePointer, clazz, mediator)
-//}
