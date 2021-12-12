@@ -45,7 +45,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
-) : RealmQuery<E>, Thawable<BaseResults<E>> {
+) : RealmQuery<E>, Thawable<RealmResultsImpl<E>> {
 
     private val queryPointer: NativePointer = when {
         composedQueryPointer != null -> composedQueryPointer
@@ -69,7 +69,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     )
 
     override fun find(): RealmResults<E> =
-        ElementResults(realmReference, resultsPointer, clazz, mediator)
+        RealmResultsImpl(realmReference, resultsPointer, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
         val appendedQuery = tryCatchCoreException {
@@ -144,7 +144,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun asFlow(): Flow<RealmResults<E>> = TODO()
 
-    override fun thaw(liveRealm: RealmReference): BaseResults<E> = TODO()
+    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> = TODO()
 
     private fun parseQuery(): NativePointer = tryCatchCoreException(filter) {
         RealmInterop.realm_query_parse(

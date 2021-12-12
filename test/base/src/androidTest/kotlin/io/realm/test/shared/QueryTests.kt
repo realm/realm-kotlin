@@ -284,6 +284,7 @@ class QueryTests {
             )
         }
 
+        // Explicit descriptor function
         realm.query(Sample::class)
             .query("intField > 2")
             .sort(Sample::intField.name, Sort.DESCENDING)
@@ -295,6 +296,7 @@ class QueryTests {
                 assertEquals(value3, results[2].intField)
             }
 
+        // Limit
         realm.query(Sample::class)
             .query("intField > 2")
             .sort(Sample::intField.name, Sort.DESCENDING)
@@ -326,6 +328,19 @@ class QueryTests {
                 assertEquals(bob, results[0].stringField)
                 assertEquals(ruth, results[1].stringField)
                 assertEquals(stacy, results[2].stringField)
+            }
+
+        // Descriptors in both query string and function - Bob, Ruth, Stacy
+        realm.query(Sample::class)
+            .query("intField > 2 LIMIT(4)")
+            .sort(Sample::stringField.name, Sort.DESCENDING)
+            .limit(3)
+            .find()
+            .let { results ->
+                assertEquals(3, results.size)
+                assertEquals(bob, results[2].stringField)
+                assertEquals(ruth, results[1].stringField)
+                assertEquals(stacy, results[0].stringField)
             }
 
         // Conflicting descriptors, query string vs function - Bob, Ruth, Stacy

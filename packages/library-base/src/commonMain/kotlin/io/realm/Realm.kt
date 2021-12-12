@@ -150,7 +150,7 @@ interface Realm : TypedRealm {
 /**
  * Returns a [RealmQuery] matching the predicate represented by [query].
  *
- * Reified convenience wrapper of [Realm.query].
+ * Reified convenience wrapper for [Realm.query].
  */
 inline fun <reified T : RealmObject> Realm.query(
     query: String = "TRUEPREDICATE",
