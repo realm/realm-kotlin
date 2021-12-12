@@ -74,7 +74,7 @@ abstract class BaseRealmImpl internal constructor(
             "TRUEPREDICATE"
         )
         val resultsPointer = RealmInterop.realm_query_find_all(findAllQuery)
-        return ElementResults(realmReference, resultsPointer, clazz, configuration.mediator)
+        return RealmResultsImpl(realmReference, resultsPointer, clazz, configuration.mediator)
     }
 
     open fun <T : RealmObject> query(
@@ -89,8 +89,8 @@ abstract class BaseRealmImpl internal constructor(
     }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
-        results: BaseResults<T>,
-        callback: Callback<BaseResults<T>>
+        results: RealmResultsImpl<T>,
+        callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }

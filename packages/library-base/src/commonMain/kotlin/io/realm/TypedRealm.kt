@@ -18,7 +18,7 @@ interface TypedRealm : BaseRealm {
      * @param clazz The class of the objects to query for.
      * @return The result of the query.
      */
-    open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
+    fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
 
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
@@ -41,7 +41,7 @@ interface TypedRealm : BaseRealm {
 /**
  * Returns the results of querying for all objects of a specific type.
  *
- * Reified convenience wrapper of [TypedRealm.objects].
+ * Reified convenience wrapper for [TypedRealm.objects].
  *
  * @param T Type of the object to query for.
  * @return The result of the query.
