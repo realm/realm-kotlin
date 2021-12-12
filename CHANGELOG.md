@@ -1,12 +1,12 @@
 ## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* `RealmResults.observe()` has been renamed to `RealmResults.asFlow()`.
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added support for dates through a new property type: `RealmInstant`.
-* Added support for `RealmQuery` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
+* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)) - querying via `Realm.objects(...)` is no longer supported.
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.

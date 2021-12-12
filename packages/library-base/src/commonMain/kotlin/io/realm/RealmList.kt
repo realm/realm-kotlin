@@ -39,9 +39,8 @@ import kotlinx.coroutines.flow.Flow
  */
 interface RealmList<E> : MutableList<E>, Flowable<RealmList<E>> {
     /**
-     * Observes changes to the RealmList. If there is any change to objects represented by the query
-     * backing the RealmResult, the flow will emit the updated RealmResult. The flow will continue
-     * running indefinitely until canceled.
+     * Observes changes to the RealmList. If there is any change to the list, the flow will emit the
+     * updated RealmResult. The flow will continue running indefinitely until canceled.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
