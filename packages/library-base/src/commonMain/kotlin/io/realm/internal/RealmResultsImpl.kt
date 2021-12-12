@@ -37,13 +37,13 @@ import kotlin.reflect.KClass
  */
 // TODO optimize - perhaps we should map the output of dictionary.values to a RealmList so that
 //  primitive typed results are never ever exposed publicly.
-internal abstract class BaseResults<E : Any> constructor(
+internal class RealmResultsImpl<E : RealmObject> constructor(
     protected val realm: RealmReference,
     internal val nativePointer: NativePointer,
     protected val clazz: KClass<E>,
     protected val mediator: Mediator,
     protected val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, Freezable<BaseResults<E>>, Thawable<BaseResults<E>>, Observable<BaseResults<E>>, RealmStateHolder {
+) : AbstractList<E>(), RealmResults<E>, Freezable<RealmResultsImpl<E>>, Thawable<RealmResultsImpl<E>>, Observable<RealmResultsImpl<E>>, RealmStateHolder {
 
     enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
@@ -51,29 +51,37 @@ internal abstract class BaseResults<E : Any> constructor(
         RESULTS // RealmResults wrapping a Realm Core Results.
     }
 
-    abstract fun instantiateResults(
-        realmReference: RealmReference,
-        nativePointer: NativePointer,
-        clazz: KClass<E>,
-        mediator: Mediator
-    ): BaseResults<E>
+//    abstract fun instantiateResults(
+//        realmReference: RealmReference,
+//        nativePointer: NativePointer,
+//        clazz: KClass<E>,
+//        mediator: Mediator
+//    ): BaseResults<E>
 
     override val size: Int
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
+    override fun get(index: Int): E {
+        val link = RealmInterop.realm_results_get<Link>(nativePointer, index.toLong())
+        val model = mediator.createInstanceOf(clazz)
+        model.link(realm, mediator, clazz, link)
+        @Suppress("UNCHECKED_CAST")
+        return model as E
+    }
+
     @Suppress("SpreadOperator")
-    override fun query(query: String, vararg args: Any?): BaseResults<E> {
+    override fun query(query: String, vararg args: Any?): RealmResultsImpl<E> {
         try {
             val table = clazz.simpleName!!
             val queryPointer = RealmInterop.realm_query_parse(nativePointer, table, query, *args)
             val resultsPointer = RealmInterop.realm_query_find_all(queryPointer)
-            return instantiateResults(realm, resultsPointer, clazz, mediator)
+            return RealmResultsImpl(realm, resultsPointer, clazz, mediator)
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler("Invalid syntax for query `$query`", exception)
         }
     }
 
-    override fun asFlow(): Flow<BaseResults<E>> {
+    override fun asFlow(): Flow<RealmResultsImpl<E>> {
         realm.checkClosed()
         return realm.owner.registerObserver(this)
     }
@@ -89,19 +97,19 @@ internal abstract class BaseResults<E : Any> constructor(
      * Returns a frozen copy of this query result. If it is already frozen, the same instance
      * is returned.
      */
-    override fun freeze(frozenRealm: RealmReference): BaseResults<E> {
+    override fun freeze(frozenRealm: RealmReference): RealmResultsImpl<E> {
         val frozenDbPointer = frozenRealm.dbPointer
         val frozenResults = RealmInterop.realm_results_resolve_in(nativePointer, frozenDbPointer)
-        return instantiateResults(frozenRealm, frozenResults, clazz, mediator)
+        return RealmResultsImpl(frozenRealm, frozenResults, clazz, mediator)
     }
 
     /**
      * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
      */
-    override fun thaw(liveRealm: RealmReference): BaseResults<E> {
+    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
         val liveResultPtr = RealmInterop.realm_results_resolve_in(nativePointer, liveDbPointer)
-        return instantiateResults(liveRealm, liveResultPtr, clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, clazz, mediator)
     }
 
     override fun registerForNotification(callback: Callback): NativePointer {
@@ -111,7 +119,7 @@ internal abstract class BaseResults<E : Any> constructor(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<BaseResults<E>>
+        channel: SendChannel<RealmResultsImpl<E>>
     ): ChannelResult<Unit>? {
         val frozenResult = freeze(frozenRealm)
         return channel.trySend(frozenResult)
@@ -120,42 +128,42 @@ internal abstract class BaseResults<E : Any> constructor(
     override fun realmState(): RealmState = realm
 }
 
-internal class ElementResults<E : RealmObject> constructor(
-    realm: RealmReference,
-    nativePointer: NativePointer,
-    clazz: KClass<E>,
-    schema: Mediator
-) : BaseResults<E>(realm, nativePointer, clazz, schema) {
-
-    override fun get(index: Int): E {
-        val link = RealmInterop.realm_results_get<Link>(nativePointer, index.toLong())
-        val model = mediator.createInstanceOf(clazz)
-        model.link(realm, mediator, clazz, link)
-        @Suppress("UNCHECKED_CAST")
-        return model as E
-    }
-
-    override fun instantiateResults(
-        realmReference: RealmReference,
-        nativePointer: NativePointer,
-        clazz: KClass<E>,
-        mediator: Mediator
-    ): BaseResults<E> = ElementResults(realmReference, nativePointer, clazz, mediator)
-}
-
-internal class ScalarResults<E : Any> constructor(
-    realm: RealmReference,
-    nativePointer: NativePointer,
-    clazz: KClass<E>,
-    mediator: Mediator
-) : BaseResults<E>(realm, nativePointer, clazz, mediator) {
-
-    override fun get(index: Int): E = RealmInterop.realm_results_get(nativePointer, index.toLong())
-
-    override fun instantiateResults(
-        realmReference: RealmReference,
-        nativePointer: NativePointer,
-        clazz: KClass<E>,
-        mediator: Mediator
-    ): BaseResults<E> = ScalarResults(realmReference, nativePointer, clazz, mediator)
-}
+//internal class ElementResults<E : RealmObject> constructor(
+//    realm: RealmReference,
+//    nativePointer: NativePointer,
+//    clazz: KClass<E>,
+//    schema: Mediator
+//) : RealmResultsImpl<E>(realm, nativePointer, clazz, schema) {
+//
+//    override fun get(index: Int): E {
+//        val link = RealmInterop.realm_results_get<Link>(nativePointer, index.toLong())
+//        val model = mediator.createInstanceOf(clazz)
+//        model.link(realm, mediator, clazz, link)
+//        @Suppress("UNCHECKED_CAST")
+//        return model as E
+//    }
+//
+//    override fun instantiateResults(
+//        realmReference: RealmReference,
+//        nativePointer: NativePointer,
+//        clazz: KClass<E>,
+//        mediator: Mediator
+//    ): RealmResultsImpl<E> = ElementResults(realmReference, nativePointer, clazz, mediator)
+//}
+//
+//internal class ScalarResults<E : Any> constructor(
+//    realm: RealmReference,
+//    nativePointer: NativePointer,
+//    clazz: KClass<E>,
+//    mediator: Mediator
+//) : BaseResults<E>(realm, nativePointer, clazz, mediator) {
+//
+//    override fun get(index: Int): E = RealmInterop.realm_results_get(nativePointer, index.toLong())
+//
+//    override fun instantiateResults(
+//        realmReference: RealmReference,
+//        nativePointer: NativePointer,
+//        clazz: KClass<E>,
+//        mediator: Mediator
+//    ): BaseResults<E> = ScalarResults(realmReference, nativePointer, clazz, mediator)
+//}

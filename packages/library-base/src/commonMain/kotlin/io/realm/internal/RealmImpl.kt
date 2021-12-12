@@ -129,8 +129,8 @@ internal class RealmImpl private constructor(
     }
 
     internal override fun <T : RealmObject> registerResultsChangeListener(
-        results: BaseResults<T>,
-        callback: Callback<BaseResults<T>>
+        results: RealmResultsImpl<T>,
+        callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
         TODO("Not yet implemented")
     }

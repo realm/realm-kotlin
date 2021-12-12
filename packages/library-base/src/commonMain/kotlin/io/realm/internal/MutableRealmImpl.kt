@@ -123,8 +123,8 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     }
 
     internal override fun <T : RealmObject> registerResultsChangeListener(
-        results: BaseResults<T>,
-        callback: Callback<BaseResults<T>>
+        results: RealmResultsImpl<T>,
+        callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
