@@ -76,8 +76,8 @@ abstract class BaseRealmImpl internal constructor(
     }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
-        results: BaseResults<T>,
-        callback: Callback<BaseResults<T>>
+        results: RealmResultsImpl<T>,
+        callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }

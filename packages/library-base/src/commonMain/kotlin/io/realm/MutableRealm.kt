@@ -87,7 +87,7 @@ interface MutableRealm : TypedRealm {
 /**
  * Returns a [RealmQuery] matching the predicate represented by [query].
  *
- * Reified convenience wrapper of [MutableRealm.query].
+ * Reified convenience wrapper for [MutableRealm.query].
  */
 inline fun <reified T : RealmObject> MutableRealm.query(
     query: String = "TRUEPREDICATE",

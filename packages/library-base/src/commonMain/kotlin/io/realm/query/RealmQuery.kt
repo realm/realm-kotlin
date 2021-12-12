@@ -32,8 +32,6 @@ import kotlin.reflect.KClass
  * using the `Builder` pattern. The query is executed using either [find] or subscribing to the
  * [Flow] returned by [asFlow].
  *
- * If a [RealmObject] class is refactored, care has to be taken not to break any query filters.
- *
  * A [Realm] is unordered, which means that there is no guarantee that a query will return the
  * objects in the order they where inserted. Use the [sort] functions if a specific order is
  * required.
@@ -42,9 +40,9 @@ import kotlin.reflect.KClass
  * queries from the UI thread may result in a drop of frames or even ANRs. If you want to prevent
  * these behaviors, you can use [asFlow] and collect the results asynchronously.
  *
- * @param E the class of the objects to be queried.
+ * @param T the class of the objects to be queried.
  */
-interface RealmQuery<E> : RealmElementQuery<E> {
+interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 
     /**
      * Appends the query represented by [filter] to an existing query using a logical `AND`.
@@ -52,7 +50,7 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * @param filter the Realm Query Language predicate to append.
      * @param arguments Realm values for the predicate.
      */
-    fun query(filter: String, vararg arguments: Any?): RealmQuery<E>
+    fun query(filter: String, vararg arguments: Any?): RealmQuery<T>
 
     /**
      * Sorts the query result by the specific property name according to [sortOrder], which is
@@ -65,7 +63,7 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * @param property the property name to sort by.
      * @throws [IllegalArgumentException] if the property name does not exist.
      */
-    fun sort(property: String, sortOrder: Sort = Sort.ASCENDING): RealmQuery<E>
+    fun sort(property: String, sortOrder: Sort = Sort.ASCENDING): RealmQuery<T>
 
     /**
      * Sorts the query result by the specific property name according to [Pair]s of properties and
@@ -81,7 +79,7 @@ interface RealmQuery<E> : RealmElementQuery<E> {
     fun sort(
         propertyAndSortOrder: Pair<String, Sort>,
         vararg additionalPropertiesAndOrders: Pair<String, Sort>
-    ): RealmQuery<E>
+    ): RealmQuery<T>
 
     /**
      * Selects a distinct set of objects of a specific class. When multiple distinct fields are
@@ -96,7 +94,7 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * points to a linked field.
      */
     // TODO "points to a linked field" doesn't apply yet
-    fun distinct(property: String, vararg extraProperties: String): RealmQuery<E>
+    fun distinct(property: String, vararg extraProperties: String): RealmQuery<T>
 
     /**
      * Limits the number of objects returned in case the query matched more objects.
@@ -107,12 +105,12 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * @param limit a limit that is greater than or equal to 1.
      * @throws IllegalArgumentException if the provided [limit] is less than 1.
      */
-    fun limit(limit: Int): RealmQuery<E>
+    fun limit(limit: Int): RealmQuery<T>
 
     /**
      * Returns a query that finds the first object that fulfills the query conditions.
      */
-    fun first(): RealmSingleQuery<E>
+    fun first(): RealmSingleQuery<T>
 
     /**
      * Finds the minimum value of a property.
@@ -156,44 +154,6 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      */
     fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T>
 
-//    /**
-//     * Calculates the average value for a given [property] and returns the result as an instance of
-//     * the class specified by [T] or throws an [IllegalArgumentException] if the `property` type
-//     * doesn't match [T] or it is other than a [Number]. The `type` parameter supports all Realm
-//     * numerals. If no values are present for the given `property` the query will return `null`.
-//     *
-//     * If the provided `type` is something other than [Double] the computation might result in
-//     * precision loss under certain circumstances. For example, when calculating the average of the
-//     * integers `1` and `2` the output will be the [Int] resulting from calling
-//     * `averageValue.roundToInt()` and not `1.5`.
-//     *
-//     * If precision loss is not desired please use [average] with the required `property` and
-//     * ignore the `type` parameter - in which case the average will be returned in the form of a
-//     * [Double] - or use it providing `Double::class` as the `type` parameter.
-//     *
-//     * @param property the property on which the result will be computed.
-//     * @param type the type of the property.
-//     * @return a [RealmScalarQuery] returning the average value for the given [property] represented
-//     * as a [T].
-//     * @throws [IllegalArgumentException] if the property doesn't match [T] or the property is not
-//     * a [Number].
-//     */
-//    fun <T : Any> average(property: String, type: KClass<T>): RealmScalarQuery<T>
-//
-//    /**
-//     * Calculates the average value for a given [property] and returns a [Double] or throws an
-//     * [IllegalArgumentException] if the specified `property` cannot be converted to a [Double]. If
-//     * no values are present for the given `property` the query will return `null`.
-//     *
-//     * This function returns the average with the same precision provided by the native database.
-//     *
-//     * @param property the property on which the result will be computed.
-//     * @return a [RealmScalarQuery] returning the average value for the given property represented
-//     * as a [Double].
-//     * @throws [IllegalArgumentException] if the property is not a [Number].
-//     */
-//    fun average(property: String): RealmScalarQuery<Double>
-
     /**
      * Returns a [RealmScalarQuery] that counts the number of objects that fulfill the query
      * conditions.
@@ -201,12 +161,14 @@ interface RealmQuery<E> : RealmElementQuery<E> {
      * @return a [RealmScalarQuery] that counts the number of objects for a given query.
      */
     fun count(): RealmScalarQuery<Long>
+
+    // TODO add 'get_description': https://github.com/realm/realm-core/issues/5106
 }
 
 /**
  * Query returning [RealmResults].
  */
-interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
+interface RealmElementQuery<T : RealmObject> : Flowable<RealmResults<T>> {
 
     /**
      * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
@@ -218,7 +180,7 @@ interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
      * @return a [RealmResults] instance containing matching objects. If no objects match the
      * condition, an instance with zero objects is returned.
      */
-    fun find(): RealmResults<E>
+    fun find(): RealmResults<T>
 
     /**
      * Finds all objects that fulfill the query conditions and returns them asynchronously as a
@@ -235,7 +197,7 @@ interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    override fun asFlow(): Flow<RealmResults<E>>
+    override fun asFlow(): Flow<RealmResults<T>>
 }
 
 /**
@@ -247,7 +209,7 @@ interface RealmElementQuery<E> : Flowable<RealmResults<E>> {
  *       `realm_results_t` returned by `realm_query_find_all()` to retrieve
  *        values from a list of primitive values.
  */
-interface RealmSingleQuery<E> : Flowable<E> {
+interface RealmSingleQuery<T> : Flowable<T> {
 
     /**
      * Finds the first object that fulfills the query conditions and returns it in a blocking
@@ -259,7 +221,7 @@ interface RealmSingleQuery<E> : Flowable<E> {
      *
      * @return a [RealmObject] instance or `null` if no object matches the condition.
      */
-    fun find(): E?
+    fun find(): T?
 
     /**
      * Finds the first object that fulfills the query conditions and returns it asynchronously as a
@@ -273,29 +235,29 @@ interface RealmSingleQuery<E> : Flowable<E> {
      *
      * @return a flow representing changes to the [RealmObject] resulting from running this query.
      */
-    override fun asFlow(): Flow<E?>
+    override fun asFlow(): Flow<T?>
 }
 
 /**
  * Queries that return scalar values. This type of query is used to more accurately represent the
  * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.min].
  */
-interface RealmScalarQuery<E> : Flowable<E> {
+interface RealmScalarQuery<T> : Flowable<T> {
     /**
-     * Returns the value of a scalar query as an [E] in a blocking fashion. The result may be `null`
+     * Returns the value of a scalar query as an [T] in a blocking fashion. The result may be `null`
      * depending on the type of scalar query:
      *
-     * - `[min]`, `[max]` return [E] or `null` if no objects are present
+     * - `[min]`, `[max]` return [T] or `null` if no objects are present
      * - `[count]` returns [Long]
      *
      * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
      * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
      * values asynchronously using [asFlow] instead.
      *
-     * @return an [E] containing the result of the scalar query or `null` depending on the query
+     * @return an [T] containing the result of the scalar query or `null` depending on the query
      * being executed.
      */
-    fun find(): E?
+    fun find(): T?
 
     /**
      * Calculates the value that fulfills the query conditions and returns it asynchronously as a
@@ -309,7 +271,7 @@ interface RealmScalarQuery<E> : Flowable<E> {
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    override fun asFlow(): Flow<E?>
+    override fun asFlow(): Flow<T?>
 }
 
 /**
@@ -348,7 +310,7 @@ inline fun <reified T : Any> RealmQuery<*>.sum(property: String): RealmScalarQue
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-fun <T, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = find().let(block)
+fun <T : RealmObject, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = find().let(block)
 
 /**
  * Similar to [RealmScalarQuery.find] but it receives a [block] in which the scalar result from the

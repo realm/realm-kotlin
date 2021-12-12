@@ -18,10 +18,9 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.internal.BaseResults
-import io.realm.internal.ElementResults
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
+import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.NativePointer
@@ -45,7 +44,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
-) : RealmQuery<E>, Thawable<BaseResults<E>> {
+) : RealmQuery<E>, Thawable<RealmResultsImpl<E>> {
 
     private val queryPointer: NativePointer = when {
         composedQueryPointer != null -> composedQueryPointer
@@ -69,7 +68,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     )
 
     override fun find(): RealmResults<E> =
-        ElementResults(realmReference, resultsPointer, clazz, mediator)
+        RealmResultsImpl(realmReference, resultsPointer, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
         val appendedQuery = tryCatchCoreException {
