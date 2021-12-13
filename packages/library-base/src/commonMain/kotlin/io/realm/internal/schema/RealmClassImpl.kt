@@ -33,9 +33,9 @@ data class RealmClassImpl(
     override val properties: Collection<RealmProperty> = cinteropProperties.map {
         RealmPropertyImpl.fromCoreProperty(it)
     }
-
-    override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
-    override fun primaryKey(): RealmProperty? = properties.firstOrNull {
+    override val primaryKey: RealmProperty? = properties.firstOrNull {
         it.type.run { this is ValuePropertyType && isPrimaryKey }
     }
+
+    override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
 }
