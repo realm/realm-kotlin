@@ -19,7 +19,7 @@ package io.realm.schema
 /**
  * A [RealmProperty] describes the properties of a class property in the object model.
  */
-interface RealmProperty { // Matches realm_property_info_t
+interface RealmProperty {
     /**
      * Returns the name of the property in the object model.
      */
