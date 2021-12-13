@@ -16,11 +16,11 @@
 
 package io.realm.mongodb
 
+import io.realm.Configuration
 import io.realm.LogConfiguration
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.ConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
@@ -142,7 +142,7 @@ interface SyncConfiguration : Configuration {
                 }
             }
 
-            val localConfiguration = RealmConfigurationImpl(
+            val baseConfiguration = ConfigurationImpl(
                 companionMap,
                 path,
                 name,
@@ -157,7 +157,7 @@ interface SyncConfiguration : Configuration {
             )
 
             return SyncConfigurationImpl(
-                localConfiguration,
+                baseConfiguration,
                 partitionValue,
                 user as UserImpl,
                 errorHandler!! // It will never be null: either default or user-provided
