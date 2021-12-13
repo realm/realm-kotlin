@@ -78,6 +78,10 @@ internal class ObjectQuery<E : RealmObject> constructor(
         return ObjectQuery(appendedQuery, this)
     }
 
+    // TODO Descriptors are added using 'append_query', which requires an actual predicate. This
+    //  might result into query strings like "TRUEPREDICATE AND TRUEPREDICATE SORT(...)". We should
+    //  look into how to avoid this, perhaps by exposing a different function that internally
+    //  ignores unnecessary default predicates.
     override fun sort(property: String, sortOrder: Sort): RealmQuery<E> =
         query("TRUEPREDICATE SORT($property ${sortOrder.name})")
 

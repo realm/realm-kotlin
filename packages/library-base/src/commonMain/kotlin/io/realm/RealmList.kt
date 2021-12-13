@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.Flow
  * [MutableRealm.copyToRealm] method.
  */
 interface RealmList<E> : MutableList<E>, Flowable<RealmList<E>> {
+
     /**
      * Observes changes to the RealmList. If there is any change to the list, the flow will emit the
      * updated RealmResult. The flow will continue running indefinitely until canceled.
