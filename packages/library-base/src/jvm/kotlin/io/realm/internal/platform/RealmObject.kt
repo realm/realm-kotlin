@@ -21,5 +21,7 @@ import io.realm.internal.RealmObjectCompanion
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
 
+// TODO OPTIMIZE Can we eliminate the reflective approach? Maybe by embedding the information
+//  through the compiler plugin or something similar to the Native findAssociatedObject
 internal actual fun <T : RealmObject> KClass<T>.realmObjectCompanion(): RealmObjectCompanion? =
     this.companionObjectInstance?.let { it as RealmObjectCompanion }

@@ -60,16 +60,18 @@ class RealmModelLoweringExtension : IrGenerationExtension {
 }
 
 private class RealmModelLowering(private val pluginContext: IrPluginContext) : ClassLoweringPass {
+
+    // NOTE This is only available on Native platforms
+    val modelObjectAnnotationClass by lazy {
+        pluginContext.lookupClassOrThrow(FqName("io.realm.internal.platform.ModelObject"))
+    }
+
     override fun lower(irClass: IrClass) {
         if (irClass.hasRealmModelInterface) {
             // For native we add @ModelObject(irClass.Companion::class) as associated object to be
             // able to resolve the companion object during runtime due to absence of
             // kotlin.reflect.full.companionObjectInstance
             if (pluginContext.platform?.componentPlatforms?.first()?.platformName == "Native") {
-                // FIXME Only look this up once, but only for Native builds as ModelObject is not
-                //  available on Native
-                val modelObjectAnnotationClass =
-                    pluginContext.lookupClassOrThrow(FqName("io.realm.internal.platform.ModelObject"))
                 val modelObjectAnnotation = IrConstructorCallImpl(
                     UNDEFINED_OFFSET,
                     UNDEFINED_OFFSET,
