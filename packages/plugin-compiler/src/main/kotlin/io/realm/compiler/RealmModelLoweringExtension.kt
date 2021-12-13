@@ -16,6 +16,7 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.MODEL_OBJECT_ANNOTATION
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_IS_FROZEN
@@ -63,7 +64,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
     // NOTE This is only available on Native platforms
     val modelObjectAnnotationClass by lazy {
-        pluginContext.lookupClassOrThrow(FqName("io.realm.internal.platform.ModelObject"))
+        pluginContext.lookupClassOrThrow(MODEL_OBJECT_ANNOTATION)
     }
 
     override fun lower(irClass: IrClass) {

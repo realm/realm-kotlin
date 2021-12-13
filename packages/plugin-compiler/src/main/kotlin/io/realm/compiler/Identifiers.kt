@@ -98,6 +98,7 @@ internal object FqNames {
     val INDEX_ANNOTATION = FqName("io.realm.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
+    val MODEL_OBJECT_ANNOTATION = FqName("io.realm.internal.platform.ModelObject")
     // Realm data types
     val REALM_LIST = FqName("io.realm.RealmList")
     val REALM_INSTANT = FqName("io.realm.RealmInstant")

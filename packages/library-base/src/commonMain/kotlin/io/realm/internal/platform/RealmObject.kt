@@ -20,4 +20,7 @@ import io.realm.RealmObject
 import io.realm.internal.RealmObjectCompanion
 import kotlin.reflect.KClass
 
+/**
+ * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
+ */
 internal expect fun <T : RealmObject> KClass<T>.realmObjectCompanion(): RealmObjectCompanion?
