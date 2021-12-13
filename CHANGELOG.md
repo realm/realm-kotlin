@@ -1,12 +1,14 @@
 ## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* Removed option to build `SyncConfiguration`s with `deleteRealmIfMigrationNeeded` option.
+* Reworked configuration hierarchy:
+  * Separated common parts of `RealmConfiguraion` and `SyncConfiguration` into `io.realm.Configuration` to avoid poluting the base configuration with local-only options.
+  * Changed `Realm.open(RealmConfiguration)` to accept new base configuration with `Realm.open(Configuration)`.
+  * Removed option to build `SyncConfiguration`s with `deleteRealmIfMigrationNeeded` option.
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added supported for dates through a new property type: `RealmInstant`.
-* Added `LocalConfiguration` to hold local-only options to avoid poluting `RealmConfiguration` with local-only options.
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.

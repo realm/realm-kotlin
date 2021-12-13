@@ -48,7 +48,7 @@ import kotlin.reflect.KClass
  * ```
  */
 // FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
-interface SyncConfiguration : RealmConfiguration {
+interface SyncConfiguration : Configuration {
 
     val user: User
     val partitionValue: PartitionValue
@@ -62,7 +62,7 @@ interface SyncConfiguration : RealmConfiguration {
         private var user: User,
         private var partitionValue: PartitionValue,
         schema: Set<KClass<out RealmObject>>,
-    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
+    ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
         private var errorHandler: SyncSession.ErrorHandler? = null
 

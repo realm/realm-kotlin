@@ -74,8 +74,8 @@ internal object FqNames {
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
-    val REALM_LOCAL_CONFIGURATION = FqName("io.realm.LocalConfiguration")
-    val REALM_SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
+    val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
+    val SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
     val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
     val SYNC_CONFIGURATION_BUILDER = FqName("io.realm.mongodb.SyncConfiguration.Builder")
     // External visible interface of Realm objects
