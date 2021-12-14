@@ -14,36 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm.log
+package io.realm.internal.platform
 
-import io.realm.Configuration
+import io.realm.RealmObject
+import io.realm.internal.RealmObjectCompanion
+import kotlin.reflect.KClass
 
 /**
- * Interface describing a logger implementation.
- *
- * @see Configuration.Builder.log
+ * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
  */
-interface RealmLogger {
-
-    /**
-     * The [LogLevel] used in this logger.
-     */
-    val level: LogLevel
-
-    /**
-     * Tag that can be used to describe the output.
-     */
-    val tag: String
-
-    /**
-     * Log an event.
-     */
-    fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
-
-    /**
-     * Log an event.
-     */
-    fun log(level: LogLevel, message: String) {
-        log(level, null, message, null)
-    }
-}
+internal expect fun <T : RealmObject> realmObjectCompanion(clazz: KClass<T>): RealmObjectCompanion

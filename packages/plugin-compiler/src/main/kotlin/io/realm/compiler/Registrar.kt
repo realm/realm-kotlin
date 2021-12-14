@@ -62,9 +62,5 @@ class Registrar : ComponentRegistrar {
         // Adds RealmObjectInternal properties, rewires accessors and adds static companion
         // properties and methods
         IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
-
-        // Modifies RealmConfiguration constructor calls to capture the companions objects of the
-        // supplied schema
-        IrGenerationExtension.registerExtension(project, RealmSchemaLoweringExtension())
     }
 }

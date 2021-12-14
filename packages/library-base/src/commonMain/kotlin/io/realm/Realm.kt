@@ -15,7 +15,7 @@
  */
 package io.realm
 
-import io.realm.internal.InternalRealmConfiguration
+import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmImpl
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -23,14 +23,14 @@ import kotlin.reflect.KClass
 /**
  * A Realm instance is the main entry point for interacting with a persisted realm.
  *
- * @see RealmConfiguration
+ * @see Configuration
  */
 interface Realm : TypedRealm {
 
     // FIXME Should this go to the end according to Kotlin conventions
     companion object {
         /**
-         * Default name for realm files unless overridden by [RealmConfiguration.Builder.name].
+         * Default name for realm files unless overridden by [Configuration.Builder.name].
          */
         public const val DEFAULT_FILE_NAME = "default.realm"
 
@@ -47,14 +47,14 @@ interface Realm : TypedRealm {
         /**
          * Open a realm instance.
          *
-         * This instance grants access to an underlying realm file defined by the provided [RealmConfiguration].
+         * This instance grants access to an underlying realm file defined by the provided [Configuration].
          *
          * @param configuration the RealmConfiguration used to open the Realm.
          *
          * @throws IllegalArgumentException on invalid Realm configurations.
          */
-        public fun open(configuration: RealmConfiguration): Realm {
-            return RealmImpl(configuration as InternalRealmConfiguration)
+        public fun open(configuration: Configuration): Realm {
+            return RealmImpl(configuration as InternalConfiguration)
         }
     }
 
@@ -82,7 +82,7 @@ interface Realm : TypedRealm {
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block. If this is a RealmObject it is
      * frozen before being returned.
-     * @see [RealmConfiguration.writeDispatcher]
+     * @see [Configuration.writeDispatcher]
      */
     suspend fun <R> write(block: MutableRealm.() -> R): R
 
@@ -105,7 +105,7 @@ interface Realm : TypedRealm {
      * Observe changes to the Realm. If there is any change to the Realm, the flow will emit the
      * updated Realm. The flow will continue running indefinitely until canceled.
      *
-     * The change calculations will run on the thread defined by [RealmConfiguration.notificationDispatcher].
+     * The change calculations will run on the thread defined by [Configuration.notificationDispatcher].
      *
      * @return a flow representing changes to this Realm.
      */
