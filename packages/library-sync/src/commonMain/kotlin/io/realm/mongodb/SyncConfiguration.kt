@@ -16,12 +16,13 @@
 
 package io.realm.mongodb
 
+import io.realm.Configuration
 import io.realm.LogConfiguration
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.ConfigurationImpl
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
@@ -47,7 +48,7 @@ import kotlin.reflect.KClass
  * ```
  */
 // FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
-interface SyncConfiguration : RealmConfiguration {
+interface SyncConfiguration : Configuration {
 
     val user: User
     val partitionValue: PartitionValue
@@ -61,7 +62,7 @@ interface SyncConfiguration : RealmConfiguration {
         private var user: User,
         private var partitionValue: PartitionValue,
         schema: Set<KClass<out RealmObject>>,
-    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
+    ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
         private var errorHandler: SyncSession.ErrorHandler? = null
 
@@ -141,7 +142,7 @@ interface SyncConfiguration : RealmConfiguration {
                 }
             }
 
-            val localConfiguration = RealmConfigurationImpl(
+            val baseConfiguration = ConfigurationImpl(
                 companionMap,
                 path,
                 name,
@@ -151,12 +152,12 @@ interface SyncConfiguration : RealmConfiguration {
                 notificationDispatcher ?: singleThreadDispatcher(name),
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
-                deleteRealmIfMigrationNeeded,
+                SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey
             )
 
             return SyncConfigurationImpl(
-                localConfiguration,
+                baseConfiguration,
                 partitionValue,
                 user as UserImpl,
                 errorHandler!! // It will never be null: either default or user-provided

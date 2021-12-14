@@ -35,7 +35,7 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versioned {
      * backing the RealmResult, the flow will emit the updated RealmResult. The flow will continue
      * running indefinitely until canceled.
      *
-     * The change calculations will on on the thread represented by [RealmConfiguration.notificationDispatcher].
+     * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
      *
      * @return a flow representing changes to the RealmResults.
      */
