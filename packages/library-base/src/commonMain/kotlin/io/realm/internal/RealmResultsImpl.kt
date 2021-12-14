@@ -55,7 +55,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
     override fun get(index: Int): E {
-        val link = RealmInterop.realm_results_get<Link>(nativePointer, index.toLong())
+        val link = RealmInterop.realm_results_get(nativePointer, index.toLong())
         val model = mediator.createInstanceOf(clazz)
         model.link(realm, mediator, clazz, link)
         @Suppress("UNCHECKED_CAST")
