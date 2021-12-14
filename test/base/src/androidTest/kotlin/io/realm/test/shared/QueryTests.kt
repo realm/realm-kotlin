@@ -18,10 +18,16 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmResults
 import io.realm.entities.Sample
+import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.query.RealmQuery
 import io.realm.query.Sort
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -759,36 +765,35 @@ class QueryTests {
         // TODO
     }
 
-//    @Test
-//    fun playground_multiThreadScenario() {
-//        val channel = Channel<Pair<RealmResults<Sample>, Long?>>(1)
-//        var query: RealmQuery<Sample>? = null
-//        val scope = singleThreadDispatcher("1")
-//
-//        runBlocking {
-//            realm.writeBlocking {
-//                copyToRealm(Sample().apply { intField = 666 })
-//            }
-//
-//            // Create a non-evaluated query (everything is lazy)
-//            query = realm.query(Sample::class, "intField == $0", 666)
-//
-//            // Core pointers are evaluated as soon as we get results!
-//            assertEquals(1, query!!.find().size)
-//            assertEquals(1, query!!.count().find())
-//
-//            val obs = async(scope) {
-//                // Having evaluated it before, we reuse the query object from a different thread
-//                val results = query!!.find()
-//                val count = query!!.count().find()
-//                channel.send(results to count)
-//            }
-//            val pair = channel.receive()
-//            assertEquals(1, pair.first.size)
-//            assertEquals(1, pair.second)
-//
-//            channel.close()
-//            obs.cancel()
-//        }
-//    }
+    @Test
+    fun playground_multiThreadScenario() {
+        val channel = Channel<RealmResults<Sample>>(1)
+        var query: RealmQuery<Sample>? = null
+        val scope = singleThreadDispatcher("1")
+
+        runBlocking {
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { intField = 666 })
+            }
+
+            // Create a query - the query itself is parsed but nothing else is done
+            query = realm.query(Sample::class, "intField == $0", 666)
+
+            val obs = async(scope) {
+                // Having built the query before, we reuse the query object from a different thread
+                // so that the results pointer is evaluated now
+                val results = query!!.find()
+                channel.send(results)
+            }
+            val results = channel.receive()
+            assertEquals(1, results.size)
+
+            query!!.find { res ->
+                assertEquals(1, res.size)
+            }
+
+            channel.close()
+            obs.cancel()
+        }
+    }
 }
