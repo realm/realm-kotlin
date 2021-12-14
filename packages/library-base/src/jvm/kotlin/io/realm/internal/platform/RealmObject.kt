@@ -23,5 +23,6 @@ import kotlin.reflect.full.companionObjectInstance
 
 // TODO OPTIMIZE Can we eliminate the reflective approach? Maybe by embedding the information
 //  through the compiler plugin or something similar to the Native findAssociatedObject
-internal actual fun <T : RealmObject> KClass<T>.realmObjectCompanion(): RealmObjectCompanion? =
-    this.companionObjectInstance?.let { it as RealmObjectCompanion }
+internal actual fun <T : RealmObject> realmObjectCompanion(clazz: KClass<T>): RealmObjectCompanion =
+    clazz.companionObjectInstance?.let { it as RealmObjectCompanion }
+        ?: error("Couldn't find companion object of class ${clazz.simpleName}")

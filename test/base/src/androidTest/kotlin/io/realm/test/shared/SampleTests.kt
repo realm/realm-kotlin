@@ -28,6 +28,7 @@ import io.realm.delete
 import io.realm.entities.Sample
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.platform.realmObjectCompanion
+import io.realm.internal.realmObjectCompanion
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -59,6 +60,7 @@ class SampleTests {
     @Test
     fun realmObjectCompanion() {
         assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanion())
+        assertIs<RealmObjectCompanion>(realmObjectCompanion(Sample::class))
     }
 
     @Test

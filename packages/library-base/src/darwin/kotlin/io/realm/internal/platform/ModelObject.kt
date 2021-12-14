@@ -21,6 +21,14 @@ import kotlin.reflect.AssociatedObjectKey
 import kotlin.reflect.ExperimentalAssociatedObjects
 import kotlin.reflect.KClass
 
+/**
+ * Native-only internal annotation that is used by the compiler plugin to mark the user model
+ * classes (implementing [RealmObject]) with it's associated companion object (implementing
+ * [RealmObjectCompanion]).
+ *
+ * This allows looking up the companion object at runtime with
+ * [findAssociatedObject][https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/find-associated-object.html].
+ */
 @OptIn(ExperimentalAssociatedObjects::class)
 @AssociatedObjectKey
 @Retention(AnnotationRetention.BINARY)

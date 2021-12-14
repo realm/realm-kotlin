@@ -75,7 +75,7 @@ open class RealmConfigurationImpl constructor(
         } else path
         this.name = name // FIXME Should read name from end of path
         this.schema = schema
-        this.mapOfKClassWithCompanion = schema.map { it to it.realmObjectCompanion()!! }.toMap()
+        this.mapOfKClassWithCompanion = schema.map { it to realmObjectCompanion(it) }.toMap()
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
         this.notificationDispatcher = notificationDispatcher
