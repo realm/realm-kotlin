@@ -15,10 +15,11 @@
  */
 package io.realm.test.shared
 
+import io.realm.Configuration
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
-import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.InternalConfiguration
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
@@ -51,6 +52,16 @@ class RealmConfigurationTests {
     @AfterTest
     fun tearDown() {
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun realmConfigurationAsConfiguration() {
+        val configFromBuilder: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+        val configFromBuilderAsRealmConfig: Configuration = configFromBuilder
+
+        val configFromWith: RealmConfiguration = RealmConfiguration.with(schema = setOf(Sample::class))
+        val configFromWithAsRealmConfig: Configuration = configFromWith
     }
 
     @Test
@@ -194,13 +205,13 @@ class RealmConfigurationTests {
     @Test
     fun notificationDispatcherRealmConfigurationDefault() {
         val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
-        assertTrue((configuration as RealmConfigurationImpl).notificationDispatcher is CoroutineDispatcher)
+        assertTrue((configuration as InternalConfiguration).notificationDispatcher is CoroutineDispatcher)
     }
 
     @Test
     fun notificationDispatcherRealmConfigurationBuilderDefault() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertTrue((configuration as RealmConfigurationImpl).notificationDispatcher is CoroutineDispatcher)
+        assertTrue((configuration as InternalConfiguration).notificationDispatcher is CoroutineDispatcher)
     }
 
     @Test
@@ -209,19 +220,19 @@ class RealmConfigurationTests {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .notificationDispatcher(dispatcher).build()
-        assertTrue { dispatcher === (configuration as RealmConfigurationImpl).notificationDispatcher }
+        assertTrue { dispatcher === (configuration as InternalConfiguration).notificationDispatcher }
     }
 
     @Test
     fun writeDispatcherRealmConfigurationDefault() {
         val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
-        assertTrue((configuration as RealmConfigurationImpl).writeDispatcher is CoroutineDispatcher)
+        assertTrue((configuration as InternalConfiguration).writeDispatcher is CoroutineDispatcher)
     }
 
     @Test
     fun writeDispatcherRealmConfigurationBuilderDefault() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertTrue((configuration as RealmConfigurationImpl).writeDispatcher is CoroutineDispatcher)
+        assertTrue((configuration as InternalConfiguration).writeDispatcher is CoroutineDispatcher)
     }
 
     @Test
@@ -231,7 +242,7 @@ class RealmConfigurationTests {
         val configuration =
             RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher)
                 .build()
-        assertTrue { dispatcher === (configuration as RealmConfigurationImpl).writeDispatcher }
+        assertTrue { dispatcher === (configuration as InternalConfiguration).writeDispatcher }
     }
 
     @Test
@@ -244,7 +255,7 @@ class RealmConfigurationTests {
                 .path("$tmpDir/default.realm")
                 .build()
         val threadId: ULong =
-            runBlocking((configuration as RealmConfigurationImpl).writeDispatcher) { PlatformUtils.threadId() }
+            runBlocking((configuration as InternalConfiguration).writeDispatcher) { PlatformUtils.threadId() }
         Realm.open(configuration).use { realm: Realm ->
             realm.writeBlocking {
                 assertEquals(threadId, PlatformUtils.threadId())

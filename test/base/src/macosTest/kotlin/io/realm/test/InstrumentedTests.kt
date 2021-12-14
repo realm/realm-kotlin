@@ -21,7 +21,7 @@ package io.realm.test
 //  or moved.
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
-import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.InternalConfiguration
 import io.realm.internal.interop.NativePointer
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
@@ -60,7 +60,7 @@ class InstrumentedTests {
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
-            realmModel.`$realm$Owner` = io.realm.internal.RealmReference(object : io.realm.internal.BaseRealmImpl(configuration as RealmConfigurationImpl, realmPointer) {}, realmPointer)
+            realmModel.`$realm$Owner` = io.realm.internal.RealmReference(object : io.realm.internal.BaseRealmImpl(configuration as InternalConfiguration, realmPointer) {}, realmPointer)
             realmModel.`$realm$TableName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)

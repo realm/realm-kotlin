@@ -16,30 +16,32 @@
 
 package io.realm.internal
 
-import io.realm.RealmConfiguration
+import io.realm.Configuration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.SchemaMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
  * An **internal Realm configuration** that holds internal properties from a
- * [io.realm.RealmConfiguration]. This is needed to make "agnostic" configurations from a base-sync
+ * [io.realm.Configuration]. This is needed to make "agnostic" configurations from a base-sync
  * point of view.
  */
-interface InternalRealmConfiguration : RealmConfiguration {
+interface InternalConfiguration : Configuration {
     val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     val mediator: Mediator
     val nativeConfig: NativePointer
     val notificationDispatcher: CoroutineDispatcher
     val writeDispatcher: CoroutineDispatcher
+    val schemaMode: SchemaMode
 
     fun debug(): String {
         return "path=$path\n" +
             " name=$name\n" +
             " maxNumberOfActiveVersions=$maxNumberOfActiveVersions\n" +
             " schemaVersion=$schemaVersion\n" +
-            " deleteRealmIfMigrationNeeded=$deleteRealmIfMigrationNeeded\n" +
+            " schemaMode=$schemaMode\n" +
             " schema=$schema"
     }
 }
