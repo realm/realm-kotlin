@@ -79,7 +79,7 @@ class RealmConfigurationTests {
     fun schemaInExternalVariable() {
         val schema = setOf(Sample::class)
         assertIs<RealmConfiguration>(RealmConfiguration.with(schema = schema))
-        assertIs<RealmConfiguration>(RealmConfiguration.Builder(schema = setOf(Sample::class)).build())
+        assertIs<RealmConfiguration>(RealmConfiguration.Builder(schema = schema).build())
     }
 
     @Test
