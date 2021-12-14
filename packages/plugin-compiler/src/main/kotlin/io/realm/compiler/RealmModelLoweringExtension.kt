@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.konan.isNative
 
 private val realmObjectInternalOverrides = setOf(
     // FIXME Define the constannts in Identifiers.kt
@@ -71,7 +72,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // For native we add @ModelObject(irClass.Companion::class) as associated object to be
             // able to resolve the companion object during runtime due to absence of
             // kotlin.reflect.full.companionObjectInstance
-            if (pluginContext.platform?.componentPlatforms?.first()?.platformName == "Native") {
+            if (pluginContext.platform.isNative()) {
                 val modelObjectAnnotation = IrConstructorCallImpl(
                     UNDEFINED_OFFSET,
                     UNDEFINED_OFFSET,
