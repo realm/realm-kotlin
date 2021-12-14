@@ -19,7 +19,7 @@ package io.realm.schema
 /**
  * A [RealmProperty] describes the properties of a class property in the object model.
  */
-interface RealmProperty { // Matches realm_property_info_t
+interface RealmProperty {
     /**
      * Returns the name of the property in the object model.
      */
@@ -33,8 +33,8 @@ interface RealmProperty { // Matches realm_property_info_t
     /**
      * Returns whether or not the property is allowed to be null in the corresponding `RealmObject`
      *
-     * For non-[ValuePropertyType] this is different from [RealmPropertyType.isNullable]  which
-     * indicates whether the individual storage element is allowed to be `null`.
+     * For [ValuePropertyType] this will be the same as [RealmPropertyType.isNullable]. For all
+     * other property types it will always be false.
      */
     val isNullable: Boolean
 }

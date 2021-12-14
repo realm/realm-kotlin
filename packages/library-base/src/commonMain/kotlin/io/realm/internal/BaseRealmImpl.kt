@@ -29,7 +29,7 @@ import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
 abstract class BaseRealmImpl internal constructor(
-    final override val configuration: InternalRealmConfiguration,
+    final override val configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {
 

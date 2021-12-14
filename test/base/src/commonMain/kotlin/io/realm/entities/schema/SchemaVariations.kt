@@ -25,7 +25,7 @@ import io.realm.entities.Sample
 import io.realm.realmListOf
 
 /**
- * Class used for test of the schema API; thus, doesn't exhaust modeling features but just provides
+ * Class used for testing of the schema API; thus, doesn't exhaust modeling features but provides
  * sufficient model features to cover all code paths of the schema API.
  */
 class SchemaVariations : RealmObject {

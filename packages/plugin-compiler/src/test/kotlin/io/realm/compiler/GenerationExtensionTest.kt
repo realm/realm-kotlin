@@ -90,47 +90,6 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun `unsupported schema argument`() {
-        var result = compileFromSource(
-            source = SourceFile.kotlin(
-                "schema.kt",
-                """
-        import io.realm.RealmObject
-        import io.realm.RealmConfiguration
-                    
-        class A : RealmObject
-        class C : RealmObject
-        class B : RealmObject
-        
-        val classes = setOf(A::class, B::class, C::class)
-        val configuration = RealmConfiguration.Builder(schema = classes).build()
-                """.trimIndent()
-            )
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("No schema was provided. It must be defined as a set of class literals (MyType::class)"))
-
-        result = compileFromSource(
-            source = SourceFile.kotlin(
-                "schema.kt",
-                """
-        import io.realm.RealmObject
-        import io.realm.RealmConfiguration
-                    
-        class A : RealmObject
-        class B : RealmObject
-        
-        val arr = arrayOf(A::class, B::class)
-        val configuration =
-            RealmConfiguration.Builder(schema = arr.toSet()).build()
-                """.trimIndent()
-            )
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("No schema was provided. It must be defined as a set of class literals (MyType::class)"))
-    }
-
-    @Test
     @Suppress("invisible_member", "invisible_reference")
     fun `implement RealmObjectInternal and generate internal properties`() {
         val inputs = Files("/sample")

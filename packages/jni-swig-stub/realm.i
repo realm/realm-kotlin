@@ -39,7 +39,7 @@ using namespace realm::jni_util;
                 java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
                 loadMethod.invoke(instance);
             } catch (Exception e) {
-                throw new RuntimeException("Couldn't load realm native libraries", e);
+                throw new RuntimeException("Couldn't load Realm native libraries", e);
             }
         }
     }

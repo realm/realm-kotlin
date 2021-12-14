@@ -16,12 +16,12 @@
 
 package io.realm.log
 
-import io.realm.RealmConfiguration
+import io.realm.Configuration
 
 /**
  * Interface describing a logger implementation.
  *
- * @see RealmConfiguration.Builder.log
+ * @see Configuration.Builder.log
  */
 interface RealmLogger {
 

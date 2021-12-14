@@ -25,7 +25,7 @@ import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
-    configuration: InternalRealmConfiguration,
+    configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealmImpl(configuration, dbPointer), Realm {
 
@@ -76,7 +76,7 @@ internal class RealmImpl private constructor(
         }
     }
 
-    constructor(configuration: InternalRealmConfiguration) :
+    constructor(configuration: InternalConfiguration) :
         this(
             configuration,
             try {

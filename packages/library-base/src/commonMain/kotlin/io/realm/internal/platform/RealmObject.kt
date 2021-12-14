@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm.schema
+package io.realm.internal.platform
+
+import io.realm.RealmObject
+import io.realm.internal.RealmObjectCompanion
+import kotlin.reflect.KClass
 
 /**
- * The various types that are used when storing the property values in the realm.
+ * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
  */
-enum class RealmStorageType {
-    BOOL,
-    INT,
-    STRING,
-    OBJECT,
-    FLOAT,
-    DOUBLE,
-    TIMESTAMP;
-}
+internal expect fun <T : RealmObject> realmObjectCompanion(clazz: KClass<T>): RealmObjectCompanion
