@@ -42,8 +42,8 @@ interface RealmConfiguration : Configuration {
     public val deleteRealmIfMigrationNeeded: Boolean
 
     /**
-     * Used to create a [Configuration]. For common use cases, a [Configuration] can be
-     * created using the [Configuration.with] function.
+     * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be
+     * created using the [RealmConfiguration.with] function.
      */
     class Builder(
         schema: Set<KClass<out RealmObject>> = setOf()
@@ -84,7 +84,7 @@ interface RealmConfiguration : Configuration {
 
     companion object {
         /**
-         * Create a configuration using default values except for schema, path and name.
+         * Creates a configuration using default values except for schema, path and name.
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */

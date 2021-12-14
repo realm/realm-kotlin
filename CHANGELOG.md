@@ -2,7 +2,7 @@
 
 ### Breaking Changes
 * Reworked configuration hierarchy:
-  * Separated common parts of `RealmConfiguraion` and `SyncConfiguration` into `io.realm.Configuration` to avoid poluting the base configuration with local-only options.
+  * Separated common parts of `RealmConfiguraion` and `SyncConfiguration` into `io.realm.Configuration` to avoid polluting the base configuration with local-only options.
   * Changed `Realm.open(RealmConfiguration)` to accept new base configuration with `Realm.open(Configuration)`.
   * Removed option to build `SyncConfiguration`s with `deleteRealmIfMigrationNeeded` option.
 

@@ -83,17 +83,15 @@ interface Configuration {
     val encryptionKey: ByteArray?
 
     /**
-     * This class contains shared properties across the two types of configuration builders.
-     * Abstracting this allows for minimal rewiring by the compiler plugin since [build] is
-     * available to both builders.
+     * Base class for configuration builders that holds properties available to both
+     * [RealmConfiguration] and [SyncConfiguration].
      *
-     * The property functions in this builder return the type of the builder itself, represented by
-     * [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
-     * all function return types have to be typecast as [S].
-     *
-     * @param T the type of [Configuration] the builder should generate
+     * @param T the type of [Configuration] the builder should generate.
      * @param S the type of builder, needed to distinguish between local and sync variants.
      */
+    // The property functions in this builder return the type of the builder itself, represented by
+    // [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
+    // all function return types have to be typecast as [S].
     @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
     abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         var schema: Set<KClass<out RealmObject>> = setOf()
@@ -129,7 +127,7 @@ interface Configuration {
         /**
          * Sets the filename of the realm file.
          *
-         * If setting the full path of the realm this name is not taken into account.
+         * If setting the full path of the realm, this name is not taken into account.
          */
         fun name(name: String) = apply { this.name = name } as S
 
@@ -163,8 +161,10 @@ interface Configuration {
          * will have a negative effect on the file size on disk. Setting this parameters can therefore be used to
          * prevent uses of Realm that can result in very large file sizes.
          *
+         * For details see the *Large Realm file size*-section of the
+         * [FAQ](https://docs.mongodb.com/realm-legacy/docs/java/latest/index.html#faq)
+         *
          * @param number the maximum number of active versions before an exception is thrown.
-         * @see [FAQ](https://realm.io/docs/java/latest/.faq-large-realm-file-size)
          */
         fun maxNumberOfActiveVersions(maxVersions: Long = 8) = apply {
             if (maxVersions < 1) {
@@ -244,14 +244,13 @@ interface Configuration {
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
 
         /**
-         * TODO Evaluate if this should be part of the public API. For now keep it internal.
-         *
          * Removes the default system logger from being installed. If no custom loggers have
          * been configured, no log events will be reported, regardless of the configured
          * log level.
          *
          * @see [Configuration.Builder.log]
          */
+        // TODO Evaluate if this should be part of the public API. For now keep it internal.
         internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
 
         protected fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
