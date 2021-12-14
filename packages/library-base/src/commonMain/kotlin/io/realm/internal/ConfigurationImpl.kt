@@ -22,12 +22,12 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.realmObjectCompanion
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
 open class ConfigurationImpl constructor(
-    companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
@@ -75,7 +75,7 @@ open class ConfigurationImpl constructor(
         } else path
         this.name = name // FIXME Should read name from end of path
         this.schema = schema
-        this.mapOfKClassWithCompanion = companionMap
+        this.mapOfKClassWithCompanion = schema.associateWith { realmObjectCompanion(it) }
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
         this.notificationDispatcher = notificationDispatcher

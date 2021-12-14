@@ -36,6 +36,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -72,6 +73,13 @@ class RealmConfigurationTests {
         )
         assertEquals(Realm.DEFAULT_FILE_NAME, config.name)
         assertEquals(setOf(Sample::class), config.schema)
+    }
+
+    @Test
+    fun schemaInExternalVariable() {
+        val schema = setOf(Sample::class)
+        assertIs<RealmConfiguration>(RealmConfiguration.with(schema = schema))
+        assertIs<RealmConfiguration>(RealmConfiguration.Builder(schema = schema).build())
     }
 
     @Test

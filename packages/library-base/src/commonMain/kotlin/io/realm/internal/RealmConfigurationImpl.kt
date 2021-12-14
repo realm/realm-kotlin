@@ -25,7 +25,6 @@ import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
 internal class RealmConfigurationImpl(
-    companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>,
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
@@ -37,7 +36,6 @@ internal class RealmConfigurationImpl(
     encryptionKey: ByteArray?,
     override val deleteRealmIfMigrationNeeded: Boolean
 ) : ConfigurationImpl(
-    companionMap,
     path,
     name,
     schema,

@@ -16,7 +16,6 @@
 
 package io.realm
 
-import io.realm.internal.REPLACED_BY_IR
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -113,9 +112,7 @@ interface Configuration {
          *
          * @return the created RealmConfiguration.
          */
-        fun build(): T {
-            REPLACED_BY_IR()
-        }
+        abstract fun build(): T
 
         /**
          * Sets the absolute path of the realm file.

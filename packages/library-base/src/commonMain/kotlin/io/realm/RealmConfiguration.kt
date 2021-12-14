@@ -16,9 +16,7 @@
 
 package io.realm
 
-import io.realm.internal.REPLACED_BY_IR
 import io.realm.internal.RealmConfigurationImpl
-import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
@@ -57,17 +55,13 @@ interface RealmConfiguration : Configuration {
          */
         fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
 
-        // Called from the compiler plugin
-        internal fun build(
-            companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
-        ): RealmConfiguration {
+        override fun build(): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
             return RealmConfigurationImpl(
-                companionMap,
                 path,
                 name,
                 schema,
@@ -84,15 +78,10 @@ interface RealmConfiguration : Configuration {
 
     companion object {
         /**
-         * Creates a configuration using default values except for schema, path and name.
+         * Creates a configuration from the given schema, with default values for all properties.
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        // Should always follow Builder constructor arguments
-        fun with(
-            schema: Set<KClass<out RealmObject>>
-        ): RealmConfiguration {
-            REPLACED_BY_IR() // Will be replace by Builder(schema).build(companionMap)
-        }
+        fun with(schema: Set<KClass<out RealmObject>>): RealmConfiguration = Builder(schema).build()
     }
 }
