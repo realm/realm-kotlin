@@ -115,9 +115,11 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
     /**
      * Finds the minimum value of a property.
      *
+     * A reified version of this method is also available as an extension function,
+     * `query.min<YourClass>(...)`. Import `io.realm.query.min` to access it.
+     *
      * @param property the property on which to find the minimum value. Only [Number] and
      * [RealmInstant] properties are supported.
-     *
      * @param type the type of the property.
      * @return a [RealmScalarQuery] returning the minimum value for the given [property] represented
      * as a [T]. If no objects exist or they all have `null` as the value for the given property,
@@ -130,6 +132,9 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 
     /**
      * Finds the maximum value of a property.
+     *
+     * A reified version of this method is also available as an extension function,
+     * `query.max<YourClass>(...)`. Import `io.realm.query.max` to access it.
      *
      * @param property the property on which to find the maximum value. Only [Number] properties are
      * supported.
@@ -144,6 +149,9 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 
     /**
      * Calculates the sum of a given property.
+     *
+     * A reified version of this method is also available as an extension function,
+     * `query.sum<YourClass>(...)`. Import `io.realm.query.sum` to access it.
      *
      * @param property the property to sum. Only [Number] properties are supported.
      * @param type the type of the property.
