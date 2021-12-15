@@ -140,7 +140,7 @@ internal class AggregatorQuery<E : RealmObject, T : Any> constructor(
                 Double::class -> result.toDouble()
                 else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}'.")
             }
-            else -> throw IllegalArgumentException("Invalid property type for '$property', only Number and RealmInstant properties can be aggregated.")
+            else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
         } as T?
     }
 }
