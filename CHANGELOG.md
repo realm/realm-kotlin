@@ -18,9 +18,9 @@
 
 ### Compatibility
 * This release is compatible with:
-  * Kotlin 1.5.31.
+  * Kotlin 1.6.10.
   * Coroutines 1.5.2-native-mt.
-  * AtomicFu 0.16.3.
+  * AtomicFu 0.17.0.
 * Minimum Gradle version: 6.1.1.  
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
@@ -29,7 +29,7 @@
 * Updated to Ktor 1.6.5.
 * Updated to AndroidX Startup 1.1.0.
 * Updated to Gradle 7.2.
-* Updated to Android Gradle Plugin 7.1.0-beta03.
+* Updated to Android Gradle Plugin 7.1.0-beta05.
 * Updated to NDK 23.1.7779620.
 * Updated to Android targetSdk 31.
 * Updated to Android compileSdk 31. 
@@ -38,6 +38,8 @@
 * Updated to Ktlint Gradle Plugin 10.2.0.
 * Updated to Kotlin Serialization 1.3.0.
 * Updated to Detekt 1.19.0-RC1.
+* Updated to Dokka 1.6.0.
+* Updated to AtomicFu 0.17.0.
 * Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
 
 
