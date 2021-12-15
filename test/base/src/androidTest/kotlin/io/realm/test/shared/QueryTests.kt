@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
+@file:Suppress("invisible_reference", "invisible_member")
+
 package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmInstant
+import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.entities.Sample
 import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.internal.query.AggregatorQueryType
+import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.query.Sort
 import io.realm.query.find
@@ -28,12 +33,16 @@ import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
+import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -46,7 +55,7 @@ class QueryTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(QuerySample::class))
             .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
@@ -61,29 +70,29 @@ class QueryTests {
 
     @Test
     fun find_realm() {
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .find { results -> assertEquals(0, results.size) }
 
         val stringValue = "some string"
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
-            val query = query(Sample::class)
+            val query = query(QuerySample::class)
 
             assertEquals(0, query.find().size)
-            copyToRealm(Sample().apply { stringField = stringValue })
+            copyToRealm(QuerySample().apply { stringField = stringValue })
             assertEquals(1, query.find().size)
         }
 
         // No filter
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .find { results -> assertEquals(1, results.size) }
 
         // Filter by string
-        realm.query(Sample::class, "stringField = $0", stringValue)
+        realm.query(QuerySample::class, "stringField = $0", stringValue)
             .find { results -> assertEquals(1, results.size) }
 
         // Filter by string that doesn't match
-        realm.query(Sample::class, "stringField = $0", "invalid string")
+        realm.query(QuerySample::class, "stringField = $0", "invalid string")
             .find { results -> assertEquals(0, results.size) }
     }
 
@@ -93,12 +102,12 @@ class QueryTests {
 
         realm.writeBlocking {
             // Queries inside a write transaction are live and can be reused within the closure
-            val query = query(Sample::class)
+            val query = query(QuerySample::class)
 
             query.find { results -> assertEquals(0, results.size) }
 
             assertEquals(0, query.find().size)
-            copyToRealm(Sample().apply { stringField = stringValue })
+            copyToRealm(QuerySample().apply { stringField = stringValue })
             assertEquals(1, query.find().size)
 
             // No filter
@@ -117,19 +126,19 @@ class QueryTests {
     @Test
     fun find_realm_malformedQueryThrows() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class, "stringField = $0")
+            realm.query(QuerySample::class, "stringField = $0")
         }.let {
             assertTrue(it.message!!.contains("Have you specified all parameters"))
         }
 
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class, "stringField = 42")
+            realm.query(QuerySample::class, "stringField = 42")
         }.let {
             assertTrue(it.message!!.contains("Wrong query field"))
         }
 
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class, "nonExistingField = 13")
+            realm.query(QuerySample::class, "nonExistingField = 13")
         }.let {
             assertTrue(it.message!!.contains("Wrong query field"))
         }
@@ -139,19 +148,19 @@ class QueryTests {
     fun find_mutableRealm_malformedQueryThrows() {
         realm.writeBlocking {
             assertFailsWith<IllegalArgumentException> {
-                query(Sample::class, "stringField = $0")
+                query(QuerySample::class, "stringField = $0")
             }.let {
                 assertTrue(it.message!!.contains("Have you specified all parameters"))
             }
 
             assertFailsWith<IllegalArgumentException> {
-                query(Sample::class, "stringField = 42")
+                query(QuerySample::class, "stringField = 42")
             }.let {
                 assertTrue(it.message!!.contains("Wrong query field"))
             }
 
             assertFailsWith<IllegalArgumentException> {
-                query(Sample::class, "nonExistingField = 13")
+                query(QuerySample::class, "nonExistingField = 13")
             }.let {
                 assertTrue(it.message!!.contains("Wrong query field"))
             }
@@ -181,31 +190,31 @@ class QueryTests {
 
         realm.writeBlocking {
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = 1
                     stringField = joe
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = 2
                     stringField = sylvia
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = 3
                     stringField = stacy
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = 4
                     stringField = ruth
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = 5
                     stringField = bob
                 }
@@ -213,9 +222,9 @@ class QueryTests {
         }
 
         // 5, 4, 3
-        realm.query(Sample::class, "intField > 1")
+        realm.query(QuerySample::class, "intField > 1")
             .query("intField > 2")
-            .sort(Sample::intField.name, Sort.DESCENDING)
+            .sort(QuerySample::intField.name, Sort.DESCENDING)
             .find { results ->
                 assertEquals(3, results.size)
                 assertEquals(5, results[0].intField)
@@ -224,9 +233,9 @@ class QueryTests {
             }
 
         // Sylvia, Stacy
-        realm.query(Sample::class, "intField > 1")
+        realm.query(QuerySample::class, "intField > 1")
             .query("stringField BEGINSWITH[c] $0", "S")
-            .sort(Sample::intField.name, Sort.ASCENDING)
+            .sort(QuerySample::intField.name, Sort.ASCENDING)
             .find { results ->
                 assertEquals(2, results.size)
                 assertEquals(sylvia, results[0].stringField)
@@ -234,7 +243,7 @@ class QueryTests {
             }
 
         // Ruth
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .query("stringField BEGINSWITH[c] $0 OR stringField BEGINSWITH[c] $1", "J", "R")
             .query("intField > 1")
             .find { results ->
@@ -259,31 +268,31 @@ class QueryTests {
 
         realm.writeBlocking {
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value1
                     stringField = joe
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value2
                     stringField = sylvia
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value3
                     stringField = stacy
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value4
                     stringField = ruth
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value5
                     stringField = bob
                 }
@@ -291,9 +300,9 @@ class QueryTests {
         }
 
         // Explicit descriptor function
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .query("intField > 2")
-            .sort(Sample::intField.name, Sort.DESCENDING)
+            .sort(QuerySample::intField.name, Sort.DESCENDING)
             .find()
             .let { results ->
                 assertEquals(3, results.size)
@@ -303,9 +312,9 @@ class QueryTests {
             }
 
         // Limit
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .query("intField > 2")
-            .sort(Sample::intField.name, Sort.DESCENDING)
+            .sort(QuerySample::intField.name, Sort.DESCENDING)
             .limit(1)
             .find()
             .let { results ->
@@ -314,7 +323,7 @@ class QueryTests {
             }
 
         // Descriptor in query string - Bob, Ruth, Stacy
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .query("intField > 2 SORT(stringField ASCENDING)")
             .find()
             .let { results ->
@@ -325,9 +334,9 @@ class QueryTests {
             }
 
         // Descriptor as a function - Bob, Ruth, Stacy
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .query("intField > 2")
-            .sort(Sample::stringField.name, Sort.ASCENDING)
+            .sort(QuerySample::stringField.name, Sort.ASCENDING)
             .find()
             .let { results ->
                 assertEquals(3, results.size)
@@ -337,9 +346,9 @@ class QueryTests {
             }
 
         // Descriptors in both query string and function - Bob, Ruth, Stacy
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .query("intField > 2 LIMIT(4)")
-            .sort(Sample::stringField.name, Sort.DESCENDING)
+            .sort(QuerySample::stringField.name, Sort.DESCENDING)
             .limit(3)
             .find()
             .let { results ->
@@ -350,9 +359,9 @@ class QueryTests {
             }
 
         // Conflicting descriptors, query string vs function - Bob, Ruth, Stacy
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .query("intField > 2 SORT(stringField ASCENDING)")
-            .sort(Sample::stringField.name, Sort.DESCENDING)
+            .sort(QuerySample::stringField.name, Sort.DESCENDING)
             .find()
             .let { results ->
                 assertEquals(3, results.size)
@@ -363,7 +372,7 @@ class QueryTests {
 
         // Invalid descriptor in query string
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query(QuerySample::class)
                 .query("intField > 2 SORT(stringField DESCENDINGGGGGGGGGG)")
         }
     }
@@ -380,25 +389,25 @@ class QueryTests {
 
         realm.writeBlocking {
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value1
                     stringField = sylvia
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value2
                     stringField = sylvia // intentionally repeated
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value3
                     stringField = stacy
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value4
                     stringField = ruth
                 }
@@ -406,9 +415,9 @@ class QueryTests {
         }
 
         // Ruth 4, Stacy 3
-        realm.query(Sample::class)
-            .distinct(Sample::stringField.name) // Sylvia, Stacy, Ruth
-            .sort(Sample::stringField.name, Sort.ASCENDING) // Ruth, Stacy, Sylvia
+        realm.query(QuerySample::class)
+            .distinct(QuerySample::stringField.name) // Sylvia, Stacy, Ruth
+            .sort(QuerySample::stringField.name, Sort.ASCENDING) // Ruth, Stacy, Sylvia
             .limit(2) // Ruth 4, Stacy 3
             .find { results ->
                 assertEquals(2, results.size)
@@ -429,25 +438,25 @@ class QueryTests {
 
         realm.writeBlocking {
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value1
                     stringField = sylvia
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value2
                     stringField = sylvia // intentionally repeated
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value3
                     stringField = stacy
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value4
                     stringField = ruth
                 }
@@ -455,9 +464,9 @@ class QueryTests {
         }
 
         // Ruth 4, Stacy 3
-        realm.query(Sample::class)
-            .distinct(Sample::stringField.name) // Sylvia, Stacy, Ruth
-            .sort(Sample::stringField.name, Sort.ASCENDING) // Ruth, Stacy, Sylvia
+        realm.query(QuerySample::class)
+            .distinct(QuerySample::stringField.name) // Sylvia, Stacy, Ruth
+            .sort(QuerySample::stringField.name, Sort.ASCENDING) // Ruth, Stacy, Sylvia
             .limit(2) // Ruth 4, Stacy 3
             .find { results ->
                 assertEquals(2, results.size)
@@ -468,10 +477,10 @@ class QueryTests {
         // Stacy 3, Sylvia 1
         // One would expect this to be Stacy 3 but notice the last 'query', it moves the descriptors
         // to the end - this is how it is also implemented in Java
-        realm.query(Sample::class)
-            .distinct(Sample::stringField.name) // normal execution: Sylvia 1, Stacy 3, Ruth 4
+        realm.query(QuerySample::class)
+            .distinct(QuerySample::stringField.name) // normal execution: Sylvia 1, Stacy 3, Ruth 4
             .sort(
-                Sample::stringField.name,
+                QuerySample::stringField.name,
                 Sort.ASCENDING
             ) // normal execution: Ruth 4, Stacy 4, Sylvia 1
             .limit(2) // normal execution: Ruth 4, Stacy 3
@@ -486,8 +495,8 @@ class QueryTests {
 
     @Test
     fun sort_emptyResults() {
-        realm.query(Sample::class)
-            .sort(Sample::intField.name)
+        realm.query(QuerySample::class)
+            .sort(QuerySample::intField.name)
             .find { results ->
                 assertTrue(results.isEmpty())
             }
@@ -503,7 +512,7 @@ class QueryTests {
         realm.writeBlocking {
             values.forEach { (intValue, stringValue) ->
                 copyToRealm(
-                    Sample().apply {
+                    QuerySample().apply {
                         intField = intValue
                         stringField = stringValue
                     }
@@ -512,8 +521,8 @@ class QueryTests {
         }
 
         // No filter, default ascending sorting
-        realm.query(Sample::class)
-            .sort(Sample::intField.name)
+        realm.query(QuerySample::class)
+            .sort(QuerySample::intField.name)
             .find { results ->
                 assertEquals(3, results.size)
                 assertEquals(john.first, results[0].intField)
@@ -525,8 +534,8 @@ class QueryTests {
             }
 
         // No filter, sort descending
-        realm.query(Sample::class)
-            .sort(Sample::intField.name to Sort.DESCENDING)
+        realm.query(QuerySample::class)
+            .sort(QuerySample::intField.name to Sort.DESCENDING)
             .find { results ->
                 assertEquals(3, results.size)
                 assertEquals(ruth.first, results[0].intField)
@@ -548,7 +557,7 @@ class QueryTests {
         realm.writeBlocking {
             values.forEach { (intValue, stringValue) ->
                 copyToRealm(
-                    Sample().apply {
+                    QuerySample().apply {
                         intField = intValue
                         stringField = stringValue
                     }
@@ -557,10 +566,10 @@ class QueryTests {
         }
 
         // No filter, multiple sortings
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .sort(
-                Sample::stringField.name to Sort.DESCENDING,
-                Sample::intField.name to Sort.ASCENDING
+                QuerySample::stringField.name to Sort.DESCENDING,
+                QuerySample::intField.name to Sort.ASCENDING
             ).find { results ->
                 assertEquals(3, results.size)
                 assertEquals(ruth.first, results[0].intField)
@@ -575,7 +584,7 @@ class QueryTests {
     @Test
     fun sort_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query(QuerySample::class)
                 .sort("invalid")
         }
     }
@@ -585,20 +594,20 @@ class QueryTests {
         val value1 = 1
         val value2 = 2
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value1 }) // repeated intentionally
-            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(QuerySample().apply { intField = value1 })
+            copyToRealm(QuerySample().apply { intField = value1 }) // repeated intentionally
+            copyToRealm(QuerySample().apply { intField = value2 })
         }
 
-        realm.query(Sample::class)
-            .distinct(Sample::intField.name)
+        realm.query(QuerySample::class)
+            .distinct(QuerySample::intField.name)
             .find { results ->
                 assertEquals(2, results.size)
             }
 
-        realm.query(Sample::class)
-            .distinct(Sample::intField.name)
-            .sort(Sample::intField.name, Sort.ASCENDING)
+        realm.query(QuerySample::class)
+            .distinct(QuerySample::intField.name)
+            .sort(QuerySample::intField.name, Sort.ASCENDING)
             .find { results ->
                 assertEquals(2, results.size)
                 assertEquals(value1, results[0].intField)
@@ -612,35 +621,35 @@ class QueryTests {
         val value2 = 2
         realm.writeBlocking {
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value1
                     longField = value1.toLong()
                 }
             )
             copyToRealm(
                 // Mixing values for different fields in this object
-                Sample().apply {
+                QuerySample().apply {
                     intField = value1
                     longField = value2.toLong()
                 }
             )
             copyToRealm(
                 // Intentionally inserting the same values as specified in the previous object
-                Sample().apply {
+                QuerySample().apply {
                     intField = value1
                     longField = value2.toLong()
                 }
             )
             copyToRealm(
-                Sample().apply {
+                QuerySample().apply {
                     intField = value2
                     longField = value2.toLong()
                 }
             )
         }
 
-        realm.query(Sample::class)
-            .distinct(Sample::intField.name, Sample::longField.name)
+        realm.query(QuerySample::class)
+            .distinct(QuerySample::intField.name, QuerySample::longField.name)
             .find { results ->
                 assertEquals(3, results.size)
             }
@@ -652,21 +661,21 @@ class QueryTests {
         val value2 = 2
         val value3 = 3
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
-            copyToRealm(Sample().apply { intField = value3 })
+            copyToRealm(QuerySample().apply { intField = value1 })
+            copyToRealm(QuerySample().apply { intField = value2 })
+            copyToRealm(QuerySample().apply { intField = value3 })
         }
 
-        realm.query(Sample::class)
-            .sort(Sample::intField.name, Sort.DESCENDING)
+        realm.query(QuerySample::class)
+            .sort(QuerySample::intField.name, Sort.DESCENDING)
             .limit(2)
             .find { results ->
                 assertEquals(2, results.size)
                 assertEquals(value3, results[0].intField)
             }
 
-        realm.query(Sample::class)
-            .sort(Sample::intField.name, Sort.DESCENDING)
+        realm.query(QuerySample::class)
+            .sort(QuerySample::intField.name, Sort.DESCENDING)
             .limit(2)
             .limit(1)
             .find { results ->
@@ -684,7 +693,7 @@ class QueryTests {
     @Test
     fun limit_throwsIfInvalidValue() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query(Sample::class)
+            realm.query(QuerySample::class)
                 .limit(-42)
         }
     }
@@ -763,7 +772,7 @@ class QueryTests {
 
     @Test
     fun count_find_empty() {
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .count()
             .find { countValue -> assertEquals(0, countValue) }
     }
@@ -773,14 +782,14 @@ class QueryTests {
         realm.writeBlocking {
             // Queries inside a write transaction produce live results which means they can be
             // reused within the closure
-            val countQuery = query(Sample::class).count()
+            val countQuery = query(QuerySample::class).count()
 
             assertEquals(0, countQuery.find())
-            copyToRealm(Sample())
+            copyToRealm(QuerySample())
             assertEquals(1, countQuery.find())
         }
 
-        realm.query(Sample::class)
+        realm.query(QuerySample::class)
             .count()
             .find { countValue -> assertEquals(1, countValue) }
     }
@@ -798,30 +807,69 @@ class QueryTests {
     }
 
     @Test
-    fun sum_find() {
-        val value1 = 2
-        val value2 = 7
-        val expectedSum = value1 + value2
-
-        realm.query(Sample::class)
-            .sum(Sample::intField.name, Int::class)
-            .find { sumValue: Int? -> assertEquals(0, sumValue) }
-
-        realm.writeBlocking {
-            // Queries inside a write transaction produce live results which means they can be
-            // reused within the closure
-            val sumQuery = query(Sample::class)
-                .sum(Sample::intField.name, Int::class)
-
-            assertEquals(0, sumQuery.find())
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
-            assertEquals(expectedSum, sumQuery.find())
+    fun sum_find_empty() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            realm.query(QuerySample::class)
+                .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { sumValue: Any? ->
+                    if (sumValue is Number) {
+                        assertEquals(0, sumValue.toInt())
+                    }
+                }
         }
 
-        realm.query(Sample::class)
-            .sum(Sample::intField.name, Int::class)
-            .find { sumValue: Int? -> assertEquals(expectedSum, sumValue) }
+        for (propertyDescriptor in propertyDescriptorsForSum) {
+            assertions(propertyDescriptor)
+        }
+
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
+            assertions(nullablePropertyDescriptor)
+        }
+    }
+
+    @Test
+    fun sum_find() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            val expectedSum =
+                expectedSum(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+            realm.writeBlocking {
+                val sumQuery = query(QuerySample::class)
+                    .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
+
+                val sumValueBefore = sumQuery.find()
+                if (sumValueBefore is Number) {
+                    assertEquals(0, sumValueBefore.toInt())
+                }
+
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+
+                val sumValueAfter = sumQuery.find()
+                if (sumValueAfter is Number) {
+                    assertEquals(expectedSum, sumValueAfter)
+                }
+            }
+
+            realm.query(QuerySample::class)
+                .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { sumValue ->
+                    if (sumValue is Number) {
+                        assertEquals(expectedSum, sumValue)
+                    }
+                }
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+
+        for (propertyDescriptor in propertyDescriptorsForSum) {
+            assertions(propertyDescriptor)
+        }
+
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
+            assertions(nullablePropertyDescriptor)
+        }
     }
 
     @Test
@@ -843,29 +891,56 @@ class QueryTests {
     }
 
     @Test
-    fun max_find() {
-        val value1 = 2
-        val value2 = 7
-
-        realm.query(Sample::class)
-            .max(Sample::intField.name, Int::class)
-            .find { maxValue: Int? -> assertNull(maxValue) }
-
-        realm.writeBlocking {
-            // Queries inside a write transaction produce live results which means they can be
-            // reused within the closure
-            val maxQuery = query(Sample::class)
-                .max(Sample::intField.name, Int::class)
-
-            assertNull(maxQuery.find())
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
-            assertEquals(value2, maxQuery.find())
+    fun max_find_empty() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            realm.query<QuerySample>()
+                .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { maxValue -> assertNull(maxValue) }
         }
 
-        realm.query(Sample::class)
-            .max(Sample::intField.name, Int::class)
-            .find { maxValue: Int? -> assertEquals(value2, maxValue) }
+        for (propertyDescriptor in propertyDescriptors) {
+            assertions(propertyDescriptor)
+        }
+
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            assertions(nullablePropertyDescriptor)
+        }
+    }
+
+    @Test
+    fun max_find() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            val expectedMax =
+                expectedMax(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+
+            realm.writeBlocking {
+                // Queries inside a write transaction produce live results which means they can be
+                // reused within the closure
+                val maxQuery = query(QuerySample::class)
+                    .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
+
+                assertNull(maxQuery.find())
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+                assertEquals(expectedMax, maxQuery.find())
+            }
+
+            realm.query(QuerySample::class)
+                .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { maxValue -> assertEquals(expectedMax, maxValue) }
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+
+        for (propertyDescriptor in propertyDescriptors) {
+            assertions(propertyDescriptor)
+        }
+
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            assertions(nullablePropertyDescriptor)
+        }
     }
 
     @Test
@@ -887,29 +962,64 @@ class QueryTests {
     }
 
     @Test
-    fun min_find() {
-        val value1 = 2
-        val value2 = 7
-
-        realm.query(Sample::class)
-            .min(Sample::intField.name, Int::class)
-            .find { minValue: Int? -> assertNull(minValue) }
-
-        realm.writeBlocking {
-            // Queries inside a write transaction produce live results which means they can be
-            // reused within the closure
-            val minQuery = query(Sample::class)
-                .min(Sample::intField.name, Int::class)
-
-            assertNull(minQuery.find())
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
-            assertEquals(value1, minQuery.find())
+    fun min_find_empty() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            realm.query<QuerySample>()
+                .min(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { minValue -> assertNull(minValue) }
         }
 
-        realm.query(Sample::class)
-            .min(Sample::intField.name, Int::class)
-            .find { minValue: Int? -> assertEquals(value1, minValue) }
+        for (propertyDescriptor in propertyDescriptors) {
+            assertions(propertyDescriptor)
+        }
+
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            assertions(nullablePropertyDescriptor)
+        }
+    }
+
+    @Test
+    fun min_find() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            val expectedMin =
+                expectedMin(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+
+            realm.writeBlocking {
+                // Queries inside a write transaction produce live results which means they can be
+                // reused within the closure
+                val minQuery = query(QuerySample::class)
+                    .min(propertyDescriptor.property.name, propertyDescriptor.clazz)
+
+                assertNull(minQuery.find())
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+
+                query(QuerySample::class)
+                    .find { results ->
+                        val i0 = results[0].nullableIntField
+                        val i1 = results[1].nullableIntField
+                        val kjahsdkh = 0
+                    }
+
+                assertEquals(expectedMin, minQuery.find())
+            }
+
+            realm.query(QuerySample::class)
+                .min(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { minValue -> assertEquals(expectedMin, minValue) }
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+
+        for (propertyDescriptor in propertyDescriptors) {
+            assertions(propertyDescriptor)
+        }
+
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            assertions(nullablePropertyDescriptor)
+        }
     }
 
     @Test
@@ -950,17 +1060,17 @@ class QueryTests {
 
     @Test
     fun playground_multiThreadScenario() {
-        val channel = Channel<RealmResults<Sample>>(1)
-        var query: RealmQuery<Sample>? = null
+        val channel = Channel<RealmResults<QuerySample>>(1)
+        var query: RealmQuery<QuerySample>? = null
         val scope = singleThreadDispatcher("1")
 
         runBlocking {
             realm.writeBlocking {
-                copyToRealm(Sample().apply { intField = 666 })
+                copyToRealm(QuerySample().apply { intField = 666 })
             }
 
             // Create a query - the query itself is parsed but nothing else is done
-            query = realm.query(Sample::class, "intField == $0", 666)
+            query = realm.query(QuerySample::class, "intField == $0", 666)
 
             val obs = async(scope) {
                 // Having built the query before, we reuse the query object from a different thread
@@ -979,4 +1089,265 @@ class QueryTests {
             obs.cancel()
         }
     }
+
+    // --------------------------------------------------
+    // Class instantiation with property setting helpers
+    // --------------------------------------------------
+
+    private fun <C> getInstance(
+        propertyDescriptor: PropertyDescriptor,
+        instance: C,
+        index: Int
+    ): C {
+        return when (propertyDescriptor.property.returnType.classifier as KClass<*>) {
+            Int::class -> setProperty(
+                instance,
+                propertyDescriptor.property as KMutableProperty1<C, Int?>,
+                propertyDescriptor.values as List<Int?>,
+                index
+            )
+            Long::class -> setProperty(
+                instance,
+                propertyDescriptor.property as KMutableProperty1<C, Long?>,
+                propertyDescriptor.values as List<Long?>,
+                index
+            )
+            Short::class -> setProperty(
+                instance,
+                propertyDescriptor.property as KMutableProperty1<C, Short?>,
+                propertyDescriptor.values as List<Short?>,
+                index
+            )
+            Double::class -> setProperty(
+                instance,
+                propertyDescriptor.property as KMutableProperty1<C, Double?>,
+                propertyDescriptor.values as List<Double?>,
+                index
+            )
+            Float::class -> setProperty(
+                instance,
+                propertyDescriptor.property as KMutableProperty1<C, Float?>,
+                propertyDescriptor.values as List<Float?>,
+                index
+            )
+            Float::class -> setProperty(
+                instance,
+                propertyDescriptor.property as KMutableProperty1<C, Float?>,
+                propertyDescriptor.values as List<Float?>,
+                index
+            )
+            RealmInstant::class -> setProperty(
+                instance,
+                propertyDescriptor.property as KMutableProperty1<C, RealmInstant?>,
+                propertyDescriptor.values as List<RealmInstant?>,
+                index
+            )
+            else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
+        }
+    }
+
+    private fun <C, T> setProperty(
+        instance: C,
+        property: KMutableProperty1<C, T?>,
+        data: List<T?>,
+        index: Int
+    ): C = instance.apply {
+        property.set(instance, data[index])
+    }
+
+    // -------------------------------------------------
+    // Aggregator helpers used to initialize structures
+    // -------------------------------------------------
+
+    private fun expectedSum(clazz: KClass<*>, kType: KType): Any =
+        expectedAggregator(clazz, kType, AggregatorQueryType.SUM)
+
+    private fun expectedMax(clazz: KClass<*>, kType: KType): Any =
+        expectedAggregator(clazz, kType, AggregatorQueryType.MAX)
+
+    private fun expectedMin(clazz: KClass<*>, kType: KType): Any =
+        expectedAggregator(clazz, kType, AggregatorQueryType.MIN)
+
+    private fun expectedAggregator(
+        clazz: KClass<*>,
+        returnType: KType,
+        type: AggregatorQueryType
+    ): Any = when (clazz) {
+        Int::class -> when (type) {
+            AggregatorQueryType.MIN -> when {
+                returnType.isMarkedNullable -> NULLABLE_INT_VALUES.mapNotNull { it }.minOrNull()
+                else -> INT_VALUES.minOrNull()
+            }
+            AggregatorQueryType.MAX -> when {
+                returnType.isMarkedNullable -> NULLABLE_INT_VALUES.mapNotNull { it }.maxOrNull()
+                else -> INT_VALUES.maxOrNull()
+            }
+            AggregatorQueryType.SUM -> when {
+                returnType.isMarkedNullable -> NULLABLE_INT_VALUES.mapNotNull { it }.sum()
+                else -> INT_VALUES.sum()
+            }
+        }?.toInt() ?: throw IllegalArgumentException("Aggregate result cannot be null.")
+        Long::class -> when (type) {
+            AggregatorQueryType.MIN -> when {
+                returnType.isMarkedNullable -> NULLABLE_LONG_VALUES.mapNotNull { it }.minOrNull()
+                else -> LONG_VALUES.minOrNull()
+            }
+            AggregatorQueryType.MAX -> when {
+                returnType.isMarkedNullable -> NULLABLE_LONG_VALUES.mapNotNull { it }.maxOrNull()
+                else -> LONG_VALUES.maxOrNull()
+            }
+            AggregatorQueryType.SUM -> when {
+                returnType.isMarkedNullable -> NULLABLE_LONG_VALUES.mapNotNull { it }.sum()
+                else -> LONG_VALUES.sum()
+            }
+        }?.toLong() ?: throw IllegalArgumentException("Aggregate result cannot be null.")
+        Short::class -> when (type) {
+            AggregatorQueryType.MIN -> when {
+                returnType.isMarkedNullable -> NULLABLE_SHORT_VALUES.mapNotNull { it }.minOrNull()
+                else -> SHORT_VALUES.minOrNull()
+            }
+            AggregatorQueryType.MAX -> when {
+                returnType.isMarkedNullable -> NULLABLE_SHORT_VALUES.mapNotNull { it }.maxOrNull()
+                else -> SHORT_VALUES.maxOrNull()
+            }
+            AggregatorQueryType.SUM -> when {
+                returnType.isMarkedNullable -> NULLABLE_SHORT_VALUES.sumOf { it?.toInt() ?: 0 }
+                else -> SHORT_VALUES.sum()
+            }
+        }?.toShort() ?: throw IllegalArgumentException("Aggregate result cannot be null.")
+        Double::class -> when (type) {
+            AggregatorQueryType.MIN -> when {
+                returnType.isMarkedNullable -> NULLABLE_DOUBLE_VALUES.mapNotNull { it }.minOrNull()
+                else -> DOUBLE_VALUES.minOrNull()
+            }
+            AggregatorQueryType.MAX -> when {
+                returnType.isMarkedNullable -> NULLABLE_DOUBLE_VALUES.mapNotNull { it }.maxOrNull()
+                else -> DOUBLE_VALUES.maxOrNull()
+            }
+            AggregatorQueryType.SUM -> when {
+                returnType.isMarkedNullable -> NULLABLE_DOUBLE_VALUES.sumOf { it ?: 0.0 }
+                else -> DOUBLE_VALUES.sum()
+            }
+        }?.toDouble() ?: throw IllegalArgumentException("Aggregate result cannot be null.")
+        Float::class -> when (type) {
+            AggregatorQueryType.MIN -> when {
+                returnType.isMarkedNullable -> NULLABLE_FLOAT_VALUES.mapNotNull { it }.minOrNull()
+                else -> FLOAT_VALUES.minOrNull()
+            }
+            AggregatorQueryType.MAX -> when {
+                returnType.isMarkedNullable -> NULLABLE_FLOAT_VALUES.mapNotNull { it }.maxOrNull()
+                else -> FLOAT_VALUES.maxOrNull()
+            }
+            AggregatorQueryType.SUM -> when {
+                returnType.isMarkedNullable -> NULLABLE_FLOAT_VALUES.sumOf { it?.toInt() ?: 0 }
+                else -> FLOAT_VALUES.sum()
+            }
+        }?.toFloat() ?: throw IllegalArgumentException("Aggregate result cannot be null.")
+        RealmInstant::class -> when (type) {
+            AggregatorQueryType.MIN -> when {
+                returnType.isMarkedNullable ->
+                    NULLABLE_TIMESTAMP_VALUES.mapNotNull { it }.minOrNull()
+                else -> TIMESTAMP_VALUES.minOrNull()
+            }
+            AggregatorQueryType.MAX -> when {
+                returnType.isMarkedNullable ->
+                    NULLABLE_TIMESTAMP_VALUES.mapNotNull { it }.maxOrNull()
+                else -> TIMESTAMP_VALUES.maxOrNull()
+            }
+            AggregatorQueryType.SUM -> throw IllegalArgumentException("SUM is not allowed on timestamp fields.")
+        } ?: throw IllegalArgumentException("Aggregate result cannot be null.")
+        else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
+    }
+
+    // ------------------------
+    // General-purpose helpers
+    // ------------------------
+
+    // Deletes all objects after assertions to avoid "null vs 0" results when testing aggregators
+    private fun cleanUpBetweenProperties() = realm.writeBlocking {
+        query(QuerySample::class)
+            .find { results ->
+                results.toList() // We cannot iterate over the results and delete directly!
+                    .forEach { sample ->
+                        val latest = findLatest(sample)
+                        assertNotNull(latest)
+                        delete(latest)
+                    }
+            }
+    }
+
+    // ----------------------------------------
+    // Descriptors used for exhaustive testing
+    // ----------------------------------------
+
+    private val basePropertyDescriptors = listOf(
+        PropertyDescriptor(QuerySample::intField, Int::class, INT_VALUES),
+        PropertyDescriptor(QuerySample::shortField, Short::class, SHORT_VALUES),
+        PropertyDescriptor(QuerySample::longField, Long::class, LONG_VALUES),
+        PropertyDescriptor(QuerySample::floatField, Float::class, FLOAT_VALUES),
+        PropertyDescriptor(QuerySample::doubleField, Double::class, DOUBLE_VALUES),
+    )
+
+    private val propertyDescriptors = basePropertyDescriptors +
+            PropertyDescriptor(QuerySample::timestampField, RealmInstant::class, TIMESTAMP_VALUES)
+
+    private val propertyDescriptorsForSum = basePropertyDescriptors
+
+    private val nullableBasePropertyDescriptors = listOf(
+        PropertyDescriptor(QuerySample::nullableIntField, Int::class, INT_VALUES),
+        PropertyDescriptor(QuerySample::nullableShortField, Short::class, SHORT_VALUES),
+        PropertyDescriptor(QuerySample::nullableLongField, Long::class, LONG_VALUES),
+        PropertyDescriptor(QuerySample::nullableFloatField, Float::class, FLOAT_VALUES),
+        PropertyDescriptor(QuerySample::nullableDoubleField, Double::class, DOUBLE_VALUES),
+    )
+
+    private val nullablePropertyDescriptors = nullableBasePropertyDescriptors +
+            PropertyDescriptor(
+                QuerySample::nullableTimestampField,
+                RealmInstant::class,
+                TIMESTAMP_VALUES
+            )
+
+    private val nullablePropertyDescriptorsForSum = nullableBasePropertyDescriptors
+}
+
+/**
+ * Metadata container used for exhaustive testing.
+ *
+ * @param property the field to be used in a particular assertion
+ * @param clazz field type
+ * @param values individual values to be stored in [property]
+ */
+private data class PropertyDescriptor(
+    val property: KMutableProperty1<QuerySample, *>,
+    val clazz: KClass<*>,
+    val values: List<Any?>
+)
+
+/**
+ * Use this and not [io.realm.entities.Sample] as that class has default initializers that make
+ * aggregating operations harder to assert.
+ */
+class QuerySample : RealmObject {
+    var stringField: String = "Realm"
+    var byteField: Byte = 0
+    var charField: Char = 'a'
+    var shortField: Short = 0
+    var intField: Int = 0
+    var longField: Long = 0
+    var booleanField: Boolean = true
+    var floatField: Float = 0F
+    var doubleField: Double = 0.0
+    var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
+
+    var nullableStringField: String? = null
+    var nullableByteField: Byte? = null
+    var nullableCharField: Char? = null
+    var nullableShortField: Short? = null
+    var nullableIntField: Int? = null
+    var nullableLongField: Long? = null
+    var nullableBooleanField: Boolean? = null
+    var nullableFloatField: Float? = null
+    var nullableDoubleField: Double? = null
+    var nullableTimestampField: RealmInstant? = null
 }

@@ -38,11 +38,11 @@ import kotlin.reflect.KClass
 // TODO optimize - perhaps we should map the output of dictionary.values to a RealmList so that
 //  primitive typed results are never ever exposed publicly.
 internal class RealmResultsImpl<E : RealmObject> constructor(
-    protected val realm: RealmReference,
+    private val realm: RealmReference,
     internal val nativePointer: NativePointer,
-    protected val clazz: KClass<E>,
-    protected val mediator: Mediator,
-    protected val mode: Mode = Mode.RESULTS
+    private val clazz: KClass<E>,
+    private val mediator: Mediator,
+    private val mode: Mode = Mode.RESULTS
 ) : AbstractList<E>(), RealmResults<E>, Freezable<RealmResultsImpl<E>>, Thawable<RealmResultsImpl<E>>, Observable<RealmResultsImpl<E>>, RealmStateHolder {
 
     enum class Mode {
