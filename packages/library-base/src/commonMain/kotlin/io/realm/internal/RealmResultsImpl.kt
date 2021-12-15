@@ -19,7 +19,6 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
@@ -43,7 +42,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     protected val clazz: KClass<E>,
     protected val mediator: Mediator,
     protected val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, Freezable<RealmResultsImpl<E>>, Thawable<RealmResultsImpl<E>>, Observable<RealmResultsImpl<E>>, RealmStateHolder {
+) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>>, RealmStateHolder {
 
     enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
