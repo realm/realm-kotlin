@@ -494,7 +494,7 @@ class QueryTests {
     }
 
     @Test
-    fun sort_emptyResults() {
+    fun sort_emptyTable() {
         realm.query(QuerySample::class)
             .sort(QuerySample::intField.name)
             .find { results ->
@@ -771,7 +771,7 @@ class QueryTests {
     }
 
     @Test
-    fun count_find_empty() {
+    fun count_find_emptyTable() {
         realm.query(QuerySample::class)
             .count()
             .find { countValue -> assertEquals(0, countValue) }
@@ -807,7 +807,7 @@ class QueryTests {
     }
 
     @Test
-    fun sum_find_empty() {
+    fun sum_find_emptyTable() {
         val assertions = { propertyDescriptor: PropertyDescriptor ->
             realm.query(QuerySample::class)
                 .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
@@ -818,10 +818,55 @@ class QueryTests {
                 }
         }
 
+        // Iterate over non-nullable properties only - exclude RealmInstant
         for (propertyDescriptor in propertyDescriptorsForSum) {
             assertions(propertyDescriptor)
         }
 
+        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
+            assertions(nullablePropertyDescriptor)
+        }
+    }
+
+    @Test
+    fun sum_find_allNullValues() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            realm.writeBlocking {
+                // Queries inside a write transaction produce live results which means they can be
+                // reused within the closure
+                val sumQuery = query(QuerySample::class)
+                    .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
+
+                // The sum of all null values is 0
+                sumQuery.find { sumValue ->
+                    if (sumValue is Number) {
+                        assertEquals(0, sumValue.toInt())
+                    }
+                }
+                copyToRealm(getInstance(propertyDescriptor, QuerySample()))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample()))
+                sumQuery.find { sumValue ->
+                    if (sumValue is Number) {
+                        assertEquals(0, sumValue.toInt())
+                    }
+                }
+            }
+
+            realm.query(QuerySample::class)
+                .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { sumValue ->
+                    if (sumValue is Number) {
+                        assertEquals(0, sumValue.toInt())
+                    }
+                }
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+
+        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
         for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
             assertions(nullablePropertyDescriptor)
         }
@@ -863,12 +908,29 @@ class QueryTests {
             cleanUpBetweenProperties()
         }
 
+        // Iterate over non-nullable properties only - exclude RealmInstant
         for (propertyDescriptor in propertyDescriptorsForSum) {
             assertions(propertyDescriptor)
         }
 
+        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
         for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
             assertions(nullablePropertyDescriptor)
+        }
+    }
+
+    @Test
+    fun sum_find_throwsIfRealmInstant() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(QuerySample::class)
+                .sum(timestampDescriptor.property.name, timestampDescriptor.clazz)
+                .find() // The sum is only evaluated after obtaining results!
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            realm.query(QuerySample::class)
+                .sum(nullableTimestampDescriptor.property.name, nullableTimestampDescriptor.clazz)
+                .find() // The sum is only evaluated after obtaining results!
         }
     }
 
@@ -891,17 +953,55 @@ class QueryTests {
     }
 
     @Test
-    fun max_find_empty() {
+    @Ignore
+    fun sum_asFlow_throwsIfRealmInstant() {
+        // TODO
+    }
+
+    @Test
+    fun max_find_emptyTable() {
         val assertions = { propertyDescriptor: PropertyDescriptor ->
             realm.query<QuerySample>()
                 .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
                 .find { maxValue -> assertNull(maxValue) }
         }
 
+        // Iterate over non-nullable properties only
         for (propertyDescriptor in propertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
+        // Iterate over nullable properties containing both null and non-null values
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            assertions(nullablePropertyDescriptor)
+        }
+    }
+
+    @Test
+    fun max_find_allNullValues() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            realm.writeBlocking {
+                // Queries inside a write transaction produce live results which means they can be
+                // reused within the closure
+                val maxQuery = query(QuerySample::class)
+                    .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
+
+                assertNull(maxQuery.find())
+                copyToRealm(getInstance(propertyDescriptor, QuerySample()))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample()))
+                assertNull(maxQuery.find())
+            }
+
+            realm.query(QuerySample::class)
+                .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { maxValue -> assertNull(maxValue) }
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+
+        // Iterate only over nullable properties and insert only null values in said properties
         for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
             assertions(nullablePropertyDescriptor)
         }
@@ -934,10 +1034,12 @@ class QueryTests {
             cleanUpBetweenProperties()
         }
 
+        // Iterate over non-nullable properties only
         for (propertyDescriptor in propertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
+        // Iterate over nullable properties containing both null and non-null values
         for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
             assertions(nullablePropertyDescriptor)
         }
@@ -962,17 +1064,49 @@ class QueryTests {
     }
 
     @Test
-    fun min_find_empty() {
+    fun min_find_emptyTable() {
         val assertions = { propertyDescriptor: PropertyDescriptor ->
             realm.query<QuerySample>()
                 .min(propertyDescriptor.property.name, propertyDescriptor.clazz)
                 .find { minValue -> assertNull(minValue) }
         }
 
+        // Iterate over non-nullable properties only
         for (propertyDescriptor in propertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
+        // Iterate over nullable properties containing both null and non-null values
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            assertions(nullablePropertyDescriptor)
+        }
+    }
+
+    @Test
+    fun min_find_allNullValues() {
+        val assertions = { propertyDescriptor: PropertyDescriptor ->
+            realm.writeBlocking {
+                // Queries inside a write transaction produce live results which means they can be
+                // reused within the closure
+                val minQuery = query(QuerySample::class)
+                    .min(propertyDescriptor.property.name, propertyDescriptor.clazz)
+
+                assertNull(minQuery.find())
+                copyToRealm(getInstance(propertyDescriptor, QuerySample()))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample()))
+                assertNull(minQuery.find())
+            }
+
+            realm.query(QuerySample::class)
+                .min(propertyDescriptor.property.name, propertyDescriptor.clazz)
+                .find { minValue -> assertNull(minValue) }
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+
+        // Iterate only over nullable properties and insert only null values in said properties
         for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
             assertions(nullablePropertyDescriptor)
         }
@@ -1013,10 +1147,12 @@ class QueryTests {
             cleanUpBetweenProperties()
         }
 
+        // Iterate over non-nullable properties only
         for (propertyDescriptor in propertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
+        // Iterate over nullable properties containing both null and non-null values
         for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
             assertions(nullablePropertyDescriptor)
         }
@@ -1048,7 +1184,7 @@ class QueryTests {
 
     @Test
     @Ignore
-    fun first_find_empty() {
+    fun first_find_emptyTable() {
         // TODO
     }
 
@@ -1097,7 +1233,7 @@ class QueryTests {
     private fun <C> getInstance(
         propertyDescriptor: PropertyDescriptor,
         instance: C,
-        index: Int
+        index: Int? = null
     ): C {
         return when (propertyDescriptor.property.returnType.classifier as KClass<*>) {
             Int::class -> setProperty(
@@ -1144,9 +1280,12 @@ class QueryTests {
         instance: C,
         property: KMutableProperty1<C, T?>,
         data: List<T?>,
-        index: Int
+        index: Int? = null
     ): C = instance.apply {
-        property.set(instance, data[index])
+        when (index) {
+            null -> property.set(instance, null)
+            else -> property.set(instance, data[index])
+        }
     }
 
     // -------------------------------------------------
@@ -1283,11 +1422,13 @@ class QueryTests {
         PropertyDescriptor(QuerySample::doubleField, Double::class, DOUBLE_VALUES),
     )
 
-    private val propertyDescriptors = basePropertyDescriptors + PropertyDescriptor(
+    private val timestampDescriptor = PropertyDescriptor(
         QuerySample::timestampField,
         RealmInstant::class,
         TIMESTAMP_VALUES
     )
+
+    private val propertyDescriptors = basePropertyDescriptors + timestampDescriptor
 
     private val propertyDescriptorsForSum = basePropertyDescriptors
 
@@ -1299,11 +1440,14 @@ class QueryTests {
         PropertyDescriptor(QuerySample::nullableDoubleField, Double::class, DOUBLE_VALUES),
     )
 
-    private val nullablePropertyDescriptors = nullableBasePropertyDescriptors + PropertyDescriptor(
+    private val nullableTimestampDescriptor = PropertyDescriptor(
         QuerySample::nullableTimestampField,
         RealmInstant::class,
         TIMESTAMP_VALUES
     )
+
+    private val nullablePropertyDescriptors =
+        nullableBasePropertyDescriptors + nullableTimestampDescriptor
 
     private val nullablePropertyDescriptorsForSum = nullableBasePropertyDescriptors
 }
