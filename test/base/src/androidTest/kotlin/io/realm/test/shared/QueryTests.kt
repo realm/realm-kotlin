@@ -1130,12 +1130,6 @@ class QueryTests {
                 propertyDescriptor.values as List<Float?>,
                 index
             )
-            Float::class -> setProperty(
-                instance,
-                propertyDescriptor.property as KMutableProperty1<C, Float?>,
-                propertyDescriptor.values as List<Float?>,
-                index
-            )
             RealmInstant::class -> setProperty(
                 instance,
                 propertyDescriptor.property as KMutableProperty1<C, RealmInstant?>,
@@ -1168,6 +1162,7 @@ class QueryTests {
     private fun expectedMin(clazz: KClass<*>, kType: KType): Any =
         expectedAggregator(clazz, kType, AggregatorQueryType.MIN)
 
+    @Suppress("LongMethod", "ComplexMethod")
     private fun expectedAggregator(
         clazz: KClass<*>,
         returnType: KType,
@@ -1288,8 +1283,11 @@ class QueryTests {
         PropertyDescriptor(QuerySample::doubleField, Double::class, DOUBLE_VALUES),
     )
 
-    private val propertyDescriptors = basePropertyDescriptors +
-            PropertyDescriptor(QuerySample::timestampField, RealmInstant::class, TIMESTAMP_VALUES)
+    private val propertyDescriptors = basePropertyDescriptors + PropertyDescriptor(
+        QuerySample::timestampField,
+        RealmInstant::class,
+        TIMESTAMP_VALUES
+    )
 
     private val propertyDescriptorsForSum = basePropertyDescriptors
 
@@ -1301,12 +1299,11 @@ class QueryTests {
         PropertyDescriptor(QuerySample::nullableDoubleField, Double::class, DOUBLE_VALUES),
     )
 
-    private val nullablePropertyDescriptors = nullableBasePropertyDescriptors +
-            PropertyDescriptor(
-                QuerySample::nullableTimestampField,
-                RealmInstant::class,
-                TIMESTAMP_VALUES
-            )
+    private val nullablePropertyDescriptors = nullableBasePropertyDescriptors + PropertyDescriptor(
+        QuerySample::nullableTimestampField,
+        RealmInstant::class,
+        TIMESTAMP_VALUES
+    )
 
     private val nullablePropertyDescriptorsForSum = nullableBasePropertyDescriptors
 }

@@ -75,6 +75,9 @@ interface Realm : TypedRealm {
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *
+     * A reified version of this method is also available as an extension function,
+     * `realm.query<YourClass>(...)`. Import `io.realm.query` to access it.
+     *
      * The results yielded by the query reflect the state of the realm at invocation time, so the
      * they do not change when the realm updates. You can access these results from any thread.
      *

@@ -88,7 +88,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
         propertyAndSortOrder: Pair<String, Sort>,
         vararg additionalPropertiesAndOrders: Pair<String, Sort>
     ): RealmQuery<E> {
-        val stringBuilder = StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
+        val stringBuilder =
+            StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
         additionalPropertiesAndOrders.forEach { extraPropertyAndOrder ->
             stringBuilder.append(", ${extraPropertyAndOrder.first} ${extraPropertyAndOrder.second}")
         }
@@ -149,7 +150,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> = TODO()
 
-    private fun parseQuery(): NativePointer = tryCatchCoreException(filter) {
+    private fun parseQuery(): NativePointer = tryCatchCoreException {
         RealmInterop.realm_query_parse(
             realmReference.dbPointer,
             clazz.simpleName!!,
@@ -158,22 +159,19 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
     }
 
-    private fun tryCatchCoreException(
-        filter: String? = null,
-        block: () -> NativePointer
-    ): NativePointer = try {
+    private fun tryCatchCoreException(block: () -> NativePointer): NativePointer = try {
         block.invoke()
     } catch (exception: RealmCoreException) {
         throw when (exception) {
             is RealmCoreInvalidQueryStringException ->
                 IllegalArgumentException("Wrong query string: ${exception.message}")
             is RealmCoreInvalidQueryException ->
-                IllegalArgumentException("Wrong query field provided or malformed syntax for query '$filter': ${exception.message}")
+                IllegalArgumentException("Wrong query field provided or malformed syntax in query: ${exception.message}")
             is RealmCoreIndexOutOfBoundsException ->
-                IllegalArgumentException("Have you specified all parameters for query '$filter'?: ${exception.message}")
+                IllegalArgumentException("Have you specified all parameters in your query?: ${exception.message}")
             else ->
                 genericRealmCoreExceptionHandler(
-                    "Invalid syntax for query '$filter': ${exception.message}",
+                    "Invalid syntax in query: ${exception.message}",
                     exception
                 )
         }
