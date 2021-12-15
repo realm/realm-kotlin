@@ -56,7 +56,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
      * scheduler, that delivers notifications on the main run loop.
      */
     internal constructor(
-        configuration: InternalRealmConfiguration,
+        configuration: InternalConfiguration,
         dispatcher: CoroutineDispatcher? = null
     ) : super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
 

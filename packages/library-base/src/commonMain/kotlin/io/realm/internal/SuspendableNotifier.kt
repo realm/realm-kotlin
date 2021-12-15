@@ -52,7 +52,7 @@ internal class SuspendableNotifier(
     )
 
     private val realmInitializer = lazy {
-        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalRealmConfiguration).nativeConfig, dispatcher)
+        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalConfiguration).nativeConfig, dispatcher)
         object : BaseRealmImpl(owner.configuration, dbPointer) {
             /* Realms used by the Notifier is just a basic Live Realm */
         }

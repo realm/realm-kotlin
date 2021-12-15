@@ -1,6 +1,6 @@
 package io.realm.log
 
-import io.realm.RealmConfiguration
+import io.realm.Configuration
 import io.realm.internal.interop.CoreLogLevel
 import io.realm.log.LogLevel.TRACE
 import io.realm.log.LogLevel.WTF
@@ -9,10 +9,10 @@ import io.realm.log.LogLevel.WTF
  * Enum describing the log levels available to Realms internal logger.
  *
  * Each log entry is assigned a priority between [TRACE] and [WTF]. If the log level is equal or
- * higher than the priority defined in [io.realm.RealmConfiguration.Builder.logLevel] the event will
+ * higher than the priority defined in [io.realm.Configuration.Builder.logLevel] the event will
  * be logged.
  *
- * @see RealmConfiguration.Builder.log
+ * @see Configuration.Builder.log
  */
 @Suppress("MagicNumber")
 enum class LogLevel(val priority: Int) {
