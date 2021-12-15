@@ -78,11 +78,11 @@ interface Realm : TypedRealm {
      * A reified version of this method is also available as an extension function,
      * `realm.query<YourClass>(...)`. Import `io.realm.query` to access it.
      *
-     * The results yielded by the query reflect the state of the realm at invocation time, so the
-     * they do not change when the realm updates. You can access these results from any thread.
-     *
      * The resulting query is lazily evaluated and will not perform any calculations until
      * [RealmQuery.find] is called or the [Flow] produced by [RealmQuery.asFlow] is collected.
+     *
+     * The results yielded by the query reflect the state of the realm at invocation time, so the
+     * they do not change when the realm updates. You can access these results from any thread.
      *
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
