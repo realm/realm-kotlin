@@ -75,7 +75,7 @@ internal object FqNames {
     val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
-    val REALM_SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
+    val SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
     val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
     val SYNC_CONFIGURATION_BUILDER = FqName("io.realm.mongodb.SyncConfiguration.Builder")
     // External visible interface of Realm objects
@@ -98,6 +98,7 @@ internal object FqNames {
     val INDEX_ANNOTATION = FqName("io.realm.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
+    val MODEL_OBJECT_ANNOTATION = FqName("io.realm.internal.platform.ModelObject")
     // Realm data types
     val REALM_LIST = FqName("io.realm.RealmList")
     val REALM_INSTANT = FqName("io.realm.RealmInstant")

@@ -734,10 +734,10 @@ actual object RealmInterop {
     }
 
     // TODO OPTIMIZE Getting a range
-    actual fun <T> realm_results_get(results: NativePointer, index: Long): T {
+    actual fun realm_results_get(results: NativePointer, index: Long): Link {
         val value = realm_value_t()
         realmc.realm_results_get(results.cptr(), index, value)
-        return from_realm_value(value)
+        return value.asLink()
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {

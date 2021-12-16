@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// FIXME Don't know how to call Sample::class.realmObjectCompanion() with
+//  import io.realm.internal.platform.realmObjectCompanion
+// And cannot only supresss that single import
+@file:Suppress("invisible_member", "invisible_reference")
+
 package io.realm.test.shared
 
 import io.realm.Realm
@@ -20,6 +25,9 @@ import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.delete
 import io.realm.entities.Sample
+import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.platform.realmObjectCompanion
+import io.realm.internal.realmObjectCompanion
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
@@ -29,6 +37,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 
 class SampleTests {
 
@@ -49,6 +58,13 @@ class SampleTests {
     fun tearDown() {
         realm.close()
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    // Tests that we can resolve RealmObjectCompanion from KClass<out RealmObject>
+    @Test
+    fun realmObjectCompanion() {
+        assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanion())
+        assertIs<RealmObjectCompanion>(realmObjectCompanion(Sample::class))
     }
 
     @Test
