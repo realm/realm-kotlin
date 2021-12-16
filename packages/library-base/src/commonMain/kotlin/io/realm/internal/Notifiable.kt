@@ -21,7 +21,7 @@ import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 
-interface Observable<T> {
+interface Notifiable<T> {
     fun registerForNotification(callback: Callback): NativePointer
 
     // FIXME Needs elaborate doc on how to signal and close channel
@@ -33,13 +33,15 @@ interface Observable<T> {
 }
 
 interface Freezable<T> {
-    fun freeze(frozenRealm: RealmReference): Observable<T>?
+    fun freeze(frozenRealm: RealmReference): Notifiable<T>?
 }
 
 interface Thawable<T> {
-    fun thaw(liveRealm: RealmReference): Observable<T>?
+    fun thaw(liveRealm: RealmReference): Notifiable<T>?
 }
 
 interface Flowable<T> {
     fun asFlow(): Flow<T?>
 }
+
+interface Observable<T> : Notifiable<T>, Freezable<T>, Thawable<T>

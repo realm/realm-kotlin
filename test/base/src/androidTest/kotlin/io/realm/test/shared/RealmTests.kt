@@ -20,7 +20,7 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
-import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.InternalConfiguration
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.WeakReference
 import io.realm.isManaged
@@ -411,7 +411,7 @@ class RealmTests {
 
         // Trigger GC - On native we also need to trigger GC on the background thread that creates
         // the references
-        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
+        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
             triggerGC()
         }
         triggerGC()
@@ -442,7 +442,7 @@ class RealmTests {
 
         // Trigger GC - On native we also need to trigger GC on the background thread that creates
         // the references
-        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
+        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
             triggerGC()
         }
         triggerGC()
@@ -456,7 +456,7 @@ class RealmTests {
         // Clear reference
         parent = null
 
-        runBlocking((realm.configuration as RealmConfigurationImpl).writeDispatcher) {
+        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
             triggerGC()
         }
         triggerGC()

@@ -18,7 +18,6 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.internal.ElementResults
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
@@ -78,6 +77,10 @@ internal class ObjectQuery<E : RealmObject> constructor(
         return ObjectQuery(appendedQuery, this)
     }
 
+    // TODO Descriptors are added using 'append_query', which requires an actual predicate. This
+    //  might result into query strings like "TRUEPREDICATE AND TRUEPREDICATE SORT(...)". We should
+    //  look into how to avoid this, perhaps by exposing a different function that internally
+    //  ignores unnecessary default predicates.
     override fun sort(property: String, sortOrder: Sort): RealmQuery<E> =
         query("TRUEPREDICATE SORT($property ${sortOrder.name})")
 
@@ -85,9 +88,10 @@ internal class ObjectQuery<E : RealmObject> constructor(
         propertyAndSortOrder: Pair<String, Sort>,
         vararg additionalPropertiesAndOrders: Pair<String, Sort>
     ): RealmQuery<E> {
-        val stringBuilder = StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
-        additionalPropertiesAndOrders.forEach { extraPropertyAndOrder ->
-            stringBuilder.append(", ${extraPropertyAndOrder.first} ${extraPropertyAndOrder.second}")
+        val (property, order) = propertyAndSortOrder
+        val stringBuilder = StringBuilder().append("TRUEPREDICATE SORT($property $order")
+        additionalPropertiesAndOrders.forEach { (extraProperty, extraOrder) ->
+            stringBuilder.append(", $extraProperty $extraOrder")
         }
         stringBuilder.append(")")
         return query(stringBuilder.toString())
@@ -140,11 +144,11 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
 
     override fun count(): RealmScalarQuery<Long> =
-        CountQuery(realmReference, queryPointer, mediator)
+        CountQuery(realmReference, queryPointer, mediator, clazz)
 
-    override fun thaw(liveRealm: RealmReference): RealmResults<E> {
+    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveResults = RealmInterop.realm_results_resolve_in(resultsPointer, liveRealm.dbPointer)
-        return ElementResults(liveRealm, liveResults, clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResults, clazz, mediator)
     }
 
     override fun asFlow(): Flow<RealmResults<E>> {
@@ -153,7 +157,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
             .registerObserver(this)
     }
 
-    private fun parseQuery(): NativePointer = tryCatchCoreException(filter) {
+    private fun parseQuery(): NativePointer = tryCatchCoreException {
         RealmInterop.realm_query_parse(
             realmReference.dbPointer,
             clazz.simpleName!!,
@@ -162,22 +166,19 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
     }
 
-    private fun tryCatchCoreException(
-        filter: String? = null,
-        block: () -> NativePointer
-    ): NativePointer = try {
+    private fun tryCatchCoreException(block: () -> NativePointer): NativePointer = try {
         block.invoke()
     } catch (exception: RealmCoreException) {
         throw when (exception) {
             is RealmCoreInvalidQueryStringException ->
                 IllegalArgumentException("Wrong query string: ${exception.message}")
             is RealmCoreInvalidQueryException ->
-                IllegalArgumentException("Wrong query field provided or malformed syntax for query '$filter': ${exception.message}")
+                IllegalArgumentException("Wrong query field provided or malformed syntax in query: ${exception.message}")
             is RealmCoreIndexOutOfBoundsException ->
-                IllegalArgumentException("Have you specified all parameters for query '$filter'?: ${exception.message}")
+                IllegalArgumentException("Have you specified all parameters in your query?: ${exception.message}")
             else ->
                 genericRealmCoreExceptionHandler(
-                    "Invalid syntax for query '$filter': ${exception.message}",
+                    "Invalid syntax in query: ${exception.message}",
                     exception
                 )
         }

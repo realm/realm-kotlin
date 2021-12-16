@@ -16,10 +16,12 @@
 
 package io.realm.internal.query
 
-import io.realm.internal.BaseResults
+import io.realm.RealmInstant
+import io.realm.RealmObject
+import io.realm.RealmResults
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
-import io.realm.internal.ScalarResults
+import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.ColumnKey
@@ -27,6 +29,7 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.Timestamp
 import io.realm.query.RealmScalarQuery
 import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.AtomicRef
@@ -36,22 +39,30 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlin.reflect.KClass
 
-internal abstract class BaseScalarQuery<T : Any> constructor(
+/**
+ * Shared logic for scalar queries.
+ *
+ * Observe that this class needs the [E] representing a [RealmObject] to avoid having to split
+ * [RealmResults] in object and scalar implementations and to be able to observe changes to the
+ * scalar values for the query - more concretely to allow returning a [RealmResultsImpl] object by
+ * [thaw], which in turn comes from processing said results with [queryMapper].
+ */
+internal abstract class BaseScalarQuery<E : RealmObject, T : Any> constructor(
     protected val realmReference: RealmReference,
     protected val queryPointer: NativePointer,
-    protected val mediator: Mediator
-) : RealmScalarQuery<T>, Thawable<BaseResults<T>> {
+    protected val mediator: Mediator,
+    protected val clazz: KClass<E>
+) : RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
 
     abstract val valueChangeManager: ValueChangeManager<T>
 
-    abstract fun getScalarClass(): KClass<T>
-    abstract fun Flow<BaseResults<T>?>.queryMapper(): Flow<T?>
+    abstract fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<T?>
 
-    override fun thaw(liveRealm: RealmReference): BaseResults<T> {
+    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
         val queryResults = RealmInterop.realm_query_find_all(queryPointer)
         val liveResultPtr = RealmInterop.realm_results_resolve_in(queryResults, liveDbPointer)
-        return ScalarResults(liveRealm, liveResultPtr, getScalarClass(), mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, clazz, mediator)
     }
 
     override fun asFlow(): Flow<T?> {
@@ -65,19 +76,18 @@ internal abstract class BaseScalarQuery<T : Any> constructor(
         RealmInterop.realm_get_col_key(realmReference.dbPointer, clazz.simpleName!!, property)
 }
 
-internal class CountQuery constructor(
+internal class CountQuery<E : RealmObject> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
-    mediator: Mediator
-) : BaseScalarQuery<Long>(realmReference, queryPointer, mediator) {
+    mediator: Mediator,
+    clazz: KClass<E>
+) : BaseScalarQuery<E, Long>(realmReference, queryPointer, mediator, clazz) {
 
     override val valueChangeManager = ValueChangeManager<Long>()
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
-    override fun getScalarClass(): KClass<Long> = Long::class
-
-    override fun Flow<BaseResults<Long>?>.queryMapper(): Flow<Long> = this.map {
+    override fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<Long?> = this.map {
         requireNotNull(it).size.toLong()
     }.filter { latestCount ->
         valueChangeManager.shouldEmitValue(latestCount)
@@ -85,23 +95,21 @@ internal class CountQuery constructor(
 }
 
 @Suppress("LongParameterList")
-internal class AggregatorQuery<T : Any> constructor(
+internal class AggregatorQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
-    private val clazz: KClass<*>,
+    clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<T>(realmReference, queryPointer, mediator) {
+) : BaseScalarQuery<E, T>(realmReference, queryPointer, mediator, clazz) {
 
     override val valueChangeManager: ValueChangeManager<T> = ValueChangeManager()
 
     override fun find(): T? = findInternal(queryPointer)
 
-    override fun getScalarClass(): KClass<T> = type
-
-    override fun Flow<BaseResults<T>?>.queryMapper(): Flow<T?> = this.map {
+    override fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<T?> = this.map {
         it?.let { results ->
             findFromResults(results.nativePointer)
         }
@@ -112,23 +120,21 @@ internal class AggregatorQuery<T : Any> constructor(
     private fun findInternal(queryPointer: NativePointer): T? =
         findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
-    private fun findFromResults(resultsPointer: NativePointer): T? {
-        try {
-            val colKey = getPropertyKey(clazz, property).key
-            return computeAggregatedValue(resultsPointer, colKey)
-        } catch (exception: RealmCoreException) {
-            throw when (exception) {
-                is RealmCoreLogicException ->
-                    IllegalArgumentException(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-                else ->
-                    genericRealmCoreExceptionHandler(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-            }
+    private fun findFromResults(resultsPointer: NativePointer): T? = try {
+        val colKey = getPropertyKey(clazz, property).key
+        computeAggregatedValue(resultsPointer, colKey)
+    } catch (exception: RealmCoreException) {
+        throw when (exception) {
+            is RealmCoreLogicException ->
+                IllegalArgumentException(
+                    "Invalid query formulation: ${exception.message}",
+                    exception
+                )
+            else ->
+                genericRealmCoreExceptionHandler(
+                    "Invalid query formulation: ${exception.message}",
+                    exception
+                )
         }
     }
 
@@ -141,16 +147,19 @@ internal class AggregatorQuery<T : Any> constructor(
             AggregatorQueryType.SUM ->
                 RealmInterop.realm_results_sum(resultsPointer, colKey)
         }
-
-        val numberResult: Number = result?.let { it as Number } ?: return null
-
         // TODO Expand to support other numeric types, e.g. Decimal128
-        return when (type) {
-            Int::class -> numberResult.toInt()
-            Long::class -> numberResult.toLong()
-            Float::class -> numberResult.toFloat()
-            Double::class -> numberResult.toDouble()
-            else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}'.")
+        return when (result) {
+            null -> null
+            is Timestamp -> RealmInstant.fromEpochSeconds(result.seconds, result.nanoSeconds)
+            is Number -> when (type) {
+                Int::class -> result.toInt()
+                Short::class -> result.toShort()
+                Long::class -> result.toLong()
+                Float::class -> result.toFloat()
+                Double::class -> result.toDouble()
+                else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}'.")
+            }
+            else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
         } as T?
     }
 }

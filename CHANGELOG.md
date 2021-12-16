@@ -1,22 +1,29 @@
 ## 0.8.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* `RealmResults.observe()` has been renamed to `RealmResults.asFlow()`.
+* Reworked configuration hierarchy:
+  * Separated common parts of `RealmConfiguraion` and `SyncConfiguration` into `io.realm.Configuration` to avoid polluting the base configuration with local-only options.
+  * Changed `Realm.open(RealmConfiguration)` to accept new base configuration with `Realm.open(Configuration)`.
+  * Removed option to build `SyncConfiguration`s with `deleteRealmIfMigrationNeeded` option.
+* `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
+* Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added support for dates through a new property type: `RealmInstant`.
-* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)) - querying via `Realm.objects(...)` is no longer supported.
+* Allow to pass schema as a variable containing the involved `KClass`es and build configurations non-fluently ([#389](https://github.com/realm/realm-kotlin/issues/389)).
+* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
 * Compiler plugin symbol lookup happens only on Sourset using Realm ([#544](https://github.com/realm/realm-kotlin/issues/544)).
+* Fixed migration exception when opening a synced realm that is already stored in the backend for the first time ([#601](https://github.com/realm/realm-kotlin/issues/604)).
 
 ### Compatibility
 * This release is compatible with:
-  * Kotlin 1.5.31.
+  * Kotlin 1.6.10.
   * Coroutines 1.5.2-native-mt.
-  * AtomicFu 0.16.3.
+  * AtomicFu 0.17.0.
 * Minimum Gradle version: 6.1.1.  
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
@@ -25,7 +32,7 @@
 * Updated to Ktor 1.6.5.
 * Updated to AndroidX Startup 1.1.0.
 * Updated to Gradle 7.2.
-* Updated to Android Gradle Plugin 7.1.0-beta03.
+* Updated to Android Gradle Plugin 7.1.0-beta05.
 * Updated to NDK 23.1.7779620.
 * Updated to Android targetSdk 31.
 * Updated to Android compileSdk 31.
@@ -34,7 +41,9 @@
 * Updated to Ktlint Gradle Plugin 10.2.0.
 * Updated to Kotlin Serialization 1.3.0.
 * Updated to Detekt 1.19.0-RC1.
-* Updated to Realm Core commit: 5903577608d202ad88f375c1bb2ceedb831f6d7b.
+* Updated to Dokka 1.6.0.
+* Updated to AtomicFu 0.17.0.
+* Updated to Realm Core 11.7.0, commit: 5903577608d202ad88f375c1bb2ceedb831f6d7b.
 
 
 ## 0.7.0 (2021-10-31)

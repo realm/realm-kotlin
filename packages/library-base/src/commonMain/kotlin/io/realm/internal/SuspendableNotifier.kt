@@ -52,7 +52,7 @@ internal class SuspendableNotifier(
     )
 
     private val realmInitializer = lazy {
-        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalRealmConfiguration).nativeConfig, dispatcher)
+        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalConfiguration).nativeConfig, dispatcher)
         object : BaseRealmImpl(owner.configuration, dbPointer) {
             /* Realms used by the Notifier is just a basic Live Realm */
         }
@@ -96,7 +96,7 @@ internal class SuspendableNotifier(
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
                 ensureActive()
-                val liveRef: Observable<T> = thawable.thaw(realm.realmReference)
+                val liveRef: Notifiable<T> = thawable.thaw(realm.realmReference)
                     ?: error("Cannot listen for changes on a deleted reference")
                 val interopCallback: io.realm.internal.interop.Callback =
                     object : io.realm.internal.interop.Callback {

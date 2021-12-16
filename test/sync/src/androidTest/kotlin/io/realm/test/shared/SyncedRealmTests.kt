@@ -39,6 +39,8 @@ import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.takeWhile
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -145,6 +147,50 @@ class SyncedRealmTests {
         realm2.close()
         PlatformUtils.deleteTempDir(dir1)
         PlatformUtils.deleteTempDir(dir2)
+    }
+
+    @Test
+    fun canOpenWithRemoteSchema() = runBlocking {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        val partitionValue = Random.nextLong().toString()
+        // Setup two realms that synchronizes with the backend
+        val dir1 = PlatformUtils.createTempDir()
+        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", partitionValue = partitionValue, user = user)
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+        val dir2 = PlatformUtils.createTempDir()
+        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user)
+        val realm2 = Realm.open(config2)
+        assertNotNull(realm2)
+
+        // Block until we see changed written to one realm in the other to ensure that schema is
+        // aligned with backend
+        val synced = async {
+            realm2.objects(ChildPk::class).observe().takeWhile { it.size != 0 }.collect { }
+        }
+        realm1.write { copyToRealm(ChildPk()) }
+        synced.await()
+
+        // Open a third realm to verify that it can open it when there is a schema on the backend
+        // There is no guarantee that this wouldn't succeed if all internal realms (user facing,
+        // writer and notifier) are opened before the schema is synced from the server, but
+        // empirically it has shown not to be the case and cause trouble if opening the second or
+        // third realm with the wrong sync-intended schema mode.
+        val dir3 = PlatformUtils.createTempDir()
+        val config3 = createSyncConfig(path = "$dir3/$DEFAULT_NAME", user = user)
+        val realm3 = Realm.open(config3)
+        assertNotNull(realm3)
+
+        realm1.close()
+        realm2.close()
+        realm3.close()
+        PlatformUtils.deleteTempDir(dir1)
+        PlatformUtils.deleteTempDir(dir2)
+        PlatformUtils.deleteTempDir(dir3)
     }
 
     @Test
