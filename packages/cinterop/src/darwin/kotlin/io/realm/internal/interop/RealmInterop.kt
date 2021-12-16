@@ -869,7 +869,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_get(results: NativePointer, index: Long): T {
+    actual fun realm_results_get(results: NativePointer, index: Long): Link {
         memScoped {
             val value = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -879,7 +879,7 @@ actual object RealmInterop {
                     value.ptr
                 )
             )
-            return from_realm_value(value)
+            return value.asLink()
         }
     }
 

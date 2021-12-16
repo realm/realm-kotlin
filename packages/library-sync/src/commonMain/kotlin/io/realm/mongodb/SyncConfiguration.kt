@@ -16,12 +16,12 @@
 
 package io.realm.mongodb
 
+import io.realm.Configuration
 import io.realm.LogConfiguration
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.internal.RealmConfigurationImpl
-import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.ConfigurationImpl
+import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
@@ -47,7 +47,7 @@ import kotlin.reflect.KClass
  * ```
  */
 // FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
-interface SyncConfiguration : RealmConfiguration {
+interface SyncConfiguration : Configuration {
 
     val user: User
     val partitionValue: PartitionValue
@@ -61,7 +61,7 @@ interface SyncConfiguration : RealmConfiguration {
         private var user: User,
         private var partitionValue: PartitionValue,
         schema: Set<KClass<out RealmObject>>,
-    ) : RealmConfiguration.SharedBuilder<SyncConfiguration, Builder>(schema) {
+    ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
         private var errorHandler: SyncSession.ErrorHandler? = null
 
@@ -107,9 +107,7 @@ interface SyncConfiguration : RealmConfiguration {
         fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
             apply { this.errorHandler = errorHandler }
 
-        internal fun build(
-            companionMap: Map<KClass<out RealmObject>, RealmObjectCompanion>
-        ): SyncConfiguration {
+        override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
             // TODO This will not remove the system logger if it was added in AppConfiguration and
             //  no overrides are done for this builder. But as removeSystemLogger() is not public
@@ -141,8 +139,7 @@ interface SyncConfiguration : RealmConfiguration {
                 }
             }
 
-            val localConfiguration = RealmConfigurationImpl(
-                companionMap,
+            val baseConfiguration = ConfigurationImpl(
                 path,
                 name,
                 schema,
@@ -151,12 +148,12 @@ interface SyncConfiguration : RealmConfiguration {
                 notificationDispatcher ?: singleThreadDispatcher(name),
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
-                deleteRealmIfMigrationNeeded,
+                SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey
             )
 
             return SyncConfigurationImpl(
-                localConfiguration,
+                baseConfiguration,
                 partitionValue,
                 user as UserImpl,
                 errorHandler!! // It will never be null: either default or user-provided

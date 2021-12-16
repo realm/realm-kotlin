@@ -15,7 +15,7 @@
  */
 package io.realm
 
-import io.realm.internal.InternalRealmConfiguration
+import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.Constants
 import io.realm.query.RealmQuery
@@ -25,46 +25,47 @@ import kotlin.reflect.KClass
 /**
  * A Realm instance is the main entry point for interacting with a persisted realm.
  *
- * @see RealmConfiguration
+ * @see Configuration
  */
 interface Realm : TypedRealm {
 
     // FIXME Should this go to the end according to Kotlin conventions
     companion object {
         /**
-         * Default name for realm files unless overridden by [RealmConfiguration.Builder.name].
+         * Default name for realm files unless overridden by [Configuration.SharedBuilder.name].
          */
-        public const val DEFAULT_FILE_NAME = "default.realm"
+        const val DEFAULT_FILE_NAME = "default.realm"
 
         /**
          * Default tag used by log entries
          */
-        public const val DEFAULT_LOG_TAG = "REALM"
+        const val DEFAULT_LOG_TAG = "REALM"
 
         /**
          * The required length for encryption keys used to encrypt Realm data.
          */
-        public const val ENCRYPTION_KEY_LENGTH = Constants.ENCRYPTION_KEY_LENGTH
+        const val ENCRYPTION_KEY_LENGTH = Constants.ENCRYPTION_KEY_LENGTH
 
         /**
-         * Open a realm instance.
+         * Open a Realm instance.
          *
-         * This instance grants access to an underlying realm file defined by the provided [RealmConfiguration].
+         * This instance grants access to an underlying realm file defined by the provided
+         * [Configuration].
          *
-         * @param configuration the RealmConfiguration used to open the Realm.
+         * @param configuration the RealmConfiguration used to open the realm.
          *
          * @throws IllegalArgumentException on invalid Realm configurations.
          */
-        public fun open(configuration: RealmConfiguration): Realm {
-            return RealmImpl(configuration as InternalRealmConfiguration)
+        fun open(configuration: Configuration): Realm {
+            return RealmImpl(configuration as InternalConfiguration)
         }
     }
 
     /**
      * Returns the results of querying for all objects of a specific type.
      *
-     * The result reflects the state of the Realm at invocation time, so the results
-     * do not change when the Realm updates. You can access these results from any thread.
+     * The result reflects the state of the realm at invocation time, so the results
+     * do not change when the realm updates. You can access these results from any thread.
      *
      * @param clazz the class of the objects to query for.
      * @return The result of the query as of the time of invoking this method.
@@ -74,11 +75,14 @@ interface Realm : TypedRealm {
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *
-     * The results yielded by the query reflect the state of the Realm at invocation time, so the
-     * they do not change when the Realm updates. You can access these results from any thread.
+     * A reified version of this method is also available as an extension function,
+     * `realm.query<YourClass>(...)`. Import `io.realm.query` to access it.
      *
      * The resulting query is lazily evaluated and will not perform any calculations until
      * [RealmQuery.find] is called or the [Flow] produced by [RealmQuery.asFlow] is collected.
+     *
+     * The results yielded by the query reflect the state of the realm at invocation time, so the
+     * they do not change when the realm updates. You can access these results from any thread.
      *
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
@@ -94,7 +98,7 @@ interface Realm : TypedRealm {
      * Dispatcher.
      *
      * The write transaction always represent the latest version of data in the Realm file, even if
-     * the calling Realm not yet represent this.
+     * the calling realm not yet represent this.
      *
      * Write transactions automatically commit any changes made when the closure returns unless
      * [MutableRealm.cancelWrite] was called.
@@ -102,7 +106,7 @@ interface Realm : TypedRealm {
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block. If this is a RealmObject it is
      * frozen before being returned.
-     * @see [RealmConfiguration.writeDispatcher]
+     * @see [Configuration.writeDispatcher]
      */
     suspend fun <R> write(block: MutableRealm.() -> R): R
 
@@ -111,8 +115,8 @@ interface Realm : TypedRealm {
      * done. Write transactions automatically commit any changes made when the closure returns
      * unless [MutableRealm.cancelWrite] was called.
      *
-     * The write transaction always represent the latest version of data in the Realm file, even if the calling
-     * Realm not yet represent this.
+     * The write transaction always represent the latest version of data in the Realm file, even if
+     * the calling realm not yet represent this.
      *
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block.
@@ -122,18 +126,19 @@ interface Realm : TypedRealm {
     fun <R> writeBlocking(block: MutableRealm.() -> R): R
 
     /**
-     * Observe changes to the Realm. If there is any change to the Realm, the flow will emit the
-     * updated Realm. The flow will continue running indefinitely until canceled.
+     * Observe changes to the realm. If there is any change to the realm, the flow will emit the
+     * updated realm. The flow will continue running indefinitely until canceled.
      *
-     * The change calculations will run on the thread defined by [RealmConfiguration.notificationDispatcher].
+     * The change calculations will run on the thread defined through the [Configuration]
+     * Notification Dispatcher.
      *
-     * @return a flow representing changes to this Realm.
+     * @return a flow representing changes to this realm.
      */
     fun observe(): Flow<Realm>
 
     /**
-     * Close this Realm and all underlying resources. Accessing any methods or Realm Objects after this
-     * method has been called will then an [IllegalStateException].
+     * Close this realm and all underlying resources. Accessing any methods or Realm Objects after
+     * this method has been called will then an [IllegalStateException].
      *
      * This will block until underlying Realms (writer and notifier) are closed, including rolling
      * back any ongoing transactions when [close] is called. Calling this from the Realm Write

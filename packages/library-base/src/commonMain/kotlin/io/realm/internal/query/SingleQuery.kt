@@ -1,9 +1,9 @@
 package io.realm.internal.query
 
 import io.realm.RealmObject
-import io.realm.internal.BaseResults
 import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
+import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -18,7 +18,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<E>,
     private val mediator: Mediator
-) : RealmSingleQuery<E>, Thawable<BaseResults<E>> {
+) : RealmSingleQuery<E>, Thawable<RealmResultsImpl<E>> {
 
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
@@ -40,6 +40,6 @@ internal class SingleQuery<E : RealmObject> constructor(
      * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
      * The results object is then used to fetch the object with index 0, which can be `null`.
      */
-    override fun thaw(liveRealm: RealmReference): BaseResults<E> =
+    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
         thawResults(liveRealm, RealmInterop.realm_query_find_all(queryPointer), clazz, mediator)
 }
