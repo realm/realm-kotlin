@@ -10,6 +10,7 @@
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added supported for dates through a new property type: `RealmInstant`.
 * Allow to pass schema as a variable containing the involved `KClass`es and build configurations non-fluently ([#389](https://github.com/realm/realm-kotlin/issues/389)).
+* Added M1 support for `library-base` variant ([#483](https://github.com/realm/realm-kotlin/issues/483)).
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
@@ -32,7 +33,7 @@
 * Updated to Android Gradle Plugin 7.1.0-beta05.
 * Updated to NDK 23.1.7779620.
 * Updated to Android targetSdk 31.
-* Updated to Android compileSdk 31. 
+* Updated to Android compileSdk 31.
 * Updated to Android Build Tools 31.0.0.
 * Updated to Ktlint version 0.43.0.
 * Updated to Ktlint Gradle Plugin 10.2.0.
