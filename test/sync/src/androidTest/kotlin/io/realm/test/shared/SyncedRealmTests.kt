@@ -171,7 +171,7 @@ class SyncedRealmTests {
         // Block until we see changed written to one realm in the other to ensure that schema is
         // aligned with backend
         val synced = async {
-            realm2.objects(ChildPk::class).asFlow().takeWhile { it.size != 0 }.collect { }
+            realm2.query(ChildPk::class).asFlow().takeWhile { it.size != 0 }.collect { }
         }
         realm1.write { copyToRealm(ChildPk()) }
         synced.await()
