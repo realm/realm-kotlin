@@ -23,7 +23,6 @@ import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.entities.Sample
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
 import io.realm.query
@@ -1027,8 +1026,8 @@ class QueryTests {
     @Test
     fun sum_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query<Sample>()
-                .sum<Int>(Sample::stringField.name)
+            realm.query<QuerySample>()
+                .sum<Int>(QuerySample::stringField.name)
                 .find()
         }
     }
@@ -1036,40 +1035,22 @@ class QueryTests {
     @Test
     fun sum_find_throwsIfInvalidType() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query<Sample>()
-                .sum<String>(Sample::intField.name)
+            realm.query<QuerySample>()
+                .sum<String>(QuerySample::intField.name)
                 .find()
         }
     }
 
     @Test
-    // TODO make exhaustive
     fun sum_asFlow() {
-        val channel = Channel<Int?>(1)
-        val value1 = 2
-        val value2 = 7
-        val expectedSum = value1 + value2
+        // Iterate over non-nullable properties only - exclude RealmInstant
+        for (propertyDescriptor in propertyDescriptorsForSum) {
+            aggregatorAssertions(AggregatorQueryType.SUM, propertyDescriptor)
+        }
 
-        runBlocking {
-            val observer = async {
-                realm.query<Sample>()
-                    .sum<Int>(Sample::intField.name)
-                    .asFlow()
-                    .collect { sumValue ->
-                        channel.send(sumValue)
-                    }
-            }
-
-            assertEquals(0, channel.receive())
-
-            realm.writeBlocking {
-                copyToRealm(Sample().apply { intField = value1 })
-                copyToRealm(Sample().apply { intField = value2 })
-            }
-
-            assertEquals(expectedSum, channel.receive())
-            observer.cancel()
-            channel.close()
+        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
+            aggregatorAssertions(AggregatorQueryType.SUM, nullablePropertyDescriptor)
         }
     }
 
@@ -1079,14 +1060,14 @@ class QueryTests {
         val value2 = 7
 
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(QuerySample().apply { intField = value1 })
+            copyToRealm(QuerySample().apply { intField = value2 })
         }
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query<Sample>()
-                    .sum<String>(Sample::intField.name)
+                realm.query<QuerySample>()
+                    .sum<String>(QuerySample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1099,8 +1080,8 @@ class QueryTests {
     fun sum_asFlow_throwsIfInvalidProperty() {
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query<Sample>()
-                    .sum<String>(Sample::stringField.name)
+                realm.query<QuerySample>()
+                    .sum<String>(QuerySample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1113,8 +1094,8 @@ class QueryTests {
     fun sum_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             assertFailsWith<IllegalStateException> {
-                query<Sample>()
-                    .sum<Int>(Sample::intField.name)
+                query<QuerySample>()
+                    .sum<Int>(QuerySample::intField.name)
                     .asFlow()
             }
         }
@@ -1214,8 +1195,8 @@ class QueryTests {
     @Test
     fun max_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query<Sample>()
-                .max<Int>(Sample::stringField.name)
+            realm.query<QuerySample>()
+                .max<Int>(QuerySample::stringField.name)
                 .find()
         }
     }
@@ -1223,46 +1204,29 @@ class QueryTests {
     @Test
     fun max_find_throwsIfInvalidType() {
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = 1 })
-            copyToRealm(Sample().apply { intField = 2 })
+            copyToRealm(QuerySample().apply { intField = 1 })
+            copyToRealm(QuerySample().apply { intField = 2 })
         }
 
         // TODO this won't fail unless we have previously stored something, otherwise it returns
         //  null and nothing will trigger an exception!
         assertFailsWith<IllegalArgumentException> {
-            realm.query<Sample>()
-                .max<String>(Sample::intField.name)
+            realm.query<QuerySample>()
+                .max<String>(QuerySample::intField.name)
                 .find()
         }
     }
 
     @Test
-    // TODO make exhaustive
     fun max_asFlow() {
-        val channel = Channel<Int?>(1)
-        val value1 = 2
-        val value2 = 7
+        // Iterate over non-nullable properties only
+        for (propertyDescriptor in propertyDescriptors) {
+            aggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
+        }
 
-        runBlocking {
-            val observer = async {
-                realm.query<Sample>()
-                    .max<Int>(Sample::intField.name)
-                    .asFlow()
-                    .collect { maxValue ->
-                        channel.send(maxValue)
-                    }
-            }
-
-            assertNull(channel.receive())
-
-            realm.writeBlocking {
-                copyToRealm(Sample().apply { intField = value1 })
-                copyToRealm(Sample().apply { intField = value2 })
-            }
-
-            assertEquals(value2, channel.receive())
-            observer.cancel()
-            channel.close()
+        // Iterate over nullable properties containing both null and non-null values
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            aggregatorAssertions(AggregatorQueryType.MAX, nullablePropertyDescriptor)
         }
     }
 
@@ -1272,14 +1236,14 @@ class QueryTests {
         val value2 = 7
 
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(QuerySample().apply { intField = value1 })
+            copyToRealm(QuerySample().apply { intField = value2 })
         }
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query<Sample>()
-                    .max<String>(Sample::intField.name)
+                realm.query<QuerySample>()
+                    .max<String>(QuerySample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1294,14 +1258,14 @@ class QueryTests {
         val value2 = 7
 
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(QuerySample().apply { intField = value1 })
+            copyToRealm(QuerySample().apply { intField = value2 })
         }
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query<Sample>()
-                    .max<String>(Sample::stringField.name)
+                realm.query<QuerySample>()
+                    .max<String>(QuerySample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1314,8 +1278,8 @@ class QueryTests {
     fun max_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             assertFailsWith<IllegalStateException> {
-                query<Sample>()
-                    .max<Int>(Sample::intField.name)
+                query<QuerySample>()
+                    .max<Int>(QuerySample::intField.name)
                     .asFlow()
             }
         }
@@ -1415,8 +1379,8 @@ class QueryTests {
     @Test
     fun min_find_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
-            realm.query<Sample>()
-                .min<Int>(Sample::stringField.name)
+            realm.query<QuerySample>()
+                .min<Int>(QuerySample::stringField.name)
                 .find()
         }
     }
@@ -1424,46 +1388,29 @@ class QueryTests {
     @Test
     fun min_find_throwsIfInvalidType() {
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = 1 })
-            copyToRealm(Sample().apply { intField = 2 })
+            copyToRealm(QuerySample().apply { intField = 1 })
+            copyToRealm(QuerySample().apply { intField = 2 })
         }
 
         // TODO this won't fail unless we have previously stored something, otherwise it returns
         //  null and nothing will trigger an exception!
         assertFailsWith<IllegalArgumentException> {
-            realm.query<Sample>()
-                .min<String>(Sample::intField.name)
+            realm.query<QuerySample>()
+                .min<String>(QuerySample::intField.name)
                 .find()
         }
     }
 
     @Test
-    // TODO make exhaustive
     fun min_asFlow() {
-        val channel = Channel<Int?>(1)
-        val value1 = 2
-        val value2 = 7
+        // Iterate over non-nullable properties only
+        for (propertyDescriptor in propertyDescriptors) {
+            aggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
+        }
 
-        runBlocking {
-            val observer = async {
-                realm.query<Sample>()
-                    .min<Int>(Sample::intField.name)
-                    .asFlow()
-                    .collect { minValue ->
-                        channel.send(minValue)
-                    }
-            }
-
-            assertNull(channel.receive())
-
-            realm.writeBlocking {
-                copyToRealm(Sample().apply { intField = value1 })
-                copyToRealm(Sample().apply { intField = value2 })
-            }
-
-            assertEquals(value1, channel.receive())
-            observer.cancel()
-            channel.close()
+        // Iterate over nullable properties containing both null and non-null values
+        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+            aggregatorAssertions(AggregatorQueryType.MIN, nullablePropertyDescriptor)
         }
     }
 
@@ -1473,14 +1420,14 @@ class QueryTests {
         val value2 = 7
 
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(QuerySample().apply { intField = value1 })
+            copyToRealm(QuerySample().apply { intField = value2 })
         }
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query<Sample>()
-                    .min<String>(Sample::intField.name)
+                realm.query<QuerySample>()
+                    .min<String>(QuerySample::intField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1495,14 +1442,14 @@ class QueryTests {
         val value2 = 7
 
         realm.writeBlocking {
-            copyToRealm(Sample().apply { intField = value1 })
-            copyToRealm(Sample().apply { intField = value2 })
+            copyToRealm(QuerySample().apply { intField = value1 })
+            copyToRealm(QuerySample().apply { intField = value2 })
         }
 
         runBlocking {
             assertFailsWith<IllegalArgumentException> {
-                realm.query<Sample>()
-                    .min<String>(Sample::stringField.name)
+                realm.query<QuerySample>()
+                    .min<String>(QuerySample::stringField.name)
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
@@ -1515,8 +1462,8 @@ class QueryTests {
     fun min_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             assertFailsWith<IllegalStateException> {
-                query<Sample>()
-                    .min<Int>(Sample::intField.name)
+                query<QuerySample>()
+                    .min<Int>(QuerySample::intField.name)
                     .asFlow()
             }
         }
@@ -1745,6 +1692,65 @@ class QueryTests {
             AggregatorQueryType.SUM -> throw IllegalArgumentException("SUM is not allowed on timestamp fields.")
         } ?: throw IllegalArgumentException("Aggregate result cannot be null.")
         else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
+    }
+
+    private fun aggregatorAssertions(
+        type: AggregatorQueryType,
+        propertyDescriptor: PropertyDescriptor
+    ) {
+        val channel = Channel<Any?>(1)
+        val expectedAggregator = when (type) {
+            AggregatorQueryType.MIN ->
+                expectedMin(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+            AggregatorQueryType.MAX ->
+                expectedMax(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+            AggregatorQueryType.SUM ->
+                expectedSum(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+        }
+
+        runBlocking {
+            val observer = async {
+                realm.query<QuerySample>()
+                    .let { query ->
+                        when (type) {
+                            AggregatorQueryType.MIN -> query.min(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.MAX -> query.max(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.SUM -> query.sum(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                        }
+                    }.asFlow()
+                    .collect { aggregatedValue ->
+                        channel.send(aggregatedValue)
+                    }
+            }
+
+            val aggregatedValue = channel.receive()
+            when (type) {
+                AggregatorQueryType.SUM -> assertEquals(0, (aggregatedValue as Number).toInt())
+                else -> assertNull(aggregatedValue)
+            }
+
+            realm.writeBlocking {
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+            }
+
+            assertEquals(expectedAggregator, channel.receive())
+            observer.cancel()
+            channel.close()
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
     }
 
     // ------------------------
