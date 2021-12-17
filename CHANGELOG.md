@@ -1,4 +1,4 @@
-## 0.8.0 (YYYY-MM-DD)
+## 0.8.0 (2021-12-17)
 
 ### Breaking Changes
 * Reworked configuration hierarchy:
