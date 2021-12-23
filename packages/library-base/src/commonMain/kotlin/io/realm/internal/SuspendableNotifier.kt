@@ -4,7 +4,6 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import kotlinx.atomicfu.AtomicRef
@@ -44,7 +43,6 @@ internal class SuspendableNotifier(
     }
 
 
-    // FIXME Work-around for the global Realm changed listener not working.
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<RealmReference>(
@@ -52,21 +50,25 @@ internal class SuspendableNotifier(
         extraBufferCapacity = 1
     )
 
-    private val realmInitializer = lazy {
-        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalConfiguration).nativeConfig, dispatcher)
-        object : BaseRealmImpl(owner.configuration, dbPointer) {
-            /* Realms used by the Notifier is just a basic Live Realm */
+    // Could just be anonymous class, but easiest way to get BaseRealmImpl.toString to display the
+    // right type with this
+    private inner class NotifierRealm : LiveRealm(owner, owner.configuration, dispatcher) {
+        // This is guaranteed to be triggered before any other notifications for the same
+        // update as we get all callbacks on the same single thread dispatcher
+        override fun onRealmChanged() {
+            super.onRealmChanged()
+            if (!_realmChanged.tryEmit(this.snapshot)) {
+                // FIXME Figure out why we sometimes end up here
+                println("Failed to send update to Realm from the Notifier: ${snapshotOwner./**/configuration.path}")
+                // throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
+            }
         }
     }
-    // Must only be accessed from the dispatchers thread
-    private val realm: BaseRealmImpl by realmInitializer
 
-//    init {
-//        runBlocking(dispatcher) {
-//            println("initializing notifier realm ")
-//            realm
-//        }
-//    }
+    private val realmInitializer = lazy { NotifierRealm() }
+
+    // Must only be accessed from the dispatchers thread
+    private val realm: LiveRealm by realmInitializer
 
     /**
      * FIXME Currently this is a hacked implementation that only does the correct thing if
@@ -79,24 +81,12 @@ internal class SuspendableNotifier(
      * query results.
      */
     internal fun realmChanged(): Flow<RealmReference> {
+        // We need to initialize the realm to register for onRealmChanged callbacks that will
+        // propagate updated new frozen realm references to the user facing realm
+        realm
         // FIXME Workaround until proper Realm Changed Listeners are implemented
         // https://github.com/realm/realm-core/issues/4613
         return _realmChanged.asSharedFlow()
-//        return callbackFlow {
-//            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-//            withContext(dispatcher) {
-//                token.value = addRealmChangedListener { frozenRealm ->
-//                    val result = trySend(frozenRealm)
-//                    if (!result.isSuccess) {
-//                        // FIXME What to do if this fails?
-//                        throw IllegalStateException("Notification could not be handled: $result")
-//                    }
-//                }
-//            }
-//            awaitClose {
-//                token.value.cancel()
-//            }
-//        }
     }
 
     internal fun <T> registerObserver(observable: Observable<T>): Flow<T> {
@@ -111,19 +101,9 @@ internal class SuspendableNotifier(
                     object : io.realm.internal.interop.Callback {
                         override fun onChange(change: NativePointer) {
                             // FIXME How to make sure the Realm isn't closed when handling this?
-
-                            // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
-                            //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
-                            //  We also send it to the owner Realm, so it can keep track of its lifecycle
-                            println("freezing: ${realm.configuration}")
-                            val frozenRealm = RealmReference(
-                                owner,
-                                RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-                            )
-                            notifyRealmChanged(frozenRealm)
                             // Notifications need to be delivered with the version they where created on, otherwise
                             // the fine-grained notification data might be out of sync.
-                            liveRef.emitFrozenUpdate(frozenRealm, change, this@callbackFlow)
+                            liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
                                 ?.let { checkResult(it) }
                         }
                     }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
@@ -172,14 +152,6 @@ internal class SuspendableNotifier(
         if (!result.isSuccess) {
             // TODO Is there a better way to handle this?
             throw IllegalStateException("Notification could not be sent: $result")
-        }
-    }
-
-    private fun notifyRealmChanged(frozenRealm: RealmReference) {
-        if (!_realmChanged.tryEmit(frozenRealm)) {
-            // FIXME Figure out why we sometimes end up here
-            println("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
-            // throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
         }
     }
 }

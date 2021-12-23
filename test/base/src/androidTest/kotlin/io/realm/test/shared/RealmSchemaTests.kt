@@ -20,6 +20,9 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.schema.SchemaVariations
+import io.realm.internal.interop.PropertyType
+import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
 import io.realm.schema.RealmStorageType
@@ -53,6 +56,7 @@ public class RealmSchemaTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
+                .log(LogLevel.DEBUG)
                 .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
@@ -179,5 +183,24 @@ public class RealmSchemaTests {
             { (_, v) -> v.isNotEmpty() },
             "Field types not exhausted: $propertyTypeMap"
         )
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun schemaChanged() = runBlocking {
+        val schema = realm.schema() as io.realm.internal.schema.RealmSchemaImpl
+        (realm as io.realm.internal.RealmImpl).updateSchema(
+            io.realm.internal.schema.RealmSchemaImpl(
+                schema.classes + io.realm.internal.schema.RealmClassImpl(
+                    io.realm.internal.interop.ClassInfo("NEW_CLASS", numProperties = 1),
+                    listOf(io.realm.internal.interop.PropertyInfo("NEW_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING))
+                )
+            )
+        )
+        assertEquals(3, realm.schema().classes.size)
+        // This test doesn't work all of the times as NotifierRealm schema doesn't seem to be
+        // updated, so if the realm reference from the notifier is received first in the Realm then
+        // the schema will be off.
+        fail()
     }
 }

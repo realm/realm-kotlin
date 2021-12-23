@@ -3,7 +3,9 @@ package io.realm.internal
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.schema.CachedSchemaMetadata
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.internal.schema.SchemaMetadata
 import io.realm.schema.RealmSchema
 
 /**
@@ -27,12 +29,13 @@ import io.realm.schema.RealmSchema
 data class RealmReference(
     val owner: BaseRealmImpl,
     val dbPointer: NativePointer,
+    val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer),
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
 ) : RealmState {
 
     // FIXME We probably don't need full schema if we just want to cache property keys for
     //  ClassMetadata, but maybe it is ok to combine it?
-    val schema: RealmSchemaImpl = RealmSchemaImpl.fromRealm(dbPointer)
+    val schema: RealmSchemaImpl by lazy { RealmSchemaImpl.fromRealm(dbPointer) }
 
     override fun version(): VersionId {
         checkClosed()

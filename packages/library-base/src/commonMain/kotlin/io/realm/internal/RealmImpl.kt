@@ -10,6 +10,7 @@ import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
+import io.realm.internal.schema.RealmSchemaImpl
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -71,6 +72,7 @@ internal class RealmImpl private constructor(
         realmScope.launch {
             realmFlow.emit(this@RealmImpl)
             notifier.realmChanged().collect { realmReference ->
+                log.debug("Receving notification on update: ${this@RealmImpl}")
                 updateRealmPointer(realmReference)
             }
         }
@@ -88,6 +90,11 @@ internal class RealmImpl private constructor(
                 )
             }
         )
+
+    // Currently just for internal-only usage in test, thus API is not polished
+    internal suspend fun updateSchema(schema: RealmSchemaImpl) {
+        updateRealmPointer(this.writer.updateSchema(schema))
+    }
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
         try {
@@ -146,7 +153,7 @@ internal class RealmImpl private constructor(
     private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
         realmPointerMutex.withLock {
             val newVersion = newRealmReference.version()
-            log.debug("Updating Realm version: ${version()} -> $newVersion")
+            log.debug("Updating Realm version: $this ${version()} -> $newVersion")
             // If we advance to a newer version then we should keep track of the preceding one,
             // otherwise just track the new one directly.
             val untrackedReference = if (newVersion >= version()) {

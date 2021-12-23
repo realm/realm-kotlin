@@ -21,13 +21,16 @@ import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.schema.RealmClassImpl
+import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
+import io.realm.schema.RealmClass
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 
-internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
+internal class MutableRealmImpl : LiveRealm, MutableRealm {
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
@@ -56,9 +59,10 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
      * scheduler, that delivers notifications on the main run loop.
      */
     internal constructor(
+        owner: BaseRealmImpl,
         configuration: InternalConfiguration,
         dispatcher: CoroutineDispatcher? = null
-    ) : super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
+    ) : super(owner, configuration, dispatcher)
 
     internal fun beginTransaction() {
         try {

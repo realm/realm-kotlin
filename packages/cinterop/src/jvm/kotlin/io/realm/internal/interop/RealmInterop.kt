@@ -190,7 +190,7 @@ actual object RealmInterop {
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
         // TODO API-SCHEMA
-        TODO("Not yet implemented")
+        return LongPointerWrapper(realmc.realm_get_schema(realm.cptr()))
     }
 
     actual fun realm_get_num_classes(realm: NativePointer): Long {
@@ -276,6 +276,10 @@ actual object RealmInterop {
 
     actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
         return realmc.realm_is_writable(realm.cptr())
+    }
+
+    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer) {
+        realmc.realm_update_schema(realm.cptr(), schema.cptr())
     }
 
     actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {

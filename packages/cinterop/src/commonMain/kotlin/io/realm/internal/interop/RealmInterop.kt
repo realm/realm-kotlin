@@ -103,6 +103,8 @@ expect object RealmInterop {
     fun realm_rollback(realm: NativePointer)
     fun realm_is_in_transaction(realm: NativePointer): Boolean
 
+    fun realm_update_schema(realm: NativePointer, schema: NativePointer)
+
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean

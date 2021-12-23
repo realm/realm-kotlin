@@ -46,6 +46,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     var `$realm$Owner`: RealmReference?
     var `$realm$ClassName`: String?
     var `$realm$Mediator`: Mediator?
+    // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
     var `$realm$metadata`: ClassMetadata?
 
 
@@ -79,7 +80,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
 
     override fun thaw(liveRealm: RealmReference): Observable<RealmObjectInternal>? {
         @Suppress("UNCHECKED_CAST")
-        val type: KClass<*> = this::class
+        val type: KClass<out RealmObject> = this::class
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
         val dbPointer = liveRealm.dbPointer

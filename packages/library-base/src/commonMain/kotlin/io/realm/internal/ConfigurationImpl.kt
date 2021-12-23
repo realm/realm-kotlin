@@ -101,10 +101,8 @@ open class ConfigurationImpl constructor(
         }
 
         mediator = object : Mediator {
-            override fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal = (
-                mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
-                    ?: error("$clazz not part of this configuration schema")
-                ) as RealmObjectInternal
+            override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal =
+                companionOf(clazz).`$realm$newInstance`() as RealmObjectInternal
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]

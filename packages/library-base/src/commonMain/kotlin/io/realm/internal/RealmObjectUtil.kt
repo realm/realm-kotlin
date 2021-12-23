@@ -20,7 +20,6 @@ import io.realm.RealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmClassImpl
 import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
@@ -38,8 +37,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     this.`$realm$Owner` = realm
     this.`$realm$ClassName` = className
     this.`$realm$ObjectPointer` = objectPointer
-    val classMetadata: RealmClassImpl? = realm.schema[className]
-    this.`$realm$metadata` = ClassMetadata(className, classMetadata!!.cinteropProperties.map<io.realm.internal.interop.PropertyInfo, Pair<String, io.realm.internal.interop.PropertyKey>> { it.name to it.key }.toMap())
+    this.`$realm$metadata` = realm.schemaMetadata[className]
     // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
     // this.link = RealmInterop.realm_object_as_link()
     this.`$realm$Mediator` = mediator
@@ -60,8 +58,7 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
     this.`$realm$ClassName` = className
     // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
     this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
-    val classMetadata: RealmClassImpl? = realm.schema[className]
-    this.`$realm$metadata` = ClassMetadata(className, classMetadata!!.cinteropProperties.map<io.realm.internal.interop.PropertyInfo, Pair<String, io.realm.internal.interop.PropertyKey>> { it.name to it.key }.toMap())
+    this.`$realm$metadata` = realm.schemaMetadata[className]
     this.`$realm$Mediator` = mediator
     @Suppress("UNCHECKED_CAST")
     return this as T
