@@ -21,8 +21,10 @@ package io.realm.test.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
+import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.internal.interop.CollectionType
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
 import io.realm.query
@@ -32,6 +34,7 @@ import io.realm.query.find
 import io.realm.query.max
 import io.realm.query.min
 import io.realm.query.sum
+import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -39,7 +42,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -1055,11 +1057,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
@@ -1122,16 +1119,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over non-nullable properties only
-//        for (propertyDescriptor in propertyDescriptors) {
-//            assertions(propertyDescriptor)
-//        }
-//
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
@@ -1252,16 +1239,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over non-nullable properties only
-//        for (propertyDescriptor in propertyDescriptors) {
-//            assertions(propertyDescriptor)
-//        }
-//
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
@@ -1324,16 +1301,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over non-nullable properties only
-//        for (propertyDescriptor in propertyDescriptors) {
-//            assertions(propertyDescriptor)
-//        }
-//
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test

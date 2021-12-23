@@ -875,19 +875,20 @@ internal val BYTE_VALUES = listOf<Byte>(1, 2)
 internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
 internal val BOOLEAN_VALUES = listOf(true, false)
-internal val TIMESTAMP_VALUES = listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
+internal val TIMESTAMP_VALUES =
+    listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
     RealmListContainer().apply { stringField = "B" }
 )
 
-internal val NULLABLE_CHAR_VALUES = listOf('a', 'b', null)
-internal val NULLABLE_STRING_VALUES = listOf("ABC", "BCD", null)
-internal val NULLABLE_INT_VALUES = listOf(1, 2, null)
-internal val NULLABLE_LONG_VALUES = listOf<Long?>(1, 2, null)
-internal val NULLABLE_SHORT_VALUES = listOf<Short?>(1, 2, null)
-internal val NULLABLE_BYTE_VALUES = listOf<Byte?>(1, 2, null)
-internal val NULLABLE_FLOAT_VALUES = listOf(1F, 2F, null)
-internal val NULLABLE_DOUBLE_VALUES = listOf(1.0, 2.0, null)
-internal val NULLABLE_BOOLEAN_VALUES = listOf(true, false, null)
-internal val NULLABLE_TIMESTAMP_VALUES = listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420), null)
+internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
+internal val NULLABLE_STRING_VALUES = STRING_VALUES + null
+internal val NULLABLE_INT_VALUES = INT_VALUES + null
+internal val NULLABLE_LONG_VALUES = LONG_VALUES + null
+internal val NULLABLE_SHORT_VALUES = SHORT_VALUES + null
+internal val NULLABLE_BYTE_VALUES = BYTE_VALUES + null
+internal val NULLABLE_FLOAT_VALUES = FLOAT_VALUES + null
+internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
+internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
+internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
