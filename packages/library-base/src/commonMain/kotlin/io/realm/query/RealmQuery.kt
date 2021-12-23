@@ -148,7 +148,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
     fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T>
 
     /**
-     * Calculates the sum of a given property.
+     * Calculates the sum of the given [property].
      *
      * A reified version of this method is also available as an extension function,
      * `query.sum<YourClass>(...)`. Import `io.realm.query.sum` to access it.

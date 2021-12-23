@@ -41,13 +41,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -705,15 +705,19 @@ class QueryTests {
                 }
         }
 
-        // Iterate over non-nullable properties only - exclude RealmInstant
-        for (propertyDescriptor in propertyDescriptorsForSum) {
+        // Iterate over all properties - exclude RealmInstant
+        for (propertyDescriptor in allPropertyDescriptorsForSum) {
             assertions(propertyDescriptor)
         }
 
-        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
-        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
-            assertions(nullablePropertyDescriptor)
-        }
+//        for (propertyDescriptor in propertyDescriptorsForSum) {
+//            assertions(propertyDescriptor)
+//        }
+//
+//        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
+//        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
+//            assertions(nullablePropertyDescriptor)
+//        }
     }
 
     @Test
@@ -762,8 +766,7 @@ class QueryTests {
     @Test
     fun sum_find() {
         val assertions = { propertyDescriptor: PropertyDescriptor ->
-            val expectedSum =
-                expectedSum(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+            val expectedSum = expectedSum(propertyDescriptor.clazz)
             realm.writeBlocking {
                 val sumQuery = query(QuerySample::class)
                     .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
@@ -795,15 +798,15 @@ class QueryTests {
             cleanUpBetweenProperties()
         }
 
-        // Iterate over non-nullable properties only - exclude RealmInstant
-        for (propertyDescriptor in propertyDescriptorsForSum) {
+        // Iterate over all properties - exclude RealmInstant
+        for (propertyDescriptor in allPropertyDescriptorsForSum) {
             assertions(propertyDescriptor)
         }
 
-        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
-        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
-            assertions(nullablePropertyDescriptor)
-        }
+//        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
+//        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
+//            assertions(nullablePropertyDescriptor)
+//        }
     }
 
     @Test
@@ -846,8 +849,61 @@ class QueryTests {
     }
 
     @Test
-    fun sum_find_throwsDueToOverflow() {
-        // TODO short, byte
+    fun sum_find_shortOverflow() {
+        val iterations = 10000
+        val invalidShortSum = (Short.MAX_VALUE * iterations).toShort()
+        val validShortSum = Short.MAX_VALUE * iterations
+
+        realm.writeBlocking {
+            for (i in 1..iterations) {
+                copyToRealm(QuerySample().apply { shortField = Short.MAX_VALUE })
+            }
+        }
+
+        // We get an inaccurate short sum if we want the result as a Short
+        realm.query(QuerySample::class)
+            .sum(QuerySample::shortField.name, Short::class)
+            .find { sumValue ->
+                assertNotNull(sumValue)
+                assertEquals(invalidShortSum, sumValue)
+            }
+
+        // Now we get the expected sum if we specify the result to be an Int
+        realm.query(QuerySample::class)
+            .sum(QuerySample::shortField.name, Int::class)
+            .find { sumValue ->
+                assertNotNull(sumValue)
+                assertEquals(validShortSum, sumValue.toInt())
+            }
+    }
+
+    @Test
+    fun sum_find_byteOverflow() {
+        val iterations = 10000
+        val invalidByteSum = (Byte.MAX_VALUE * iterations).toByte()
+        val validByteSum = Byte.MAX_VALUE * iterations
+
+        realm.writeBlocking {
+            for (i in 1..iterations) {
+                copyToRealm(QuerySample().apply { byteField = Byte.MAX_VALUE })
+            }
+        }
+
+        // We get an inaccurate byte sum if we want the result as a Byte
+        realm.query(QuerySample::class)
+            .sum(QuerySample::byteField.name, Byte::class)
+            .find { sumValue ->
+                assertNotNull(sumValue)
+                assertEquals(invalidByteSum, sumValue)
+            }
+
+        // Now we get the expected sum if we specify the result to be an Int
+        realm.query(QuerySample::class)
+            .sum(QuerySample::byteField.name, Int::class)
+            .find { sumValue ->
+                assertNotNull(sumValue)
+                assertEquals(validByteSum, sumValue.toInt())
+            }
     }
 
     @Test
@@ -891,15 +947,15 @@ class QueryTests {
                 .find { maxValue -> assertNull(maxValue) }
         }
 
-        // Iterate over non-nullable properties only
-        for (propertyDescriptor in propertyDescriptors) {
+        // Iterate over all properties
+        for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
-        // Iterate over nullable properties containing both null and non-null values
-        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-            assertions(nullablePropertyDescriptor)
-        }
+//        // Iterate over nullable properties containing both null and non-null values
+//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+//            assertions(nullablePropertyDescriptor)
+//        }
     }
 
     @Test
@@ -935,8 +991,7 @@ class QueryTests {
     @Test
     fun max_find() {
         val assertions = { propertyDescriptor: PropertyDescriptor ->
-            val expectedMax =
-                expectedMax(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+            val expectedMax = expectedMax(propertyDescriptor.clazz)
 
             realm.writeBlocking {
                 // Queries inside a write transaction produce live results which means they can be
@@ -959,15 +1014,20 @@ class QueryTests {
             cleanUpBetweenProperties()
         }
 
-        // Iterate over non-nullable properties only
-        for (propertyDescriptor in propertyDescriptors) {
+        // Iterate over all properties
+        for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
-        // Iterate over nullable properties containing both null and non-null values
-        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-            assertions(nullablePropertyDescriptor)
-        }
+//        // Iterate over non-nullable properties only
+//        for (propertyDescriptor in propertyDescriptors) {
+//            assertions(propertyDescriptor)
+//        }
+//
+//        // Iterate over nullable properties containing both null and non-null values
+//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+//            assertions(nullablePropertyDescriptor)
+//        }
     }
 
     @Test
@@ -1036,15 +1096,20 @@ class QueryTests {
                 .find { minValue -> assertNull(minValue) }
         }
 
-        // Iterate over non-nullable properties only
-        for (propertyDescriptor in propertyDescriptors) {
+        // Iterate over all properties
+        for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
-        // Iterate over nullable properties containing both null and non-null values
-        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-            assertions(nullablePropertyDescriptor)
-        }
+//        // Iterate over non-nullable properties only
+//        for (propertyDescriptor in propertyDescriptors) {
+//            assertions(propertyDescriptor)
+//        }
+//
+//        // Iterate over nullable properties containing both null and non-null values
+//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+//            assertions(nullablePropertyDescriptor)
+//        }
     }
 
     @Test
@@ -1080,8 +1145,7 @@ class QueryTests {
     @Test
     fun min_find() {
         val assertions = { propertyDescriptor: PropertyDescriptor ->
-            val expectedMin =
-                expectedMin(propertyDescriptor.clazz, propertyDescriptor.property.returnType)
+            val expectedMin = expectedMin(propertyDescriptor.clazz)
 
             realm.writeBlocking {
                 // Queries inside a write transaction produce live results which means they can be
@@ -1104,15 +1168,20 @@ class QueryTests {
             cleanUpBetweenProperties()
         }
 
-        // Iterate over non-nullable properties only
-        for (propertyDescriptor in propertyDescriptors) {
+        // Iterate over all properties
+        for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
 
-        // Iterate over nullable properties containing both null and non-null values
-        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-            assertions(nullablePropertyDescriptor)
-        }
+//        // Iterate over non-nullable properties only
+//        for (propertyDescriptor in propertyDescriptors) {
+//            assertions(propertyDescriptor)
+//        }
+//
+//        // Iterate over nullable properties containing both null and non-null values
+//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+//            assertions(nullablePropertyDescriptor)
+//        }
     }
 
     @Test
@@ -1229,58 +1298,63 @@ class QueryTests {
     // Class instantiation with property setting helpers
     // --------------------------------------------------
 
+    /**
+     * Creates a [QuerySample] object and sets a value in the property specified by
+     * [PropertyDescriptor.property]. The [index] parameter specifies which value from the dataset
+     * used to populate the realm instance should be used.
+     */
     private fun <C> getInstance(
         propertyDescriptor: PropertyDescriptor,
         instance: C,
         index: Int? = null
-    ): C {
-        return when (propertyDescriptor.property.returnType.classifier as KClass<*>) {
+    ): C = with(propertyDescriptor) {
+        when (property.returnType.classifier as KClass<*>) {
             Int::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, Int?>,
-                propertyDescriptor.values as List<Int?>,
+                property as KMutableProperty1<C, Int?>,
+                values as List<Int?>,
                 index
             )
             Long::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, Long?>,
-                propertyDescriptor.values as List<Long?>,
+                property as KMutableProperty1<C, Long?>,
+                values as List<Long?>,
                 index
             )
             Short::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, Short?>,
-                propertyDescriptor.values as List<Short?>,
+                property as KMutableProperty1<C, Short?>,
+                values as List<Short?>,
                 index
             )
             Double::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, Double?>,
-                propertyDescriptor.values as List<Double?>,
+                property as KMutableProperty1<C, Double?>,
+                values as List<Double?>,
                 index
             )
             Float::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, Float?>,
-                propertyDescriptor.values as List<Float?>,
+                property as KMutableProperty1<C, Float?>,
+                values as List<Float?>,
                 index
             )
             Byte::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, Byte?>,
-                propertyDescriptor.values as List<Byte?>,
+                property as KMutableProperty1<C, Byte?>,
+                values as List<Byte?>,
                 index
             )
             Char::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, Char?>,
-                propertyDescriptor.values as List<Char?>,
+                property as KMutableProperty1<C, Char?>,
+                values as List<Char?>,
                 index
             )
             RealmInstant::class -> setProperty(
                 instance,
-                propertyDescriptor.property as KMutableProperty1<C, RealmInstant?>,
-                propertyDescriptor.values as List<RealmInstant?>,
+                property as KMutableProperty1<C, RealmInstant?>,
+                values as List<RealmInstant?>,
                 index
             )
             else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
@@ -1303,137 +1377,69 @@ class QueryTests {
     // Aggregator helpers used to initialize structures
     // -------------------------------------------------
 
-    private fun expectedSum(clazz: KClass<*>, kType: KType): Any =
-        expectedAggregator(clazz, kType, AggregatorQueryType.SUM)
+    private fun expectedSum(clazz: KClass<*>): Any =
+        expectedAggregator(clazz, AggregatorQueryType.SUM)
 
-    private fun expectedMax(clazz: KClass<*>, kType: KType): Any =
-        expectedAggregator(clazz, kType, AggregatorQueryType.MAX)
+    private fun expectedMax(clazz: KClass<*>): Any =
+        expectedAggregator(clazz, AggregatorQueryType.MAX)
 
-    private fun expectedMin(clazz: KClass<*>, kType: KType): Any =
-        expectedAggregator(clazz, kType, AggregatorQueryType.MIN)
+    private fun expectedMin(clazz: KClass<*>): Any =
+        expectedAggregator(clazz, AggregatorQueryType.MIN)
 
-    // Calling the aggregator will never return null here, so force non-nullability with !!
+    /**
+     * Computes the corresponding aggregator [type] for a specific [clazz]. Null values are never
+     * computed when calculating aggregators, thus te use of "X_VALUES" which are all non-nullable.
+     *
+     * Calling the aggregator will never return null here, so force non-nullability with "!!" since
+     * Kotlin's aggregators return null in case the given collection is empty
+     */
     @Suppress("LongMethod", "ComplexMethod")
-    private fun expectedAggregator(
-        clazz: KClass<*>,
-        returnType: KType,
-        type: AggregatorQueryType
-    ): Any = when (clazz) {
-        Int::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_INT_VALUES.mapNotNull { it }.minOrNull()!!
-                else -> INT_VALUES.minOrNull()!!
+    private fun expectedAggregator(clazz: KClass<*>, type: AggregatorQueryType): Any =
+        when (clazz) {
+            Int::class -> when (type) {
+                AggregatorQueryType.MIN -> INT_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> INT_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> INT_VALUES.sum()
             }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_INT_VALUES.mapNotNull { it }.maxOrNull()!!
-                else -> INT_VALUES.maxOrNull()!!
+            Long::class -> when (type) {
+                AggregatorQueryType.MIN -> LONG_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> LONG_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> LONG_VALUES.sum()
             }
-            AggregatorQueryType.SUM -> when {
-                returnType.isMarkedNullable -> NULLABLE_INT_VALUES.mapNotNull { it }.sum()
-                else -> INT_VALUES.sum()
+            Short::class -> when (type) {
+                AggregatorQueryType.MIN -> SHORT_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> SHORT_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> SHORT_VALUES.sum()
+                    .toShort() // Typecast manually or the sum will be an Int
             }
-        }.toInt()
-        Long::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_LONG_VALUES.mapNotNull { it }.minOrNull()!!
-                else -> LONG_VALUES.minOrNull()!!
+            Double::class -> when (type) {
+                AggregatorQueryType.MIN -> DOUBLE_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> DOUBLE_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> DOUBLE_VALUES.sum()
             }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_LONG_VALUES.mapNotNull { it }.maxOrNull()!!
-                else -> LONG_VALUES.maxOrNull()!!
+            Float::class -> when (type) {
+                AggregatorQueryType.MIN -> FLOAT_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> FLOAT_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> FLOAT_VALUES.sum()
             }
-            AggregatorQueryType.SUM -> when {
-                returnType.isMarkedNullable -> NULLABLE_LONG_VALUES.mapNotNull { it }.sum()
-                else -> LONG_VALUES.sum()
+            Byte::class -> when (type) {
+                AggregatorQueryType.MIN -> BYTE_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> BYTE_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> BYTE_VALUES.sum()
+                    .toByte() // Typecast manually or the sum will be an Int
             }
-        }.toLong()
-        Short::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_SHORT_VALUES.mapNotNull { it }.minOrNull()!!
-                else -> SHORT_VALUES.minOrNull()!!
+            Char::class -> when (type) {
+                AggregatorQueryType.MIN -> CHAR_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> CHAR_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> CHAR_VALUES.sumOf { it.code }
             }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_SHORT_VALUES.mapNotNull { it }.maxOrNull()!!
-                else -> SHORT_VALUES.maxOrNull()!!
+            RealmInstant::class -> when (type) {
+                AggregatorQueryType.MIN -> TIMESTAMP_VALUES.minOrNull()!!
+                AggregatorQueryType.MAX -> TIMESTAMP_VALUES.maxOrNull()!!
+                AggregatorQueryType.SUM -> throw IllegalArgumentException("SUM is not allowed on timestamp fields.")
             }
-            AggregatorQueryType.SUM -> when {
-                returnType.isMarkedNullable -> NULLABLE_SHORT_VALUES.sumOf { it?.toInt() ?: 0 }
-                else -> SHORT_VALUES.sum()
-            }
-        }.toShort()
-        Double::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_DOUBLE_VALUES.mapNotNull { it }
-                    .minOrNull()!!
-                else -> DOUBLE_VALUES.minOrNull()!!
-            }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_DOUBLE_VALUES.mapNotNull { it }
-                    .maxOrNull()!!
-                else -> DOUBLE_VALUES.maxOrNull()!!
-            }
-            AggregatorQueryType.SUM -> when {
-                returnType.isMarkedNullable -> NULLABLE_DOUBLE_VALUES.sumOf { it ?: 0.0 }
-                else -> DOUBLE_VALUES.sum()
-            }
-        }.toDouble()
-        Float::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_FLOAT_VALUES.mapNotNull { it }.minOrNull()!!
-                else -> FLOAT_VALUES.minOrNull()!!
-            }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_FLOAT_VALUES.mapNotNull { it }.maxOrNull()!!
-                else -> FLOAT_VALUES.maxOrNull()!!
-            }
-            AggregatorQueryType.SUM -> when {
-                returnType.isMarkedNullable -> NULLABLE_FLOAT_VALUES.sumOf { it?.toInt() ?: 0 }
-                else -> FLOAT_VALUES.sum()
-            }
-        }.toFloat()
-        Byte::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_BYTE_VALUES.mapNotNull { it }.minOrNull()!!
-                else -> BYTE_VALUES.minOrNull()!!
-            }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_BYTE_VALUES.mapNotNull { it }.maxOrNull()!!
-                else -> BYTE_VALUES.maxOrNull()!!
-            }
-            AggregatorQueryType.SUM -> when {
-                returnType.isMarkedNullable -> NULLABLE_BYTE_VALUES.sumOf { it?.toInt() ?: 0 }
-                else -> BYTE_VALUES.sum()
-            }
-        }.toByte()
-        Char::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_CHAR_VALUES.mapNotNull { it }.minOrNull()!!
-                else -> CHAR_VALUES.minOrNull()!!
-            }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_CHAR_VALUES.mapNotNull { it }.maxOrNull()!!
-                else -> CHAR_VALUES.maxOrNull()!!
-            }
-            AggregatorQueryType.SUM -> when {
-                returnType.isMarkedNullable -> NULLABLE_CHAR_VALUES.sumOf { it?.code ?: 0 }.toChar()
-                else -> CHAR_VALUES.toCharArray().sumOf { it.toInt() }.toChar()
-            }
+            else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
         }
-        RealmInstant::class -> when (type) {
-            AggregatorQueryType.MIN -> when {
-                returnType.isMarkedNullable -> NULLABLE_TIMESTAMP_VALUES.mapNotNull { it }
-                    .minOrNull()!!
-                else -> TIMESTAMP_VALUES.minOrNull()!!
-            }
-            AggregatorQueryType.MAX -> when {
-                returnType.isMarkedNullable -> NULLABLE_TIMESTAMP_VALUES.mapNotNull { it }
-                    .maxOrNull()!!
-                else -> TIMESTAMP_VALUES.maxOrNull()!!
-            }
-            AggregatorQueryType.SUM -> throw IllegalArgumentException("SUM is not allowed on timestamp fields.")
-        }
-        else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
-    }
 
     // ------------------------
     // General-purpose helpers
@@ -1490,125 +1496,131 @@ class QueryTests {
 
     private val nullablePropertyDescriptorsForSum = nullableBasePropertyDescriptors
 
-    //-----------------------
-    // List descriptors
-    //-----------------------
+    private val allPropertyDescriptorsForSum =
+        propertyDescriptorsForSum + nullablePropertyDescriptorsForSum
 
-    // Base
-    private val baseListPropertyDescriptors = listOf(
-        PropertyDescriptor(
-            QuerySample::intListField,
-            Int::class,
-            INT_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::shortListField,
-            Short::class,
-            SHORT_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::longListField,
-            Long::class,
-            LONG_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::floatListField,
-            Float::class,
-            FLOAT_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::doubleListField,
-            Double::class,
-            DOUBLE_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::byteListField,
-            Double::class,
-            BYTE_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::charListField,
-            Double::class,
-            CHAR_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        )
-    )
+    private val allPropertyDescriptors = propertyDescriptors + nullablePropertyDescriptors
 
-    // Timestamp
-    private val timestampListPropertyDescriptor = PropertyDescriptor(
-        QuerySample::timestampListField,
-        RealmInstant::class,
-        TIMESTAMP_VALUES,
-        CollectionType.RLM_COLLECTION_TYPE_LIST
-    )
-
-    // Base + timestamp
-    private val listPropertyDescriptors = baseListPropertyDescriptors +
-            timestampListPropertyDescriptor
-
-    // Nullable
-    private val nullableBaseListPropertyDescriptors = listOf(
-        PropertyDescriptor(
-            QuerySample::nullableIntListField,
-            Int::class,
-            INT_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::nullableShortListField,
-            Short::class,
-            SHORT_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::nullableLongListField,
-            Long::class,
-            LONG_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::nullableFloatListField,
-            Float::class,
-            FLOAT_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::nullableDoubleListField,
-            Double::class,
-            DOUBLE_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::nullableByteListField,
-            Double::class,
-            BYTE_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        ),
-        PropertyDescriptor(
-            QuerySample::nullableCharListField,
-            Double::class,
-            CHAR_VALUES,
-            CollectionType.RLM_COLLECTION_TYPE_LIST
-        )
-    )
-
-    // Nullable timestamp
-    private val nullableTimestampListPropertyDescriptor = PropertyDescriptor(
-        QuerySample::nullableTimestampListField,
-        RealmInstant::class,
-        TIMESTAMP_VALUES,
-        CollectionType.RLM_COLLECTION_TYPE_LIST
-    )
-
-    // Nullable base + nullable timestamp
-    private val nullableListPropertyDescriptors = nullableBaseListPropertyDescriptors +
-            nullableTimestampListPropertyDescriptor
+    // TODO figure out how to test aggregators on RealmList<Number> fields
+//    // -----------------------
+//    // List descriptors
+//    // -----------------------
+//
+//    // Base
+//    private val baseListPropertyDescriptors = listOf(
+//        PropertyDescriptor(
+//            QuerySample::intListField,
+//            Int::class,
+//            INT_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::shortListField,
+//            Short::class,
+//            SHORT_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::longListField,
+//            Long::class,
+//            LONG_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::floatListField,
+//            Float::class,
+//            FLOAT_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::doubleListField,
+//            Double::class,
+//            DOUBLE_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::byteListField,
+//            Double::class,
+//            BYTE_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::charListField,
+//            Double::class,
+//            CHAR_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        )
+//    )
+//
+//    // Timestamp
+//    private val timestampListPropertyDescriptor = PropertyDescriptor(
+//        QuerySample::timestampListField,
+//        RealmInstant::class,
+//        TIMESTAMP_VALUES,
+//        CollectionType.RLM_COLLECTION_TYPE_LIST
+//    )
+//
+//    // Base + timestamp
+//    private val listPropertyDescriptors = baseListPropertyDescriptors +
+//        timestampListPropertyDescriptor
+//
+//    // Nullable
+//    private val nullableBaseListPropertyDescriptors = listOf(
+//        PropertyDescriptor(
+//            QuerySample::nullableIntListField,
+//            Int::class,
+//            INT_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::nullableShortListField,
+//            Short::class,
+//            SHORT_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::nullableLongListField,
+//            Long::class,
+//            LONG_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::nullableFloatListField,
+//            Float::class,
+//            FLOAT_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::nullableDoubleListField,
+//            Double::class,
+//            DOUBLE_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::nullableByteListField,
+//            Double::class,
+//            BYTE_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        ),
+//        PropertyDescriptor(
+//            QuerySample::nullableCharListField,
+//            Double::class,
+//            CHAR_VALUES,
+//            CollectionType.RLM_COLLECTION_TYPE_LIST
+//        )
+//    )
+//
+//    // Nullable timestamp
+//    private val nullableTimestampListPropertyDescriptor = PropertyDescriptor(
+//        QuerySample::nullableTimestampListField,
+//        RealmInstant::class,
+//        TIMESTAMP_VALUES,
+//        CollectionType.RLM_COLLECTION_TYPE_LIST
+//    )
+//
+//    // Nullable base + nullable timestamp
+//    private val nullableListPropertyDescriptors = nullableBaseListPropertyDescriptors +
+//        nullableTimestampListPropertyDescriptor
 }
 
 /**

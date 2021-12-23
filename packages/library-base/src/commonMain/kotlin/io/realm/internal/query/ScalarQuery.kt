@@ -52,7 +52,6 @@ internal abstract class BaseScalarQuery<E : RealmObject, T : Any> constructor(
     protected val mediator: Mediator
 ) : RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
 
-    abstract fun getScalarClass(): KClass<T>
     abstract fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<T?>
     abstract fun discardRepeated(latestValue: T?): Boolean
 
@@ -72,8 +71,6 @@ internal class CountQuery<E : RealmObject> constructor(
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
-    override fun getScalarClass(): KClass<Long> = Long::class
-
     override fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<Long?> = TODO()
 
     override fun discardRepeated(latestValue: Long?): Boolean = TODO()
@@ -91,8 +88,6 @@ internal class AggregatorQuery<E : RealmObject, T : Any> constructor(
 ) : BaseScalarQuery<E, T>(realmReference, queryPointer, mediator) {
 
     override fun find(): T? = findInternal(queryPointer)
-
-    override fun getScalarClass(): KClass<T> = type
 
     override fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<T?> = TODO()
 
@@ -119,6 +114,7 @@ internal class AggregatorQuery<E : RealmObject, T : Any> constructor(
         }
     }
 
+    @Suppress("ComplexMethod")
     private fun computeAggregatedValue(resultsPointer: NativePointer, colKey: Long): T? {
         val result: T? = when (queryType) {
             AggregatorQueryType.MIN ->

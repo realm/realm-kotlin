@@ -102,7 +102,7 @@ return $jnicall;
 bool realm_object_is_valid(const realm_object_t*);
 
 %{
-void throw_as_java_exception(JNIEnv *jenv) {
+bool throw_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
         std::string message("[" + std::to_string(error.error) + "]: " + error.message);
@@ -122,24 +122,31 @@ void throw_as_java_exception(JNIEnv *jenv) {
                 jint(error.error),
                 error_message);
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
+        return true;
+    } else {
+        return false;
     }
 }
 %}
 
 %typemap(out) SWIGTYPE* {
     if (!result) {
-        throw_as_java_exception(jenv);
-        // Check if it works if throw_as_java_exception doesn't throw
-        return $null;
+        bool exception_thrown = throw_as_java_exception(jenv);
+        if (exception_thrown) {
+            // Check if it works if throw_as_java_exception doesn't throw
+            return $null;
+        }
     }
     *($1_type*)&jresult = result;
 }
 
 %typemap(out) bool {
     if (!result) {
-        throw_as_java_exception(jenv);
-        // Check if it works if throw_as_java_exception doesn't throw
-        return $null;
+        bool exception_thrown = throw_as_java_exception(jenv);
+        if (exception_thrown) {
+            // Check if it works if throw_as_java_exception doesn't throw
+            return $null;
+        }
     }
     jresult = (jboolean)result;
 }
