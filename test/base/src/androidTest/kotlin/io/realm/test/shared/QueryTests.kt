@@ -1698,7 +1698,11 @@ class QueryTests {
 
             val aggregatedValue = channel.receive()
             when (type) {
-                AggregatorQueryType.SUM -> assertEquals(0, (aggregatedValue as Number).toInt())
+                AggregatorQueryType.SUM -> when (aggregatedValue) {
+                    is Number -> assertEquals(0, aggregatedValue.toInt())
+                    is Char -> assertEquals(0, aggregatedValue.code)
+                    else -> throw IllegalStateException("Expected a Number or a Char but got $aggregatedValue.")
+                }
                 else -> assertNull(aggregatedValue)
             }
 
@@ -1707,7 +1711,15 @@ class QueryTests {
                 copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
             }
 
-            assertEquals(expectedAggregator, channel.receive())
+            val receivedAggregator = channel.receive()
+            when (type) {
+                AggregatorQueryType.SUM -> when (receivedAggregator) {
+                    is Number -> assertEquals(expectedAggregator, receivedAggregator)
+                    is Char -> assertEquals(expectedAggregator, receivedAggregator.code)
+                }
+                else -> assertEquals(expectedAggregator, receivedAggregator)
+            }
+
             observer.cancel()
             channel.close()
 
