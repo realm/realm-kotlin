@@ -709,15 +709,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptorsForSum) {
             assertions(propertyDescriptor)
         }
-
-//        for (propertyDescriptor in propertyDescriptorsForSum) {
-//            assertions(propertyDescriptor)
-//        }
-//
-//        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
@@ -802,11 +793,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptorsForSum) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
