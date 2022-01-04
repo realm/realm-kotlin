@@ -1,3 +1,27 @@
+## 0.9.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.5.2-native-mt.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
 ## 0.8.0 (2021-12-17)
 
 ### Breaking Changes

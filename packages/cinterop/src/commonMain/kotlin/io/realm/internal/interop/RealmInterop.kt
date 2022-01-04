@@ -31,7 +31,10 @@ import kotlin.jvm.JvmInline
 value class ClassKey(val key: Long)
 // Wrapper for the C-API realm_property_key_t uniquely identifying the property within a class/table
 @JvmInline
-value class ColumnKey(val key: Long)
+value class PropertyKey(val key: Long)
+
+expect val INVALID_CLASS_KEY: ClassKey
+expect val INVALID_PROPERTY_KEY: PropertyKey
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -39,7 +42,7 @@ expect object RealmInterop {
     fun realm_get_library_version(): String
     fun realm_get_num_versions(realm: NativePointer): Long
 
-    fun realm_schema_new(tables: List<Table>): NativePointer
+    fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer
 
     fun realm_config_new(): NativePointer
     fun realm_config_set_path(config: NativePointer, path: String)
@@ -74,6 +77,10 @@ expect object RealmInterop {
 
     fun realm_get_schema(realm: NativePointer): NativePointer
     fun realm_get_num_classes(realm: NativePointer): Long
+    fun realm_get_class_keys(realm: NativePointer): List<ClassKey>
+    fun realm_find_class(realm: NativePointer, name: String): ClassKey?
+    fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo
+    fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
     fun realm_release(p: NativePointer)
 
@@ -85,9 +92,6 @@ expect object RealmInterop {
     fun realm_rollback(realm: NativePointer)
     fun realm_is_in_transaction(realm: NativePointer): Boolean
 
-    // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
-    // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
-    fun realm_find_class(realm: NativePointer, name: String): ClassKey
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
@@ -95,13 +99,13 @@ expect object RealmInterop {
 
     fun realm_object_as_link(obj: NativePointer): Link
 
-    fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey
+    fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey
 
-    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T
-    fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T
+    fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean)
 
     // list
-    fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer
+    fun realm_get_list(obj: NativePointer, key: PropertyKey): NativePointer
     fun realm_list_size(list: NativePointer): Long
     fun <T> realm_list_get(list: NativePointer, index: Long): T
     fun <T> realm_list_add(list: NativePointer, index: Long, value: T)
@@ -112,7 +116,7 @@ expect object RealmInterop {
     fun realm_list_is_valid(list: NativePointer): Boolean
 
     // query
-    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer
+    fun realm_query_parse(realm: NativePointer, className: String, query: String, vararg args: Any?): NativePointer
 
     fun realm_query_find_first(realm: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
