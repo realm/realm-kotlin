@@ -20,7 +20,7 @@ data class ClassInfo(
     val name: String,
     val primaryKey: String?,
     val numProperties: Long,
-    val numComputerProperties: Long = 0,
+    val numComputedProperties: Long = 0,
     val key: ClassKey = INVALID_CLASS_KEY,
     val flags: Int = ClassFlags.RLM_CLASS_NORMAL
 ) {
