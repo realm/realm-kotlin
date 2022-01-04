@@ -73,7 +73,7 @@ pipeline {
         // Setting 'activity'-timeouts here doesn't clear the overall job timeout, so
         // not an option. More finegrained timeouts can be targeted at specific
         // stages, but these will include the time waiting for resources/nodes.
-        timeout(time: 120, unit: 'MINUTES')
+        timeout(time: 180, unit: 'MINUTES')
     }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
