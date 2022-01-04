@@ -295,7 +295,6 @@ android {
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
-                arguments("-DANDROID_STL=c++_shared")
                 arguments("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
                 arguments("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
                 targets.add("realmc")
