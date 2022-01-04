@@ -1,5 +1,5 @@
-# API Dynamic Realms
-This API would provide access to an untyped Realm, that has provides a generic data access objects. Such objects allows the users to access their fields with type unsafe accessors.
+# Dynamic Realm API 
+DynamicRealm is a dynamic variant of Realm. This means that all access to data and/or queries are done using string based class names instead of class type references. This is useful during migrations or when working with string-based data like CSV or XML files.
 
 There are two main elements in this API the Realm itself, and the Realm objects used to access this Realm.
 
@@ -7,7 +7,7 @@ There are two main elements in this API the Realm itself, and the Realm objects 
 
 ## API Proposal
 
-The API is a variation of the `Realm` and `MutableRealm`, that only handles `DynamicRealmObjects`.
+The API is a variation of the `Realm` and `MutableRealm` that only handles `DynamicRealmObjects`.
 
 ```
 interface UntypedRealm: BaseRealm {
@@ -47,10 +47,9 @@ A `DynamicRealmObject` is a type unsafe object, that provides:
 
 > Discussion: Better naming?
 
-### Proposals
-### 1. Typed functions (java style)
+### Proposal 1: Static typed functions (Realm-Java style)
 
-Because this proposal is statically typed it cannot provide support for custom data types.
+This option does not support custom data types because types are statically defined in the accessors.
 
 ```
 class DynamicRealmObject {
@@ -99,7 +98,7 @@ class DynamicRealmObject {
 
 val dynamicObject: DynamicRealmObject
 
-// No need to explicity define the type, is defined by the function
+// No need to explicity define the type, as is defined by the function
 val name = dynamicObject.getString("name")
 
 // Exception on mismatching types
@@ -111,9 +110,9 @@ assertFailsWith<IllegalStateException> {
 val myList: RealmList<DynamicRealmObject> = dynamicObject.getList("myList")
 val floatList: RealmList<Float> = dynamicObject.getList("floatList")
 ```
+> Should a mismatch type throw an `IllegalStateException` or an `ClassCastException`.
 
-
-### 2. Dynamic type
+### Proposal 2: Dynamic typed functions
 
 ```
 interface DynamicRealmObject {
@@ -152,5 +151,6 @@ val floatList: RealmList<Float> = dynamicObject.get("floatList")
 val floatList2 = dynamicObject.get<RealmList<Float>>("floatList")
 
 // custom type adapters
+// It could automatically find the adapter for transforming the core type into a Date
 val birthDate: Date = dynamicRealmObject.get("birthdate")
 ```
