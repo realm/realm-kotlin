@@ -1,18 +1,42 @@
-## 0.8.0 (YYYY-MM-DD)
+## 0.9.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
+* Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
+
+### Enhancements
+* Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.5.2-native-mt.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 0.8.0 (2021-12-17)
 
 ### Breaking Changes
 * Reworked configuration hierarchy:
   * Separated common parts of `RealmConfiguraion` and `SyncConfiguration` into `io.realm.Configuration` to avoid polluting the base configuration with local-only options.
   * Changed `Realm.open(RealmConfiguration)` to accept new base configuration with `Realm.open(Configuration)`.
   * Removed option to build `SyncConfiguration`s with `deleteRealmIfMigrationNeeded` option.
-* `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
-* Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
 * Added support for dates through a new property type: `RealmInstant`.
 * Allow to pass schema as a variable containing the involved `KClass`es and build configurations non-fluently ([#389](https://github.com/realm/realm-kotlin/issues/389)).
-* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
+* Added M1 support for `library-base` variant ([#483](https://github.com/realm/realm-kotlin/issues/483)).
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
