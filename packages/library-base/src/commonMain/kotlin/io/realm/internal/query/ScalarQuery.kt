@@ -24,7 +24,7 @@ import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
-import io.realm.internal.interop.ColumnKey
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
@@ -59,7 +59,7 @@ internal abstract class BaseScalarQuery<E : RealmObject, T : Any> constructor(
 
     override fun asFlow(): Flow<T?> = TODO()
 
-    protected fun getPropertyKey(clazz: KClass<*>, property: String): ColumnKey =
+    protected fun getPropertyKey(clazz: KClass<*>, property: String): PropertyKey =
         RealmInterop.realm_get_col_key(realmReference.dbPointer, clazz.simpleName!!, property)
 }
 

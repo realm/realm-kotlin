@@ -937,11 +937,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
@@ -1004,16 +999,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over non-nullable properties only
-//        for (propertyDescriptor in propertyDescriptors) {
-//            assertions(propertyDescriptor)
-//        }
-//
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
@@ -1086,16 +1071,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over non-nullable properties only
-//        for (propertyDescriptor in propertyDescriptors) {
-//            assertions(propertyDescriptor)
-//        }
-//
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
@@ -1158,16 +1133,6 @@ class QueryTests {
         for (propertyDescriptor in allPropertyDescriptors) {
             assertions(propertyDescriptor)
         }
-
-//        // Iterate over non-nullable properties only
-//        for (propertyDescriptor in propertyDescriptors) {
-//            assertions(propertyDescriptor)
-//        }
-//
-//        // Iterate over nullable properties containing both null and non-null values
-//        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
-//            assertions(nullablePropertyDescriptor)
-//        }
     }
 
     @Test
