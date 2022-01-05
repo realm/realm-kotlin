@@ -9,8 +9,6 @@
 using namespace realm::jni_util;
 %}
 
-// FIXME MEMORY Verify finalizers, etc.
-//  https://github.com/realm/realm-kotlin/issues/93
 // TODO OPTIMIZATION
 //  - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
@@ -27,7 +25,24 @@ using namespace realm::jni_util;
 
 // Manual additions to java module class
 %pragma(java) modulecode=%{
-//  Manual addition
+    // Trigger loading of shared library when the swig wrapper is loaded
+    static {
+        // using https://developer.android.com/reference/java/lang/System#getProperties()
+        if (System.getProperty("java.specification.vendor").contains("Android")) {
+            System.loadLibrary("realmc");
+        } else {
+            // otherwise locate, using reflection, the dependency SoLoader and call load
+            // (calling SoLoader directly will create a circular dependency with `jvmMain`)
+            try {
+                Class<?> classToLoad = Class.forName("io.realm.jvm.SoLoader");
+                Object instance = classToLoad.newInstance();
+                java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
+                loadMethod.invoke(instance);
+            } catch (Exception e) {
+                throw new RuntimeException("Couldn't load Realm native libraries", e);
+            }
+        }
+    }
 %}
 
 // Helpers included directly in cpp file
@@ -186,7 +201,9 @@ void throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*};
+%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*};
+
+%apply uint32_t[] {realm_class_key_t*};
 
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"

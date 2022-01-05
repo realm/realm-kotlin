@@ -52,7 +52,9 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     ios()
-    macosX64("macos") {}
+    iosSimulatorArm64()
+    macosX64("macos")
+    macosArm64()
     sourceSets {
         commonMain {
             dependencies {
@@ -106,8 +108,17 @@ kotlin {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
         }
+        val macosArm64Main by getting {
+            kotlin.srcDir("src/darwin/kotlin")
+            kotlin.srcDir("src/macosMain/kotlin")
+        }
+
         getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwin/kotlin")
+            kotlin.srcDir("src/ios/kotlin")
+        }
+        val iosSimulatorArm64Main by getting {
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
         }
