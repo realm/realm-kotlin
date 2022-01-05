@@ -19,6 +19,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.propertyInfo
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -38,11 +39,13 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
+import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
@@ -63,6 +66,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
+import platform.posix.size_tVar
 import platform.posix.strerror
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
@@ -94,6 +98,9 @@ import realm_wrapper.realm_version_id_t
 import kotlin.collections.set
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
+
+actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
+actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realm_wrapper.RLM_INVALID_PROPERTY_KEY) }
 
 private fun throwOnError() {
     memScoped {
@@ -231,21 +238,21 @@ actual object RealmInterop {
         return realm_wrapper.realm_get_library_version().safeKString("library_version")
     }
 
-    actual fun realm_schema_new(tables: List<Table>): NativePointer {
-        val count = tables.size
+    actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer {
+        val count = schema.size
+
         memScoped {
             val cclasses = allocArray<realm_class_info_t>(count)
             val cproperties = allocArray<CPointerVar<realm_property_info_t>>(count)
-            for ((i, clazz) in tables.withIndex()) {
-                val properties = clazz.properties
+            for ((i, entry) in schema.withIndex()) {
+                val (clazz, properties) = entry
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
                     primary_key = (clazz.primaryKey ?: "").cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
-                    flags =
-                        clazz.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                    flags = clazz.flags
                 }
                 cproperties[i] =
                     allocArray<realm_property_info_t>(properties.size).getPointer(memScope)
@@ -253,12 +260,11 @@ actual object RealmInterop {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
                         public_name = "".cstr.ptr
-                        link_target = property.linkTarget.cstr.ptr
+                        link_target = property.linkTarget?.cstr?.ptr ?: "".cstr.ptr
                         link_origin_property_name = "".cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
-                        flags =
-                            property.flags.fold(0) { flags, element -> flags or element.nativeValue.toInt() }
+                        flags = property.flags
                     }
                 }
             }
@@ -387,6 +393,94 @@ actual object RealmInterop {
         return realm_wrapper.realm_get_num_classes(realm.cptr()).toLong()
     }
 
+    actual fun realm_get_class_keys(realm: NativePointer): List<ClassKey> {
+        memScoped {
+            val max = realm_get_num_classes(realm)
+            val keys = allocArray<UIntVar>(max)
+            val outCount = alloc<size_tVar>()
+            checkedBooleanResult(realm_wrapper.realm_get_class_keys(realm.cptr(), keys, max.convert(), outCount.ptr))
+            if (max != outCount.value.toLong()) {
+                error("Invalid schema: Insufficient keys; got ${outCount.value}, expected $max")
+            }
+            return (0 until max).map { ClassKey(keys[it].toLong()) }
+        }
+    }
+
+    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey? {
+        memScoped {
+            val found = alloc<BooleanVar>()
+            val classInfo = alloc<realm_class_info_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_find_class(
+                    realm.cptr(),
+                    name,
+                    found.ptr,
+                    classInfo.ptr
+                )
+            )
+            return if (found.value) {
+                ClassKey(classInfo.key.toLong())
+            } else {
+                null
+            }
+        }
+    }
+
+    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo {
+        memScoped {
+            val classInfo = alloc<realm_class_info_t>()
+            realm_wrapper.realm_get_class(realm.cptr(), classKey.key.toUInt(), classInfo.ptr)
+            return with(classInfo) {
+                ClassInfo(
+                    name.safeKString("name"),
+                    primary_key?.toKString(),
+                    num_properties.convert(),
+                    num_computed_properties.convert(),
+                    ClassKey(key.toLong()),
+                    flags
+                )
+            }
+        }
+    }
+
+    actual fun realm_get_class_properties(
+        realm: NativePointer,
+        classKey: ClassKey,
+        max: Long
+    ): List<PropertyInfo> {
+        memScoped {
+            val properties = allocArray<realm_property_info_t>(max)
+            val outCount = alloc<size_tVar>()
+            realm_wrapper.realm_get_class_properties(
+                realm.cptr(),
+                classKey.key.convert(),
+                properties,
+                max.convert(),
+                outCount.ptr
+            )
+            outCount.value.toLong().let { count ->
+                return if (count > 0) {
+                    (0 until outCount.value.toLong()).map {
+                        with(properties[it]) {
+                            PropertyInfo(
+                                name.safeKString("name"),
+                                public_name?.toKString(),
+                                PropertyType.from(type.toInt()),
+                                CollectionType.from(collection_type.toInt()),
+                                link_target?.toKString(),
+                                link_origin_property_name?.toKString(),
+                                PropertyKey(key),
+                                flags
+                            )
+                        }
+                    }
+                } else {
+                    emptyList()
+                }
+            }
+        }
+    }
+
     actual fun realm_release(p: NativePointer) {
         realm_wrapper.realm_release((p as CPointerWrapper).ptr)
     }
@@ -413,25 +507,6 @@ actual object RealmInterop {
 
     actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
         return realm_wrapper.realm_is_writable(realm.cptr())
-    }
-
-    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
-        memScoped {
-            val found = alloc<BooleanVar>()
-            val classInfo = alloc<realm_class_info_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_find_class(
-                    realm.cptr(),
-                    name,
-                    found.ptr,
-                    classInfo.ptr
-                )
-            )
-            if (!found.value) {
-                throw IllegalArgumentException("Class \"$name\" not found")
-            }
-            return ClassKey(classInfo.key.toLong())
-        }
     }
 
     actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {
@@ -479,17 +554,17 @@ actual object RealmInterop {
         val link: CValue<realm_link_t> =
             realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
-            return Link(this.target_table.toLong(), this.target)
+            return Link(ClassKey(this.target_table.toLong()), this.target)
         }
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
+    actual fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey {
         memScoped {
-            return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
+            return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
         }
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
+    actual fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T {
         memScoped {
             val value: realm_value_t = alloc()
             checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
@@ -520,7 +595,7 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean) {
         memScoped {
             checkedBooleanResult(
                 realm_wrapper.realm_set_value_by_ref(
@@ -533,7 +608,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer {
+    actual fun realm_get_list(obj: NativePointer, key: PropertyKey): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
     }
 
@@ -680,7 +755,7 @@ actual object RealmInterop {
 
     actual fun realm_query_parse(
         realm: NativePointer,
-        table: String,
+        className: String,
         query: String,
         vararg args: Any?
     ): NativePointer {
@@ -695,7 +770,7 @@ actual object RealmInterop {
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
-                    classInfo(realm, table).key,
+                    classInfo(realm, className).key,
                     query,
                     count.toULong(),
                     cArgs
@@ -745,7 +820,7 @@ actual object RealmInterop {
             if (value.type != realm_value_type.RLM_TYPE_LINK) {
                 error("Query did not return link but ${value.type}")
             }
-            return Link(value.link.target_table.toLong(), value.link.target)
+            return Link(ClassKey(value.link.target), value.link.target_table.toLong())
         }
     }
 
@@ -887,7 +962,7 @@ actual object RealmInterop {
         val ptr = checkedPointerResult(
             realm_wrapper.realm_get_object(
                 realm.cptr(),
-                link.tableKey.toUInt(),
+                link.classKey.key.toUInt(),
                 link.objKey
             )
         )
@@ -1333,7 +1408,7 @@ actual object RealmInterop {
         if (this.type != realm_value_type.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target_table.toLong(), this.link.target)
+        return Link(ClassKey(this.link.target_table.toLong()), this.link.target)
     }
 
     private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {
