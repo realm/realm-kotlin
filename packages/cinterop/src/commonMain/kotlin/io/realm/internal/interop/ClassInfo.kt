@@ -16,10 +16,18 @@
 
 package io.realm.internal.interop
 
-// FIXME API-INTERNAL Compiler does not pick up the actual if not in a separate file, so not
-//  following RealmEnums.kt structure, but might have to move anyway, so keeping the structure
-//  unaligned for now.
-actual enum class ClassFlag(override val nativeValue: Int) : NativeEnumerated {
-    RLM_CLASS_NORMAL(realm_class_flags_e.RLM_CLASS_NORMAL),
-    RLM_CLASS_EMBEDDED(realm_class_flags_e.RLM_CLASS_EMBEDDED),
+data class ClassInfo(
+    val name: String,
+    val primaryKey: String?,
+    val numProperties: Long,
+    val numComputedProperties: Long = 0,
+    val key: ClassKey = INVALID_CLASS_KEY,
+    val flags: Int = ClassFlags.RLM_CLASS_NORMAL
+) {
+    companion object {
+        // Convenience wrapper to ease maintaining compiler plugin
+        fun create(name: String, primaryKey: String?, numProperties: Long): ClassInfo {
+            return ClassInfo(name, primaryKey, numProperties, 0)
+        }
+    }
 }
