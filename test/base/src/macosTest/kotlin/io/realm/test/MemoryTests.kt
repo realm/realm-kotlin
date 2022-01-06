@@ -32,7 +32,6 @@ import platform.posix.pclose
 import platform.posix.popen
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
