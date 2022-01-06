@@ -24,7 +24,6 @@ import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.internal.interop.CollectionType
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
 import io.realm.query
@@ -36,10 +35,12 @@ import io.realm.query.min
 import io.realm.query.sum
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TypeDescriptor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -1402,19 +1403,55 @@ class QueryTests {
             .find { results -> results.delete() }
     }
 
-    // ----------------------------------------
-    // Descriptors used for exhaustive testing
-    // ----------------------------------------
+    // -------------------------------------------------------
+    // Descriptors used for exhaustive testing on aggregators
+    // -------------------------------------------------------
 
-    private val basePropertyDescriptors = listOf(
-        PropertyDescriptor(QuerySample::intField, Int::class, INT_VALUES),
-        PropertyDescriptor(QuerySample::shortField, Short::class, SHORT_VALUES),
-        PropertyDescriptor(QuerySample::longField, Long::class, LONG_VALUES),
-        PropertyDescriptor(QuerySample::floatField, Float::class, FLOAT_VALUES),
-        PropertyDescriptor(QuerySample::doubleField, Double::class, DOUBLE_VALUES),
-        PropertyDescriptor(QuerySample::byteField, Byte::class, BYTE_VALUES),
-        PropertyDescriptor(QuerySample::charField, Char::class, CHAR_VALUES)
-    )
+    @Suppress("ComplexMethod")
+    private fun getDescriptor(
+        classifier: KClassifier,
+        isNullable: Boolean = false
+    ): PropertyDescriptor = when (classifier) {
+        Int::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableIntField else QuerySample::intField,
+            Int::class,
+            if (isNullable) NULLABLE_INT_VALUES else INT_VALUES
+        )
+        Short::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableShortField else QuerySample::shortField,
+            Short::class,
+            if (isNullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
+        )
+        Long::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableLongField else QuerySample::longField,
+            Long::class,
+            if (isNullable) NULLABLE_LONG_VALUES else LONG_VALUES
+        )
+        Float::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableFloatField else QuerySample::floatField,
+            Float::class,
+            if (isNullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
+        )
+        Double::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableDoubleField else QuerySample::doubleField,
+            Double::class,
+            if (isNullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        )
+        Byte::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableByteField else QuerySample::byteField,
+            Byte::class,
+            if (isNullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
+        )
+        Char::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableCharField else QuerySample::charField,
+            Char::class,
+            if (isNullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
+        )
+        else -> throw IllegalArgumentException("Invalid type descriptor: $classifier")
+    }
+
+    private val basePropertyDescriptors =
+        TypeDescriptor.aggregateClassifiers.keys.map { getDescriptor(it) }
 
     private val timestampDescriptor = PropertyDescriptor(
         QuerySample::timestampField,
@@ -1426,15 +1463,8 @@ class QueryTests {
 
     private val propertyDescriptorsForSum = basePropertyDescriptors
 
-    private val nullableBasePropertyDescriptors = listOf(
-        PropertyDescriptor(QuerySample::nullableIntField, Int::class, INT_VALUES),
-        PropertyDescriptor(QuerySample::nullableShortField, Short::class, SHORT_VALUES),
-        PropertyDescriptor(QuerySample::nullableLongField, Long::class, LONG_VALUES),
-        PropertyDescriptor(QuerySample::nullableFloatField, Float::class, FLOAT_VALUES),
-        PropertyDescriptor(QuerySample::nullableDoubleField, Double::class, DOUBLE_VALUES),
-        PropertyDescriptor(QuerySample::nullableByteField, Byte::class, BYTE_VALUES),
-        PropertyDescriptor(QuerySample::nullableCharField, Char::class, CHAR_VALUES)
-    )
+    private val nullableBasePropertyDescriptors =
+        TypeDescriptor.aggregateClassifiers.keys.map { getDescriptor(it, true) }
 
     private val nullableTimestampDescriptor = PropertyDescriptor(
         QuerySample::nullableTimestampField,
@@ -1466,8 +1496,7 @@ class QueryTests {
 private data class PropertyDescriptor(
     val property: KMutableProperty1<QuerySample, *>,
     val clazz: KClass<*>,
-    val values: List<Any?>,
-    val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE
+    val values: List<Any?>
 )
 
 /**
