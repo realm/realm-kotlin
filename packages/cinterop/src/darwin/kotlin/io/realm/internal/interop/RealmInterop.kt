@@ -779,13 +779,37 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_query_find_first(realm: NativePointer): Link? {
+    actual fun realm_query_parse_for_results(
+        results: NativePointer,
+        query: String,
+        vararg args: Any?
+    ): NativePointer {
+        memScoped {
+            val count = args.size
+            val cArgs = allocArray<realm_value_t>(count)
+            args.mapIndexed { i, arg ->
+                cArgs[i].apply {
+                    set(memScope, arg)
+                }
+            }
+            return CPointerWrapper(
+                realm_wrapper.realm_query_parse_for_results(
+                    results.cptr(),
+                    query,
+                    count.toULong(),
+                    cArgs
+                )
+            )
+        }
+    }
+
+    actual fun realm_query_find_first(query: NativePointer): Link? {
         memScoped {
             val found = alloc<BooleanVar>()
             val value = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_query_find_first(
-                    realm.cptr(),
+                    query.cptr(),
                     value.ptr,
                     found.ptr
                 )
@@ -802,6 +826,38 @@ actual object RealmInterop {
 
     actual fun realm_query_find_all(query: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_query_count(query: NativePointer): Long {
+        memScoped {
+            val count = alloc<ULongVar>()
+            checkedBooleanResult(realm_wrapper.realm_query_count(query.cptr(), count.ptr))
+            return count.value.toLong()
+        }
+    }
+
+    actual fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer {
+        memScoped {
+            val count = args.size
+            val cArgs = allocArray<realm_value_t>(count)
+            args.mapIndexed { i, arg ->
+                cArgs[i].apply {
+                    set(memScope, arg)
+                }
+            }
+            return CPointerWrapper(
+                realm_wrapper.realm_query_append_query(
+                    query.cptr(),
+                    filter,
+                    count.toULong(),
+                    cArgs
+                )
+            )
+        }
     }
 
     actual fun realm_results_resolve_in(
@@ -824,7 +880,71 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
+    actual fun <T> realm_results_average(
+        results: NativePointer,
+        property: Long
+    ): Pair<Boolean, T> {
+        memScoped {
+            val found = cValue<BooleanVar>().ptr
+            val average = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_average(
+                    results.cptr(),
+                    property,
+                    average.ptr,
+                    found
+                )
+            )
+            return found.pointed.value to from_realm_value(average)
+        }
+    }
+
+    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+        memScoped {
+            val sum = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_sum(
+                    results.cptr(),
+                    property,
+                    sum.ptr,
+                    null
+                )
+            )
+            return from_realm_value(sum)
+        }
+    }
+
+    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+        memScoped {
+            val max = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_max(
+                    results.cptr(),
+                    property,
+                    max.ptr,
+                    null
+                )
+            )
+            return from_realm_value(max)
+        }
+    }
+
+    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+        memScoped {
+            val min = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_min(
+                    results.cptr(),
+                    property,
+                    min.ptr,
+                    null
+                )
+            )
+            return from_realm_value(min)
+        }
+    }
+
+    actual fun realm_results_get(results: NativePointer, index: Long): Link {
         memScoped {
             val value = alloc<realm_value_t>()
             checkedBooleanResult(

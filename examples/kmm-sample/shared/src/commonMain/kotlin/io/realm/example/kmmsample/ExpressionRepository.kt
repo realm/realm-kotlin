@@ -39,6 +39,6 @@ class ExpressionRepository {
     }
 
     fun observeChanges(): Flow<List<Expression>> {
-        return realm.objects(Expression::class).observe()
+        return realm.objects(Expression::class).asFlow()
     }
 }

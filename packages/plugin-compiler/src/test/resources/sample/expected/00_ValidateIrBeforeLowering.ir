@@ -1984,9 +1984,9 @@ MODULE_FRAGMENT name:<main>
           public open fun registerForNotification (callback: io.realm.internal.interop.Callback): io.realm.internal.interop.NativePointer declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback
-      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.Observable<io.realm.internal.RealmObjectInternal>? [fake_override]
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
-          public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.Observable<io.realm.internal.RealmObjectInternal>? declared in io.realm.internal.RealmObjectInternal
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
@@ -2278,9 +2278,9 @@ MODULE_FRAGMENT name:<main>
           public open fun registerForNotification (callback: io.realm.internal.interop.Callback): io.realm.internal.interop.NativePointer declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback
-      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.Observable<io.realm.internal.RealmObjectInternal>? [fake_override]
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
-          public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.Observable<io.realm.internal.RealmObjectInternal>? declared in io.realm.internal.RealmObjectInternal
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
