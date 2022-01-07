@@ -1615,7 +1615,7 @@ class QueryTests {
             else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
         }
 
-    @Suppress("ComplexMethod")
+    @Suppress("ComplexMethod", "LongMethod")
     private fun aggregatorAssertions(
         type: AggregatorQueryType,
         propertyDescriptor: PropertyDescriptor
