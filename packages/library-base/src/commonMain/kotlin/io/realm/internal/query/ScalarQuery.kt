@@ -31,11 +31,8 @@ import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
 import io.realm.query.RealmScalarQuery
-import kotlinx.atomicfu.AtomicBoolean
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlin.reflect.KClass
 
@@ -53,8 +50,6 @@ internal abstract class BaseScalarQuery<E : RealmObject, T : Any> constructor(
     protected val mediator: Mediator,
     protected val clazz: KClass<E>
 ) : RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
-
-    abstract val valueChangeManager: ValueChangeManager<T>
 
     abstract fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<T?>
 
@@ -83,15 +78,11 @@ internal class CountQuery<E : RealmObject> constructor(
     clazz: KClass<E>
 ) : BaseScalarQuery<E, Long>(realmReference, queryPointer, mediator, clazz) {
 
-    override val valueChangeManager = ValueChangeManager<Long>()
-
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
     override fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<Long?> = this.map {
         requireNotNull(it).size.toLong()
-    }.filter { latestCount ->
-        valueChangeManager.shouldEmitValue(latestCount)
-    }
+    }.distinctUntilChanged()
 }
 
 @Suppress("LongParameterList")
@@ -105,17 +96,13 @@ internal class AggregatorQuery<E : RealmObject, T : Any> constructor(
     private val queryType: AggregatorQueryType
 ) : BaseScalarQuery<E, T>(realmReference, queryPointer, mediator, clazz) {
 
-    override val valueChangeManager: ValueChangeManager<T> = ValueChangeManager()
-
     override fun find(): T? = findInternal(queryPointer)
 
     override fun Flow<RealmResultsImpl<E>?>.queryMapper(): Flow<T?> = this.map {
         it?.let { results ->
             findFromResults(results.nativePointer)
         }
-    }.filter { latestValue: T? ->
-        valueChangeManager.shouldEmitValue(latestValue)
-    }
+    }.distinctUntilChanged()
 
     private fun findInternal(queryPointer: NativePointer): T? =
         findFromResults(RealmInterop.realm_query_find_all(queryPointer))
@@ -164,30 +151,6 @@ internal class AggregatorQuery<E : RealmObject, T : Any> constructor(
             }
             else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
         } as T?
-    }
-}
-
-/**
- * Convenience class to encapsulate the logic behind whether repeated elements should be emitted by
- * [RealmScalarQuery.asFlow]. The [firstUpdate] and [previousValue] properties need to be
- * [AtomicRef]s due to Kotlin Native's memory model.
- */
-internal class ValueChangeManager<T> {
-
-    private val firstUpdate: AtomicBoolean = atomic(true)
-    private val previousValue: AtomicRef<T?> = atomic(null)
-
-    fun shouldEmitValue(latestValue: T?): Boolean = if (firstUpdate.value) {
-        firstUpdate.value = false
-        previousValue.value = latestValue
-        true
-    } else {
-        if (previousValue.value == latestValue) {
-            false
-        } else {
-            previousValue.value = latestValue
-            true
-        }
     }
 }
 

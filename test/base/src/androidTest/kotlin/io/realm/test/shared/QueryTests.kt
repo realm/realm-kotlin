@@ -36,10 +36,12 @@ import io.realm.query.sum
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -1550,13 +1552,13 @@ class QueryTests {
     // -------------------------------------------------
 
     private fun expectedSum(clazz: KClass<*>): Any =
-        expectedAggregator(clazz, AggregatorQueryType.SUM)
+        expectedAggregate(clazz, AggregatorQueryType.SUM)
 
     private fun expectedMax(clazz: KClass<*>): Any =
-        expectedAggregator(clazz, AggregatorQueryType.MAX)
+        expectedAggregate(clazz, AggregatorQueryType.MAX)
 
     private fun expectedMin(clazz: KClass<*>): Any =
-        expectedAggregator(clazz, AggregatorQueryType.MIN)
+        expectedAggregate(clazz, AggregatorQueryType.MIN)
 
     /**
      * Computes the corresponding aggregator [type] for a specific [clazz]. Null values are never
@@ -1566,7 +1568,7 @@ class QueryTests {
      * Kotlin's aggregators return null in case the given collection is empty
      */
     @Suppress("LongMethod", "ComplexMethod")
-    private fun expectedAggregator(clazz: KClass<*>, type: AggregatorQueryType): Any =
+    private fun expectedAggregate(clazz: KClass<*>, type: AggregatorQueryType): Any =
         when (clazz) {
             Int::class -> when (type) {
                 AggregatorQueryType.MIN -> INT_VALUES.minOrNull()!!
@@ -1619,7 +1621,7 @@ class QueryTests {
         propertyDescriptor: PropertyDescriptor
     ) {
         val channel = Channel<Any?>(1)
-        val expectedAggregator = when (type) {
+        val expectedAggregate = when (type) {
             AggregatorQueryType.MIN -> expectedMin(propertyDescriptor.clazz)
             AggregatorQueryType.MAX -> expectedMax(propertyDescriptor.clazz)
             AggregatorQueryType.SUM -> expectedSum(propertyDescriptor.clazz)
@@ -1659,18 +1661,55 @@ class QueryTests {
                 else -> assertNull(aggregatedValue)
             }
 
+            // Trigger an emission
             realm.writeBlocking {
                 copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
                 copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
             }
 
-            val receivedAggregator = channel.receive()
+            val receivedAggregate = channel.receive()
             when (type) {
-                AggregatorQueryType.SUM -> when (receivedAggregator) {
-                    is Number -> assertEquals(expectedAggregator, receivedAggregator)
-                    is Char -> assertEquals(expectedAggregator, receivedAggregator.code)
+                AggregatorQueryType.SUM -> when (receivedAggregate) {
+                    is Number -> assertEquals(expectedAggregate, receivedAggregate)
+                    is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
                 }
-                else -> assertEquals(expectedAggregator, receivedAggregator)
+                else -> assertEquals(expectedAggregate, receivedAggregate)
+            }
+
+            // Attempt to fool the flow by not changing the aggregations
+            // This should NOT trigger an emission
+            realm.writeBlocking {
+                // First delete the existing data within the transaction
+                query<QuerySample>()
+                    .find { it.delete() }
+
+                // Then insert the same data - which should result in the same aggregated values
+                // Therefore not emitting anything
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+            }
+
+            // Should not receive anything and should time out
+            assertFailsWith<TimeoutCancellationException> {
+                withTimeout(100) {
+                    channel.receive()
+                }
+            }
+
+            // Now change the values again to trigger an update
+            realm.writeBlocking {
+                query<QuerySample>()
+                    .find { it.delete() }
+            }
+
+            val finalAggregatedValue = channel.receive()
+            when (type) {
+                AggregatorQueryType.SUM -> when (finalAggregatedValue) {
+                    is Number -> assertEquals(0, finalAggregatedValue.toInt())
+                    is Char -> assertEquals(0, finalAggregatedValue.code)
+                    else -> throw IllegalStateException("Expected a Number or a Char but got $finalAggregatedValue.")
+                }
+                else -> assertNull(finalAggregatedValue)
             }
 
             observer.cancel()
