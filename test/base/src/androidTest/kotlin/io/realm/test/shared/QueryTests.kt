@@ -24,7 +24,6 @@ import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.internal.interop.CollectionType
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
 import io.realm.query
@@ -36,11 +35,15 @@ import io.realm.query.min
 import io.realm.query.sum
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TypeDescriptor
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -1597,13 +1600,13 @@ class QueryTests {
     // -------------------------------------------------
 
     private fun expectedSum(clazz: KClass<*>): Any =
-        expectedAggregator(clazz, AggregatorQueryType.SUM)
+        expectedAggregate(clazz, AggregatorQueryType.SUM)
 
     private fun expectedMax(clazz: KClass<*>): Any =
-        expectedAggregator(clazz, AggregatorQueryType.MAX)
+        expectedAggregate(clazz, AggregatorQueryType.MAX)
 
     private fun expectedMin(clazz: KClass<*>): Any =
-        expectedAggregator(clazz, AggregatorQueryType.MIN)
+        expectedAggregate(clazz, AggregatorQueryType.MIN)
 
     /**
      * Computes the corresponding aggregator [type] for a specific [clazz]. Null values are never
@@ -1613,7 +1616,7 @@ class QueryTests {
      * Kotlin's aggregators return null in case the given collection is empty
      */
     @Suppress("LongMethod", "ComplexMethod")
-    private fun expectedAggregator(clazz: KClass<*>, type: AggregatorQueryType): Any =
+    private fun expectedAggregate(clazz: KClass<*>, type: AggregatorQueryType): Any =
         when (clazz) {
             Int::class -> when (type) {
                 AggregatorQueryType.MIN -> INT_VALUES.minOrNull()!!
@@ -1666,7 +1669,7 @@ class QueryTests {
         propertyDescriptor: PropertyDescriptor
     ) {
         val channel = Channel<Any?>(1)
-        val expectedAggregator = when (type) {
+        val expectedAggregate = when (type) {
             AggregatorQueryType.MIN -> expectedMin(propertyDescriptor.clazz)
             AggregatorQueryType.MAX -> expectedMax(propertyDescriptor.clazz)
             AggregatorQueryType.SUM -> expectedSum(propertyDescriptor.clazz)
@@ -1706,18 +1709,55 @@ class QueryTests {
                 else -> assertNull(aggregatedValue)
             }
 
+            // Trigger an emission
             realm.writeBlocking {
                 copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
                 copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
             }
 
-            val receivedAggregator = channel.receive()
+            val receivedAggregate = channel.receive()
             when (type) {
-                AggregatorQueryType.SUM -> when (receivedAggregator) {
-                    is Number -> assertEquals(expectedAggregator, receivedAggregator)
-                    is Char -> assertEquals(expectedAggregator, receivedAggregator.code)
+                AggregatorQueryType.SUM -> when (receivedAggregate) {
+                    is Number -> assertEquals(expectedAggregate, receivedAggregate)
+                    is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
                 }
-                else -> assertEquals(expectedAggregator, receivedAggregator)
+                else -> assertEquals(expectedAggregate, receivedAggregate)
+            }
+
+            // Attempt to fool the flow by not changing the aggregations
+            // This should NOT trigger an emission
+            realm.writeBlocking {
+                // First delete the existing data within the transaction
+                query<QuerySample>()
+                    .find { it.delete() }
+
+                // Then insert the same data - which should result in the same aggregated values
+                // Therefore not emitting anything
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+            }
+
+            // Should not receive anything and should time out
+            assertFailsWith<TimeoutCancellationException> {
+                withTimeout(100) {
+                    channel.receive()
+                }
+            }
+
+            // Now change the values again to trigger an update
+            realm.writeBlocking {
+                query<QuerySample>()
+                    .find { it.delete() }
+            }
+
+            val finalAggregatedValue = channel.receive()
+            when (type) {
+                AggregatorQueryType.SUM -> when (finalAggregatedValue) {
+                    is Number -> assertEquals(0, finalAggregatedValue.toInt())
+                    is Char -> assertEquals(0, finalAggregatedValue.code)
+                    else -> throw IllegalStateException("Expected a Number or a Char but got $finalAggregatedValue.")
+                }
+                else -> assertNull(finalAggregatedValue)
             }
 
             observer.cancel()
@@ -1739,19 +1779,55 @@ class QueryTests {
             .find { results -> results.delete() }
     }
 
-    // ----------------------------------------
-    // Descriptors used for exhaustive testing
-    // ----------------------------------------
+    // -------------------------------------------------------
+    // Descriptors used for exhaustive testing on aggregators
+    // -------------------------------------------------------
 
-    private val basePropertyDescriptors = listOf(
-        PropertyDescriptor(QuerySample::intField, Int::class, INT_VALUES),
-        PropertyDescriptor(QuerySample::shortField, Short::class, SHORT_VALUES),
-        PropertyDescriptor(QuerySample::longField, Long::class, LONG_VALUES),
-        PropertyDescriptor(QuerySample::floatField, Float::class, FLOAT_VALUES),
-        PropertyDescriptor(QuerySample::doubleField, Double::class, DOUBLE_VALUES),
-        PropertyDescriptor(QuerySample::byteField, Byte::class, BYTE_VALUES),
-        PropertyDescriptor(QuerySample::charField, Char::class, CHAR_VALUES)
-    )
+    @Suppress("ComplexMethod")
+    private fun getDescriptor(
+        classifier: KClassifier,
+        isNullable: Boolean = false
+    ): PropertyDescriptor = when (classifier) {
+        Int::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableIntField else QuerySample::intField,
+            Int::class,
+            if (isNullable) NULLABLE_INT_VALUES else INT_VALUES
+        )
+        Short::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableShortField else QuerySample::shortField,
+            Short::class,
+            if (isNullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
+        )
+        Long::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableLongField else QuerySample::longField,
+            Long::class,
+            if (isNullable) NULLABLE_LONG_VALUES else LONG_VALUES
+        )
+        Float::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableFloatField else QuerySample::floatField,
+            Float::class,
+            if (isNullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
+        )
+        Double::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableDoubleField else QuerySample::doubleField,
+            Double::class,
+            if (isNullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        )
+        Byte::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableByteField else QuerySample::byteField,
+            Byte::class,
+            if (isNullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
+        )
+        Char::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableCharField else QuerySample::charField,
+            Char::class,
+            if (isNullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
+        )
+        else -> throw IllegalArgumentException("Invalid type descriptor: $classifier")
+    }
+
+    private val basePropertyDescriptors =
+        TypeDescriptor.aggregateClassifiers.keys.map { getDescriptor(it) }
 
     private val timestampDescriptor = PropertyDescriptor(
         QuerySample::timestampField,
@@ -1763,15 +1839,8 @@ class QueryTests {
 
     private val propertyDescriptorsForSum = basePropertyDescriptors
 
-    private val nullableBasePropertyDescriptors = listOf(
-        PropertyDescriptor(QuerySample::nullableIntField, Int::class, INT_VALUES),
-        PropertyDescriptor(QuerySample::nullableShortField, Short::class, SHORT_VALUES),
-        PropertyDescriptor(QuerySample::nullableLongField, Long::class, LONG_VALUES),
-        PropertyDescriptor(QuerySample::nullableFloatField, Float::class, FLOAT_VALUES),
-        PropertyDescriptor(QuerySample::nullableDoubleField, Double::class, DOUBLE_VALUES),
-        PropertyDescriptor(QuerySample::nullableByteField, Byte::class, BYTE_VALUES),
-        PropertyDescriptor(QuerySample::nullableCharField, Char::class, CHAR_VALUES)
-    )
+    private val nullableBasePropertyDescriptors =
+        TypeDescriptor.aggregateClassifiers.keys.map { getDescriptor(it, true) }
 
     private val nullableTimestampDescriptor = PropertyDescriptor(
         QuerySample::nullableTimestampField,
@@ -1789,126 +1858,8 @@ class QueryTests {
 
     private val allPropertyDescriptors = propertyDescriptors + nullablePropertyDescriptors
 
-    // TODO figure out how to test aggregators on RealmList<Number> fields
-//    // -----------------------
-//    // List descriptors
-//    // -----------------------
-//
-//    // Base
-//    private val baseListPropertyDescriptors = listOf(
-//        PropertyDescriptor(
-//            QuerySample::intListField,
-//            Int::class,
-//            INT_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::shortListField,
-//            Short::class,
-//            SHORT_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::longListField,
-//            Long::class,
-//            LONG_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::floatListField,
-//            Float::class,
-//            FLOAT_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::doubleListField,
-//            Double::class,
-//            DOUBLE_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::byteListField,
-//            Double::class,
-//            BYTE_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::charListField,
-//            Double::class,
-//            CHAR_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        )
-//    )
-//
-//    // Timestamp
-//    private val timestampListPropertyDescriptor = PropertyDescriptor(
-//        QuerySample::timestampListField,
-//        RealmInstant::class,
-//        TIMESTAMP_VALUES,
-//        CollectionType.RLM_COLLECTION_TYPE_LIST
-//    )
-//
-//    // Base + timestamp
-//    private val listPropertyDescriptors = baseListPropertyDescriptors +
-//        timestampListPropertyDescriptor
-//
-//    // Nullable
-//    private val nullableBaseListPropertyDescriptors = listOf(
-//        PropertyDescriptor(
-//            QuerySample::nullableIntListField,
-//            Int::class,
-//            INT_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::nullableShortListField,
-//            Short::class,
-//            SHORT_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::nullableLongListField,
-//            Long::class,
-//            LONG_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::nullableFloatListField,
-//            Float::class,
-//            FLOAT_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::nullableDoubleListField,
-//            Double::class,
-//            DOUBLE_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::nullableByteListField,
-//            Double::class,
-//            BYTE_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        ),
-//        PropertyDescriptor(
-//            QuerySample::nullableCharListField,
-//            Double::class,
-//            CHAR_VALUES,
-//            CollectionType.RLM_COLLECTION_TYPE_LIST
-//        )
-//    )
-//
-//    // Nullable timestamp
-//    private val nullableTimestampListPropertyDescriptor = PropertyDescriptor(
-//        QuerySample::nullableTimestampListField,
-//        RealmInstant::class,
-//        TIMESTAMP_VALUES,
-//        CollectionType.RLM_COLLECTION_TYPE_LIST
-//    )
-//
-//    // Nullable base + nullable timestamp
-//    private val nullableListPropertyDescriptors = nullableBaseListPropertyDescriptors +
-//        nullableTimestampListPropertyDescriptor
+    // TODO figure out whether we need to test aggregators on RealmList<Number> fields
+    //  see https://github.com/realm/realm-core/issues/5137
 }
 
 /**
@@ -1921,8 +1872,7 @@ class QueryTests {
 private data class PropertyDescriptor(
     val property: KMutableProperty1<QuerySample, *>,
     val clazz: KClass<*>,
-    val values: List<Any?>,
-    val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE
+    val values: List<Any?>
 )
 
 /**
