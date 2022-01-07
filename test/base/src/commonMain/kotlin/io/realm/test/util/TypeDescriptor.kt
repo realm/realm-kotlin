@@ -119,16 +119,20 @@ internal object TypeDescriptor {
         CollectionType.RLM_COLLECTION_TYPE_DICTIONARY
     )
 
-    // Kotlin classifier to Core field type mappings
-    val classifiers: Map<KClassifier, CoreFieldType> = mapOf(
+    // Classifiers for types that can be used in aggregate queries
+    val aggregateClassifiers: Map<KClassifier, CoreFieldType> = mapOf(
         Byte::class to CoreFieldType.INT,
         Char::class to CoreFieldType.INT,
         Short::class to CoreFieldType.INT,
         Int::class to CoreFieldType.INT,
         Long::class to CoreFieldType.INT,
-        Boolean::class to CoreFieldType.BOOL,
         Float::class to CoreFieldType.FLOAT,
-        Double::class to CoreFieldType.DOUBLE,
+        Double::class to CoreFieldType.DOUBLE
+    )
+
+    // Kotlin classifier to Core field type mappings
+    val classifiers: Map<KClassifier, CoreFieldType> = aggregateClassifiers + mapOf(
+        Boolean::class to CoreFieldType.BOOL,
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         RealmObject::class to CoreFieldType.OBJECT
