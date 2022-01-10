@@ -19,7 +19,6 @@ interface UntypedRealm: BaseRealm {
     ): RealmQuery<DynamicRealmObject>
 }
 
-
 interface DynamicRealm: UntypedRealm {
     suspend fun <R> write(block: DynamicMutableRealm.() -> R): R 
     fun <R> writeBlocking(block: DynamicMutableRealm.() -> R): R
@@ -29,6 +28,8 @@ interface DynamicRealm: UntypedRealm {
 
 interface DynamicMutableRealm: UntypedRealm {
     fun createObject(type: String): DynamicRealmObject
+    fun createObject(type: String, primaryKey: Any?): DynamicRealmObject
+    fun createEmbeddedObject(type: String, DynamicRealmObject parent, parentProperty: String)
     fun findLatest(obj: DynamicRealmObject): DynamicRealmObject?
     fun cancelWrite()
     fun delete(obj: DynamicRealmObject) // deletes an object
