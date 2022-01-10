@@ -17,6 +17,6 @@ actual class HttpClientCache actual constructor(timeoutMs: Long, customLogger: L
     }
 }
 
-actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit ): HttpClient {
+actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
     return HttpClient(CIO, block)
 }

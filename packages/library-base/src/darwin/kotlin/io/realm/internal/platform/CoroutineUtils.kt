@@ -1,9 +1,9 @@
 package io.realm.internal.platform
 
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.newSingleThreadContext
+import kotlin.coroutines.CoroutineContext
 
 // Expose platform runBlocking through common interface
 public actual fun <T> runBlocking(
