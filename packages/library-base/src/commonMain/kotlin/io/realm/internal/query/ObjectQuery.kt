@@ -12,13 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package io.realm.internal
+package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.internal.Mediator
+import io.realm.internal.RealmReference
+import io.realm.internal.RealmResultsImpl
+import io.realm.internal.Thawable
+import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
@@ -33,7 +37,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("SpreadOperator")
-internal class RealmObjectQuery<E : RealmObject> constructor(
+internal class ObjectQuery<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
@@ -53,7 +57,7 @@ internal class RealmObjectQuery<E : RealmObject> constructor(
 
     constructor(
         composedQueryPointer: NativePointer?,
-        objectQuery: RealmObjectQuery<E>
+        objectQuery: ObjectQuery<E>
     ) : this(
         objectQuery.realmReference,
         objectQuery.clazz,
@@ -70,7 +74,7 @@ internal class RealmObjectQuery<E : RealmObject> constructor(
         val appendedQuery = tryCatchCoreException {
             RealmInterop.realm_query_append_query(queryPointer, filter, *arguments)
         }
-        return RealmObjectQuery(appendedQuery, this)
+        return ObjectQuery(appendedQuery, this)
     }
 
     // TODO Descriptors are added using 'append_query', which requires an actual predicate. This
@@ -106,13 +110,41 @@ internal class RealmObjectQuery<E : RealmObject> constructor(
 
     override fun first(): RealmSingleQuery<E> = TODO()
 
-    override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> = TODO()
+    override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> =
+        AggregatorQuery<E, T>(
+            realmReference,
+            queryPointer,
+            mediator,
+            clazz,
+            property,
+            type,
+            AggregatorQueryType.MIN
+        )
 
-    override fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T> = TODO()
+    override fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T> =
+        AggregatorQuery<E, T>(
+            realmReference,
+            queryPointer,
+            mediator,
+            clazz,
+            property,
+            type,
+            AggregatorQueryType.MAX
+        )
 
-    override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> = TODO()
+    override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
+        AggregatorQuery<E, T>(
+            realmReference,
+            queryPointer,
+            mediator,
+            clazz,
+            property,
+            type,
+            AggregatorQueryType.SUM
+        )
 
-    override fun count(): RealmScalarQuery<Long> = TODO()
+    override fun count(): RealmScalarQuery<Long> =
+        CountQuery<E>(realmReference, queryPointer, mediator)
 
     override fun asFlow(): Flow<RealmResults<E>> = TODO()
 
