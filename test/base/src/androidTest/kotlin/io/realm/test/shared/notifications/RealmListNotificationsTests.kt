@@ -91,7 +91,7 @@ class RealmListNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun observe() {
+    override fun asFlow() {
         val dataSet = OBJECT_VALUES
 
         val container = realm.writeBlocking {
@@ -132,7 +132,7 @@ class RealmListNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun cancelObserve() {
+    override fun cancelAsFlow() {
         runBlocking {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
