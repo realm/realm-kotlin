@@ -80,7 +80,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun observe() {
+    override fun asFlow() {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
@@ -102,7 +102,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun cancelObserve() {
+    override fun cancelAsFlow() {
         runBlocking {
             val c1 = Channel<RealmResults<Sample>>(1)
             val c2 = Channel<RealmResults<Sample>>(1)

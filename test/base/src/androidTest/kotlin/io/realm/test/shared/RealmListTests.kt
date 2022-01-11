@@ -72,7 +72,7 @@ class RealmListTests {
 
     @Test
     fun realmListInitializer_realmListOf() {
-        val realmListFromArgsEmpty: RealmList<String> = realmListOf<String>()
+        val realmListFromArgsEmpty: RealmList<String> = realmListOf()
         assertTrue(realmListFromArgsEmpty.isEmpty())
 
         val realmListFromArgs: RealmList<String> = realmListOf("1", "2")
@@ -84,15 +84,15 @@ class RealmListTests {
         val realmListFromEmptyCollection = emptyList<String>().toRealmList()
         assertTrue(realmListFromEmptyCollection.isEmpty())
 
-        val realmListFromSingleElementList = listOf<String>("1").toRealmList()
+        val realmListFromSingleElementList = listOf("1").toRealmList()
         assertContentEquals(listOf("1"), realmListFromSingleElementList)
-        val realmListFromSingleElementSet = setOf<String>("1").toRealmList()
-        assertContentEquals(listOf("1"), realmListFromSingleElementList)
+        val realmListFromSingleElementSet = setOf("1").toRealmList()
+        assertContentEquals(listOf("1"), realmListFromSingleElementSet)
 
-        val realmListFromMultiElementCollection = setOf<String>("1", "2").toRealmList()
+        val realmListFromMultiElementCollection = setOf("1", "2").toRealmList()
         assertContentEquals(listOf("1", "2"), realmListFromMultiElementCollection)
 
-        val realmListFromIterator = IntRange(0, 2).toRealmList()
+        val realmListFromIterator = (0..2).toRealmList()
         assertContentEquals(listOf(0, 1, 2), realmListFromIterator)
     }
 

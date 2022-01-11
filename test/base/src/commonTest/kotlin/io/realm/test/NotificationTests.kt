@@ -16,11 +16,11 @@ interface NotificationTests {
 
     // Verify that a notification is triggered on updates
     @Test
-    fun observe()
+    fun asFlow()
 
     // Verify that a flow can be cancelled
     @Test
-    fun cancelObserve()
+    fun cancelAsFlow()
 
     // Verify that `null` is emitted and the Flow is closed whenever the object
     // being observed is deleted.
