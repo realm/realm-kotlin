@@ -34,7 +34,7 @@ import io.realm.query.RealmScalarQuery
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-internal enum class AggregatorQueryType {
+enum class AggregatorQueryType {
     MIN, MAX, SUM
 }
 

@@ -148,7 +148,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
     if (!result) {
         bool exception_thrown = throw_as_java_exception(jenv);
         if (exception_thrown) {
-            // Check if it works if throw_as_java_exception doesn't throw
+            // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return $null;
         }
     }
@@ -159,7 +159,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
     if (!result) {
         bool exception_thrown = throw_as_java_exception(jenv);
         if (exception_thrown) {
-            // Check if it works if throw_as_java_exception doesn't throw
+            // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return $null;
         }
     }
