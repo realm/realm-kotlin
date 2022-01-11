@@ -37,6 +37,8 @@ interface DynamicMutableRealm: UntypedRealm {
 ```
 > Discussion: Better naming?
 
+> Should the embedded object constructor sit on the `DynamicRealm` or in the `DynamicRealmObject`?
+
 > Feedback: Any missing functionality?
 
 ## DynamicRealmObject
@@ -117,6 +119,7 @@ val floatList: RealmList<Float> = dynamicObject.getList("floatList")
 
 ```
 interface DynamicRealmObject {
+    fun createEmbeddedObject(fieldName: String) // much simpler than sitting in Realm, type can be inferred.
     inline fun <reified T> get(fieldName: String): T
     inline fun <reified T> set(fieldName: String, value: T)
     inline fun <reified T> getObjectLinks(fieldName: String): RealmResults<T>
