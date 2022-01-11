@@ -1636,6 +1636,85 @@ class QueryTests {
         }
     }
 
+    @Test
+    fun first_asFlow_deleteObservable() {
+        val channel = Channel<QuerySample?>(1)
+
+        runBlocking {
+            realm.writeBlocking {
+                copyToRealm(QuerySample())
+            }
+
+            val observer = async {
+                realm.query<QuerySample>()
+                    .first()
+                    .asFlow()
+                    .collect { first ->
+                        channel.send(first)
+                    }
+            }
+
+            assertNotNull(channel.receive())
+
+            realm.writeBlocking {
+                objects(QuerySample::class).delete()
+            }
+
+            assertNull(channel.receive())
+
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun first_asFlow_cancel() {
+        runBlocking {
+            val channel1 = Channel<QuerySample?>(1)
+            val channel2 = Channel<QuerySample?>(1)
+
+            val observer1 = async {
+                realm.query<QuerySample>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        channel1.send(it)
+                    }
+            }
+            val observer2 = async {
+                realm.query<QuerySample>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        channel2.send(it)
+                    }
+            }
+
+            // Write one object
+            realm.write {
+                copyToRealm(QuerySample().apply { stringField = "Bar" })
+            }
+
+            // Assert emission and cancel first subscription
+            assertNotNull(channel1.receive())
+            assertNotNull(channel2.receive())
+            observer1.cancel()
+
+            // Write another object
+            realm.write {
+                copyToRealm(QuerySample().apply { stringField = "Baz" })
+            }
+
+            // Assert emission and that the original channel hasn't been received
+            assertNotNull(channel2.receive())
+            assertTrue(channel1.isEmpty)
+
+            observer2.cancel()
+            channel1.close()
+            channel2.close()
+        }
+    }
+
     // ----------------------------------
     // Multithreading with query objects
     // ----------------------------------
