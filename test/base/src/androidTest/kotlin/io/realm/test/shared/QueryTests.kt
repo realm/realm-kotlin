@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("invisible_reference", "invisible_member")
-
 package io.realm.test.shared
 
 import io.realm.Realm
@@ -177,6 +175,27 @@ class QueryTests {
     }
 
     @Test
+    fun asFlow_initialResults() {
+        val channel = Channel<RealmResults<QuerySample>>(1)
+
+        runBlocking {
+            val observer = async {
+                realm.query<QuerySample>()
+                    .asFlow()
+                    .collect { results ->
+                        assertNotNull(results)
+                        channel.send(results)
+                    }
+            }
+
+            assertTrue(channel.receive().isEmpty())
+
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
     fun asFlow() {
         val channel = Channel<RealmResults<QuerySample>>(1)
 
@@ -197,6 +216,37 @@ class QueryTests {
             }
 
             assertEquals(1, channel.receive().size)
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun asFlow_deleteObservable() {
+        val channel = Channel<RealmResults<QuerySample>>(1)
+
+        runBlocking {
+            realm.writeBlocking {
+                copyToRealm(QuerySample())
+            }
+
+            val observer = async {
+                realm.query<QuerySample>()
+                    .asFlow()
+                    .collect { results ->
+                        assertNotNull(results)
+                        channel.send(results)
+                    }
+            }
+
+            assertEquals(1, channel.receive().size)
+
+            realm.writeBlocking {
+                objects(QuerySample::class).delete()
+            }
+
+            assertTrue(channel.receive().isEmpty())
+
             observer.cancel()
             channel.close()
         }
@@ -738,6 +788,28 @@ class QueryTests {
     }
 
     @Test
+    fun count_asFlow_initialValue() {
+        val channel = Channel<Long>(1)
+
+        runBlocking {
+            val observer = async {
+                realm.query<QuerySample>()
+                    .count()
+                    .asFlow()
+                    .collect { countValue ->
+                        assertNotNull(countValue)
+                        channel.send(countValue)
+                    }
+            }
+
+            assertEquals(0, channel.receive())
+
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
     fun count_asFlow() {
         val channel = Channel<Long>(1)
 
@@ -761,6 +833,86 @@ class QueryTests {
             assertEquals(1, channel.receive())
             observer.cancel()
             channel.close()
+        }
+    }
+
+    @Test
+    fun count_asFlow_deleteObservable() {
+        val channel = Channel<Long>(1)
+
+        runBlocking {
+            realm.write {
+                copyToRealm(QuerySample())
+            }
+
+            val observer = async {
+                realm.query<QuerySample>()
+                    .count()
+                    .asFlow()
+                    .collect { countValue ->
+                        assertNotNull(countValue)
+                        channel.send(countValue)
+                    }
+            }
+
+            assertEquals(1, channel.receive())
+
+            realm.write {
+                objects(QuerySample::class).delete()
+            }
+
+            assertEquals(0, channel.receive())
+
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun count_asFlow_cancel() {
+        runBlocking {
+            val channel1 = Channel<Long?>(1)
+            val channel2 = Channel<Long?>(1)
+
+            val observer1 = async {
+                realm.query<QuerySample>()
+                    .count()
+                    .asFlow()
+                    .collect {
+                        channel1.send(it)
+                    }
+            }
+            val observer2 = async {
+                realm.query<QuerySample>()
+                    .count()
+                    .asFlow()
+                    .collect {
+                        channel2.send(it)
+                    }
+            }
+
+            // Write one object
+            realm.write {
+                copyToRealm(QuerySample().apply { stringField = "Bar" })
+            }
+
+            // Assert emission and cancel first subscription
+            assertEquals(1, channel1.receive())
+            assertEquals(1, channel2.receive())
+            observer1.cancel()
+
+            // Write another object
+            realm.write {
+                copyToRealm(QuerySample().apply { stringField = "Baz" })
+            }
+
+            // Assert emission and that the original channel hasn't been received
+            assertEquals(2, channel2.receive())
+            assertTrue(channel1.isEmpty)
+
+            observer2.cancel()
+            channel1.close()
+            channel2.close()
         }
     }
 
@@ -925,7 +1077,7 @@ class QueryTests {
 
     @Test
     fun sum_find_shortOverflow() {
-        val iterations = 10000
+        val iterations = 100
         val invalidShortSum = (Short.MAX_VALUE * iterations).toShort()
         val validShortSum = Short.MAX_VALUE * iterations
 
@@ -954,7 +1106,7 @@ class QueryTests {
 
     @Test
     fun sum_find_byteOverflow() {
-        val iterations = 10000
+        val iterations = 100
         val invalidByteSum = (Byte.MAX_VALUE * iterations).toByte()
         val validByteSum = Byte.MAX_VALUE * iterations
 
@@ -993,7 +1145,9 @@ class QueryTests {
     @Test
     fun sum_asFlow() {
         for (propertyDescriptor in allPropertyDescriptorsForSum) {
-            aggregatorAssertions(AggregatorQueryType.SUM, propertyDescriptor)
+            asFlowAggregatorAssertions(AggregatorQueryType.SUM, propertyDescriptor)
+            asFlowDeleteObservableAssertions(AggregatorQueryType.SUM, propertyDescriptor)
+            asFlowCancel(AggregatorQueryType.SUM, propertyDescriptor)
         }
     }
 
@@ -1167,7 +1321,9 @@ class QueryTests {
     @Test
     fun max_asFlow() {
         for (propertyDescriptor in allPropertyDescriptors) {
-            aggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
+            asFlowAggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
+            asFlowDeleteObservableAssertions(AggregatorQueryType.MAX, propertyDescriptor)
+            asFlowCancel(AggregatorQueryType.MAX, propertyDescriptor)
         }
     }
 
@@ -1349,7 +1505,9 @@ class QueryTests {
     @Test
     fun min_asFlow() {
         for (propertyDescriptor in allPropertyDescriptors) {
-            aggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
+            asFlowAggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
+            asFlowDeleteObservableAssertions(AggregatorQueryType.MIN, propertyDescriptor)
+            asFlowCancel(AggregatorQueryType.MIN, propertyDescriptor)
         }
     }
 
@@ -1663,8 +1821,18 @@ class QueryTests {
             else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
         }
 
+    /**
+     * Asserts calls to `asFlow` for all aggregate operations. The assertions follow this pattern:
+     * - subscribe to the flow and receive initial aggregated value (0 or null)
+     * - update the realm
+     * - receive emission and assert
+     * - attempt to trick `distinctUntilChanged` by deleting the previously stored objects and save
+     *   the same ones, resulting into an unchanged aggregate
+     * - ensure we receive no emissions
+     * - delete stored values to trigger an emission
+     */
     @Suppress("ComplexMethod", "LongMethod")
-    private fun aggregatorAssertions(
+    private fun asFlowAggregatorAssertions(
         type: AggregatorQueryType,
         propertyDescriptor: PropertyDescriptor
     ) {
@@ -1762,6 +1930,180 @@ class QueryTests {
 
             observer.cancel()
             channel.close()
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+    }
+
+    @Suppress("ComplexMethod", "LongMethod")
+    private fun asFlowDeleteObservableAssertions(
+        type: AggregatorQueryType,
+        propertyDescriptor: PropertyDescriptor
+    ) {
+        val channel = Channel<Any?>(1)
+        val expectedAggregate = when (type) {
+            AggregatorQueryType.MIN -> expectedMin(propertyDescriptor.clazz)
+            AggregatorQueryType.MAX -> expectedMax(propertyDescriptor.clazz)
+            AggregatorQueryType.SUM -> expectedSum(propertyDescriptor.clazz)
+        }
+
+        runBlocking {
+            realm.writeBlocking {
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+            }
+
+            val observer = async {
+                realm.query<QuerySample>()
+                    .let { query ->
+                        when (type) {
+                            AggregatorQueryType.MIN -> query.min(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.MAX -> query.max(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.SUM -> query.sum(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                        }
+                    }.asFlow()
+                    .collect { aggregatedValue ->
+                        channel.send(aggregatedValue)
+                    }
+            }
+
+            val receivedAggregate = channel.receive()
+            when (type) {
+                AggregatorQueryType.SUM -> when (receivedAggregate) {
+                    is Number -> assertEquals(expectedAggregate, receivedAggregate)
+                    is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
+                }
+                else -> assertEquals(expectedAggregate, receivedAggregate)
+            }
+
+            // Now delete objects to trigger a new emission
+            realm.write {
+                objects(QuerySample::class).delete()
+            }
+
+            val aggregatedValue = channel.receive()
+            when (type) {
+                AggregatorQueryType.SUM -> when (aggregatedValue) {
+                    is Number -> assertEquals(0, aggregatedValue.toInt())
+                    is Char -> assertEquals(0, aggregatedValue.code)
+                    else -> throw IllegalStateException("Expected a Number or a Char but got $aggregatedValue.")
+                }
+                else -> assertNull(aggregatedValue)
+            }
+
+            observer.cancel()
+            channel.close()
+
+            // Make sure to delete all objects after assertions as aggregators to clean state and
+            // avoid "null vs 0" results when testing
+            cleanUpBetweenProperties()
+        }
+    }
+
+    @Suppress("ComplexMethod", "LongMethod")
+    private fun asFlowCancel(
+        type: AggregatorQueryType,
+        propertyDescriptor: PropertyDescriptor
+    ) {
+        val channel1 = Channel<Any?>(1)
+        val channel2 = Channel<Any?>(1)
+
+        runBlocking {
+            // Subscribe to flow 1
+            val observer1 = async {
+                realm.query<QuerySample>()
+                    .let { query ->
+                        when (type) {
+                            AggregatorQueryType.MIN -> query.min(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.MAX -> query.max(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.SUM -> query.sum(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                        }
+                    }.asFlow()
+                    .collect { aggregatedValue ->
+                        channel1.send(aggregatedValue)
+                    }
+            }
+
+            // Subscribe to flow 2
+            val observer2 = async {
+                realm.query<QuerySample>()
+                    .let { query ->
+                        when (type) {
+                            AggregatorQueryType.MIN -> query.min(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.MAX -> query.max(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                            AggregatorQueryType.SUM -> query.sum(
+                                propertyDescriptor.property.name,
+                                propertyDescriptor.clazz
+                            )
+                        }
+                    }.asFlow()
+                    .collect { aggregatedValue ->
+                        channel2.send(aggregatedValue)
+                    }
+            }
+
+            val initialAggregate1 = channel1.receive()
+            val initialAggregate2 = channel2.receive()
+            when (type) {
+                AggregatorQueryType.SUM -> when (initialAggregate1) {
+                    is Number -> {
+                        assertEquals(0, initialAggregate1.toInt())
+                        assertEquals(0, (initialAggregate2 as Number).toInt())
+                    }
+                    is Char -> {
+                        assertEquals(0, initialAggregate1.code)
+                        assertEquals(0, (initialAggregate2 as Char).code)
+                    }
+                }
+                else -> {
+                    assertNull(initialAggregate1)
+                    assertNull(initialAggregate2)
+                }
+            }
+
+            // Cancel flow 1
+            observer1.cancel()
+
+            // Write one object
+            realm.writeBlocking {
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+            }
+
+            // Assert emission and that the original channel hasn't been received
+            val receivedAggregate = channel2.receive()
+            val expectedAggregate = propertyDescriptor.values[0]
+            assertEquals(expectedAggregate, receivedAggregate)
+            assertTrue(channel1.isEmpty)
+
+            observer2.cancel()
+            channel1.close()
+            channel2.close()
 
             // Make sure to delete all objects after assertions as aggregators to clean state and
             // avoid "null vs 0" results when testing
