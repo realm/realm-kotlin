@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("invisible_reference", "invisible_member")
-
 package io.realm.test.shared
 
 import io.realm.Realm

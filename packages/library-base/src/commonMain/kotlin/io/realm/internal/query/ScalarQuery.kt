@@ -154,6 +154,6 @@ internal class AggregatorQuery<E : RealmObject, T : Any> constructor(
     }
 }
 
-internal enum class AggregatorQueryType {
+enum class AggregatorQueryType {
     MIN, MAX, SUM
 }

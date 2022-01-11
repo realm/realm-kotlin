@@ -120,12 +120,14 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      *
      * @param property the property on which to find the minimum value. Only [Number] and
      * [RealmInstant] properties are supported.
-     * @param type the type of the property.
+     * @param type the type of the resulting aggregated value, which may or may not coincide with
+     * the type of the property itself.
      * @return a [RealmScalarQuery] returning the minimum value for the given [property] represented
      * as a [T]. If no objects exist or they all have `null` as the value for the given property,
      * `null` will be returned by the query. Otherwise, the minimum value is returned. When
      * determining the minimum value, objects with `null` values are ignored.
-     * @throws IllegalArgumentException if the field is not a [Number].
+     * @throws IllegalArgumentException if the [property] is not a [Number] or a [Char], or if
+     * [type] cannot be used to represent the [property].
      */
     // TODO update doc when ObjectId and Decimal128 are added
     fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T>
@@ -138,27 +140,39 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      *
      * @param property the property on which to find the maximum value. Only [Number] properties are
      * supported.
-     * @param type the type of the property.
+     * @param type the type of the resulting aggregated value, which may or may not coincide with
+     * the type of the property itself.
      * @return a [RealmScalarQuery] returning the maximum value for the given [property] represented
      * as a [T]. If no objects exist or they all have `null` as the value for the given property,
      * `null` will be returned by the query. Otherwise, the maximum value is returned. When
      * determining the maximum value, objects with `null` values are ignored.
-     * @throws IllegalArgumentException if the field is not a [Number].
+     * @throws IllegalArgumentException if the [property] is not a [Number] or a [Char], or if
+     * [type] cannot be used to represent the [property].
      */
     fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T>
 
     /**
      * Calculates the sum of the given [property].
      *
+     * If the aggregated result of the [property] does not fit into the specified [type] the result
+     * will overflow following Kotlin's semantics for said type. For example, if the property
+     * `floor` is a `Byte` and the specified type is also `Byte`, e.g.
+     * `query.sum("floor", Short::class)`, the result will overflow for values greater than
+     * [Byte.MAX_VALUE]. It is possible to circumvent this limitation by specifying a type which is
+     * less likely to overflow in the query, e.g. `query.sum("floor", Int::class)`. In this case the
+     * aggregated value will be an `Int`.
+     *
      * A reified version of this method is also available as an extension function,
      * `query.sum<YourClass>(...)`. Import `io.realm.query.sum` to access it.
      *
      * @param property the property to sum. Only [Number] properties are supported.
-     * @param type the type of the property.
+     * @param type the type of the resulting aggregated value, which may or may not coincide with
+     * the type of the property itself.
      * @return the sum of fields of the matching objects. If no objects exist or they all have
      * `null` as the value for the given property, `0` will be returned. When computing the sum,
      * objects with `null` values are ignored.
-     * @throws IllegalArgumentException if the field is not a [Number] type.
+     * @throws IllegalArgumentException if the [property] is not a [Number] or a [Char], or if it is
+     * a [RealmInstant], or if the [type] cannot be used to represent the [property].
      */
     fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T>
 
