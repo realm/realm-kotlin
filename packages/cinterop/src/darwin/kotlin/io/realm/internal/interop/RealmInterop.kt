@@ -820,7 +820,7 @@ actual object RealmInterop {
             if (value.type != realm_value_type.RLM_TYPE_LINK) {
                 error("Query did not return link but ${value.type}")
             }
-            return Link(ClassKey(value.link.target), value.link.target_table.toLong())
+            return Link(ClassKey(value.link.target_table.toLong()), value.link.target)
         }
     }
 

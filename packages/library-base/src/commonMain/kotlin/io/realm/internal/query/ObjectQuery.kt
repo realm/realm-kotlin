@@ -109,7 +109,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun limit(limit: Int): RealmQuery<E> = query("TRUEPREDICATE LIMIT($limit)")
 
-    override fun first(): RealmSingleQuery<E> = TODO()
+    override fun first(): RealmSingleQuery<E> =
+        SingleQuery(realmReference, queryPointer, clazz, mediator)
 
     override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
         MinMaxQuery(
@@ -139,10 +140,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator, clazz)
 
-    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
-        val liveResults = RealmInterop.realm_results_resolve_in(resultsPointer, liveRealm.dbPointer)
-        return RealmResultsImpl(liveRealm, liveResults, clazz, mediator)
-    }
+    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
+        thawResults(liveRealm, resultsPointer, clazz, mediator)
 
     override fun asFlow(): Flow<RealmResults<E>> {
         realmReference.checkClosed()

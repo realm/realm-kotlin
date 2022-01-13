@@ -1571,21 +1571,148 @@ class QueryTests {
     // --------------
 
     @Test
-    @Ignore
-    fun first_find() {
-        // TODO
-    }
-
-    @Test
-    @Ignore
     fun first_find_emptyTable() {
-        // TODO
+        realm.query<QuerySample>()
+            .first()
+            .find { first -> assertNull(first) }
     }
 
     @Test
-    @Ignore
+    fun first_find() {
+        val value1 = 1
+        val value2 = 2
+
+        realm.writeBlocking {
+            // Queries inside a write transaction produce live results which means they can be
+            // reused within the closure
+            val firstQuery = query<QuerySample>("intField > $0", value1)
+                .first()
+
+            assertNull(firstQuery.find())
+            copyToRealm(QuerySample(intField = value1))
+            copyToRealm(QuerySample(intField = value2))
+            val first = firstQuery.find()
+            assertNotNull(first)
+            assertEquals(value2, first.intField)
+        }
+
+        realm.query<QuerySample>("intField > $0", value1)
+            .first()
+            .find { first ->
+                assertNotNull(first)
+                assertEquals(value2, first.intField)
+            }
+    }
+
+    @Test
     fun first_asFlow() {
-        // TODO
+        val channel = Channel<QuerySample?>(1)
+        val value1 = 2
+        val value2 = 7
+
+        runBlocking {
+            val observer = async {
+                realm.query<QuerySample>("intField > $0", value1)
+                    .first()
+                    .asFlow()
+                    .collect { first ->
+                        channel.send(first)
+                    }
+            }
+
+            val firstNull = channel.receive()
+            assertNull(firstNull)
+
+            realm.writeBlocking {
+                copyToRealm(QuerySample(intField = value1))
+                copyToRealm(QuerySample(intField = value2))
+            }
+
+            val first = channel.receive()
+            assertNotNull(first)
+            assertEquals(value2, first.intField)
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun first_asFlow_deleteObservable() {
+        val channel = Channel<QuerySample?>(1)
+
+        runBlocking {
+            realm.writeBlocking {
+                copyToRealm(QuerySample())
+            }
+
+            val observer = async {
+                realm.query<QuerySample>()
+                    .first()
+                    .asFlow()
+                    .collect { first ->
+                        channel.send(first)
+                    }
+            }
+
+            assertNotNull(channel.receive())
+
+            realm.writeBlocking {
+                objects(QuerySample::class).delete()
+            }
+
+            assertNull(channel.receive())
+
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun first_asFlow_cancel() {
+        runBlocking {
+            val channel1 = Channel<QuerySample?>(1)
+            val channel2 = Channel<QuerySample?>(1)
+
+            val observer1 = async {
+                realm.query<QuerySample>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        channel1.send(it)
+                    }
+            }
+            val observer2 = async {
+                realm.query<QuerySample>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        channel2.send(it)
+                    }
+            }
+
+            // Write one object
+            realm.write {
+                copyToRealm(QuerySample().apply { stringField = "Bar" })
+            }
+
+            // Assert emission and cancel first subscription
+            assertNotNull(channel1.receive())
+            assertNotNull(channel2.receive())
+            observer1.cancel()
+
+            // Write another object
+            realm.write {
+                copyToRealm(QuerySample().apply { stringField = "Baz" })
+            }
+
+            // Assert emission and that the original channel hasn't been received
+            assertNotNull(channel2.receive())
+            assertTrue(channel1.isEmpty)
+
+            observer2.cancel()
+            channel1.close()
+            channel2.close()
+        }
     }
 
     // ----------------------------------
