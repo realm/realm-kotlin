@@ -255,9 +255,9 @@ class QueryTests {
     @Test
     fun asFlow_throwsInsideWrite() {
         realm.writeBlocking {
+            val query = query<QuerySample>()
             assertFailsWith<IllegalStateException> {
-                query<QuerySample>()
-                    .asFlow()
+                query.asFlow()
             }
         }
     }
@@ -630,9 +630,9 @@ class QueryTests {
 
     @Test
     fun distinct_throwsIfInvalidProperty() {
+        val query = realm.query<QuerySample>()
         assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .distinct("invalid")
+            query.distinct("invalid")
         }
     }
 
@@ -1190,10 +1190,10 @@ class QueryTests {
     @Test
     fun sum_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
+            val sumQuery = query<QuerySample>()
+                .sum<Int>(QuerySample::intField.name)
             assertFailsWith<IllegalStateException> {
-                query<QuerySample>()
-                    .sum<Int>(QuerySample::intField.name)
-                    .asFlow()
+                sumQuery.asFlow()
             }
         }
     }
