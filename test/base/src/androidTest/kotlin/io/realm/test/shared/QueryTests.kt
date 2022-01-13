@@ -1077,7 +1077,7 @@ class QueryTests {
 
     @Test
     fun sum_find_shortOverflow() {
-        val iterations = 100
+        val iterations = 10
         val invalidShortSum = (Short.MAX_VALUE * iterations).toShort()
         val validShortSum = Short.MAX_VALUE * iterations
 
@@ -1106,7 +1106,7 @@ class QueryTests {
 
     @Test
     fun sum_find_byteOverflow() {
-        val iterations = 100
+        val iterations = 10
         val invalidByteSum = (Byte.MAX_VALUE * iterations).toByte()
         val validByteSum = Byte.MAX_VALUE * iterations
 
