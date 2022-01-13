@@ -257,9 +257,9 @@ class QueryTests {
     @Test
     fun asFlow_throwsInsideWrite() {
         realm.writeBlocking {
+            val query = query<QuerySample>()
             assertFailsWith<IllegalStateException> {
-                query<QuerySample>()
-                    .asFlow()
+                query.asFlow()
             }
         }
     }
@@ -632,9 +632,9 @@ class QueryTests {
 
     @Test
     fun distinct_throwsIfInvalidProperty() {
+        val query = realm.query<QuerySample>()
         assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .distinct("invalid")
+            query.distinct("invalid")
         }
     }
 
@@ -1081,7 +1081,7 @@ class QueryTests {
 
     @Test
     fun sum_find_shortOverflow() {
-        val iterations = 100
+        val iterations = 10
         val invalidShortSum = (Short.MAX_VALUE * iterations).toShort()
         val validShortSum = Short.MAX_VALUE * iterations
 
@@ -1110,7 +1110,7 @@ class QueryTests {
 
     @Test
     fun sum_find_byteOverflow() {
-        val iterations = 100
+        val iterations = 10
         val invalidByteSum = (Byte.MAX_VALUE * iterations).toByte()
         val validByteSum = Byte.MAX_VALUE * iterations
 
@@ -1194,10 +1194,10 @@ class QueryTests {
     @Test
     fun sum_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
+            val sumQuery = query<QuerySample>()
+                .sum<Int>(QuerySample::intField.name)
             assertFailsWith<IllegalStateException> {
-                query<QuerySample>()
-                    .sum<Int>(QuerySample::intField.name)
-                    .asFlow()
+                sumQuery.asFlow()
             }
         }
     }
