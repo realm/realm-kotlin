@@ -30,6 +30,7 @@ import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
 import io.realm.query.RealmQuery
+import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
 import io.realm.query.RealmSingleQuery
 import io.realm.query.Sort
@@ -88,10 +89,10 @@ internal class ObjectQuery<E : RealmObject> constructor(
         propertyAndSortOrder: Pair<String, Sort>,
         vararg additionalPropertiesAndOrders: Pair<String, Sort>
     ): RealmQuery<E> {
-        val stringBuilder =
-            StringBuilder().append("TRUEPREDICATE SORT(${propertyAndSortOrder.first} ${propertyAndSortOrder.second}")
-        additionalPropertiesAndOrders.forEach { extraPropertyAndOrder ->
-            stringBuilder.append(", ${extraPropertyAndOrder.first} ${extraPropertyAndOrder.second}")
+        val (property, order) = propertyAndSortOrder
+        val stringBuilder = StringBuilder().append("TRUEPREDICATE SORT($property $order")
+        additionalPropertiesAndOrders.forEach { (extraProperty, extraOrder) ->
+            stringBuilder.append(", $extraProperty $extraOrder")
         }
         stringBuilder.append(")")
         return query(stringBuilder.toString())
@@ -110,8 +111,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun first(): RealmSingleQuery<E> = TODO()
 
-    override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        AggregatorQuery<E, T>(
+    override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
+        MinMaxQuery(
             realmReference,
             queryPointer,
             mediator,
@@ -121,8 +122,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
             AggregatorQueryType.MIN
         )
 
-    override fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        AggregatorQuery<E, T>(
+    override fun <T : Any> max(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
+        MinMaxQuery(
             realmReference,
             queryPointer,
             mediator,
@@ -133,22 +134,21 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
 
     override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        AggregatorQuery<E, T>(
-            realmReference,
-            queryPointer,
-            mediator,
-            clazz,
-            property,
-            type,
-            AggregatorQueryType.SUM
-        )
+        SumQuery(realmReference, queryPointer, mediator, clazz, property, type)
 
     override fun count(): RealmScalarQuery<Long> =
-        CountQuery<E>(realmReference, queryPointer, mediator)
+        CountQuery(realmReference, queryPointer, mediator, clazz)
 
-    override fun asFlow(): Flow<RealmResults<E>> = TODO()
+    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
+        val liveResults = RealmInterop.realm_results_resolve_in(resultsPointer, liveRealm.dbPointer)
+        return RealmResultsImpl(liveRealm, liveResults, clazz, mediator)
+    }
 
-    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> = TODO()
+    override fun asFlow(): Flow<RealmResults<E>> {
+        realmReference.checkClosed()
+        return realmReference.owner
+            .registerObserver(this)
+    }
 
     private fun parseQuery(): NativePointer = tryCatchCoreException {
         RealmInterop.realm_query_parse(

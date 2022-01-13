@@ -130,7 +130,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * [type] cannot be used to represent the [property].
      */
     // TODO update doc when ObjectId and Decimal128 are added
-    fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T>
+    fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
 
     /**
      * Finds the maximum value of a property.
@@ -149,7 +149,8 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * @throws IllegalArgumentException if the [property] is not a [Number] or a [Char], or if
      * [type] cannot be used to represent the [property].
      */
-    fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T>
+    // TODO update doc when ObjectId and Decimal128 are added
+    fun <T : Any> max(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
 
     /**
      * Calculates the sum of the given [property].
@@ -256,21 +257,54 @@ interface RealmSingleQuery<T> : Flowable<T> {
 
 /**
  * Queries that return scalar values. This type of query is used to more accurately represent the
- * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.min].
+ * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.sum].
  */
 interface RealmScalarQuery<T> : Flowable<T> {
     /**
-     * Returns the value of a scalar query as an [T] in a blocking fashion. The result may be `null`
-     * depending on the type of scalar query:
+     * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be of a
+     * different type depending on the type of query:
      *
-     * - `[min]`, `[max]` return [T] or `null` if no objects are present
      * - `[count]` returns [Long]
+     * - `[sum]` returns the `type` specified in the call to said function
      *
      * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
      * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
      * values asynchronously using [asFlow] instead.
      *
-     * @return an [T] containing the result of the scalar query or `null` depending on the query
+     * @return a [T] containing the result of the scalar query.
+     */
+    fun find(): T
+
+    /**
+     * Calculates the value that fulfills the query conditions and returns it asynchronously as a
+     * [Flow].
+     *
+     * If there is any changes to the objects represented by the query backing the value, the flow
+     * will emit the updated value. The flow will continue running indefinitely until canceled.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     */
+    override fun asFlow(): Flow<T>
+}
+
+/**
+ * Queries that return scalar, nullable values. This type of query is used to more accurately
+ * represent the results provided by some query operations, e.g. [RealmQuery.min] or
+ * [RealmQuery.max].
+ */
+interface RealmScalarNullableQuery<T> : Flowable<T> {
+    /**
+     * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be `null`
+     * if no objects are present.
+     *
+     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
+     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
+     * values asynchronously using [asFlow] instead.
+     *
+     * @return a [T] containing the result of the scalar query or `null` depending on the query
      * being executed.
      */
     fun find(): T?
@@ -303,13 +337,13 @@ enum class Sort {
 /**
  * Similar to [RealmQuery.min] but the type parameter is automatically inferred.
  */
-inline fun <reified T : Any> RealmQuery<*>.min(property: String): RealmScalarQuery<T> =
+inline fun <reified T : Any> RealmQuery<*>.min(property: String): RealmScalarNullableQuery<T> =
     min(property, T::class)
 
 /**
  * Similar to [RealmQuery.max] but the type parameter is automatically inferred.
  */
-inline fun <reified T : Any> RealmQuery<*>.max(property: String): RealmScalarQuery<T> =
+inline fun <reified T : Any> RealmQuery<*>.max(property: String): RealmScalarNullableQuery<T> =
     max(property, T::class)
 
 /**
@@ -336,7 +370,17 @@ fun <T : RealmObject, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = 
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-fun <T, R> RealmScalarQuery<T>.find(block: (T?) -> R): R = find().let(block)
+fun <T, R> RealmScalarQuery<T>.find(block: (T) -> R): R = find().let(block)
+
+/**
+ * Similar to [RealmScalarNullableQuery.find] but it receives a [block] in which the scalar result
+ * from the query is provided.
+ *
+ * @param T the type of the query
+ * @param R the type returned by [block]
+ * @return whatever [block] returns
+ */
+fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find().let(block)
 
 /**
  * Similar to [RealmSingleQuery.find] but it receives a [block] in which the [RealmObject] from the
