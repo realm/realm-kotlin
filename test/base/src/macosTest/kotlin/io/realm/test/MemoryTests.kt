@@ -38,7 +38,6 @@ import kotlin.test.assertEquals
 
 // New memory model doesn't seem to fix or memory leak, or maybe we have to reevaluate how we do
 // the tests.
-@Ignore
 class MemoryTests {
 
     lateinit var tmpDir: String
@@ -55,6 +54,7 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
+    @Ignore
     fun garbageCollectorShouldFreeNativeResources() {
         @OptIn(ExperimentalStdlibApi::class)
         println("NEW_MEMORY_MODEL: " + isExperimentalMM())
