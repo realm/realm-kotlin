@@ -30,6 +30,7 @@ import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
 import io.realm.query.RealmQuery
+import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
 import io.realm.query.RealmSingleQuery
 import io.realm.query.Sort
@@ -110,8 +111,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun first(): RealmSingleQuery<E> = TODO()
 
-    override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        AggregatorQuery(
+    override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
+        MinMaxQuery(
             realmReference,
             queryPointer,
             mediator,
@@ -121,8 +122,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
             AggregatorQueryType.MIN
         )
 
-    override fun <T : Any> max(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        AggregatorQuery(
+    override fun <T : Any> max(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
+        MinMaxQuery(
             realmReference,
             queryPointer,
             mediator,
@@ -133,15 +134,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
 
     override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        AggregatorQuery(
-            realmReference,
-            queryPointer,
-            mediator,
-            clazz,
-            property,
-            type,
-            AggregatorQueryType.SUM
-        )
+        SumQuery(realmReference, queryPointer, mediator, clazz, property, type)
 
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator, clazz)
