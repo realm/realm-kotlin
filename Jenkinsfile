@@ -187,15 +187,24 @@ pipeline {
                         ])
                     }
                 }
-                stage('Integration Tests - macOS') {
+                stage('Integration Tests - macOS - Old memory model') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
                             {
                                 testAndCollect("test", "macosTest")
                             },
+                        ])
+                    }
+                }
+                stage('Integration Tests - macOS - New memory model') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            // This will overwrite previous test results, but should be ok as we would not get here
+                            // if previous stages failed. 
                             {
-                                testAndCollect("test", "macosTest", "-Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("test", "macosTest -Pkotlin.native.binary.memoryModel=experimental")
                             },
                         ])
                     }
