@@ -199,7 +199,6 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         }
     }
 
-    //    @Suppress("ComplexMethod")
     private fun computeAggregatedValue(resultsPointer: NativePointer, colKey: Long): T {
         val result: T = RealmInterop.realm_results_sum(resultsPointer, colKey)
         // TODO Expand to support other numeric types, e.g. Decimal128
