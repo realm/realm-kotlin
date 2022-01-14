@@ -54,7 +54,7 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
-    @Ignore
+    @Ignore // Investigate https://github.com/realm/realm-kotlin/issues/327
     fun garbageCollectorShouldFreeNativeResources() {
         @OptIn(ExperimentalStdlibApi::class)
         println("NEW_MEMORY_MODEL: " + isExperimentalMM())
