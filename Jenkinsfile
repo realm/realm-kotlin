@@ -171,13 +171,10 @@ pipeline {
                         )
                     }
                 }
-                stage('Integration Tests - macOS') {
+                stage('Integration Tests - Android') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
-                            {
-                                testAndCollect("test", "macosTest")
-                            },
                             {
                                 withLogcatTrace(
                                     "integrationtest",
@@ -187,6 +184,19 @@ pipeline {
                                     }
                                 )
                             }
+                        ])
+                    }
+                }
+                stage('Integration Tests - macOS') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("test", "macosTest")
+                            },
+                            {
+                                testAndCollect("test", "macosTest", "-Pkotlin.native.binary.memoryModel=experimental")
+                            },
                         ])
                     }
                 }
