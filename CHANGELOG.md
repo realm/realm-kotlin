@@ -1,4 +1,4 @@
-## 0.9.0 (YYYY-MM-DD)
+## 0.8.1 (2022-01-17)
 
 ### Breaking Changes
 * None.
@@ -7,7 +7,7 @@
 * Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
 
 ### Fixed
-* None.
+* Synchronously process project configurations to avoid exceptions when running parallel builds [#626](https://github.com/realm/realm-kotlin/issues/626).
 
 ### Compatibility
 * This release is compatible with:
