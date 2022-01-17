@@ -202,5 +202,6 @@ public class RealmSchemaTests {
         // updated, so if the realm reference from the notifier is received first in the Realm then
         // the schema will be off.
         fail()
+        Unit
     }
 }

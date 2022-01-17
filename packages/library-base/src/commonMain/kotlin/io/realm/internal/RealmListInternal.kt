@@ -42,8 +42,8 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
  * Implementation for managed lists, backed by Realm.
  */
 internal class ManagedRealmList<E>(
-    val nativePointer: NativePointer,
-    val metadata: ListOperatorMetadata
+    private val nativePointer: NativePointer,
+    private val metadata: ListOperatorMetadata
 ) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
 
     private val operator = ListOperator<E>(metadata)
@@ -74,15 +74,6 @@ internal class ManagedRealmList<E>(
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
         }
-    }
-
-    // FIXME bug in AbstractMutableList.addAll native implementation:
-    //  https://youtrack.jetbrains.com/issue/KT-47211
-    //  Remove this method once the native implementation has a check for valid index
-    override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        metadata.realm.checkClosed()
-        rangeCheckForAdd(index)
-        return super.addAll(index, elements)
     }
 
     override fun clear() {
@@ -152,12 +143,6 @@ internal class ManagedRealmList<E>(
     // TODO from LifeCycle interface
     internal fun isValid(): Boolean {
         return RealmInterop.realm_list_is_valid(nativePointer)
-    }
-
-    private fun rangeCheckForAdd(index: Int) {
-        if (index < 0 || index > size) {
-            throw IndexOutOfBoundsException("Index: '$index', Size: '$size'")
-        }
     }
 }
 

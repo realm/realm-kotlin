@@ -28,7 +28,7 @@ object RealmStorageTypeImpl {
             io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_FLOAT -> RealmStorageType.FLOAT
             io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> RealmStorageType.DOUBLE
             io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> RealmStorageType.TIMESTAMP
-            else -> error("Unknown type: $type")
+            else -> error("Unknown storage type: $type")
         }
     }
 }

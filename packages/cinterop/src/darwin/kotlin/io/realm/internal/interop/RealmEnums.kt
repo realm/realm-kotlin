@@ -58,7 +58,7 @@ actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerate
 
     actual companion object {
         actual fun from(nativeValue: Int): PropertyType {
-            return values().find { it.nativeValue == nativeValue.toUInt() } ?: error("Unknown type: $nativeValue")
+            return values().find { it.nativeValue == nativeValue.toUInt() } ?: error("Unknown property type: $nativeValue")
         }
     }
 }
@@ -70,7 +70,7 @@ actual enum class CollectionType(override val nativeValue: UInt) : NativeEnumera
     RLM_COLLECTION_TYPE_DICTIONARY(realm_wrapper.RLM_COLLECTION_TYPE_DICTIONARY);
     actual companion object {
         actual fun from(nativeValue: Int): CollectionType {
-            return values().find { it.nativeValue == nativeValue.toUInt() } ?: error("Unknown type: $nativeValue")
+            return values().find { it.nativeValue == nativeValue.toUInt() } ?: error("Unknown collection type: $nativeValue")
         }
     }
 }

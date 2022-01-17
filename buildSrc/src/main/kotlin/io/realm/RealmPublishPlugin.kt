@@ -35,6 +35,7 @@ import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
 import java.net.URI
+import java.time.Duration
 
 // Custom options for POM configurations that might differ between Realm modules
 open class PomOptions {
@@ -148,6 +149,10 @@ class RealmPublishPlugin : Plugin<Project> {
                         this.username.set(getPropertyValue(project,"ossrhUsername"))
                         this.password.set(getPropertyValue(project,"ossrhPassword"))
                     }
+                }
+                this.transitionCheckOptions {
+                    maxRetries.set(720) // Retry for 2 hours. Sometimes Maven Central is really slow!
+                    delayBetween.set(Duration.ofSeconds(10))
                 }
             }
         }

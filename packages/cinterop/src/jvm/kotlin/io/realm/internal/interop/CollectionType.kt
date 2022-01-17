@@ -27,7 +27,7 @@ actual enum class CollectionType(override val nativeValue: Int) : NativeEnumerat
 
     actual companion object {
         actual fun from(nativeValue: Int): CollectionType {
-            return values().find { it.nativeValue == nativeValue } ?: error("Unknown type: $nativeValue")
+            return values().find { it.nativeValue == nativeValue } ?: error("Unknown collection type: $nativeValue")
         }
     }
 }
