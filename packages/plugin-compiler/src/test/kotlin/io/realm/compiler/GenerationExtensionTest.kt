@@ -20,6 +20,7 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.interop.ClassFlag
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyType
 import org.junit.Test
@@ -72,11 +73,12 @@ class GenerationExtensionTest {
         ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
-            val outputFile = File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir")
-            stripInputPath(outputFile, fileMap)
+            // TODO Quick fix: Investigate where 'main' part suddenly came from with Kotlin 1.5.31
+            stripInputPath(File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir"), fileMap)
             assertEquals(
                 File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
-                outputFile.readText()
+                // TODO Quick fix: Investigate where 'main' part suddenly came from with Kotlin 1.5.31
+                File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir").readText()
             )
         }
     }
@@ -135,16 +137,14 @@ class GenerationExtensionTest {
 
         assertTrue(companionObject is RealmObjectCompanion)
 
-        val (table, properties) = companionObject.`$realm$schema`()
+        val table = companionObject.`$realm$schema`()
         val realmFields = companionObject.`$realm$fields`!!
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
-        // FIXME Technically this should check that the class is neither embedded or anything else
-        //  special, but as we don't support it yet there is nothing to check
-        // assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
-        assertEquals(realmFields.count(), properties.size)
-        val expectedProperties = mapOf(
+        assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
+        assertEquals(realmFields.count(), table.properties.size)
+        val properties = mapOf(
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
 
@@ -188,16 +188,16 @@ class GenerationExtensionTest {
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
         )
-        assertEquals(expectedProperties.size, properties.size)
-        properties.map { property ->
+        assertEquals(properties.size, table.properties.size)
+        table.properties.map { property ->
             val expectedType =
-                expectedProperties[property.name] ?: error("Property not found: ${property.name}")
+                properties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
 
         val fields: List<KMutableProperty1<*, *>>? =
             (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
-        assertEquals(expectedProperties.size, fields?.size)
+        assertEquals(properties.size, fields?.size)
 
         val newInstance = companionObject.`$realm$newInstance`()
         assertNotNull(newInstance)

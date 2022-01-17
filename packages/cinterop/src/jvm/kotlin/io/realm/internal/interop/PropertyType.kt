@@ -29,9 +29,9 @@ actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated
     RLM_PROPERTY_TYPE_TIMESTAMP(realm_property_type_e.RLM_PROPERTY_TYPE_TIMESTAMP);
 
     // TODO OPTIMIZE
-    actual companion object {
-        actual fun from(nativeValue: Int): PropertyType {
-            return values().find { it.nativeValue == nativeValue } ?: error("Unknown property type: $nativeValue")
+    companion object {
+        fun of(i: Int): PropertyType {
+            return values().find { it.nativeValue == i } ?: error("Unknown type: $i")
         }
     }
 }

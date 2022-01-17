@@ -91,14 +91,12 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
     try {
         val managedModel = mediator.createInstanceOf(type)
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
-        key?.let {
-            return managedModel.manage(
-                realm,
-                mediator,
-                type,
-                RealmInterop.realm_object_create(realm.dbPointer, key)
-            )
-        } ?: error("Couldn't find key for class $objectType")
+        return managedModel.manage(
+            realm,
+            mediator,
+            type,
+            RealmInterop.realm_object_create(realm.dbPointer, key)
+        )
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
@@ -121,20 +119,18 @@ internal fun <T : RealmObject> create(
         // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
         //  instead
         //  https://github.com/realm/realm-core/issues/4595
-        key?.let {
-            val existingPrimaryKeyObject =
-                RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
-            existingPrimaryKeyObject?.let {
-                throw IllegalArgumentException("Cannot create object with existing primary key")
-            }
-            val managedModel = mediator.createInstanceOf(type)
-            return managedModel.manage(
-                realm,
-                mediator,
-                type,
-                RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
-            )
-        } ?: error("Couldn't find key for class $objectType")
+        val existingPrimaryKeyObject =
+            RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
+        existingPrimaryKeyObject?.let {
+            throw IllegalArgumentException("Cannot create object with existing primary key")
+        }
+        val managedModel = mediator.createInstanceOf(type)
+        return managedModel.manage(
+            realm,
+            mediator,
+            type,
+            RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
+        )
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
