@@ -155,6 +155,14 @@ kotlin {
 //    }
 }
 
+// Using a custom name module for internal methods to avoid default name mangling in Kotlin compiler which uses the module
+// name and build type variant as a suffix, this default behaviour can cause mismatch at runtime https://github.com/realm/realm-kotlin/issues/621
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-module-name", "io.realm.kotlin.library")
+    }
+}
+
 // Android configuration
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
