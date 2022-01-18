@@ -31,16 +31,12 @@ gradlePlugin {
 
 repositories {
     google()
-    jcenter()
     gradlePluginPortal()
 }
 
 
 // Setup dependencies for building the buildScript.
 buildscript {
-    repositories {
-        jcenter()
-    }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
     }

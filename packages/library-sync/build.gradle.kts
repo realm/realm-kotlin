@@ -21,9 +21,6 @@ plugins {
     id("org.jetbrains.dokka")
 }
 buildscript {
-    repositories {
-        mavenCentral()
-    }
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
     }
@@ -37,7 +34,6 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
     mavenLocal()
 }
