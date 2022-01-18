@@ -36,7 +36,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-// New memory model doesn't seem to fix or memory leak, or maybe we have to reevaluate how we do
+// New memory model doesn't seem to fix our memory leak, or maybe we have to reevaluate how we do
 // the tests.
 class MemoryTests {
 
