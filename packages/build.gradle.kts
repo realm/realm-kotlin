@@ -24,8 +24,13 @@ plugins {
 }
 
 allprojects {
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+    }
     repositories {
-        jcenter()
+        mavenCentral()
     }
 
     version = Realm.version
