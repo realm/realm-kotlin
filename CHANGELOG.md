@@ -35,7 +35,6 @@
 * Added supported for dates through a new property type: `RealmInstant`.
 * Allow to pass schema as a variable containing the involved `KClass`es and build configurations non-fluently ([#389](https://github.com/realm/realm-kotlin/issues/389)).
 * Added M1 support for `library-base` variant ([#483](https://github.com/realm/realm-kotlin/issues/483)).
-* Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
 
 ### Fixed
 * Gradle metadata for pure Android projects. Now using `io.realm.kotlin:library-base:<VERSION>` should work correctly.
