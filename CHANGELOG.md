@@ -9,6 +9,7 @@
 ### Fixed
 * Using a custom module name to fix [#621](https://github.com/realm/realm-kotlin/issues/621).
 * Synchronously process project configurations to avoid exceptions when running parallel builds [#626](https://github.com/realm/realm-kotlin/issues/626).
+* Update to Kotlin 1.6.10. The `Compatibility` entry for 0.8.0 stating that the project had been updated to Kotlin 1.6.10 was not correct [#640](https://github.com/realm/realm-kotlin/issues/640).
 
 ### Compatibility
 * This release is compatible with:
