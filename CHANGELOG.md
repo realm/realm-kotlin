@@ -17,22 +17,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Ktor 1.6.5.
-* Updated to AndroidX Startup 1.1.0.
-* Updated to Gradle 7.2.
-* Updated to Android Gradle Plugin 7.1.0-beta05.
-* Updated to NDK 23.1.7779620.
-* Updated to Android targetSdk 31.
-* Updated to Android compileSdk 31.
-* Updated to Android Build Tools 31.0.0.
-* Updated to Ktlint version 0.43.0.
-* Updated to Ktlint Gradle Plugin 10.2.0.
-* Updated to Kotlin Serialization 1.3.0.
-* Updated to Detekt 1.19.0-RC1.
-* Updated to Dokka 1.6.0.
-* Updated to AtomicFu 0.17.0.
-* Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
-
+* Updated to Kotlin 1.5.31.
 
 ## 0.8.0 (2021-12-17)
 
