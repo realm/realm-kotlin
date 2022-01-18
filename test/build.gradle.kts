@@ -38,7 +38,7 @@ allprojects {
             maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
         }
         google()
-        jcenter()
+        mavenCentral()
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
