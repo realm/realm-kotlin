@@ -1,4 +1,4 @@
-## 0.8.1-SNAPSHOT (YYYY-MM-DD)
+## 0.8.1 (2022-01-18)
 
 ### Breaking Changes
 * None.
