@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`. 
 
 ### Fixed
 * None.
