@@ -34,6 +34,16 @@ dependencies {
 }
 
 android {
+
+    signingConfigs {
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+        }
+    }
+
     compileSdkVersion(Versions.Android.compileSdkVersion)
     defaultConfig {
         applicationId = "io.realm.example.kmmsample.androidApp"
@@ -45,7 +55,9 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+	    isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
