@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* The `library-base` module would try to initialize a number of `library-sync` classes for JNI lookups. These were not being excluded from Proguard obfuscation causing release builds to crash when initializing JNI [#643](https://github.com/realm/realm-kotlin/issues/643).
+* The `library-base` module would try to initialize a number of `library-sync` classes for JNI lookups. These and `RealmObjectCompanion` were not being excluded from Proguard obfuscation causing release builds to crash when initializing JNI [#643](https://github.com/realm/realm-kotlin/issues/643).
 
 ### Compatibility
 * This release is compatible with:
