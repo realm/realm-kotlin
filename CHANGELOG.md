@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* Added source code link to model definition compiler errors. ([#173](https://github.com/realm/realm-kotlin/issues/173))
 
 ### Fixed
 * None.
