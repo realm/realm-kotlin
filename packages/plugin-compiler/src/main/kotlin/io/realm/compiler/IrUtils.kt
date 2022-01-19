@@ -426,6 +426,6 @@ fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
  * Method to indicate fatal issues that should not have happeneded; as opposed to user modeling
  * errors that are reported as compiler errors.
  */
-fun fatalError(message: Any): Nothing {
+fun fatalError(message: String): Nothing {
     error(message)
 }
