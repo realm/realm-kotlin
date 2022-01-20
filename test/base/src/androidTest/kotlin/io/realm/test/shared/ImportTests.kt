@@ -106,7 +106,9 @@ class ImportTests {
         val clone = realm.writeBlocking { copyToRealm(root) }
 
         assertNotNull(clone)
-        assertEquals(2L, realm.query(Sample::class).count().find())
+        val query = realm.query(Sample::class)
+        assertEquals(2L, query.count().find())
+        assertEquals(2, query.find().size)
         val child = clone.child
         assertNotNull(child)
         assertNotNull(child.stringField)

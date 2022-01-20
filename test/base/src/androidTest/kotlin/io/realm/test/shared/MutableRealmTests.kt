@@ -75,7 +75,7 @@ class MutableRealmTests {
 
     @Test
     fun cancelingWrite() {
-        assertEquals(0, realm.query<Parent>().count().find())
+        assertEquals(0, realm.query<Parent>().find().size)
         realm.writeBlocking {
             copyToRealm(Parent())
             cancelWrite()
