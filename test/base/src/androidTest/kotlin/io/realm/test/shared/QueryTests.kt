@@ -672,12 +672,6 @@ class QueryTests {
     }
 
     @Test
-    @Ignore
-    fun limit_asSubQuery() {
-        // TODO
-    }
-
-    @Test
     fun limit_throwsIfInvalidValue() {
         assertFailsWith<IllegalArgumentException> {
             realm.query<QuerySample>()
@@ -685,9 +679,9 @@ class QueryTests {
         }
     }
 
-    // ----------------------
-    // Aggregators - average
-    // ----------------------
+    // --------------------------------------------------------------------------------
+    // TODO - Aggregators - average - https://github.com/realm/realm-kotlin/issues/646
+    // --------------------------------------------------------------------------------
 
     @Test
     @Ignore
@@ -1721,12 +1715,15 @@ class QueryTests {
         }
     }
 
+    // -------------------------------------------------------
+    // TODO - add tests for queries on collections when ready
+    // -------------------------------------------------------
+
     // ----------------------------------
     // Multithreading with query objects
     // ----------------------------------
 
     @Test
-    // TODO remove this
     fun playground_multiThreadScenario() {
         val channel = Channel<RealmResults<QuerySample>>(1)
         var query: RealmQuery<QuerySample>? = null

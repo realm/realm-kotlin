@@ -41,7 +41,8 @@ interface RealmList<E> : MutableList<E>, Flowable<RealmList<E>> {
 
     /**
      * Observes changes to the RealmList. If there is any change to the list, the flow will emit the
-     * updated RealmResult. The flow will continue running indefinitely until canceled.
+     * updated RealmResult. The flow will continue running indefinitely until canceled or until the
+     * parent object is deleted.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
