@@ -78,7 +78,7 @@ class IndexTests {
                 assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
             } else {
                 assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, type.toString())
-                assertTrue(result.messages.contains("but must be of type"))
+                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(7, 5\\): .*but must be of type")))
             }
         }
     }
@@ -92,6 +92,8 @@ class IndexTests {
                 """
                         import io.realm.RealmInstant
                         import io.realm.RealmObject
+                        import io.realm.RealmList
+                        import io.realm.realmListOf
                         import io.realm.RealmConfiguration
                         import io.realm.annotations.Index
 
@@ -106,5 +108,6 @@ class IndexTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
+        assertTrue(result.messages.contains("sources/indexing_collections.kt: (9, 5): [Realm] Indexed key indexedKey is of type RealmList but must be of type"))
     }
 }
