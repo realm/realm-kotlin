@@ -553,7 +553,7 @@ def runMonkey() {
             sh """
                 cd examples/kmm-sample
                 ./gradlew uninstallAll installRelease --stacktrace --no-daemon
-                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
+                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey --pct-syskeys 0 -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
     } catch (err) {
