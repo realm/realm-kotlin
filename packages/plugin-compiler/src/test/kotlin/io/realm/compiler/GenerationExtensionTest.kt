@@ -240,15 +240,6 @@ class GenerationExtensionTest {
         inputs.assertGeneratedIR()
     }
 
-    @Test
-    fun `compiler error context`() {
-        val inputs = Files("/error")
-
-        val result = compile(inputs)
-
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-    }
-
     private fun compile(
         inputs: Files,
         plugins: List<Registrar> = listOf(Registrar())
