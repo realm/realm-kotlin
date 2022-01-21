@@ -31,6 +31,7 @@ import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
+import kotlin.collections.set
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -86,11 +87,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.StarProjectionImpl
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
-import kotlin.collections.set
-import org.jetbrains.kotlin.backend.jvm.codegen.fileParent
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
-import org.jetbrains.kotlin.ir.declarations.path
-import org.jetbrains.kotlin.ir.util.file
 
 /**
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm

@@ -17,11 +17,8 @@
 package io.realm.compiler
 
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import java.time.Instant
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
-import org.jetbrains.kotlin.cli.common.messages.IrMessageCollector
-import org.jetbrains.kotlin.ir.util.IrMessageLogger
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 
 // Logging to a temp file and to console/IDE (Build Output)
 lateinit var messageCollector: MessageCollector

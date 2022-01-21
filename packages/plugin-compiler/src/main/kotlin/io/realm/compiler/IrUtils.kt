@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -406,19 +405,19 @@ fun IrBlockBuilder.createSafeCallConstruction(
     }
 }
 
-/** Finds the line and column of [irElement] within this file. */
+/** Finds the line and column of [IrDeclaration] */
 fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
     val sourceRangeInfo = file.fileEntry.getSourceRangeInfo(
-            beginOffset = startOffset,
-            endOffset = endOffset
+        beginOffset = startOffset,
+        endOffset = endOffset
     )
     return CompilerMessageLocationWithRange.create(
-            path = sourceRangeInfo.filePath,
-            lineStart = sourceRangeInfo.startLineNumber + 1,
-            columnStart = sourceRangeInfo.startColumnNumber + 1,
-            lineEnd = sourceRangeInfo.endLineNumber + 1,
-            columnEnd = sourceRangeInfo.endColumnNumber + 1,
-            lineContent = null
+        path = sourceRangeInfo.filePath,
+        lineStart = sourceRangeInfo.startLineNumber + 1,
+        columnStart = sourceRangeInfo.startColumnNumber + 1,
+        lineEnd = sourceRangeInfo.endLineNumber + 1,
+        columnEnd = sourceRangeInfo.endColumnNumber + 1,
+        lineContent = null
     )!!
 }
 
