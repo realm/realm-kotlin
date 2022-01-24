@@ -1127,7 +1127,7 @@ actual object RealmInterop {
                     SyncException(message)
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
-                val session = CPointerWrapper(syncSession)
+                val session = CPointerWrapper(realm_clone(syncSession))
                 errorCallback.onSyncError(session, syncException)
             },
             StableRef.create(errorHandler).asCPointer(),

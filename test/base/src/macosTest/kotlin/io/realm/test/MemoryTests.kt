@@ -36,6 +36,8 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+// New memory model doesn't seem to fix our memory leak, or maybe we have to reevaluate how we do
+// the tests.
 class MemoryTests {
 
     lateinit var tmpDir: String
@@ -52,8 +54,11 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
-    @Ignore // We currently do not clean up intermediate versions if the realm itself is garbage collected
+    @Ignore // Investigate https://github.com/realm/realm-kotlin/issues/327
     fun garbageCollectorShouldFreeNativeResources() {
+        @OptIn(ExperimentalStdlibApi::class)
+        println("NEW_MEMORY_MODEL: " + isExperimentalMM())
+
         val referenceHolder = mutableListOf<Sample>()
         val amountOfMemoryMappedInProcessCMD =
             "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
@@ -109,6 +114,9 @@ class MemoryTests {
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
     fun closeShouldFreeMemory() {
+        @OptIn(ExperimentalStdlibApi::class)
+        println("NEW_MEMORY_MODEL: " + isExperimentalMM())
+
         val referenceHolder = mutableListOf<Sample>()
         val amountOfMemoryMappedInProcessCMD =
             "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
