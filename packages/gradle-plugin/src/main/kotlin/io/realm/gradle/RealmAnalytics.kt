@@ -83,6 +83,7 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
         }
     }
 
+    @Synchronized
     private fun sendMetricIfNeeded(project: Project) {
         if (!METRIC_PROCESSED) {
             val disableAnalytics: Boolean = project.gradle.startParameter.isOffline || "true".equals(System.getenv()["REALM_DISABLE_ANALYTICS"], ignoreCase = true)

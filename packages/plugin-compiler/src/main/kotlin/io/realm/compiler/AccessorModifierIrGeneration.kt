@@ -317,7 +317,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     ) {
         val type = declaration.symbol.descriptor.type
         if (type.arguments[0] is StarProjectionImpl) {
-            logError("Error in field ${declaration.name} - RealmLists cannot use a '*' projection.")
+            logError("Error in field ${declaration.name} - RealmLists cannot use a '*' projection.", declaration.locationOf())
             return
         }
         val listGenericType = type.arguments[0].type
@@ -524,7 +524,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         if (inheritsFromRealmObject(listGenericType.constructor.supertypes)) {
             // Nullable objects are not supported
             if (listGenericType.isNullable()) {
-                logError("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.")
+                logError("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.", declaration.locationOf())
             }
             return CoreType(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -534,7 +534,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         // If not a RealmObject, check whether the list itself is nullable - if so, throw error
         if (descriptorType.isNullable()) {
-            logError("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.")
+            logError("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.", declaration.locationOf())
             return null
         }
 
@@ -546,7 +546,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 nullable = listGenericType.isNullable()
             )
         } else {
-            logError("Unsupported type for lists: '$listGenericType'")
+            logError("Unsupported type for lists: '$listGenericType'", declaration.locationOf())
             null
         }
     }
@@ -571,7 +571,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
-                            logError("Unsupported type for list: '$type'")
                             null
                         }
                 }
