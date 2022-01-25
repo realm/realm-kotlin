@@ -43,9 +43,9 @@ class ReadMeTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-                RealmConfiguration.Builder(schema = setOf(Person::class, Dog::class))
-                        .path("$tmpDir/default.realm")
-                        .build()
+            RealmConfiguration.Builder(schema = setOf(Person::class, Dog::class))
+                .path("$tmpDir/default.realm")
+                .build()
         realm = Realm.open(configuration)
     }
 
@@ -55,8 +55,15 @@ class ReadMeTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-    class Dog : RealmObject { var name: String = "NN"; var age: Int = 0 }
-    class Person : RealmObject { var name: String = ""; var dog: Dog? = null }
+    class Dog : RealmObject {
+        var name: String = "NN"
+        var age: Int = 0
+    }
+
+    class Person : RealmObject {
+        var name: String = ""
+        var dog: Dog? = null
+    }
 
     @Test
     fun query() {
