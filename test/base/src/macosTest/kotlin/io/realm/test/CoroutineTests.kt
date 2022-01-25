@@ -49,8 +49,13 @@ class CoroutineTests {
     // Fails on non native-mt as dispatching from background thread to main does change actual
     // thread, thus failing to assert main thread id
     @Test
+    // Ignored for new memory model as (from https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md):
+    // "Dispatchers.Main is backed by the main queue on Darwin and by a standalone Worker on other
+    // platforms. Don't use Dispatchers.Main in unit tests because, in unit tests, nothing
+    // processes the main thread queue."
+    @Ignore
     fun dispatchBetweenThreads() {
-        val tid = PlatformUtils.threadId()
+        val tid = runBlocking(Dispatchers.Main) { PlatformUtils.threadId() }
 
         printlntid("main")
         val worker = Worker.start()
