@@ -23,6 +23,7 @@ import io.realm.query
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.newSingleThreadContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
