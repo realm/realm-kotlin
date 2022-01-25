@@ -130,6 +130,8 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * [type] cannot be used to represent the [property].
      */
     // TODO update doc when ObjectId and Decimal128 are added
+    //  https://github.com/realm/realm-kotlin/issues/652
+    //  https://github.com/realm/realm-kotlin/issues/653
     fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
 
     /**
@@ -150,6 +152,8 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * [type] cannot be used to represent the [property].
      */
     // TODO update doc when ObjectId and Decimal128 are added
+    //  https://github.com/realm/realm-kotlin/issues/652
+    //  https://github.com/realm/realm-kotlin/issues/653
     fun <T : Any> max(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
 
     /**
@@ -196,9 +200,8 @@ interface RealmElementQuery<T : RealmObject> : Flowable<RealmResults<T>> {
     /**
      * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
      *
-     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
-     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
-     * results asynchronously using [asFlow] instead.
+     * It is not recommended launching heavy queries from the UI thread as it may result in a drop
+     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
      *
      * @return a [RealmResults] instance containing matching objects. If no objects match the
      * condition, an instance with zero objects is returned.
@@ -232,9 +235,8 @@ interface RealmSingleQuery<T> : Flowable<T> {
      * Finds the first object that fulfills the query conditions and returns it in a blocking
      * fashion.
      *
-     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
-     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
-     * object asynchronously using [asFlow] instead.
+     * It is not recommended launching heavy queries from the UI thread as it may result in a drop
+     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
      *
      * @return a [RealmObject] instance or `null` if no object matches the condition.
      */
@@ -267,9 +269,8 @@ interface RealmScalarQuery<T> : Flowable<T> {
      * - `[count]` returns [Long]
      * - `[sum]` returns the `type` specified in the call to said function
      *
-     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
-     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
-     * values asynchronously using [asFlow] instead.
+     * It is not recommended launching heavy queries from the UI thread as it may result in a drop
+     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
      *
      * @return a [T] containing the result of the scalar query.
      */
@@ -300,9 +301,8 @@ interface RealmScalarNullableQuery<T> : Flowable<T> {
      * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be `null`
      * if no objects are present.
      *
-     * Launching heavy queries from the UI thread may result in a drop of frames or even ANRs. **We
-     * do not recommend doing so.** If you want to prevent these behaviors you can obtain the
-     * values asynchronously using [asFlow] instead.
+     * It is not recommended launching heavy queries from the UI thread as it may result in a drop
+     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
      *
      * @return a [T] containing the result of the scalar query or `null` depending on the query
      * being executed.

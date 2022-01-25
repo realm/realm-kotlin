@@ -31,7 +31,7 @@ import kotlin.reflect.KClass
  * Primitive results are not exposed through the public API but might be needed when implementing
  * `RealmDictionary.values` as Core returns those as results.
  */
-// TODO optimize - perhaps we should map the output of dictionary.values to a RealmList so that
+// TODO OPTIMIZE Perhaps we should map the output of dictionary.values to a RealmList so that
 //  primitive typed results are never ever exposed publicly.
 internal class RealmResultsImpl<E : RealmObject> constructor(
     private val realm: RealmReference,
