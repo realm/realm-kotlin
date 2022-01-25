@@ -1,8 +1,7 @@
 ## 0.9.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
-* Upgraded to Kotlin Coroutines 1.6.0. You either have to use the `1.6.0-native-mt` dependency or use the new memory model and disable _binary freezing_ in the consuming project. This can be done with the following gradle properties `kotlin.native.binary.memoryModel=experimental` and `kotlin.native.binary.freezing=disabled`. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#switch-to-the-new-mm and https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#unexpected-object-freezing for more details on the latter. 
-
+* None.
 
 ### Enhancements
 * Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
@@ -15,7 +14,7 @@
 ### Compatibility
 * This release is compatible with:
   * Kotlin 1.6.10.
-  * Coroutines 1.6.0/1.6.0-native-mt.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 if using the new memory model with gradle properties `kotlin.native.binary.memoryModel=experimental` and `kotlin.native.binary.freezing=disabled`. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#switch-to-the-new-mm and https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#unexpected-object-freezing for more details on the latter.
   * AtomicFu 0.17.0.
 * Minimum Gradle version: 6.1.1.  
 * Minimum Android Gradle Plugin version: 4.0.0.
