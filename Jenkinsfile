@@ -107,20 +107,20 @@ pipeline {
 
                 stage('build-jvm-native-libs') {
                     parallel{
-//                       stage('build_jvm_linux') {
-//                           when { expression { shouldBuildJvmABIs() } }
-//                           agent {
-//                               node {
-//                                   label 'docker'
-//                               }
-//                           }
-//                           steps {
-//                               // It is an order of magnitude faster to checkout the repo
-//                               // rather then stashing/unstashing all files to build Linux and Win
-//                               runScm()
-//                               build_jvm_linux()
-//                           }
-//                       }
+                      stage('build_jvm_linux') {
+                          when { expression { shouldBuildJvmABIs() } }
+                          agent {
+                              node {
+                                  label 'docker'
+                              }
+                          }
+                          steps {
+                              // It is an order of magnitude faster to checkout the repo
+                              // rather then stashing/unstashing all files to build Linux and Win
+                              runScm()
+                              build_jvm_linux()
+                          }
+                      }
 
                       stage('build_osx_arm64') {
                         when { expression { shouldBuildJvmABIs() } }
@@ -135,19 +135,19 @@ pipeline {
                         }
                       }
 
-//                       stage('build_jvm_windows') {
-//                           when { expression { shouldBuildJvmABIs() } }
-//                           agent {
-//                               node {
-//                                    // FIXME aws-windows-02 has issue with checking out the repo with symlinks
-//                                   label 'aws-windows-01'
-//                               }
-//                           }
-//                           steps {
-//                             runScm()
-//                             build_jvm_windows()
-//                           }
-//                       }
+                      stage('build_jvm_windows') {
+                          when { expression { shouldBuildJvmABIs() } }
+                          agent {
+                              node {
+                                   // FIXME aws-windows-02 has issue with checking out the repo with symlinks
+                                  label 'aws-windows-01'
+                              }
+                          }
+                          steps {
+                            runScm()
+                            build_jvm_windows()
+                          }
+                      }
                     }
                 }
 
