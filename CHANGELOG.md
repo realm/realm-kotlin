@@ -1,10 +1,12 @@
 ## 0.9.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
+* Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
 
 ### Enhancements
 * Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
 * Added source code link to model definition compiler errors. ([#173](https://github.com/realm/realm-kotlin/issues/173))
 * Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`. 
 
@@ -87,7 +89,7 @@
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
-* Added supported for dates through a new property type: `RealmInstant`.
+* Added support for dates through a new property type: `RealmInstant`.
 * Allow to pass schema as a variable containing the involved `KClass`es and build configurations non-fluently ([#389](https://github.com/realm/realm-kotlin/issues/389)).
 * Added M1 support for `library-base` variant ([#483](https://github.com/realm/realm-kotlin/issues/483)).
 
@@ -120,7 +122,7 @@
 * Updated to Detekt 1.19.0-RC1.
 * Updated to Dokka 1.6.0.
 * Updated to AtomicFu 0.17.0.
-* Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
+* Updated to Realm Core 11.7.0, commit: 5903577608d202ad88f375c1bb2ceedb831f6d7b.
 
 
 ## 0.7.0 (2021-10-31)

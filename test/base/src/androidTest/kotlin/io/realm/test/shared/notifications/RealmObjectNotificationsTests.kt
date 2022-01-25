@@ -80,7 +80,7 @@ class RealmObjectNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun observe() {
+    override fun asFlow() {
         runBlocking {
             val c = Channel<Sample?>(1)
             val obj: Sample = realm.write {
@@ -106,7 +106,7 @@ class RealmObjectNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun cancelObserve() {
+    override fun cancelAsFlow() {
         runBlocking {
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
