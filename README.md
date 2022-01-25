@@ -115,20 +115,21 @@ CoroutineScope(context).async {
 The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries)
 
 ```Kotlin
-// All Persons
-import io.realm.objects
+// All persons
+import io.realm.query
 
-val all = realm.objects<Person>()
+val all = realm.query<Person>().find()
 
-// Person named 'Carlo'
-val filteredByName = realm.objects<Person>().query("name = $0", "Carlo")
+// Persons named 'Carlo'
+val personsByNameQuery = realm.query<Person>("name = $0", "Carlo")
+val filteredByName = personsByNameQuery.find()
 
 // Person having a dog aged more than 7 with a name starting with 'Fi'
-val filteredByDog = realm.objects<Person>().query("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi")
+val filteredByDog = realm.query<Person>("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi").find()
 
 // Observing for changes with Kotlin Coroutine Flows
 CoroutineScope(context).async {
-    filteredByName.observe().collect { result: RealmResults<Person> ->
+    personsByNameQuery.asFlow().collect { result ->
         println("Realm updated: Number of persons is ${result.size}")
     }
 }
