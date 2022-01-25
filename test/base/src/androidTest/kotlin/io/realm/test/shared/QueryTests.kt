@@ -1690,6 +1690,10 @@ class QueryTests {
                     }
             }
 
+            // First emission will be null
+            assertNull(channel1.receive())
+            assertNull(channel2.receive())
+
             // Write one object
             realm.write {
                 copyToRealm(QuerySample().apply { stringField = "Bar" })
