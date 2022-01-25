@@ -889,6 +889,9 @@ class QueryTests {
                     }
             }
 
+            assertEquals(0, channel1.receive())
+            assertEquals(0, channel2.receive())
+
             // Write one object
             realm.write {
                 copyToRealm(QuerySample().apply { stringField = "Bar" })
