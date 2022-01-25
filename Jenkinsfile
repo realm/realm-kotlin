@@ -122,7 +122,7 @@ pipeline {
                           }
                       }
 
-                      stage('build_jvm_linux') {
+                      stage('build_osx_arm64') {
                         when { expression { shouldBuildJvmABIs() } }
                         agent {
                             node {
