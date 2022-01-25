@@ -56,12 +56,12 @@ object Versions {
         const val targetSdk = 31
         const val compileSdkVersion = 31
         const val buildToolsVersion = "31.0.0"
-        const val buildTools = "7.1.0-beta05" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
+        const val buildTools = "7.1.0-rc01" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.1.7779620"
     }
     const val androidxStartup = "1.1.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
-    const val androidxJunit = "1.1.3-beta02" // https://maven.google.com/web/index.html#androidx.test.ext:junit
-    const val androidxTest = "1.4.0-beta02" // https://maven.google.com/web/index.html#androidx.test:rules
+    const val androidxJunit = "1.1.3" // https://maven.google.com/web/index.html#androidx.test.ext:junit
+    const val androidxTest = "1.4.0" // https://maven.google.com/web/index.html#androidx.test:rules
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
     const val atomicfu = "0.17.0" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
