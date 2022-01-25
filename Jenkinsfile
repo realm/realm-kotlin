@@ -121,6 +121,22 @@ pipeline {
                               build_jvm_linux()
                           }
                       }
+
+                      stage('build_jvm_linux') {
+                        when { expression { shouldBuildJvmABIs() } }
+                        agent {
+                            node {
+                                label 'osx_arm64'
+                            }
+                        }
+                        steps {
+                            // It is an order of magnitude faster to checkout the repo
+                            // rather then stashing/unstashing all files to build Linux and Win
+                            runScm()
+                            build_jvm_osx_arm64()
+                        }
+                      }
+
                       stage('build_jvm_windows') {
                           when { expression { shouldBuildJvmABIs() } }
                           agent {
@@ -326,6 +342,7 @@ def runBuild() {
     if (shouldBuildJvmABIs()) {
         unstash name: 'linux_so_file'
         unstash name: 'win_dll'
+        unstash name: 'osx_arm64_so_file'
         buildJvmAbiFlag = "-PcopyJvmABIs=true"
     }
 
@@ -677,7 +694,6 @@ def shouldBuildJvmABIs() {
     if (publishBuild || shouldPublishSnapshot(version)) return true else return false
 }
 
-// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
 def build_jvm_linux() {
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {
@@ -692,6 +708,21 @@ def build_jvm_linux() {
 
         stash includes:'packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so', name: 'linux_so_file'
     }
+}
+
+def build_jvm_osx_arm64() {
+    unstash name: 'swig_jni'
+    sh """
+       cd packages/cinterop/src/jvmMain/
+       rm -rf osx_arm64-build-dir
+       mkdir osx_arm64-build-dir
+       cd osx_arm64-build-dir
+       cmake -D JAVA_INCLUDE_PATH=`/usr/libexec/java_home`/include  ../../jvm
+       make -j8
+    """
+
+    stash includes:'packages/cinterop/src/jvmMain/osx_arm64-build-dir/librealmc.dylib', name: 'osx_arm64_so_file'
+
 }
 
 def build_jvm_windows() {

@@ -189,6 +189,8 @@ void throw_as_java_exception(JNIEnv *jenv) {
     // Original
     %#if defined(__ANDROID__)
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
+    %#elif defined(__aarch64__)
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
     %#else
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
     %#endif
@@ -197,6 +199,8 @@ void throw_as_java_exception(JNIEnv *jenv) {
     // Original
     %#if defined(__ANDROID__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
+    %#elif defined(__aarch64__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong *)$1, $input);
     %#else
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
