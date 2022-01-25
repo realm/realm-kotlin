@@ -371,14 +371,14 @@ fun Task.buildSharedLibrariesForJVM() {
         // Only on CI for Snapshots and Releases
         if (copyJvmABIs) {
             // copy files (Linux)
-            project.file("src/jvmMain/linux-build-dir/librealmc.so")
-                .copyTo(project.file("src/jvmMain/resources/jni/linux/librealmc.so"), overwrite = true)
-            genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
+//            project.file("src/jvmMain/linux-build-dir/librealmc.so")
+//                .copyTo(project.file("src/jvmMain/resources/jni/linux/librealmc.so"), overwrite = true)
+//            genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
 
             // copy files (Windows)
-            project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
-                .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
-            genHashFile(platform = "windows", prefix = "", suffix = ".dll")
+//            project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
+//                .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
+//            genHashFile(platform = "windows", prefix = "", suffix = ".dll")
 
             // copy files (macOS ARM64)
             project.file("src/jvmMain/osx_arm64-build-dir/librealmc.dylib")

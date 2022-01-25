@@ -107,20 +107,20 @@ pipeline {
 
                 stage('build-jvm-native-libs') {
                     parallel{
-                      stage('build_jvm_linux') {
-                          when { expression { shouldBuildJvmABIs() } }
-                          agent {
-                              node {
-                                  label 'docker'
-                              }
-                          }
-                          steps {
-                              // It is an order of magnitude faster to checkout the repo
-                              // rather then stashing/unstashing all files to build Linux and Win
-                              runScm()
-                              build_jvm_linux()
-                          }
-                      }
+//                       stage('build_jvm_linux') {
+//                           when { expression { shouldBuildJvmABIs() } }
+//                           agent {
+//                               node {
+//                                   label 'docker'
+//                               }
+//                           }
+//                           steps {
+//                               // It is an order of magnitude faster to checkout the repo
+//                               // rather then stashing/unstashing all files to build Linux and Win
+//                               runScm()
+//                               build_jvm_linux()
+//                           }
+//                       }
 
                       stage('build_osx_arm64') {
                         when { expression { shouldBuildJvmABIs() } }
@@ -130,26 +130,24 @@ pipeline {
                             }
                         }
                         steps {
-                            // It is an order of magnitude faster to checkout the repo
-                            // rather then stashing/unstashing all files to build Linux and Win
                             runScm()
                             build_jvm_osx_arm64()
                         }
                       }
 
-                      stage('build_jvm_windows') {
-                          when { expression { shouldBuildJvmABIs() } }
-                          agent {
-                              node {
-                                   // FIXME aws-windows-02 has issue with checking out the repo with symlinks
-                                  label 'aws-windows-01'
-                              }
-                          }
-                          steps {
-                            runScm()
-                            build_jvm_windows()
-                          }
-                      }
+//                       stage('build_jvm_windows') {
+//                           when { expression { shouldBuildJvmABIs() } }
+//                           agent {
+//                               node {
+//                                    // FIXME aws-windows-02 has issue with checking out the repo with symlinks
+//                                   label 'aws-windows-01'
+//                               }
+//                           }
+//                           steps {
+//                             runScm()
+//                             build_jvm_windows()
+//                           }
+//                       }
                     }
                 }
 
@@ -712,15 +710,16 @@ def build_jvm_linux() {
 
 def build_jvm_osx_arm64() {
     unstash name: 'swig_jni'
-    sh """
-       cd packages/cinterop/src/jvmMain/
-       rm -rf osx_arm64-build-dir
-       mkdir osx_arm64-build-dir
-       cd osx_arm64-build-dir
-       cmake -D JAVA_INCLUDE_PATH=`/usr/libexec/java_home`/include  ../../jvm
-       make -j8
-    """
-
+    withEnv(['PATH+USER_BIN=/usr/local/bin:/opt/homebrew/bin']) {
+        sh """
+           cd packages/cinterop/src/jvmMain/
+           rm -rf osx_arm64-build-dir
+           mkdir osx_arm64-build-dir
+           cd osx_arm64-build-dir
+           cmake -D JAVA_INCLUDE_PATH=`/usr/libexec/java_home`/include  ../../jvm
+           make -j8
+        """
+    }
     stash includes:'packages/cinterop/src/jvmMain/osx_arm64-build-dir/librealmc.dylib', name: 'osx_arm64_so_file'
 
 }
