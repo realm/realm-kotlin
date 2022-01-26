@@ -716,7 +716,7 @@ def build_jvm_osx_arm64() {
            rm -rf osx_arm64-build-dir
            mkdir osx_arm64-build-dir
            cd osx_arm64-build-dir
-           cmake -D JAVA_INCLUDE_PATH=`/usr/libexec/java_home`/include  ../../jvm
+           cmake -D CMAKE_OSX_ARCHITECTURES="arm64" JAVA_INCLUDE_PATH=`/usr/libexec/java_home`/include  ../../jvm
            make -j8
         """
     }
