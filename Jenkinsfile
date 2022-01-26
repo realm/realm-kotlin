@@ -677,7 +677,6 @@ def shouldBuildJvmABIs() {
     if (publishBuild || shouldPublishSnapshot(version)) return true else return false
 }
 
-// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
 def build_jvm_linux() {
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {
