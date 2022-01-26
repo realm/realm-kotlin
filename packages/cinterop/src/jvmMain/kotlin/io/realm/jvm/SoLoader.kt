@@ -144,12 +144,6 @@ private enum class Platform(
         suffix = "dylib",
         defaultSystemLocation = "${System.getProperty("user.home")}/Library/Caches/io.realm.kotlin/"
     ),
-    MACOS_ARM64(
-        shortName = "/jni/macos_arm64",
-        prefix = "lib",
-        suffix = "dylib",
-        defaultSystemLocation = "${System.getProperty("user.home")}/Library/Caches/io.realm.kotlin/"
-    ),
     LINUX(
         shortName = "/jni/linux",
         prefix = "lib",
@@ -177,11 +171,7 @@ private enum class Platform(
                     LINUX
                 }
                 os.contains("mac") -> {
-                    if (System.getProperty("os.arch").lowercase() == "aarch64") {
-                        MACOS_ARM64
-                    } else {
-                        MACOS
-                    }
+                    MACOS
                 }
                 else -> error("Unsupported OS: $os")
             }

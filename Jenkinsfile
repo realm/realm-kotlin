@@ -121,20 +121,6 @@ pipeline {
                               build_jvm_linux()
                           }
                       }
-
-                      stage('build_osx_arm64') {
-                        when { expression { shouldBuildJvmABIs() } }
-                        agent {
-                            node {
-                                label 'osx_arm64'
-                            }
-                        }
-                        steps {
-                            runScm()
-                            build_jvm_osx_arm64()
-                        }
-                      }
-
                       stage('build_jvm_windows') {
                           when { expression { shouldBuildJvmABIs() } }
                           agent {
@@ -340,7 +326,6 @@ def runBuild() {
     if (shouldBuildJvmABIs()) {
         unstash name: 'linux_so_file'
         unstash name: 'win_dll'
-        unstash name: 'osx_arm64_so_file'
         buildJvmAbiFlag = "-PcopyJvmABIs=true"
     }
 
@@ -706,22 +691,6 @@ def build_jvm_linux() {
 
         stash includes:'packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so', name: 'linux_so_file'
     }
-}
-
-def build_jvm_osx_arm64() {
-    unstash name: 'swig_jni'
-    withEnv(['PATH+USER_BIN=/usr/local/bin:/opt/homebrew/bin']) {
-        sh """
-           cd packages/cinterop/src/jvmMain/
-           rm -rf osx_arm64-build-dir
-           mkdir osx_arm64-build-dir
-           cd osx_arm64-build-dir
-           cmake -D CMAKE_OSX_ARCHITECTURES="arm64" JAVA_INCLUDE_PATH=`/usr/libexec/java_home`/include  ../../jvm
-           make -j8
-        """
-    }
-    stash includes:'packages/cinterop/src/jvmMain/osx_arm64-build-dir/librealmc.dylib', name: 'osx_arm64_so_file'
-
 }
 
 def build_jvm_windows() {

@@ -350,6 +350,7 @@ fun Task.buildSharedLibrariesForJVM() {
             workingDir(project.file(directory))
             commandLine(
                 "cmake",
+                "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64",
                 project.file("src/jvm/")
             )
         }
@@ -379,12 +380,6 @@ fun Task.buildSharedLibrariesForJVM() {
             project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
                 .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
             genHashFile(platform = "windows", prefix = "", suffix = ".dll")
-
-            // copy files (macOS ARM64)
-            project.file("src/jvmMain/osx_arm64-build-dir/librealmc.dylib")
-                .copyTo(project.file("src/jvmMain/resources/jni/macos_arm64/librealmc.dylib"), overwrite = true)
-            genHashFile(platform = "macos_arm64", prefix = "lib", suffix = ".dylib")
-
         }
     }
 
@@ -397,9 +392,6 @@ fun Task.buildSharedLibrariesForJVM() {
 
         outputs.file(project.file("src/jvmMain/resources/jni/windows/realmc.dll"))
         outputs.file(project.file("src/jvmMain/resources/jni/windows/dynamic_libraries.properties"))
-
-        outputs.file(project.file("src/jvmMain/resources/jni/macos_arm64/librealmc.dylib"))
-        outputs.file(project.file("src/jvmMain/resources/jni/macos_arm64/dynamic_libraries.properties"))
     }
 }
 
