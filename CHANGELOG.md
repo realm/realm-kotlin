@@ -24,7 +24,7 @@
 
 ### Internal
 * Updated to Gradle 7.3.3.
-* Updated to Android Gradle Plugin 7.1.0-rc01.
+* Updated to Android Gradle Plugin 7.1.0.
 * Updated to AndroidX JUnit 1.1.3.
 * Updated to AndroidX Test 1.4.0.
 
