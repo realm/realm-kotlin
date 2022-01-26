@@ -123,6 +123,8 @@ class SyncedRealmTests {
 
         val channel = Channel<RealmResults<ChildPk>>(1)
 
+        assertEquals(0, realm1.query<ChildPk>().find().size, realm1.toString())
+
         runBlocking {
             val observer = async {
                 realm2.query<ChildPk>()

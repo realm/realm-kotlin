@@ -119,4 +119,6 @@ abstract class BaseRealmImpl internal constructor(
         RealmInterop.realm_close(reference.dbPointer)
         log.info("Realm closed: ${configuration.path}")
     }
+
+    override fun toString(): String = "${this::class.simpleName}[${this.configuration.path}]"
 }
