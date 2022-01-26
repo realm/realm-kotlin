@@ -17,7 +17,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.asLink
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -676,18 +675,57 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
     }
 
-    actual fun realm_query_find_first(realm: NativePointer): Link? {
+    actual fun realm_query_parse_for_results(
+        results: NativePointer,
+        query: String,
+        vararg args: Any?
+    ): NativePointer {
+        val count = args.size
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
+        }
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_results(results.cptr(), query, count.toLong(), cArgs)
+        )
+    }
+
+    actual fun realm_query_find_first(query: NativePointer): Link? {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
-        realmc.realm_query_find_first(realm.cptr(), value, found)
+        realmc.realm_query_find_first(query.cptr(), value, found)
         if (!found[0]) {
             return null
+        }
+        if (value.type != realm_value_type_e.RLM_TYPE_LINK) {
+            error("Query did not return link but ${value.type}")
         }
         return value.asLink()
     }
 
     actual fun realm_query_find_all(query: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_query_count(query: NativePointer): Long {
+        val count = LongArray(1)
+        realmc.realm_query_count(query.cptr(), count)
+        return count[0]
+    }
+
+    actual fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer {
+        val count = args.size
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
+        }
+        return LongPointerWrapper(
+            realmc.realm_query_append_query(query.cptr(), filter, count.toLong(), cArgs)
+        )
     }
 
     actual fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer {
@@ -700,8 +738,39 @@ actual object RealmInterop {
         return count[0]
     }
 
+    actual fun <T> realm_results_average(
+        results: NativePointer,
+        property: Long
+    ): Pair<Boolean, T> {
+        val average = realm_value_t()
+        val found = booleanArrayOf(false)
+        realmc.realm_results_average(results.cptr(), property, average, found)
+        return found[0] to from_realm_value(average)
+    }
+
+    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+        val sum = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_sum(results.cptr(), property, sum, foundArray)
+        return from_realm_value(sum)
+    }
+
+    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+        val max = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_max(results.cptr(), property, max, foundArray)
+        return from_realm_value(max)
+    }
+
+    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+        val min = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_min(results.cptr(), property, min, foundArray)
+        return from_realm_value(min)
+    }
+
     // TODO OPTIMIZE Getting a range
-    actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
+    actual fun realm_results_get(results: NativePointer, index: Long): Link {
         val value = realm_value_t()
         realmc.realm_results_get(results.cptr(), index, value)
         return value.asLink()

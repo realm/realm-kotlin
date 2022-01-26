@@ -18,6 +18,7 @@ package io.realm.test.shared
 
 import io.realm.LogConfiguration
 import io.realm.Realm
+import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
@@ -29,6 +30,7 @@ import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
+import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
@@ -119,25 +121,26 @@ class SyncedRealmTests {
             name = "A"
         }
 
-        val channel = Channel<ChildPk>(1)
+        val channel = Channel<RealmResults<ChildPk>>(1)
 
         runBlocking {
             val observer = async {
-                realm2.objects(ChildPk::class)
-                    .observe()
+                realm2.query<ChildPk>()
+                    .asFlow()
                     .collect { childResults ->
-                        if (childResults.size == 1) {
-                            channel.send(childResults[0])
-                        }
+                        channel.send(childResults)
                     }
             }
+
+            assertEquals(0, channel.receive().size)
 
             realm1.write {
                 copyToRealm(child)
             }
 
-            val childResult = channel.receive()
-            assertEquals("CHILD_A", childResult._id)
+            val childResults = channel.receive()
+            val childPk = childResults[0]
+            assertEquals("CHILD_A", childPk._id)
             observer.cancel()
             channel.close()
         }
@@ -169,7 +172,7 @@ class SyncedRealmTests {
         // Block until we see changed written to one realm in the other to ensure that schema is
         // aligned with backend
         val synced = async {
-            realm2.objects(ChildPk::class).observe().takeWhile { it.size != 0 }.collect { }
+            realm2.query(ChildPk::class).asFlow().takeWhile { it.size != 0 }.collect { }
         }
         realm1.write { copyToRealm(ChildPk()) }
         synced.await()

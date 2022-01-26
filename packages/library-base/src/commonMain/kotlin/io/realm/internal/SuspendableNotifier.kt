@@ -91,14 +91,13 @@ internal class SuspendableNotifier(
 //        }
     }
 
-    internal fun <T> registerObserver(observable: Observable<T>): Flow<T> {
+    internal fun <T> registerObserver(thawable: Thawable<T>): Flow<T> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
                 ensureActive()
-                val liveRef: Observable<T> =
-                    observable.thaw(realm.realmReference)
-                        ?: error("Cannot listen for changes on a deleted reference")
+                val liveRef: Notifiable<T> = thawable.thaw(realm.realmReference)
+                    ?: error("Cannot listen for changes on a deleted reference")
                 val interopCallback: io.realm.internal.interop.Callback =
                     object : io.realm.internal.interop.Callback {
                         override fun onChange(change: NativePointer) {

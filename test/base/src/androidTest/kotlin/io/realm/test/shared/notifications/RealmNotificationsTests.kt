@@ -71,7 +71,7 @@ class RealmNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun observe() {
+    override fun asFlow() {
         runBlocking {
             val c = Channel<Realm>(1)
             val startingVersion = realm.version()
@@ -92,7 +92,7 @@ class RealmNotificationsTests : NotificationTests {
 
     @Test
     @Ignore
-    override fun cancelObserve() {
+    override fun cancelAsFlow() {
         TODO("Wait for a Global change listener to become available")
     }
 

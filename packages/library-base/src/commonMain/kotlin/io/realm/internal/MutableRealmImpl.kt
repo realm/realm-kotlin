@@ -118,7 +118,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
 
-    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
+    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 

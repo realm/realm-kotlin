@@ -25,6 +25,7 @@ import io.ktor.client.features.logging.Logger
 import io.ktor.client.features.logging.Logging
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.log.LogLevel
+import io.realm.mongodb.internal.createPlatformClient
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -33,9 +34,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() -> Unit = {}): HttpClient {
     val timeout = Duration.seconds(5).inWholeMilliseconds
-    // TODO We probably need to fix the clients, so ktor does not automatically override with
-    //  another client if people update the runtime available ones through other dependencies
-    return HttpClient {
+    return createPlatformClient {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
         install(HttpTimeout) {
             connectTimeoutMillis = timeout

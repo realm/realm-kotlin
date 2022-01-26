@@ -24,6 +24,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.entities.Sample
 import io.realm.internal.platform.RealmInitializer
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import org.junit.After
 import org.junit.Before
@@ -83,20 +84,33 @@ class InstrumentedTests {
             copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
-        val objects1: RealmResults<Sample> = realm.objects(Sample::class)
-        assertEquals(2, objects1.size)
+        realm.query(Sample::class)
+            .find {
+                assertEquals(2, it.size)
+            }
 
-        val objects2: RealmResults<Sample> =
-            realm.objects(Sample::class).query("stringField == $0", s)
-        assertEquals(1, objects2.size)
-        for (sample in objects2) {
-            assertEquals(s, sample.stringField)
-        }
+        realm.query(Sample::class)
+            .query("stringField == $0", s)
+            .find { results ->
+                assertEquals(1, results.size)
+                for (sample in results) {
+                    assertEquals(s, sample.stringField)
+                }
+            }
+
+        realm.query(Sample::class)
+            .query("stringField == $0", s)
+            .find { results ->
+                assertEquals(1, results.size)
+                for (sample in results) {
+                    assertEquals(s, sample.stringField)
+                }
+            }
     }
 
     @Test
     fun query_parseErrorThrows() {
-        val objects: RealmResults<Sample> = realm.objects(Sample::class)
+        val objects: RealmResults<Sample> = realm.query(Sample::class).find()
         assertFailsWith<IllegalArgumentException> {
             objects.query("name == str")
         }
@@ -109,14 +123,16 @@ class InstrumentedTests {
             copyToRealm(Sample()).run { stringField = "Hello, Realm!" }
         }
 
-        val objects1: RealmResults<Sample> = realm.objects(Sample::class)
-        assertEquals(2, objects1.size)
+        realm.query(Sample::class)
+            .find { results ->
+                assertEquals(2, results.size)
+            }
 
         realm.writeBlocking {
-            objects(Sample::class).delete()
+            query(Sample::class).find().delete()
         }
 
-        assertEquals(0, realm.objects(Sample::class).size)
+        assertEquals(0, realm.query(Sample::class).find().size)
     }
 
     @Test
