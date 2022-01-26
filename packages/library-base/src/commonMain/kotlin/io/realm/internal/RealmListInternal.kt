@@ -34,7 +34,7 @@ import kotlin.reflect.KClass
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
 internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableListOf() {
-    override fun observe(): Flow<RealmList<E>> =
+    override fun asFlow(): Flow<RealmList<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 }
 
@@ -59,7 +59,10 @@ internal class ManagedRealmList<E>(
         try {
             return operator.convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not get element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not get element at list index $index",
+                exception
+            )
         }
     }
 
@@ -72,7 +75,10 @@ internal class ManagedRealmList<E>(
                 copyToRealm(metadata.mediator, metadata.realm, element)
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not add element at list index $index",
+                exception
+            )
         }
     }
 
@@ -86,7 +92,10 @@ internal class ManagedRealmList<E>(
         try {
             RealmInterop.realm_list_erase(nativePointer, index.toLong())
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not remove element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not remove element at list index $index",
+                exception
+            )
         }
     }
 
@@ -101,11 +110,14 @@ internal class ManagedRealmList<E>(
                 )
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not set list element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not set list element at list index $index",
+                exception
+            )
         }
     }
 
-    override fun observe(): Flow<ManagedRealmList<E>> {
+    override fun asFlow(): Flow<ManagedRealmList<E>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }

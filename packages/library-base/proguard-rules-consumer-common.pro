@@ -18,6 +18,48 @@
     *;
 }
 
+-keep class io.realm.internal.interop.JVMScheduler {
+    *;
+}
+
+# Prevent all RealmObjects from having their companions stripped
+-keep class ** implements io.realm.internal.RealmObjectCompanion {
+    *;
+}
+
+# Interop, sync-specific classes
+-keep class io.realm.internal.interop.sync.NetworkTransport {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
+-keep class io.realm.internal.interop.sync.Response {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
+-keep class io.realm.internal.interop.LongPointerWrapper {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
+-keep class io.realm.mongodb.AppException {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
+-keep class io.realm.mongodb.SyncException {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
+-keep class io.realm.internal.interop.SyncLogCallback {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
+-keep class io.realm.internal.interop.SyncErrorCallback {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
+-keep class io.realm.internal.interop.AppCallback {
+    *;
+}
+
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt
 #-keepattributes LineNumberTable,SourceFile

@@ -131,7 +131,7 @@ internal class RealmImpl private constructor(
         TODO()
     }
 
-    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
+    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         return notifier.registerObserver(t)
     }
 

@@ -22,19 +22,15 @@ import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.Utils.printlntid
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import platform.CoreFoundation.CFRunLoopGetCurrent
+import kotlinx.coroutines.test.runTest
 import platform.CoreFoundation.CFRunLoopRun
-import platform.CoreFoundation.CFRunLoopStop
 import platform.Foundation.NSNumber
 import platform.darwin.DISPATCH_QUEUE_PRIORITY_BACKGROUND
 import platform.darwin.dispatch_get_global_queue
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,34 +42,22 @@ import kotlin.test.assertEquals
  */
 class CoroutineTests {
 
-    // Fails on non native-mt as dispatching from background thread to main does change actual
-    // thread, thus failing to assert main thread id
     @Test
-    fun dispatchBetweenThreads() {
-        val tid = PlatformUtils.threadId()
-
-        printlntid("main")
-        val worker = Worker.start()
-        worker.execute(TransferMode.SAFE, { tid }) { tid ->
-            printlntid("worker")
-            runBlocking {
-                printlntid("runblocking")
-                val currentTid = PlatformUtils.threadId()
-                val async: Deferred<Unit> = CoroutineScope(Dispatchers.Unconfined).async {
-                    assertEquals(currentTid, PlatformUtils.threadId())
-                    printlntid("async")
-                }
-                withContext(Dispatchers.Main) {
-                    // This just runs on the worker thread for non native-mt
-                    printlntid("main from background")
-                    assertEquals(tid, PlatformUtils.threadId())
-                    printlntid("exiting")
-                    CFRunLoopStop(CFRunLoopGetCurrent())
-                }
+    fun dispatchBetweenThreads() = runTest {
+        val dispatcher1 = newSingleThreadContext("test-dispatcher-1")
+        val dispatcher2 = newSingleThreadContext("test-disptacher-2")
+        val tid2 = runBlocking(dispatcher2) {
+            PlatformUtils.threadId()
+        }
+        runBlocking(dispatcher1) {
+            val currentTid = PlatformUtils.threadId()
+            CoroutineScope(Dispatchers.Unconfined).async {
+                assertEquals(currentTid, PlatformUtils.threadId())
+            }.await()
+            runBlocking(dispatcher2) {
+                assertEquals(tid2, PlatformUtils.threadId())
             }
         }
-        CFRunLoopRun()
-        printlntid("main exit")
     }
 
     // Both with and without native-mt:

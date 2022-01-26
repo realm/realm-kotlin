@@ -1,5 +1,6 @@
 package io.realm
 
+import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 
 /**
@@ -56,16 +57,24 @@ interface MutableRealm : TypedRealm {
     fun <T : RealmObject> copyToRealm(instance: T): T
 
     /**
-     * Returns the results of querying for all objects of a specific type.
+     * Returns a [RealmQuery] matching the predicate represented by [query].
      *
-     * The result is live and thus also reflects any update to the [MutableRealm].
+     * The results yielded by the query are live and thus also reflect any update to the
+     * [MutableRealm]. Said results are only valid on the calling thread.
      *
-     * The result is only valid on the calling thread.
+     * **It is not allowed to call [RealmQuery.asFlow] on queries generated from a [MutableRealm].**
      *
-     * @param clazz the class of the objects to query for.
-     * @return the result of the query, reflecting future updates to the mutable realm.
+     * The resulting query is lazily evaluated and will not perform any calculations until
+     * [RealmQuery.find] is called.
+     *
+     * @param query the Realm Query Language predicate to append.
+     * @param args Realm values for the predicate.
      */
-    override fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T>
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T>
 
     /**
      * Deletes the object from the underlying Realm.
@@ -74,3 +83,13 @@ interface MutableRealm : TypedRealm {
      */
     fun <T : RealmObject> delete(obj: T)
 }
+
+/**
+ * Returns a [RealmQuery] matching the predicate represented by [query].
+ *
+ * Reified convenience wrapper for [MutableRealm.query].
+ */
+inline fun <reified T : RealmObject> MutableRealm.query(
+    query: String = "TRUEPREDICATE",
+    vararg args: Any?
+): RealmQuery<T> = query(T::class, query, *args)

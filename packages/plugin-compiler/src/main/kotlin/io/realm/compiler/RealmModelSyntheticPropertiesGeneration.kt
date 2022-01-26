@@ -192,7 +192,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             0 -> null
             1 -> primaryKeyFields.entries.first().value.declaration
             else -> {
-                logError("RealmObject can only have one primary key")
+                logError("RealmObject can only have one primary key", companion.parentAsClass.locationOf())
                 null
             }
         }
@@ -224,7 +224,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     @Suppress("LongMethod", "ComplexMethod")
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
-            ?: error("Companion object not available")
+            ?: fatalError("Companion object not available")
 
         val fields: MutableMap<String, SchemaProperty> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
@@ -235,7 +235,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             0 -> null
             1 -> primaryKeyFields.entries.first().key
             else -> {
-                logError("RealmObject can only have one primary key")
+                logError("RealmObject can only have one primary key", irClass.locationOf())
                 null
             }
         }
@@ -317,13 +317,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
                                 val property = value.declaration
                                 val backingField = property.backingField
-                                    ?: error("Property without backing field or type.")
+                                    ?: fatalError("Property without backing field or type.")
                                 // Nullability applies to the generic type in collections
                                 val nullable = if (value.collectionType == CollectionType.NONE) {
                                     backingField.type.isNullable()
                                 } else {
                                     value.coreGenericTypes?.get(0)?.nullable
-                                        ?: error("Missing generic type while processing a collection field.")
+                                        ?: fatalError("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
@@ -341,6 +341,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
                                     logError(
                                         "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                        property.locationOf()
                                     )
                                 }
                                 val indexableTypes = with(pluginContext.irBuiltIns) {
@@ -349,6 +350,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(
                                         "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        property.locationOf()
                                     )
                                 }
 
@@ -444,14 +446,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     // Generate body for the synthetic new instance method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     fun addNewInstanceMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
-            ?: error("Companion object not available")
+            ?: fatalError("Companion object not available")
 
         val function =
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
             val defaultCtor = irClass.primaryConstructor
-                ?: error("Can not find primary constructor")
+                ?: fatalError("Can not find primary constructor")
             +irReturn(
                 IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
                     startOffset,
@@ -514,7 +516,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // overridden:
         //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmObjectInternal
         val propertyAccessorGetter = owner.getPropertyGetter(propertyName.asString())
-            ?: error("${propertyName.asString()} function getter symbol is not available")
+            ?: fatalError("${propertyName.asString()} function getter symbol is not available")
         getter.overriddenSymbols = listOf(propertyAccessorGetter)
 
         // BLOCK_BODY
@@ -544,7 +546,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // overridden:
         //  public abstract fun <set-realmPointer> (<set-?>: kotlin.Long?): kotlin.Unit declared in dev.nhachicha.RealmObjectInternal
         val realmPointerSetter = owner.getPropertySetter(propertyName.asString())
-            ?: error("${propertyName.asString()} function getter symbol is not available")
+            ?: fatalError("${propertyName.asString()} function getter symbol is not available")
         setter.overriddenSymbols = listOf(realmPointerSetter)
 
         // VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Long?

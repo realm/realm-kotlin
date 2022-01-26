@@ -31,6 +31,8 @@ import io.realm.entities.primarykey.PrimaryKeyShort
 import io.realm.entities.primarykey.PrimaryKeyShortNullable
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.test.util.TypeDescriptor.rType
@@ -80,7 +82,10 @@ class PrimaryKeyTests {
             copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
         }
 
-        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
+        realm.query<PrimaryKeyString>()
+            .find { results ->
+                assertEquals(PRIMARY_KEY, results[0].primaryKey)
+            }
     }
 
     @Test
@@ -89,7 +94,10 @@ class PrimaryKeyTests {
             copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
         }
 
-        assertNull(realm.objects(PrimaryKeyStringNullable::class)[0].primaryKey)
+        realm.query<PrimaryKeyStringNullable>()
+            .find { results ->
+                assertNull(results[0].primaryKey)
+            }
     }
 
     @Test
@@ -102,7 +110,10 @@ class PrimaryKeyTests {
             }
         }
 
-        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
+        realm.query<PrimaryKeyString>()
+            .find { results ->
+                assertEquals(PRIMARY_KEY, results[0].primaryKey)
+            }
     }
 
     @Test
@@ -115,9 +126,11 @@ class PrimaryKeyTests {
             }
         }
 
-        val objects = realm.objects(PrimaryKeyStringNullable::class)
-        assertEquals(1, objects.size)
-        assertNull(objects[0].primaryKey)
+        realm.query<PrimaryKeyStringNullable>()
+            .find { results ->
+                assertEquals(1, results.size)
+                assertNull(results[0].primaryKey)
+            }
     }
 
     @Test

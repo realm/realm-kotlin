@@ -56,28 +56,28 @@ object Versions {
         const val targetSdk = 31
         const val compileSdkVersion = 31
         const val buildToolsVersion = "31.0.0"
-        const val buildTools = "7.1.0-beta05" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
+        const val buildTools = "7.1.0" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.1.7779620"
     }
     const val androidxStartup = "1.1.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
-    const val androidxJunit = "1.1.3-beta02" // https://maven.google.com/web/index.html#androidx.test.ext:junit
-    const val androidxTest = "1.4.0-beta02" // https://maven.google.com/web/index.html#androidx.test:rules
+    const val androidxJunit = "1.1.3" // https://maven.google.com/web/index.html#androidx.test.ext:junit
+    const val androidxTest = "1.4.0" // https://maven.google.com/web/index.html#androidx.test:rules
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
     const val atomicfu = "0.17.0" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.18.1 is available through the Android SDK.
     // Build also tested successfully with 3.21.4 (latest release).
     const val cmake = "3.18.1"
-    const val coroutines = "1.5.2-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
+    const val coroutines = "1.6.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val detektPlugin = "1.19.0-RC1" // https://github.com/detekt/detekt
     const val dokka = "1.6.0" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
-    const val kotlin = "1.6.0" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
+    const val kotlin = "1.6.10" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
     const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
-    const val ktlint = "0.43.0" // https://github.com/pinterest/ktlint
+    const val ktlint = "0.43.2" // https://github.com/pinterest/ktlint
     const val ktor = "1.6.5" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.0.0" // https://square.github.io/okio/#releases

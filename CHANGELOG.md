@@ -1,13 +1,44 @@
-## 0.9.0 (YYYY-MM-DD)
+## 0.9.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
+* Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
+
+### Enhancements
+* Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
+* Added source code link to model definition compiler errors. ([#173](https://github.com/realm/realm-kotlin/issues/173))
+* Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`. 
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Gradle 7.3.3.
+* Updated to Android Gradle Plugin 7.1.0.
+* Updated to AndroidX JUnit 1.1.3.
+* Updated to AndroidX Test 1.4.0.
+
+
+## 0.8.2 (2022-01-20)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* None.
 
 ### Fixed
-* None.
+* The `library-base` module would try to initialize a number of `library-sync` classes for JNI lookups. These and `RealmObjectCompanion` were not being excluded from Proguard obfuscation causing release builds to crash when initializing JNI [#643](https://github.com/realm/realm-kotlin/issues/643).
 
 ### Compatibility
 * This release is compatible with:
@@ -22,6 +53,32 @@
 * None.
 
 
+## 0.8.1 (2022-01-18)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Using a custom module name to fix [#621](https://github.com/realm/realm-kotlin/issues/621).
+* Synchronously process project configurations to avoid exceptions when running parallel builds [#626](https://github.com/realm/realm-kotlin/issues/626).
+* Update to Kotlin 1.6.10. The `Compatibility` entry for 0.8.0 stating that the project had been updated to Kotlin 1.6.10 was not correct [#640](https://github.com/realm/realm-kotlin/issues/640).
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.5.2-native-mt.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Kotlin 1.6.10.
+
+
 ## 0.8.0 (2021-12-17)
 
 ### Breaking Changes
@@ -32,7 +89,7 @@
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
-* Added supported for dates through a new property type: `RealmInstant`.
+* Added support for dates through a new property type: `RealmInstant`.
 * Allow to pass schema as a variable containing the involved `KClass`es and build configurations non-fluently ([#389](https://github.com/realm/realm-kotlin/issues/389)).
 * Added M1 support for `library-base` variant ([#483](https://github.com/realm/realm-kotlin/issues/483)).
 
@@ -65,7 +122,7 @@
 * Updated to Detekt 1.19.0-RC1.
 * Updated to Dokka 1.6.0.
 * Updated to AtomicFu 0.17.0.
-* Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
+* Updated to Realm Core 11.7.0, commit: 5903577608d202ad88f375c1bb2ceedb831f6d7b.
 
 
 ## 0.7.0 (2021-10-31)

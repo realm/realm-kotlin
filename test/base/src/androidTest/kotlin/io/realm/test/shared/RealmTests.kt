@@ -24,7 +24,8 @@ import io.realm.internal.InternalConfiguration
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.WeakReference
 import io.realm.isManaged
-import io.realm.objects
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.PlatformUtils.triggerGC
 import io.realm.version
@@ -44,6 +45,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -151,9 +153,11 @@ class RealmTests {
             this.copyToRealm(Child()).apply { this.name = name }
         }
         assertEquals(name, child.name)
-        val objects = realm.objects<Child>()
-        val childFromResult = objects[0]
-        assertEquals(name, childFromResult.name)
+        realm.query<Child>()
+            .find { objects ->
+                val childFromResult = objects[0]
+                assertEquals(name, childFromResult.name)
+            }
     }
 
     @Suppress("invisible_member")
@@ -168,7 +172,7 @@ class RealmTests {
                 throw CustomException()
             }
         }
-        assertEquals(0, realm.objects<Child>().size)
+        assertEquals(0, realm.query<Child>().find().size)
     }
 
     @Test
@@ -186,7 +190,7 @@ class RealmTests {
             this.copyToRealm(Child()).apply { this.name = name }
         }
         assertEquals(name, child.name)
-        assertEquals(1, realm.objects<Child>().size)
+        assertEquals(1, realm.query<Child>().find().size)
 
         realm.writeBlocking {
             this.copyToRealm(Child()).apply { this.name = name }
@@ -205,7 +209,7 @@ class RealmTests {
                 throw CustomException()
             }
         }
-        assertEquals(0, realm.objects<Child>().size)
+        assertEquals(0, realm.query<Child>().find().size)
     }
 
     @Test
@@ -224,7 +228,7 @@ class RealmTests {
         realm.close()
         assertTrue(realm.isClosed())
         realm = Realm.open(configuration)
-        assertEquals(10, realm.objects(Parent::class).size)
+        assertEquals(10, realm.query<Parent>().find().size)
     }
 
     @Test
@@ -264,7 +268,7 @@ class RealmTests {
         assertTrue(realm.isClosed())
 
         realm = Realm.open(configuration)
-        assertEquals(1, realm.objects(Parent::class).size)
+        assertEquals(1, realm.query<Parent>().find().size)
     }
 
     @Test
@@ -286,7 +290,7 @@ class RealmTests {
         realm.close()
         assert(write.await() is RuntimeException)
         realm = Realm.open(configuration)
-        assertEquals(0, realm.objects<Parent>().size)
+        assertEquals(0, realm.query<Parent>().find().size)
     }
 
     @Test
@@ -327,7 +331,7 @@ class RealmTests {
         // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in
         // some way (or the writer to be backed by another thread).
-        assertEquals(0, realm.objects(Parent::class).size)
+        assertEquals(0, realm.query<Parent>().find().size)
     }
 
     @Test
@@ -361,7 +365,7 @@ class RealmTests {
         // dispatcher is a run loop on the local thread, thus, the main flow is not picked up when
         // the mutex is unlocked. Doing so would require the write block to be able to suspend in
         // some way (or the writer to be backed by another thread).
-        assertEquals(1, realm.objects(Parent::class).size)
+        assertEquals(1, realm.query<Parent>().find().size)
     }
 
     @Test
@@ -378,7 +382,7 @@ class RealmTests {
                 copyToRealm(Parent())
             }
         }
-        assertEquals(2, realm.objects<Parent>().size)
+        assertEquals(2, realm.query<Parent>().find().size)
     }
 
     @Test
@@ -386,14 +390,19 @@ class RealmTests {
         runBlocking {
             realm.write { copyToRealm(Parent()) }
         }
-        val parent: Parent = realm.objects<Parent>().first()
-        runBlocking {
-            realm.write { copyToRealm(Parent()) }
-        }
-        realm.close()
-        assertFailsWith<IllegalStateException> {
-            parent.version()
-        }
+        realm.query<Parent>()
+            .first()
+            .find { parent ->
+                assertNotNull(parent)
+
+                runBlocking {
+                    realm.write { copyToRealm(Parent()) }
+                }
+                realm.close()
+                assertFailsWith<IllegalStateException> {
+                    parent.version()
+                }
+            }
     }
 
     @Test
@@ -433,7 +442,10 @@ class RealmTests {
         // issue is not bound to the freezing inside write, but also happens on the same thread as
         // the realm is constructed on.
         realm.writeBlocking { copyToRealm(Parent()); Unit }
-        var parent: Parent? = realm.objects<Parent>()!!.first()
+        var parent: Parent? = realm.query<Parent>()
+            .first()
+            .find()
+        assertNotNull(parent)
         assertEquals(1, intermediateReferences.value.size)
         realm.writeBlocking { }
         assertEquals(2, intermediateReferences.value.size)
