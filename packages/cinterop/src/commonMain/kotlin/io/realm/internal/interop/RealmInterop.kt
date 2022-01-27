@@ -38,6 +38,7 @@ expect val INVALID_PROPERTY_KEY: PropertyKey
 
 // TODO Again it would be awesome with marker interfaces for the various realm types, so we could
 //  add it as generic parameters here ...
+// Registration token that represent realm and schema change callback registration
 @JvmInline
 value class RegistrationToken(val value: Long)
 

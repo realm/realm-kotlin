@@ -33,8 +33,6 @@ data class RealmReference(
     // FIXME Should we keep a debug flag to assert that we have the right liveness state
 ) : RealmState {
 
-    // FIXME We probably don't need full schema if we just want to cache property keys for
-    //  ClassMetadata, but maybe it is ok to combine it?
     val schema: RealmSchemaImpl by lazy { RealmSchemaImpl.fromRealm(dbPointer) }
 
     override fun version(): VersionId {
@@ -49,6 +47,10 @@ data class RealmReference(
 
     override fun isClosed(): Boolean {
         return RealmInterop.realm_is_closed(dbPointer)
+    }
+
+    fun close() {
+        RealmInterop.realm_close(dbPointer)
     }
 
     inline fun checkClosed() {

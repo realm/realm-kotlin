@@ -22,7 +22,10 @@ import io.realm.entities.Sample
 import io.realm.entities.schema.SchemaVariations
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.platform.runBlocking
+import io.realm.internal.RealmObjectInternal
+import io.realm.internal.schema.RealmClassImpl
 import io.realm.log.LogLevel
+import io.realm.query
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
 import io.realm.schema.RealmStorageType
@@ -189,14 +192,35 @@ public class RealmSchemaTests {
     @Suppress("invisible_reference", "invisible_member")
     fun schemaChanged() = runBlocking {
         val schema = realm.schema() as io.realm.internal.schema.RealmSchemaImpl
+        val schemaVariationsDescriptor: RealmClassImpl = schema["SchemaVariations"]!!
+        val sampleDescriptor: RealmClassImpl = schema["Sample"]!!
+        val updatedSampleDescriptor = RealmClassImpl(
+            sampleDescriptor.cinteropClass,
+            sampleDescriptor.cinteropProperties +
+                io.realm.internal.interop.PropertyInfo("NEW_SAMPLE_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING))
         (realm as io.realm.internal.RealmImpl).updateSchema(
             io.realm.internal.schema.RealmSchemaImpl(
-                schema.classes + io.realm.internal.schema.RealmClassImpl(
-                    io.realm.internal.interop.ClassInfo("NEW_CLASS", numProperties = 1),
-                    listOf(io.realm.internal.interop.PropertyInfo("NEW_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING))
+                listOf(
+                    schemaVariationsDescriptor,
+                    updatedSampleDescriptor,
+                    RealmClassImpl(
+                        io.realm.internal.interop.ClassInfo("NEW_CLASS", numProperties = 1),
+                        listOf(io.realm.internal.interop.PropertyInfo("NEW_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING))
+                    )
                 )
             )
         )
+
+        val newSample = realm.write {
+            copyToRealm(Sample())
+        }
+
+        io.realm.internal.RealmObjectHelper.setValue(newSample as RealmObjectInternal, "NEW_SAMPLE_PROPERTY", "TEST")
+        assertEquals("TEST", io.realm.internal.RealmObjectHelper.getValue<String>(newSample as RealmObjectInternal, "NEW_SAMPLE_PROPERTY"))
+
+        val newSampleFromRealm = realm.query<Sample>().find()[0]
+        assertEquals("TEST", io.realm.internal.RealmObjectHelper.getValue<String>(newSampleFromRealm as RealmObjectInternal, "NEW_SAMPLE_PROPERTY"))
+
         assertEquals(3, realm.schema().classes.size)
         // This test doesn't work all of the times as NotifierRealm schema doesn't seem to be
         // updated, so if the realm reference from the notifier is received first in the Realm then

@@ -44,13 +44,15 @@ import io.realm.internal.freeze as freezeTyped
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
     private val tid: ULong
     private val realmInitializer = lazy {
-        MutableRealmImpl(owner, owner.configuration, dispatcher)
+        MutableRealmImpl(owner.configuration, dispatcher)
     }
 
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealmImpl by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
+
+    private val versionTracker = VersionTracker(owner.log)
 
     init {
         tid = runBlocking(dispatcher) { threadId() }
@@ -71,7 +73,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                 // - onRealmChanged - updating the realm.snapshot to also point to the latest key cache
                 // Seems like order is not guaranteed, but it is synchroneous, so updating snapshot
                 // in both callbacks should ensure that we have the right snapshot here
-                realm.snapshot
+                RealmReference(owner, RealmInterop.realm_freeze(realm.realmReference.dbPointer), realm.realmReference.schemaMetadata)
             }
         }
     }
@@ -104,8 +106,8 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // the transaction is committed and we freeze it.
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
-            val newDbPointer = RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-            val newReference = RealmReference(owner, newDbPointer, realm.realmReference.schemaMetadata)
+            val newReference = RealmReference(owner, RealmInterop.realm_freeze(realm.realmReference.dbPointer), realm.realmReference.schemaMetadata)
+            versionTracker.trackNewAndCloseExpiredReferences(newReference)
             // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {
                 result = freezeWriteReturnValue(newReference, result)
@@ -160,12 +162,17 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // which will itself prevent other transactions to start as the dispatcher can only run
             // a single job at a time
             withContext(dispatcher) {
+                // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
+                // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
                 if (realmInitializer.isInitialized()) {
-                    // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
-                    // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
+                    versionTracker.close()
                     realm.close()
                 }
             }
         }
+    }
+
+    fun unregisterCallbacks() {
+        realm.unregisterCallbacks()
     }
 }

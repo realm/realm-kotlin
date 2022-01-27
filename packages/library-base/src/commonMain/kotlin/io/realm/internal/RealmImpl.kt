@@ -19,7 +19,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -28,7 +27,7 @@ import kotlinx.coroutines.sync.withLock
 internal class RealmImpl private constructor(
     configuration: InternalConfiguration,
     dbPointer: NativePointer
-) : BaseRealmImpl(configuration, dbPointer), Realm {
+) : BaseRealmImpl(configuration), Realm {
 
     private val realmPointerMutex = Mutex()
 
@@ -38,7 +37,7 @@ internal class RealmImpl private constructor(
         MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
     private val notifier =
         SuspendableNotifier(this, configuration.notificationDispatcher)
-    private val writer =
+    internal val writer =
         SuspendableWriter(this, configuration.writeDispatcher)
 
     private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
@@ -55,10 +54,11 @@ internal class RealmImpl private constructor(
             updatableRealm.value = value
         }
 
-    // Set of currently open realms. Storing the native pointer explicitly to enable us to close
-    // the realm when the RealmReference is no longer referenced anymore.
-    internal val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> =
-        atomic(mutableSetOf())
+    // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
+    //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
+    //  would require us to sync that up. See also comment about maybe reworking how the initial
+    //  frozen version is obtained in the init block.
+    private val versionTracker = VersionTracker(log)
 
     init {
         // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
@@ -66,8 +66,9 @@ internal class RealmImpl private constructor(
         //  frozen pointer and close the live one.
         val initialLiveDbPointer = realmReference.dbPointer
         val frozenRealm = RealmInterop.realm_freeze(initialLiveDbPointer)
-        RealmInterop.realm_close(initialLiveDbPointer)
+        realmReference.close()
         realmReference = RealmReference(this, frozenRealm)
+        versionTracker.trackNewAndCloseExpiredReferences(realmReference)
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
             realmFlow.emit(this@RealmImpl)
@@ -153,7 +154,7 @@ internal class RealmImpl private constructor(
     private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
         realmPointerMutex.withLock {
             val newVersion = newRealmReference.version()
-            log.debug("Updating Realm version: $this ${version()} -> $newVersion")
+            log.debug("Updating Realm version: $this $newRealmReference ${version()} -> $newVersion")
             // If we advance to a newer version then we should keep track of the preceding one,
             // otherwise just track the new one directly.
             val untrackedReference = if (newVersion >= version()) {
@@ -163,28 +164,9 @@ internal class RealmImpl private constructor(
             } else {
                 newRealmReference
             }
-            trackNewAndCloseExpiredReferences(untrackedReference)
-
             // Notify public observers that the Realm changed
             realmFlow.emit(this)
         }
-    }
-
-    // Must only be called with realmPointerMutex locked
-    private fun trackNewAndCloseExpiredReferences(realmReference: RealmReference) {
-        val references = mutableSetOf<Pair<NativePointer, WeakReference<RealmReference>>>(
-            Pair(realmReference.dbPointer, WeakReference(realmReference))
-        )
-        intermediateReferences.value.forEach { entry ->
-            val (pointer, ref) = entry
-            if (ref.get() == null) {
-                log.debug("Closing unreferenced version: ${RealmInterop.realm_get_version_id(pointer)}")
-                RealmInterop.realm_close(pointer)
-            } else {
-                references.add(entry)
-            }
-        }
-        intermediateReferences.value = references
     }
 
     override fun close() {
@@ -196,15 +178,17 @@ internal class RealmImpl private constructor(
                 writer.close()
                 realmScope.cancel()
                 notifier.close()
+                versionTracker.close()
                 super.close()
-                intermediateReferences.value.forEach { (pointer, _) ->
-                    log.debug(
-                        "Closing intermediated version: ${RealmInterop.realm_get_version_id(pointer)}"
-                    )
-                    RealmInterop.realm_close(pointer)
-                }
             }
         }
         // TODO There is currently nothing that tears down the dispatcher
+    }
+
+    // FIXME Internal method to work around that callback subscription is not freed on GC
+    //  <issue ref>
+    internal fun unregisterCallbacks() {
+        writer.unregisterCallbacks()
+        notifier.unregisterCallbacks()
     }
 }

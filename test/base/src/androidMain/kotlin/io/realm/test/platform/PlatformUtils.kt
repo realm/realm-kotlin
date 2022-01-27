@@ -20,7 +20,6 @@ import android.annotation.SuppressLint
 import android.os.SystemClock
 import java.io.File
 import java.nio.file.Files
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime

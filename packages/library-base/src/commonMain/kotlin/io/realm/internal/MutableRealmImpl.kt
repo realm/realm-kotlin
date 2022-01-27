@@ -59,10 +59,9 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
      * scheduler, that delivers notifications on the main run loop.
      */
     internal constructor(
-        owner: BaseRealmImpl,
-        configuration: InternalConfiguration,
-        dispatcher: CoroutineDispatcher? = null
-    ) : super(owner, configuration, dispatcher)
+            configuration: InternalConfiguration,
+            dispatcher: CoroutineDispatcher? = null
+    ) : super(configuration, dispatcher)
 
     internal fun beginTransaction() {
         try {
