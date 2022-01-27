@@ -17,22 +17,26 @@ package io.realm.internal
 
 import io.realm.BaseRealm
 import io.realm.RealmObject
-import io.realm.RealmResults
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.query.ObjectQuery
+import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.notifications.Callback
 import io.realm.notifications.Cancellable
+import io.realm.query.RealmQuery
+import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
 abstract class BaseRealmImpl internal constructor(
-    final override val configuration: InternalRealmConfiguration,
+    final override val configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {
 
     private companion object {
-        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE = "Observing changes are not supported by this Realm."
+        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE =
+            "Observing changes are not supported by this Realm."
     }
 
     /**
@@ -62,23 +66,22 @@ abstract class BaseRealmImpl internal constructor(
         log.info("Realm opened: ${configuration.path}")
     }
 
-    open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        // Use same reference through out all operations to avoid locking
-        val realmReference = this.realmReference
-        realmReference.checkClosed()
-        return RealmResultsImpl.fromQuery(
-            realmReference,
-            RealmInterop.realm_query_parse(
-                realmReference.dbPointer,
-                clazz.simpleName!!,
-                "TRUEPREDICATE"
-            ),
-            clazz,
-            configuration.mediator
-        )
+    // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
+    //  update, but requires that we initialize it all on the actual schema update to allow freezing
+    //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
+    //  initialization it would probably be acceptable to initialize on schema updates
+    override fun schema(): RealmSchema {
+        return RealmSchemaImpl.fromRealm(realmReference)
     }
 
-    internal open fun <T> registerObserver(t: Observable<T>): Flow<T> {
+    open fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T> =
+        ObjectQuery(realmReference, clazz, configuration.mediator, null, query, *args)
+
+    internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

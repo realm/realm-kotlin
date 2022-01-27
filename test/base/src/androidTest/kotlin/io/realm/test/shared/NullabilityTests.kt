@@ -17,7 +17,9 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmInstant
 import io.realm.entities.Nullability
+import io.realm.query
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
 import kotlin.reflect.KClassifier
@@ -72,7 +74,7 @@ class NullabilityTests {
             nullability.stringNonNullable = "Realm"
         }
 
-        val nullabilityAfter = realm.objects(Nullability::class)[0]
+        val nullabilityAfter = realm.query<Nullability>().find()[0]
         assertNull(nullabilityAfter.stringNullable)
         assertNotNull(nullabilityAfter.stringNonNullable)
     }
@@ -83,13 +85,13 @@ class NullabilityTests {
             val nullableFieldTypes: MutableSet<KClassifier> = TypeDescriptor.allSingularFieldTypes.map { it.elementType }.filter { it.nullable }
                 .map { it.classifier }.toMutableSet()
 
-            copyToRealm(Nullability()).also { nullableProp ->
+            copyToRealm(Nullability()).also { nullableObj: Nullability ->
                 fun <T> testProperty(property: KMutableProperty1<Nullability, T?>, value: T) {
-                    assertNull(property.get(nullableProp))
-                    property.set(nullableProp, value)
-                    assertEquals(value, property.get(nullableProp))
-                    property.set(nullableProp, null)
-                    assertNull(property.get(nullableProp))
+                    assertNull(property.get(nullableObj))
+                    property.set(nullableObj, value)
+                    assertEquals(value, property.get(nullableObj))
+                    property.set(nullableObj, null)
+                    assertNull(property.get(nullableObj))
                     nullableFieldTypes.remove(property.returnType.classifier)
                 }
                 testProperty(Nullability::stringNullable, "Realm")
@@ -102,6 +104,7 @@ class NullabilityTests {
                 testProperty(Nullability::floatNullable, 123.456f)
                 testProperty(Nullability::doubleField, 123.456)
                 testProperty(Nullability::objectField, null)
+                testProperty(Nullability::timestampField, RealmInstant.fromEpochSeconds(42, 420))
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.

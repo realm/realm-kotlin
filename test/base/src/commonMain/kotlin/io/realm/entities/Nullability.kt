@@ -16,6 +16,7 @@
 
 package io.realm.entities
 
+import io.realm.RealmInstant
 import io.realm.RealmObject
 
 class Nullability : RealmObject {
@@ -34,5 +35,6 @@ class Nullability : RealmObject {
 
     var floatNullable: Float? = null
     var doubleField: Double? = null
+    var timestampField: RealmInstant? = null
     var objectField: Nullability? = null
 }

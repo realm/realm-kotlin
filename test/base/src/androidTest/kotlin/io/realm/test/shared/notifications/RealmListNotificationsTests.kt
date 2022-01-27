@@ -54,7 +54,7 @@ class RealmListNotificationsTests : NotificationTests {
 
     @AfterTest
     fun tearDown() {
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
@@ -74,7 +74,7 @@ class RealmListNotificationsTests : NotificationTests {
             val channel = Channel<RealmList<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel.send(flowList)
                     }
@@ -91,7 +91,7 @@ class RealmListNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun observe() {
+    override fun asFlow() {
         val dataSet = OBJECT_VALUES
 
         val container = realm.writeBlocking {
@@ -103,7 +103,7 @@ class RealmListNotificationsTests : NotificationTests {
             val channel = Channel<RealmList<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel.send(flowList)
                     }
@@ -132,7 +132,7 @@ class RealmListNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun cancelObserve() {
+    override fun cancelAsFlow() {
         runBlocking {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
@@ -144,14 +144,14 @@ class RealmListNotificationsTests : NotificationTests {
             val channel2 = Channel<RealmList<*>>(1)
             val observer1 = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel1.trySend(flowList)
                     }
             }
             val observer2 = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel2.trySend(flowList)
                     }
@@ -207,7 +207,7 @@ class RealmListNotificationsTests : NotificationTests {
             }
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .onCompletion {
                         // Signal completion
                         channel2.send(true)
@@ -249,7 +249,7 @@ class RealmListNotificationsTests : NotificationTests {
             }
             val observer = async {
                 container.objectListField
-                    .observe()
+                    .asFlow()
                     .collect { flowList ->
                         channel.trySend(flowList)
                     }

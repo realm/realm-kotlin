@@ -19,7 +19,8 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
-import io.realm.objects
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -49,7 +50,7 @@ class LinkTests {
     @Test
     fun basics() {
         val name = "Realm"
-        val parent = realm.writeBlocking {
+        realm.writeBlocking {
             val parent = copyToRealm(Parent())
             val child = copyToRealm(Child())
             child.name = name
@@ -57,21 +58,29 @@ class LinkTests {
             assertNull(parent.child)
             parent.child = child
             assertNotNull(parent.child)
-            parent
         }
 
-        assertEquals(1, realm.objects(Parent::class).size)
+        assertEquals(1, realm.query<Parent>().find().size)
 
-        val child1 = realm.objects(Parent::class).first().child
-        assertEquals(name, child1?.name)
+        realm.query<Parent>()
+            .first()
+            .find { parentFromQuery ->
+                assertNotNull(parentFromQuery)
+                val child1 = parentFromQuery.child
+                assertEquals(name, child1?.name)
+            }
 
         realm.writeBlocking {
-            val parent: Parent = objects<Parent>().first()
-            assertNotNull(parent.child)
-            parent.child = null
-            assertNull(parent.child)
+            query<Parent>()
+                .first()
+                .find { parent ->
+                    assertNotNull(parent)
+                    assertNotNull(parent.child)
+                    parent.child = null
+                    assertNull(parent.child)
+                }
         }
 
-        assertNull(realm.objects(Parent::class)[0].child)
+        assertNull(realm.query<Parent>().find()[0].child)
     }
 }

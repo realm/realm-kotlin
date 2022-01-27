@@ -32,6 +32,8 @@ version = null
 // Wether or not to run test steps
 runTests = true
 isReleaseBranch = releaseBranches.contains(currentBranch)
+// Manually wipe the workspace before checking out the code. This happens automatically on release branches.
+forceWipeWorkspace = false
 
 // References to Docker containers holding the MongoDB Test server and infrastructure for
 // controlling it.
@@ -67,7 +69,11 @@ pipeline {
         // description in case we run into problems down the line.
 
         // lock resource: 'kotlin_build_lock'
-        timeout(time: 15, activity: true, unit: 'MINUTES')
+        // Overall job timeout. This doesn't include time for waiting on the agent.
+        // Setting 'activity'-timeouts here doesn't clear the overall job timeout, so
+        // not an option. More finegrained timeouts can be targeted at specific
+        // stages, but these will include the time waiting for resources/nodes.
+        timeout(time: 180, unit: 'MINUTES')
     }
     environment {
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
@@ -148,7 +154,7 @@ pipeline {
                         runCompilerPluginTest()
                     }
                 }
-                stage('Tests Macos - Unit Tests') {
+                stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("packages", "macosTest")
@@ -165,13 +171,10 @@ pipeline {
                         )
                     }
                 }
-                stage('Integration Tests') {
+                stage('Integration Tests - Android') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
-                            {
-                                testAndCollect("test", "macosTest")
-                            },
                             {
                                 withLogcatTrace(
                                     "integrationtest",
@@ -184,6 +187,28 @@ pipeline {
                         ])
                     }
                 }
+                stage('Integration Tests - macOS - Old memory model') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("test", "macosTest")
+                            },
+                        ])
+                    }
+                }
+                stage('Integration Tests - macOS - New memory model') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            // This will overwrite previous test results, but should be ok as we would not get here
+                            // if previous stages failed. 
+                            {
+                                testAndCollect("test", "macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                            },
+                        ])
+                    }
+                }
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
@@ -192,6 +217,16 @@ pipeline {
                           testWithServer([
                               { testAndCollect("test", ':sync:jvmTest') }
                           ])
+                    }
+                }
+                stage('Integration Tests - iOS') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("test", "iosTest")
+                            }
+                        ])
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -240,7 +275,7 @@ def runScm() {
     def repoExtensions = [
         [$class: 'SubmoduleOption', recursiveSubmodules: true]
     ]
-    if (isReleaseBranch) {
+    if (isReleaseBranch || forceWipeWorkspace) {
         repoExtensions += [
             [$class: 'WipeWorkspace'],
             [$class: 'CleanCheckout'],
@@ -414,46 +449,46 @@ def testWithServer(tasks) {
     // Work-around for https://github.com/docker/docker-credential-helpers/issues/82
     withCredentials([
             [$class: 'StringBinding', credentialsId: 'realm-kotlin-ci-password', variable: 'PASSWORD'],
+            [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'realm-kotlin-baas-aws-credentials', accessKeyVariable: 'BAAS_AWS_ACCESS_KEY_ID', secretKeyVariable: 'BAAS_AWS_SECRET_ACCESS_KEY']
     ]) {
         sh "security -v unlock-keychain -p $PASSWORD"
-    }
+        try {
+            // Prepare Docker containers with MongoDB Realm Test Server infrastructure for
+            // integration tests.
+            // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
+            def props = readProperties file: 'dependencies.list'
+            echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
+            def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
+            docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
+              mdbRealmImage.pull()
+            }
+            def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
+            def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
+            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
 
-    try {
-        // Prepare Docker containers with MongoDB Realm Test Server infrastructure for
-        // integration tests.
-        // TODO: How much of this logic can be moved to start_server.sh for shared logic with local testing.
-        def props = readProperties file: 'dependencies.list'
-        echo "Version in dependencies.list: ${props.MONGODB_REALM_SERVER}"
-        def mdbRealmImage = docker.image("docker.pkg.github.com/realm/ci/mongodb-realm-test-server:${props.MONGODB_REALM_SERVER}")
-        docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
-          mdbRealmImage.pull()
-        }
-        def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
-        def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
-        sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
+            sh "docker network create ${dockerNetworkId}"
+            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
+            mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
+            sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
-        sh "docker network create ${dockerNetworkId}"
-        mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000")
-        mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
-        sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
+            // Techinically this is only needed for Android, but since all tests are
+            // executed on same host and tasks are grouped in same stage we just do it
+            // here
+            forwardAdbPorts()
 
-        // Techinically this is only needed for Android, but since all tests are
-        // executed on same host and tasks are grouped in same stage we just do it
-        // here
-        forwardAdbPorts()
-
-        tasks.each { task ->
-            task()
-        }
-    } finally {
-        // We assume that creating these containers and the docker network can be considered an atomic operation.
-        if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
-            try {
-                archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
-            } finally {
-                mongoDbRealmContainer.stop()
-                mongoDbRealmCommandServerContainer.stop()
-                sh "docker network rm ${dockerNetworkId}"
+            tasks.each { task ->
+                task()
+            }
+        } finally {
+            // We assume that creating these containers and the docker network can be considered an atomic operation.
+            if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
+                try {
+                    archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
+                } finally {
+                    mongoDbRealmContainer.stop()
+                    mongoDbRealmCommandServerContainer.stop()
+                    sh "docker network rm ${dockerNetworkId}"
+                }
             }
         }
     }
@@ -536,7 +571,7 @@ def runMonkey() {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             sh """
                 cd examples/kmm-sample
-                ./gradlew uninstallAll installDebug --stacktrace --no-daemon
+                ./gradlew uninstallAll installRelease --stacktrace --no-daemon
                 $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
@@ -551,7 +586,7 @@ def runBuildMinAndroidApp() {
         sh """
             cd examples/min-android-sample
             java -version
-            ./gradlew assembleDebug --stacktrace --no-daemon
+            ./gradlew assembleDebug jvmJar --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'
@@ -642,20 +677,19 @@ def shouldBuildJvmABIs() {
     if (publishBuild || shouldPublishSnapshot(version)) return true else return false
 }
 
-// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
 def build_jvm_linux() {
     unstash name: 'swig_jni'
-    docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/linux/generic.Dockerfile .').inside {
+    docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {
         sh """
-           cd packages/cinterop/src/jvmMain/linux/
-           rm -rf build-dir
-           mkdir build-dir
-           cd build-dir
-           cmake ..
+           cd packages/cinterop/src/jvmMain/
+           rm -rf linux-build-dir
+           mkdir linux-build-dir
+           cd linux-build-dir
+           cmake ../../jvm
            make -j8
         """
 
-        stash includes:'packages/cinterop/src/jvmMain/linux/build-dir/librealmc.so', name: 'linux_so_file'
+        stash includes:'packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so', name: 'linux_so_file'
     }
 }
 
@@ -673,7 +707,7 @@ def build_jvm_windows() {
 
   def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
   dir('packages') {
-      bat "cd cinterop\\src\\jvmMain\\windows && rmdir /s /q build-dir & mkdir build-dir && cd build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} .. && \"${tool 'cmake'}\" --build . --config Release"
+      bat "cd cinterop\\src\\jvmMain && rmdir /s /q windows-build-dir & mkdir windows-build-dir && cd windows-build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} ..\\..\\jvm && \"${tool 'cmake'}\" --build . --config Release"
   }
-  stash includes: 'packages/cinterop/src/jvmMain/windows/build-dir/Release/realmc.dll', name: 'win_dll'
+  stash includes: 'packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll', name: 'win_dll'
 }

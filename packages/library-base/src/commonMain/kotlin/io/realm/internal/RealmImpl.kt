@@ -10,7 +10,6 @@ import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
 import io.realm.notifications.Callback
 import io.realm.notifications.Cancellable
-import io.realm.notifications.RealmChange
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -19,14 +18,13 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
-    configuration: InternalRealmConfiguration,
+    configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealmImpl(configuration, dbPointer), Realm {
 
@@ -35,7 +33,7 @@ internal class RealmImpl private constructor(
     internal val realmScope =
         CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow =
-        MutableSharedFlow<RealmChange<Realm>>(replay = 1) // Realm notifications emit their initial state when subscribed to
+        MutableSharedFlow<Realm>(replay = 1) // Realm notifications emit their initial state when subscribed to
     private val notifier =
         SuspendableNotifier(this, configuration.notificationDispatcher)
     private val writer =
@@ -77,14 +75,14 @@ internal class RealmImpl private constructor(
         }
     }
 
-    constructor(configuration: InternalRealmConfiguration) :
+    constructor(configuration: InternalConfiguration) :
         this(
             configuration,
             try {
                 RealmInterop.realm_open(configuration.nativeConfig)
             } catch (exception: RealmCoreException) {
                 throw genericRealmCoreExceptionHandler(
-                    "Could not open Realm with the given configuration",
+                    "Could not open Realm with the given configuration: ${configuration.debug()}",
                     exception
                 )
             }
@@ -114,7 +112,7 @@ internal class RealmImpl private constructor(
         }
     }
 
-    override fun observe(): Flow<RealmChange<Realm>> {
+    override fun observe(): Flow<Realm> {
         return realmFlow.asSharedFlow()
     }
 
@@ -125,7 +123,7 @@ internal class RealmImpl private constructor(
         TODO()
     }
 
-    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
+    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         return notifier.registerObserver(t)
     }
 

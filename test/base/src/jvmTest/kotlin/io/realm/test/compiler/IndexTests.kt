@@ -18,6 +18,7 @@ package io.realm.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.RealmInstant
 import io.realm.internal.interop.CollectionType
 import io.realm.test.util.Compiler.compileFromSource
 import io.realm.test.util.TypeDescriptor.allFieldTypes
@@ -40,6 +41,7 @@ class IndexTests {
             Float::class to "1.4f",
             Double::class to "1.4",
             String::class to "\"Realm\"",
+            RealmInstant::class to "RealmInstant.fromEpochSeconds(42, 420)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -57,6 +59,7 @@ class IndexTests {
                 source = SourceFile.kotlin(
                     "indexing.kt",
                     """
+                        import io.realm.RealmInstant
                         import io.realm.RealmObject
                         import io.realm.RealmConfiguration
                         import io.realm.annotations.Index
@@ -75,7 +78,7 @@ class IndexTests {
                 assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
             } else {
                 assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, type.toString())
-                assertTrue(result.messages.contains("but must be of type"))
+                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(7, 5\\): .*but must be of type")))
             }
         }
     }
@@ -87,7 +90,10 @@ class IndexTests {
             source = SourceFile.kotlin(
                 "indexing_collections.kt",
                 """
+                        import io.realm.RealmInstant
                         import io.realm.RealmObject
+                        import io.realm.RealmList
+                        import io.realm.realmListOf
                         import io.realm.RealmConfiguration
                         import io.realm.annotations.Index
 
@@ -102,5 +108,6 @@ class IndexTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
+        assertTrue(result.messages.contains("sources/indexing_collections.kt: (9, 5): [Realm] Indexed key indexedKey is of type RealmList but must be of type"))
     }
 }

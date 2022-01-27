@@ -25,13 +25,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
-import java.lang.reflect.Method
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
 
-private val INVALID_CLASS_KEY: Long by lazy { realmc.getRLM_INVALID_CLASS_KEY() }
-private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_KEY() }
+actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realmc.getRLM_INVALID_CLASS_KEY()) }
+actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM_INVALID_PROPERTY_KEY()) }
 
 /**
  * JVM/Android interop implementation.
@@ -41,21 +40,6 @@ private val INVALID_PROPERTY_KEY: Long by lazy { realmc.getRLM_INVALID_PROPERTY_
  */
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
-
-    // TODO API-CLEANUP Maybe pull library loading into separate method
-    //  https://github.com/realm/realm-kotlin/issues/56
-    init {
-        if (isAndroid()) {
-            System.loadLibrary("realmc")
-        } else {
-            // otherwise locate, using reflection, the dependency SoLoader and call load
-            // (calling SoLoader directly will create a circular dependency with `jvmMain`)
-            val classToLoad = Class.forName("io.realm.jvm.SoLoader")
-            val instance = classToLoad.newInstance()
-            val loadMethod: Method = classToLoad.getDeclaredMethod("load")
-            loadMethod.invoke(instance)
-        }
-    }
 
     actual fun realm_get_version_id(realm: NativePointer): Long {
         val version = realm_version_id_t()
@@ -78,21 +62,21 @@ actual object RealmInterop {
         return result.first()
     }
 
-    actual fun realm_schema_new(tables: List<Table>): NativePointer {
-        val count = tables.size
+    actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer {
+        val count = schema.size
         val cclasses = realmc.new_classArray(count)
         val cproperties = realmc.new_propertyArrayArray(count)
 
-        for ((i, clazz) in tables.withIndex()) {
-            val properties = clazz.properties
+        for ((i, entry) in schema.withIndex()) {
+            val (clazz, properties) = entry
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
                 primary_key = clazz.primaryKey ?: ""
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
-                key = INVALID_CLASS_KEY
-                flags = clazz.flags.fold(0) { flags, element -> flags or element.nativeValue }
+                key = INVALID_CLASS_KEY.key
+                flags = clazz.flags
             }
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
@@ -104,8 +88,8 @@ actual object RealmInterop {
                     collection_type = property.collectionType.nativeValue
                     link_target = property.linkTarget
                     link_origin_property_name = property.linkOriginPropertyName
-                    key = INVALID_PROPERTY_KEY
-                    flags = property.flags.fold(0) { flags, element -> flags or element.nativeValue }
+                    key = INVALID_PROPERTY_KEY.key
+                    flags = property.flags
                 }
                 realmc.propertyArray_setitem(classProperties, j, cproperty)
             }
@@ -191,6 +175,59 @@ actual object RealmInterop {
         return realmc.realm_get_num_classes((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_get_class_keys(realm: NativePointer): List<ClassKey> {
+        val count = realm_get_num_classes(realm)
+        val keys = LongArray(count.toInt())
+        val outCount = longArrayOf(0)
+        realmc.realm_get_class_keys(realm.cptr(), keys, count, outCount)
+        if (count != outCount[0]) {
+            error("Invalid schema: Insufficient keys; got ${outCount[0]}, expected $count")
+        }
+        return keys.map { ClassKey(it) }
+    }
+
+    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey? {
+        val info = realm_class_info_t()
+        val found = booleanArrayOf(false)
+        realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
+        return if (found[0]) {
+            ClassKey(info.key)
+        } else {
+            null
+        }
+    }
+
+    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo {
+        val info = realm_class_info_t()
+        realmc.realm_get_class(realm.cptr(), classKey.key, info)
+        return with(info) {
+            ClassInfo(name, primary_key, num_properties, num_computed_properties, ClassKey(key), flags)
+        }
+    }
+    actual fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo> {
+        val properties = realmc.new_propertyArray(max.toInt())
+        val outCount = longArrayOf(0)
+        realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
+        return if (outCount[0] > 0) {
+            (0 until outCount[0]).map { i ->
+                with(realmc.propertyArray_getitem(properties, i.toInt())) {
+                    PropertyInfo(
+                        name,
+                        public_name,
+                        PropertyType.from(type),
+                        CollectionType.from(collection_type),
+                        link_target,
+                        link_origin_property_name,
+                        PropertyKey(key),
+                        flags
+                    )
+                }
+            }
+        } else {
+            emptyList()
+        }
+    }
+
     actual fun realm_release(p: NativePointer) {
         realmc.realm_release((p as LongPointerWrapper).ptr)
     }
@@ -241,26 +278,20 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey {
-        val info = realm_class_info_t()
-        val found = booleanArrayOf(false)
-        realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
-        if (!found[0]) {
-            throw IllegalArgumentException("Cannot find class: '$name")
-        }
-        return ClassKey(info.key)
-    }
-
     actual fun realm_object_as_link(obj: NativePointer): Link {
         val link: realm_link_t = realmc.realm_object_as_link(obj.cptr())
-        return Link(link.target_table, link.target)
+        return Link(ClassKey(link.target_table), link.target)
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey {
-        return ColumnKey(propertyInfo(realm, classInfo(realm, table), col).key)
+    actual fun realm_get_col_key(
+        realm: NativePointer,
+        className: String,
+        col: String
+    ): PropertyKey {
+        return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T {
+    actual fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
@@ -279,6 +310,8 @@ actual object RealmInterop {
                 value.fnum
             realm_value_type_e.RLM_TYPE_DOUBLE ->
                 value.dnum
+            realm_value_type_e.RLM_TYPE_TIMESTAMP ->
+                value.asTimestamp()
             realm_value_type_e.RLM_TYPE_LINK ->
                 value.asLink()
             realm_value_type_e.RLM_TYPE_NULL,
@@ -289,13 +322,18 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean) {
         val cvalue = to_realm_value(value)
         realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
     }
 
-    actual fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer {
-        return LongPointerWrapper(realmc.realm_get_list((obj as LongPointerWrapper).ptr, key.key))
+    actual fun realm_get_list(obj: NativePointer, key: PropertyKey): NativePointer {
+        return LongPointerWrapper(
+            realmc.realm_get_list(
+                (obj as LongPointerWrapper).ptr,
+                key.key
+            )
+        )
     }
 
     actual fun realm_list_size(list: NativePointer): Long {
@@ -348,6 +386,7 @@ actual object RealmInterop {
 
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
+    @Suppress("ComplexMethod", "LongMethod")
     private fun <T> to_realm_value(value: T): realm_value_t {
         val cvalue = realm_value_t()
         if (value == null) {
@@ -389,6 +428,13 @@ actual object RealmInterop {
                 is Double -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
                     cvalue.dnum = value
+                }
+                is Timestamp -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_TIMESTAMP
+                    cvalue.timestamp = realm_timestamp_t().apply {
+                        seconds = value.seconds
+                        nanoseconds = value.nanoSeconds
+                    }
                 }
                 is RealmObjectInterop -> {
                     val nativePointer = (value as RealmObjectInterop).`$realm$ObjectPointer`
@@ -599,12 +645,12 @@ actual object RealmInterop {
         realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
-    private fun classInfo(realm: NativePointer, table: String): realm_class_info_t {
+    private fun classInfo(realm: NativePointer, className: String): realm_class_info_t {
         val found = booleanArrayOf(false)
         val classInfo = realm_class_info_t()
-        realmc.realm_find_class((realm as LongPointerWrapper).ptr, table, found, classInfo)
+        realmc.realm_find_class((realm as LongPointerWrapper).ptr, className, found, classInfo)
         if (!found[0]) {
-            throw IllegalArgumentException("Cannot find class: '$table")
+            throw IllegalArgumentException("Cannot find class: '$className")
         }
         return classInfo
     }
@@ -619,9 +665,9 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer {
+    actual fun realm_query_parse(realm: NativePointer, className: String, query: String, vararg args: Any?): NativePointer {
         val count = args.size
-        val classKey = classInfo(realm, table).key
+        val classKey = classInfo(realm, className).key
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
             realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
@@ -629,18 +675,57 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
     }
 
-    actual fun realm_query_find_first(realm: NativePointer): Link? {
+    actual fun realm_query_parse_for_results(
+        results: NativePointer,
+        query: String,
+        vararg args: Any?
+    ): NativePointer {
+        val count = args.size
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
+        }
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_results(results.cptr(), query, count.toLong(), cArgs)
+        )
+    }
+
+    actual fun realm_query_find_first(query: NativePointer): Link? {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
-        realmc.realm_query_find_first(realm.cptr(), value, found)
+        realmc.realm_query_find_first(query.cptr(), value, found)
         if (!found[0]) {
             return null
+        }
+        if (value.type != realm_value_type_e.RLM_TYPE_LINK) {
+            error("Query did not return link but ${value.type}")
         }
         return value.asLink()
     }
 
     actual fun realm_query_find_all(query: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
+    }
+
+    actual fun realm_query_count(query: NativePointer): Long {
+        val count = LongArray(1)
+        realmc.realm_query_count(query.cptr(), count)
+        return count[0]
+    }
+
+    actual fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer {
+        val count = args.size
+        val cArgs = realmc.new_valueArray(count)
+        args.mapIndexed { i, arg ->
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
+        }
+        return LongPointerWrapper(
+            realmc.realm_query_append_query(query.cptr(), filter, count.toLong(), cArgs)
+        )
     }
 
     actual fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer {
@@ -653,15 +738,46 @@ actual object RealmInterop {
         return count[0]
     }
 
+    actual fun <T> realm_results_average(
+        results: NativePointer,
+        property: Long
+    ): Pair<Boolean, T> {
+        val average = realm_value_t()
+        val found = booleanArrayOf(false)
+        realmc.realm_results_average(results.cptr(), property, average, found)
+        return found[0] to from_realm_value(average)
+    }
+
+    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+        val sum = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_sum(results.cptr(), property, sum, foundArray)
+        return from_realm_value(sum)
+    }
+
+    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+        val max = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_max(results.cptr(), property, max, foundArray)
+        return from_realm_value(max)
+    }
+
+    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+        val min = realm_value_t()
+        val foundArray = BooleanArray(1)
+        realmc.realm_results_min(results.cptr(), property, min, foundArray)
+        return from_realm_value(min)
+    }
+
     // TODO OPTIMIZE Getting a range
-    actual fun <T> realm_results_get(results: NativePointer, index: Long): Link {
+    actual fun realm_results_get(results: NativePointer, index: Long): Link {
         val value = realm_value_t()
         realmc.realm_results_get(results.cptr(), index, value)
         return value.asLink()
     }
 
     actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
-        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.tableKey, link.objKey))
+        return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.classKey.key, link.objKey))
     }
 
     actual fun realm_object_find_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer? {
@@ -690,11 +806,18 @@ actual object RealmInterop {
         }
     }
 
+    private fun realm_value_t.asTimestamp(): Timestamp {
+        if (this.type != realm_value_type_e.RLM_TYPE_TIMESTAMP) {
+            error("Value is not of type Timestamp: $this.type")
+        }
+        return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+    }
+
     private fun realm_value_t.asLink(): Link {
         if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
         }
-        return Link(this.link.target_table, this.link.target)
+        return Link(ClassKey(this.link.target_table), this.link.target)
     }
 }
 

@@ -16,11 +16,11 @@ interface NotificationTests {
 
     // Verify that a notification is triggered on updates
     @Test
-    fun observe()
+    fun asFlow()
 
     // Verify that a flow can be cancelled
     @Test
-    fun cancelObserve()
+    fun cancelAsFlow()
 
     // Verify that `null` is emitted and the Flow is closed whenever the object
     // being observed is deleted.
@@ -39,16 +39,19 @@ interface NotificationTests {
     fun closingRealmDoesNotCancelFlows()
 
     @Test
+    @Ignore
+    fun addChangeListener_emitOnProvidedDispatcher() {
+        // FIXME Implement in another PR
+    }
+
+    @Ignore
+    @Test
     fun addChangeListener() {
         // FIXME Implement in another PR
     }
 
     @Test
-    fun addChangeListener_emitOnProvidedDispatcher() {
-        // FIXME Implement in another PR
-    }
-
-    @Test
+    @Ignore
     fun openSameRealmFileWithDifferentDispatchers() {
         // FIXME
     }
@@ -56,6 +59,7 @@ interface NotificationTests {
     // Verify that the Main dispatcher can be used for both writes and notifications
     // It should be considered an anti-pattern in production, but is plausible in tests.
     @Test
+    @Ignore
     fun useMainDispatchers() {
         // FIXME
     }
@@ -64,12 +68,14 @@ interface NotificationTests {
     // dispatcher for writes. This is the closest match to how this currently works
     // in Realm Java.
     @Test
+    @Ignore
     fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
         // FIXME
     }
 
     // Verify that the special test dispatchers provided by Google also when using Realm.
     @Test
+    @Ignore
     fun useTestDispatchers() {
         // FIXME
     }
