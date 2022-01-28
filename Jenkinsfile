@@ -121,135 +121,154 @@ pipeline {
                               build_jvm_linux()
                           }
                       }
-                      stage('build_jvm_windows') {
-                          when { expression { shouldBuildJvmABIs() } }
-                          agent {
-                              node {
-                                   // FIXME aws-windows-02 has issue with checking out the repo with symlinks
-                                  label 'aws-windows-01'
-                              }
-                          }
-                          steps {
-                            runScm()
-                            build_jvm_windows()
-                          }
-                      }
+                    //   stage('build_jvm_windows') {
+                    //       when { expression { shouldBuildJvmABIs() } }
+                    //       agent {
+                    //           node {
+                    //               // FIXME aws-windows-02 has issue with checking out the repo with symlinks
+                    //               label 'aws-windows-01'
+                    //           }
+                    //       }
+                    //       steps {
+                    //         runScm()
+                    //         build_jvm_windows()
+                    //       }
+                    //   }
                     }
                 }
 
-                stage('Build') {
-                    steps {
-                        runBuild()
-                    }
-                }
-                stage('Static Analysis') {
-                    when { expression { runTests } }
-                    steps {
-                        runStaticAnalysis()
-                    }
-                }
-                stage('Tests Compiler Plugin') {
-                    when { expression { runTests } }
-                    steps {
-                        runCompilerPluginTest()
-                    }
-                }
-                stage('Tests macOS - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("packages", "macosTest")
-                    }
-                }
-                stage('Tests Android - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        withLogcatTrace(
-                            "unittest",
-                            {
-                                testAndCollect("packages", "connectedAndroidTest")
-                            }
-                        )
-                    }
-                }
-                stage('Integration Tests - macOS') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("test", "macosTest")
-                            },
-                            {
-                                withLogcatTrace(
-                                    "integrationtest",
-                                    {
-                                        forwardAdbPorts()
-                                        testAndCollect("test", "connectedAndroidTest")
-                                    }
-                                )
-                            }
-                        ])
-                    }
-                }
-                stage('Tests JVM') {
-                    when { expression { runTests } }
-                    steps {
-                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.compiler*"')
-                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.shared*"')
-                          testWithServer([
-                              { testAndCollect("test", ':sync:jvmTest') }
-                          ])
-                    }
-                }
-                stage('Integration Tests - iOS') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("test", "iosTest")
-                            }
-                        ])
-                    }
-                }
-                stage('Tests Android Sample App') {
-                    when { expression { runTests } }
-                    steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            runMonkey()
-                        }
-                    }
-                }
-                stage('Build Android on minimum versions') {
-                    when { expression { runTests } }
-                    steps {
-                        runBuildMinAndroidApp()
-                    }
-                }
-                stage('Publish SNAPSHOT to Maven Central') {
-                    when { expression { shouldPublishSnapshot(version) } }
-                    steps {
-                        runPublishSnapshotToMavenCentral()
-                    }
-                }
-                stage('Publish Release to Maven Central') {
-                    when { expression { publishBuild } }
-                    steps {
-                        runPublishReleaseOnMavenCentral()
-                    }
-                }
+                // stage('Build') {
+                //     steps {
+                //         runBuild()
+                //     }
+                // }
+                // stage('Static Analysis') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         runStaticAnalysis()
+                //     }
+                // }
+                // stage('Tests Compiler Plugin') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         runCompilerPluginTest()
+                //     }
+                // }
+                // stage('Tests macOS - Unit Tests') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testAndCollect("packages", "macosTest")
+                //     }
+                // }
+                // stage('Tests Android - Unit Tests') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         withLogcatTrace(
+                //             "unittest",
+                //             {
+                //                 testAndCollect("packages", "connectedAndroidTest")
+                //             }
+                //         )
+                //     }
+                // }
+                // stage('Integration Tests - Android') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             {
+                //                 withLogcatTrace(
+                //                     "integrationtest",
+                //                     {
+                //                         forwardAdbPorts()
+                //                         testAndCollect("test", "connectedAndroidTest")
+                //                     }
+                //                 )
+                //             }
+                //         ])
+                //     }
+                // }
+                // stage('Integration Tests - macOS - Old memory model') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             {
+                //                 testAndCollect("test", "macosTest")
+                //             },
+                //         ])
+                //     }
+                // }
+                // stage('Integration Tests - macOS - New memory model') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             // This will overwrite previous test results, but should be ok as we would not get here
+                //             // if previous stages failed.
+                //             {
+                //                 testAndCollect("test", "macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                //             },
+                //         ])
+                //     }
+                // }
+                // stage('Tests JVM') {
+                //     when { expression { runTests } }
+                //     steps {
+                //           testAndCollect("test", ':base:jvmTest --tests "io.realm.test.compiler*"')
+                //           testAndCollect("test", ':base:jvmTest --tests "io.realm.test.shared*"')
+                //           testWithServer([
+                //               { testAndCollect("test", ':sync:jvmTest') }
+                //           ])
+                //     }
+                // }
+                // stage('Integration Tests - iOS') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             {
+                //                 testAndCollect("test", "iosTest")
+                //             }
+                //         ])
+                //     }
+                // }
+                // stage('Tests Android Sample App') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                //             runMonkey()
+                //         }
+                //     }
+                // }
+                // stage('Build Android on minimum versions') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         runBuildMinAndroidApp()
+                //     }
+                // }
+                // stage('Publish SNAPSHOT to Maven Central') {
+                //     when { expression { shouldPublishSnapshot(version) } }
+                //     steps {
+                //         runPublishSnapshotToMavenCentral()
+                //     }
+                // }
+                // stage('Publish Release to Maven Central') {
+                //     when { expression { publishBuild } }
+                //     steps {
+                //         runPublishReleaseOnMavenCentral()
+                //     }
+                // }
             }
         }
     }
-    post {
-        failure {
-            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
-        }
-        unstable {
-            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
-        }
-        fixed {
-            notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
-        }
-    }
+    // post {
+    //     failure {
+    //         notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is broken!*")
+    //     }
+    //     unstable {
+    //         notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch is unstable!*")
+    //     }
+    //     fixed {
+    //         notifySlackIfRequired("*The realm-kotlin/${currentBranch} branch has been fixed!*")
+    //     }
+    // }
 }
 
 def runScm() {
@@ -655,10 +674,9 @@ def runCommand(String command){
 }
 
 def shouldBuildJvmABIs() {
-    if (publishBuild || shouldPublishSnapshot(version)) return true else return false
+    return true
 }
 
-// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
 def build_jvm_linux() {
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {
@@ -667,11 +685,13 @@ def build_jvm_linux() {
            rm -rf linux-build-dir
            mkdir linux-build-dir
            cd linux-build-dir
-           cmake ../../jvm
+           cmake -DCMAKE_BUILD_TYPE=Debug ../../jvm
            make -j8
         """
 
-        stash includes:'packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so', name: 'linux_so_file'
+        //stash includes:'packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so', name: 'linux_so_file'
+        archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/linux-build-dir/**/*.*', allowEmptyArchive: true
+
     }
 }
 
