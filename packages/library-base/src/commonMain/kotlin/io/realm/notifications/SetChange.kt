@@ -17,8 +17,12 @@ sealed interface SetChange<V> {
      * Returns the newest version of the Set being observed. If an error occured when calculating
      * changes or the parent object owning the set was deleted, `null` is returned.
      */
-    val set: Set<V> // FIXME: Should probably be RealmSet<V> when available.
+
+    @Suppress("ForbiddenComment")
+    // FIXME: Should probably be RealmSet<V> when available.
+    val set: Set<V>
 }
+
 interface InitialSet<V> : SetChange<V>
 interface UpdatedSet<V> : SetChange<V> {
     /**
@@ -31,4 +35,5 @@ interface UpdatedSet<V> : SetChange<V> {
      */
     val numberOfDeletions: Int
 }
+
 interface DeletedSet<V> : SetChange<V>

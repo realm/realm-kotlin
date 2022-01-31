@@ -15,3 +15,13 @@ sealed interface RealmChange<R : BaseRealm> {
 }
 interface InitialRealm<R : BaseRealm> : RealmChange<R>
 interface UpdatedRealm<R : BaseRealm> : RealmChange<R>
+
+internal class InitialRealmImpl<R : BaseRealm>(override val realm: R) : InitialRealm<R> {
+    override val state: RealmChange.State
+        get() = RealmChange.State.INITIAL
+}
+
+internal class UpdatedRealmImpl<R : BaseRealm>(override val realm: R) : UpdatedRealm<R> {
+    override val state: RealmChange.State
+        get() = RealmChange.State.UPDATED
+}

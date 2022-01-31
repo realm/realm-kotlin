@@ -19,10 +19,10 @@ package io.realm.internal.query
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.Mediator
+import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
-import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
@@ -45,7 +45,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
-) : RealmQuery<E>, Thawable<RealmResultsImpl<E>> {
+) : RealmQuery<E>, Thawable<Observable<RealmResultsImpl<E>>> {
 
     private val queryPointer: NativePointer = when {
         composedQueryPointer != null -> composedQueryPointer

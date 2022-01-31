@@ -21,11 +21,11 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.entities.Sample
 import io.realm.internal.platform.runBlocking
+import io.realm.notifications.RealmChange
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -57,14 +57,14 @@ class RealmNotificationsTests : NotificationTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<Realm>(1)
+            val c = Channel<RealmChange<Realm>>(1)
             val startingVersion = realm.version()
             val observer = async {
-                realm.observe().collect {
+                realm.asFlow().collect {
                     c.send(it)
                 }
             }
-            assertEquals(startingVersion, c.receive().version())
+            assertEquals(startingVersion, c.receive().realm.version())
             observer.cancel()
             c.close()
         }
@@ -73,16 +73,16 @@ class RealmNotificationsTests : NotificationTests {
     @Test
     override fun asFlow() {
         runBlocking {
-            val c = Channel<Realm>(1)
+            val c = Channel<RealmChange<Realm>>(1)
             val startingVersion = realm.version()
             val observer = async {
-                realm.observe().collect {
+                realm.asFlow().collect {
                     c.send(it)
                 }
             }
-            assertEquals(startingVersion, c.receive().version())
+            assertEquals(startingVersion, c.receive().realm.version())
             realm.write { /* Do nothing */ }
-            c.receive().version().let { updatedVersion ->
+            c.receive().realm.version().let { updatedVersion ->
                 assertEquals(VersionId(startingVersion.version + 1), updatedVersion)
             }
             observer.cancel()

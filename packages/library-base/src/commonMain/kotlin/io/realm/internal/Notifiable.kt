@@ -33,15 +33,15 @@ interface Notifiable<T> {
 }
 
 interface Freezable<T> {
-    fun freeze(frozenRealm: RealmReference): Notifiable<T>?
+    fun freeze(frozenRealm: RealmReference): T?
 }
 
 interface Thawable<T> {
-    fun thaw(liveRealm: RealmReference): Notifiable<T>?
+    fun thaw(liveRealm: RealmReference): T?
 }
 
 interface Flowable<T> {
     fun asFlow(): Flow<T?>
 }
 
-interface Observable<T> : Notifiable<T>, Freezable<T>, Thawable<T>
+interface Observable<T> : Notifiable<T>, Freezable<Observable<T>>, Thawable<Observable<T>>

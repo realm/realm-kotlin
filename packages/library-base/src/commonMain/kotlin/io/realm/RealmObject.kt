@@ -100,10 +100,9 @@ public fun RealmObject.isValid(): Boolean {
  */
 public fun <T : RealmObject> T.observe(): Flow<T> {
     checkNotificationsAvailable()
-    TODO()
-//    val internalObject = this as RealmObjectInternal
-//    @Suppress("UNCHECKED_CAST")
-//    return (internalObject.`$realm$Owner`!!).owner.registerObserver(this) as Flow<T>
+    val internalObject = this as RealmObjectInternal
+    @Suppress("UNCHECKED_CAST")
+    return (internalObject.`$realm$Owner`!!).owner.registerObserver(this) as Flow<T>
 }
 
 private fun RealmObject.checkNotificationsAvailable() {

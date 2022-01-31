@@ -15,9 +15,11 @@
  */
 package io.realm
 
+import io.realm.internal.Flowable
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.Constants
+import io.realm.notifications.RealmChange
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -27,7 +29,7 @@ import kotlin.reflect.KClass
  *
  * @see Configuration
  */
-interface Realm : TypedRealm {
+interface Realm : TypedRealm, Flowable<RealmChange<Realm>> {
 
     // FIXME Should this go to the end according to Kotlin conventions
     companion object {
@@ -123,7 +125,7 @@ interface Realm : TypedRealm {
      *
      * @return a flow representing changes to this realm.
      */
-    fun observe(): Flow<Realm>
+    override fun asFlow(): Flow<RealmChange<Realm>>
 
     /**
      * Close this realm and all underlying resources. Accessing any methods or Realm Objects after

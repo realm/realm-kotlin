@@ -2,6 +2,7 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.internal.Mediator
+import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
@@ -18,7 +19,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<E>,
     private val mediator: Mediator
-) : RealmSingleQuery<E>, Thawable<RealmResultsImpl<E>> {
+) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>>> {
 
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null

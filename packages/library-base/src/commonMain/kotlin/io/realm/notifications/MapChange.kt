@@ -17,8 +17,12 @@ sealed interface MapChange<K : String, V : String> {
      * Returns the newest state of the Map being observed. If an error occurred when calculating
      * changes or the parent object owning the map was deleted, `null` is returned.
      */
-    val map: Map<K, V> // FIXME: Should probably be RealmMap<V> when available.
+
+    @Suppress("ForbiddenComment")
+    // FIXME: Should probably be RealmMap<V> when available.
+    val map: Map<K, V>
 }
+
 interface InitialMap<K : String, V : String> : MapChange<K, V>
 interface UpdatedMap<K : String, V : String> : MapChange<K, V> {
     /**
