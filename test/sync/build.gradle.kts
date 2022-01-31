@@ -46,7 +46,6 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
-                implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }
 

@@ -47,7 +47,24 @@ interface Realm : TypedRealm {
         const val ENCRYPTION_KEY_LENGTH = Constants.ENCRYPTION_KEY_LENGTH
 
         /**
+<<<<<<< Updated upstream
          * Open a Realm instance.
+=======
+         * The default implementation for determining if a file should be compacted or not. This
+         * implementation will only trigger if the file is above 50 MB and 50% or more can be
+         * reclaimed.
+         * @see [RealmConfiguration.Builder.compactOnLaunch]
+         */
+        public val DEFAULT_COMPACT_ON_LAUNCH_CALLBACK: CompactOnLaunchCallback = object: CompactOnLaunchCallback {
+            override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
+                val thresholdSize = (50 * 1024 * 1024).toLong()
+                return totalBytes > thresholdSize && usedBytes.toDouble() / totalBytes.toDouble() >= 0.5
+            }
+        }
+
+        /**
+         * Open a realm instance.
+>>>>>>> Stashed changes
          *
          * This instance grants access to an underlying realm file defined by the provided
          * [Configuration].

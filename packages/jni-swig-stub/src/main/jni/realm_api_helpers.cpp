@@ -283,6 +283,21 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
     }
 }
 
+bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes) {
+    auto env = get_env(true);
+    static JavaClass java_should_compact_class(env, "kotlin/jvm/functions/Function2");
+    static JavaMethod java_should_compact_method(env, java_should_compact_class, "invoke", "(JJ)Z");
+
+    jboolean result = env->CallBooleanMethod(static_cast<jobject>(userdata), java_should_compact_method, total_bytes, used_bytes);
+
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        throw std::runtime_error("An unexpected Error was thrown from Java.");
+    } else {
+        return static_cast<bool>(result);
+    }
+}
+
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
     static JavaMethod m_send_request_method(jenv,
                                             JavaClassGlobalDef::network_transport_class(),
