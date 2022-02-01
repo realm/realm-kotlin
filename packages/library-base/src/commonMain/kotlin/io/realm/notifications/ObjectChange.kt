@@ -21,11 +21,9 @@ sealed interface ObjectChange<O : RealmObject> {
      */
     val obj: O?
 }
-interface InitialObject<O : RealmObject> : ObjectChange<O> {
-    override val obj: O
-}
+interface InitialObject<O : RealmObject> : ObjectChange<O>
+
 interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
-    override val obj: O
     /**
      * Returns the names of properties that has changed.
      */
@@ -43,3 +41,24 @@ interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
     }
 }
 interface DeletedObject<O : RealmObject> : ObjectChange<O>
+
+internal class InitialObjectImpl<O : RealmObject>(override val obj: O?): InitialObject<O> {
+    override val state: ObjectChange.State
+        get() = ObjectChange.State.INITIAL
+}
+
+internal class UpdatedObjectImpl<O : RealmObject>(override val obj: O?): UpdatedObject<O> {
+    override val state: ObjectChange.State
+        get() = ObjectChange.State.UPDATED
+
+    override val changedFields: Array<String>
+        get() = TODO("Not yet implemented")
+}
+
+internal class DeletedObjectImpl<O : RealmObject>: DeletedObject<O> {
+    override val state: ObjectChange.State
+        get() = ObjectChange.State.DELETED
+
+    override val obj: O?
+        get() = null
+}

@@ -27,7 +27,7 @@ interface Notifiable<T> {
     // FIXME Needs elaborate doc on how to signal and close channel
     fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
+        change: NativePointer?,
         channel: SendChannel<T>
     ): ChannelResult<Unit>?
 }

@@ -21,7 +21,10 @@ import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.isValid
+import io.realm.notifications.DeletedObjectImpl
+import io.realm.notifications.InitialObjectImpl
 import io.realm.notifications.ObjectChange
+import io.realm.notifications.UpdatedObjectImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -35,7 +38,7 @@ import kotlin.reflect.KClass
  * [RealmObject].
  */
 @Suppress("VariableNaming")
-interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal, RealmObjectInternal>, Flowable<RealmObjectInternal> {
+interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal, ObjectChange<RealmObjectInternal>>, Flowable<ObjectChange<RealmObjectInternal>> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
@@ -91,19 +94,24 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
-        channel: SendChannel<RealmObjectInternal>
+        change: NativePointer?,
+        channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
         val f: RealmObjectInternal? = this.freeze(frozenRealm)
         return if (f == null) {
+            channel.trySend(DeletedObjectImpl())
             channel.close()
             null
         } else {
-            channel.trySend(f)
+            if(change == null) {
+                channel.trySend(InitialObjectImpl(f))
+            } else {
+                channel.trySend(UpdatedObjectImpl(f))
+            }
         }
     }
 
-    override fun asFlow(): Flow<RealmObjectInternal> {
+    override fun asFlow(): Flow<ObjectChange<RealmObjectInternal>> {
         return this.`$realm$Owner`!!.owner.registerObserver(this)
     }
 }

@@ -11,6 +11,7 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -100,6 +101,9 @@ internal class SuspendableNotifier(
                     ?: error("Cannot listen for changes on a deleted reference")
                 val interopCallback: io.realm.internal.interop.Callback =
                     object : io.realm.internal.interop.Callback {
+                        // The first element is a
+                        var initialDelivered = false
+
                         override fun onChange(change: NativePointer) {
                             // FIXME How to make sure the Realm isn't closed when handling this?
 
@@ -113,8 +117,11 @@ internal class SuspendableNotifier(
                             notifyRealmChanged(frozenRealm)
                             // Notifications need to be delivered with the version they where created on, otherwise
                             // the fine-grained notification data might be out of sync.
-                            liveRef.emitFrozenUpdate(frozenRealm, change, this@callbackFlow)
-                                ?.let { checkResult(it) }
+                            liveRef.emitFrozenUpdate(frozenRealm, if(initialDelivered) change else null, this@callbackFlow)
+                                ?.let {
+                                    initialDelivered = true
+                                    checkResult(it)
+                                }
                         }
                     }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
                 val newToken =

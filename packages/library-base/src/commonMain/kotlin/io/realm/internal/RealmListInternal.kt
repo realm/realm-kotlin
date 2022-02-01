@@ -140,7 +140,7 @@ internal class ManagedRealmList<E>(
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
+        change: NativePointer?,
         channel: SendChannel<ManagedRealmList<E>>
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)

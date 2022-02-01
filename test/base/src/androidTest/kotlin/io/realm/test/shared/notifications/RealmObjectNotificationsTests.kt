@@ -19,6 +19,9 @@ package io.realm.test.shared.notifications
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
+import io.realm.notifications.InitialObject
+import io.realm.notifications.ObjectChange
+import io.realm.notifications.UpdatedObject
 import io.realm.observe
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
@@ -33,6 +36,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -62,7 +66,7 @@ class RealmObjectNotificationsTests : NotificationTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<Sample?>(1)
+            val c = Channel<ObjectChange<Sample>>(1)
             val obj = realm.write {
                 copyToRealm(
                     Sample().apply { stringField = "Foo" }
@@ -73,7 +77,12 @@ class RealmObjectNotificationsTests : NotificationTests {
                     c.trySend(it)
                 }
             }
-            assertEquals("Foo", c.receive()!!.stringField)
+
+            c.receive().let { objectChange ->
+                assertIs<InitialObject<Sample>>(objectChange)
+                assertEquals("Foo", objectChange.obj!!.stringField)
+            }
+
             observer.cancel()
             c.close()
         }
@@ -82,7 +91,7 @@ class RealmObjectNotificationsTests : NotificationTests {
     @Test
     override fun asFlow() {
         runBlocking {
-            val c = Channel<Sample?>(1)
+            val c = Channel<ObjectChange<Sample>>(1)
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
@@ -91,15 +100,28 @@ class RealmObjectNotificationsTests : NotificationTests {
                     c.trySend(it)
                 }
             }
-            assertEquals("Foo", c.receive()!!.stringField)
+
+            c.receive().let { objectChange ->
+                assertIs<InitialObject<Sample>>(objectChange)
+                assertEquals("Foo", objectChange.obj!!.stringField)
+            }
+
             obj.update {
                 stringField = "Bar"
             }
-            assertEquals("Bar", c.receive()!!.stringField)
+            c.receive().let { objectChange ->
+                assertIs<UpdatedObject<Sample>>(objectChange)
+                assertEquals("Bar", objectChange.obj!!.stringField)
+            }
+
             obj.update {
                 stringField = "Baz"
             }
-            assertEquals("Baz", c.receive()!!.stringField)
+            c.receive().let { objectChange ->
+                assertIs<UpdatedObject<Sample>>(objectChange)
+                assertEquals("Baz", objectChange.obj!!.stringField)
+            }
+
             observer.cancel()
             c.close()
         }
@@ -111,8 +133,8 @@ class RealmObjectNotificationsTests : NotificationTests {
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
-            val c1 = Channel<Sample?>(1)
-            val c2 = Channel<Sample?>(1)
+            val c1 = Channel<ObjectChange<Sample>>(1)
+            val c2 = Channel<ObjectChange<Sample>>(1)
             val observer1 = async {
                 obj.observe().collect {
                     c1.trySend(it)
@@ -124,20 +146,35 @@ class RealmObjectNotificationsTests : NotificationTests {
                 }
             }
             // First event should be the initial value
-            assertEquals("Foo", c1.receive()!!.stringField)
-            assertEquals("Foo", c2.receive()!!.stringField)
+            c1.receive().let { objectChange ->
+                assertIs<InitialObject<Sample>>(objectChange)
+                assertEquals("Foo", objectChange.obj!!.stringField)
+            }
+            c2.receive().let { objectChange ->
+                assertIs<InitialObject<Sample>>(objectChange)
+                assertEquals("Foo", objectChange.obj!!.stringField)
+            }
             // Second event should reflect the udpate
             obj.update {
                 stringField = "Bar"
             }
-            assertEquals("Bar", c1.receive()!!.stringField)
-            assertEquals("Bar", c2.receive()!!.stringField)
+            c1.receive().let { objectChange ->
+                assertIs<UpdatedObject<Sample>>(objectChange)
+                assertEquals("Bar", objectChange.obj!!.stringField)
+            }
+            c2.receive().let { objectChange ->
+                assertIs<UpdatedObject<Sample>>(objectChange)
+                assertEquals("Bar", objectChange.obj!!.stringField)
+            }
 
             observer1.cancel()
             obj.update {
                 stringField = "Baz"
             }
-            assertEquals("Baz", c2.receive()!!.stringField)
+            c2.receive().let { objectChange ->
+                assertIs<UpdatedObject<Sample>>(objectChange)
+                assertEquals("Baz", objectChange.obj!!.stringField)
+            }
             assertTrue(c1.isEmpty)
             observer2.cancel()
             c1.close()
@@ -148,7 +185,8 @@ class RealmObjectNotificationsTests : NotificationTests {
     @Test
     override fun deleteObservable() {
         runBlocking {
-            val c = Channel<Sample?>(1)
+            val c1 = Channel<ObjectChange<Sample>>(1)
+            val c2 = Channel<Unit>(1)
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
@@ -156,20 +194,24 @@ class RealmObjectNotificationsTests : NotificationTests {
                 obj.observe()
                     .onCompletion {
                         // Emit sentinel value to signal that flow completed
-                        c.send(Sample())
+                        c2.send(Unit)
                     }
                     .collect {
-                        c.send(it)
+                        c1.send(it)
                     }
             }
-            assertNotNull(c.receive())
+            c1.receive().let { objectChange ->
+                assertIs<InitialObject<Sample>>(objectChange)
+                assertNotNull(objectChange.obj)
+            }
             realm.write {
                 delete(findLatest(obj)!!)
             }
             // Test for sentinel value
-            assertEquals(Sample().stringField, c.receive()!!.stringField)
+            assertEquals(Unit, c2.receive())
             observer.cancel()
-            c.close()
+            c1.close()
+            c2.close()
         }
     }
 
@@ -182,7 +224,7 @@ class RealmObjectNotificationsTests : NotificationTests {
     @Test
     override fun closingRealmDoesNotCancelFlows() {
         runBlocking {
-            val c = Channel<Sample?>(1)
+            val c = Channel<ObjectChange<Sample>>(1)
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
@@ -192,7 +234,10 @@ class RealmObjectNotificationsTests : NotificationTests {
                 }
                 fail("Flow should not be canceled.")
             }
-            assertEquals("Foo", c.receive()!!.stringField)
+            c.receive().let { objectChange ->
+                assertIs<InitialObject<Sample>>(objectChange)
+                assertEquals("Foo", objectChange.obj!!.stringField)
+            }
             realm.close()
             observer.cancel()
             c.close()
