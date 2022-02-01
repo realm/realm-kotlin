@@ -21,7 +21,9 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.entities.Sample
 import io.realm.internal.platform.runBlocking
+import io.realm.notifications.InitialRealm
 import io.realm.notifications.RealmChange
+import io.realm.notifications.UpdatedRealm
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
@@ -31,6 +33,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class RealmNotificationsTests : NotificationTests {
 
@@ -64,7 +67,11 @@ class RealmNotificationsTests : NotificationTests {
                     c.send(it)
                 }
             }
-            assertEquals(startingVersion, c.receive().realm.version())
+            c.receive().let { realmChange ->
+                assertIs<InitialRealm<Realm>>(realmChange)
+                assertEquals(startingVersion, realmChange.realm.version())
+            }
+
             observer.cancel()
             c.close()
         }
@@ -80,11 +87,21 @@ class RealmNotificationsTests : NotificationTests {
                     c.send(it)
                 }
             }
-            assertEquals(startingVersion, c.receive().realm.version())
-            realm.write { /* Do nothing */ }
-            c.receive().realm.version().let { updatedVersion ->
-                assertEquals(VersionId(startingVersion.version + 1), updatedVersion)
+
+            // We should first receive an initial Realm notification.
+            c.receive().let { realmChange ->
+                assertIs<InitialRealm<Realm>>(realmChange)
+                assertEquals(startingVersion, realmChange.realm.version())
             }
+
+            realm.write { /* Do nothing */ }
+
+            // Now we we should receive an updated Realm change notification.
+            c.receive().let { realmChange ->
+                assertIs<UpdatedRealm<Realm>>(realmChange)
+                assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
+            }
+
             observer.cancel()
             c.close()
         }
