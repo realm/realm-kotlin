@@ -29,7 +29,7 @@ import kotlinx.coroutines.sync.withLock
 internal class RealmImpl private constructor(
     configuration: InternalConfiguration,
     dbPointer: NativePointer
-) : BaseRealmImpl(configuration, dbPointer), Realm {
+) : BaseRealmImpl(configuration, dbPointer), Realm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
 
