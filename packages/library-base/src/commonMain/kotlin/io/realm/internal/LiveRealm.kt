@@ -69,11 +69,7 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
 
     protected open fun onRealmChanged() {
         log.debug("Realm changed: $this $configuration")
-        try {
-            _snapshot.value = null
-        } catch (e: Exception) {
-            log.debug("${e.message}")
-        }
+        _snapshot.value = null
     }
 
     protected open fun onSchemaChanged(schema: NativePointer) {

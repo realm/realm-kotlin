@@ -4,14 +4,10 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmInterop
-import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.internal.schema.CachedSchemaMetadata
 import io.realm.internal.util.Validation.sdkError
 import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult

@@ -21,12 +21,9 @@ import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.schema.RealmClassImpl
-import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
-import io.realm.schema.RealmClass
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 
@@ -59,9 +56,9 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
      * scheduler, that delivers notifications on the main run loop.
      */
     internal constructor(
-            parent: RealmImpl,
-            configuration: InternalConfiguration,
-            dispatcher: CoroutineDispatcher? = null
+        parent: RealmImpl,
+        configuration: InternalConfiguration,
+        dispatcher: CoroutineDispatcher? = null
     ) : super(parent, configuration, dispatcher)
 
     internal fun beginTransaction() {

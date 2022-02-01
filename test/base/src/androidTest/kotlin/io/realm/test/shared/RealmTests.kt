@@ -20,16 +20,11 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
-import io.realm.internal.InternalConfiguration
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.platform.WeakReference
 import io.realm.isManaged
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.platform.PlatformUtils.triggerGC
 import io.realm.version
-import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin

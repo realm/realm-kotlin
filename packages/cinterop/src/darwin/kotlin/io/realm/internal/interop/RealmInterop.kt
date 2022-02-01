@@ -374,15 +374,18 @@ actual object RealmInterop {
     }
 
     actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
-        return RegistrationToken(realm_wrapper.realm_add_realm_changed_callback(realm.cptr(),
-            staticCFunction { userData ->
-                safeUserData<() -> Unit>(userData)()
-            },
-            StableRef.create(block).asCPointer(),
-            staticCFunction { userdata ->
-                disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
-            }
-        ).toLong())
+        return RegistrationToken(
+            realm_wrapper.realm_add_realm_changed_callback(
+                realm.cptr(),
+                staticCFunction { userData ->
+                    safeUserData<() -> Unit>(userData)()
+                },
+                StableRef.create(block).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
+                }
+            ).toLong()
+        )
     }
 
     actual fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken) {
@@ -390,7 +393,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken {
-        return RegistrationToken(realm_wrapper.realm_add_schema_changed_callback(realm.cptr(),
+        return RegistrationToken(
+            realm_wrapper.realm_add_schema_changed_callback(
+                realm.cptr(),
                 staticCFunction { userData, schema ->
                     safeUserData<(NativePointer) -> Unit>(userData)(CPointerWrapper(realm_clone(schema)))
                 },
@@ -398,8 +403,10 @@ actual object RealmInterop {
                 staticCFunction { userdata ->
                     disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
                 }
-        ).toLong())
+            ).toLong()
+        )
     }
+
     actual fun realm_remove_schema_changed_callback(realm: NativePointer, token: RegistrationToken) {
         realm_wrapper.realm_remove_schema_changed_callback(realm.cptr(), token.value.toULong())
     }
@@ -540,7 +547,7 @@ actual object RealmInterop {
         return realm_wrapper.realm_is_writable(realm.cptr())
     }
 
-    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer): Unit {
+    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer) {
         TODO()
     }
 
@@ -1551,7 +1558,8 @@ actual object RealmInterop {
                 for (i in 0 until num_headers.toInt()) {
                     headers?.get(i)?.let { header ->
                         headerMap[header.name!!.toKString()] = header.value!!.toKString()
-                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
+                    }
+                        ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
                 }
 
                 networkTransport.sendRequest(
@@ -1667,6 +1675,7 @@ private fun printlnWithTid(s: String) {
     val tid = tid()
     println("<" + tid.toString() + "> $s")
 }
+
 private fun tid(): ULong {
     memScoped {
         initRuntimeIfNeeded()
@@ -1675,6 +1684,7 @@ private fun tid(): ULong {
         return tidVar.value
     }
 }
+
 private fun getUnixError() = strerror(posix_errno())!!.toKString()
 private inline fun Int.ensureUnixCallResult(s: String): Int {
     if (this != 0) {

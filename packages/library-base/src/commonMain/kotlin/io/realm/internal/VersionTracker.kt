@@ -16,9 +16,9 @@
 
 package io.realm.internal
 
-import io.realm.internal.platform.WeakReference
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.WeakReference
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 

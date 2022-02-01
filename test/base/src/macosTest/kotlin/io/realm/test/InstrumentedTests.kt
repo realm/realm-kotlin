@@ -21,7 +21,6 @@ package io.realm.test
 //  or moved.
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
-import io.realm.internal.InternalConfiguration
 import io.realm.internal.interop.NativePointer
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
@@ -61,7 +60,7 @@ class InstrumentedTests {
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
             // FIXME The above CPointerWrapper cannot be used as RealmReference will try to resolve the schema from the realmPointer :thinking: Maybe we can just eliminate this test
-            //realmModel.`$realm$Owner` = io.realm.internal.RealmReference(object : io.realm.internal.BaseRealmImpl(configuration as InternalConfiguration, realmPointer) {}, realmPointer)
+            // realmModel.`$realm$Owner` = io.realm.internal.RealmReference(object : io.realm.internal.BaseRealmImpl(configuration as InternalConfiguration, realmPointer) {}, realmPointer)
             realmModel.`$realm$ClassName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)

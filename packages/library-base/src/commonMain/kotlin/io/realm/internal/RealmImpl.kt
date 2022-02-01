@@ -8,7 +8,6 @@ import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.schema.RealmSchemaImpl
 import kotlinx.atomicfu.AtomicRef

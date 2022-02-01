@@ -21,8 +21,8 @@ import android.text.format.Formatter
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.Realm
-import io.realm.RealmObject
 import io.realm.RealmConfiguration
+import io.realm.RealmObject
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.PlatformUtils.triggerGC
 import org.junit.After

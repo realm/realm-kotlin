@@ -20,7 +20,6 @@ import io.realm.RealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.schema.RealmClassImpl
 import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 

@@ -202,7 +202,10 @@ public class RealmSchemaTests {
         val updatedSampleDescriptor = RealmClassImpl(
             sampleDescriptor.cinteropClass,
             sampleDescriptor.cinteropProperties +
-                io.realm.internal.interop.PropertyInfo("NEW_SAMPLE_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING))
+                io.realm.internal.interop.PropertyInfo(
+                    "NEW_SAMPLE_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING
+                )
+        )
         (realm as io.realm.internal.RealmImpl).updateSchema(
             io.realm.internal.schema.RealmSchemaImpl(
                 listOf(

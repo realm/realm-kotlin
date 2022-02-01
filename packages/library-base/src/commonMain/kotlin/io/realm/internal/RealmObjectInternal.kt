@@ -19,8 +19,8 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.PropertyKey
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.util.Validation.sdkError
 import io.realm.isValid
@@ -49,11 +49,10 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
     var `$realm$metadata`: ClassMetadata?
 
-
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
     fun propertyKeyOrThrow(propertyName: String): PropertyKey = this.`$realm$metadata`?.getOrThrow(propertyName)
-    // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         ?: sdkError("Class meta data should never be null for managed objects")
 
     override fun realmState(): RealmState {

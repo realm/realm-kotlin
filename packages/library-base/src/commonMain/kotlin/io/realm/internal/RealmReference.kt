@@ -6,7 +6,6 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.CachedSchemaMetadata
 import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.internal.schema.SchemaMetadata
-import io.realm.schema.RealmSchema
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
@@ -28,7 +27,7 @@ import kotlinx.atomicfu.atomic
  * NOTE: There should never be multiple RealmReferences with the same `dbPointer` as the underlying
  * C++ SharedRealm is closed when the RealmReference is no longer referenced by the [Realm].
  */
-interface RealmReference :  RealmState {
+interface RealmReference : RealmState {
     val owner: BaseRealmImpl
     val schemaMetadata: SchemaMetadata
     val dbPointer: NativePointer
@@ -67,9 +66,9 @@ data class FrozenRealmReference(
 }
 
 data class LiveRealmReference(override val owner: BaseRealmImpl, override val dbPointer: NativePointer) : RealmReference {
-    val _schemaMetadata: AtomicRef<SchemaMetadata> = atomic(CachedSchemaMetadata(dbPointer))
+    private val _schemaMetadata: AtomicRef<SchemaMetadata> = atomic(CachedSchemaMetadata(dbPointer))
     override val schemaMetadata: SchemaMetadata
-    get() = _schemaMetadata.value
+        get() = _schemaMetadata.value
 
     fun refreshSchema() {
         _schemaMetadata.value = CachedSchemaMetadata(dbPointer)

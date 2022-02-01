@@ -41,6 +41,7 @@ object Validation {
     }
 
     fun sdkError(message: String): Nothing {
+        @Suppress("TooGenericExceptionThrown")
         throw RuntimeException(message)
     }
 }

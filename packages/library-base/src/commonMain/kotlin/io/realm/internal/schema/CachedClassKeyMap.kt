@@ -21,8 +21,6 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 
 /**
  * Schema metadata providing access to class metadata for the schema.
@@ -30,7 +28,7 @@ import kotlinx.atomicfu.atomic
 interface SchemaMetadata {
     operator fun get(className: String): ClassMetadata?
     fun getOrThrow(className: String): ClassMetadata = get(className)
-            ?: throw IllegalArgumentException("Object of type '${className} not found")
+        ?: throw IllegalArgumentException("Object of type '$className not found")
 }
 
 /**
@@ -40,7 +38,7 @@ interface ClassMetadata {
     val className: String
     operator fun get(propertyName: String): PropertyKey?
     fun getOrThrow(propertyName: String): PropertyKey = get(propertyName)
-            ?: throw IllegalArgumentException("Object of type '${className} doesn't have a property named '$propertyName'")
+        ?: throw IllegalArgumentException("Object of type '$className doesn't have a property named '$propertyName'")
 }
 
 /**
@@ -73,5 +71,3 @@ class CachedClassMetadata(dbPointer: NativePointer, override val className: Stri
 
     override fun get(propertyName: String): PropertyKey? = propertyMap[propertyName]
 }
-
-

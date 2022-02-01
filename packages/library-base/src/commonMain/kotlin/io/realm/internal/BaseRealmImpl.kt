@@ -19,7 +19,6 @@ import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
