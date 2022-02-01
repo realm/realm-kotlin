@@ -64,6 +64,7 @@ abstract class BaseRealmImpl internal constructor(
         log.info("Realm opened: $this ${this.configuration} ${configuration.path}")
     }
 
+    // FIXME
     // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
     //  update, but requires that we initialize it all on the actual schema update to allow freezing
     //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t

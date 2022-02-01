@@ -392,7 +392,7 @@ actual object RealmInterop {
     actual fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken {
         return RegistrationToken(realm_wrapper.realm_add_schema_changed_callback(realm.cptr(),
                 staticCFunction { userData, schema ->
-                    safeUserData<() -> Unit>(userData)()
+                    safeUserData<(NativePointer) -> Unit>(userData)(CPointerWrapper(realm_clone(schema)))
                 },
                 StableRef.create(block).asCPointer(),
                 staticCFunction { userdata ->
@@ -464,7 +464,7 @@ actual object RealmInterop {
             return with(classInfo) {
                 ClassInfo(
                     name.safeKString("name"),
-                    primary_key?.toKString(),
+                    primary_key?.toKString() ?: "",
                     num_properties.convert(),
                     num_computed_properties.convert(),
                     ClassKey(key.toLong()),
@@ -495,11 +495,11 @@ actual object RealmInterop {
                         with(properties[it]) {
                             PropertyInfo(
                                 name.safeKString("name"),
-                                public_name?.toKString(),
+                                public_name?.toKString() ?: "",
                                 PropertyType.from(type.toInt()),
                                 CollectionType.from(collection_type.toInt()),
-                                link_target?.toKString(),
-                                link_origin_property_name?.toKString(),
+                                link_target?.toKString() ?: "",
+                                link_origin_property_name?.toKString() ?: "",
                                 PropertyKey(key),
                                 flags
                             )
@@ -538,6 +538,10 @@ actual object RealmInterop {
 
     actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
         return realm_wrapper.realm_is_writable(realm.cptr())
+    }
+
+    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer): Unit {
+        TODO()
     }
 
     actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {

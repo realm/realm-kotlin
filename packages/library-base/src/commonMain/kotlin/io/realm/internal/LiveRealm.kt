@@ -19,9 +19,11 @@ package io.realm.internal
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RegistrationToken
-import io.realm.internal.schema.CachedSchemaMetadata
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.internal.util.Validation.sdkError
 import io.realm.log.LogLevel
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -31,28 +33,47 @@ import kotlinx.coroutines.CoroutineDispatcher
  * NOTE: Must be constructed with a single thread dispatcher and must be constructed on the same
  * thread that is backing the dispatcher.
  *
- * @param snapshotOwner The owner of the snapshot references of this realm.
+ * @param owner The owner of the snapshot references of this realm.
  * @param configuration The configuration of the realm.
  * @param dispatcher The single thread dispatcher backing the realm scheduler of this realm. The
  * realm itself must only be access on the same thread.
  */
-abstract class LiveRealm(configuration: InternalConfiguration, dispatcher: CoroutineDispatcher? = null) : BaseRealmImpl(configuration) {
+internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalConfiguration, dispatcher: CoroutineDispatcher? = null) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: RegistrationToken
     private val schemaChangeRegistration: RegistrationToken
 
-    override val realmReference: RealmReference by lazy {
+    internal val versionTracker = VersionTracker(owner.log)
+
+    override val realmReference: LiveRealmReference by lazy {
         val dbPointer = RealmInterop.realm_open(configuration.nativeConfig, dispatcher)
-        RealmReference(this, dbPointer, LiveSchemaMetadata(dbPointer))
+        LiveRealmReference(this, dbPointer)
     }
 
+    private val _snapshot: AtomicRef<RealmReference?> = atomic(null)
+    internal val snapshot: RealmReference
+        get() {
+            if (_snapshot.value == null) {
+                val snapshot = FrozenRealmReference(owner, RealmInterop.realm_freeze(realmReference.dbPointer), realmReference.schemaMetadata)
+                versionTracker.trackNewAndCloseExpiredReferences(snapshot)
+                _snapshot.value = snapshot
+            }
+            return _snapshot.value ?: sdkError("Snapshot should never be null")
+        }
+
     init {
+        log.debug("asdasdf")
         realmChangeRegistration = RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, ::onRealmChanged)
         schemaChangeRegistration = RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, ::onSchemaChanged)
     }
 
     protected open fun onRealmChanged() {
         log.debug("Realm changed: $this $configuration")
+        try {
+            _snapshot.value = null
+        } catch (e: Exception) {
+            log.debug("${e.message}")
+        }
     }
 
     protected open fun onSchemaChanged(schema: NativePointer) {
@@ -61,14 +82,7 @@ abstract class LiveRealm(configuration: InternalConfiguration, dispatcher: Corou
         } else {
             log.debug("onSchemaChanged: $this $configuration")
         }
-        // realmReference.dbPointer is pointing to the live db, so conceptually the same schema,
-        // but creating new instances to clear the cache
-        this.schema = CachedSchemaMetadata(realmReference.dbPointer)
-        // We are not guaranteed that onRealmChanged is triggered after updating the schema so update snapshot
-        this.snapshot = RealmReference(snapshotOwner, RealmInterop.realm_freeze(realmReference.dbPointer), this.schema)
-
-        // DEBUG
-        // RealmInterop.realm_get_schema(realmReference.dbPointer)
+        realmReference.refreshSchema()
     }
 
     internal fun unregisterCallbacks() {
@@ -78,6 +92,7 @@ abstract class LiveRealm(configuration: InternalConfiguration, dispatcher: Corou
 
     override fun close() {
         unregisterCallbacks()
+        versionTracker.close()
         super.close()
     }
 }

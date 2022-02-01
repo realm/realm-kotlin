@@ -20,9 +20,9 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.schema.SchemaVariations
+import io.realm.internal.RealmObjectInternal
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.platform.runBlocking
-import io.realm.internal.RealmObjectInternal
 import io.realm.internal.schema.RealmClassImpl
 import io.realm.log.LogLevel
 import io.realm.query
@@ -33,6 +33,7 @@ import io.realm.schema.ValuePropertyType
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -190,6 +191,10 @@ public class RealmSchemaTests {
 
     @Test
     @Suppress("invisible_reference", "invisible_member")
+    // We don't have any way to verify that the schema is actually changed since we cannot open
+    // realms in dynamic mode, hence schema will only get updated it's (anyway stable) keys and not
+    // see any new classes/properties
+    @Ignore
     fun schemaChanged() = runBlocking {
         val schema = realm.schema() as io.realm.internal.schema.RealmSchemaImpl
         val schemaVariationsDescriptor: RealmClassImpl = schema["SchemaVariations"]!!

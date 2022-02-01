@@ -9,6 +9,7 @@ import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.schema.CachedSchemaMetadata
+import io.realm.internal.util.Validation.sdkError
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
@@ -46,8 +47,6 @@ internal class SuspendableNotifier(
         }
     }
 
-    private val versionTracker = VersionTracker(owner.log)
-
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<RealmReference>(
@@ -57,20 +56,15 @@ internal class SuspendableNotifier(
 
     // Could just be anonymous class, but easiest way to get BaseRealmImpl.toString to display the
     // right type with this
-    private inner class NotifierRealm : LiveRealm(owner.configuration, dispatcher) {
-        lateinit var snapshot: RealmReference
-
-        init {
-            update()
-        }
-
+    private inner class NotifierRealm : LiveRealm(owner, owner.configuration, dispatcher) {
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
-        override fun onRealmChanged() { update() }
-
-        private fun update() {
-            this.snapshot = RealmReference(owner, RealmInterop.realm_freeze(realmReference.dbPointer), CachedSchemaMetadata(realmReference.dbPointer))
-            versionTracker.trackNewAndCloseExpiredReferences(this.snapshot)
+        override fun onRealmChanged() {
+            super.onRealmChanged()
+            if (!_realmChanged.tryEmit(this.snapshot)) {
+                // Should never fail to emit snapshot version as we just drop oldest
+                sdkError("Failed to emit snapshot version")
+            }
         }
     }
 
@@ -140,7 +134,6 @@ internal class SuspendableNotifier(
             // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
             // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
             if (realmInitializer.isInitialized()) {
-                versionTracker.close()
                 realm.close()
             }
         }

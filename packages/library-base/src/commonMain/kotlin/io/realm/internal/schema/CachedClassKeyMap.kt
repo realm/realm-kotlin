@@ -74,40 +74,4 @@ class CachedClassMetadata(dbPointer: NativePointer, override val className: Stri
     override fun get(propertyName: String): PropertyKey? = propertyMap[propertyName]
 }
 
-class LiveSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadata {
-    // List of LiveClassMetadata that points back to this LiveSchemaMetadata that is updated on
-    // schema changes
-    val classMap: MutableMap<String, LiveClassMetadata> = mutableMapOf()
-    var cachedClassMap: Map<String, CachedClassMetadata> = mapOf()
 
-    init {
-        update()
-    }
-
-    override fun get(className: String): ClassMetadata? = classMap[className]
-            ?: throw IllegalArgumentException("Object of type '${className} not found")
-
-    fun update() {
-        // Refresh updated schema
-        val cachedSchemaMetadata = CachedSchemaMetadata(dbPointer)
-        // Update map to live class meta data
-        cachedSchemaMetadata.classMap.keys.forEach {
-            if (!classMap.containsKey(it)) {
-                classMap.put(it, LiveClassMetadata(it, this))
-            }
-        }
-        //
-        cachedClassMap = cachedSchemaMetadata.classMap
-    }
-
-    fun get(className: String, propertyName: String): PropertyKey? {
-        return cachedClassMap[className]?.get(propertyName)
-                ?: throw IllegalArgumentException("Object of type '${className} doesn't have a property named '$propertyName'")
-    }
-}
-
-class LiveClassMetadata(override val className: String, val schemaMetadata: LiveSchemaMetadata) : ClassMetadata {
-    override fun get(propertyName: String): PropertyKey? {
-        return schemaMetadata.get(className, propertyName)
-    }
-}

@@ -40,7 +40,7 @@ internal class RealmImpl private constructor(
     internal val writer =
         SuspendableWriter(this, configuration.writeDispatcher)
 
-    private var updatableRealm: AtomicRef<RealmReference> = atomic(RealmReference(this, dbPointer))
+    private var updatableRealm: AtomicRef<RealmReference> = atomic(LiveRealmReference(this, dbPointer))
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -56,8 +56,8 @@ internal class RealmImpl private constructor(
 
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
-    //  would require us to sync that up. See also comment about maybe reworking how the initial
-    //  frozen version is obtained in the init block.
+    //  would require us to sync that up. Didn't address this as we already have a todo on fixing
+    //  constructing the initial frozen version in the init block.
     private val versionTracker = VersionTracker(log)
 
     init {
@@ -67,8 +67,9 @@ internal class RealmImpl private constructor(
         val initialLiveDbPointer = realmReference.dbPointer
         val frozenRealm = RealmInterop.realm_freeze(initialLiveDbPointer)
         realmReference.close()
-        realmReference = RealmReference(this, frozenRealm)
-        versionTracker.trackNewAndCloseExpiredReferences(realmReference)
+        val frozenReference = FrozenRealmReference(this, frozenRealm)
+        realmReference = frozenReference
+        versionTracker.trackNewAndCloseExpiredReferences(frozenReference)
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
             realmFlow.emit(this@RealmImpl)
