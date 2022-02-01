@@ -44,4 +44,4 @@ interface Flowable<T> {
     fun asFlow(): Flow<T?>
 }
 
-interface Observable<T> : Notifiable<T>, Freezable<Observable<T>>, Thawable<Observable<T>>
+interface Observable<T, C> : Notifiable<C>, Freezable<Observable<T, C>>, Thawable<Observable<T, C>>

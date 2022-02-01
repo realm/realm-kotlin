@@ -46,7 +46,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
-) : RealmQuery<E>, Thawable<Observable<RealmResultsImpl<E>>> {
+) : RealmQuery<E>, Thawable<Observable<RealmResultsImpl<E>, RealmResultsImpl<E>>> {
 
     private val queryPointer: NativePointer = when {
         composedQueryPointer != null -> composedQueryPointer

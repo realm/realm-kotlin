@@ -44,7 +44,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     private val nativePointer: NativePointer,
     private val metadata: ListOperatorMetadata
-) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>, ManagedRealmList<E>> {
 
     private val operator = ListOperator<E>(metadata)
 

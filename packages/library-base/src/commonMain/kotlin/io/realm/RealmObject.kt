@@ -20,6 +20,7 @@ import io.realm.internal.MutableRealmImpl
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
+import io.realm.notifications.ObjectChange
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -98,7 +99,7 @@ public fun RealmObject.isValid(): Boolean {
  *
  * @return a flow representing changes to the object.
  */
-public fun <T : RealmObject> T.observe(): Flow<T> {
+public fun <T : RealmObject, C : ObjectChange<T>> T.observe(): Flow<T> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")

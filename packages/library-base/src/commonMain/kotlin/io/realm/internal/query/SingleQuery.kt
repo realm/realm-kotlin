@@ -19,7 +19,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<E>,
     private val mediator: Mediator
-) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>>> {
+) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>, RealmResultsImpl<E>>> {
 
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null

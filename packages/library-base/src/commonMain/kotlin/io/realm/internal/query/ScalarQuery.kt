@@ -53,7 +53,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val queryPointer: NativePointer,
     protected val mediator: Mediator,
     protected val clazz: KClass<E>
-) : Thawable<Observable<RealmResultsImpl<E>>> {
+) : Thawable<Observable<RealmResultsImpl<E>, RealmResultsImpl<E>>> {
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
