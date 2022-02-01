@@ -139,8 +139,9 @@ CoroutineScope(context).async {
 
 ```Kotlin
 // Find the first Person without a dog
-realm.objects<Person>().query("dog == NULL LIMIT(1)")
-    .firstOrNull()
+realm.query<Person>("dog == NULL LIMIT(1)")
+    .first()
+    .find()
     ?.also { personWithoutDog ->
         // Add a dog in a transaction
         realm.writeBlocking {
@@ -155,7 +156,7 @@ Use the result of a query to delete from the database
 ```Kotlin
 // delete all Dogs
 realm.writeBlocking {
-    this.objects<Dog>().delete()
+    this.query<Dog>().find().delete()
 }
 ```
 

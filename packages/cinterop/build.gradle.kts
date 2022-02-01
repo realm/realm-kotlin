@@ -350,6 +350,7 @@ fun Task.buildSharedLibrariesForJVM() {
             workingDir(project.file(directory))
             commandLine(
                 "cmake",
+                "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64",
                 project.file("src/jvm/")
             )
         }
@@ -383,7 +384,6 @@ fun Task.buildSharedLibrariesForJVM() {
     }
 
     outputs.file(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"))
-    outputs.file(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"))
     outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
 
     if (copyJvmABIs) {
