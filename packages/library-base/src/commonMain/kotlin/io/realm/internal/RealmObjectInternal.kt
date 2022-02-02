@@ -98,16 +98,19 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         change: NativePointer,
         channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
-        val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
+        val deleted = RealmInterop.realm_object_changes_is_deleted(change)
 
-        return if (frozenObject == null) {
+        return if (deleted) {
             channel.trySend(DeletedObjectImpl())
             channel.close()
             null
         } else {
+            val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
             val modifiedPropertiesCount = RealmInterop.realm_object_changes_get_num_modified_properties(change)
 
             if (modifiedPropertiesCount == 0L) {
+                @Suppress("ForbiddenComment")
+                // TODO: Can we identify initial change as a 0-modified-properties changeset?
                 channel.trySend(InitialObjectImpl(frozenObject))
             } else {
                 channel.trySend(

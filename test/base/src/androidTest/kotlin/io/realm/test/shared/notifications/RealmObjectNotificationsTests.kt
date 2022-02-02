@@ -18,11 +18,11 @@ package io.realm.test.shared.notifications
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.asFlow
 import io.realm.entities.Sample
 import io.realm.notifications.InitialObject
 import io.realm.notifications.ObjectChange
 import io.realm.notifications.UpdatedObject
-import io.realm.asFlow
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.update
