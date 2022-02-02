@@ -5,7 +5,7 @@
 ### Enhancements
 
 ### Fixed
-* Fixed ([#605](https://github.com/realm/realm-kotlin/issues/605)) `RealmConfiguration.path` should report the full Realm path.
+* `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)) 
 
 ### Compatibility
 * This release is compatible with:
