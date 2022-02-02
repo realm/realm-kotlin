@@ -118,6 +118,8 @@ interface Configuration {
          * Sets the absolute path of the realm file.
          *
          * If not set the realm will be stored at the default app storage location for the platform.
+         *
+         * @param path either the canonical absolute path or a relative path from the current directory ('./').
          */
         fun path(path: String?): S = apply { this.path = path } as S
 

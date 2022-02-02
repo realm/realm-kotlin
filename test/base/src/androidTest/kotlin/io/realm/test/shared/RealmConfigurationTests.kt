@@ -106,6 +106,15 @@ class RealmConfigurationTests {
             "${appFilesDirectory()}/custom.realm",
             configFromBuilderWithCustomName.path
         )
+
+        val configFromBuilderWithCurrentDir: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .path("./my_dir/foo.realm")
+                .build()
+        assertEquals(
+            "${appFilesDirectory()}/my_dir/foo.realm",
+            configFromBuilderWithCurrentDir.path
+        )
     }
 
     @Test
