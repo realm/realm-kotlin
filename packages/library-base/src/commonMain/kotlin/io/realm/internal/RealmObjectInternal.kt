@@ -106,35 +106,44 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             null
         } else {
             val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
-            val modifiedPropertiesCount = RealmInterop.realm_object_changes_get_num_modified_properties(change)
+            val modifiedPropertyCount = RealmInterop.realm_object_changes_get_num_modified_properties(change)
 
-            if (modifiedPropertiesCount == 0L) {
+            if (modifiedPropertyCount == 0L) {
                 @Suppress("ForbiddenComment")
                 // TODO: Can we identify initial change as a 0-modified-properties changeset?
                 channel.trySend(InitialObjectImpl(frozenObject))
             } else {
                 channel.trySend(
-                    UpdatedObjectImpl(frozenObject) {
-                        val changedPropertyKeys: List<PropertyKey> =
-                            RealmInterop.realm_object_changes_get_modified_properties(
-                                change,
-                                modifiedPropertiesCount
-                            )
-
-                        val changedPropertyNames: List<String> =
-                            changedPropertyKeys.map { propertyKey: PropertyKey ->
-                                RealmInterop.realm_get_property(
-                                    frozenRealm.dbPointer,
-                                    `$realm$TableName`!!,
-                                    propertyKey
-                                ).name
-                            }
-
-                        changedPropertyNames.toTypedArray()
-                    }
+                    UpdatedObjectImpl(
+                        obj = frozenObject,
+                        changedFields = getChangedFieldNames(
+                            frozenRealm,
+                            change,
+                            modifiedPropertyCount
+                        )
+                    )
                 )
             }
         }
+    }
+
+    @Suppress("ForbiddenComment")
+    // TODO: Optimize. Cannot be lazy evaluated because the notification pointer provided by the c-api is stack allocated.
+    private fun getChangedFieldNames(
+        frozenRealm: RealmReference,
+        change: NativePointer,
+        modifiedPropertiesCount: Long
+    ): Array<String> {
+        return RealmInterop.realm_object_changes_get_modified_properties(
+            change,
+            modifiedPropertiesCount
+        ).map { propertyKey: PropertyKey ->
+            RealmInterop.realm_get_property(
+                frozenRealm.dbPointer,
+                `$realm$TableName`!!,
+                propertyKey
+            ).name
+        }.toTypedArray()
     }
 
     override fun asFlow(): Flow<ObjectChange<RealmObjectInternal>> {

@@ -1132,11 +1132,9 @@ actual object RealmInterop {
         if (propertyCount == 0L) {
             return emptyList()
         }
-
         memScoped {
             val propertyKeys = allocArray<LongVar>(propertyCount)
-            realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, propertyCount.toULong())
-
+            realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, propertyCount.convert())
             return (0 until propertyCount.toInt()).map { PropertyKey(propertyKeys[it].toLong()) }
         }
     }

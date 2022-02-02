@@ -35,6 +35,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
@@ -113,7 +114,7 @@ class RealmObjectNotificationsTests : NotificationTests {
                 assertIs<UpdatedObject<Sample>>(objectChange)
 
                 assertEquals(1, objectChange.changedFields.size)
-                assertEquals("stringField", objectChange.changedFields[0])
+                assertContains(objectChange.changedFields, Sample::stringField.name)
 
                 assertEquals("Bar", objectChange.obj!!.stringField)
             }
@@ -126,8 +127,9 @@ class RealmObjectNotificationsTests : NotificationTests {
                 assertIs<UpdatedObject<Sample>>(objectChange)
 
                 assertEquals(2, objectChange.changedFields.size)
-                assertEquals("stringField", objectChange.changedFields[0])
-                assertEquals("booleanField", objectChange.changedFields[1])
+
+                assertContains(objectChange.changedFields, Sample::stringField.name)
+                assertContains(objectChange.changedFields, Sample::booleanField.name)
 
                 assertEquals("Baz", objectChange.obj!!.stringField)
                 assertEquals(false, objectChange.obj!!.booleanField)

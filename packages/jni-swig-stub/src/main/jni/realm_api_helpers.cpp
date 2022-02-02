@@ -50,7 +50,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                 }
                 jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                      on_change_method,
-                                     reinterpret_cast<jlong>(changes->clone()));
+                                     reinterpret_cast<jlong>(changes));
             },
             [](void *userdata,
                const realm_async_error_t *async_error) {
@@ -89,7 +89,7 @@ register_list_notification_cb(realm_list_t *list, jobject callback) {
                 }
                 jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                      on_change_method,
-                                     reinterpret_cast<jlong>(changes->clone()));
+                                     reinterpret_cast<jlong>(changes));
             },
             [](void *userdata,
                const realm_async_error_t *async_error) {
@@ -126,7 +126,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
                 }
                 jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                      on_change_method,
-                                     reinterpret_cast<jlong>(changes->clone()));
+                                     reinterpret_cast<jlong>(changes));
             },
             [](void *userdata,
                const realm_async_error_t *async_error) {

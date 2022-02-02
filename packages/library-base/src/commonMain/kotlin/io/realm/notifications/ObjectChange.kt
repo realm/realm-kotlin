@@ -49,12 +49,10 @@ internal class InitialObjectImpl<O : RealmObject>(override val obj: O?) : Initia
 
 internal class UpdatedObjectImpl<O : RealmObject>(
     override val obj: O?,
-    changedFields: () -> Array<String>,
+    override val changedFields: Array<String>
 ) : UpdatedObject<O> {
     override val state: ObjectChange.State
         get() = ObjectChange.State.UPDATED
-
-    override val changedFields: Array<String> by lazy { changedFields() }
 }
 
 internal class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {

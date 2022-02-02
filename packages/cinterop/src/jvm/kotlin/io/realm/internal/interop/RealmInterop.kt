@@ -456,7 +456,7 @@ actual object RealmInterop {
                 obj.cptr(),
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                     }
                 }
             ),
