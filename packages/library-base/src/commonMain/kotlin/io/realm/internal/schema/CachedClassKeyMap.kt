@@ -41,6 +41,7 @@ interface ClassMetadata {
         ?: throw IllegalArgumentException("Object of type '$className doesn't have a property named '$propertyName'")
 }
 
+// FIXME We are actually not lazy loading these right now
 /**
  * Schema metadata implementation that postpones class key lookup until first access.
  *
@@ -48,8 +49,13 @@ interface ClassMetadata {
  * only looked up on first access.
  */
 class CachedSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadata {
-    val classMap: Map<String, CachedClassMetadata> by lazy {
-        RealmInterop.realm_get_class_keys(dbPointer).map<ClassKey, Pair<String, CachedClassMetadata>> {
+    // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
+    //  and 'by lazy' initializers can throw
+    //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
+    val classMap: Map<String, CachedClassMetadata>
+
+    init {
+        classMap = RealmInterop.realm_get_class_keys(dbPointer).map<ClassKey, Pair<String, CachedClassMetadata>> {
             val classInfo = RealmInterop.realm_get_class(dbPointer, it)
             println("Looking up class info for $this ${classInfo.name}")
             classInfo.name to CachedClassMetadata(dbPointer, classInfo.name, classInfo.key)
@@ -59,14 +65,20 @@ class CachedSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadat
     override fun get(className: String): CachedClassMetadata? = classMap[className]
 }
 
+// FIXME We are actually not lazy loading these right now
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
 class CachedClassMetadata(dbPointer: NativePointer, override val className: String, val classKey: ClassKey) : ClassMetadata {
-    val propertyMap: Map<String, PropertyKey> by lazy {
+    // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
+    //  and 'by lazy' initializers can throw
+    //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
+    val propertyMap: Map<String, PropertyKey>
+
+    init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
         println("Looking up property info for ${classInfo.name}")
-        RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyKey>> { it.name to it.key }.toMap()
+        propertyMap = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyKey>> { it.name to it.key }.toMap()
     }
 
     override fun get(propertyName: String): PropertyKey? = propertyMap[propertyName]
