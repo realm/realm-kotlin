@@ -111,16 +111,26 @@ class RealmObjectNotificationsTests : NotificationTests {
             }
             c.receive().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
-                objectChange.changedFields.size
+
+                assertEquals(1, objectChange.changedFields.size)
+                assertEquals("stringField", objectChange.changedFields[0])
+
                 assertEquals("Bar", objectChange.obj!!.stringField)
             }
 
             obj.update {
                 stringField = "Baz"
+                booleanField = false
             }
             c.receive().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
+
+                assertEquals(2, objectChange.changedFields.size)
+                assertEquals("stringField", objectChange.changedFields[0])
+                assertEquals("booleanField", objectChange.changedFields[1])
+
                 assertEquals("Baz", objectChange.obj!!.stringField)
+                assertEquals(false, objectChange.obj!!.booleanField)
             }
 
             observer.cancel()
