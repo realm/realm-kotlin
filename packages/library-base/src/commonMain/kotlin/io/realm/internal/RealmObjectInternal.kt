@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
 import io.realm.isValid
 import io.realm.notifications.DeletedObjectImpl
@@ -94,7 +95,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer?,
+        change: NativePointer,
         channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
         val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
@@ -104,16 +105,30 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             channel.close()
             null
         } else {
-            if (change == null) {
+            val modifiedPropertiesCount = RealmInterop.realm_object_changes_get_num_modified_properties(change)
+
+            if (modifiedPropertiesCount == 0L) {
                 channel.trySend(InitialObjectImpl(frozenObject))
             } else {
                 channel.trySend(
-                    UpdatedObjectImpl(
-                        frozenObject,
-                        frozenRealm.dbPointer,
-                        `$realm$TableName`!!,
-                        change
-                    )
+                    UpdatedObjectImpl(frozenObject) {
+                        val changedPropertyKeys: List<PropertyKey> =
+                            RealmInterop.realm_object_changes_get_modified_properties(
+                                change,
+                                modifiedPropertiesCount
+                            )
+
+                        val changedPropertyNames: List<String> =
+                            changedPropertyKeys.map { propertyKey: PropertyKey ->
+                                RealmInterop.realm_get_property(
+                                    frozenRealm.dbPointer,
+                                    `$realm$TableName`!!,
+                                    propertyKey
+                                ).name
+                            }
+
+                        changedPropertyNames.toTypedArray()
+                    }
                 )
             }
         }

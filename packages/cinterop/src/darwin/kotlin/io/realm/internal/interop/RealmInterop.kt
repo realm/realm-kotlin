@@ -1120,11 +1120,18 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
-        val limit = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr())
+    actual fun realm_object_changes_get_num_modified_properties(change: NativePointer): Long {
+        return realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr()).toLong()
+    }
+
+    actual fun realm_object_changes_get_modified_properties(change: NativePointer, propertyCount: Long): List<PropertyKey> {
+        if (propertyCount == 0L) {
+            return emptyList()
+        }
+
         memScoped {
-            val propertyKeys = allocArray<LongVar>(limit.toInt())
-            val propertyCount = realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, limit)
+            val propertyKeys = allocArray<LongVar>(propertyCount)
+            realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, propertyCount.toULong())
 
             return (0 until propertyCount.toInt()).map { PropertyKey(propertyKeys[it].toLong()) }
         }

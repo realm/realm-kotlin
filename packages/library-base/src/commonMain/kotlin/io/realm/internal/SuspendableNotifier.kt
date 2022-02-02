@@ -100,9 +100,6 @@ internal class SuspendableNotifier(
                     ?: error("Cannot listen for changes on a deleted reference")
                 val interopCallback: io.realm.internal.interop.Callback =
                     object : io.realm.internal.interop.Callback {
-                        // The first element is a
-                        var initialDelivered = false
-
                         override fun onChange(change: NativePointer) {
                             // FIXME How to make sure the Realm isn't closed when handling this?
 
@@ -118,10 +115,9 @@ internal class SuspendableNotifier(
                             // the fine-grained notification data might be out of sync.
                             liveRef.emitFrozenUpdate(
                                 frozenRealm,
-                                if (initialDelivered) change else null,
+                                change,
                                 this@callbackFlow
                             )?.let {
-                                initialDelivered = true
                                 checkResult(it)
                             }
                         }

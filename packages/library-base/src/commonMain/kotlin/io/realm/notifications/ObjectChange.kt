@@ -1,9 +1,6 @@
 package io.realm.notifications
 
 import io.realm.RealmObject
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.PropertyKey
-import io.realm.internal.interop.RealmInterop
 
 sealed interface ObjectChange<O : RealmObject> {
     enum class State {
@@ -52,28 +49,12 @@ internal class InitialObjectImpl<O : RealmObject>(override val obj: O?) : Initia
 
 internal class UpdatedObjectImpl<O : RealmObject>(
     override val obj: O?,
-    dbPointer: NativePointer,
-    tableName: String,
-    change: NativePointer,
+    changedFields: () -> Array<String>,
 ) : UpdatedObject<O> {
     override val state: ObjectChange.State
         get() = ObjectChange.State.UPDATED
 
-    override val changedFields: Array<String> by lazy {
-        val changedPropertyKeys: List<PropertyKey> =
-            RealmInterop.realm_object_changes_get_modified_properties(change)
-
-        val changedPropertyNames: List<String> =
-            changedPropertyKeys.map { propertyKey: PropertyKey ->
-                RealmInterop.realm_get_property(
-                    dbPointer,
-                    tableName,
-                    propertyKey
-                ).name
-            }
-
-        changedPropertyNames.toTypedArray()
-    }
+    override val changedFields: Array<String> by lazy { changedFields() }
 }
 
 internal class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {

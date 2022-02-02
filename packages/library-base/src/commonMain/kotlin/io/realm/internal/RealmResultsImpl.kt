@@ -107,7 +107,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer?,
+        change: NativePointer,
         channel: SendChannel<RealmResultsImpl<E>>
     ): ChannelResult<Unit>? {
         val frozenResult = freeze(frozenRealm)
