@@ -1,6 +1,9 @@
 package io.realm.notifications
 
 import io.realm.RealmObject
+import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyKey
+import io.realm.internal.interop.RealmInterop
 
 sealed interface ObjectChange<O : RealmObject> {
     enum class State {
@@ -42,20 +45,38 @@ interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
 }
 interface DeletedObject<O : RealmObject> : ObjectChange<O>
 
-internal class InitialObjectImpl<O : RealmObject>(override val obj: O?): InitialObject<O> {
+internal class InitialObjectImpl<O : RealmObject>(override val obj: O?) : InitialObject<O> {
     override val state: ObjectChange.State
         get() = ObjectChange.State.INITIAL
 }
 
-internal class UpdatedObjectImpl<O : RealmObject>(override val obj: O?): UpdatedObject<O> {
+internal class UpdatedObjectImpl<O : RealmObject>(
+    override val obj: O?,
+    dbPointer: NativePointer,
+    tableName: String,
+    change: NativePointer,
+) : UpdatedObject<O> {
     override val state: ObjectChange.State
         get() = ObjectChange.State.UPDATED
 
-    override val changedFields: Array<String>
-        get() = TODO("Not yet implemented")
+    override val changedFields: Array<String> by lazy {
+        val changedPropertyKeys: List<PropertyKey> =
+            RealmInterop.realm_object_changes_get_modified_properties(change)
+
+        val changedPropertyNames: List<String> =
+            changedPropertyKeys.map { propertyKey: PropertyKey ->
+                RealmInterop.realm_get_property(
+                    dbPointer,
+                    tableName,
+                    propertyKey
+                ).name
+            }
+
+        changedPropertyNames.toTypedArray()
+    }
 }
 
-internal class DeletedObjectImpl<O : RealmObject>: DeletedObject<O> {
+internal class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {
     override val state: ObjectChange.State
         get() = ObjectChange.State.DELETED
 

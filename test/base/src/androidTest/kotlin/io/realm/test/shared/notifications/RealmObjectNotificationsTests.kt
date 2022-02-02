@@ -111,6 +111,7 @@ class RealmObjectNotificationsTests : NotificationTests {
             }
             c.receive().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
+                objectChange.changedFields.size
                 assertEquals("Bar", objectChange.obj!!.stringField)
             }
 

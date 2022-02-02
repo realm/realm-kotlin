@@ -193,6 +193,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
 
+%apply int64_t* OUTPUT {realm_property_key_t* out_modified};
+
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};
 // Type map for int64_t has an erroneous cast, don't know how to fix it except with this

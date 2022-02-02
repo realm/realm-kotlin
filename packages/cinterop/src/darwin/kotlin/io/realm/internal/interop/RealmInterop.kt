@@ -20,6 +20,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.RealmInterop.propertyInfo
+import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -37,6 +38,7 @@ import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValue
+import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
@@ -1116,6 +1118,34 @@ actual object RealmInterop {
             ),
             managed = false
         )
+    }
+
+    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
+        val limit = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr())
+        memScoped {
+            val propertyKeys = allocArray<LongVar>(limit.toInt())
+            val propertyCount = realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, limit)
+
+            return (0 until propertyCount.toInt()).map { PropertyKey(propertyKeys[it].toLong()) }
+        }
+    }
+
+    actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {
+        memScoped {
+            val propertyInfo = alloc<realm_property_info_t>()
+            checkedBooleanResult(realm_wrapper.realm_get_property(realm.cptr(), classInfo(realm, className).key.toUInt(), propertyKey.key, propertyInfo.ptr))
+
+            return PropertyInfo(
+                name = propertyInfo.name.safeKString("name"),
+                publicName = propertyInfo.public_name?.toKString(),
+                type = PropertyType.from(propertyInfo.type.toInt()),
+                collectionType = CollectionType.from(propertyInfo.collection_type.toInt()),
+                linkTarget = propertyInfo.link_target?.toKString(),
+                linkOriginPropertyName = propertyInfo.link_origin_property_name?.toKString(),
+                key = PropertyKey(propertyInfo.key),
+                flags = propertyInfo.flags
+            )
+        }
     }
 
     // TODO sync config shouldn't be null

@@ -97,16 +97,24 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         change: NativePointer?,
         channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
-        val f: RealmObjectInternal? = this.freeze(frozenRealm)
-        return if (f == null) {
+        val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
+
+        return if (frozenObject == null) {
             channel.trySend(DeletedObjectImpl())
             channel.close()
             null
         } else {
-            if(change == null) {
-                channel.trySend(InitialObjectImpl(f))
+            if (change == null) {
+                channel.trySend(InitialObjectImpl(frozenObject))
             } else {
-                channel.trySend(UpdatedObjectImpl(f))
+                channel.trySend(
+                    UpdatedObjectImpl(
+                        frozenObject,
+                        frozenRealm.dbPointer,
+                        `$realm$TableName`!!,
+                        change
+                    )
+                )
             }
         }
     }

@@ -11,7 +11,6 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -117,11 +116,14 @@ internal class SuspendableNotifier(
                             notifyRealmChanged(frozenRealm)
                             // Notifications need to be delivered with the version they where created on, otherwise
                             // the fine-grained notification data might be out of sync.
-                            liveRef.emitFrozenUpdate(frozenRealm, if(initialDelivered) change else null, this@callbackFlow)
-                                ?.let {
-                                    initialDelivered = true
-                                    checkResult(it)
-                                }
+                            liveRef.emitFrozenUpdate(
+                                frozenRealm,
+                                if (initialDelivered) change else null,
+                                this@callbackFlow
+                            )?.let {
+                                initialDelivered = true
+                                checkResult(it)
+                            }
                         }
                     }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
                 val newToken =

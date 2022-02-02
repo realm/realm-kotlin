@@ -456,7 +456,7 @@ actual object RealmInterop {
                 obj.cptr(),
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(pointer)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
                     }
                 }
             ),
@@ -492,6 +492,33 @@ actual object RealmInterop {
                 }
             ),
             managed = false
+        )
+    }
+
+    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
+        val propertyCount = realmc.realm_object_changes_get_num_modified_properties(change.cptr())
+        if (propertyCount == 0L) {
+            return emptyList()
+        }
+
+        val keys = LongArray(propertyCount.toInt())
+        realmc.realm_object_changes_get_modified_properties(change.cptr(), keys, propertyCount)
+        return keys.map { PropertyKey(it) }
+    }
+
+    actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {
+        val pinfo = realm_property_info_t()
+        realmc.realm_get_property(realm.cptr(), classInfo(realm, className).key, propertyKey.key, pinfo)
+
+        return PropertyInfo(
+            name = pinfo.name,
+            publicName = pinfo.public_name,
+            type = PropertyType.from(pinfo.type),
+            collectionType = CollectionType.from(pinfo.collection_type),
+            linkTarget = pinfo.link_target,
+            linkOriginPropertyName = pinfo.link_origin_property_name,
+            key = PropertyKey(pinfo.key),
+            flags = pinfo.flags
         )
     }
 
