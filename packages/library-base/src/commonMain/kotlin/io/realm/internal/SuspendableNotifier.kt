@@ -45,7 +45,7 @@ internal class SuspendableNotifier(
 
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
-    private val _realmChanged = MutableSharedFlow<RealmReference>(
+    private val _realmChanged = MutableSharedFlow<FrozenRealmReference>(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
         extraBufferCapacity = 1
     )
@@ -78,7 +78,7 @@ internal class SuspendableNotifier(
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    internal fun realmChanged(): Flow<RealmReference> {
+    internal fun realmChanged(): Flow<FrozenRealmReference> {
         return _realmChanged.asSharedFlow()
     }
 

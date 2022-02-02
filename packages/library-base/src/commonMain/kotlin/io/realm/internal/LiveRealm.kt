@@ -50,12 +50,12 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         LiveRealmReference(this, dbPointer)
     }
 
-    private val _snapshot: AtomicRef<RealmReference?> = atomic(null)
-    internal val snapshot: RealmReference
+    private val _snapshot: AtomicRef<FrozenRealmReference?> = atomic(null)
+    internal val snapshot: FrozenRealmReference
         get() {
             if (_snapshot.value == null) {
-                val snapshot = FrozenRealmReference(owner, RealmInterop.realm_freeze(realmReference.dbPointer), realmReference.schemaMetadata)
-                versionTracker.trackNewAndCloseExpiredReferences(snapshot)
+                val snapshot = realmReference.snapshot(owner)
+                versionTracker.trackAndCloseExpiredReferences(snapshot)
                 _snapshot.value = snapshot
             }
             return _snapshot.value ?: sdkError("Snapshot should never be null")
@@ -78,7 +78,7 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         } else {
             log.debug("onSchemaChanged: $this $configuration")
         }
-        realmReference.refreshSchema()
+        realmReference.refreshSchemaMetadata()
     }
 
     internal fun unregisterCallbacks() {

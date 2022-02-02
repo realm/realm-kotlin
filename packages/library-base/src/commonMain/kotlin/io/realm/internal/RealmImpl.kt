@@ -39,36 +39,32 @@ internal class RealmImpl private constructor(
     internal val writer =
         SuspendableWriter(this, configuration.writeDispatcher)
 
-    private var updatableRealm: AtomicRef<RealmReference> = atomic(LiveRealmReference(this, dbPointer))
-
+    private var _realmReference: AtomicRef<RealmReference> = atomic(LiveRealmReference(this, dbPointer))
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
      *
      * NOTE: As this is updated to a new frozen version on notifications about changes in the
      * underlying realm, care should be taken not to spread operations over different references.
      */
-    internal override var realmReference: RealmReference
-        get() = updatableRealm.value
-        set(value) {
-            updatableRealm.value = value
-        }
+    // TODO Could just be FrozenRealmReference but fails to close all references if full
+    //  initialization is moved to the initialization of updatableRealm ... maybe a caveat with
+    //  atomicfu
+    internal override var realmReference: RealmReference by _realmReference
 
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
     //  would require us to sync that up. Didn't address this as we already have a todo on fixing
-    //  constructing the initial frozen version in the init block.
+    //  constructing the initial frozen version in the initialization of updatableRealm.
     private val versionTracker = VersionTracker(log)
 
     init {
         // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
         //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
         //  frozen pointer and close the live one.
-        val initialLiveDbPointer = realmReference.dbPointer
-        val frozenRealm = RealmInterop.realm_freeze(initialLiveDbPointer)
+        val frozenReference = (realmReference as LiveRealmReference).snapshot(this)
+        versionTracker.trackAndCloseExpiredReferences(frozenReference)
         realmReference.close()
-        val frozenReference = FrozenRealmReference(this, frozenRealm)
         realmReference = frozenReference
-        versionTracker.trackNewAndCloseExpiredReferences(frozenReference)
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
             realmFlow.emit(this@RealmImpl)
@@ -151,8 +147,9 @@ internal class RealmImpl private constructor(
         TODO("Not yet implemented")
     }
 
-    private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
+    private suspend fun updateRealmPointer(newRealmReference: FrozenRealmReference) {
         realmPointerMutex.withLock {
+            versionTracker.trackAndCloseExpiredReferences()
             val newVersion = newRealmReference.version()
             log.debug("Updating Realm version: $this $newRealmReference ${version()} -> $newVersion")
             // If we advance to a newer version then we should keep track of the preceding one,

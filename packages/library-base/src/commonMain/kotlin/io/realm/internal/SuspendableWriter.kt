@@ -57,7 +57,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
     }
 
     // Currently just for internal-only usage in test, thus API is not polished
-    suspend fun updateSchema(schema: RealmSchemaImpl): RealmReference {
+    suspend fun updateSchema(schema: RealmSchemaImpl): FrozenRealmReference {
         return withContext(dispatcher) {
             transactionMutex.withLock {
                 realm.log.debug("Updating schema: $schema")
@@ -71,12 +71,12 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                 // - onRealmChanged - updating the realm.snapshot to also point to the latest key cache
                 // Seems like order is not guaranteed, but it is synchroneous, so updating snapshot
                 // in both callbacks should ensure that we have the right snapshot here
-                FrozenRealmReference(owner, RealmInterop.realm_freeze(realm.realmReference.dbPointer), realm.realmReference.schemaMetadata)
+                realm.snapshot
             }
         }
     }
 
-    suspend fun <R> write(block: MutableRealm.() -> R): Pair<RealmReference, R> {
+    suspend fun <R> write(block: MutableRealm.() -> R): Pair<FrozenRealmReference, R> {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
         return withContext(dispatcher) {
             var result: R

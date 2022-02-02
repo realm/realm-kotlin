@@ -33,10 +33,11 @@ internal class VersionTracker(val log: RealmLog) {
     // the realm when the RealmReference is no longer referenced anymore.
     private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())
 
-    fun trackNewAndCloseExpiredReferences(realmReference: FrozenRealmReference) {
-        val references = mutableSetOf<Pair<NativePointer, WeakReference<RealmReference>>>(
-            Pair(realmReference.dbPointer, WeakReference(realmReference))
-        )
+    fun trackAndCloseExpiredReferences(realmReference: FrozenRealmReference? = null) {
+        val references = mutableSetOf<Pair<NativePointer, WeakReference<RealmReference>>>()
+        realmReference?.let {
+            references.add(Pair(realmReference.dbPointer, WeakReference(it)))
+        }
         intermediateReferences.value.forEach { entry ->
             val (pointer, ref) = entry
             if (ref.get() == null) {

@@ -4,7 +4,6 @@ import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.CachedSchemaMetadata
-import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.internal.schema.SchemaMetadata
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -61,16 +60,28 @@ data class FrozenRealmReference(
     override val owner: BaseRealmImpl,
     override val dbPointer: NativePointer,
     override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer),
-) : RealmReference {
-    val schema: RealmSchemaImpl by lazy { RealmSchemaImpl.fromRealm(dbPointer) }
-}
+) : RealmReference
 
+/**
+ * A **live realm reference** linking to the underlying live SharedRealm with the option to update
+ * schema metadata when the schema has changed.
+ */
 data class LiveRealmReference(override val owner: BaseRealmImpl, override val dbPointer: NativePointer) : RealmReference {
     private val _schemaMetadata: AtomicRef<SchemaMetadata> = atomic(CachedSchemaMetadata(dbPointer))
     override val schemaMetadata: SchemaMetadata
         get() = _schemaMetadata.value
 
-    fun refreshSchema() {
+    /**
+     * Returns a frozen realm reference of the current live realm reference.
+     */
+    fun snapshot(owner: BaseRealmImpl): FrozenRealmReference {
+        return FrozenRealmReference(owner, RealmInterop.realm_freeze(dbPointer), schemaMetadata)
+    }
+
+    /**
+     * Refreshes the realm reference's cached schema meta data from the current live realm reference.
+     */
+    fun refreshSchemaMetadata() {
         _schemaMetadata.value = CachedSchemaMetadata(dbPointer)
     }
 }

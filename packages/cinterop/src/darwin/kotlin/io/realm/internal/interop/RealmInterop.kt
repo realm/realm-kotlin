@@ -548,7 +548,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_update_schema(realm: NativePointer, schema: NativePointer) {
-        TODO()
+        checkedBooleanResult(realm_wrapper.realm_update_schema(realm.cptr(), schema.cptr()))
     }
 
     actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {

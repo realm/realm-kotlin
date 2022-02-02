@@ -20,12 +20,10 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.schema.SchemaVariations
-import io.realm.internal.RealmObjectInternal
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.schema.RealmClassImpl
 import io.realm.log.LogLevel
-import io.realm.query
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
 import io.realm.schema.RealmStorageType
@@ -33,7 +31,6 @@ import io.realm.schema.ValuePropertyType
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -192,25 +189,34 @@ public class RealmSchemaTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     // We don't have any way to verify that the schema is actually changed since we cannot open
-    // realms in dynamic mode, hence schema will only get updated it's (anyway stable) keys and not
-    // see any new classes/properties
-    @Ignore
+    // realms in dynamic mode, hence schema will only get it's (anyway stable!?) keys updated and
+    // not see any new classes/properties. Thus only verifying that we have an updated key cache
+    // instance
     fun schemaChanged() = runBlocking {
         val schema = realm.schema() as io.realm.internal.schema.RealmSchemaImpl
         val schemaVariationsDescriptor: RealmClassImpl = schema["SchemaVariations"]!!
         val sampleDescriptor: RealmClassImpl = schema["Sample"]!!
-        val updatedSampleDescriptor = RealmClassImpl(
-            sampleDescriptor.cinteropClass,
-            sampleDescriptor.cinteropProperties +
-                io.realm.internal.interop.PropertyInfo(
-                    "NEW_SAMPLE_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING
-                )
-        )
+
+        // Get an object from the initial schema
+        val sample1 = realm.write {
+            copyToRealm(Sample())
+        }
+        // And grab the class metadata instance
+        val classCache = (sample1 as io.realm.internal.RealmObjectInternal).`$realm$metadata`
+
+        val sample2 = realm.write {
+            copyToRealm(Sample())
+        }
+
+        // Assert that this is the same for subsequent objects of the same type
+        assertTrue(classCache === (sample2 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
+
+        // Update the schema
         (realm as io.realm.internal.RealmImpl).updateSchema(
             io.realm.internal.schema.RealmSchemaImpl(
                 listOf(
                     schemaVariationsDescriptor,
-                    updatedSampleDescriptor,
+                    sampleDescriptor,
                     RealmClassImpl(
                         io.realm.internal.interop.ClassInfo("NEW_CLASS", numProperties = 1),
                         listOf(io.realm.internal.interop.PropertyInfo("NEW_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING))
@@ -219,21 +225,13 @@ public class RealmSchemaTests {
             )
         )
 
-        val newSample = realm.write {
+        // And verify that new objects have a new class meta data instance
+        val sample3 = realm.write {
             copyToRealm(Sample())
         }
-
-        io.realm.internal.RealmObjectHelper.setValue(newSample as RealmObjectInternal, "NEW_SAMPLE_PROPERTY", "TEST")
-        assertEquals("TEST", io.realm.internal.RealmObjectHelper.getValue<String>(newSample as RealmObjectInternal, "NEW_SAMPLE_PROPERTY"))
-
-        val newSampleFromRealm = realm.query<Sample>().find()[0]
-        assertEquals("TEST", io.realm.internal.RealmObjectHelper.getValue<String>(newSampleFromRealm as RealmObjectInternal, "NEW_SAMPLE_PROPERTY"))
-
-        assertEquals(3, realm.schema().classes.size)
-        // This test doesn't work all of the times as NotifierRealm schema doesn't seem to be
-        // updated, so if the realm reference from the notifier is received first in the Realm then
-        // the schema will be off.
-        fail()
-        Unit
+        assertFalse(classCache === (sample3 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
+        // and that the old frozen objects still have the original class meta data instance
+        assertTrue(classCache === (sample1 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
+        assertTrue(classCache === (sample2 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
     }
 }
