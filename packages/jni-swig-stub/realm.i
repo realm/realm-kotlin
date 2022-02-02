@@ -193,8 +193,6 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
 
-%apply int64_t* INOUT {realm_property_key_t* out_modified};
-
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};
 // Type map for int64_t has an erroneous cast, don't know how to fix it except with this
@@ -218,7 +216,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*};
+%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*};
 
 %apply uint32_t[] {realm_class_key_t*};
 
