@@ -24,6 +24,7 @@ import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.OS_NAME
 import io.realm.internal.platform.OS_VERSION
 import io.realm.internal.platform.RUNTIME
+import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
