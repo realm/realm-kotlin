@@ -19,7 +19,7 @@ fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
     // Need to freeze value as it is used inside the client's init lambda block, which also
     // freezes captured objects too, see:
     // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
-    val frozenTimeout = timeoutMs.freeze()
+    val frozenTimeout = timeoutMs.freeze() // MM: Doesn't catch user reference
     return createPlatformClient {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
 

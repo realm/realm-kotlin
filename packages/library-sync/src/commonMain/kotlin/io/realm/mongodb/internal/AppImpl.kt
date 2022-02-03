@@ -59,7 +59,7 @@ internal class AppImpl(
                 Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
                 channelResultCallback<NativePointer, User>(channel) { userPointer ->
                     UserImpl(userPointer, this)
-                }.freeze()
+                }.freeze() // MM: Catches AppImpl instance, leading to configuration and hence user callbacks
             )
             return channel.receive()
                 .getOrThrow()

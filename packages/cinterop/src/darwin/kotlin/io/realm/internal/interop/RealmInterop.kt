@@ -19,12 +19,12 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.propertyInfo
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.util.freezeOnOldMM
 import io.realm.mongodb.AppException
 import io.realm.mongodb.SyncException
 import kotlinx.atomicfu.AtomicRef
@@ -96,7 +96,6 @@ import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
 import kotlin.collections.set
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
@@ -130,7 +129,7 @@ class CPointerWrapper(ptr: CPointer<out CPointed>?, managed: Boolean = true) : N
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(ptr.freeze()) {
+        createCleaner(ptr.freezeOnOldMM()) {
             realm_release(it)
         }
     } else null
@@ -1204,7 +1203,7 @@ actual object RealmInterop {
                 val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
                 userDataLogCallback.log(logLevel.toShort(), message?.toKString())
             },
-            StableRef.create(callback.freeze()).asCPointer(),
+            StableRef.create(callback.freezeOnOldMM()).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
         )
     }
@@ -1420,7 +1419,7 @@ actual object RealmInterop {
         dispatcher: CoroutineDispatcher
     ): CPointer<realm_scheduler_t>? {
         printlntid("createSingleThreadDispatcherScheduler")
-        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher).freeze()
+        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher).freezeOnOldMM()
 
         return realm_wrapper.realm_scheduler_new(
             // userdata: kotlinx.cinterop.CValuesRef<*>?,
@@ -1604,7 +1603,7 @@ actual object RealmInterop {
             scope.launch(
                 scope.coroutineContext,
                 CoroutineStart.DEFAULT,
-                function.freeze()
+                function.freezeOnOldMM()
             )
         }
     }

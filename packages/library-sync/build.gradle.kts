@@ -58,7 +58,6 @@ kotlin {
                 implementation(project(":cinterop"))
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}") {
-                    version { strictly(Versions.coroutines) }
                 }
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
@@ -68,7 +67,6 @@ kotlin {
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
 
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }

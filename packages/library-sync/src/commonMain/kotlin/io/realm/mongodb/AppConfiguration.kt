@@ -141,7 +141,7 @@ interface AppConfiguration {
                         appLogger.debug(message)
                     }
                 }
-            ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+            ).freeze() // MM: Catches userLoggers // Kotlin network client needs to be frozen before passed to the C-API
 
             return AppConfigurationImpl(
                 appId = appId,

@@ -5,7 +5,7 @@ import io.realm.Cancellable
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.platform.freeze
+import io.realm.internal.util.freezeOnOldMM
 import io.realm.internal.platform.runBlocking
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
@@ -116,7 +116,7 @@ internal class SuspendableNotifier(
                             liveRef.emitFrozenUpdate(frozenRealm, change, this@callbackFlow)
                                 ?.let { checkResult(it) }
                         }
-                    }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
+                    }.freezeOnOldMM()
                 val newToken =
                     NotificationToken<Callback<T>>(
                         // FIXME What is this callback for anyway?

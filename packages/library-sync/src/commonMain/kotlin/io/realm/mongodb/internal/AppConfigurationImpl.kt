@@ -45,7 +45,7 @@ internal class AppConfigurationImpl(
         platform = "$OS_NAME/$RUNTIME",
         platformVersion = OS_VERSION,
         sdkVersion = io.realm.internal.SDK_VERSION
-    ).freeze()
+    )//.freeze() // MM: Is this needed at all?
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

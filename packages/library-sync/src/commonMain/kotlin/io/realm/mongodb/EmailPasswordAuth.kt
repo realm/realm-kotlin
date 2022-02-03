@@ -33,7 +33,7 @@ class EmailPasswordAuth(
                 Validation.checkEmpty(password, "password"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }.freeze() // MM: Doesn't catch user references
             )
             return channel.receive()
                 .getOrThrow()

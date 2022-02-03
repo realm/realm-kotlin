@@ -47,7 +47,7 @@ internal class UserImpl(
                 nativePointer,
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }.freeze() // MM: Doesn't catch user reference
             )
             return channel.receive()
                 .getOrThrow()

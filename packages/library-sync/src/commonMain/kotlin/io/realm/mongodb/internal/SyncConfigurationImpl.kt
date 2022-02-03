@@ -43,7 +43,7 @@ internal class SyncConfigurationImpl(
                 override fun onSyncError(pointer: NativePointer, throwable: SyncException) {
                     errorHandler.onError(SyncSessionImpl(pointer), throwable)
                 }
-            }.freeze()
+            }.freeze() // MM: Catches errorHandler
         )
         RealmInterop.realm_config_set_sync_config(configuration.nativeConfig, nativeSyncConfig)
     }
