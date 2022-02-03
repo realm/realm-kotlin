@@ -1,20 +1,18 @@
 package io.realm.test.shared
 
-import io.realm.CompactOnLaunchCallback
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.platformFileSystem
 import okio.Path.Companion.toPath
-import kotlin.test.Test
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-
 
 class CompactOnLaunchTests {
 
@@ -50,11 +48,11 @@ class CompactOnLaunchTests {
     @Test
     fun defaultCallback_boundaries() {
         val callback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK
-        assertFalse(callback.invoke(50*1024*1024, 40*1024*1024))
-        assertFalse(callback.invoke(50*1024*1024+8, 25*1024*1024))
-        assertFalse(callback.invoke(50*1024*1024+8, 25*1024*1024+3))
-        assertTrue(callback.invoke(50*1024*1024+8, 25*1024*1024+4))
-        assertTrue(callback.invoke(50*1024*1024+8, 25*1024*1024+5))
+        assertFalse(callback.invoke(50 * 1024 * 1024, 40 * 1024 * 1024))
+        assertFalse(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024))
+        assertFalse(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 3))
+        assertTrue(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 4))
+        assertTrue(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 5))
     }
 
     @Test
@@ -71,20 +69,15 @@ class CompactOnLaunchTests {
 
     @Test
     fun compact_populatedRealm() {
-
     }
 
     @Test
     fun compact_encryptedRealm() {
-
     }
 
     @Test
     fun compact_throwsInCallback() {
-
     }
-
-
 
 //    fun compactRealm_encryptedEmptyRealm() {
 //        val realmConfig: RealmConfiguration =

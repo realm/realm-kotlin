@@ -27,21 +27,13 @@ import kotlin.reflect.KClass
  *
  * Note that compacting a file can take a while, so compacting should generally only be done when
  * opening a realm file on a background thread.
+ *
+ * @param totalBytes the total file size (data + free space).
+ * @param usedBytes the total bytes used by data in the file.
+ * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
+ * compaction will be skipped.
  */
-// FIXME: Proguard
-typealias CompactOnLaunchCallback = (totalBytes: Long, usedBytes:Long) -> Boolean
-//interface CompactOnLaunchCallback {
-//    /**
-//     * This method determines if the Realm file should be compacted before opened and returned to the user. It is passed
-//     * the total file size (data + free space) and the bytes used by data in the file.
-//     *
-//     * @param totalBytes the total file size (data + free space).
-//     * @param usedBytes the total bytes used by data in the file.
-//     * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
-//     * compaction will be skipped.
-//     */
-//    fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
-//}
+typealias CompactOnLaunchCallback = (totalBytes: Long, usedBytes: Long) -> Boolean
 
 /**
  * Configuration for log events created by a Realm instance.

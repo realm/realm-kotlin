@@ -55,7 +55,7 @@ interface Realm : TypedRealm {
          * reclaimed.
          * @see [RealmConfiguration.Builder.compactOnLaunch]
          */
-        public val DEFAULT_COMPACT_ON_LAUNCH_CALLBACK: CompactOnLaunchCallback = object: CompactOnLaunchCallback {
+        public val DEFAULT_COMPACT_ON_LAUNCH_CALLBACK: CompactOnLaunchCallback = object : CompactOnLaunchCallback {
             override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
                 val thresholdSize = (50 * 1024 * 1024).toLong()
                 return totalBytes > thresholdSize && usedBytes.toDouble() / totalBytes.toDouble() >= 0.5
