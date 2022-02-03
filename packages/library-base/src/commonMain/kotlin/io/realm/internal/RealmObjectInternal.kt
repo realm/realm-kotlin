@@ -109,8 +109,6 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             val modifiedPropertyCount = RealmInterop.realm_object_changes_get_num_modified_properties(change)
 
             if (modifiedPropertyCount == 0L) {
-                @Suppress("ForbiddenComment")
-                // TODO: Can we identify initial change as a 0-modified-properties changeset?
                 channel.trySend(InitialObjectImpl(frozenObject))
             } else {
                 channel.trySend(
@@ -127,8 +125,6 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         }
     }
 
-    @Suppress("ForbiddenComment")
-    // TODO: Optimize. Cannot be lazy evaluated because the notification pointer provided by the c-api is stack allocated.
     private fun getChangedFieldNames(
         frozenRealm: RealmReference,
         change: NativePointer,
@@ -138,6 +134,8 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             change,
             modifiedPropertiesCount
         ).map { propertyKey: PropertyKey ->
+            @Suppress("ForbiddenComment")
+            // TODO: Optimize. Once https://github.com/realm/realm-kotlin/pull/596 is merged we could extract the field names from ClassMetadata
             RealmInterop.realm_get_property(
                 frozenRealm.dbPointer,
                 `$realm$TableName`!!,
