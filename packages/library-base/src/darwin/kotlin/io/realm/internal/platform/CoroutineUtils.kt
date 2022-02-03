@@ -18,13 +18,16 @@ public actual fun <T> runBlocking(
  */
 actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     // TODO Find a way to report incompatible coroutine library and memory model here:
-    //  - Works for base/sync with:
-    //    - Coroutine native-mt variants and either old or new memory model
-    //  Works for base with:
-    //    - Coroutine 1.6.0 and new memory model
-    //  Works for sync with:
-    //    - Coroutine 1.6.0 and new memory model and -Pkotlin.native.binary.freezing=disabled
-    //      (required for ktor to work, but not a requirement for our library to work after this PR)
+    //  Supported scenarios are:
+    //  - Coroutine 1.6.0-native-mt:
+    //    - base/sync works with both (old/new) memory models
+    //  - Coroutine 1.6.0 and new memory model
+    //    - base works without `kotlin.native.binary.freezing=disabled` from this PR
+    //    - sync work but only with `kotlin.native.binary.freezing=disabled` as this is required by
+    //      ktor
+    //  Not supported:
+    //  - Coroutine 1.6.0 and old memory model
+    //
     //  Could maybe reuse ktor check from with our custom freezeOnOldMM :thinking:
     //  https://github.com/ktorio/ktor/blob/1.6.5/ktor-client/ktor-client-core/posix/src/io/ktor/client/utils/CoroutineUtilsPosix.kt
     //  or just catch and rethrow the below 1.6.0 exception with an appropriate error message:
