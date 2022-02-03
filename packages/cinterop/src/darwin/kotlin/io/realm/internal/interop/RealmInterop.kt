@@ -1133,6 +1133,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_collection_changes_get_changes(change: NativePointer): CollectionChanges {
+
+    }
+
     actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {
         memScoped {
             val propertyInfo = alloc<realm_property_info_t>()

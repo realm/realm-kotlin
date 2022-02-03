@@ -507,6 +507,74 @@ actual object RealmInterop {
         return keys.map { PropertyKey(it) }
     }
 
+    actual fun realm_collection_changes_get_changes(change: NativePointer): CollectionChanges {
+        val insertCount = LongArray(1)
+        val deleteCount = LongArray(1)
+        val modificationCount = LongArray(1)
+        val movesCount = LongArray(1)
+
+        realmc.realm_collection_changes_get_num_changes(
+            change.cptr(),
+            deleteCount,
+            insertCount,
+            modificationCount,
+            movesCount
+        )
+
+        return CollectionChanges().apply {
+            deletesIndices = LongArray(deleteCount[0].toInt())
+            insertsIndices = LongArray(insertCount[0].toInt())
+            modificationsIndices = LongArray(modificationCount[0].toInt())
+            modificationsAfterIndices = LongArray(modificationCount[0].toInt())
+            moves = LongArray(movesCount[0].toInt() * 2)
+
+            realmc.realm_collection_changes_get_changes(
+                change.cptr(),
+                deletesIndices,
+                deletesIndices.size.toLong(),
+                insertsIndices,
+                insertsIndices.size.toLong(),
+                modificationsIndices,
+                modificationsAfterIndices.size.toLong(),
+                modificationsAfterIndices,
+                modificationsAfterIndices.size.toLong(),
+                moves
+            )
+        }
+    }
+
+    actual fun realm_collection_changes_get_ranges(change: NativePointer): CollectionRanges {
+        val insertRangesCount = LongArray(1)
+        val deleteRangesCount = LongArray(1)
+        val modificationRangesCount = LongArray(1)
+        val movesCount = LongArray(1)
+
+        realmc.realm_collection_changes_get_num_ranges(
+            change.cptr(),
+            deleteRangesCount,
+            insertRangesCount,
+            modificationRangesCount,
+            movesCount
+        )
+
+        return CollectionRanges().apply {
+            deleteRanges = LongArray(deleteRangesCount[0].toInt() * 2)
+            insertRanges = LongArray(insertRangesCount[0].toInt() * 2)
+            modificationsRanges = LongArray(modificationRangesCount[0].toInt() * 2)
+            modificationsRangesAfter = LongArray(modificationRangesCount[0].toInt() * 2)
+            moves = LongArray(movesCount[0].toInt() * 2)
+
+            realmc.realm_collection_changes_get_ranges(
+                change.cptr(),
+                deleteRanges,
+                insertRanges,
+                modificationsRanges,
+                modificationsRangesAfter,
+                moves
+            )
+        }
+    }
+
     actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {
         val pinfo = realm_property_info_t()
         realmc.realm_get_property(realm.cptr(), classInfo(realm, className).key, propertyKey.key, pinfo)

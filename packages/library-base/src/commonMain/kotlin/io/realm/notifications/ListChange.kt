@@ -114,10 +114,10 @@ sealed interface ListChange<out T : List<*>> {
     )
 
     val state: State
-    val list: T
+    val list: T?
 }
-interface InitialList<T : List<RealmObject>> : ListChange<T>
-interface UpdatedList<T : List<RealmObject>> : ListChange<T> {
+interface InitialList<T : List<*>> : ListChange<T>
+interface UpdatedList<T : List<*>> : ListChange<T> {
     val deletions: IntArray
     val insertions: IntArray
     val changes: IntArray
@@ -125,4 +125,4 @@ interface UpdatedList<T : List<RealmObject>> : ListChange<T> {
     val insertionRanges: Array<ListChange.Range>
     val changeRanges: Array<ListChange.Range>
 }
-interface DeletedList<T : List<RealmObject>> : ListChange<T>
+interface DeletedList<T : List<*>> : ListChange<T>

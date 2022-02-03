@@ -57,6 +57,43 @@ std::string rlm_stdstr(realm_string_t val)
 }
 %}
 
+// Transforms a realm_index_range_t into a long array
+%typemap(in) (realm_index_range_t*, size_t) {
+    $2 = jenv->GetArrayLength($input) / 2;
+    $1 = new realm_index_range_t[$2];
+}
+
+%typemap(freearg) (realm_index_range_t*, size_t) {
+    jlong* rangeArray = jenv->GetLongArrayElements($input, NULL);
+
+    for(int i = 0; i < $2; i++) {
+        rangeArray[i * 2] = $1[i].from;
+        rangeArray[i * 2 + 1] = $1[i].to;
+    }
+
+    jenv->ReleaseLongArrayElements($input, rangeArray, JNI_COMMIT);
+
+    delete $1;
+}
+
+%typemap(jni) (realm_index_range_t*, size_t) "jlongArray"
+%typemap(jtype) (realm_index_range_t*, size_t) "long[]"
+%typemap(jstype) (realm_index_range_t*, size_t) "long[]"
+%typemap(javain) (realm_index_range_t*, size_t) "$javainput"
+%apply (realm_index_range_t*, size_t) {
+    (realm_index_range_t* out_deletion_ranges, size_t max_deletion_ranges),
+    (realm_index_range_t* out_insertion_ranges, size_t max_insertion_ranges),
+    (realm_index_range_t* out_modification_ranges, size_t max_modification_ranges),
+    (realm_index_range_t* out_modification_ranges_after, size_t max_modification_ranges_after),
+    (realm_collection_move_t* out_moves, size_t max_moves)
+}
+
+// Transforms a realm_collection_move_t into a long array
+%typemap(in) (realm_collection_move_t* out_moves, size_t max_moves) {
+    $2 = jenv->GetArrayLength($input) / 2;
+    $1 = new realm_collection_move_t[$2];
+}
+
 // This sets up a type map for all methods with the argument pattern of:
 //    realm_void_user_completion_func_t, void* userdata, realm_free_userdata_func_t
 // This will make Swig wrap methods taking this argument pattern into:
@@ -75,7 +112,7 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
-// Reuse void callback typemap as template for result callback
+
 %apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
     (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t)
 };
@@ -108,7 +145,7 @@ return $jnicall;
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
-               realm_http_completion_func_t, realm_http_transport_t*};
+               realm_http_completion_func_t, realm_http_transport_t*, realm_collection_changes_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.

@@ -152,6 +152,8 @@ expect object RealmInterop {
     fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
     fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey>
+    fun realm_collection_changes_get_changes(change: NativePointer): CollectionChanges
+    fun realm_collection_changes_get_ranges(change: NativePointer): CollectionRanges
     fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo
 
     // App

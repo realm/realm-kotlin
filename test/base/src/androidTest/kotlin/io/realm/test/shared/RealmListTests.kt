@@ -892,7 +892,8 @@ internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
-    RealmListContainer().apply { stringField = "B" }
+    RealmListContainer().apply { stringField = "B" },
+    RealmListContainer().apply { stringField = "V" }
 )
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
