@@ -1,7 +1,7 @@
 ## 0.9.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
-* `Realm.observe()`, `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
+* `Realm.observe()`, `RealmObject.observe()`, `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
 * Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
 
 ### Enhancements
@@ -11,6 +11,7 @@
 * Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`.
 * Add support for JVM on M1 (in case we're running outside Rosetta compatibility mode, example when using Azul JVM which is compiled against `aarch64`) [#629](https://github.com/realm/realm-kotlin/issues/629).
 * Add support for fine grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `RealmInitial` or `RealmUpdated` states.
+* Add support for fine grained notification on Realm objects. `RealmObject.asFlow()` yields `ObjectChange` that represent the `ObjectInitial`, `ObjectUpdated` or `ObjectDeleted` states.
 
 ### Fixed
 * None.
