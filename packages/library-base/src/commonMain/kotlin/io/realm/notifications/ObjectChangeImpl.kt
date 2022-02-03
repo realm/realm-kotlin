@@ -2,12 +2,12 @@ package io.realm.notifications
 
 import io.realm.RealmObject
 
-internal class InitialObjectImpl<O : RealmObject>(override val obj: O) : InitialObject<O> {
+internal data class InitialObjectImpl<O : RealmObject>(override val obj: O) : InitialObject<O> {
     override val state: ObjectChange.State
         get() = ObjectChange.State.INITIAL
 }
 
-internal class UpdatedObjectImpl<O : RealmObject>(
+internal data class UpdatedObjectImpl<O : RealmObject>(
     override val obj: O,
     override val changedFields: Array<String>
 ) : UpdatedObject<O> {
@@ -15,7 +15,7 @@ internal class UpdatedObjectImpl<O : RealmObject>(
         get() = ObjectChange.State.UPDATED
 }
 
-internal class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {
+internal data class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {
     override val state: ObjectChange.State
         get() = ObjectChange.State.DELETED
 
