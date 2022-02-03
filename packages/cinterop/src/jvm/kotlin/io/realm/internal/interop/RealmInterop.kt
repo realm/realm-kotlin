@@ -495,10 +495,6 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_object_changes_is_deleted(change: NativePointer): Boolean {
-        return realmc.realm_object_changes_is_deleted(change.cptr())
-    }
-
     actual fun realm_object_changes_get_num_modified_properties(change: NativePointer): Long {
         return realmc.realm_object_changes_get_num_modified_properties(change.cptr())
     }

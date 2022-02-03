@@ -98,14 +98,13 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         change: NativePointer,
         channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
-        val deleted = RealmInterop.realm_object_changes_is_deleted(change)
+        val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
 
-        return if (deleted) {
+        return if (frozenObject == null) {
             channel.trySend(DeletedObjectImpl())
             channel.close()
             null
         } else {
-            val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
             val modifiedPropertyCount = RealmInterop.realm_object_changes_get_num_modified_properties(change)
 
             if (modifiedPropertyCount == 0L) {
