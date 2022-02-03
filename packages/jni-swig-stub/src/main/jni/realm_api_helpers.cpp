@@ -286,7 +286,7 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
 bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes) {
     auto env = get_env(true);
     static JavaClass java_should_compact_class(env, "kotlin/jvm/functions/Function2");
-    static JavaMethod java_should_compact_method(env, java_should_compact_class, "invoke", "(JJ)Z");
+    static JavaMethod java_should_compact_method(env, java_should_compact_class, "invoke", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     jboolean result = env->CallBooleanMethod(static_cast<jobject>(userdata), java_should_compact_method, total_bytes, used_bytes);
 
