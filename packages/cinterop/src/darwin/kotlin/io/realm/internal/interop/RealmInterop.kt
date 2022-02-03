@@ -1120,11 +1120,9 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_object_changes_get_num_modified_properties(change: NativePointer): Long {
-        return realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr()).toLong()
-    }
-
     actual fun realm_object_changes_get_modified_properties(change: NativePointer, propertyCount: Long): List<PropertyKey> {
+        val propertyCount = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr()).toLong()
+
         if (propertyCount == 0L) {
             return emptyList()
         }

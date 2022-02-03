@@ -105,33 +105,22 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             channel.close()
             null
         } else {
-            val modifiedPropertyCount = RealmInterop.realm_object_changes_get_num_modified_properties(change)
+            val changedFieldNames = getChangedFieldNames(frozenRealm, change)
 
-            if (modifiedPropertyCount == 0L) {
+            if (changedFieldNames.isEmpty()) {
                 channel.trySend(InitialObjectImpl(frozenObject))
             } else {
-                channel.trySend(
-                    UpdatedObjectImpl(
-                        obj = frozenObject,
-                        changedFields = getChangedFieldNames(
-                            frozenRealm,
-                            change,
-                            modifiedPropertyCount
-                        )
-                    )
-                )
+                channel.trySend(UpdatedObjectImpl(frozenObject, changedFieldNames))
             }
         }
     }
 
     private fun getChangedFieldNames(
         frozenRealm: RealmReference,
-        change: NativePointer,
-        modifiedPropertiesCount: Long
+        change: NativePointer
     ): Array<String> {
         return RealmInterop.realm_object_changes_get_modified_properties(
-            change,
-            modifiedPropertiesCount
+            change
         ).map { propertyKey: PropertyKey ->
             @Suppress("ForbiddenComment")
             // TODO: Optimize. Once https://github.com/realm/realm-kotlin/pull/596 is merged we could extract the field names from ClassMetadata
