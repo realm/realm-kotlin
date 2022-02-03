@@ -5,8 +5,8 @@ import io.realm.Cancellable
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.util.freezeOnOldMM
 import io.realm.internal.platform.runBlocking
+import io.realm.internal.util.freezeOnOldMM
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow

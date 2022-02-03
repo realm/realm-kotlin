@@ -18,6 +18,5 @@ package io.realm.internal.util
 
 import kotlin.native.concurrent.freeze
 
-
 @OptIn(ExperimentalStdlibApi::class)
 actual fun <T> T.freezeOnOldMM(): T = if (isExperimentalMM()) { this } else { this.freeze() }

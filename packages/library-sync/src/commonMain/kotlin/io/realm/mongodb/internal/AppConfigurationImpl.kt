@@ -24,7 +24,6 @@ import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.OS_NAME
 import io.realm.internal.platform.OS_VERSION
 import io.realm.internal.platform.RUNTIME
-import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
@@ -45,7 +44,7 @@ internal class AppConfigurationImpl(
         platform = "$OS_NAME/$RUNTIME",
         platformVersion = OS_VERSION,
         sdkVersion = io.realm.internal.SDK_VERSION
-    )//.freeze() // MM: Is this needed at all?
+    ).freeze() // MM: Is this needed at all?
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
