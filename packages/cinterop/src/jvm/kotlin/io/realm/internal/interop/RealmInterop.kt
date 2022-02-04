@@ -498,10 +498,6 @@ actual object RealmInterop {
     actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
         val propertyCount = realmc.realm_object_changes_get_num_modified_properties(change.cptr())
 
-        if (propertyCount == 0L) {
-            return emptyList()
-        }
-
         val keys = LongArray(propertyCount.toInt())
         realmc.realm_object_changes_get_modified_properties(change.cptr(), keys, propertyCount)
         return keys.map { PropertyKey(it) }
