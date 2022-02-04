@@ -41,6 +41,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
@@ -118,7 +119,7 @@ class SyncConfigTests {
             user = user,
             partitionValue = DEFAULT_PARTITION_VALUE
         ).build()
-        assertEquals(Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK, config.compactOnLaunchCallback)
+        assertNull(config.compactOnLaunchCallback)
     }
 
     @Test
