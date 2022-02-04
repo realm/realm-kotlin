@@ -124,7 +124,7 @@ class SyncConfigTests {
     @Test
     fun compactOnLaunch() {
         val user = createTestUser()
-        val callback = object: CompactOnLaunchCallback {
+        val callback = object : CompactOnLaunchCallback {
             override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
                 return false
             }
