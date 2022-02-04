@@ -14,15 +14,15 @@ import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.isFrozen
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
-actual val RUNTIME: String = "Native"
+internal actual val RUNTIME: String = "Native"
 // These causes memory mapping rendering MemoryTests to fail, so only initialize them if actually needed
-actual val OS_NAME: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemName() }
-actual val OS_VERSION: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemVersionString }
+internal actual val OS_NAME: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemName() }
+internal actual val OS_VERSION: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemVersionString }
 
-actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
+internal actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
     NSLogLogger(tag, logLevel)
 
-actual fun threadId(): ULong {
+internal actual fun threadId(): ULong {
     memScoped {
         val tidVar = alloc<ULongVar>()
         pthread_threadid_np(null, tidVar.ptr)
@@ -30,9 +30,9 @@ actual fun threadId(): ULong {
     }
 }
 
-actual fun <T> T.freeze(): T = this.freeze()
+internal actual fun <T> T.freeze(): T = this.freeze()
 
-actual val <T> T.isFrozen: Boolean
+internal actual val <T> T.isFrozen: Boolean
     get() = this.isFrozen
 
-actual fun Any.ensureNeverFrozen() = this.ensureNeverFrozen()
+internal actual fun Any.ensureNeverFrozen() = this.ensureNeverFrozen()

@@ -1,6 +1,6 @@
 package io.realm.internal.platform
 
 @Suppress("FunctionOnlyReturningConstant")
-actual fun appFilesDirectory(): String {
+internal actual fun appFilesDirectory(): String {
     return "."
 }

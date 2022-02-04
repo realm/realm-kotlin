@@ -22,13 +22,13 @@ import io.realm.Versioned
 /**
  * A RealmState exposes common methods to query the state of any Realm object.
  */
-interface RealmState : Versioned {
+internal interface RealmState : Versioned {
     fun isFrozen(): Boolean
     fun isClosed(): Boolean
 }
 
 // Singleton instance acting as implementation for all unmanaged objects
-object UnmanagedState : RealmState {
+internal object UnmanagedState : RealmState {
     override fun version(): VersionId {
         throw IllegalArgumentException("Cannot access life cycle information on unmanaged object")
     }
@@ -43,7 +43,7 @@ object UnmanagedState : RealmState {
 }
 
 // Default implementation for all objects that can provide a RealmState instance
-interface RealmStateHolder : RealmState {
+internal interface RealmStateHolder : RealmState {
     fun realmState(): RealmState
 
     override fun version(): VersionId {

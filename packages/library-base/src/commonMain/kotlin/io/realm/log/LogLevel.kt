@@ -15,7 +15,7 @@ import io.realm.log.LogLevel.WTF
  * @see Configuration.Builder.log
  */
 @Suppress("MagicNumber")
-enum class LogLevel(val priority: Int) {
+public enum class LogLevel(internal val priority: Int) {
     ALL(0),
     TRACE(1),
     DEBUG(2),
@@ -25,14 +25,14 @@ enum class LogLevel(val priority: Int) {
     WTF(6),
     NONE(7);
 
-    companion object {
+    public companion object {
         /**
          * Converts a Core log level value to a library log level value. Values that represent the
          * same level from the library perspective are folded together.
          *
          * For internal use only.
          */
-        fun fromCoreLogLevel(coreLogLevel: CoreLogLevel): LogLevel = when (coreLogLevel) {
+        public fun fromCoreLogLevel(coreLogLevel: CoreLogLevel): LogLevel = when (coreLogLevel) {
             CoreLogLevel.RLM_LOG_LEVEL_ALL,
             CoreLogLevel.RLM_LOG_LEVEL_TRACE -> TRACE
             CoreLogLevel.RLM_LOG_LEVEL_DEBUG -> DEBUG

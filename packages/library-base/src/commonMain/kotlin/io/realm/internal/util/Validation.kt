@@ -19,7 +19,7 @@ package io.realm.internal.util
 /**
  * Collection of validation methods to ensure uniform input validation.
  */
-object Validation {
+internal object Validation {
     fun illegalArgument(message: String): Nothing = throw IllegalArgumentException(message)
 
     inline fun <reified T> checkType(value: Any?, name: String): T {

@@ -6,9 +6,9 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
-actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher =
+internal actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher =
     Executors.newFixedThreadPool(size).asCoroutineDispatcher()
 
-actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
+internal actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
     return kotlinx.coroutines.runBlocking(context, block)
 }

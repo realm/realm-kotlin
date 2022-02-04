@@ -21,7 +21,7 @@ import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 
-interface Notifiable<T> {
+internal interface Notifiable<T> {
     fun registerForNotification(callback: Callback): NativePointer
 
     // FIXME Needs elaborate doc on how to signal and close channel
@@ -32,16 +32,17 @@ interface Notifiable<T> {
     ): ChannelResult<Unit>?
 }
 
-interface Freezable<T> {
+internal interface Freezable<T> {
     fun freeze(frozenRealm: RealmReference): Notifiable<T>?
 }
 
-interface Thawable<T> {
+internal interface Thawable<T> {
     fun thaw(liveRealm: RealmReference): Notifiable<T>?
 }
 
-interface Flowable<T> {
-    fun asFlow(): Flow<T?>
+// TODO Why is this flowable here?
+public interface Flowable<T> {
+    public fun asFlow(): Flow<T?>
 }
 
-interface Observable<T> : Notifiable<T>, Freezable<T>, Thawable<T>
+internal interface Observable<T> : Notifiable<T>, Freezable<T>, Thawable<T>

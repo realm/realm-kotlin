@@ -21,14 +21,14 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.schema.RealmClass
 import io.realm.schema.RealmSchema
 
-data class RealmSchemaImpl(
+internal data class RealmSchemaImpl(
     override val classes: Collection<RealmClass>
 ) : RealmSchema {
 
     override fun get(className: String): RealmClass? = classes.firstOrNull { it.name == className }
 
     companion object {
-        fun fromRealm(realmReference: RealmReference): RealmSchemaImpl {
+        internal fun fromRealm(realmReference: RealmReference): RealmSchemaImpl {
             val dbPointer = realmReference.dbPointer
             val classKeys = RealmInterop.realm_get_class_keys(dbPointer)
             return RealmSchemaImpl(

@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
  * [io.realm.Configuration]. This is needed to make "agnostic" configurations from a base-sync
  * point of view.
  */
-interface InternalConfiguration : Configuration {
+internal interface InternalConfiguration : Configuration {
     val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     val mediator: Mediator
     val nativeConfig: NativePointer

@@ -1,15 +1,15 @@
 package io.realm.internal.platform
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
-actual val RUNTIME: String = "JVM"
+internal actual val RUNTIME: String = "JVM"
 
-actual fun threadId(): ULong {
+internal actual fun threadId(): ULong {
     return Thread.currentThread().id.toULong()
 }
 
-actual fun <T> T.freeze(): T = this
+internal actual fun <T> T.freeze(): T = this
 
-actual val <T> T.isFrozen: Boolean
+internal actual val <T> T.isFrozen: Boolean
     get() = false
 
-actual fun Any.ensureNeverFrozen() {}
+internal actual fun Any.ensureNeverFrozen() {}

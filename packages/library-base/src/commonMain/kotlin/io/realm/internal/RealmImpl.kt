@@ -10,6 +10,7 @@ import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
+import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
@@ -88,6 +90,16 @@ internal class RealmImpl private constructor(
                 )
             }
         )
+
+    // Required as Kotlin otherwise gets confused about the visibility and reports
+    // "Cannot infer visibility for '...'. Please specify it explicitly"
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T> {
+        return super.query(clazz, query, *args)
+    }
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
         try {

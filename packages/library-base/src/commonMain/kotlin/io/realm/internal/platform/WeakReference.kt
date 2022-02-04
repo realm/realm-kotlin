@@ -5,7 +5,8 @@ package io.realm.internal.platform
  *
  * Basically just wrapping underlying platform implementations.
  */
-expect class WeakReference<T : Any>(referred: T) {
-    fun clear()
-    fun get(): T?
+// TODO This is currently public because making it public breaks something in Kotlins type check for Strict mode
+public expect class WeakReference<T : Any>(referred: T) {
+    public fun clear()
+    public fun get(): T?
 }

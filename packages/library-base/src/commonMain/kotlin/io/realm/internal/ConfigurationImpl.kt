@@ -27,7 +27,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
-open class ConfigurationImpl constructor(
+internal open class ConfigurationImpl constructor(
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,

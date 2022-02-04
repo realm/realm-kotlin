@@ -22,7 +22,7 @@ import io.realm.schema.RealmClass
 import io.realm.schema.RealmProperty
 import io.realm.schema.ValuePropertyType
 
-data class RealmClassImpl(
+internal data class RealmClassImpl(
     // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
     // avoid unnecessary repeated initializations for realm_schema_new
     val cinteropClass: ClassInfo,

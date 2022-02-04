@@ -27,7 +27,7 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
 import kotlin.reflect.KClass
 
-object RealmObjectHelper {
+internal object RealmObjectHelper {
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
     // generated code
     // - Generic return type should be R but causes compilation errors for native

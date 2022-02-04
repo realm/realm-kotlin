@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Marker interface to define a model (managed by Realm).
  */
-interface RealmObject
+public interface RealmObject
 
 /**
  * Returns whether the object is frozen or not.
@@ -55,7 +55,7 @@ public fun RealmObject.version(): VersionId {
 // FIXME API Currently just adding these as extension methods as putting them directly into
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83
-fun RealmObject.delete() {
+public fun RealmObject.delete() {
     MutableRealmImpl.delete(this)
 }
 
@@ -66,7 +66,7 @@ fun RealmObject.delete() {
  * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely seperate from
  * Realm.
  */
-fun RealmObject.isManaged(): Boolean {
+public fun RealmObject.isManaged(): Boolean {
     return realmObjectInternal().`$realm$IsManaged`
 }
 

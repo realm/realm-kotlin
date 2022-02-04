@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
-abstract class BaseRealmImpl internal constructor(
+internal abstract class BaseRealmImpl internal constructor(
     final override val configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {
@@ -74,7 +74,7 @@ abstract class BaseRealmImpl internal constructor(
         return RealmSchemaImpl.fromRealm(realmReference)
     }
 
-    open fun <T : RealmObject> query(
+    internal open fun <T : RealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
