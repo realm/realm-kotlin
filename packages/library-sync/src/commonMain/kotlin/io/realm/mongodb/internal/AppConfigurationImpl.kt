@@ -28,7 +28,8 @@ import io.realm.internal.platform.freeze
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
-internal class AppConfigurationImpl(
+// TODO Public due to being a transitive dependency to AppImpl
+public class AppConfigurationImpl(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val networkTransport: NetworkTransport,

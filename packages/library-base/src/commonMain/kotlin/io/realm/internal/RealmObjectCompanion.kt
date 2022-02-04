@@ -20,10 +20,11 @@ import io.realm.internal.schema.RealmClassImpl
 import kotlin.reflect.KMutableProperty1
 
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
+// TODO Public due to being a transitive dependency to Mediator.
 @Suppress("VariableNaming")
-internal interface RealmObjectCompanion {
-    val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): RealmClassImpl
-    fun `$realm$newInstance`(): Any
+public interface RealmObjectCompanion {
+    public val `$realm$fields`: List<KMutableProperty1<*, *>>?
+    public val `$realm$primaryKey`: KMutableProperty1<*, *>?
+    public fun `$realm$schema`(): RealmClassImpl
+    public fun `$realm$newInstance`(): Any
 }

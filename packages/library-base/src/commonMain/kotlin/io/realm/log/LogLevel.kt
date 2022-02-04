@@ -15,7 +15,7 @@ import io.realm.log.LogLevel.WTF
  * @see Configuration.Builder.log
  */
 @Suppress("MagicNumber")
-public enum class LogLevel(internal val priority: Int) {
+public enum class LogLevel(public val priority: Int) {
     ALL(0),
     TRACE(1),
     DEBUG(2),

@@ -6,7 +6,7 @@ import kotlinx.coroutines.newSingleThreadContext
 import kotlin.coroutines.CoroutineContext
 
 // Expose platform runBlocking through common interface
-internal actual fun <T> runBlocking(
+public actual fun <T> runBlocking(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T
 ): T {
@@ -16,11 +16,11 @@ internal actual fun <T> runBlocking(
 /**
  * The default dispatcher for Darwin platforms spawns a new thread with a run loop.
  */
-internal actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
+public actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     return newSingleThreadContext(id)
 }
 
-internal actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher {
+public actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher {
     // TODO https://github.com/realm/realm-kotlin/issues/501
     return singleThreadDispatcher("singleThreadDispatcher")
 }

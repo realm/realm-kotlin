@@ -33,15 +33,16 @@ import kotlin.reflect.KClass
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
+// TODO Public due to being a transative dependency of Mediator
 @Suppress("VariableNaming")
-internal interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
+public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
-    var `$realm$Owner`: RealmReference?
-    var `$realm$TableName`: String?
-    var `$realm$IsManaged`: Boolean
-    var `$realm$Mediator`: Mediator?
+    public var `$realm$Owner`: RealmReference?
+    public var `$realm$TableName`: String?
+    public var `$realm$IsManaged`: Boolean
+    public var `$realm$Mediator`: Mediator?
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower

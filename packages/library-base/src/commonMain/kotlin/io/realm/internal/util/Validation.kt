@@ -19,21 +19,22 @@ package io.realm.internal.util
 /**
  * Collection of validation methods to ensure uniform input validation.
  */
-internal object Validation {
-    fun illegalArgument(message: String): Nothing = throw IllegalArgumentException(message)
+// TODO Public due to being used in the test package
+public object Validation {
+    public fun illegalArgument(message: String): Nothing = throw IllegalArgumentException(message)
 
-    inline fun <reified T> checkType(value: Any?, name: String): T {
+    public inline fun <reified T> checkType(value: Any?, name: String): T {
         if (value !is T) {
             illegalArgument("Argument '$name' must be of type ${T::class.simpleName}")
         }
         return value
     }
 
-    fun isEmptyString(str: String?): Boolean {
+    public fun isEmptyString(str: String?): Boolean {
         return str == null || str.length == 0
     }
 
-    fun checkEmpty(value: String?, name: String): String {
+    public fun checkEmpty(value: String?, name: String): String {
         if (isEmptyString(value)) {
             illegalArgument("Argument '$name' must be non-empty")
         }

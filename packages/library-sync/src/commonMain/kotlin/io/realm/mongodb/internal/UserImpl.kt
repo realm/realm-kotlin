@@ -25,7 +25,8 @@ import io.realm.internal.util.use
 import io.realm.mongodb.User
 import kotlinx.coroutines.channels.Channel
 
-internal class UserImpl(
+// TODO Public due to being a transitive dependency to SyncConfigurationImpl
+public class UserImpl(
     val nativePointer: NativePointer,
     override val app: AppImpl
 ) : User {

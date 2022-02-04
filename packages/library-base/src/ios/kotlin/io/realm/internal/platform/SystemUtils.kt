@@ -5,7 +5,7 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
-internal actual fun appFilesDirectory(): String {
+public actual fun appFilesDirectory(): String {
     return (
         NSFileManager.defaultManager.URLForDirectory(
             NSDocumentDirectory,

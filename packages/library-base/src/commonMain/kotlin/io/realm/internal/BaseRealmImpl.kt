@@ -29,7 +29,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
-internal abstract class BaseRealmImpl internal constructor(
+// TODO Public due to being a transitive dependency to RealmReference
+public abstract class BaseRealmImpl internal constructor(
     final override val configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {

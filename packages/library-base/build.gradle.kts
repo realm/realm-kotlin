@@ -280,7 +280,7 @@ tasks.create("generateSdkVersionConstant") {
             """
             // Generated file. Do not edit!
             package io.realm.internal
-            internal const val SDK_VERSION: String = "${project.version}"
+            public const val SDK_VERSION: String = "${project.version}"
             """.trimIndent()
         )
     }

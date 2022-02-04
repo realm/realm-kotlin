@@ -22,9 +22,10 @@ import io.realm.Versioned
 /**
  * A RealmState exposes common methods to query the state of any Realm object.
  */
-internal interface RealmState : Versioned {
-    fun isFrozen(): Boolean
-    fun isClosed(): Boolean
+// TODO Public due to being a transitive dependency to RealmStateHolder
+public interface RealmState : Versioned {
+    public fun isFrozen(): Boolean
+    public fun isClosed(): Boolean
 }
 
 // Singleton instance acting as implementation for all unmanaged objects
@@ -43,8 +44,9 @@ internal object UnmanagedState : RealmState {
 }
 
 // Default implementation for all objects that can provide a RealmState instance
-internal interface RealmStateHolder : RealmState {
-    fun realmState(): RealmState
+// TODO Public due to being a transitive dependency to RealmObjectInternal
+public interface RealmStateHolder : RealmState {
+    public fun realmState(): RealmState
 
     override fun version(): VersionId {
         return realmState().version()
