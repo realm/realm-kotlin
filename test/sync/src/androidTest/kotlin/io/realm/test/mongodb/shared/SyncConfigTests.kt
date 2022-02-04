@@ -16,6 +16,7 @@
 
 package io.realm.test.mongodb.shared
 
+import io.realm.CompactOnLaunchCallback
 import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
@@ -107,6 +108,35 @@ class SyncConfigTests {
             partitionValue = DEFAULT_PARTITION_VALUE
         ).build()
         assertNotNull(config.errorHandler)
+    }
+
+    @Test
+    fun compactOnLaunch_default() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
+        assertEquals(Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK, config.compactOnLaunchCallback)
+    }
+
+    @Test
+    fun compactOnLaunch() {
+        val user = createTestUser()
+        val callback = object: CompactOnLaunchCallback {
+            override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
+                return false
+            }
+        }
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        )
+            .compactOnLaunch(callback)
+            .build()
+        assertEquals(callback, config.compactOnLaunchCallback)
     }
 
 //    @Test

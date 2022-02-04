@@ -94,16 +94,27 @@ std::string rlm_stdstr(realm_string_t val)
 //  - a Java method that takes one argument of type `Object` (`jstype`) and passes this object on as `Object` to the native method (`jtype`+``javain`)
 //  - a JNI method that takes a `jobject` (`jni`) that translates the incoming single argument into the actual three arguments of the C-API method (`in`)
 %typemap(jstype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
-//%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
 %typemap(jtype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
 %typemap(javain) (realm_should_compact_on_launch_func_t, void* userdata) "$javainput";
 %typemap(jni) (realm_should_compact_on_launch_func_t, void* userdata) "jobject";
 %typemap(in) (realm_should_compact_on_launch_func_t, void* userdata) {
-    // FIXME: Add support for JavaGlobalWeakRef, similar to Java
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_should_compact_on_launch_func_t>(realm_should_compact_callback);
-    $2 = $input;
+    // FIXME How to add support for JavaGlobalWeakRef, similar to Java?
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
 }
+
+//%typemap(jstype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
+////%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
+//%typemap(jtype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
+//%typemap(javain) (realm_should_compact_on_launch_func_t, void* userdata) "$javainput";
+//%typemap(jni) (realm_should_compact_on_launch_func_t, void* userdata) "jobject";
+//%typemap(in) (realm_should_compact_on_launch_func_t, void* userdata) {
+//    // FIXME: Add support for JavaGlobalWeakRef, similar to Java
+//    auto jenv = get_env(true);
+//    $1 = reinterpret_cast<realm_should_compact_on_launch_func_t>(realm_should_compact_callback);
+//    $2 = realm::jni_util::JavaGlobalWeakRef(jenv, $input);
+//}
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;
