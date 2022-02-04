@@ -273,7 +273,7 @@ interface Configuration {
          * The space will be used by subsequent writes, but in the interim period the file will
          * be larger than what is strictly needed.
          *
-         * This method thus makes it possible to define a function that determines whether or not
+         * This method makes it possible to define a function that determines whether or not
          * the file should be compacted when the realm is opened, optimizing how much disk size
          * is used.
          *

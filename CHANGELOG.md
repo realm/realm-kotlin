@@ -5,6 +5,7 @@
 * Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
 
 ### Enhancements
+* Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
 * Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
 * Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
 * Added source code link to model definition compiler errors. ([#173](https://github.com/realm/realm-kotlin/issues/173))

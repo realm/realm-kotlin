@@ -100,21 +100,9 @@ std::string rlm_stdstr(realm_string_t val)
 %typemap(in) (realm_should_compact_on_launch_func_t, void* userdata) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_should_compact_on_launch_func_t>(realm_should_compact_callback);
-    // FIXME How to add support for JavaGlobalWeakRef, similar to Java?
+    // FIXME How to release this: https://github.com/realm/realm-core/issues/5222
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
 }
-
-//%typemap(jstype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
-////%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
-//%typemap(jtype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
-//%typemap(javain) (realm_should_compact_on_launch_func_t, void* userdata) "$javainput";
-//%typemap(jni) (realm_should_compact_on_launch_func_t, void* userdata) "jobject";
-//%typemap(in) (realm_should_compact_on_launch_func_t, void* userdata) {
-//    // FIXME: Add support for JavaGlobalWeakRef, similar to Java
-//    auto jenv = get_env(true);
-//    $1 = reinterpret_cast<realm_should_compact_on_launch_func_t>(realm_should_compact_callback);
-//    $2 = realm::jni_util::JavaGlobalWeakRef(jenv, $input);
-//}
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;
