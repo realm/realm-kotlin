@@ -28,10 +28,9 @@ import kotlin.reflect.KClass
  * Note that compacting a file can take a while, so compacting should generally only be done when
  * opening a realm file on a background thread.
  *
- * @param totalBytes the total file size (data + free space).
- * @param usedBytes the total bytes used by data in the file.
- * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
- * compaction will be skipped.
+ * - `totalBytes` is the total file size (data + free space).
+ * - `usedBytes` is the total bytes used by data in the file.
+ * - `true` should be returned if an attempt to compact the file should be made. `false` if not.
  */
 typealias CompactOnLaunchCallback = (totalBytes: Long, usedBytes: Long) -> Boolean
 
