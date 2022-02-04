@@ -5,7 +5,7 @@
 ### Enhancements
 
 ### Fixed
-* Refactoring the compiler plugin to use API available in Kotlin `1.6.20` fixes ([#619](https://github.com/realm/realm-kotlin/issues/619)).
+* Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
 
 
 ### Compatibility
