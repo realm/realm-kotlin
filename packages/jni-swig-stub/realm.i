@@ -59,26 +59,28 @@ std::string rlm_stdstr(realm_string_t val)
 
 // Transforms a realm_index_range_t into a long array
 %typemap(in) (realm_index_range_t*, size_t) {
-    $2 = jenv->GetArrayLength($input) / 2;
+    $2 = jenv->GetArrayLength($input);
     $1 = new realm_index_range_t[$2];
 }
 
 %typemap(freearg) (realm_index_range_t*, size_t) {
-    jlong* rangeArray = jenv->GetLongArrayElements($input, NULL);
-
     for(int i = 0; i < $2; i++) {
-        rangeArray[i * 2] = $1[i].from;
-        rangeArray[i * 2 + 1] = $1[i].to;
-    }
+        jlongArray jRangeArray = (jlongArray) jenv->GetObjectArrayElement($input, i);
 
-    jenv->ReleaseLongArrayElements($input, rangeArray, JNI_COMMIT);
+        jlong* rangeArray = jenv->GetLongArrayElements(jRangeArray, NULL);
+        rangeArray[0] = $1[i].from;
+        rangeArray[1] = $1[i].to - $1[i].from + 1;
+        jenv->ReleaseLongArrayElements(jRangeArray, rangeArray, JNI_COMMIT);
+
+        jenv->DeleteLocalRef(jRangeArray);
+    }
 
     delete $1;
 }
 
-%typemap(jni) (realm_index_range_t*, size_t) "jlongArray"
-%typemap(jtype) (realm_index_range_t*, size_t) "long[]"
-%typemap(jstype) (realm_index_range_t*, size_t) "long[]"
+%typemap(jni) (realm_index_range_t*, size_t) "jobjectArray"
+%typemap(jtype) (realm_index_range_t*, size_t) "long[][]"
+%typemap(jstype) (realm_index_range_t*, size_t) "long[][]"
 %typemap(javain) (realm_index_range_t*, size_t) "$javainput"
 %apply (realm_index_range_t*, size_t) {
     (realm_index_range_t* out_deletion_ranges, size_t max_deletion_ranges),

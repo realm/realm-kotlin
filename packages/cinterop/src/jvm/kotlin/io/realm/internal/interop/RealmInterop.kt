@@ -521,23 +521,22 @@ actual object RealmInterop {
             movesCount
         )
 
-        return CollectionChanges().apply {
-            deletesIndices = LongArray(deleteCount[0].toInt())
-            insertsIndices = LongArray(insertCount[0].toInt())
-            modificationsIndices = LongArray(modificationCount[0].toInt())
-            modificationsAfterIndices = LongArray(modificationCount[0].toInt())
-            moves = LongArray(movesCount[0].toInt() * 2)
-
+        return CollectionChanges(
+            deletionCount = deleteCount,
+            insertionCount = insertCount,
+            modificationCount = modificationCount,
+            movesCount = movesCount
+        ).apply {
             realmc.realm_collection_changes_get_changes(
                 change.cptr(),
-                deletesIndices,
-                deletesIndices.size.toLong(),
-                insertsIndices,
-                insertsIndices.size.toLong(),
-                modificationsIndices,
-                modificationsAfterIndices.size.toLong(),
-                modificationsAfterIndices,
-                modificationsAfterIndices.size.toLong(),
+                deletionIndices,
+                deletionIndices.size.toLong(),
+                insertionIndices,
+                insertionIndices.size.toLong(),
+                modificationIndices,
+                modificationIndicesAfter.size.toLong(),
+                modificationIndicesAfter,
+                modificationIndicesAfter.size.toLong(),
                 moves
             )
         }
@@ -557,19 +556,18 @@ actual object RealmInterop {
             movesCount
         )
 
-        return CollectionRanges().apply {
-            deleteRanges = LongArray(deleteRangesCount[0].toInt() * 2)
-            insertRanges = LongArray(insertRangesCount[0].toInt() * 2)
-            modificationsRanges = LongArray(modificationRangesCount[0].toInt() * 2)
-            modificationsRangesAfter = LongArray(modificationRangesCount[0].toInt() * 2)
-            moves = LongArray(movesCount[0].toInt() * 2)
-
+        return CollectionRanges(
+            insertRangesCount = insertRangesCount,
+            deleteRangesCount = deleteRangesCount,
+            modificationRangesCount = modificationRangesCount,
+            movesCount = movesCount
+        ).apply {
             realmc.realm_collection_changes_get_ranges(
                 change.cptr(),
-                deleteRanges,
-                insertRanges,
-                modificationsRanges,
-                modificationsRangesAfter,
+                deletionRanges,
+                insertionRanges,
+                modificationRanges,
+                modificationRangesAfter,
                 moves
             )
         }
