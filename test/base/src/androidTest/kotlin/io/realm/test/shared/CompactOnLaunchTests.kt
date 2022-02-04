@@ -127,6 +127,7 @@ class CompactOnLaunchTests {
             .build()
 
         // TODO We should find a better way to propagate exceptions
-        assertFailsWith<IllegalArgumentException> { Realm.open(config) }
+        // TODO This throws IllegalArgumentException on JVM but RuntimeException on macOS.
+        assertFailsWith<RuntimeException> { Realm.open(config) }
     }
 }
