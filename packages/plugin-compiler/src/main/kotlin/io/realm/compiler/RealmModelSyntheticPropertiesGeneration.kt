@@ -563,7 +563,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 symbol = property.backingField!!.symbol,
                 receiver = irGet(setter.dispatchReceiverParameter!!),
                 value = irGet(valueParameter),
-                type = context.irBuiltIns.unitType)
+                type = context.irBuiltIns.unitType
+            )
         }
     }
 

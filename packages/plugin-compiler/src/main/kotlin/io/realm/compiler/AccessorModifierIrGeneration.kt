@@ -487,8 +487,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                         symbol = backingField.symbol,
                                         receiver = irGet(receiver),
                                         value = irGet(setter.valueParameters.first()),
-                                        type = context.irBuiltIns.unitType)
-                                    ,
+                                        type = context.irBuiltIns.unitType
+                                    ),
                                     origin = IrStatementOrigin.IF
                                 )
                             )
