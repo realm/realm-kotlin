@@ -91,7 +91,7 @@ interface Configuration {
     // The property functions in this builder return the type of the builder itself, represented by
     // [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
     // all function return types have to be typecast as [S].
-    @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
+    @Suppress("UnnecessaryAbstractClass", "UNCHECKED_CAST") // Actual implementations should rewire build() to companion map variant
     abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
