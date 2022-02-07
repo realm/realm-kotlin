@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import kotlin.reflect.KFunction1
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -503,42 +504,57 @@ actual object RealmInterop {
         return keys.map { PropertyKey(it) }
     }
 
-    actual fun realm_collection_changes_get_changes(change: NativePointer): CollectionChanges {
-        val insertCount = LongArray(1)
-        val deleteCount = LongArray(1)
+    private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
+    private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
+
+    private fun LongArray.asIterator(): ArrayAccessor = { index -> this[index].toInt() }
+
+    private fun Array<LongArray>.asFromIterator(): ArrayAccessor = { index -> this[index][0].toInt() }
+    private fun Array<LongArray>.asToIterator(): ArrayAccessor = { index -> this[index][1].toInt() }
+
+    actual fun <T, R> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeBuilder<T, R>) {
+        val insertionCount = LongArray(1)
+        val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
-            deleteCount,
-            insertCount,
+            deletionCount,
+            insertionCount,
             modificationCount,
             movesCount
         )
 
-        return CollectionChanges(
-            deletionCount = deleteCount,
-            insertionCount = insertCount,
-            modificationCount = modificationCount,
-            movesCount = movesCount
-        ).apply {
-            realmc.realm_collection_changes_get_changes(
-                change.cptr(),
-                deletionIndices,
-                deletionIndices.size.toLong(),
-                insertionIndices,
-                insertionIndices.size.toLong(),
-                modificationIndices,
-                modificationIndicesAfter.size.toLong(),
-                modificationIndicesAfter,
-                modificationIndicesAfter.size.toLong(),
-                moves
-            )
-        }
+        val insertionIndices: LongArray = initIndicesArray(insertionCount)
+        val modificationIndices: LongArray = initIndicesArray(modificationCount)
+        val modificationIndicesAfter: LongArray = initIndicesArray(modificationCount)
+        val deletionIndices: LongArray = initIndicesArray(deletionCount)
+        val moves: Array<LongArray> = initRangeArray(movesCount)
+
+        realmc.realm_collection_changes_get_changes(
+            change.cptr(),
+            deletionIndices,
+            deletionIndices.size.toLong(),
+            insertionIndices,
+            insertionIndices.size.toLong(),
+            modificationIndices,
+            modificationIndicesAfter.size.toLong(),
+            modificationIndicesAfter,
+            modificationIndicesAfter.size.toLong(),
+            moves
+        )
+
+        val a: KFunction1<Int, Long> = insertionIndices::get
+
+        builder.insertionIndices(insertionIndices.size, insertionIndices.asIterator())
+        builder.deletionIndices(deletionIndices.size, deletionIndices.asIterator())
+        builder.modificationIndices(modificationIndices.size, modificationIndices.asIterator())
+        builder.modificationIndicesAfter(modificationIndicesAfter.size, modificationIndicesAfter.asIterator())
+        builder.moves(moves.size, moves.asFromIterator(), moves.asToIterator())
     }
 
-    actual fun realm_collection_changes_get_ranges(change: NativePointer): CollectionRanges {
+    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeBuilder<T, R>) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)
@@ -552,21 +568,25 @@ actual object RealmInterop {
             movesCount
         )
 
-        return CollectionRanges(
-            insertRangesCount = insertRangesCount,
-            deleteRangesCount = deleteRangesCount,
-            modificationRangesCount = modificationRangesCount,
-            movesCount = movesCount
-        ).apply {
-            realmc.realm_collection_changes_get_ranges(
-                change.cptr(),
-                deletionRanges,
-                insertionRanges,
-                modificationRanges,
-                modificationRangesAfter,
-                moves
-            )
-        }
+        val insertionRanges: Array<LongArray> = initRangeArray(insertRangesCount)
+        val modificationRanges: Array<LongArray> = initRangeArray(modificationRangesCount)
+        val modificationRangesAfter: Array<LongArray> = initRangeArray(modificationRangesCount)
+        val deletionRanges: Array<LongArray> = initRangeArray(deleteRangesCount)
+        val moves: Array<LongArray> = initRangeArray(movesCount)
+
+        realmc.realm_collection_changes_get_ranges(
+            change.cptr(),
+            deletionRanges,
+            insertionRanges,
+            modificationRanges,
+            modificationRangesAfter,
+            moves
+        )
+
+        builder.deletionRanges(deletionRanges.size, deletionRanges.asFromIterator(), deletionRanges.asToIterator())
+        builder.insertionRanges(insertionRanges.size, insertionRanges.asFromIterator(), insertionRanges.asToIterator())
+        builder.modificationRanges(modificationRanges.size, modificationRanges.asFromIterator(), modificationRanges.asToIterator())
+        builder.modificationRangesAfter(modificationRangesAfter.size, modificationRangesAfter.asFromIterator(), modificationRangesAfter.asToIterator())
     }
 
     actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {

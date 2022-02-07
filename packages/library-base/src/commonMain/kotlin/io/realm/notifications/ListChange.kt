@@ -1,7 +1,5 @@
 package io.realm.notifications
 
-import io.realm.RealmObject
-
 /**
  * This sealed interface describe the possible changes that happen happen to a list collection,
  * currently [io.realm.RealmList] or [io.realm.RealmResults].
@@ -81,27 +79,6 @@ import io.realm.RealmObject
  * ```
  */
 sealed interface ListChange<out T : List<*>> {
-
-    enum class State {
-        /**
-         * This state is used the first time a change listener or flow is triggered. It will emit the
-         * initial state of the [io.realm.RealmList] or [io.realm.RealmResults].
-         */
-        INITIAL,
-
-        /**
-         * This state is used for every subsequent update after the first, as long as the object
-         * being observed is available.
-         */
-        UPDATED,
-
-        /**
-         * This state is used if the parent object owning collection is deleted.
-         * If this happens, [ListChange.list] returns an en empty collection.
-         */
-        DELETED,
-    }
-
     data class Range(
         /**
          * The start index of this change range.
@@ -113,7 +90,6 @@ sealed interface ListChange<out T : List<*>> {
         val length: Int
     )
 
-    val state: State
     val list: T?
 }
 interface InitialList<T : List<*>> : ListChange<T>

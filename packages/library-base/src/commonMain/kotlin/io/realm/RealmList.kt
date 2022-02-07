@@ -16,7 +16,6 @@
 
 package io.realm
 
-import io.realm.internal.Flowable
 import io.realm.internal.UnmanagedRealmList
 import io.realm.internal.asRealmList
 import io.realm.notifications.ListChange
