@@ -62,7 +62,6 @@ import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -76,6 +75,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
@@ -556,10 +556,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         setter.body = DeclarationIrBuilder(pluginContext, setter.symbol).irBlockBody {
             at(startOffset, endOffset)
-            +irSetField(
-                irGet(setter.dispatchReceiverParameter!!),
-                property.backingField!!,
-                irGet(valueParameter)
+
+            +IrSetFieldImpl(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                symbol = property.backingField!!.symbol,
+                receiver = irGet(setter.dispatchReceiverParameter!!),
+                value = irGet(valueParameter),
+                type = context.irBuiltIns.unitType
             )
         }
     }
