@@ -16,28 +16,27 @@
 
 package io.realm.gradle
 
+import io.realm.gradle.analytics.AnalyticsService
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
+import org.gradle.api.provider.Provider
+import org.gradle.build.event.BuildEventsListenerRegistry
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import io.realm.gradle.analytics.AnalyticsService
-import org.gradle.api.logging.LogLevel
-import org.gradle.api.logging.Logger
-import org.gradle.api.provider.Provider
-import org.gradle.build.event.BuildEventsListenerRegistry
-import org.slf4j.LoggerFactory
 import javax.inject.Inject
 
 
 @Suppress("unused")
 open class RealmPlugin : Plugin<Project> {
 
-    private val logger: org.slf4j.Logger = LoggerFactory.getLogger("realm-plugin")
+    private val logger: Logger = Logging.getLogger("realm-plugin")
 
     @Inject
-    public open fun getBuildEventsRegistry(): BuildEventsListenerRegistry { TODO("Should be replaced by Gradle") }
+    public open fun getBuildEventsRegistry(): BuildEventsListenerRegistry { TODO("Should have been replaced by Gradle.") }
 
     override fun apply(project: Project) {
         project.pluginManager.apply(RealmCompilerSubplugin::class.java)

@@ -17,6 +17,7 @@
 package io.realm.gradle.analytics
 
 import com.android.build.gradle.BaseExtension
+import io.realm.gradle.RealmCompilerSubplugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
@@ -174,7 +175,7 @@ internal class RealmAnalytics {
     @Suppress("TooGenericExceptionCaught")
     private fun sendAnalytics(json: String, logger: Logger) {
         try {
-            logger.debug("REALM ANALYTICS: sending payload\n$json")
+            logger.debug("Sending analytics payload\n$json")
             // FIXME This should be turned into a daemon thread so we don't block the build for
             //  6 seconds when there is no network.
             val pool = Executors.newSingleThreadExecutor()

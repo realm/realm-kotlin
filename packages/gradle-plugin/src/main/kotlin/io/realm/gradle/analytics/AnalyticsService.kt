@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,11 @@ import org.gradle.tooling.events.task.TaskSuccessResult
  * Build Services are still very much experimental, so additional logging has been added
  * to this class to catch catches where types are different than expected. We do _NOT_
  * want analytics to take down a users build, so exceptions are avoided on purpose.
+ *
+ * Build Services was added in Gradle 6.1. They can be called by multiple tasks, so must
+ * be implemented to be thread-safe
+ *
+ * @see https://docs.gradle.org/current/userguide/build_services.html
  */
 abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, OperationCompletionListener {
 
@@ -72,6 +77,7 @@ abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, Ope
         }
     }
 
+
     private fun filterResultAndSendAnalytics(taskEvent: TaskFinishEvent) {
         // We use `compile<XXX>` tasks as a heuristic for a "build". This will not detect builds
         // that fail very early or incremental builds with no code change, but neither will it
@@ -89,6 +95,7 @@ abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, Ope
      *
      * This method is responsible for gathering all the analytics data we are sending.
      */
+    @Synchronized
     fun collectAnalyticsData(project: Project) {
         analytics = RealmAnalytics()
         analytics!!.gatherAnalyticsDataIfNeeded(project)
