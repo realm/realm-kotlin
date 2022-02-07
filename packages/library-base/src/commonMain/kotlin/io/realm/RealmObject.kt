@@ -91,9 +91,9 @@ public fun RealmObject.isValid(): Boolean {
 }
 
 /**
- * Observe changes to a Realm object. Any change to the object, will cause the flow to emit the updated
- * object. If the observed object is deleted from the Realm, the flow will complete, otherwise it will
- * continue running until canceled.
+ * Observe changes to a Realm object. The flow would emit an [ObjectChange] once subscribed and
+ * then, on every change to the object. If the observed object is deleted from the Realm, the flow
+ * will complete, otherwise it will continue running until canceled.
  *
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
