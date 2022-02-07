@@ -20,9 +20,25 @@ plugins {
     `java-gradle-plugin`
 }
 
+buildscript {
+    extra["ciBuild"] = Realm.ciBuild
+    repositories {
+        if (extra["ciBuild"] as Boolean) {
+            maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
+        }
+    }
+    dependencies {
+        classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
+    }
+}
+
 allprojects {
     repositories {
-        jcenter()
+        if (rootProject.extra["ciBuild"] as Boolean) {
+            maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
+        }
+        google()
+        mavenCentral()
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

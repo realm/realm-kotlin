@@ -29,7 +29,7 @@ import kotlin.test.assertFailsWith
 /**
  * This class contains all the Realm encryption integration tests that validate opening a Realm with an encryption key.
  *
- *  [RealmConfigurationTests] tests how the encryption key is passed to a [RealmConfiguration].
+ *  [RealmConfigurationTests] tests how the encryption key is passed to a [Configuration].
  */
 class EncryptionTests {
     private lateinit var tmpDir: String

@@ -115,20 +115,21 @@ CoroutineScope(context).async {
 The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries)
 
 ```Kotlin
-// All Persons
-import io.realm.objects
+// All persons
+import io.realm.query
 
-val all = realm.objects<Person>()
+val all = realm.query<Person>().find()
 
-// Person named 'Carlo'
-val filteredByName = realm.objects<Person>().query("name = $0", "Carlo")
+// Persons named 'Carlo'
+val personsByNameQuery = realm.query<Person>("name = $0", "Carlo")
+val filteredByName = personsByNameQuery.find()
 
 // Person having a dog aged more than 7 with a name starting with 'Fi'
-val filteredByDog = realm.objects<Person>().query("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi")
+val filteredByDog = realm.query<Person>("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi").find()
 
 // Observing for changes with Kotlin Coroutine Flows
 CoroutineScope(context).async {
-    filteredByName.observe().collect { result: RealmResults<Person> ->
+    personsByNameQuery.asFlow().collect { result ->
         println("Realm updated: Number of persons is ${result.size}")
     }
 }
@@ -138,8 +139,9 @@ CoroutineScope(context).async {
 
 ```Kotlin
 // Find the first Person without a dog
-realm.objects<Person>().query("dog == NULL LIMIT(1)")
-    .firstOrNull()
+realm.query<Person>("dog == NULL LIMIT(1)")
+    .first()
+    .find()
     ?.also { personWithoutDog ->
         // Add a dog in a transaction
         realm.writeBlocking {
@@ -154,7 +156,7 @@ Use the result of a query to delete from the database
 ```Kotlin
 // delete all Dogs
 realm.writeBlocking {
-    this.objects<Dog>().delete()
+    this.query<Dog>().find().delete()
 }
 ```
 
@@ -163,6 +165,12 @@ Next: head to the full KMM [example](./examples/kmm-sample).
 ### NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
  
 ## The project is in Alpha. Features and API may change in future versions.
+
+## Kotlin Memory Model and Coroutine compatibility
+
+Realm Kotlin is implemented against Kotlin's default memory model (the old one), but still supports running with the new memory model if enabled in the consuming project. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#switch-to-the-new-mm for details on enabled the new memory model.
+
+By default Realm Kotlin depends and requires to run with Kotlin Coroutines version `1.6.0-native-mt`. To use Realm Kotlin with the non-`native-mt` version of Coroutines you will have to enable the new memory model and also disables our internal freezing to accomodate the new freeze transparency for Coroutine 1.6.0. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#unexpected-object-freezing for more details on that.
 
 ## Design documents
 
@@ -366,3 +374,4 @@ This project adheres to the [MongoDB Code of Conduct](https://www.mongodb.com/co
 By participating, you are expected to uphold this code. Please report
 unacceptable behavior to [community-conduct@mongodb.com](mailto:community-conduct@mongodb.com).
 
+<img style="width: 0px; height: 0px;" src="https://3eaz4mshcd.execute-api.us-east-1.amazonaws.com/prod?s=https://github.com/realm/realm-kotlin#README.md">

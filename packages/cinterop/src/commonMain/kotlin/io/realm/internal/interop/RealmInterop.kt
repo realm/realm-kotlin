@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
@@ -30,7 +31,10 @@ import kotlin.jvm.JvmInline
 value class ClassKey(val key: Long)
 // Wrapper for the C-API realm_property_key_t uniquely identifying the property within a class/table
 @JvmInline
-value class ColumnKey(val key: Long)
+value class PropertyKey(val key: Long)
+
+expect val INVALID_CLASS_KEY: ClassKey
+expect val INVALID_PROPERTY_KEY: PropertyKey
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -38,7 +42,7 @@ expect object RealmInterop {
     fun realm_get_library_version(): String
     fun realm_get_num_versions(realm: NativePointer): Long
 
-    fun realm_schema_new(tables: List<Table>): NativePointer
+    fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer
 
     fun realm_config_new(): NativePointer
     fun realm_config_set_path(config: NativePointer, path: String)
@@ -73,6 +77,10 @@ expect object RealmInterop {
 
     fun realm_get_schema(realm: NativePointer): NativePointer
     fun realm_get_num_classes(realm: NativePointer): Long
+    fun realm_get_class_keys(realm: NativePointer): List<ClassKey>
+    fun realm_find_class(realm: NativePointer, name: String): ClassKey?
+    fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo
+    fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
     fun realm_release(p: NativePointer)
 
@@ -84,9 +92,6 @@ expect object RealmInterop {
     fun realm_rollback(realm: NativePointer)
     fun realm_is_in_transaction(realm: NativePointer): Boolean
 
-    // FIXME API-INTERNAL Maybe keep full realm_class_info_t/realm_property_info_t representation in Kotlin
-    // FIXME API-INTERNAL How to return boolean 'found'? Currently throwing runtime exceptions
-    fun realm_find_class(realm: NativePointer, name: String): ClassKey
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
@@ -94,13 +99,13 @@ expect object RealmInterop {
 
     fun realm_object_as_link(obj: NativePointer): Link
 
-    fun realm_get_col_key(realm: NativePointer, table: String, col: String): ColumnKey
+    fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey
 
-    fun <T> realm_get_value(obj: NativePointer, key: ColumnKey): T
-    fun <T> realm_set_value(o: NativePointer, key: ColumnKey, value: T, isDefault: Boolean)
+    fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T
+    fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean)
 
     // list
-    fun realm_get_list(obj: NativePointer, key: ColumnKey): NativePointer
+    fun realm_get_list(obj: NativePointer, key: PropertyKey): NativePointer
     fun realm_list_size(list: NativePointer): Long
     fun <T> realm_list_get(list: NativePointer, index: Long): T
     fun <T> realm_list_add(list: NativePointer, index: Long, value: T)
@@ -111,15 +116,25 @@ expect object RealmInterop {
     fun realm_list_is_valid(list: NativePointer): Boolean
 
     // query
-    fun realm_query_parse(realm: NativePointer, table: String, query: String, vararg args: Any?): NativePointer
-
-    fun realm_query_find_first(realm: NativePointer): Link?
+    fun realm_query_parse(realm: NativePointer, className: String, query: String, vararg args: Any?): NativePointer
+    fun realm_query_parse_for_results(results: NativePointer, query: String, vararg args: Any?): NativePointer
+    fun realm_query_find_first(query: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
+    fun realm_query_count(query: NativePointer): Long
+    fun realm_query_append_query(
+        query: NativePointer,
+        filter: String,
+        vararg args: Any?
+    ): NativePointer
 
     fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer
     fun realm_results_count(results: NativePointer): Long
+    fun <T> realm_results_average(results: NativePointer, property: Long): Pair<Boolean, T>
+    fun <T> realm_results_sum(results: NativePointer, property: Long): T
+    fun <T> realm_results_max(results: NativePointer, property: Long): T
+    fun <T> realm_results_min(results: NativePointer, property: Long): T
     // FIXME OPTIMIZE Get many
-    fun <T> realm_results_get(results: NativePointer, index: Long): Link
+    fun realm_results_get(results: NativePointer, index: Long): Link
 
     fun realm_get_object(realm: NativePointer, link: Link): NativePointer
 
@@ -143,7 +158,16 @@ expect object RealmInterop {
         syncClientConfig: NativePointer,
         basePath: String,
     ): NativePointer
-    fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: CinteropCallback)
+    fun realm_app_get_current_user(app: NativePointer): NativePointer?
+    fun realm_app_log_in_with_credentials(app: NativePointer, credentials: NativePointer, callback: AppCallback<NativePointer>)
+    fun realm_app_log_out(app: NativePointer, user: NativePointer, callback: AppCallback<Unit>)
+    fun realm_clear_cached_apps()
+
+    // User
+    fun realm_user_get_identity(user: NativePointer): String
+    fun realm_user_is_logged_in(user: NativePointer): Boolean
+    fun realm_user_log_out(user: NativePointer)
+    fun realm_user_get_state(user: NativePointer): CoreUserState
 
     // Sync client config
     fun realm_sync_client_config_new(): NativePointer
@@ -176,6 +200,14 @@ expect object RealmInterop {
     fun realm_app_credentials_new_anonymous(): NativePointer
     fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
+
+    // Email Password Authentication
+    fun realm_app_email_password_provider_client_register_email(
+        app: NativePointer,
+        email: String,
+        password: String,
+        callback: AppCallback<Unit>
+    )
 
     // Sync config
     fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer

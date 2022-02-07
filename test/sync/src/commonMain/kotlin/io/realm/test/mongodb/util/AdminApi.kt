@@ -50,8 +50,12 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
  * Wrapper around MongoDB Realm Server Admin functions needed for tests.
  */
 interface AdminApi {
-    // Method to create remote user until we have proper EmailAuthProvider
-    fun createUser(email: String, password: String)
+
+    /**
+     * Creates a remote user. Only call this function when `EmailPasswordAuth.registerUser` doesn't
+     * make sense to use.
+     */
+    fun createUserRestApi(email: String, password: String)
 
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
@@ -90,6 +94,8 @@ open class AdminApiImpl internal constructor(
     @Serializable
     data class ServerApp(val client_app_id: String, val _id: String)
 
+    // FIXME Do not rely on this API to create users and use EmailPasswordAuth wrapper is ready
+    //  see https://github.com/realm/realm-kotlin/issues/433
     init {
         // Must be initialized on same thread as the constructor to allow initializing the lateinit
         // properties on native
@@ -127,7 +133,7 @@ open class AdminApiImpl internal constructor(
     }
 
     // Method to create remote user until we have proper EmailAuthProvider
-    override fun createUser(email: String, password: String) {
+    override fun createUserRestApi(email: String, password: String) {
         runBlocking(dispatcher) {
             client.post<Unit>("$url/groups/$groupId/apps/$appId/users") {
                 contentType(ContentType.Application.Json)

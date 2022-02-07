@@ -20,6 +20,8 @@ import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
@@ -41,6 +43,7 @@ import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -67,10 +70,13 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
+import org.jetbrains.kotlin.ir.util.nameForIrSerialization
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -151,7 +157,7 @@ internal fun IrPluginContext.lookupFunctionInClass(
 
 internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
     return referenceClass(name)?.owner
-        ?: error("Cannot find ${name.asString()} on platform $platform.")
+        ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
 }
 
 internal fun IrPluginContext.lookupConstructorInClass(
@@ -161,6 +167,13 @@ internal fun IrPluginContext.lookupConstructorInClass(
     return referenceConstructors(fqName).first {
         filter(it)
     }
+}
+
+internal fun <T> IrClass.lookupCompanionDeclaration(
+    name: Name
+): T {
+    return this.companionObject()?.declarations?.first { it.nameForIrSerialization == name } as T
+        ?: fatalError("Cannot find companion method ${name.asString()} on ${this.name}")
 }
 
 object SchemaCollector {
@@ -188,7 +201,8 @@ enum class PropertyType {
     RLM_PROPERTY_TYPE_STRING,
     RLM_PROPERTY_TYPE_OBJECT,
     RLM_PROPERTY_TYPE_FLOAT,
-    RLM_PROPERTY_TYPE_DOUBLE
+    RLM_PROPERTY_TYPE_DOUBLE,
+    RLM_PROPERTY_TYPE_TIMESTAMP
 }
 
 data class CoreType(
@@ -313,7 +327,7 @@ fun IrClass.addValueProperty(
     // overridden:
     //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmObjectInternal
     val propertyAccessorGetter = superClass.getPropertyGetter(propertyName.asString())
-        ?: error("${propertyName.asString()} function getter symbol is not available")
+        ?: fatalError("${propertyName.asString()} function getter symbol is not available")
     getter.overriddenSymbols = listOf(propertyAccessorGetter)
 
     // BLOCK_BODY
@@ -389,4 +403,28 @@ fun IrBlockBuilder.createSafeCallConstruction(
             )
         }
     }
+}
+
+/** Finds the line and column of [IrDeclaration] */
+fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
+    val sourceRangeInfo = file.fileEntry.getSourceRangeInfo(
+        beginOffset = startOffset,
+        endOffset = endOffset
+    )
+    return CompilerMessageLocationWithRange.create(
+        path = sourceRangeInfo.filePath,
+        lineStart = sourceRangeInfo.startLineNumber + 1,
+        columnStart = sourceRangeInfo.startColumnNumber + 1,
+        lineEnd = sourceRangeInfo.endLineNumber + 1,
+        columnEnd = sourceRangeInfo.endColumnNumber + 1,
+        lineContent = null
+    )!!
+}
+
+/**
+ * Method to indicate fatal issues that should not have happeneded; as opposed to user modeling
+ * errors that are reported as compiler errors.
+ */
+fun fatalError(message: String): Nothing {
+    error(message)
 }

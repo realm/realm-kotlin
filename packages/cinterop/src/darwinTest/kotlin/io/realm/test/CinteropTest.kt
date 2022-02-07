@@ -16,15 +16,15 @@
 
 package io.realm.test
 
-import io.realm.internal.interop.ClassFlag
+import io.realm.internal.interop.ClassFlags
+import io.realm.internal.interop.ClassInfo
 import io.realm.internal.interop.CollectionType
-import io.realm.internal.interop.Property
-import io.realm.internal.interop.PropertyFlag
+import io.realm.internal.interop.PropertyFlags
+import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.SchemaValidationMode
-import io.realm.internal.interop.Table
 import io.realm.internal.interop.coreErrorAsThrowable
 import io.realm.internal.interop.set
 import io.realm.internal.interop.toKString
@@ -82,7 +82,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("11.5.1", realm_get_library_version()!!.toKString())
+        assertEquals("11.7.0", realm_get_library_version()!!.toKString())
     }
 
     @Test
@@ -145,17 +145,17 @@ class CinteropTest {
     @Test
     fun cinterop_realmInterop() {
         val tables = listOf(
-            Table(
+            ClassInfo(
                 name = "foo",
                 primaryKey = "",
-                flags = setOf(ClassFlag.RLM_CLASS_NORMAL),
-                properties = listOf(
-                    Property(
-                        name = "int",
-                        type = PropertyType.RLM_PROPERTY_TYPE_INT,
-                        collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
-                        flags = setOf(PropertyFlag.RLM_PROPERTY_NORMAL)
-                    )
+                flags = ClassFlags.RLM_CLASS_NORMAL,
+                numProperties = 1,
+            ) to listOf(
+                PropertyInfo(
+                    name = "int",
+                    type = PropertyType.RLM_PROPERTY_TYPE_INT,
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
+                    flags = PropertyFlags.RLM_PROPERTY_NORMAL,
                 )
             )
         )

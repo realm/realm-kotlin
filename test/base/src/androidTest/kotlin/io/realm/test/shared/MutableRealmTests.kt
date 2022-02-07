@@ -20,7 +20,7 @@ import io.realm.RealmConfiguration
 import io.realm.entities.StringPropertyWithPrimaryKey
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
-import io.realm.objects
+import io.realm.query
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -54,7 +54,7 @@ class MutableRealmTests {
 
     @AfterTest
     fun tearDown() {
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
@@ -63,7 +63,7 @@ class MutableRealmTests {
     @Test
     fun copyToRealmWithDefaults() {
         realm.writeBlocking { copyToRealm(Parent()) }
-        val parents = realm.objects<Parent>()
+        val parents = realm.query<Parent>().find()
         assertEquals(1, parents.size)
         assertEquals("N.N.", parents[0].name)
     }
@@ -75,12 +75,12 @@ class MutableRealmTests {
 
     @Test
     fun cancelingWrite() {
-        assertEquals(0, realm.objects(Parent::class).count())
+        assertEquals(0, realm.query<Parent>().find().size)
         realm.writeBlocking {
             copyToRealm(Parent())
             cancelWrite()
         }
-        assertEquals(0, realm.objects(Parent::class).count())
+        assertEquals(0, realm.query<Parent>().count().find())
     }
 
     @Test

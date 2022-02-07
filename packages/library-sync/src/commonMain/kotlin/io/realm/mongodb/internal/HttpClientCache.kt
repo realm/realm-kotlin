@@ -1,6 +1,7 @@
 package io.realm.mongodb.internal
 
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.features.logging.Logger
@@ -19,9 +20,7 @@ fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
     // freezes captured objects too, see:
     // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
     val frozenTimeout = timeoutMs.freeze()
-    // TODO We probably need to fix the clients, so ktor does not automatically override with
-    //  another client if people update the runtime available ones through other dependencies
-    return HttpClient() {
+    return createPlatformClient {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
 
         install(HttpTimeout) {
@@ -48,3 +47,5 @@ fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
 expect class HttpClientCache(timeoutMs: Long, customLogger: Logger? = null) {
     fun getClient(): HttpClient
 }
+
+expect fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient

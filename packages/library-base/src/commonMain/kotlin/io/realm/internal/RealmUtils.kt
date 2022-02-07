@@ -91,12 +91,14 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
     try {
         val managedModel = mediator.createInstanceOf(type)
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
-        return managedModel.manage(
-            realm,
-            mediator,
-            type,
-            RealmInterop.realm_object_create(realm.dbPointer, key)
-        )
+        key?.let {
+            return managedModel.manage(
+                realm,
+                mediator,
+                type,
+                RealmInterop.realm_object_create(realm.dbPointer, key)
+            )
+        } ?: error("Couldn't find key for class $objectType")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
@@ -119,18 +121,20 @@ internal fun <T : RealmObject> create(
         // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
         //  instead
         //  https://github.com/realm/realm-core/issues/4595
-        val existingPrimaryKeyObject =
-            RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
-        existingPrimaryKeyObject?.let {
-            throw IllegalArgumentException("Cannot create object with existing primary key")
-        }
-        val managedModel = mediator.createInstanceOf(type)
-        return managedModel.manage(
-            realm,
-            mediator,
-            type,
-            RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
-        )
+        key?.let {
+            val existingPrimaryKeyObject =
+                RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
+            existingPrimaryKeyObject?.let {
+                throw IllegalArgumentException("Cannot create object with existing primary key")
+            }
+            val managedModel = mediator.createInstanceOf(type)
+            return managedModel.manage(
+                realm,
+                mediator,
+                type,
+                RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
+            )
+        } ?: error("Couldn't find key for class $objectType")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
@@ -240,8 +244,8 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreMultipleSyncAgentsException,
         is RealmCoreAddressSpaceExhaustedException,
         is RealmCoreMaximumFileSizeExceededException,
-        is RealmCoreOutOfDiskSpaceException -> Error(message, cause)
-        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException(message)
+        is RealmCoreOutOfDiskSpaceException -> Error("RealmCoreException ${cause.message} $message", cause)
+        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException("RealmCoreException ${cause.message} $message")
         is RealmCoreInvalidArgumentException,
         is RealmCoreInvalidQueryStringException,
         is RealmCoreOtherException,
@@ -250,9 +254,9 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreUnexpectedPrimaryKeyException,
         is RealmCoreWrongPrimaryKeyTypeException,
         is RealmCoreModifyPrimaryKeyException,
-        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException(message, cause)
+        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("RealmCoreException ${cause.message} $message", cause)
         is RealmCoreNotInATransactionException,
-        is RealmCoreLogicException -> IllegalStateException(message, cause)
+        is RealmCoreLogicException -> IllegalStateException("RealmCoreException ${cause.message} $message", cause)
         is RealmCoreNoneException,
         is RealmCoreUnknownException,
         is RealmCoreNotClonableException,
@@ -271,6 +275,6 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreColumnAlreadyExistsException,
         is RealmCoreKeyAlreadyUsedException,
         is RealmCoreSerializationErrorException,
-        is RealmCoreCallbackException -> RuntimeException(message, cause)
+        is RealmCoreCallbackException -> RuntimeException("RealmCoreException ${cause.message} $message", cause)
     }
 }

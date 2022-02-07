@@ -5,10 +5,10 @@
 #include <cstring>
 #include <string>
 #include "realm_api_helpers.h"
+
+using namespace realm::jni_util;
 %}
 
-// FIXME MEMORY Verify finalizers, etc.
-//  https://github.com/realm/realm-kotlin/issues/93
 // TODO OPTIMIZATION
 //  - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
@@ -25,7 +25,24 @@
 
 // Manual additions to java module class
 %pragma(java) modulecode=%{
-//  Manual addition
+    // Trigger loading of shared library when the swig wrapper is loaded
+    static {
+        // using https://developer.android.com/reference/java/lang/System#getProperties()
+        if (System.getProperty("java.specification.vendor").contains("Android")) {
+            System.loadLibrary("realmc");
+        } else {
+            // otherwise locate, using reflection, the dependency SoLoader and call load
+            // (calling SoLoader directly will create a circular dependency with `jvmMain`)
+            try {
+                Class<?> classToLoad = Class.forName("io.realm.jvm.SoLoader");
+                Object instance = classToLoad.newInstance();
+                java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
+                loadMethod.invoke(instance);
+            } catch (Exception e) {
+                throw new RuntimeException("Couldn't load Realm native libraries", e);
+            }
+        }
+    }
 %}
 
 // Helpers included directly in cpp file
@@ -39,6 +56,37 @@ std::string rlm_stdstr(realm_string_t val)
     return std::string(val.data, 0, val.size);
 }
 %}
+
+// This sets up a type map for all methods with the argument pattern of:
+//    realm_void_user_completion_func_t, void* userdata, realm_free_userdata_func_t
+// This will make Swig wrap methods taking this argument pattern into:
+//  - a Java method that takes one argument of type `Object` (`jstype`) and passes this object on as `Object` to the native method (`jtype`+``javain`)
+//  - a JNI method that takes a `jobject` (`jni`) that translates the incoming single argument into the actual three arguments of the C-API method (`in`)
+%typemap(jstype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
+//%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
+%typemap(jtype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
+%typemap(javain) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "$javainput";
+%typemap(jni) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "jobject";
+%typemap(in) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = app_complete_void_callback;
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+// Reuse void callback typemap as template for result callback
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_app_user_completion_func_t>(app_complete_result_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;
@@ -60,7 +108,7 @@ return $jnicall;
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
-               realm_http_transport_t*};
+               realm_http_completion_func_t, realm_http_transport_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -69,7 +117,7 @@ return $jnicall;
 bool realm_object_is_valid(const realm_object_t*);
 
 %{
-void throw_as_java_exception(JNIEnv *jenv) {
+bool throw_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
         std::string message("[" + std::to_string(error.error) + "]: " + error.message);
@@ -89,20 +137,31 @@ void throw_as_java_exception(JNIEnv *jenv) {
                 jint(error.error),
                 error_message);
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
+        return true;
+    } else {
+        return false;
     }
 }
 %}
 
 %typemap(out) SWIGTYPE* {
     if (!result) {
-        throw_as_java_exception(jenv);
+        bool exception_thrown = throw_as_java_exception(jenv);
+        if (exception_thrown) {
+            // Return immediately if there was an error in which case the exception will be raised when returning to JVM
+            return $null;
+        }
     }
     *($1_type*)&jresult = result;
 }
 
 %typemap(out) bool {
     if (!result) {
-        throw_as_java_exception(jenv);
+        bool exception_thrown = throw_as_java_exception(jenv);
+        if (exception_thrown) {
+            // Return immediately if there was an error in which case the exception will be raised when returning to JVM
+            return $null;
+        }
     }
     jresult = (jboolean)result;
 }
@@ -141,6 +200,8 @@ void throw_as_java_exception(JNIEnv *jenv) {
     // Original
     %#if defined(__ANDROID__)
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
+    %#elif defined(__aarch64__)
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
     %#else
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
     %#endif
@@ -149,11 +210,15 @@ void throw_as_java_exception(JNIEnv *jenv) {
     // Original
     %#if defined(__ANDROID__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
+    %#elif defined(__aarch64__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong *)$1, $input);
     %#else
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*};
+%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*};
+
+%apply uint32_t[] {realm_class_key_t*};
 
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"

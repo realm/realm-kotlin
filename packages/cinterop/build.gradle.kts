@@ -135,6 +135,17 @@ kotlin {
             }
         }
     }
+    iosSimulatorArm64 {
+        compilations.getByName("main") {
+            cinterops.create("realm_wrapper") {
+                defFile = project.file("src/native/realm.def")
+                packageName = "realm_wrapper"
+                includeDirs("$absoluteCorePath/src/")
+            }
+            kotlinOptions.freeCompilerArgs +=
+                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorUniversalRelease else nativeLibraryIncludesIosSimulatorUniversalDebug
+        }
+    }
 
     macosX64("macos") {
         compilations.getByName("main") {
@@ -150,6 +161,16 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
+            kotlinOptions.freeCompilerArgs += if (isReleaseBuild) nativeLibraryIncludesMacosUniversalRelease else nativeLibraryIncludesMacosUniversalDebug
+        }
+    }
+    macosArm64 {
+        compilations.getByName("main") {
+            cinterops.create("realm_wrapper") {
+                defFile = project.file("src/native/realm.def")
+                packageName = "realm_wrapper"
+                includeDirs("$absoluteCorePath/src/")
+            }
             kotlinOptions.freeCompilerArgs += if (isReleaseBuild) nativeLibraryIncludesMacosUniversalRelease else nativeLibraryIncludesMacosUniversalDebug
         }
     }
@@ -194,6 +215,10 @@ kotlin {
             // FIXME HIERARCHICAL-BUILD Rename to nativeDarwin
             kotlin.srcDir("src/darwin/kotlin")
         }
+        val macosArm64Main by getting {
+            kotlin.srcDir("src/darwin/kotlin")
+        }
+
         val iosMain by getting {
             // TODO HIERARCHICAL-BUILD From 1.5.30-M1 we should be able to commonize cinterops using
             //  kotlin.mpp.enableCInteropCommonization=true (https://youtrack.jetbrains.com/issue/KT-40975)
@@ -201,8 +226,14 @@ kotlin {
             //  https://youtrack.jetbrains.com/issue/KT-48153
             kotlin.srcDir("src/darwin/kotlin")
         }
+        val iosSimulatorArm64Main by getting {
+            kotlin.srcDir("src/darwin/kotlin")
+        }
         val macosTest by getting {
             // FIXME HIERARCHICAL-BUILD Rename to nativeDarwinTest
+            kotlin.srcDir("src/darwinTest/kotlin")
+        }
+        val macosArm64Test by getting {
             kotlin.srcDir("src/darwinTest/kotlin")
         }
         val iosTest by getting {
@@ -319,7 +350,8 @@ fun Task.buildSharedLibrariesForJVM() {
             workingDir(project.file(directory))
             commandLine(
                 "cmake",
-                project.file("src/jvmMain/")
+                "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64",
+                project.file("src/jvm/")
             )
         }
         exec {
@@ -340,19 +372,18 @@ fun Task.buildSharedLibrariesForJVM() {
         // Only on CI for Snapshots and Releases
         if (copyJvmABIs) {
             // copy files (Linux)
-            project.file("src/jvmMain/linux/build-dir/librealmc.so")
+            project.file("src/jvmMain/linux-build-dir/librealmc.so")
                 .copyTo(project.file("src/jvmMain/resources/jni/linux/librealmc.so"), overwrite = true)
             genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
 
             // copy files (Windows)
-            project.file("src/jvmMain/windows/build-dir/Release/realmc.dll")
+            project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
                 .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
             genHashFile(platform = "windows", prefix = "", suffix = ".dll")
         }
     }
 
     outputs.file(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"))
-    outputs.file(project.file("src/jvmMain/resources/jni/macos/librealm-ffi.dylib"))
     outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
 
     if (copyJvmABIs) {

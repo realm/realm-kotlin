@@ -1,5 +1,9 @@
 buildscript {
+    extra["ciBuild"] = Realm.ciBuild
     repositories {
+        if (extra["ciBuild"] as Boolean) {
+            maven(url = "file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
+        }
         google()
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
@@ -15,9 +19,11 @@ version = Realm.version
 
 allprojects {
     repositories {
+        if (rootProject.extra["ciBuild"] as Boolean) {
+            maven("file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
+        }
         google()
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
-        jcenter() // Required by detekt
     }
 }

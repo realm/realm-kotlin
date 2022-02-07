@@ -14,6 +14,8 @@
  */
 package io.realm
 
+import io.realm.schema.RealmSchema
+
 /**
  * Base class for all Realm instances ([Realm] and [MutableRealm]).
  */
@@ -21,13 +23,20 @@ interface BaseRealm : Versioned {
     /**
      * Configuration used to configure this Realm instance.
      */
-    val configuration: RealmConfiguration
+    val configuration: Configuration
+
+    /**
+     * Returns an immutable schema of the realm.
+     *
+     * @return the schema of the realm.
+     */
+    fun schema(): RealmSchema
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have
      * a negative impact on the Realm file size on disk.
      *
-     * @see [RealmConfiguration.Builder.maxNumberOfActiveVersions]
+     * @see [Configuration.Builder.maxNumberOfActiveVersions]
      */
     fun getNumberOfActiveVersions(): Long
 

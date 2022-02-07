@@ -19,6 +19,7 @@ package io.realm.test.shared
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
@@ -26,7 +27,8 @@ import io.realm.entities.list.Level1
 import io.realm.entities.list.Level2
 import io.realm.entities.list.Level3
 import io.realm.entities.list.RealmListContainer
-import io.realm.objects
+import io.realm.query
+import io.realm.query.find
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
@@ -62,7 +64,7 @@ class RealmListTests {
 
     @AfterTest
     fun tearDown() {
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
@@ -70,7 +72,7 @@ class RealmListTests {
 
     @Test
     fun realmListInitializer_realmListOf() {
-        val realmListFromArgsEmpty: RealmList<String> = realmListOf<String>()
+        val realmListFromArgsEmpty: RealmList<String> = realmListOf()
         assertTrue(realmListFromArgsEmpty.isEmpty())
 
         val realmListFromArgs: RealmList<String> = realmListOf("1", "2")
@@ -82,15 +84,15 @@ class RealmListTests {
         val realmListFromEmptyCollection = emptyList<String>().toRealmList()
         assertTrue(realmListFromEmptyCollection.isEmpty())
 
-        val realmListFromSingleElementList = listOf<String>("1").toRealmList()
+        val realmListFromSingleElementList = listOf("1").toRealmList()
         assertContentEquals(listOf("1"), realmListFromSingleElementList)
-        val realmListFromSingleElementSet = setOf<String>("1").toRealmList()
-        assertContentEquals(listOf("1"), realmListFromSingleElementList)
+        val realmListFromSingleElementSet = setOf("1").toRealmList()
+        assertContentEquals(listOf("1"), realmListFromSingleElementSet)
 
-        val realmListFromMultiElementCollection = setOf<String>("1", "2").toRealmList()
+        val realmListFromMultiElementCollection = setOf("1", "2").toRealmList()
         assertContentEquals(listOf("1", "2"), realmListFromMultiElementCollection)
 
-        val realmListFromIterator = IntRange(0, 2).toRealmList()
+        val realmListFromIterator = (0..2).toRealmList()
         assertContentEquals(listOf(0, 1, 2), realmListFromIterator)
     }
 
@@ -116,12 +118,15 @@ class RealmListTests {
             copyToRealm(level1_2) // this includes the graph of all 6 objects
         }
 
-        val objectsL1: RealmResults<Level1> =
-            realm.objects<Level1>().query("name BEGINSWITH \"l\" SORT(name ASC)")
-        val objectsL2: RealmResults<Level2> =
-            realm.objects<Level2>().query("name BEGINSWITH \"l\" SORT(name ASC)")
-        val objectsL3: RealmResults<Level3> =
-            realm.objects<Level3>().query("name BEGINSWITH \"l\" SORT(name ASC)")
+        val objectsL1: RealmResults<Level1> = realm.query<Level1>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL2: RealmResults<Level2> = realm.query<Level2>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL3: RealmResults<Level3> = realm.query<Level3>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
 
         assertEquals(2, objectsL1.count())
         assertEquals(2, objectsL2.count())
@@ -282,6 +287,7 @@ class RealmListTests {
         Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
         Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
+        RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         RealmObject::class -> OBJECT_VALUES
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
@@ -546,9 +552,12 @@ internal abstract class ManagedListTester<T>(
                     .addAll(dataSet)
             }
 
-            val list = realm.objects<RealmListContainer>()
+            val list = realm.query<RealmListContainer>()
                 .first()
-                .let { typeSafetyManager.getList(it) }
+                .find { listContainer ->
+                    assertNotNull(listContainer)
+                    typeSafetyManager.getList(listContainer)
+                }
 
             realm.close()
 
@@ -809,7 +818,10 @@ internal abstract class ManagedListTester<T>(
     // Retrieves the list again but this time from Realm to check the getter is called correctly
     private fun assertListAndCleanup(assertion: (RealmList<T>) -> Unit) {
         realm.writeBlocking {
-            val container = this.objects<RealmListContainer>().first()
+            val container = this.query<RealmListContainer>()
+                .first()
+                .find()
+            assertNotNull(container)
             val list = typeSafetyManager.getList(container)
 
             // Assert
@@ -823,7 +835,10 @@ internal abstract class ManagedListTester<T>(
     }
 
     private fun assertContainerAndCleanup(assertion: (RealmListContainer) -> Unit) {
-        val container = realm.objects<RealmListContainer>().first()
+        val container = realm.query<RealmListContainer>()
+            .first()
+            .find()
+        assertNotNull(container)
 
         // Assert
         errorCatcher {
@@ -873,17 +888,20 @@ internal val BYTE_VALUES = listOf<Byte>(1, 2)
 internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
 internal val BOOLEAN_VALUES = listOf(true, false)
+internal val TIMESTAMP_VALUES =
+    listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
     RealmListContainer().apply { stringField = "B" }
 )
 
-internal val NULLABLE_CHAR_VALUES = listOf('a', 'b', null)
-internal val NULLABLE_STRING_VALUES = listOf("ABC", "BCD", null)
-internal val NULLABLE_INT_VALUES = listOf(1, 2, null)
-internal val NULLABLE_LONG_VALUES = listOf<Long?>(1, 2, null)
-internal val NULLABLE_SHORT_VALUES = listOf<Short?>(1, 2, null)
-internal val NULLABLE_BYTE_VALUES = listOf<Byte?>(1, 2, null)
-internal val NULLABLE_FLOAT_VALUES = listOf(1F, 2F, null)
-internal val NULLABLE_DOUBLE_VALUES = listOf(1.0, 2.0, null)
-internal val NULLABLE_BOOLEAN_VALUES = listOf(true, false, null)
+internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
+internal val NULLABLE_STRING_VALUES = STRING_VALUES + null
+internal val NULLABLE_INT_VALUES = INT_VALUES + null
+internal val NULLABLE_LONG_VALUES = LONG_VALUES + null
+internal val NULLABLE_SHORT_VALUES = SHORT_VALUES + null
+internal val NULLABLE_BYTE_VALUES = BYTE_VALUES + null
+internal val NULLABLE_FLOAT_VALUES = FLOAT_VALUES + null
+internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
+internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
+internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null

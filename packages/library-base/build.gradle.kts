@@ -21,9 +21,6 @@ plugins {
     id("org.jetbrains.dokka")
 }
 buildscript {
-    repositories {
-        mavenCentral()
-    }
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
     }
@@ -37,7 +34,6 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
     mavenLocal()
 }
@@ -52,7 +48,9 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     ios()
-    macosX64("macos") {}
+    iosSimulatorArm64()
+    macosX64("macos")
+    macosArm64()
     sourceSets {
         commonMain {
             dependencies {
@@ -106,8 +104,17 @@ kotlin {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
         }
+        val macosArm64Main by getting {
+            kotlin.srcDir("src/darwin/kotlin")
+            kotlin.srcDir("src/macosMain/kotlin")
+        }
+
         getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/darwin/kotlin")
+            kotlin.srcDir("src/ios/kotlin")
+        }
+        val iosSimulatorArm64Main by getting {
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
         }
@@ -128,6 +135,14 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
+}
+
+// Using a custom name module for internal methods to avoid default name mangling in Kotlin compiler which uses the module
+// name and build type variant as a suffix, this default behaviour can cause mismatch at runtime https://github.com/realm/realm-kotlin/issues/621
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-module-name", "io.realm.kotlin.library")
+    }
 }
 
 // Android configuration
@@ -246,7 +261,7 @@ publishing {
 }
 
 // Generate code with version constant
-tasks.create("pluginVersion") {
+tasks.create("generateSdkVersionConstant") {
     val outputDir = file(versionDirectory)
 
     inputs.property("version", project.version)
@@ -264,6 +279,6 @@ tasks.create("pluginVersion") {
         )
     }
 }
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    dependsOn("pluginVersion")
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    dependsOn("generateSdkVersionConstant")
 }

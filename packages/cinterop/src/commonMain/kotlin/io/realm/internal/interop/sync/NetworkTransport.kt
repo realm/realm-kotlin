@@ -29,13 +29,17 @@ interface NetworkTransport {
     val authorizationHeaderName: String?
     val customHeaders: Map<String, String>
 
-    // FIXME https://github.com/realm/realm-kotlin/issues/450
     fun sendRequest(
         method: String,
         url: String,
         headers: Map<String, String>,
-        body: String
-    ): Response
+        body: String,
+        callback: ResponseCallback
+    )
+}
+
+fun interface ResponseCallback {
+    fun response(response: Response)
 }
 
 data class Response(

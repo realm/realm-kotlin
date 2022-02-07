@@ -25,7 +25,7 @@ import kotlinx.coroutines.sync.withLock
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
-    configuration: InternalRealmConfiguration,
+    configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealmImpl(configuration, dbPointer), Realm {
 
@@ -76,14 +76,14 @@ internal class RealmImpl private constructor(
         }
     }
 
-    constructor(configuration: InternalRealmConfiguration) :
+    constructor(configuration: InternalConfiguration) :
         this(
             configuration,
             try {
                 RealmInterop.realm_open(configuration.nativeConfig)
             } catch (exception: RealmCoreException) {
                 throw genericRealmCoreExceptionHandler(
-                    "Could not open Realm with the given configuration",
+                    "Could not open Realm with the given configuration: ${configuration.debug()}",
                     exception
                 )
             }
@@ -124,7 +124,7 @@ internal class RealmImpl private constructor(
         TODO()
     }
 
-    override fun <T> registerObserver(t: Observable<T>): Flow<T> {
+    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         return notifier.registerObserver(t)
     }
 

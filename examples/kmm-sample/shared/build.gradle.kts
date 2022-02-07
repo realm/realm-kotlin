@@ -24,14 +24,12 @@ plugins {
     id("kotlin-android-extensions")
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
+    id("io.realm.kotlin")
 }
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }
-
-// Apply Realm Kotlin plugin
-apply(plugin = "io.realm.kotlin")
 
 kotlin {
     jvm()

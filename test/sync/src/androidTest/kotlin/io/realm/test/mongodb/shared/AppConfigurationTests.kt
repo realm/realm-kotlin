@@ -20,6 +20,7 @@ import io.realm.mongodb.AppConfiguration
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
 // private const val CUSTOM_HEADER_VALUE = "bar"
@@ -358,6 +359,28 @@ class AppConfigurationTests {
 //        assertTrue(headerSet.get())
 //        looperThread.testComplete()
 //    }
+
+    fun equals_same() {
+        val appId = "foo"
+        val url = "http://myurl.com"
+        val config = AppConfiguration.Builder(appId)
+            .baseUrl(url)
+            .build()
+        val otherConfig = AppConfiguration.Builder(appId)
+            .baseUrl(url)
+            .build()
+        assertEquals(config, otherConfig)
+    }
+
+    fun equals_different() {
+        val config = AppConfiguration.Builder("foo")
+            .baseUrl("http://myurl.com")
+            .build()
+        val otherConfig = AppConfiguration.Builder("fooooo")
+            .baseUrl("http://www.mongodb.com")
+            .build()
+        assertNotEquals(config, otherConfig)
+    }
 
     @Ignore // TODO
     fun dispatcher() { }

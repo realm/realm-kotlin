@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
@@ -23,6 +24,7 @@ import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.Timestamp
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +34,7 @@ import kotlin.reflect.KClass
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
 internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableListOf() {
-    override fun observe(): Flow<RealmList<E>> =
+    override fun asFlow(): Flow<RealmList<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 }
 
@@ -40,8 +42,8 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
  * Implementation for managed lists, backed by Realm.
  */
 internal class ManagedRealmList<E>(
-    val nativePointer: NativePointer,
-    val metadata: ListOperatorMetadata
+    private val nativePointer: NativePointer,
+    private val metadata: ListOperatorMetadata
 ) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
 
     private val operator = ListOperator<E>(metadata)
@@ -57,7 +59,10 @@ internal class ManagedRealmList<E>(
         try {
             return operator.convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not get element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not get element at list index $index",
+                exception
+            )
         }
     }
 
@@ -70,17 +75,11 @@ internal class ManagedRealmList<E>(
                 copyToRealm(metadata.mediator, metadata.realm, element)
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not add element at list index $index",
+                exception
+            )
         }
-    }
-
-    // FIXME bug in AbstractMutableList.addAll native implementation:
-    //  https://youtrack.jetbrains.com/issue/KT-47211
-    //  Remove this method once the native implementation has a check for valid index
-    override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        metadata.realm.checkClosed()
-        rangeCheckForAdd(index)
-        return super.addAll(index, elements)
     }
 
     override fun clear() {
@@ -93,7 +92,10 @@ internal class ManagedRealmList<E>(
         try {
             RealmInterop.realm_list_erase(nativePointer, index.toLong())
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not remove element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not remove element at list index $index",
+                exception
+            )
         }
     }
 
@@ -108,11 +110,14 @@ internal class ManagedRealmList<E>(
                 )
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not set list element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not set list element at list index $index",
+                exception
+            )
         }
     }
 
-    override fun observe(): Flow<ManagedRealmList<E>> {
+    override fun asFlow(): Flow<ManagedRealmList<E>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }
@@ -151,12 +156,6 @@ internal class ManagedRealmList<E>(
     internal fun isValid(): Boolean {
         return RealmInterop.realm_list_is_valid(nativePointer)
     }
-
-    private fun rangeCheckForAdd(index: Int) {
-        if (index < 0 || index > size) {
-            throw IndexOutOfBoundsException("Index: '$index', Size: '$size'")
-        }
-    }
 }
 
 /**
@@ -194,6 +193,7 @@ internal class ListOperator<E>(
                 Float::class,
                 Double::class,
                 String::class -> value
+                RealmInstant::class -> RealmInstantImpl(value as Timestamp)
                 else -> (value as Link).toRealmObject(
                     clazz as KClass<out RealmObject>,
                     mediator,

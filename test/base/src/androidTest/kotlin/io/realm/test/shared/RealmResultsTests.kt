@@ -17,10 +17,11 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -48,7 +49,7 @@ class RealmResultsTests {
 
     @AfterTest
     fun tearDown() {
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
@@ -56,14 +57,18 @@ class RealmResultsTests {
 
     @Test
     fun version() {
-        val results: RealmResults<Parent> = realm.objects(Parent::class)
-        assertEquals(INITIAL_VERSION, results.version())
+        realm.query<Parent>()
+            .find { results ->
+                assertEquals(INITIAL_VERSION, results.version())
+            }
     }
 
     @Test
     fun versionThrowsIfRealmIsClosed() {
-        val results: RealmResults<Parent> = realm.objects(Parent::class)
-        realm.close()
-        assertFailsWith<IllegalStateException> { results.version() }
+        realm.query<Parent>()
+            .find { results ->
+                realm.close()
+                assertFailsWith<IllegalStateException> { results.version() }
+            }
     }
 }

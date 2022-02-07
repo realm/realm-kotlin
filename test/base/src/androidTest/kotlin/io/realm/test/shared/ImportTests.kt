@@ -17,6 +17,7 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
@@ -55,7 +56,7 @@ class ImportTests {
     @Test
     fun importPrimitiveDefaults() {
         realm.writeBlocking { copyToRealm(Sample()) }
-        val managed = realm.objects(Sample::class)[0]
+        val managed = realm.query(Sample::class).find()[0]
 
         // TODO Find a way to ensure that our Sample covers all types. This isn't doable right now
         //  without polluting test project configuration with cinterop dependency. Some of the
@@ -74,6 +75,7 @@ class ImportTests {
                 Boolean::class -> assertEquals(true, managed.booleanField)
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
+                RealmInstant::class -> assertEquals(RealmInstant.fromEpochSeconds(100, 1000), managed.timestampField)
                 RealmObject::class -> assertEquals(null, managed.child)
                 else -> error("Untested type: $type")
             }
@@ -104,7 +106,9 @@ class ImportTests {
         val clone = realm.writeBlocking { copyToRealm(root) }
 
         assertNotNull(clone)
-        assertEquals(2, realm.objects(Sample::class).count())
+        val query = realm.query(Sample::class)
+        assertEquals(2L, query.count().find())
+        assertEquals(2, query.find().size)
         val child = clone.child
         assertNotNull(child)
         assertNotNull(child.stringField)
@@ -181,7 +185,7 @@ class ImportTests {
         val managed = realm.writeBlocking {
             copyToRealm(Sample()).apply { stringField = v1 }
         }
-        assertEquals(1, realm.objects(Sample::class).count())
+        assertEquals(1L, realm.query(Sample::class).count().find())
 
         val unmanaged = Sample().apply {
             stringField = v2
@@ -192,7 +196,7 @@ class ImportTests {
             copyToRealm(unmanaged)
         }
 
-        assertEquals(2, realm.objects(Sample::class).count())
+        assertEquals(2L, realm.query(Sample::class).count().find())
         assertEquals(v2, importedRoot.stringField)
         assertEquals(v1, importedRoot.child?.stringField)
     }
@@ -204,6 +208,6 @@ class ImportTests {
             copyToRealm(sample)
         }
 
-        assertEquals(1, realm.objects(Sample::class).count())
+        assertEquals(1L, realm.query(Sample::class).count().find())
     }
 }
