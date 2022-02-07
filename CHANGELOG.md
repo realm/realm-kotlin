@@ -5,7 +5,9 @@
 ### Enhancements
 
 ### Fixed
-* `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)) 
+* Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
+* `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
+
 
 ### Compatibility
 * This release is compatible with:
@@ -17,11 +19,6 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Gradle 7.3.3.
-* Updated to Android Gradle Plugin 7.1.0.
-* Updated to AndroidX JUnit 1.1.3.
-* Updated to AndroidX Test 1.4.0.
-
 
 
 ## 0.9.0 (2022-01-28)
