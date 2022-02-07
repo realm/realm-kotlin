@@ -3,18 +3,6 @@ package io.realm.notifications
 import io.realm.RealmObject
 
 sealed interface ObjectChange<O : RealmObject> {
-    enum class State {
-        INITIAL,
-        UPDATED,
-        DELETED
-    }
-
-    /**
-     * Returns the state represented by this change. See [io.realm.notifications.ObjectChange.State]
-     * for a description of the different states a changeset can be in.
-     */
-    val state: State
-
     /**
      * Returns the newest state of object being observed. `null` is returned if the object
      * has been deleted.
