@@ -31,7 +31,7 @@ import java.net.SocketException
 import java.net.URL
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.*
+import java.util.Scanner
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.xml.bind.DatatypeConverter
@@ -99,7 +99,7 @@ internal class RealmAnalytics {
     public fun sendAnalyticsData() {
         if (!METRIC_PROCESSED) {
             jsonData?.let {
-                logger.debug("Sending Realm analytics data: \n${jsonData}")
+                logger.debug("Sending Realm analytics data: \n$jsonData")
                 sendAnalytics(it, logger)
             }
             METRIC_PROCESSED = true
@@ -176,7 +176,7 @@ internal class RealmAnalytics {
     private fun sendAnalytics(json: String, logger: Logger) {
         try {
             logger.debug("Sending analytics payload\n$json")
-            // FIXME This should be turned into a daemon thread so we don't block the build for
+            // TODO Consider turning this into a daemon thread so we don't block the build for
             //  6 seconds when there is no network.
             val pool = Executors.newSingleThreadExecutor()
             try {
@@ -213,7 +213,7 @@ internal class RealmAnalytics {
  */
 internal object ComputerIdentifierGenerator {
     private const val UNKNOWN = "unknown"
-    private val OS = System.getProperty("os.name").toLowerCase()
+    private val OS = System.getProperty("os.name").lowercase()
     @Suppress("TooGenericExceptionCaught")
     fun get(): String {
         return try {

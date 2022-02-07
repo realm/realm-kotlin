@@ -18,10 +18,8 @@ package io.realm.gradle.analytics
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-
-import org.gradle.api.services.BuildServiceParameters
-
 import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 import org.gradle.tooling.events.FinishEvent
 import org.gradle.tooling.events.OperationCompletionListener
 import org.gradle.tooling.events.task.TaskFailureResult
@@ -55,19 +53,19 @@ abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, Ope
                 logger.warn("Null event received. This should never happen.")
                 return
             }
-            when(event) {
+            when (event) {
                 is TaskFinishEvent -> handleTaskResult(event)
                 else -> {
                     logger.warn("Unknown event type: ${event.javaClass.name}")
                 }
             }
         } catch (ex: Exception) {
-            logger.warn("Unexpected error: ${ex.toString()}")
+            logger.warn("Unexpected error: $ex")
         }
     }
 
     private fun handleTaskResult(taskEvent: TaskFinishEvent) {
-        when(val result: TaskOperationResult = taskEvent.result) {
+        when (val result: TaskOperationResult = taskEvent.result) {
             is TaskSkippedResult -> { /* Ignore skipped tasks to avoid excessive work during incremental builds */ }
             is TaskFailureResult -> { filterResultAndSendAnalytics(taskEvent) }
             is TaskSuccessResult -> { filterResultAndSendAnalytics(taskEvent) }
@@ -76,7 +74,6 @@ abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, Ope
             }
         }
     }
-
 
     private fun filterResultAndSendAnalytics(taskEvent: TaskFinishEvent) {
         // We use `compile<XXX>` tasks as a heuristic for a "build". This will not detect builds
@@ -101,4 +98,3 @@ abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, Ope
         analytics!!.gatherAnalyticsDataIfNeeded(project)
     }
 }
-

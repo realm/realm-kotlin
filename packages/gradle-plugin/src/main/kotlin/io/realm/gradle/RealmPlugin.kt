@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import javax.inject.Inject
 
-
 @Suppress("unused")
 open class RealmPlugin : Plugin<Project> {
 
