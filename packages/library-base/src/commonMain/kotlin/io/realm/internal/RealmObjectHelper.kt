@@ -62,7 +62,7 @@ internal object RealmObjectHelper {
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$ClassName`!!, col)
-        val res = RealmInterop.realm_get_value<Timestamp>(o, key)
+        val res = RealmInterop.realm_get_value<Timestamp?>(o, key)
         return if (res == null) null else RealmInstantImpl(res)
     }
 
@@ -82,7 +82,7 @@ internal object RealmObjectHelper {
     ): Any? {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val link = RealmInterop.realm_get_value<Link>(o, key)
+        val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
             val value =
                 (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
@@ -214,6 +214,7 @@ internal object RealmObjectHelper {
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     internal fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
         TODO()
     }

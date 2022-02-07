@@ -78,7 +78,7 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
     }
 
     override fun <T : RealmObject> findLatest(obj: T): T? {
-        return if (obj == null || !obj.isValid()) {
+        return if (!obj.isValid()) {
             null
         } else if (!obj.isManaged()) {
             throw IllegalArgumentException(
