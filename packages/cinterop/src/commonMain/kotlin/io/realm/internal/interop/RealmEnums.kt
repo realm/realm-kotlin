@@ -20,16 +20,16 @@ package io.realm.internal.interop
 expect enum class SchemaMode {
     RLM_SCHEMA_MODE_AUTOMATIC,
     RLM_SCHEMA_MODE_IMMUTABLE,
-    RLM_SCHEMA_MODE_READ_ONLY_ALTERNATIVE,
+    RLM_SCHEMA_MODE_READ_ONLY,
     RLM_SCHEMA_MODE_RESET_FILE,
     RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
     RLM_SCHEMA_MODE_ADDITIVE_EXPLICIT,
     RLM_SCHEMA_MODE_MANUAL,
 }
 
-expect enum class ClassFlag {
-    RLM_CLASS_NORMAL,
-    RLM_CLASS_EMBEDDED,
+expect object ClassFlags {
+    val RLM_CLASS_NORMAL: Int
+    val RLM_CLASS_EMBEDDED: Int
 }
 
 expect enum class PropertyType {
@@ -39,25 +39,32 @@ expect enum class PropertyType {
     RLM_PROPERTY_TYPE_OBJECT,
     RLM_PROPERTY_TYPE_FLOAT,
     RLM_PROPERTY_TYPE_DOUBLE,
+    RLM_PROPERTY_TYPE_TIMESTAMP,
     ;
 
     // Consider adding property methods to make it easier to do generic code on all types. Or is this exactly what collection type is about
     // fun isList()
     // fun isReference()
+    companion object {
+        fun from(nativeValue: Int): PropertyType
+    }
 }
 
 expect enum class CollectionType {
     RLM_COLLECTION_TYPE_NONE,
     RLM_COLLECTION_TYPE_LIST,
     RLM_COLLECTION_TYPE_SET,
-    RLM_COLLECTION_TYPE_DICTIONARY,
+    RLM_COLLECTION_TYPE_DICTIONARY;
+    companion object {
+        fun from(nativeValue: Int): CollectionType
+    }
 }
 
-expect enum class PropertyFlag {
-    RLM_PROPERTY_NORMAL,
-    RLM_PROPERTY_NULLABLE,
-    RLM_PROPERTY_PRIMARY_KEY,
-    RLM_PROPERTY_INDEXED,
+expect object PropertyFlags {
+    val RLM_PROPERTY_NORMAL: Int
+    val RLM_PROPERTY_NULLABLE: Int
+    val RLM_PROPERTY_PRIMARY_KEY: Int
+    val RLM_PROPERTY_INDEXED: Int
 }
 
 expect enum class SchemaValidationMode {

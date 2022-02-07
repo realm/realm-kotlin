@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package io.realm.internal.interop
+package io.realm.schema
 
-// FIXME API-INTERNAL Compiler does not pick up the actual if not in a separate file, so not
-//  following RealmEnums.kt structure, but might have to move anyway, so keeping the structure
-//  unaligned for now.
-actual enum class ClassFlag(override val nativeValue: Int) : NativeEnumerated {
-    RLM_CLASS_NORMAL(realm_class_flags_e.RLM_CLASS_NORMAL),
-    RLM_CLASS_EMBEDDED(realm_class_flags_e.RLM_CLASS_EMBEDDED),
+/**
+ * The various types that are used when storing the property values in the realm.
+ */
+enum class RealmStorageType {
+    BOOL,
+    INT,
+    STRING,
+    OBJECT,
+    FLOAT,
+    DOUBLE,
+    TIMESTAMP;
 }

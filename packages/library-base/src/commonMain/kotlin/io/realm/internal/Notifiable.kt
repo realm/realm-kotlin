@@ -21,23 +21,27 @@ import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 
-// FIXME Could be split into various interfaces, to getter better type safety around our operations
-//  - Native reference
-//    val ref: NativePointer
-//  - Freezable
-//    fun freeze(frozenRealm: RealmReference): Frozen<T>
-//  - Thawable
-//    fun thaw(liveRealm: RealmReference): Live<T>?
-//    fun registerForNotification(callback: Callback): NativePointer
-//    fun emitFrozenUpdate(frozenRealm: RealmReference, change: NativePointer, channel: SendChannel<T>): ChannelResult<Unit>?
-//  - Public Observable
-//    fun observe(): Flow<T>
-interface Observable<T> {
-    fun freeze(frozenRealm: RealmReference): Observable<T>?
-    fun thaw(liveRealm: RealmReference): Observable<T>?
+interface Notifiable<T> {
     fun registerForNotification(callback: Callback): NativePointer
+
     // FIXME Needs elaborate doc on how to signal and close channel
-    fun emitFrozenUpdate(frozenRealm: RealmReference, change: NativePointer, channel: SendChannel<T>): ChannelResult<Unit>?
-    // Should we have a similar public variant
-    fun observe(): Flow<T>
+    fun emitFrozenUpdate(
+        frozenRealm: RealmReference,
+        change: NativePointer,
+        channel: SendChannel<T>
+    ): ChannelResult<Unit>?
 }
+
+interface Freezable<T> {
+    fun freeze(frozenRealm: RealmReference): Notifiable<T>?
+}
+
+interface Thawable<T> {
+    fun thaw(liveRealm: RealmReference): Notifiable<T>?
+}
+
+interface Flowable<T> {
+    fun asFlow(): Flow<T?>
+}
+
+interface Observable<T> : Notifiable<T>, Freezable<T>, Thawable<T>

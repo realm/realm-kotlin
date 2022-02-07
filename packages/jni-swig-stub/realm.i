@@ -9,8 +9,6 @@
 using namespace realm::jni_util;
 %}
 
-// FIXME MEMORY Verify finalizers, etc.
-//  https://github.com/realm/realm-kotlin/issues/93
 // TODO OPTIMIZATION
 //  - Transfer "value semantics" objects in one go. Maybe custom serializer into byte buffers for all value types
 
@@ -27,7 +25,24 @@ using namespace realm::jni_util;
 
 // Manual additions to java module class
 %pragma(java) modulecode=%{
-//  Manual addition
+    // Trigger loading of shared library when the swig wrapper is loaded
+    static {
+        // using https://developer.android.com/reference/java/lang/System#getProperties()
+        if (System.getProperty("java.specification.vendor").contains("Android")) {
+            System.loadLibrary("realmc");
+        } else {
+            // otherwise locate, using reflection, the dependency SoLoader and call load
+            // (calling SoLoader directly will create a circular dependency with `jvmMain`)
+            try {
+                Class<?> classToLoad = Class.forName("io.realm.jvm.SoLoader");
+                Object instance = classToLoad.newInstance();
+                java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
+                loadMethod.invoke(instance);
+            } catch (Exception e) {
+                throw new RuntimeException("Couldn't load Realm native libraries", e);
+            }
+        }
+    }
 %}
 
 // Helpers included directly in cpp file
@@ -102,7 +117,7 @@ return $jnicall;
 bool realm_object_is_valid(const realm_object_t*);
 
 %{
-void throw_as_java_exception(JNIEnv *jenv) {
+bool throw_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
         std::string message("[" + std::to_string(error.error) + "]: " + error.message);
@@ -122,20 +137,31 @@ void throw_as_java_exception(JNIEnv *jenv) {
                 jint(error.error),
                 error_message);
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
+        return true;
+    } else {
+        return false;
     }
 }
 %}
 
 %typemap(out) SWIGTYPE* {
     if (!result) {
-        throw_as_java_exception(jenv);
+        bool exception_thrown = throw_as_java_exception(jenv);
+        if (exception_thrown) {
+            // Return immediately if there was an error in which case the exception will be raised when returning to JVM
+            return $null;
+        }
     }
     *($1_type*)&jresult = result;
 }
 
 %typemap(out) bool {
     if (!result) {
-        throw_as_java_exception(jenv);
+        bool exception_thrown = throw_as_java_exception(jenv);
+        if (exception_thrown) {
+            // Return immediately if there was an error in which case the exception will be raised when returning to JVM
+            return $null;
+        }
     }
     jresult = (jboolean)result;
 }
@@ -174,6 +200,8 @@ void throw_as_java_exception(JNIEnv *jenv) {
     // Original
     %#if defined(__ANDROID__)
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
+    %#elif defined(__aarch64__)
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
     %#else
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
     %#endif
@@ -182,11 +210,15 @@ void throw_as_java_exception(JNIEnv *jenv) {
     // Original
     %#if defined(__ANDROID__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
+    %#elif defined(__aarch64__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong *)$1, $input);
     %#else
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*};
+%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*};
+
+%apply uint32_t[] {realm_class_key_t*};
 
 // Just generate constants for the enum and pass them back and forth as integers
 %include "enumtypeunsafe.swg"

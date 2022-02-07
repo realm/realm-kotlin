@@ -42,6 +42,7 @@ data class RealmReference(
         return RealmInterop.realm_is_closed(dbPointer)
     }
 
+    @Suppress("NOTHING_TO_INLINE") // Inline for more readable stack traces.
     inline fun checkClosed() {
         if (isClosed()) {
             throw IllegalStateException("Realm has been closed and is no longer accessible: ${owner.configuration.path}")

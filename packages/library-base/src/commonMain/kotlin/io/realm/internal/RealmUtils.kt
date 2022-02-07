@@ -69,7 +69,7 @@ import kotlin.reflect.KProperty1
  * Add a check and error message for code that never be reached because it should have been
  * replaced by the Compiler Plugin.
  */
-@Suppress("FunctionNaming")
+@Suppress("FunctionNaming", "NOTHING_TO_INLINE")
 inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
@@ -91,12 +91,14 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
     try {
         val managedModel = mediator.createInstanceOf(type)
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
-        return managedModel.manage(
-            realm,
-            mediator,
-            type,
-            RealmInterop.realm_object_create(realm.dbPointer, key)
-        )
+        key?.let {
+            return managedModel.manage(
+                realm,
+                mediator,
+                type,
+                RealmInterop.realm_object_create(realm.dbPointer, key)
+            )
+        } ?: error("Couldn't find key for class $objectType")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
@@ -119,18 +121,20 @@ internal fun <T : RealmObject> create(
         // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
         //  instead
         //  https://github.com/realm/realm-core/issues/4595
-        val existingPrimaryKeyObject =
-            RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
-        existingPrimaryKeyObject?.let {
-            throw IllegalArgumentException("Cannot create object with existing primary key")
-        }
-        val managedModel = mediator.createInstanceOf(type)
-        return managedModel.manage(
-            realm,
-            mediator,
-            type,
-            RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
-        )
+        key?.let {
+            val existingPrimaryKeyObject =
+                RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
+            existingPrimaryKeyObject?.let {
+                throw IllegalArgumentException("Cannot create object with existing primary key")
+            }
+            val managedModel = mediator.createInstanceOf(type)
+            return managedModel.manage(
+                realm,
+                mediator,
+                type,
+                RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
+            )
+        } ?: error("Couldn't find key for class $objectType")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
@@ -155,10 +159,10 @@ internal fun <T> copyToRealm(
         if (!elementToCopy.isManaged()) {
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
-            val members =
-                companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-
+            @Suppress("UNCHECKED_CAST")
+            val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
             val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+                @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,
                     realmPointer,
@@ -197,6 +201,7 @@ internal fun <T> copyToRealm(
                     member.set(target, it)
                 }
             }
+            @Suppress("UNCHECKED_CAST")
             elementToCopy = target as T
         }
 

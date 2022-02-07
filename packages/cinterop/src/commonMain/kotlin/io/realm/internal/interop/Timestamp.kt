@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.internal.interop
 
-// FIXME API-SCHEMA Platform independent class definition. Maybe rework into utility method called in Realm
-//  object's companion schema mechanism depending on how we relate this to the actual schema/runtime
-//  realm_class_info_t.
-data class Table(
-    val name: String,
-    val primaryKey: String?,
-    val flags: Set<ClassFlag> = setOf(ClassFlag.RLM_CLASS_NORMAL),
-    val properties: List<Property>
-)
+/**
+ * Wrapper around Core Timestamp values.
+ * See https://github.com/realm/realm-core/blob/master/src/realm/timestamp.hpp for more information
+ */
+interface Timestamp {
+    val seconds: Long
+    val nanoSeconds: Int
+}
+
+// Implementation that should only be used within the cinterop module.
+internal data class TimestampImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp

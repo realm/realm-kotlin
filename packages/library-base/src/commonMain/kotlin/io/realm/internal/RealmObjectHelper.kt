@@ -16,13 +16,15 @@
 
 package io.realm.internal
 
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.internal.interop.ColumnKey
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.Timestamp
 import kotlin.reflect.KClass
 
 object RealmObjectHelper {
@@ -44,6 +46,16 @@ object RealmObjectHelper {
         return RealmInterop.realm_get_value(o, key)
     }
 
+    @Suppress("unused") // Called from generated code
+    internal fun <R> getTimestamp(obj: RealmObjectInternal, col: String): RealmInstant? {
+        obj.checkValid()
+        val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
+        val res = RealmInterop.realm_get_value<Timestamp?>(o, key)
+        return if (res == null) null else RealmInstantImpl(res)
+    }
+
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
     internal inline fun <reified R : RealmObject> getObject(
@@ -54,7 +66,7 @@ object RealmObjectHelper {
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
-        val link = RealmInterop.realm_get_value<Link>(o, key)
+        val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
             val value =
                 (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
@@ -76,7 +88,7 @@ object RealmObjectHelper {
         val realm: RealmReference =
             obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key: ColumnKey =
+        val key: PropertyKey =
             RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
         val clazz: KClass<*> = R::class
@@ -133,6 +145,32 @@ object RealmObjectHelper {
         }
     }
 
+    // Consider inlining
+    @Suppress("unused") // Called from generated code
+    internal fun <R> setTimestamp(obj: RealmObjectInternal, col: String, value: RealmInstant?) {
+        obj.checkValid()
+        val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$TableName`!!, col)
+        // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
+        //  implementations in the various platform RealmInterops here to eliminate
+        //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
+        //  only. This relates to the overall concern of having a generic path for getter/setter
+        //  instead of generating a typed path for each type.
+        try {
+            RealmInterop.realm_set_value(o, key, value, false)
+        }
+        // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
+        // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
+        // info that might help users to understand the exception.
+        catch (exception: RealmCoreException) {
+            throw IllegalStateException(
+                "Cannot set `${obj.`$realm$TableName`}.$col` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                exception
+            )
+        }
+    }
+
     @Suppress("unused") // Called from generated code
     internal inline fun <reified R : RealmObjectInternal> setObject(
         obj: RealmObjectInternal,
@@ -146,6 +184,7 @@ object RealmObjectHelper {
         setValue(obj, col, newValue)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     internal fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
         TODO()
     }

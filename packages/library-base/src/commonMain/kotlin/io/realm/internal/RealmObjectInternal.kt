@@ -34,7 +34,7 @@ import kotlin.reflect.KClass
  * [RealmObject].
  */
 @Suppress("VariableNaming")
-interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal> {
+interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
@@ -67,13 +67,14 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         }
     }
 
-    override fun thaw(liveRealm: RealmReference): Observable<RealmObjectInternal>? {
+    override fun thaw(liveRealm: RealmReference): RealmObjectInternal? {
         @Suppress("UNCHECKED_CAST")
         val type: KClass<*> = this::class
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
+            @Suppress("UNCHECKED_CAST")
             managedModel.manage(
                 liveRealm,
                 mediator,
@@ -102,12 +103,12 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         }
     }
 
-    override fun observe(): Flow<RealmObjectInternal> {
+    override fun asFlow(): Flow<RealmObjectInternal> {
         return this.`$realm$Owner`!!.owner.registerObserver(this)
     }
 }
 
-internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {
+internal fun RealmObject.realmObjectInternal(): RealmObjectInternal {
     return this as RealmObjectInternal
 }
 

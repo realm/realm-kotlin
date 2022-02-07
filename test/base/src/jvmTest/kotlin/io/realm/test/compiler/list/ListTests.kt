@@ -129,10 +129,18 @@ class ListTests {
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("RealmLists cannot use a '*' projection"))
     }
+
+    @Test
+    fun `unsupported type in list - fails`() {
+        val result = compileFromSource(SourceFile.kotlin("nullableList.kt", UNSUPPORTED_TYPE))
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Unsupported type for lists: 'A'"))
+    }
 }
 
 private val NON_NULLABLE_LIST_CODE = """
 import io.realm.realmListOf
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -145,6 +153,7 @@ class NonNullableList : RealmObject {
 
 private val NULLABLE_LIST_CODE = """
 import io.realm.realmListOf
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -157,6 +166,7 @@ class NullableList : RealmObject {
 
 private val NULLABLE_TYPE_CODE = """
 import io.realm.realmListOf
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -169,6 +179,7 @@ class NullableTypeList : RealmObject {
 
 private val STAR_PROJECTION = """
 import io.realm.realmListOf
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -177,4 +188,19 @@ import java.lang.Exception
 class NullableTypeList : RealmObject {
     var list: RealmList<*> = realmListOf<String>()
 }
+""".trimIndent()
+
+private val UNSUPPORTED_TYPE = """
+    import io.realm.realmListOf
+    import io.realm.RealmInstant
+    import io.realm.RealmList
+    import io.realm.RealmObject
+
+    import java.lang.Exception
+
+    class A
+
+    class NullableTypeList : RealmObject {
+        var list: RealmList<A> = realmListOf()
+    }
 """.trimIndent()

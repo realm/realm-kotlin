@@ -21,6 +21,8 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.entities.Sample
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
@@ -33,6 +35,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -63,9 +66,11 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<RealmResults<Sample>>(1)
             val observer = async {
-                realm.objects(Sample::class).observe().collect {
-                    c.trySend(it)
-                }
+                realm.query<Sample>()
+                    .asFlow()
+                    .collect {
+                        c.trySend(it)
+                    }
             }
             val initialElement: RealmResults<Sample> = c.receive()
             assertEquals(0, initialElement.size)
@@ -75,13 +80,17 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun observe() {
+    override fun asFlow() {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
-                    c.trySend(it.size)
-                }
+                realm.query<Sample>()
+                    .asFlow()
+                    .filterNot {
+                        it.isEmpty()
+                    }.collect {
+                        c.trySend(it.size)
+                    }
             }
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
@@ -93,19 +102,27 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun cancelObserve() {
+    override fun cancelAsFlow() {
         runBlocking {
             val c1 = Channel<RealmResults<Sample>>(1)
             val c2 = Channel<RealmResults<Sample>>(1)
             val observer1 = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
-                    c1.trySend(it)
-                }
+                realm.query<Sample>()
+                    .asFlow()
+                    .filterNot {
+                        it.isEmpty()
+                    }.collect {
+                        c1.trySend(it)
+                    }
             }
             val observer2 = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
-                    c2.trySend(it)
-                }
+                realm.query<Sample>()
+                    .asFlow()
+                    .filterNot {
+                        it.isEmpty()
+                    }.collect {
+                        c2.trySend(it)
+                    }
             }
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })
@@ -136,13 +153,20 @@ class RealmResultsNotificationsTests : NotificationTests {
                 )
             }
             val observer = async {
-                realm.objects(Sample::class).observe().collect {
-                    c.trySend(it)
-                }
+                realm.query<Sample>()
+                    .asFlow()
+                    .collect {
+                        c.trySend(it)
+                    }
             }
             assertEquals(1, c.receive().size)
             realm.write {
-                delete(objects(Sample::class).first())
+                query<Sample>()
+                    .first()
+                    .find { sample ->
+                        assertNotNull(sample)
+                        delete(sample)
+                    }
             }
             assertEquals(0, c.receive().size)
             observer.cancel()
@@ -151,28 +175,32 @@ class RealmResultsNotificationsTests : NotificationTests {
     }
 
     @Test
-    @Ignore // FIXME Not correctly imlemented yet
+    @Ignore // FIXME Not correctly implemented yet
     override fun closeRealmInsideFlowThrows() {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val counter = AtomicInt(0)
             val observer1 = async {
-                realm.objects(Sample::class).observe().collect {
-                    when (counter.incrementAndGet()) {
-                        1 -> c.trySend(it.size)
-                        2 -> {
-                            realm.close()
-                            c.trySend(-1)
-                            println("realm closed")
+                realm.query<Sample>()
+                    .asFlow()
+                    .collect {
+                        when (counter.incrementAndGet()) {
+                            1 -> c.trySend(it.size)
+                            2 -> {
+                                realm.close()
+                                c.trySend(-1)
+                                println("realm closed")
+                            }
                         }
                     }
-                }
             }
             val observer2 = async {
-                realm.objects(Sample::class).observe().collect {
-                    println(it.first().stringField)
-                    println("$it -> ${realm.isClosed()}")
-                }
+                realm.query<Sample>()
+                    .asFlow()
+                    .collect {
+                        println(it.first().stringField)
+                        println("$it -> ${realm.isClosed()}")
+                    }
             }
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
@@ -193,9 +221,13 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                realm.objects(Sample::class).observe().filterNot { it.isEmpty() }.collect {
-                    c.send(it.size)
-                }
+                realm.query<Sample>()
+                    .asFlow()
+                    .filterNot {
+                        it.isEmpty()
+                    }.collect {
+                        c.send(it.size)
+                    }
                 fail("Flow should not be canceled.")
             }
             realm.write {

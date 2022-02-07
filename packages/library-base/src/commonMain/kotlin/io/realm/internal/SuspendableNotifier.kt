@@ -52,7 +52,7 @@ internal class SuspendableNotifier(
     )
 
     private val realmInitializer = lazy {
-        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalRealmConfiguration).nativeConfig, dispatcher)
+        val dbPointer = RealmInterop.realm_open(owner.configuration.nativeConfig, dispatcher)
         object : BaseRealmImpl(owner.configuration, dbPointer) {
             /* Realms used by the Notifier is just a basic Live Realm */
         }
@@ -91,14 +91,13 @@ internal class SuspendableNotifier(
 //        }
     }
 
-    internal fun <T> registerObserver(observable: Observable<T>): Flow<T> {
+    internal fun <T> registerObserver(thawable: Thawable<T>): Flow<T> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
                 ensureActive()
-                val liveRef: Observable<T> =
-                    observable.thaw(realm.realmReference)
-                        ?: error("Cannot listen for changes on a deleted reference")
+                val liveRef: Notifiable<T> = thawable.thaw(realm.realmReference)
+                    ?: error("Cannot listen for changes on a deleted reference")
                 val interopCallback: io.realm.internal.interop.Callback =
                     object : io.realm.internal.interop.Callback {
                         override fun onChange(change: NativePointer) {
@@ -138,6 +137,7 @@ internal class SuspendableNotifier(
      *
      * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
      */
+    @Suppress("UNUSED_PARAMETER")
     internal fun registerRealmChangedListener(callback: Callback<Pair<NativePointer, VersionId>>): Cancellable {
         TODO("Waiting for RealmInterop to have support for global Realm changed")
     }

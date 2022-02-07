@@ -89,3 +89,10 @@ internal fun <T : RealmObject> Link.toRealmObject(
     return mediator.createInstanceOf(clazz)
         .link(realm, mediator, clazz, this)
 }
+
+/**
+ * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
+ */
+internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanion(): RealmObjectCompanion {
+    return io.realm.internal.platform.realmObjectCompanion(this)
+}

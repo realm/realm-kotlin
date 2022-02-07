@@ -49,3 +49,12 @@ suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
         liveObject
     }
 }
+
+// Expose a try-with-resource pattern for Realms
+fun Realm.use(action: (Realm) -> Unit) {
+    try {
+        action(this)
+    } finally {
+        this.close()
+    }
+}
