@@ -29,7 +29,8 @@ import kotlinx.coroutines.CoroutineDispatcher
  * updated by other threads.
  *
  * NOTE: Must be constructed with a single thread dispatcher and must be constructed on the same
- * thread that is backing the dispatcher.
+ * thread that is backing the dispatcher. Further, this is not thread safe so must only be modified
+ * on the dispatcher's thread.
  *
  * @param owner The owner of the snapshot references of this realm.
  * @param configuration The configuration of the realm.
@@ -49,6 +50,13 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
     }
 
     private val _snapshot: AtomicRef<FrozenRealmReference?> = atomic(null)
+
+    /**
+     * Frozen snapshot reference of the realm.
+     *
+     * NOTE: The snapshot is lazily created and must only be retrieved on the thread of the
+     * dispatcher.
+     */
     internal val snapshot: FrozenRealmReference
         get() {
             // Initialize a new snapshot that can be reused until cleared again onRealmChanged
