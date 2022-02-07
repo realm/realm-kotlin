@@ -19,9 +19,7 @@ package io.realm.internal
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RegistrationToken
-import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.internal.util.Validation.sdkError
-import io.realm.log.LogLevel
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
@@ -53,6 +51,7 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
     private val _snapshot: AtomicRef<FrozenRealmReference?> = atomic(null)
     internal val snapshot: FrozenRealmReference
         get() {
+            // Initialize a new snapshot that can be reused until cleared again onRealmChanged
             if (_snapshot.value == null) {
                 val snapshot = realmReference.snapshot(owner)
                 versionTracker.trackAndCloseExpiredReferences(snapshot)
@@ -62,22 +61,16 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         }
 
     init {
-        log.debug("asdasdf")
         realmChangeRegistration = RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, ::onRealmChanged)
         schemaChangeRegistration = RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, ::onSchemaChanged)
     }
 
     protected open fun onRealmChanged() {
-        log.debug("Realm changed: $this $configuration")
+        // Just clean snapshot so that a new one is initialized next time it is needed
         _snapshot.value = null
     }
 
     protected open fun onSchemaChanged(schema: NativePointer) {
-        if (log.logLevel >= LogLevel.DEBUG) {
-            log.debug("onSchemaChanged: $this $configuration ${RealmSchemaImpl.fromRealm(realmReference.dbPointer)}")
-        } else {
-            log.debug("onSchemaChanged: $this $configuration")
-        }
         realmReference.refreshSchemaMetadata()
     }
 
@@ -88,7 +81,10 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
 
     override fun close() {
         unregisterCallbacks()
+        // Close all intermediate references
         versionTracker.close()
+        // Close actual live reference
+        realmReference.close()
         super.close()
     }
 }

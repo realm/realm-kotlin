@@ -51,7 +51,7 @@ internal object RealmObjectHelper {
     }
 
     internal fun <R> getValueByKey(obj: RealmObjectInternal, key: io.realm.internal.interop.PropertyKey): Any? {
-        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer`!! ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
         return RealmInterop.realm_get_value(o, key)
     }
@@ -80,7 +80,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectInternal,
         key: io.realm.internal.interop.PropertyKey,
     ): Any? {
-        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val link = RealmInterop.realm_get_value<Link>(o, key)
         if (link != null) {
@@ -108,8 +108,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectInternal,
         key: io.realm.internal.interop.PropertyKey,
     ): RealmList<Any?> {
-        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
-        // FIXME Have we already ensured checkValid()?
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
         val clazz: KClass<*> = R::class

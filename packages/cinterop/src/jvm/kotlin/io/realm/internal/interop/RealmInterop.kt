@@ -72,7 +72,7 @@ actual object RealmInterop {
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
-                primary_key = clazz.primaryKey ?: ""
+                primary_key = clazz.primaryKey
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = INVALID_CLASS_KEY.key
@@ -143,7 +143,7 @@ actual object RealmInterop {
             realmc.open_realm_with_scheduler(
                 (config as LongPointerWrapper).ptr,
                 if (dispatcher != null) JVMScheduler(dispatcher) else null
-            ),
+            )
         )
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)

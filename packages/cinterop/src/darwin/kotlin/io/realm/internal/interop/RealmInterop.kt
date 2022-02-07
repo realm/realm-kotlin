@@ -249,7 +249,7 @@ actual object RealmInterop {
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
-                    primary_key = (clazz.primaryKey ?: "").cstr.ptr
+                    primary_key = clazz.primaryKey.cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags = clazz.flags
@@ -259,9 +259,9 @@ actual object RealmInterop {
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
-                        public_name = "".cstr.ptr
-                        link_target = property.linkTarget?.cstr?.ptr ?: "".cstr.ptr
-                        link_origin_property_name = "".cstr.ptr
+                        public_name = SCHEMA_NO_VALUE.cstr.ptr
+                        link_target = property.linkTarget.cstr.ptr
+                        link_origin_property_name = SCHEMA_NO_VALUE.cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
                         flags = property.flags
@@ -471,7 +471,7 @@ actual object RealmInterop {
             return with(classInfo) {
                 ClassInfo(
                     name.safeKString("name"),
-                    primary_key?.toKString() ?: "",
+                    primary_key?.toKString() ?: SCHEMA_NO_VALUE,
                     num_properties.convert(),
                     num_computed_properties.convert(),
                     ClassKey(key.toLong()),
@@ -502,11 +502,11 @@ actual object RealmInterop {
                         with(properties[it]) {
                             PropertyInfo(
                                 name.safeKString("name"),
-                                public_name?.toKString() ?: "",
+                                public_name.safeKString("public_name"),
                                 PropertyType.from(type.toInt()),
                                 CollectionType.from(collection_type.toInt()),
-                                link_target?.toKString() ?: "",
-                                link_origin_property_name?.toKString() ?: "",
+                                link_target.safeKString("link_target"),
+                                link_origin_property_name.safeKString("link_origin_property_name"),
                                 PropertyKey(key),
                                 flags
                             )
@@ -1455,7 +1455,7 @@ actual object RealmInterop {
 
     private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {
         return this?.toKString()
-            ?: throw NullPointerException(identifier?.let { "'$identifier' cannot be null." })
+            ?: throw NullPointerException(identifier?.let { "'$identifier' shouldn't be null." })
     }
 
     private fun createSingleThreadDispatcherScheduler(
@@ -1558,8 +1558,7 @@ actual object RealmInterop {
                 for (i in 0 until num_headers.toInt()) {
                     headers?.get(i)?.let { header ->
                         headerMap[header.name!!.toKString()] = header.value!!.toKString()
-                    }
-                        ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
+                    } ?: error("Header at index $i within range ${num_headers.toInt()} should not be null")
                 }
 
                 networkTransport.sendRequest(

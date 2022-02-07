@@ -1,5 +1,6 @@
 package io.realm.internal
 
+import io.realm.Realm
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -46,6 +47,7 @@ interface RealmReference : RealmState {
     }
 
     fun close() {
+        checkClosed()
         RealmInterop.realm_close(dbPointer)
     }
 
@@ -80,6 +82,9 @@ data class LiveRealmReference(override val owner: BaseRealmImpl, override val db
 
     /**
      * Refreshes the realm reference's cached schema meta data from the current live realm reference.
+     *
+     * This means that any existing live realm objects will get an updated schema. This should be
+     * safe as we don't expect live objects to leave the scope of the write block of [Realm.write].
      */
     fun refreshSchemaMetadata() {
         _schemaMetadata.value = CachedSchemaMetadata(dbPointer)

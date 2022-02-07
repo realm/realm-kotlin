@@ -69,7 +69,6 @@ internal class RealmImpl private constructor(
         realmScope.launch {
             realmFlow.emit(this@RealmImpl)
             notifier.realmChanged().collect { realmReference ->
-                log.debug("Receving notification on update: ${this@RealmImpl}")
                 updateRealmPointer(realmReference)
             }
         }
@@ -151,7 +150,7 @@ internal class RealmImpl private constructor(
         realmPointerMutex.withLock {
             versionTracker.trackAndCloseExpiredReferences()
             val newVersion = newRealmReference.version()
-            log.debug("Updating Realm version: $this $newRealmReference ${version()} -> $newVersion")
+            log.debug("Updating Realm version: ${version()} -> $newVersion")
             // If we advance to a newer version then we should keep track of the preceding one,
             // otherwise just track the new one directly.
             val untrackedReference = if (newVersion >= version()) {
@@ -176,6 +175,8 @@ internal class RealmImpl private constructor(
                 realmScope.cancel()
                 notifier.close()
                 versionTracker.close()
+                // The local realmReference is pointing to a realm reference managed by either the
+                // version tracker, writer or notifier, so it is already closed
                 super.close()
             }
         }

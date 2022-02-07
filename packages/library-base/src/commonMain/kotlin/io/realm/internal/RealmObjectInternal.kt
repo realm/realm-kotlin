@@ -52,7 +52,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
     fun propertyKeyOrThrow(propertyName: String): PropertyKey = this.`$realm$metadata`?.getOrThrow(propertyName)
-        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         ?: sdkError("Class meta data should never be null for managed objects")
 
     override fun realmState(): RealmState {

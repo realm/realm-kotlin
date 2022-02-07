@@ -59,17 +59,10 @@ class InstrumentedTests {
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
-            // FIXME The above CPointerWrapper cannot be used as RealmReference will try to resolve the schema from the realmPointer :thinking: Maybe we can just eliminate this test
-            // realmModel.`$realm$Owner` = io.realm.internal.RealmReference(object : io.realm.internal.BaseRealmImpl(configuration as InternalConfiguration, realmPointer) {}, realmPointer)
             realmModel.`$realm$ClassName` = "Sample"
 
             assertEquals(true, realmModel.`$realm$IsManaged`)
             assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
-            // FIXME Not set ... see comments above
-//            assertEquals(
-//                ptr2.rawPtr.toLong(),
-//                 (realmModel.`$realm$Owner`!!.dbPointer as CPointerWrapper).ptr!!.rawValue.toLong()
-//            )
             assertEquals("Sample", realmModel.`$realm$ClassName`)
         }
     }
