@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.gradle
+package io.realm.gradle.analytics
 
 import com.android.build.gradle.BaseExtension
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.artifacts.ResolvedArtifact
-import org.gradle.api.execution.TaskExecutionAdapter
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
-import org.gradle.api.tasks.TaskState
+import org.gradle.api.logging.Logging
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -34,7 +30,7 @@ import java.net.SocketException
 import java.net.URL
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.Scanner
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.xml.bind.DatatypeConverter
@@ -71,25 +67,39 @@ private const val TOKEN = "ce0fac19508f6c8f20066d345d360fd0"
 private const val EVENT_NAME = "Run"
 private const val URL_PREFIX = "https://webhooks.mongodb-realm.com/api/client/v2.0/app/realmsdkmetrics-zmhtm/service/metric_webhook/incoming_webhook/metric?data="
 
-internal class RealmAnalytics : TaskExecutionAdapter() {
+internal class RealmAnalytics {
+
+    private val logger: Logger = Logging.getLogger("realm-analytics")
+    private var jsonData: String? = null
+
     companion object {
         @Volatile
         var METRIC_PROCESSED = false // prevent duplicate reports being sent from the same build run
     }
 
-    override fun afterExecute(task: Task, state: TaskState) {
-        if (!state.skipped && task.name.startsWith("compile")) {
-            sendMetricIfNeeded(task.project)
+    /**
+     * Collect analytics information. This method must be called in `project.afterEvaluate()`.
+     */
+    public fun gatherAnalyticsDataIfNeeded(project: Project) {
+        val disableAnalytics: Boolean = project.gradle.startParameter.isOffline || "true".equals(System.getenv()["REALM_DISABLE_ANALYTICS"], ignoreCase = true)
+        if (!disableAnalytics) {
+            jsonData = jsonPayload(project)
+            // Resetting this flag as the Gradle Daemon keep this class and its state
+            // alive between builds, preventing analytics from being sent across multiple builds
+            METRIC_PROCESSED = false
         }
     }
 
+    /**
+     * Send any previously gathered analytics data. [gatherAnalyticsDataIfNeeded] must be called
+     * first.
+     */
     @Synchronized
-    private fun sendMetricIfNeeded(project: Project) {
+    public fun sendAnalyticsData() {
         if (!METRIC_PROCESSED) {
-            val disableAnalytics: Boolean = project.gradle.startParameter.isOffline || "true".equals(System.getenv()["REALM_DISABLE_ANALYTICS"], ignoreCase = true)
-            if (!disableAnalytics) {
-                val json = jsonPayload(project)
-                sendAnalytics(json, project.logger)
+            jsonData?.let {
+                logger.debug("Sending Realm analytics data: \n${jsonData}")
+                sendAnalytics(it, logger)
             }
             METRIC_PROCESSED = true
         }
@@ -106,23 +116,23 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
         val minSDK = projectAndroidExtension?.defaultConfig?.minSdkVersion?.apiString
         val targetSDK = projectAndroidExtension?.defaultConfig?.targetSdkVersion?.apiString
 
-        // Should be safe to iterate the configurations as we have left the configuration
-        // phase when this is called.
+        // We cannot use resolved configurations here as this code is called in
+        // afterEvaluate, and resolving it prevents other plugins from modifying
+        // them. E.g the KMP plugin will crash if we resolve the configurations
+        // in `afterEvaluate`. This means we can only see dependencies directly set,
+        // and not their transitive dependencies. This should be fine as we only
+        // want to track builds directly using Realm.
         var usesSync = false
         outer@
         for (conf in project.configurations) {
-            try {
-                for (artifact: ResolvedArtifact in conf.resolvedConfiguration.resolvedArtifacts) {
-                    // In Java we can detect Sync because we enable it through a Gradle closure.
+            for (dependency in conf.dependencies) {
+                if (dependency.group == "io.realm.kotlin" && dependency.name == "library-sync") {
+                    // In Java we can detect Sync through a Gradle configuration closure.
                     // In Kotlin, this choice is currently determined by which dependency
                     // people include
-                    if (artifact.name.startsWith("library-sync")) {
-                        usesSync = true
-                        break@outer
-                    }
+                    usesSync = true
+                    break@outer
                 }
-            } catch (ignore: Exception) {
-                // Some artifacts might not be able to resolve, in this case, just ignore them.
             }
         }
 
@@ -164,20 +174,21 @@ internal class RealmAnalytics : TaskExecutionAdapter() {
     @Suppress("TooGenericExceptionCaught")
     private fun sendAnalytics(json: String, logger: Logger) {
         try {
-            logger.log(LogLevel.DEBUG, "REALM ANALYTICS: sending payload\n$json")
+            logger.debug("REALM ANALYTICS: sending payload\n$json")
+            // FIXME This should be turned into a daemon thread so we don't block the build for
+            //  6 seconds when there is no network.
             val pool = Executors.newSingleThreadExecutor()
             try {
                 pool.execute { networkQuery(json) }
                 pool.awaitTermination(CONNECT_TIMEOUT + READ_TIMEOUT, TimeUnit.MILLISECONDS)
-                logger.log(LogLevel.DEBUG, "REALM ANALYTICS: transfer completed")
+                logger.debug("Analytics sent.")
             } catch (e: InterruptedException) {
-                logger.log(LogLevel.DEBUG, "REALM ANALYTICS: transfer interrupted")
+                logger.debug("Sending analytics was interrupted.")
                 pool.shutdownNow()
             }
         } catch (e: Exception) {
             // Analytics failing for any reason should not crash the build
-            logger.log(LogLevel.DEBUG, "REALM ANALYTICS: transfer failed")
-            System.err.println("Could not send analytics: $e")
+            logger.warn("Error when sending: $e")
         }
     }
 

@@ -22,17 +22,35 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import io.realm.gradle.analytics.AnalyticsService
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.Logger
+import org.gradle.api.provider.Provider
+import org.gradle.build.event.BuildEventsListenerRegistry
+import org.slf4j.LoggerFactory
+import javax.inject.Inject
+
 
 @Suppress("unused")
-class RealmPlugin : Plugin<Project> {
+open class RealmPlugin : Plugin<Project> {
+
+    private val logger: org.slf4j.Logger = LoggerFactory.getLogger("realm-plugin")
+
+    @Inject
+    public open fun getBuildEventsRegistry(): BuildEventsListenerRegistry { TODO("Should be replaced by Gradle") }
 
     override fun apply(project: Project) {
         project.pluginManager.apply(RealmCompilerSubplugin::class.java)
 
-        project.gradle.addListener(RealmAnalytics())
+        // Run analytics as a Build Service to support Gradle Configuration Cache
+        val serviceProvider: Provider<AnalyticsService> = project.gradle.sharedServices.registerIfAbsent(
+            "realm-analytics",
+            AnalyticsService::class.java
+        ) { /* Do nothing */ }
+        getBuildEventsRegistry().onTaskCompletion(serviceProvider)
 
         // Stand alone Android projects have not initialized kotlin plugin when applying this, so
-        // postpone dependency injection till after evaluation
+        // postpone dependency injection till after evaluation.
         project.afterEvaluate {
             val kotlin = project.extensions.findByName("kotlin")
             // TODO AUTO-SETUP To ease configuration we could/should inject dependencies to our
@@ -50,6 +68,18 @@ class RealmPlugin : Plugin<Project> {
                 // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
                 // else ->
                 //    TODO("Cannot 'realm-kotlin' library dependency to ${kotlin::class.qualifiedName}")
+            }
+
+            // Create the analytics during configuration because it needs access to the project
+            // in order to gather project relevant information in afterEvaluate. Currently
+            // there doesn't seem a way to get this information during the Execution Phase.
+            try {
+                val analyticsService: AnalyticsService = serviceProvider.get()
+                analyticsService.collectAnalyticsData(it)
+            } catch (ex: Exception) {
+                // Work-around for https://github.com/gradle/gradle/issues/18821
+                // Since this only happens in multi-module projects, this should be fine as
+                // the build will still be registered by the first module that starts the service.
             }
         }
     }

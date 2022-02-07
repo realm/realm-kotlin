@@ -246,6 +246,8 @@ internal object TypeDescriptor {
     }
 
     fun KMutableProperty1<*, *>.rType(): RealmFieldType {
+        // FIXME: returnType isn't available in Common, we should create our custom type: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
+        //  This only works if you specifically run Android or MacOS tests, running `assemble` crashes.
         return this.returnType.rType()
     }
 

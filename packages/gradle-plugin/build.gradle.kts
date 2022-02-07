@@ -90,6 +90,11 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+tasks.withType<JavaCompile> {
+    sourceCompatibility = Versions.jvmTarget
+    targetCompatibility = Versions.jvmTarget
+}
+
 // Make version information available at runtime
 val versionDirectory = "$buildDir/generated/source/version/"
 sourceSets {
