@@ -19,9 +19,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.asFromIterator
-import io.realm.internal.interop.RealmInterop.asIterator
-import io.realm.internal.interop.RealmInterop.asToIterator
 import io.realm.internal.interop.RealmInterop.propertyInfo
 import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AuthProvider
@@ -1137,15 +1134,7 @@ actual object RealmInterop {
 
     private inline fun <reified T : CVariable> MemScope.initArray(size: CArrayPointer<ULongVar>) = allocArray<T>(size[0].toInt())
 
-    private fun CArrayPointer<ULongVar>.asIterator(): ArrayAccessor = { index -> this[index].toInt() }
-
-    private fun CArrayPointer<realm_wrapper.realm_collection_move_t>.asFromIterator(): ArrayAccessor = { index -> this[index].from.toInt() }
-    private fun CArrayPointer<realm_wrapper.realm_collection_move_t>.asToIterator(): ArrayAccessor = { index -> this[index].to.toInt() }
-
-    private fun CArrayPointer<realm_wrapper.realm_index_range_t>.asFromIterator(): ArrayAccessor = { index -> this[index].from.toInt() }
-    private fun CArrayPointer<realm_wrapper.realm_index_range_t>.asToIterator(): ArrayAccessor = { index -> this[index].to.toInt() }
-
-    actual fun <T, R> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeBuilder<T, R>) {
+    actual fun <T, R, M> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
         memScoped {
             val insertionCount = allocArray<ULongVar>(1)
             val deletionCount = allocArray<ULongVar>(1)
@@ -1174,15 +1163,15 @@ actual object RealmInterop {
                 movesCount[0],
             )
 
-            builder.insertionIndices(deletionCount[0].toInt(), insertionIndices.asIterator())
-            builder.deletionIndices(insertionCount[0].toInt(), deletionIndices.asIterator())
-            builder.modificationIndices(modificationCount[0].toInt(), modificationIndices.asIterator())
-            builder.modificationIndicesAfter(modificationCount[0].toInt(), modificationIndicesAfter.asIterator())
-            builder.moves(movesCount[0].toInt(), moves.asFromIterator(), moves.asToIterator())
+            builder.insertionIndices(deletionCount, insertionIndices)
+            builder.deletionIndices(insertionCount, deletionIndices)
+            builder.modificationIndices(modificationCount, modificationIndices)
+            builder.modificationIndicesAfter(modificationCount, modificationIndicesAfter)
+            builder.moves(movesCount, moves)
         }
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeBuilder<T, R>) {
+    actual fun <T, R, M> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
         memScoped {
             val insertRangesCount = allocArray<ULongVar>(1)
             val deleteRangesCount = allocArray<ULongVar>(1)
@@ -1217,10 +1206,10 @@ actual object RealmInterop {
                 movesCount[0],
             )
 
-            builder.deletionRanges(deleteRangesCount[0].toInt(), deletionRanges.asFromIterator(), deletionRanges.asToIterator())
-            builder.insertionRanges(insertRangesCount[0].toInt(), insertionRanges.asFromIterator(), insertionRanges.asToIterator())
-            builder.modificationRanges(modificationRangesCount[0].toInt(), modificationRanges.asFromIterator(), modificationRanges.asToIterator())
-            builder.modificationRangesAfter(modificationRangesCount[0].toInt(), modificationRangesAfter.asFromIterator(), modificationRangesAfter.asToIterator())
+            builder.deletionRanges(deleteRangesCount, deletionRanges)
+            builder.insertionRanges(insertRangesCount, insertionRanges)
+            builder.modificationRanges(modificationRangesCount, modificationRanges)
+            builder.modificationRangesAfter(modificationRangesCount, modificationRangesAfter)
         }
     }
 

@@ -21,7 +21,7 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.ArrayAccessor
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.CollectionChangeBuilder
+import io.realm.internal.interop.CollectionChangeSetBuilder
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
@@ -175,12 +175,12 @@ internal class ManagedRealmList<E>(
 }
 
 internal class UpdatedListBuilder<T : List<*>>(val list: T) :
-    CollectionChangeBuilder<UpdatedList<T>, ListChange.Range>() {
+    CollectionChangeSetBuilder<UpdatedList<T>, ListChange.Range, ListChange.Move>() {
 
-    override fun indices(size: Int, indicesAccessor: ArrayAccessor): IntArray =
+    override fun initIndicesArray(size: Int, indicesAccessor: ArrayAccessor): IntArray =
         IntArray(size) { index -> indicesAccessor(index) }
 
-    override fun ranges(
+    override fun initRangesArray(
         size: Int,
         fromAccessor: ArrayAccessor,
         toAccessor: ArrayAccessor
@@ -191,6 +191,17 @@ internal class UpdatedListBuilder<T : List<*>>(val list: T) :
             ListChange.Range(from, to - from + 1)
         }
 
+    override fun initMovesArray(
+        size: Int,
+        fromAccessor: ArrayAccessor,
+        toAccessor: ArrayAccessor
+    ): Array<ListChange.Move> =
+        Array(size) { index ->
+            val from: Int = fromAccessor(index)
+            val to: Int = toAccessor(index)
+            ListChange.Move(from, to)
+        }
+
     override fun build(): UpdatedList<T> = UpdatedListImpl(
         list = list,
         deletions = deletionIndices,
@@ -198,7 +209,8 @@ internal class UpdatedListBuilder<T : List<*>>(val list: T) :
         changes = modificationIndicesAfter,
         deletionRanges = deletionRanges,
         insertionRanges = insertionRanges,
-        changeRanges = modificationRangesAfter
+        changeRanges = modificationRangesAfter,
+        moves = moves
     )
 }
 

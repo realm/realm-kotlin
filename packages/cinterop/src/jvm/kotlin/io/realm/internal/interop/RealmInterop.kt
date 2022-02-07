@@ -25,7 +25,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
-import kotlin.reflect.KFunction1
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -507,12 +506,7 @@ actual object RealmInterop {
     private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
     private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
 
-    private fun LongArray.asIterator(): ArrayAccessor = { index -> this[index].toInt() }
-
-    private fun Array<LongArray>.asFromIterator(): ArrayAccessor = { index -> this[index][0].toInt() }
-    private fun Array<LongArray>.asToIterator(): ArrayAccessor = { index -> this[index][1].toInt() }
-
-    actual fun <T, R> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeBuilder<T, R>) {
+    actual fun <T, R, M> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
         val insertionCount = LongArray(1)
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
@@ -545,16 +539,14 @@ actual object RealmInterop {
             moves
         )
 
-        val a: KFunction1<Int, Long> = insertionIndices::get
-
-        builder.insertionIndices(insertionIndices.size, insertionIndices.asIterator())
-        builder.deletionIndices(deletionIndices.size, deletionIndices.asIterator())
-        builder.modificationIndices(modificationIndices.size, modificationIndices.asIterator())
-        builder.modificationIndicesAfter(modificationIndicesAfter.size, modificationIndicesAfter.asIterator())
-        builder.moves(moves.size, moves.asFromIterator(), moves.asToIterator())
+        builder.insertionIndices(insertionIndices)
+        builder.deletionIndices(deletionIndices)
+        builder.modificationIndices(modificationIndices)
+        builder.modificationIndicesAfter(modificationIndicesAfter)
+        builder.moves(moves)
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeBuilder<T, R>) {
+    actual fun <T, R, M> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)
@@ -583,10 +575,10 @@ actual object RealmInterop {
             moves
         )
 
-        builder.deletionRanges(deletionRanges.size, deletionRanges.asFromIterator(), deletionRanges.asToIterator())
-        builder.insertionRanges(insertionRanges.size, insertionRanges.asFromIterator(), insertionRanges.asToIterator())
-        builder.modificationRanges(modificationRanges.size, modificationRanges.asFromIterator(), modificationRanges.asToIterator())
-        builder.modificationRangesAfter(modificationRangesAfter.size, modificationRangesAfter.asFromIterator(), modificationRangesAfter.asToIterator())
+        builder.deletionRanges(deletionRanges)
+        builder.insertionRanges(insertionRanges)
+        builder.modificationRanges(modificationRanges)
+        builder.modificationRangesAfter(modificationRangesAfter)
     }
 
     actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {

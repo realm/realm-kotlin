@@ -10,7 +10,8 @@ internal class UpdatedListImpl<T : List<*>>(
     override val changes: IntArray,
     override val deletionRanges: Array<ListChange.Range>,
     override val insertionRanges: Array<ListChange.Range>,
-    override val changeRanges: Array<ListChange.Range>
+    override val changeRanges: Array<ListChange.Range>,
+    override val moves: Array<ListChange.Move>
 ) : UpdatedList<T>
 
 internal class DeletedListImpl<T : List<*>> : DeletedList<T> {
