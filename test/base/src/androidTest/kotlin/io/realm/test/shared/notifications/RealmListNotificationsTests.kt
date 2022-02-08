@@ -283,6 +283,7 @@ class RealmListNotificationsTests : NotificationTests {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun updatedListChangeSet() {
         val dataset = OBJECT_VALUES
         val dataset2 = OBJECT_VALUES2
@@ -327,9 +328,11 @@ class RealmListNotificationsTests : NotificationTests {
                 assertEquals(dataset.size, listChange.list!!.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>), insertRanges = arrayOf(
-                    ListChange.Range(0, 2)
-                ))
+                    (listChange as UpdatedList<*>),
+                    insertRanges = arrayOf(
+                        ListChange.Range(0, 2)
+                    )
+                )
             }
 
             // Assert multiple ranges are reported
@@ -349,10 +352,12 @@ class RealmListNotificationsTests : NotificationTests {
                 assertEquals(dataset.size + dataset2.size + dataset3.size, listChange.list!!.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>), insertRanges = arrayOf(
-                    ListChange.Range(0, 4),
-                    ListChange.Range(6, 2)
-                ))
+                    (listChange as UpdatedList<*>),
+                    insertRanges = arrayOf(
+                        ListChange.Range(0, 4),
+                        ListChange.Range(6, 2)
+                    )
+                )
             }
 
             // Assert multiple ranges are deleted
@@ -373,10 +378,12 @@ class RealmListNotificationsTests : NotificationTests {
                 assertEquals(dataset.size, listChange.list!!.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>), deletionRanges = arrayOf(
-                    ListChange.Range(0, 4),
-                    ListChange.Range(6, 2)
-                ))
+                    (listChange as UpdatedList<*>),
+                    deletionRanges = arrayOf(
+                        ListChange.Range(0, 4),
+                        ListChange.Range(6, 2)
+                    )
+                )
             }
 
             // Assert a single range is deleted
@@ -395,9 +402,11 @@ class RealmListNotificationsTests : NotificationTests {
                 assertTrue(listChange.list!!.isEmpty())
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>), deletionRanges = arrayOf(
-                    ListChange.Range(0, 2)
-                ))
+                    (listChange as UpdatedList<*>),
+                    deletionRanges = arrayOf(
+                        ListChange.Range(0, 2)
+                    )
+                )
             }
 
             // Add some values to change
@@ -433,10 +442,12 @@ class RealmListNotificationsTests : NotificationTests {
                 assertEquals(dataset2.size, listChange.list!!.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>), changesRanges = arrayOf(
-                    ListChange.Range(0, 2),
-                    ListChange.Range(3, 1),
-                ))
+                    (listChange as UpdatedList<*>),
+                    changesRanges = arrayOf(
+                        ListChange.Range(0, 2),
+                        ListChange.Range(3, 1),
+                    )
+                )
             }
 
             // Reverse a list
@@ -455,9 +466,11 @@ class RealmListNotificationsTests : NotificationTests {
                 assertEquals(dataset2.size, listChange.list!!.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>), changesRanges = arrayOf(
-                    ListChange.Range(0, 4)
-                ))
+                    (listChange as UpdatedList<*>),
+                    changesRanges = arrayOf(
+                        ListChange.Range(0, 4)
+                    )
+                )
             }
 
             observer.cancel()
