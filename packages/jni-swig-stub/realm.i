@@ -69,7 +69,7 @@ std::string rlm_stdstr(realm_string_t val)
 
         jlong* rangeArray = jenv->GetLongArrayElements(jRangeArray, NULL);
         rangeArray[0] = $1[i].from;
-        rangeArray[1] = $1[i].to - $1[i].from + 1;
+        rangeArray[1] = $1[i].to;
         jenv->ReleaseLongArrayElements(jRangeArray, rangeArray, JNI_COMMIT);
 
         jenv->DeleteLocalRef(jRangeArray);

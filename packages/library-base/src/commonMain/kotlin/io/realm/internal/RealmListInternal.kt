@@ -188,7 +188,7 @@ internal class UpdatedListBuilder<T : List<*>>(val list: T) :
         Array(size) { index ->
             val from: Int = fromAccessor(index)
             val to: Int = toAccessor(index)
-            ListChange.Range(from, to - from + 1)
+            ListChange.Range(from, to - from)
         }
 
     override fun initMovesArray(

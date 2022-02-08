@@ -1163,8 +1163,8 @@ actual object RealmInterop {
                 movesCount[0],
             )
 
-            builder.insertionIndices(deletionCount, insertionIndices)
-            builder.deletionIndices(insertionCount, deletionIndices)
+            builder.insertionIndices(insertionCount, insertionIndices)
+            builder.deletionIndices(deletionCount, deletionIndices)
             builder.modificationIndices(modificationCount, modificationIndices)
             builder.modificationIndicesAfter(modificationCount, modificationIndicesAfter)
             builder.moves(movesCount, moves)

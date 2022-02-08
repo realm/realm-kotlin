@@ -27,15 +27,17 @@ import io.realm.notifications.UpdatedList
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.shared.OBJECT_VALUES
+import io.realm.test.shared.OBJECT_VALUES2
+import io.realm.test.shared.OBJECT_VALUES3
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
@@ -277,6 +279,256 @@ class RealmListNotificationsTests : NotificationTests {
             realm.close()
             observer.cancel()
             channel.close()
+        }
+    }
+
+    @Test
+    fun updatedListChangeSet() {
+        val dataset = OBJECT_VALUES
+        val dataset2 = OBJECT_VALUES2
+        val dataset3 = OBJECT_VALUES3
+
+        val container = realm.writeBlocking {
+            // Create an empty container with empty lists
+            copyToRealm(RealmListContainer())
+        }
+
+        runBlocking {
+            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val observer = async {
+                container.objectListField
+                    .asFlow()
+                    .collect { flowList ->
+                        channel.send(flowList)
+                    }
+            }
+
+            // Assertion after empty list is emitted
+            channel.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(0, listChange.list!!.size)
+            }
+
+            // Assert a single range is reported
+            //
+            // objectListField = [<A, B>]
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedList = queriedContainer!!.objectListField
+                queriedList.addAll(dataset)
+            }
+
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset.size, listChange.list!!.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>), insertRanges = arrayOf(
+                    ListChange.Range(0, 2)
+                ))
+            }
+
+            // Assert multiple ranges are reported
+            //
+            // objectListField = [<C, D, E, F>, A, B, <G, H>]
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedList = queriedContainer!!.objectListField
+                queriedList.addAll(0, dataset2)
+                queriedList.addAll(dataset3)
+            }
+
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset.size + dataset2.size + dataset3.size, listChange.list!!.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>), insertRanges = arrayOf(
+                    ListChange.Range(0, 4),
+                    ListChange.Range(6, 2)
+                ))
+            }
+
+            // Assert multiple ranges are deleted
+            //
+            // objectListField = [<C, D, E, F>, A, B, <G, H>]
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedList = queriedContainer!!.objectListField
+
+                queriedList.removeRange(6..7)
+                queriedList.removeRange(0..3)
+            }
+
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset.size, listChange.list!!.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>), deletionRanges = arrayOf(
+                    ListChange.Range(0, 4),
+                    ListChange.Range(6, 2)
+                ))
+            }
+
+            // Assert a single range is deleted
+            //
+            // objectListField = [<A, B>]
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedList = queriedContainer!!.objectListField
+                queriedList.removeRange(0..1)
+            }
+
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertTrue(listChange.list!!.isEmpty())
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>), deletionRanges = arrayOf(
+                    ListChange.Range(0, 2)
+                ))
+            }
+
+            // Add some values to change
+            //
+            // objectListField = [<C, D, E, F>]
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedList = queriedContainer!!.objectListField
+                queriedList.addAll(dataset2)
+            }
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset2.size, listChange.list!!.size)
+            }
+
+            // Change some two ranges of values
+            //
+            // objectListField = [<A>, <B>, E, <D>]
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedList = queriedContainer!!.objectListField
+                queriedList[0].stringField = "A"
+                queriedList[1].stringField = "B"
+                queriedList[3].stringField = "D"
+            }
+
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset2.size, listChange.list!!.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>), changesRanges = arrayOf(
+                    ListChange.Range(0, 2),
+                    ListChange.Range(3, 1),
+                ))
+            }
+
+            // Reverse a list
+            //
+            // objectListField = [<D>, <E>, <B>, <A>]
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedList = queriedContainer!!.objectListField
+                queriedList.reverse()
+            }
+
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset2.size, listChange.list!!.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>), changesRanges = arrayOf(
+                    ListChange.Range(0, 4)
+                ))
+            }
+
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    private fun RealmList<*>.removeRange(range: IntRange) {
+        range.reversed().forEach { index -> removeAt(index) }
+    }
+
+    private fun assertContains(array: IntArray, element: ListChange.Range) {
+        for (value in element.startIndex until element.startIndex + element.length) {
+            assertContains(array, value, "Array [${array.joinToString(",")}] does not contain `$value`")
+        }
+    }
+
+    private fun assertContains(
+        expectedRanges: Array<ListChange.Range>,
+        indices: IntArray,
+        ranges: Array<ListChange.Range>
+    ) {
+        if (expectedRanges.isEmpty()) {
+            assertTrue(indices.isEmpty())
+            assertTrue(ranges.isEmpty())
+        } else {
+            var elementCount = 0
+
+            for (range in expectedRanges) {
+                assertContains(indices, range)
+                assertContains(ranges, range)
+
+                elementCount += range.length
+            }
+
+            assertEquals(elementCount, indices.size)
+        }
+    }
+
+    private fun assertIsChangeSet(
+        updatedListChange: UpdatedList<*>,
+        insertRanges: Array<ListChange.Range> = emptyArray(),
+        deletionRanges: Array<ListChange.Range> = emptyArray(),
+        changesRanges: Array<ListChange.Range> = emptyArray(),
+        moves: Array<ListChange.Move> = emptyArray()
+    ) {
+        assertContains(
+            insertRanges,
+            updatedListChange.insertions,
+            updatedListChange.insertionRanges
+        )
+
+        assertContains(
+            deletionRanges,
+            updatedListChange.deletions,
+            updatedListChange.deletionRanges
+        )
+
+        assertContains(
+            changesRanges,
+            updatedListChange.changes,
+            updatedListChange.changeRanges
+        )
+
+        if (moves.isEmpty()) {
+            assertTrue(updatedListChange.moves.isEmpty())
+        } else {
+            assertEquals(moves.size, updatedListChange.moves.size)
+            for (move in moves) {
+                assertContains(updatedListChange.moves, move)
+            }
         }
     }
 }
