@@ -116,8 +116,8 @@ interface Realm : TypedRealm {
     fun <R> writeBlocking(block: MutableRealm.() -> R): R
 
     /**
-     * Observe changes to the realm. If there is any change to the realm, the flow will emit the
-     * updated realm. The flow will continue running indefinitely until canceled.
+     * Observe changes to the realm. The flow will emit a [RealmChange] once subscribed and then, on
+     * every change to the realm. The flow will continue running indefinitely until canceled.
      *
      * The change calculations will run on the thread defined through the [Configuration]
      * Notification Dispatcher.
