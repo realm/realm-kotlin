@@ -100,7 +100,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
-    private val realmModelInternalInterface: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
+    private val realmModelInternalInterface: IrClass =
+        pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val nullableNativePointerInterface =
         pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
             .symbol.createType(true, emptyList())
@@ -134,16 +135,36 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addVariableProperty(realmModelInternalInterface, OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
-            addVariableProperty(realmModelInternalInterface, REALM_OWNER, realmReferenceClass.defaultType.makeNullable(), ::irNull)
+            addVariableProperty(
+                realmModelInternalInterface,
+                OBJECT_POINTER,
+                nullableNativePointerInterface,
+                ::irNull
+            )
+            addVariableProperty(
+                realmModelInternalInterface,
+                REALM_OWNER,
+                realmReferenceClass.defaultType.makeNullable(),
+                ::irNull
+            )
             addVariableProperty(
                 realmModelInternalInterface,
                 OBJECT_CLASS_NAME,
                 pluginContext.irBuiltIns.stringType.makeNullable(),
                 ::irNull
             )
-            addVariableProperty(realmModelInternalInterface, OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
-            addVariableProperty(realmModelInternalInterface, MEDIATOR, mediatorInterface.defaultType.makeNullable(), ::irNull)
+            addVariableProperty(
+                realmModelInternalInterface,
+                OBJECT_IS_MANAGED,
+                pluginContext.irBuiltIns.booleanType,
+                ::irFalse
+            )
+            addVariableProperty(
+                realmModelInternalInterface,
+                MEDIATOR,
+                mediatorInterface.defaultType.makeNullable(),
+                ::irNull
+            )
         }
 
     @Suppress("LongMethod")
@@ -182,7 +203,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
         }
 
-        val primaryKeyFields = properties!!.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields = properties!!.filter {
+            it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION)
+        }
 
         val primaryKey: IrProperty? = when (primaryKeyFields.size) {
             0 -> null
@@ -210,7 +233,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     getter = primaryKey.getter?.symbol,
                     setter = primaryKey.setter?.symbol
                 )
-            } ?: IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
+            } ?: IrConstImpl.constNull(
+                startOffset,
+                endOffset,
+                pluginContext.irBuiltIns.nothingNType
+            )
         }
     }
 
@@ -225,7 +252,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val fields: MutableMap<String, SchemaProperty> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        val primaryKeyFields = fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields =
+            fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
