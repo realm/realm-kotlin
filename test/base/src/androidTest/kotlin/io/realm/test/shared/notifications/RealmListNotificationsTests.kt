@@ -66,7 +66,7 @@ class RealmListNotificationsTests : NotificationTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-    @Test @Ignore
+    @Test
     override fun initialElement() {
         val dataSet = OBJECT_VALUES
 
@@ -99,7 +99,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
     }
 
-    @Test @Ignore
+    @Test
     override fun asFlow() {
         val dataSet = OBJECT_VALUES
 
@@ -146,7 +146,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
     }
 
-    @Test @Ignore
+    @Test
     override fun cancelAsFlow() {
         runBlocking {
             // Freeze values since native complains if we reference a package-level defined variable
@@ -204,7 +204,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
     }
 
-    @Test @Ignore
+    @Test
     override fun deleteObservable() {
         runBlocking {
             // Freeze values since native complains if we reference a package-level defined variable
@@ -258,7 +258,7 @@ class RealmListNotificationsTests : NotificationTests {
         TODO("Waiting for RealmList support")
     }
 
-    @Test @Ignore
+    @Test
     override fun closingRealmDoesNotCancelFlows() {
         runBlocking {
             val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
@@ -282,7 +282,8 @@ class RealmListNotificationsTests : NotificationTests {
         }
     }
 
-    @Test @Ignore
+    @Test
+    @Ignore
     @Suppress("LongMethod")
     fun updatedListChangeSet() {
         val dataset = OBJECT_VALUES
