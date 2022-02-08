@@ -283,7 +283,6 @@ class RealmListNotificationsTests : NotificationTests {
     }
 
     @Test
-    @Ignore
     @Suppress("LongMethod")
     fun updatedListChangeSet() {
         val dataset = OBJECT_VALUES

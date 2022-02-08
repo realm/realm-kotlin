@@ -1145,9 +1145,9 @@ actual object RealmInterop {
 
             val deletionIndices = initArray<ULongVar>(deletionCount)
             val insertionIndices = initArray<ULongVar>(insertionCount)
-            val modificationIndices = initArray<ULongVar>(insertionCount)
-            val modificationIndicesAfter = initArray<ULongVar>(insertionCount)
-            val moves = initArray<realm_wrapper.realm_collection_move_t>(insertionCount)
+            val modificationIndices = initArray<ULongVar>(modificationCount)
+            val modificationIndicesAfter = initArray<ULongVar>(modificationCount)
+            val moves = initArray<realm_wrapper.realm_collection_move_t>(movesCount)
 
             realm_wrapper.realm_collection_changes_get_changes(
                 change.cptr(),
@@ -1160,7 +1160,7 @@ actual object RealmInterop {
                 modificationIndicesAfter,
                 modificationCount[0],
                 moves,
-                movesCount[0],
+                movesCount[0]
             )
 
             builder.insertionIndices(insertionCount, insertionIndices)
@@ -1203,7 +1203,7 @@ actual object RealmInterop {
                 modificationRangesAfter,
                 modificationRangesCount[0],
                 moves,
-                movesCount[0],
+                movesCount[0]
             )
 
             builder.deletionRanges(deleteRangesCount, deletionRanges)
