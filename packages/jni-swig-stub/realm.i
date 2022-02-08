@@ -108,7 +108,7 @@ std::string rlm_stdstr(realm_string_t val)
 
 // Transforms a realm_collection_move_t into a long array
 %typemap(in) (realm_collection_move_t* out_moves, size_t max_moves) {
-    $2 = jenv->GetArrayLength($input) / 2;
+    $2 = jenv->GetArrayLength($input);
     $1 = new realm_collection_move_t[$2];
 }
 
