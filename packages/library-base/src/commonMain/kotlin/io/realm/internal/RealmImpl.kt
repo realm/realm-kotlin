@@ -184,7 +184,7 @@ internal class RealmImpl private constructor(
     }
 
     // FIXME Internal method to work around that callback subscription is not freed on GC
-    //  <issue ref>
+    //  https://github.com/realm/realm-kotlin/issues/671
     internal fun unregisterCallbacks() {
         writer.unregisterCallbacks()
         notifier.unregisterCallbacks()
