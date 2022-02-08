@@ -54,12 +54,11 @@ interface Realm : TypedRealm {
          * @see [RealmConfiguration.Builder.compactOnLaunch]
          */
         @Suppress("MagicNumber")
-        public val DEFAULT_COMPACT_ON_LAUNCH_CALLBACK: CompactOnLaunchCallback = object : CompactOnLaunchCallback {
-            override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
+        public val DEFAULT_COMPACT_ON_LAUNCH_CALLBACK: CompactOnLaunchCallback =
+            CompactOnLaunchCallback { totalBytes, usedBytes ->
                 val thresholdSize = (50 * 1024 * 1024).toLong()
-                return totalBytes > thresholdSize && usedBytes.toDouble() / totalBytes.toDouble() >= 0.5
+                totalBytes > thresholdSize && usedBytes.toDouble() / totalBytes.toDouble() >= 0.5
             }
-        }
 
         /**
          * Open a realm instance.

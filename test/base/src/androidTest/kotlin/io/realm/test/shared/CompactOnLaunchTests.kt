@@ -6,6 +6,8 @@ import io.realm.entities.Sample
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.platformFileSystem
 import io.realm.test.util.use
+import kotlinx.atomicfu.AtomicBoolean
+import kotlinx.atomicfu.atomic
 import okio.Path.Companion.toPath
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -64,9 +66,16 @@ class CompactOnLaunchTests {
         var config = configBuilder.compactOnLaunch { _, _ -> false }.build()
         Realm.open(config).close()
         val before: Long = platformFileSystem.metadata(config.path.toPath()).size!!
-        config = configBuilder.compactOnLaunch { _, _ -> true }.build()
+        val called = atomic(false)
+        config = configBuilder
+            .compactOnLaunch { _, _ ->
+                called.value = true
+                true
+            }
+            .build()
         Realm.open(config).close()
         val after: Long = platformFileSystem.metadata(config.path.toPath()).size!!
+        assertTrue(called.value)
         assertEquals(before, after, "$before == $after")
     }
 
@@ -82,8 +91,10 @@ class CompactOnLaunchTests {
             }
         }
         val before: Long = platformFileSystem.metadata(config.path.toPath()).size!!
+        val called = atomic(false)
         config = configBuilder
             .compactOnLaunch { totalBytes, usedBytes ->
+                called.value = true
                 assertTrue(totalBytes > usedBytes)
                 true
             }
@@ -91,6 +102,7 @@ class CompactOnLaunchTests {
 
         Realm.open(config).close()
         val after: Long = platformFileSystem.metadata(config.path.toPath()).size!!
+        assertTrue(called.value)
         assertTrue(before > after, "$before > $after")
     }
 

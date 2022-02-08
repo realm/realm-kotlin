@@ -303,14 +303,9 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
     jobject tb = wrap_long(env, jlong(total_bytes));
     jobject ub = wrap_long(env, jlong(used_bytes));
     jobject boxed_result = env->CallObjectMethod(callback, java_should_compact_method, tb, ub);
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-        throw std::runtime_error("An unexpected error was thrown in the callback. See the logs for more details.");
-    } else {
-        jboolean result = env->CallBooleanMethod(boxed_result, boolean_value_method);
-        return result;
-    }
+    jni_check_exception(env);
+    jboolean result = env->CallBooleanMethod(boxed_result, boolean_value_method);
+    return result;
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {

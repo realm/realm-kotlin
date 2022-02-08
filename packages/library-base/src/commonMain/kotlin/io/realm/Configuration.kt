@@ -25,14 +25,22 @@ import kotlin.reflect.KClass
  * This interface is used to determine if a Realm file should be compacted the first time the file
  * is opened and before the instance is returned.
  *
- * Note that compacting a file can take a while, so compacting should generally only be done when
- * opening a realm file on a background thread.
- *
- * - `totalBytes` is the total file size (data + free space).
- * - `usedBytes` is the total bytes used by data in the file.
- * - `true` should be returned if an attempt to compact the file should be made. `false` if not.
+ * Note that compacting a file can take a while, so compacting should generally only be done as
+ * part of opening a Realm on a background thread.
  */
-typealias CompactOnLaunchCallback = (totalBytes: Long, usedBytes: Long) -> Boolean
+fun interface CompactOnLaunchCallback {
+
+    /**
+     * This method determines if the Realm file should be compacted before opened and returned to
+     * the user.
+     *
+     * @param totalBytes the total file size (data + free space).
+     * @param usedBytes the total bytes used by data in the file.
+     * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
+     * compaction will be skipped.
+     */
+    fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
+}
 
 /**
  * Configuration for log events created by a Realm instance.

@@ -111,6 +111,7 @@ class SyncConfigTests {
         assertNotNull(config.errorHandler)
     }
 
+    // Smoke-test...most functionality is tested in CompactOnLaunchTests
     @Test
     fun compactOnLaunch_default() {
         val user = createTestUser()
@@ -122,6 +123,7 @@ class SyncConfigTests {
         assertNull(config.compactOnLaunchCallback)
     }
 
+    // Smoke-test...most functionality is tested in CompactOnLaunchTests
     @Test
     fun compactOnLaunch() {
         val user = createTestUser()

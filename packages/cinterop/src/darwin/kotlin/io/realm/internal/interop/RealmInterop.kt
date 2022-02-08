@@ -347,10 +347,10 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_should_compact_on_launch_function(
             config.cptr(),
             staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
-                userdata?.asStableRef<((Long, Long) -> Boolean)>()?.get()?.invoke(
+                stableUserData<((Long, Long) -> Boolean)>(userdata).get().invoke(
                     total.toLong(),
                     used.toLong()
-                ) ?: error("Compact callback data should never be null")
+                )
             },
             StableRef.create(callback).asCPointer()
         )

@@ -91,8 +91,10 @@ open class ConfigurationImpl constructor(
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
         RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
         RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
-        compactOnLaunchCallback?.let {
-            RealmInterop.realm_config_set_should_compact_on_launch_function(nativeConfig, it)
+        compactOnLaunchCallback?.let { callback ->
+            RealmInterop.realm_config_set_should_compact_on_launch_function(nativeConfig) { totalBytes: Long, usedBytes: Long ->
+                callback.shouldCompact(totalBytes, usedBytes)
+            }
         }
 
         val nativeSchema = RealmInterop.realm_schema_new(
