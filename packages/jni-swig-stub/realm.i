@@ -66,13 +66,29 @@ std::string rlm_stdstr(realm_string_t val)
 %typemap(freearg) (realm_index_range_t*, size_t) {
     for(int i = 0; i < $2; i++) {
         jlongArray jRangeArray = (jlongArray) jenv->GetObjectArrayElement($input, i);
+        size_t *arg = (size_t *) 0 ;
+        jlong *jarr;
 
-        jlong* rangeArray = jenv->GetLongArrayElements(jRangeArray, NULL);
-        rangeArray[0] = $1[i].from;
-        rangeArray[1] = $1[i].to;
-        jenv->ReleaseLongArrayElements(jRangeArray, rangeArray, JNI_COMMIT);
+        %#if defined(__ANDROID__)
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&arg, jRangeArray)) return $null;
+        %#elif defined(__aarch64__)
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&arg, jRangeArray)) return $null;
+        %#else
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&arg, jRangeArray)) return $null;
+        %#endif
 
-        jenv->DeleteLocalRef(jRangeArray);
+        arg[0] = $1[i].from;
+        arg[1] = $1[i].to;
+
+        %#if defined(__ANDROID__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr, (long*)arg, jRangeArray);
+        %#elif defined(__aarch64__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr, (jlong *)arg, jRangeArray);
+        %#else
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr, (long long *)arg, jRangeArray);
+        %#endif
+
+        jenv->SetObjectArrayElement($input, i, jRangeArray);
     }
 
     delete $1;
