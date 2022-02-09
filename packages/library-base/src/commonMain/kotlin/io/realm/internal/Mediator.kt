@@ -20,6 +20,10 @@ import io.realm.RealmObject
 import kotlin.reflect.KClass
 
 interface Mediator {
+    // TODO OPTIMIZE Most usage of this could be done from cached RealmObjectCompanion instance.
+    //  Maybe just eliminate this method to ensure that we don't misuse it in favor of
+    //  companionOf(clazz).`$realm$newInstance`()
     fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal
     fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
+//    fun companionOf(className: String): RealmObjectCompanion
 }

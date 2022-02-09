@@ -25,6 +25,7 @@ import io.realm.internal.schema.RealmClassImpl
 import io.realm.internal.schema.RealmSchemaImpl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -43,12 +44,23 @@ import io.realm.internal.freeze as freezeTyped
  */
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
     private val tid: ULong
+
+    internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcher), MutableRealmImpl, TypedRealmImpl {
+
+        override val realmReference: LiveRealmReference
+            get() = super.realmReference
+
+        override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
+            return super<MutableRealmImpl>.registerObserver(t)
+        }
+    }
+
     private val realmInitializer = lazy {
-        MutableRealmImpl(owner, owner.configuration, dispatcher)
+        WriterRealm()
     }
 
     // Must only be accessed from the dispatchers thread
-    private val realm: MutableRealmImpl by realmInitializer
+    private val realm: WriterRealm by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
 

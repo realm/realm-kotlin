@@ -106,6 +106,7 @@ interface Configuration {
         protected var deleteRealmIfMigrationNeeded: Boolean = false
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
+        protected var migration: RealmMigration? = null
 
         /**
          * Creates the RealmConfiguration based on the builder properties.
@@ -146,6 +147,10 @@ interface Configuration {
          */
         fun schema(vararg classes: KClass<out RealmObject>) =
             apply { this.schema = setOf(*classes) } as S
+
+        // FIXME Docs
+        // FIXME Should be internal until settled
+        fun migration(migration: RealmMigration) : S = apply { this.migration = migration } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when

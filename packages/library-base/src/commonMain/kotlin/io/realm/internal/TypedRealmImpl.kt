@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,19 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealm
 import io.realm.RealmObject
-import io.realm.internal.schema.RealmClassImpl
+import io.realm.TypedRealm
+import io.realm.internal.query.ObjectQuery
+import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty1
 
-// TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
-@Suppress("VariableNaming")
-interface RealmObjectCompanion {
-    val `$realm$className`: String
-    val `$realm$class`: KClass<out RealmObject>
-    val `$realm$fields`: List<KMutableProperty1<*, *>>?
-    val `$realm$primaryKey`: KMutableProperty1<*, *>?
-    fun `$realm$schema`(): RealmClassImpl
-    fun `$realm$newInstance`(): Any
+interface TypedRealmImpl : TypedRealm, BaseRealm {
+
+    override val configuration: InternalConfiguration
+    val realmReference: RealmReference
+
+    override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> =
+        // FIXME Needs to work with obfuscation
+        ObjectQuery(realmReference, clazz.simpleName!!, clazz, configuration.mediator, null, query, *args)
 }

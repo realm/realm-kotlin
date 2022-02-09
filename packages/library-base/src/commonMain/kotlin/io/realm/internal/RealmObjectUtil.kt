@@ -28,10 +28,9 @@ import kotlin.reflect.KClass
 internal fun <T : RealmObject> RealmObjectInternal.manage(
     realm: RealmReference,
     mediator: Mediator,
-    type: KClass<T>,
+    className: String,
     objectPointer: NativePointer
 ): T {
-    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
     this.`$realm$ClassName` = className
@@ -48,10 +47,9 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
 internal fun <T : RealmObject> RealmObjectInternal.link(
     realm: RealmReference,
     mediator: Mediator,
-    type: KClass<T>,
+    className: String,
     link: Link
 ): T {
-    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
     this.`$realm$ClassName` = className
@@ -78,21 +76,22 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealmImpl): T? {
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmReference): T? {
     @Suppress("UNCHECKED_CAST")
-    return this.thaw(liveRealm.realmReference)?.let { it as T }
+    return this.thaw(liveRealm)?.let { it as T }
 }
 
 /**
  * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
  */
 internal fun <T : RealmObject> Link.toRealmObject(
+    className: String,
     clazz: KClass<T>,
     mediator: Mediator,
     realm: RealmReference
 ): T {
     return mediator.createInstanceOf(clazz)
-        .link(realm, mediator, clazz, this)
+        .link(realm, mediator, className, this)
 }
 
 /**

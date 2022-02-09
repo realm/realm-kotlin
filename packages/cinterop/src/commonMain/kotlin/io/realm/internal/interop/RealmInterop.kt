@@ -1,3 +1,5 @@
+@file:JvmMultifileClass
+@file:JvmName("RealmInteropJvm")
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -22,6 +24,8 @@ import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
+import kotlin.jvm.JvmMultifileClass
+import kotlin.jvm.JvmName
 
 // FIXME API-INTERNAL Consider adding marker interfaces NativeRealm, NativeRealmConfig, etc. as type parameter
 //  to NativePointer. NOTE Verify that it is supported for Kotlin Native!
@@ -42,6 +46,8 @@ expect val INVALID_PROPERTY_KEY: PropertyKey
 @JvmInline
 value class RegistrationToken(val value: Long)
 
+typealias MigrationCallback = Function3<NativePointer, NativePointer, NativePointer, Boolean>
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_get_version_id(realm: NativePointer): Long
@@ -58,6 +64,7 @@ expect object RealmInterop {
     fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long)
     fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray)
     fun realm_config_get_encryption_key(config: NativePointer): ByteArray?
+    fun realm_config_set_migration_function(config: NativePointer, callback: MigrationCallback)
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 
@@ -77,6 +84,8 @@ expect object RealmInterop {
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
+
+//    fun realm_get_schema_version(realm: NativePointer): Int
 
     fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken
     fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken)

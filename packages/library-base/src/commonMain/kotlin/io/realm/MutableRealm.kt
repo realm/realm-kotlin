@@ -32,6 +32,8 @@ interface MutableRealm : TypedRealm {
      *
      * @throws IllegalArgumentException if called on an unmanaged object.
      */
+    // TODO Should actually be BaseRealm.find/TypedRealm.find as we should be able to resolve any
+    //  object in any other version also for non-mutable rea
     fun <T : RealmObject> findLatest(obj: T): T?
 
     /**
@@ -70,11 +72,11 @@ interface MutableRealm : TypedRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    override fun <T : RealmObject> query(
-        clazz: KClass<T>,
-        query: String,
-        vararg args: Any?
-    ): RealmQuery<T>
+//    override fun <T : RealmObject> query(
+//        clazz: KClass<T>,
+//        query: String,
+//        vararg args: Any?
+//    ): RealmQuery<T>
 
     /**
      * Deletes the object from the underlying Realm.

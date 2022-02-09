@@ -72,6 +72,7 @@ interface RealmConfiguration : Configuration {
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,
+                migration
             )
         }
     }

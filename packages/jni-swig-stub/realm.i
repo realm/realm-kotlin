@@ -111,6 +111,16 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+%typemap(jstype) (realm_migration_func_t, void* userdata) "Object" ;
+%typemap(jtype) (realm_migration_func_t, void* userdata) "Object" ;
+%typemap(javain) (realm_migration_func_t, void* userdata) "$javainput";
+%typemap(jni) (realm_migration_func_t, void* userdata) "jobject";
+%typemap(in) (realm_migration_func_t, void* userdata) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_migration_func_t>(migration_callback);
+    // FIXME When are we supposed to release this, or shouldn't we hold on to it
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+}
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;

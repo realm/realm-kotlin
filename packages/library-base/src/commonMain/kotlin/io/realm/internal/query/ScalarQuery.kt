@@ -20,6 +20,7 @@ import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.Mediator
+import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
@@ -51,6 +52,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val realmReference: RealmReference,
     protected val queryPointer: NativePointer,
     protected val mediator: Mediator,
+    protected val className: String,
     protected val clazz: KClass<E>
 ) : Thawable<RealmResultsImpl<E>> {
 
@@ -58,11 +60,12 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
         val liveDbPointer = liveRealm.dbPointer
         val queryResults = RealmInterop.realm_query_find_all(queryPointer)
         val liveResultPtr = RealmInterop.realm_results_resolve_in(queryResults, liveDbPointer)
-        return RealmResultsImpl(liveRealm, liveResultPtr, clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, className, clazz, mediator)
     }
 
-    protected fun getPropertyKey(clazz: KClass<*>, property: String): PropertyKey =
-        RealmInterop.realm_get_col_key(realmReference.dbPointer, clazz.simpleName!!, property)
+    // TODO OPTIMIZE Can't we just retrieve this once from the schema metadata
+    protected fun getPropertyKey(className: String, property: String): PropertyKey =
+        RealmInterop.realm_get_col_key(realmReference.dbPointer, className, property)
 }
 
 /**
@@ -72,8 +75,9 @@ internal class CountQuery<E : RealmObject> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
+    className: String,
     clazz: KClass<E>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<Long>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, className, clazz), RealmScalarQuery<Long>, Thawable<RealmResultsImpl<E>> {
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
@@ -96,11 +100,12 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
+    className: String,
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarNullableQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, className, clazz), RealmScalarNullableQuery<T>, Thawable<RealmResultsImpl<E>> {
 
     override fun find(): T? = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -113,7 +118,8 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     }
 
     private fun findFromResults(resultsPointer: NativePointer): T? = try {
-        val colKey = getPropertyKey(clazz, property).key
+        // TODO OPTIMIZE
+        val colKey = getPropertyKey(className, property).key
         computeAggregatedValue(resultsPointer, colKey)
     } catch (exception: RealmCoreException) {
         throw when (exception) {
@@ -167,10 +173,11 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
+    className: String,
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, className, clazz), RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
 
     override fun find(): T = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -183,7 +190,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     }
 
     private fun findFromResults(resultsPointer: NativePointer): T = try {
-        val colKey = getPropertyKey(clazz, property).key
+        val colKey = getPropertyKey(className, property).key
         computeAggregatedValue(resultsPointer, colKey)
     } catch (exception: RealmCoreException) {
         throw when (exception) {

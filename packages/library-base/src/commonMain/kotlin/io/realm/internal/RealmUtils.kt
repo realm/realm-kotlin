@@ -17,6 +17,7 @@
 
 package io.realm.internal
 
+import io.realm.Realm
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
@@ -87,20 +88,24 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
     //  some runtime container of an open realm.
     //  https://github.com/realm/realm-kotlin/issues/85
     //  https://github.com/realm/realm-kotlin/issues/105
-    val objectType = type.simpleName ?: error("Cannot get class name")
+    val companion = mediator.companionOf(type)
+    val className: String = companion.`$realm$className`
     try {
-        val managedModel = mediator.createInstanceOf(type)
-        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
+//        val managedModel: RealmObjectInternal = mediator.createInstanceOf(type)
+//        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
+        // FIXME Is this OK
+        val managedModel = companion.`$realm$newInstance`() as RealmObjectInternal
+        val key = RealmInterop.realm_find_class(realm.dbPointer, className)
         key?.let {
             return managedModel.manage(
                 realm,
                 mediator,
-                type,
+                className,
                 RealmInterop.realm_object_create(realm.dbPointer, key)
             )
-        } ?: error("Couldn't find key for class $objectType")
+        } ?: error("Couldn't find key for class $className")
     } catch (e: RealmCoreException) {
-        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)
     }
 }
 
@@ -108,6 +113,7 @@ internal fun <T : RealmObject> create(
     mediator: Mediator,
     realm: RealmReference,
     type: KClass<T>,
+    companion: RealmObjectCompanion,
     primaryKey: Any?
 ): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
@@ -115,9 +121,10 @@ internal fun <T : RealmObject> create(
     //  some runtime container of an open realm.
     //  https://github.com/realm/realm-kotlin/issues/85
     //  https://github.com/realm/realm-kotlin/issues/105
-    val objectType = type.simpleName ?: error("Cannot get class name")
+    // Should use companion.className
+    val className = type.simpleName ?: error("Cannot get class name")
     try {
-        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
+        val key = RealmInterop.realm_find_class(realm.dbPointer, className)
         // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
         //  instead
         //  https://github.com/realm/realm-core/issues/4595
@@ -127,16 +134,16 @@ internal fun <T : RealmObject> create(
             existingPrimaryKeyObject?.let {
                 throw IllegalArgumentException("Cannot create object with existing primary key")
             }
-            val managedModel = mediator.createInstanceOf(type)
+            val managedModel = companion.`$realm$newInstance`() as RealmObjectInternal
             return managedModel.manage(
                 realm,
                 mediator,
-                type,
+                className,
                 RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
             )
-        } ?: error("Couldn't find key for class $objectType")
+        } ?: error("Couldn't find key for class $className")
     } catch (e: RealmCoreException) {
-        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)
     }
 }
 
@@ -167,6 +174,7 @@ internal fun <T> copyToRealm(
                     mediator,
                     realmPointer,
                     instance::class,
+                    companion,
                     (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance)
                 )
             } ?: create(mediator, realmPointer, instance::class)

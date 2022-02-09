@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.DynamicRealmObject
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -47,10 +48,10 @@ internal object RealmObjectHelper {
     @Suppress("unused") // Called from generated code
     internal fun <R> getValue(obj: RealmObjectInternal, propertyName: String): Any? {
         obj.checkValid()
-        return getValueByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
+        return getByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
     }
 
-    internal fun <R> getValueByKey(obj: RealmObjectInternal, key: io.realm.internal.interop.PropertyKey): Any? {
+    internal fun <R> getByKey(obj: RealmObjectInternal, key: io.realm.internal.interop.PropertyKey): Any? {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer`!! ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
         return RealmInterop.realm_get_value(o, key)
@@ -84,12 +85,11 @@ internal object RealmObjectHelper {
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
-            val value =
-                (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
+            val value = (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
             return value.link(
                 obj.`$realm$Owner`!!,
                 obj.`$realm$Mediator`!!,
-                R::class,
+                obj.`$realm$ClassName`!!,
                 link
             )
         }
@@ -118,7 +118,7 @@ internal object RealmObjectHelper {
         val realm: RealmReference =
             obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         // Cannot call managedRealmList directly from an inline function
-        return getManagedRealmList(listPtr, clazz, mediator, realm)
+        return getManagedRealmList(listPtr, obj.`$realm$ClassName`!!, clazz, mediator, realm)
     }
 
     /**
@@ -128,6 +128,7 @@ internal object RealmObjectHelper {
      */
     internal fun getManagedRealmList(
         listPtr: NativePointer,
+        className: String,
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference
@@ -135,6 +136,7 @@ internal object RealmObjectHelper {
         return managedRealmList(
             listPtr,
             ListOperatorMetadata(
+                className,
                 clazz = clazz,
                 mediator = mediator,
                 realm = realm
@@ -212,6 +214,34 @@ internal object RealmObjectHelper {
             copyToRealm(obj.`$realm$Mediator`!!, obj.`$realm$Owner`!!, value)
         } else value
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
+    }
+
+//    internal inline fun <reified R : Any> get(obj: RealmObjectInternal, propertyName: String): R? {
+//        return get(obj, R::class, propertyName)
+//    }
+
+    internal fun <R : Any> get(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
+        return when(clazz) {
+            DynamicRealmObject::class -> getObject<DynamicRealmObject>(obj, propertyName)
+            RealmList::class -> getList<Any>(obj, propertyName)
+            else -> getValue<R>(obj, propertyName)
+        } as R?
+//        val
+//        val value = getByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
+//        return when (value) {
+//            is Link -> {
+//                // HACK HACK HACK to get the generic bound right
+//                val dsf = clazz as KClass<out RealmObject>
+//                (obj.`$realm$Mediator`!!).createInstanceOf(dsf).link<RealmObject>(
+//                    obj.`$realm$Owner`!!,
+//                    obj.`$realm$Mediator`!!,
+//                    obj.`$realm$ClassName`!!,
+//                    value
+//                )
+//            }
+//            else ->
+//                value
+//        } as R?
     }
 
     @Suppress("UNUSED_PARAMETER")

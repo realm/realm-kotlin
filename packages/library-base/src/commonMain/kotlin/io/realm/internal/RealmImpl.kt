@@ -2,14 +2,18 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
+import io.realm.DynamicRealm
 import io.realm.MutableRealm
 import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
+import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -21,12 +25,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
     configuration: InternalConfiguration,
     dbPointer: NativePointer
-) : BaseRealmImpl(configuration), Realm {
+) : BaseRealmImpl(configuration), Realm, TypedRealmImpl {
 
     private val realmPointerMutex = Mutex()
 
@@ -49,7 +54,7 @@ internal class RealmImpl private constructor(
     // TODO Could just be FrozenRealmReference but fails to close all references if full
     //  initialization is moved to the initialization of updatableRealm ... maybe a caveat with
     //  atomicfu
-    internal override var realmReference: RealmReference by _realmReference
+    override var realmReference: RealmReference by _realmReference
 
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
@@ -86,6 +91,10 @@ internal class RealmImpl private constructor(
                 )
             }
         )
+
+    override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
+        return super.query(clazz, query, *args)
+    }
 
     // Currently just for internal-only usage in test, thus API is not polished
     internal suspend fun updateSchema(schema: RealmSchemaImpl) {
@@ -189,4 +198,10 @@ internal class RealmImpl private constructor(
         writer.unregisterCallbacks()
         notifier.unregisterCallbacks()
     }
+
+
 }
+
+// DOC Should not be closed on its own
+internal fun Realm.asDynamicRealm(): DynamicRealm =
+    DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, (this as RealmImpl).realmReference.dbPointer)

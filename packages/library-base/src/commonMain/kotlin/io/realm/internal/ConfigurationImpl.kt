@@ -16,7 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.DynamicRealmObject
 import io.realm.LogConfiguration
+import io.realm.RealmMigration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -38,6 +40,7 @@ open class ConfigurationImpl constructor(
     schemaVersion: Long,
     schemaMode: SchemaMode,
     encryptionKey: ByteArray?,
+    migration: RealmMigration?,
 ) : InternalConfiguration {
 
     override val path: String
@@ -96,13 +99,35 @@ open class ConfigurationImpl constructor(
         RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
         RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
 
+
+        migration?.let {
+            RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer ->
+                val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
+                // If we don't start a read, then we cannot det the version
+                RealmInterop.realm_begin_read(oldRealm)
+
+                // FIXME Might have to split a new base of MutableRealm to act as live realm without
+                //  ability to register for notifications ... maybe already safe but needs to verify
+                val new = object : BaseRealmImpl(this@ConfigurationImpl) {
+                    override val realmReference: RealmReference = FrozenRealmReference(this, newRealm)
+                }
+                migration.migrate(old, new)
+                true
+            }
+        }
+
         encryptionKey?.let {
             RealmInterop.realm_config_set_encryption_key(nativeConfig, it)
         }
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal =
-                companionOf(clazz).`$realm$newInstance`() as RealmObjectInternal
+                when(clazz) {
+                    DynamicRealmObject::class ->
+                        DynamicRealmObjectImpl()
+                    else ->
+                        companionOf(clazz).`$realm$newInstance`() as RealmObjectInternal
+                }
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]

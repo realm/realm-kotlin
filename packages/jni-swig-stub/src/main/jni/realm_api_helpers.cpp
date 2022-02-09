@@ -63,6 +63,22 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
     jni_check_exception(env);
 }
 
+bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
+                        const realm_schema_t *schema) {
+    auto env = get_env(true);
+    // Should map RealmInterop.MigrationCallback
+    static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function3");
+    static JavaMethod java_callback_method(env, java_callback_class, "invoke",
+                                           "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    bool result = env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method,
+                                        wrap_pointer(env, reinterpret_cast<jlong>(old_realm)),
+                                        wrap_pointer(env, reinterpret_cast<jlong>(new_realm)),
+                                        wrap_pointer(env, reinterpret_cast<jlong>(schema))
+    );
+    jni_check_exception(env);
+    return result;
+}
+
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
 //  changes as realm_collection_changes_t.
 realm_notification_token_t *

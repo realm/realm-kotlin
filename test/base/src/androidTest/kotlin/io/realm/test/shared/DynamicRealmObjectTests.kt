@@ -16,46 +16,6 @@
 
 package io.realm.test.shared
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.realm.BaseRealm
-import io.realm.Realm
-import io.realm.RealmConfiguration
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.entities.AllJavaTypes
-import io.realm.entities.AllTypes
-import io.realm.entities.CyclicType
-import io.realm.entities.Dog
-import io.realm.entities.NullTypes
-import io.realm.entities.NullablePrimitiveFields
-import io.realm.entities.Owner
-import io.realm.entities.PrimaryKeyAsBoxedByte
-import io.realm.entities.PrimaryKeyAsBoxedInteger
-import io.realm.entities.PrimaryKeyAsBoxedLong
-import io.realm.entities.PrimaryKeyAsBoxedShort
-import io.realm.entities.PrimaryKeyAsByte
-import io.realm.entities.PrimaryKeyAsInteger
-import io.realm.entities.PrimaryKeyAsLong
-import io.realm.entities.PrimaryKeyAsShort
-import io.realm.entities.PrimaryKeyAsString
-import io.realm.exceptions.RealmException
-import org.bson.types.Decimal128
-import org.bson.types.ObjectId
-import org.hamcrest.Matchers
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExpectedException
-import org.junit.runner.RunWith
-import java.math.BigDecimal
-import java.text.ParseException
-import java.util.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
-
-@RunWith(AndroidJUnit4::class)
 class DynamicRealmObjectTests {
 //    @Rule
 //    val configFactory: TestRealmConfigurationFactory = TestRealmConfigurationFactory()

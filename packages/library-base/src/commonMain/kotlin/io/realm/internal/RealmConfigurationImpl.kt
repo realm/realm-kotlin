@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.LogConfiguration
+import io.realm.RealmMigration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.SchemaMode
@@ -34,7 +35,8 @@ internal class RealmConfigurationImpl(
     writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
     encryptionKey: ByteArray?,
-    override val deleteRealmIfMigrationNeeded: Boolean
+    override val deleteRealmIfMigrationNeeded: Boolean,
+    migration: RealmMigration?
 ) : ConfigurationImpl(
     path,
     name,
@@ -48,6 +50,7 @@ internal class RealmConfigurationImpl(
         true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
         false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
     },
-    encryptionKey
+    encryptionKey,
+    migration
 ),
     RealmConfiguration

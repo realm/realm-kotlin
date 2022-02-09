@@ -15,23 +15,25 @@
  */
 package io.realm.internal
 
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.query.ObjectQuery
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
-import kotlinx.coroutines.CoroutineDispatcher
+import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
-internal class MutableRealmImpl : LiveRealm, MutableRealm {
+internal interface MutableRealmImpl : MutableRealm {
+
+    override val configuration: InternalConfiguration
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
-    internal companion object {
+    companion object {
         internal fun <T : RealmObject> delete(obj: T) {
             val internalObject = obj as RealmObjectInternal
             checkObjectValid(internalObject)
@@ -45,6 +47,12 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
         }
     }
 
+    val realmReference: LiveRealmReference
+
+//    internal constructor(
+//        configuration: InternalConfiguration,
+//        dispatcher: CoroutineDispatcher? = null
+//    ) : super(parent, configuration, dispatcher)
     /**
      * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
      * done inside the MutableRealm is not immediately reflected in the `parentRealm`.
@@ -55,13 +63,14 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
      * - Native: Either a scheduler dispatching to the supplied dispatcher or the default Darwin
      * scheduler, that delivers notifications on the main run loop.
      */
-    internal constructor(
-        parent: RealmImpl,
-        configuration: InternalConfiguration,
-        dispatcher: CoroutineDispatcher? = null
-    ) : super(parent, configuration, dispatcher)
+//    internal constructor(
+//        parent: RealmImpl,
+//        configuration: InternalConfiguration,
+//        dispatcher: CoroutineDispatcher? = null
+//    ) : super(parent, configuration, dispatcher)
 
-    internal fun beginTransaction() {
+
+    fun beginTransaction() {
         try {
             RealmInterop.realm_begin_write(realmReference.dbPointer)
         } catch (exception: RealmCoreException) {
@@ -69,11 +78,11 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
         }
     }
 
-    internal fun commitTransaction() {
+    fun commitTransaction() {
         RealmInterop.realm_commit(realmReference.dbPointer)
     }
 
-    internal fun isInTransaction(): Boolean {
+    fun isInTransaction(): Boolean {
         return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
     }
 
@@ -91,8 +100,8 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
             // up to date, just return input
             obj
         } else {
-            val liveRealm = realmReference.owner
-            (obj as RealmObjectInternal).thaw(liveRealm)
+            // Why is the cast needed
+            (obj as RealmObjectInternal).thaw(realmReference) as T
         }
     }
 
@@ -119,28 +128,31 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
 
-    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
+    fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerResultsChangeListener(
-        results: RealmResultsImpl<T>,
-        callback: Callback<RealmResultsImpl<T>>
-    ): Cancellable {
-        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
-    }
-
-    internal override fun <T : RealmObject> registerListChangeListener(
-        list: List<T>,
-        callback: Callback<List<T>>
-    ): Cancellable {
-        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
-    }
-
-    internal override fun <T : RealmObject> registerObjectChangeListener(
-        obj: T,
-        callback: Callback<T?>
-    ): Cancellable {
-        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
-    }
+//    // FIXME Can we eliminate these
+//    override fun <T : RealmObject> registerResultsChangeListener(
+//        results: RealmResultsImpl<T>,
+//        callback: Callback<RealmResultsImpl<T>>
+//    ): Cancellable {
+//        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+//    }
+//
+//    // FIXME Can we eliminate these
+//    internal override fun <T : RealmObject> registerListChangeListener(
+//        list: List<T>,
+//        callback: Callback<List<T>>
+//    ): Cancellable {
+//        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+//    }
+//
+//    // FIXME Can we eliminate these
+//    internal override fun <T : RealmObject> registerObjectChangeListener(
+//        obj: T,
+//        callback: Callback<T?>
+//    ): Cancellable {
+//        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+//    }
 }

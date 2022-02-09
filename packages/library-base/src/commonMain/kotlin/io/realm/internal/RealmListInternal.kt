@@ -162,6 +162,7 @@ internal class ManagedRealmList<E>(
  * Metadata needed to correctly instantiate a list operator.
  */
 internal data class ListOperatorMetadata(
+    val className: String,
     val clazz: KClass<*>,
     val mediator: Mediator,
     val realm: RealmReference
@@ -194,11 +195,14 @@ internal class ListOperator<E>(
                 Double::class,
                 String::class -> value
                 RealmInstant::class -> RealmInstantImpl(value as Timestamp)
-                else -> (value as Link).toRealmObject(
+                Link::class -> (value as Link).toRealmObject(
+                    className,
                     clazz as KClass<out RealmObject>,
                     mediator,
                     realm
                 )
+                else ->
+                    error("Unknown type $clazz" )
             } as E
         }
     }

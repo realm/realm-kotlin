@@ -36,6 +36,8 @@ import kotlin.reflect.KClass
 internal class RealmResultsImpl<E : RealmObject> constructor(
     private val realm: RealmReference,
     internal val nativePointer: NativePointer,
+//    private val companion: RealmObjectCompanion,
+    private val className: String,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     private val mode: Mode = Mode.RESULTS
@@ -52,8 +54,9 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
 
     override fun get(index: Int): E {
         val link = RealmInterop.realm_results_get(nativePointer, index.toLong())
+        // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
         val model = mediator.createInstanceOf(clazz)
-        model.link(realm, mediator, clazz, link)
+        model.link<E>(realm, mediator, className, link)
         @Suppress("UNCHECKED_CAST")
         return model as E
     }
@@ -61,10 +64,9 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any?): RealmResultsImpl<E> {
         try {
-            val table = clazz.simpleName!!
-            val queryPointer = RealmInterop.realm_query_parse(nativePointer, table, query, *args)
+            val queryPointer = RealmInterop.realm_query_parse(nativePointer, className, query, *args)
             val resultsPointer = RealmInterop.realm_query_find_all(queryPointer)
-            return RealmResultsImpl(realm, resultsPointer, clazz, mediator)
+            return RealmResultsImpl(realm, resultsPointer, className, clazz, mediator)
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler("Invalid syntax for query `$query`", exception)
         }
@@ -89,7 +91,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun freeze(frozenRealm: RealmReference): RealmResultsImpl<E> {
         val frozenDbPointer = frozenRealm.dbPointer
         val frozenResults = RealmInterop.realm_results_resolve_in(nativePointer, frozenDbPointer)
-        return RealmResultsImpl(frozenRealm, frozenResults, clazz, mediator)
+        return RealmResultsImpl(frozenRealm, frozenResults, className, clazz, mediator)
     }
 
     /**
@@ -98,7 +100,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
         val liveResultPtr = RealmInterop.realm_results_resolve_in(nativePointer, liveDbPointer)
-        return RealmResultsImpl(liveRealm, liveResultPtr, clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, className,clazz, mediator)
     }
 
     override fun registerForNotification(callback: Callback): NativePointer {

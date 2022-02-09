@@ -2,6 +2,8 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.internal.Mediator
+import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
@@ -16,6 +18,7 @@ import kotlin.reflect.KClass
 internal class SingleQuery<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val queryPointer: NativePointer,
+    private val className: String,
     private val clazz: KClass<E>,
     private val mediator: Mediator
 ) : RealmSingleQuery<E>, Thawable<RealmResultsImpl<E>> {
@@ -23,7 +26,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
         val model = mediator.createInstanceOf(clazz)
-        model.link(realmReference, mediator, clazz, link)
+        model.link<E>(realmReference, mediator, className, link)
         @Suppress("UNCHECKED_CAST")
         return model as E
     }
@@ -41,5 +44,5 @@ internal class SingleQuery<E : RealmObject> constructor(
      * The results object is then used to fetch the object with index 0, which can be `null`.
      */
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
-        thawResults(liveRealm, RealmInterop.realm_query_find_all(queryPointer), clazz, mediator)
+        thawResults(liveRealm, RealmInterop.realm_query_find_all(queryPointer), className, clazz, mediator)
 }

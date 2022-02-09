@@ -137,6 +137,10 @@ actual object RealmInterop {
         return null
     }
 
+    actual fun realm_config_set_migration_function(config: NativePointer, callback: MigrationCallback) {
+        realmc.realm_config_set_migration_function(config.cptr(), callback)
+    }
+
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
         val realmPtr = LongPointerWrapper(
@@ -149,6 +153,12 @@ actual object RealmInterop {
         realm_begin_read(realmPtr)
         return realmPtr
     }
+
+
+//    actual fun realm_get_schema_version(realm: NativePointer): Int {
+//        return realmc.
+//
+//    }
 
     actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
         return RegistrationToken(realmc.realm_add_realm_changed_callback(realm.cptr(), block))

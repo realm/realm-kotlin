@@ -139,6 +139,7 @@ class DynamicRealmTests {
 //        Assert.assertTrue(Realm.deleteRealm(defaultConfig))
 //    }
 //
+    // FIXME
 //    @Test
 //    fun createObject() {
 //        realm.beginTransaction()
@@ -147,6 +148,8 @@ class DynamicRealmTests {
 //        Assert.assertTrue(obj.isValid())
 //    }
 //
+
+    // FIXME
 //    @Test
 //    fun createObject_withPrimaryKey() {
 //        realm.beginTransaction()
@@ -155,6 +158,7 @@ class DynamicRealmTests {
 //        realm.cancelTransaction()
 //    }
 //
+    // FIXME
 //    @Test
 //    fun createObject_withNullStringPrimaryKey() {
 //        realm.beginTransaction()
@@ -163,6 +167,7 @@ class DynamicRealmTests {
 //        assertEquals(1, realm.where(PrimaryKeyAsString.CLASS_NAME).equalTo(PrimaryKeyAsString.FIELD_PRIMARY_KEY, null as String?).count())
 //    }
 //
+    // FIXME
 //    @Test
 //    fun createObject_withNullBytePrimaryKey() {
 //        realm.beginTransaction()
@@ -171,6 +176,7 @@ class DynamicRealmTests {
 //        assertEquals(1, realm.where(PrimaryKeyAsBoxedByte.CLASS_NAME).equalTo(PrimaryKeyAsBoxedByte.FIELD_PRIMARY_KEY, null as Byte?).count())
 //    }
 //
+    // FIXME
 //    @Test
 //    fun createObject_withNullShortPrimaryKey() {
 //        realm.beginTransaction()
@@ -179,6 +185,7 @@ class DynamicRealmTests {
 //        assertEquals(1, realm.where(PrimaryKeyAsBoxedShort.CLASS_NAME).equalTo(PrimaryKeyAsBoxedShort.FIELD_PRIMARY_KEY, null as Short?).count())
 //    }
 //
+    // FIXME
 //    @Test
 //    fun createObject_withNullIntegerPrimaryKey() {
 //        realm.beginTransaction()
@@ -188,6 +195,7 @@ class DynamicRealmTests {
 //    }
 //
 //    @Test
+    // FIXME
 //    fun createObject_withNullLongPrimaryKey() {
 //        realm.beginTransaction()
 //        realm.createObject(PrimaryKeyAsBoxedLong.CLASS_NAME, null as Long?)
@@ -196,18 +204,21 @@ class DynamicRealmTests {
 //    }
 //
 //    @Test(expected = IllegalArgumentException::class)
+    // FIXME
 //    fun createObject_illegalPrimaryKeyValue() {
 //        realm.beginTransaction()
 //        realm.createObject(DogPrimaryKey.CLASS_NAME, "bar")
 //    }
 //
 //    @Test(expected = RealmException::class)
+    // FIXME
 //    fun createObject_absentPrimaryKeyThrows() {
 //        realm.beginTransaction()
 //        realm.createObject(DogPrimaryKey.CLASS_NAME)
 //    }
 //
 //    @Test
+    // FIXME
 //    fun where() {
 //        realm.beginTransaction()
 //        realm.createObject(AllTypes.CLASS_NAME)
@@ -217,6 +228,7 @@ class DynamicRealmTests {
 //    }
 //
 //    @Test(expected = IllegalArgumentException::class)
+    // FIXME
 //    fun delete_type_invalidName() {
 //        realm.beginTransaction()
 //        realm.delete("I don't exist")
@@ -224,6 +236,7 @@ class DynamicRealmTests {
 //
 //    @Test(expected = IllegalStateException::class)
 //    fun delete_type_outsideTransactionClearOutsideTransactionThrows() {
+    // FIXME
 //        realm.delete(AllTypes.CLASS_NAME)
 //    }
 //

@@ -113,7 +113,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
             // Add body for synthetic companion methods
             val companion = irClass.companionObject() ?: fatalError("RealmObject without companion")
-            generator.addCompanionFields(companion, SchemaCollector.properties[irClass])
+            generator.addCompanionFields(irClass.name.identifier, companion, SchemaCollector.properties[irClass])
             generator.addSchemaMethodBody(irClass)
             generator.addNewInstanceMethodBody(irClass)
         } else {

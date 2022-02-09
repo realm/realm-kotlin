@@ -71,7 +71,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             managedModel.manage(
                 frozenRealm,
                 mediator,
-                type,
+                this.`$realm$ClassName`!!,
                 it
             )
         }
@@ -88,7 +88,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             managedModel.manage(
                 liveRealm,
                 mediator,
-                type as KClass<RealmObjectInternal>,
+                this.`$realm$ClassName`!!,
                 it
             )
         }
