@@ -101,6 +101,8 @@ std::string rlm_stdstr(realm_string_t val)
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_should_compact_on_launch_func_t>(realm_should_compact_callback);
     // FIXME How to release this: https://github.com/realm/realm-core/issues/5222
+    //  When #5222 resolved, it might be possible to merge this type map with the above as their
+    //  signatures then follow the same pattern.
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
 }
 

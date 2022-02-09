@@ -112,6 +112,7 @@ class SyncConfigTests {
     }
 
     // Smoke-test...most functionality is tested in CompactOnLaunchTests
+    // See https://github.com/realm/realm-kotlin/issues/672
     @Test
     fun compactOnLaunch_default() {
         val user = createTestUser()
@@ -124,6 +125,7 @@ class SyncConfigTests {
     }
 
     // Smoke-test...most functionality is tested in CompactOnLaunchTests
+    // See https://github.com/realm/realm-kotlin/issues/672
     @Test
     fun compactOnLaunch() {
         val user = createTestUser()

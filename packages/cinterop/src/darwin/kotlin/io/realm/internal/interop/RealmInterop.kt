@@ -342,7 +342,7 @@ actual object RealmInterop {
 
     actual fun realm_config_set_should_compact_on_launch_function(
         config: NativePointer,
-        callback: (Long, Long) -> Boolean
+        callback: CompactOnLaunchCallback
     ) {
         realm_wrapper.realm_config_set_should_compact_on_launch_function(
             config.cptr(),

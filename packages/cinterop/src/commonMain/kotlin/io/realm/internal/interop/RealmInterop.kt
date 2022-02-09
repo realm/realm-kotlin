@@ -33,6 +33,8 @@ value class ClassKey(val key: Long)
 @JvmInline
 value class PropertyKey(val key: Long)
 
+typealias CompactOnLaunchCallback = (Long, Long) -> Boolean
+
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
@@ -52,7 +54,7 @@ expect object RealmInterop {
     fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long)
     fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray)
     fun realm_config_get_encryption_key(config: NativePointer): ByteArray?
-    fun realm_config_set_should_compact_on_launch_function(config: NativePointer, callback: (Long, Long) -> Boolean)
+    fun realm_config_set_should_compact_on_launch_function(config: NativePointer, callback: CompactOnLaunchCallback)
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 

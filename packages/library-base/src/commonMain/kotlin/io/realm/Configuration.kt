@@ -285,7 +285,9 @@ interface Configuration {
          * is used.
          *
          * @param callback The callback called when opening the realm file. The return value
-         * determines whether or not the file should be compacted.
+         * determines whether or not the file should be compacted. If not user defined callback
+         * is defined, the default policy will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
+         * for more details.
          */
         fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK) =
             apply { this.compactOnLaunchCallback = callback } as S

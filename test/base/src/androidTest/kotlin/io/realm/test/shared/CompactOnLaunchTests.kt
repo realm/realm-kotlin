@@ -6,7 +6,6 @@ import io.realm.entities.Sample
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.platformFileSystem
 import io.realm.test.util.use
-import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import okio.Path.Companion.toPath
 import kotlin.random.Random
