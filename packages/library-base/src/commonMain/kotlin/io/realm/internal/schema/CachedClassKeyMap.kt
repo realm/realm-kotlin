@@ -28,7 +28,7 @@ import io.realm.internal.interop.RealmInterop
 interface SchemaMetadata {
     operator fun get(className: String): ClassMetadata?
     fun getOrThrow(className: String): ClassMetadata = get(className)
-        ?: throw IllegalArgumentException("Object of type '$className not found")
+        ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
 
 /**
@@ -38,10 +38,9 @@ interface ClassMetadata {
     val className: String
     operator fun get(propertyName: String): PropertyKey?
     fun getOrThrow(propertyName: String): PropertyKey = get(propertyName)
-        ?: throw IllegalArgumentException("Object of type '$className doesn't have a property named '$propertyName'")
+        ?: throw IllegalArgumentException("Schema for type '$className doesn't contain a property named '$propertyName'")
 }
 
-// FIXME We are actually not lazy loading these right now
 /**
  * Schema metadata implementation that postpones class key lookup until first access.
  *
@@ -57,7 +56,6 @@ class CachedSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadat
     init {
         classMap = RealmInterop.realm_get_class_keys(dbPointer).map<ClassKey, Pair<String, CachedClassMetadata>> {
             val classInfo = RealmInterop.realm_get_class(dbPointer, it)
-            println("Looking up class info for $this ${classInfo.name}")
             classInfo.name to CachedClassMetadata(dbPointer, classInfo.name, classInfo.key)
         }.toMap()
     }
@@ -65,7 +63,6 @@ class CachedSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadat
     override fun get(className: String): CachedClassMetadata? = classMap[className]
 }
 
-// FIXME We are actually not lazy loading these right now
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
@@ -77,7 +74,6 @@ class CachedClassMetadata(dbPointer: NativePointer, override val className: Stri
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        println("Looking up property info for ${classInfo.name}")
         propertyMap = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyKey>> { it.name to it.key }.toMap()
     }
 

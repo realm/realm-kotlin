@@ -51,7 +51,7 @@ internal object RealmObjectHelper {
     }
 
     internal fun <R> getValueByKey(obj: RealmObjectInternal, key: io.realm.internal.interop.PropertyKey): Any? {
-        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer`!! ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
         return RealmInterop.realm_get_value(o, key)
     }
@@ -62,7 +62,7 @@ internal object RealmObjectHelper {
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$ClassName`!!, col)
-        val res = RealmInterop.realm_get_value<Timestamp>(o, key)
+        val res = RealmInterop.realm_get_value<Timestamp?>(o, key)
         return if (res == null) null else RealmInstantImpl(res)
     }
 
@@ -80,9 +80,9 @@ internal object RealmObjectHelper {
         obj: RealmObjectInternal,
         key: io.realm.internal.interop.PropertyKey,
     ): Any? {
-        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val link = RealmInterop.realm_get_value<Link>(o, key)
+        val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
             val value =
                 (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
@@ -108,8 +108,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectInternal,
         key: io.realm.internal.interop.PropertyKey,
     ): RealmList<Any?> {
-        // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
-        // FIXME Have we already ensured checkValid()?
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
         val clazz: KClass<*> = R::class
@@ -215,6 +214,7 @@ internal object RealmObjectHelper {
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     internal fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
         TODO()
     }

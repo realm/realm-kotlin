@@ -60,10 +60,9 @@ abstract class BaseRealmImpl internal constructor(
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
     init {
-        log.info("Realm opened: $this ${this.configuration} ${configuration.path}")
+        log.info("Realm opened: ${configuration.path}")
     }
 
-    // FIXME
     // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
     //  update, but requires that we initialize it all on the actual schema update to allow freezing
     //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
@@ -112,9 +111,8 @@ abstract class BaseRealmImpl internal constructor(
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        realmReference.close()
         log.info("Realm closed: $this ${configuration.path}")
     }
 
-    override fun toString(): String = "${this::class.simpleName}[${this.configuration.path}, ${this.hashCode()}]"
+    override fun toString(): String = "${this::class.simpleName}[${this.configuration.path}}]"
 }

@@ -16,18 +16,21 @@
 
 package io.realm.internal.interop
 
+// The C-API uses the empty string as value for string properties that are not set
+const val SCHEMA_NO_VALUE = ""
+
 data class ClassInfo(
     val name: String,
-    val primaryKey: String = "", // C-API crashes if null
+    val primaryKey: String = SCHEMA_NO_VALUE,
     val numProperties: Long,
-    val numComputerProperties: Long = 0,
+    val numComputedProperties: Long = 0,
     val key: ClassKey = INVALID_CLASS_KEY,
     val flags: Int = ClassFlags.RLM_CLASS_NORMAL
 ) {
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin
         fun create(name: String, primaryKey: String?, numProperties: Long): ClassInfo {
-            return ClassInfo(name, primaryKey ?: "", numProperties, 0)
+            return ClassInfo(name, primaryKey ?: SCHEMA_NO_VALUE, numProperties, 0)
         }
     }
 }

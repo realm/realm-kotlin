@@ -23,7 +23,7 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
 /**
- * Book keeping of intermediate versions that needs to be closed when no longer referenced or when
+ * Bookkeeping of intermediate versions that needs to be closed when no longer referenced or when
  * explicitly closing a realm.
  *
  * NOTE: This is not thread safe, so synchronization should be enforced by the owner/caller.
@@ -53,7 +53,7 @@ internal class VersionTracker(val log: RealmLog) {
     fun close() {
         intermediateReferences.value.forEach { (pointer, _) ->
             log.debug(
-                "Closing intermediated version: ${RealmInterop.realm_get_version_id(pointer)}"
+                "Closing intermediate version: ${RealmInterop.realm_get_version_id(pointer)}"
             )
             RealmInterop.realm_close(pointer)
         }

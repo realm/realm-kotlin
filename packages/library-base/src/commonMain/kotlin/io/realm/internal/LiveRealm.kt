@@ -19,9 +19,7 @@ package io.realm.internal
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RegistrationToken
-import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.internal.util.Validation.sdkError
-import io.realm.log.LogLevel
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
@@ -31,7 +29,8 @@ import kotlinx.coroutines.CoroutineDispatcher
  * updated by other threads.
  *
  * NOTE: Must be constructed with a single thread dispatcher and must be constructed on the same
- * thread that is backing the dispatcher.
+ * thread that is backing the dispatcher. Further, this is not thread safe so must only be modified
+ * on the dispatcher's thread.
  *
  * @param owner The owner of the snapshot references of this realm.
  * @param configuration The configuration of the realm.
@@ -51,8 +50,16 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
     }
 
     private val _snapshot: AtomicRef<FrozenRealmReference?> = atomic(null)
+
+    /**
+     * Frozen snapshot reference of the realm.
+     *
+     * NOTE: The snapshot is lazily created and must only be retrieved on the thread of the
+     * dispatcher.
+     */
     internal val snapshot: FrozenRealmReference
         get() {
+            // Initialize a new snapshot that can be reused until cleared again onRealmChanged
             if (_snapshot.value == null) {
                 val snapshot = realmReference.snapshot(owner)
                 versionTracker.trackAndCloseExpiredReferences(snapshot)
@@ -62,22 +69,16 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         }
 
     init {
-        log.debug("asdasdf")
         realmChangeRegistration = RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, ::onRealmChanged)
         schemaChangeRegistration = RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, ::onSchemaChanged)
     }
 
     protected open fun onRealmChanged() {
-        log.debug("Realm changed: $this $configuration")
+        // Just clean snapshot so that a new one is initialized next time it is needed
         _snapshot.value = null
     }
 
     protected open fun onSchemaChanged(schema: NativePointer) {
-        if (log.logLevel >= LogLevel.DEBUG) {
-            log.debug("onSchemaChanged: $this $configuration ${RealmSchemaImpl.fromRealm(realmReference.dbPointer)}")
-        } else {
-            log.debug("onSchemaChanged: $this $configuration")
-        }
         realmReference.refreshSchemaMetadata()
     }
 
@@ -88,7 +89,10 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
 
     override fun close() {
         unregisterCallbacks()
+        // Close all intermediate references
         versionTracker.close()
+        // Close actual live reference
+        realmReference.close()
         super.close()
     }
 }
