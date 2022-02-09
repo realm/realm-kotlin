@@ -1,4 +1,27 @@
-## 0.9.0-SNAPSHOT (YYYY-MM-DD)
+## 0.10.0-SNAPSHOT (2022-MM-DD)
+
+### Breaking Changes
+
+### Enhancements
+
+### Fixed
+* Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
+* `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
+
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+
+
+## 0.9.0 (2022-01-28)
 
 ### Breaking Changes
 * `Realm.observe()`, `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
@@ -13,7 +36,7 @@
 * Add support for fine grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `RealmInitial` or `RealmUpdated` states.
 
 ### Fixed
-* None.
+* Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)). 
 
 ### Compatibility
 * This release is compatible with:

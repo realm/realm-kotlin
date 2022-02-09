@@ -52,7 +52,7 @@ internal class SuspendableNotifier(
     )
 
     private val realmInitializer = lazy {
-        val dbPointer = RealmInterop.realm_open((owner.configuration as InternalConfiguration).nativeConfig, dispatcher)
+        val dbPointer = RealmInterop.realm_open(owner.configuration.nativeConfig, dispatcher)
         object : BaseRealmImpl(owner.configuration, dbPointer) {
             /* Realms used by the Notifier is just a basic Live Realm */
         }
@@ -137,6 +137,7 @@ internal class SuspendableNotifier(
      *
      * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
      */
+    @Suppress("UNUSED_PARAMETER")
     internal fun registerRealmChangedListener(callback: Callback<Pair<NativePointer, VersionId>>): Cancellable {
         TODO("Waiting for RealmInterop to have support for global Realm changed")
     }

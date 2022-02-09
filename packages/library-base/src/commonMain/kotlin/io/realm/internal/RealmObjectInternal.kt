@@ -74,6 +74,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         val managedModel = mediator.createInstanceOf(type)
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
+            @Suppress("UNCHECKED_CAST")
             managedModel.manage(
                 liveRealm,
                 mediator,
@@ -107,7 +108,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     }
 }
 
-internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {
+internal fun RealmObject.realmObjectInternal(): RealmObjectInternal {
     return this as RealmObjectInternal
 }
 
