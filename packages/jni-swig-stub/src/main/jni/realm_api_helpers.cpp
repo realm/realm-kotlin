@@ -23,15 +23,6 @@
 using namespace realm::jni_util;
 using namespace realm::_impl;
 
-jobject wrap_long(JNIEnv* jenv, jlong long_value, jboolean managed = false) {
-    static JavaClass long_object_class(jenv, "java/lang/Long");
-    static JavaMethod long_object_constructor(jenv, long_object_class, "<init>", "(J)V");
-    return jenv->NewObject(long_object_class,
-                           long_object_constructor,
-                           long_value,
-                           managed);
-}
-
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
 //  changes as realm_collection_changes_t.
 realm_notification_token_t *
@@ -294,17 +285,12 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
 
 bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes) {
     auto env = get_env(true);
-    static JavaClass java_should_compact_class(env, "kotlin/jvm/functions/Function2");
-    static JavaMethod java_should_compact_method(env, java_should_compact_class, "invoke", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-    static JavaClass boolean_class(env, "java/lang/Boolean");
-    static JavaMethod boolean_value_method(env, boolean_class, "booleanValue", "()Z");
+    static JavaClass java_should_compact_class(env, "io/realm/internal/interop/CompactOnLaunchCallback");
+    static JavaMethod java_should_compact_method(env, java_should_compact_class, "invoke", "(JJ)Z");
 
     jobject callback = static_cast<jobject>(userdata);
-    jobject tb = wrap_long(env, jlong(total_bytes));
-    jobject ub = wrap_long(env, jlong(used_bytes));
-    jobject boxed_result = env->CallObjectMethod(callback, java_should_compact_method, tb, ub);
+    jboolean result = env->CallBooleanMethod(callback, java_should_compact_method, jlong(total_bytes), jlong(used_bytes));
     jni_check_exception(env);
-    jboolean result = env->CallBooleanMethod(boxed_result, boolean_value_method);
     return result;
 }
 

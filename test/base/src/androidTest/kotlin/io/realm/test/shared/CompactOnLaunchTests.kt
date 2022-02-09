@@ -52,11 +52,11 @@ class CompactOnLaunchTests {
     @Test
     fun defaultCallback_boundaries() {
         val callback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK
-        assertFalse(callback.invoke(50 * 1024 * 1024, 40 * 1024 * 1024))
-        assertFalse(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024))
-        assertFalse(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 3))
-        assertTrue(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 4))
-        assertTrue(callback.invoke(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 5))
+        assertFalse(callback.shouldCompact(50 * 1024 * 1024, 40 * 1024 * 1024))
+        assertFalse(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024))
+        assertFalse(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 3))
+        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 4))
+        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 5))
     }
 
     @Test

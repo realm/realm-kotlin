@@ -33,7 +33,9 @@ value class ClassKey(val key: Long)
 @JvmInline
 value class PropertyKey(val key: Long)
 
-typealias CompactOnLaunchCallback = (Long, Long) -> Boolean
+fun interface CompactOnLaunchCallback {
+    fun invoke(totalBytes: Long, usedBytes: Long): Boolean
+}
 
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
