@@ -1,6 +1,7 @@
 ## 0.10.0-SNAPSHOT (2022-MM-DD)
 
 ### Breaking Changes
+* `Realm.observe()` has been renamed to `asFlow()`.
 
 ### Enhancements
 
@@ -24,7 +25,7 @@
 ## 0.9.0 (2022-01-28)
 
 ### Breaking Changes
-* `Realm.observe()`, `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
+* `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
 * Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
 
 ### Enhancements
