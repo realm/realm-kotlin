@@ -539,11 +539,11 @@ actual object RealmInterop {
             moves
         )
 
-        builder.insertionIndices(insertionIndices)
-        builder.deletionIndices(deletionIndices)
-        builder.modificationIndices(modificationIndices)
-        builder.modificationIndicesAfter(modificationIndicesAfter)
-        builder.moves(moves)
+        builder.initIndicesArray(builder::insertionIndices, insertionIndices)
+        builder.initIndicesArray(builder::deletionIndices, deletionIndices)
+        builder.initIndicesArray(builder::modificationIndices, modificationIndices)
+        builder.initIndicesArray(builder::modificationIndicesAfter, modificationIndicesAfter)
+        builder.initMovesArray(builder::moves, moves)
     }
 
     actual fun <T, R, M> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
@@ -575,10 +575,10 @@ actual object RealmInterop {
             moves
         )
 
-        builder.deletionRanges(deletionRanges)
-        builder.insertionRanges(insertionRanges)
-        builder.modificationRanges(modificationRanges)
-        builder.modificationRangesAfter(modificationRangesAfter)
+        builder.initRangesArray(builder::deletionRanges, deletionRanges)
+        builder.initRangesArray(builder::insertionRanges, insertionRanges)
+        builder.initRangesArray(builder::modificationRanges, modificationRanges)
+        builder.initRangesArray(builder::modificationRangesAfter, modificationRangesAfter)
     }
 
     actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {

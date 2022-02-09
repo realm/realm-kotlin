@@ -1163,11 +1163,11 @@ actual object RealmInterop {
                 movesCount[0]
             )
 
-            builder.insertionIndices(insertionCount, insertionIndices)
-            builder.deletionIndices(deletionCount, deletionIndices)
-            builder.modificationIndices(modificationCount, modificationIndices)
-            builder.modificationIndicesAfter(modificationCount, modificationIndicesAfter)
-            builder.moves(movesCount, moves)
+            builder.initIndicesArray(builder::insertionIndices, insertionCount, insertionIndices)
+            builder.initIndicesArray(builder::deletionIndices, deletionCount, deletionIndices)
+            builder.initIndicesArray(builder::modificationIndices, modificationCount, modificationIndices)
+            builder.initIndicesArray(builder::modificationIndicesAfter, modificationCount, modificationIndicesAfter)
+            builder.initMovesArray(builder::moves, movesCount, moves)
         }
     }
 
@@ -1206,10 +1206,10 @@ actual object RealmInterop {
                 movesCount[0]
             )
 
-            builder.deletionRanges(deleteRangesCount, deletionRanges)
-            builder.insertionRanges(insertRangesCount, insertionRanges)
-            builder.modificationRanges(modificationRangesCount, modificationRanges)
-            builder.modificationRangesAfter(modificationRangesCount, modificationRangesAfter)
+            builder.initRangesArray(builder::deletionRanges, deleteRangesCount, deletionRanges)
+            builder.initRangesArray(builder::insertionRanges, insertRangesCount, insertionRanges)
+            builder.initRangesArray(builder::modificationRanges, modificationRangesCount, modificationRanges)
+            builder.initRangesArray(builder::modificationRangesAfter, modificationRangesCount, modificationRangesAfter)
         }
     }
 
