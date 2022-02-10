@@ -17,5 +17,6 @@
 package io.realm
 
 interface DynamicMutableRealmObject : DynamicRealmObject {
+    // FIXME Verify that return objects are of the correct type for get
     fun <T> set(fieldName: String, value: T)
 }

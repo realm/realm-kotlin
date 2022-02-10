@@ -339,6 +339,21 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_config_set_migration_function(config: NativePointer, callback: MigrationCallback) {
+        realm_wrapper.realm_config_set_migration_function(
+                config.cptr(),
+                staticCFunction { userData, oldRealm, newRealm, schema ->
+                    safeUserData<MigrationCallback>(userData)(
+                            CPointerWrapper(realm_clone(oldRealm)),
+                            CPointerWrapper(realm_clone(newRealm)),
+                            CPointerWrapper(realm_clone(schema)),
+                    )
+                },
+                // Does this leak?? Don't bother until pattern from https://github.com/realm/realm-core/issues/5222 is settled
+                StableRef.create(callback).asCPointer()
+        )
+    }
+
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
         realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }

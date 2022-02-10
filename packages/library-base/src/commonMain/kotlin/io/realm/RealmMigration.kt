@@ -16,9 +16,50 @@
 
 package io.realm
 
-// FIXME DOC
-fun interface RealmMigration {
-    fun migrate(old: DynamicRealm, new: DynamicMutableRealm)
+interface DataMigrationContext {
+    val oldRealm : DynamicRealm
+    val newRealm : DynamicMutableRealm
 }
 
+//interface ManualMigration: Migration {
+//    val realm: SuperDynamicRealm // We can change the schema
+//}
 
+sealed interface RealmMigration
+// FIXME DOC
+fun interface AutomaticRealmMigration: RealmMigration {
+    fun migrate(migrationContext: DataMigrationContext)
+}
+
+// TODO
+//fun interface ManualRealmMigration : Migration {
+//    fun migrate(migration: ManualMigration)
+//}
+
+//fun test () {
+//    val config = RealmConfiguration.Builder()
+////            .automaticMigration
+////            .manualMigration
+//            .migration(AutomaticRealmMigration { migrationContext: DataMigrationContext ->
+//                migrationContext.enumerate()
+//            })
+//            .migration(ManualRealmMigration {  })
+////            .migration(AutomaticRealmMigration { old, new ->
+////            }
+//
+////            )
+////            .migration()
+////            { automatic: AutomaticSchemaMigration ->
+////
+////            }
+//            .build()
+//}
+//
+//
+//fun AutomaticRealmMigration.enumerate(block: (oldObject: RealmObject, newObject: RealmObject) -> Unit) {
+//    this
+//
+//}
+//fun DataMigrationContext.enumerate(block: (oldObject: RealmObject, newObject: RealmObject) ->) {
+//
+//}

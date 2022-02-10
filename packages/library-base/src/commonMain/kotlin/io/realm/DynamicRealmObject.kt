@@ -19,12 +19,17 @@ package io.realm
 import kotlin.reflect.KClass
 
 interface DynamicRealmObject : RealmObject {
+
     val type : String
     // FIXME Should we have something like
     //  val fields: Set<String>
     //  to ease access or is it ok to rely on realm.schema to introspect
 
     fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
+    // We need a list variant to overcome issues with specifying the generic type of the collection
+//    fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
+//    fun <T : Any> getList(fieldName: String, clazz: KClass<T>): RealmList<T>?
+
 }
 
 inline fun <reified T : Any> DynamicRealmObject.get(fieldName: String): T? = this.get(fieldName, T::class)

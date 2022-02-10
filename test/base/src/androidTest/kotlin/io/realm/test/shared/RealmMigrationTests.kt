@@ -25,7 +25,6 @@ import io.realm.internal.asDynamicRealm
 import io.realm.query.RealmQuery
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.use
-import java.lang.IllegalStateException
 import kotlin.test.*
 
 class RealmMigrationTests {
@@ -54,12 +53,16 @@ class RealmMigrationTests {
             }
         }
 
-        val newConfiguration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.SampleMigrated::class))
+        val newConfiguration = RealmConfiguration.Builder(schema = setOf(SampleMigrated::class))
             .schemaVersion(1)
-            .migration { oldRealm: DynamicRealm, newRealm: DynamicMutableRealm ->
+            .migration(AutomaticRealmMigration { context ->
+                val oldRealm: DynamicRealm = context.oldRealm
+                val newRealm: DynamicMutableRealm = context.newRealm
+
                 println("Migration: ${oldRealm.version().version}->${newRealm.version().version}")
                 println("Old schema: ${oldRealm.schema()}")
                 println("New schema: ${newRealm.schema()}")
+                // FIXME Don't have access to schema version :|/
 
                 val query: RealmQuery<out DynamicRealmObject> = oldRealm.query(Sample::class.simpleName!!)
                 val first: DynamicRealmObject? = query.first().find()
@@ -77,7 +80,7 @@ class RealmMigrationTests {
                 newObject.set("self", newObject)
 
                 // FIXME Need primary key
-            }
+            })
             .path("$tmpDir/default.realm").build()
 
         // Open realm and trigger migration
@@ -92,8 +95,8 @@ class RealmMigrationTests {
     @Test
     fun dynamicRealm() {
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
-                .path("$tmpDir/default.realm").build()
+                RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
+                        .path("$tmpDir/default.realm").build()
 
         val realm = Realm.open(configuration)
         realm.writeBlocking {
@@ -117,7 +120,8 @@ class RealmMigrationTests {
         assertEquals("Sample", first.type)
 
         // get string
-        assertEquals("Parent", first.get("stringField"))
+        val actual = first.get("stringField", String::class)
+        assertEquals("Parent", actual)
 
         // get object
         val dynamicChild: DynamicRealmObject? = first.get("child")
@@ -126,11 +130,15 @@ class RealmMigrationTests {
 
         // string list
         // FIXME Doesn't verify generic type
-        val stringList: RealmList<String>? = first.get("stringListField")
-        assertEquals("STRINGLISTELEMENT", stringList!![0])
+        val stringList1: RealmList<String>? = first.get("stringListField")
+        // FIXME Do we need separate getList method
+//        val get: RealmList<String>? = first.getList("stringListField", String::class)
+//        val stringList2: RealmList<String>? = get
+
+        assertEquals("STRINGLISTELEMENT", stringList1!![0])
         // FIXME Is it acceptable that this is a mutable list?
         assertFailsWith<IllegalStateException> {
-            stringList.add("another element")
+            stringList1.add("another element")
         }
 
         // object list
@@ -151,6 +159,12 @@ class RealmMigrationTests {
             // FIXME Seems like message for accessing objects on closed realm is wrong
             assertTrue { message!!.contains("Cannot perform this operation on an invalid/deleted object") }
         }
+    }
+
+    // FIXME
+    fun iterate() {
+        // emurate
+        // migrate
     }
 
     // Dynamic readable

@@ -16,18 +16,17 @@
 
 package io.realm
 
-import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
 
-// Or MigrationRealm
 interface DynamicMutableRealm: DynamicRealm {
 
     override fun query(clazz: String, query: String, vararg args: Any?): RealmQuery<DynamicMutableRealmObject>
 
     fun createObject(type: String): DynamicMutableRealmObject
+
     fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
-//    fun createEmbeddedObject(type: String, parent: DynamicRealmObject, parentProperty: String)
+
     fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
-//    fun cancelWrite()
+
     fun delete(obj: RealmObject)
 }
