@@ -18,8 +18,11 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmResults
+import io.realm.entities.MultipleConstructors
 import io.realm.entities.Sample
 import io.realm.entities.schema.SchemaVariations
+import io.realm.query
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
 import io.realm.schema.RealmStorageType
@@ -179,5 +182,46 @@ public class RealmSchemaTests {
             { (_, v) -> v.isNotEmpty() },
             "Field types not exhausted: $propertyTypeMap"
         )
+    }
+
+    @Test
+    fun multipleConstructors() {
+        val config = RealmConfiguration
+            .Builder(schema = setOf(MultipleConstructors::class))
+            .path("$tmpDir/default.realm").build()
+        val realm = Realm.open(config)
+
+        val firstCtor = MultipleConstructors() // this uses all defaults: "John", "Doe", 42
+        val secondCtor = MultipleConstructors(foreName = "Thanos") // Thanos, Doe, 42
+        val thirdCtor = MultipleConstructors(firstName = "Jack", lastName = "Reacher")
+        val fourthCtor = MultipleConstructors("Lee", "Child", 67)
+
+        realm.writeBlocking {
+            this.copyToRealm(firstCtor)
+            this.copyToRealm(secondCtor)
+            this.copyToRealm(thirdCtor)
+            this.copyToRealm(fourthCtor)
+        }
+
+        val people: RealmResults<MultipleConstructors> = realm.query<MultipleConstructors>().sort("firstName").find()
+        assertEquals(4, people.size)
+
+        assertEquals("Jack", people[0].firstName)
+        assertEquals("Reacher", people[0].lastName)
+        assertEquals(42, people[0].age)
+
+        assertEquals("John", people[1].firstName)
+        assertEquals("Doe", people[1].lastName)
+        assertEquals(42, people[1].age)
+
+        assertEquals("Lee", people[2].firstName)
+        assertEquals("Child", people[2].lastName)
+        assertEquals(67, people[2].age)
+
+        assertEquals("Thanos", people[3].firstName)
+        assertEquals("Doe", people[3].lastName)
+        assertEquals(42, people[3].age)
+
+        realm.close()
     }
 }

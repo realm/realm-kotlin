@@ -84,12 +84,12 @@ import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
@@ -476,14 +476,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            val defaultCtor = irClass.primaryConstructor
-                ?: fatalError("Can not find primary constructor")
+            val firstZeroArgCtor = irClass.constructors.filter { it.valueParameters.isEmpty() }.firstOrNull()
+                ?: fatalError("Can not find primary zero arg constructor")
             +irReturn(
                 IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
                     startOffset,
                     endOffset,
-                    defaultCtor.returnType,
-                    defaultCtor.symbol,
+                    firstZeroArgCtor.returnType,
+                    firstZeroArgCtor.symbol,
                     0,
                     0,
                     0,

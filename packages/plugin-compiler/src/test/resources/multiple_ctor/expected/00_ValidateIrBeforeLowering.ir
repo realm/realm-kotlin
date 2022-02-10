@@ -1,0 +1,454 @@
+// --- IR for <main> after Validate IR before lowering
+MODULE_FRAGMENT name:<main>
+  FILE fqName:multiple_ctor.input fileName:input/MultipleConstructors.kt
+    CLASS CLASS name:MultipleConstructors modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+      CONSTRUCTOR visibility:public <> (firstName:kotlin.String, lastName:kotlin.String, age:kotlin.Int) returnType:multiple_ctor.input.MultipleConstructors [primary]
+        VALUE_PARAMETER name:firstName index:0 type:kotlin.String
+        VALUE_PARAMETER name:lastName index:1 type:kotlin.String
+        VALUE_PARAMETER name:age index:2 type:kotlin.Int
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+          INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:MultipleConstructors modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]'
+      PROPERTY name:firstName visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private
+          EXPRESSION_BODY
+            GET_VAR 'firstName: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<init>' type=kotlin.String origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+        FUN name:<get-firstName> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:firstName visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-firstName> (): kotlin.String declared in multiple_ctor.input.MultipleConstructors'
+                WHEN type=kotlin.String origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-firstName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                    then: CALL 'internal final fun getValue <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.String
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-firstName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      col: CONST String type=kotlin.String value="firstName"
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private' type=kotlin.String origin=null
+                      receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-firstName>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN name:<set-firstName> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:kotlin.String) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:firstName visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-firstName> (<set-?>: kotlin.String): kotlin.Unit declared in multiple_ctor.input.MultipleConstructors'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-firstName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                    then: CALL 'internal final fun setValue <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.String
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-firstName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      col: CONST String type=kotlin.String value="firstName"
+                      value: GET_VAR '<set-?>: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<set-firstName>' type=kotlin.String origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-firstName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      value: GET_VAR '<set-?>: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<set-firstName>' type=kotlin.String origin=null
+      PROPERTY name:lastName visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:lastName type:kotlin.String visibility:private
+          EXPRESSION_BODY
+            GET_VAR 'lastName: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<init>' type=kotlin.String origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+        FUN name:<get-lastName> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:lastName visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-lastName> (): kotlin.String declared in multiple_ctor.input.MultipleConstructors'
+                WHEN type=kotlin.String origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-lastName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                    then: CALL 'internal final fun getValue <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                      <R>: kotlin.String
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-lastName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      col: CONST String type=kotlin.String value="lastName"
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:lastName type:kotlin.String visibility:private' type=kotlin.String origin=null
+                      receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-lastName>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN name:<set-lastName> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:kotlin.String) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:lastName visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-lastName> (<set-?>: kotlin.String): kotlin.Unit declared in multiple_ctor.input.MultipleConstructors'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-lastName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                    then: CALL 'internal final fun setValue <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.String
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-lastName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      col: CONST String type=kotlin.String value="lastName"
+                      value: GET_VAR '<set-?>: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<set-lastName>' type=kotlin.String origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:lastName type:kotlin.String visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-lastName>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      value: GET_VAR '<set-?>: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<set-lastName>' type=kotlin.String origin=null
+      PROPERTY name:age visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private
+          EXPRESSION_BODY
+            GET_VAR 'age: kotlin.Int declared in multiple_ctor.input.MultipleConstructors.<init>' type=kotlin.Int origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+        FUN name:<get-age> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors) returnType:kotlin.Int
+          correspondingProperty: PROPERTY name:age visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-age> (): kotlin.Int declared in multiple_ctor.input.MultipleConstructors'
+                WHEN type=kotlin.Int origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-age>' type=multiple_ctor.input.MultipleConstructors origin=null
+                    then: BLOCK type=kotlin.Int? origin=null
+                      BLOCK type=kotlin.Int? origin=SAFE_CALL
+                        VAR IR_TEMPORARY_VARIABLE name:tmp0_coreValue type:kotlin.Any? [val]
+                          CALL 'internal final fun getValue <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String): kotlin.Any? declared in io.realm.internal.RealmObjectHelper' type=kotlin.Any? origin=GET_PROPERTY
+                            <R>: kotlin.Int
+                            $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                            obj: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-age>' type=multiple_ctor.input.MultipleConstructors origin=null
+                            col: CONST String type=kotlin.String value="age"
+                        WHEN type=kotlin.Int? origin=null
+                          BRANCH
+                            if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                              arg0: GET_VAR 'val tmp0_coreValue: kotlin.Any? [val] declared in multiple_ctor.input.MultipleConstructors.<get-age>' type=kotlin.Any? origin=null
+                              arg1: CONST Null type=kotlin.Nothing? value=null
+                            then: CONST Null type=kotlin.Nothing? value=null
+                          BRANCH
+                            if: CONST Boolean type=kotlin.Boolean value=true
+                            then: CALL 'public open fun toInt (): kotlin.Int declared in kotlin.Long' type=kotlin.Int origin=null
+                              $this: GET_VAR 'val tmp0_coreValue: kotlin.Any? [val] declared in multiple_ctor.input.MultipleConstructors.<get-age>' type=kotlin.Any? origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private' type=kotlin.Int origin=null
+                      receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-age>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN name:<set-age> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:kotlin.Int) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:age visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Int
+          BLOCK_BODY
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-age> (<set-?>: kotlin.Int): kotlin.Unit declared in multiple_ctor.input.MultipleConstructors'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-age>' type=multiple_ctor.input.MultipleConstructors origin=null
+                    then: CALL 'internal final fun setValue <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, value: R of io.realm.internal.RealmObjectHelper.setValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <R>: kotlin.Int
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:public superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-age>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      col: CONST String type=kotlin.String value="age"
+                      value: WHEN type=kotlin.Long? origin=null
+                        BRANCH
+                          if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                            arg0: GET_VAR '<set-?>: kotlin.Int declared in multiple_ctor.input.MultipleConstructors.<set-age>' type=kotlin.Int origin=null
+                            arg1: CONST Null type=kotlin.Nothing? value=null
+                          then: CONST Null type=kotlin.Nothing? value=null
+                        BRANCH
+                          if: CONST Boolean type=kotlin.Boolean value=true
+                          then: CALL 'public open fun toLong (): kotlin.Long declared in kotlin.Int' type=kotlin.Long origin=null
+                            $this: GET_VAR '<set-?>: kotlin.Int declared in multiple_ctor.input.MultipleConstructors.<set-age>' type=kotlin.Int origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-age>' type=multiple_ctor.input.MultipleConstructors origin=null
+                      value: GET_VAR '<set-?>: kotlin.Int declared in multiple_ctor.input.MultipleConstructors.<set-age>' type=kotlin.Int origin=null
+      CONSTRUCTOR visibility:public <> (firstName:kotlin.String, lastName:kotlin.String) returnType:multiple_ctor.input.MultipleConstructors
+        VALUE_PARAMETER name:firstName index:0 type:kotlin.String
+        VALUE_PARAMETER name:lastName index:1 type:kotlin.String
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> (firstName: kotlin.String, lastName: kotlin.String, age: kotlin.Int) [primary] declared in multiple_ctor.input.MultipleConstructors'
+            firstName: GET_VAR 'firstName: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<init>' type=kotlin.String origin=null
+            lastName: GET_VAR 'lastName: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<init>' type=kotlin.String origin=null
+            age: CONST Int type=kotlin.Int value=42
+      CONSTRUCTOR visibility:public <> (foreName:kotlin.String) returnType:multiple_ctor.input.MultipleConstructors
+        VALUE_PARAMETER name:foreName index:0 type:kotlin.String
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> (firstName: kotlin.String, lastName: kotlin.String) declared in multiple_ctor.input.MultipleConstructors'
+            firstName: GET_VAR 'foreName: kotlin.String declared in multiple_ctor.input.MultipleConstructors.<init>' type=kotlin.String origin=null
+            lastName: CONST String type=kotlin.String value="Doe"
+      CONSTRUCTOR visibility:public <> () returnType:multiple_ctor.input.MultipleConstructors
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> (foreName: kotlin.String) declared in multiple_ctor.input.MultipleConstructors'
+            foreName: CONST String type=kotlin.String value="John"
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]
+        $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors.Companion
+        CONSTRUCTOR visibility:private <> () returnType:multiple_ctor.input.MultipleConstructors.Companion [primary]
+          BLOCK_BODY
+            DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.internal.RealmObjectCompanion]'
+        FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+          overridden:
+            public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+          VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+          overridden:
+            public open fun hashCode (): kotlin.Int declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+          overridden:
+            public open fun toString (): kotlin.String declared in kotlin.Any
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        FUN name:$realm$schema visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun $realm$schema (): io.realm.internal.schema.RealmClassImpl declared in io.realm.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun $realm$schema (): kotlin.Any declared in multiple_ctor.input.MultipleConstructors.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.internal.interop.PropertyInfo>) [primary] declared in io.realm.internal.schema.RealmClassImpl' type=io.realm.internal.schema.RealmClassImpl origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long): io.realm.internal.interop.ClassInfo declared in io.realm.internal.interop.ClassInfo.Companion' type=io.realm.internal.interop.ClassInfo origin=null
+                  $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.ClassInfo.Companion
+                  name: CONST String type=kotlin.String value="MultipleConstructors"
+                  primaryKey: CONST Null type=kotlin.Nothing? value=null
+                  numProperties: CONST Long type=kotlin.Long value=3
+                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.PropertyInfo> origin=null
+                  <T>: io.realm.internal.interop.PropertyInfo
+                  elements: VARARG type=kotlin.Array<io.realm.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.internal.interop.PropertyInfo>
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.interop.PropertyInfo.Companion' type=io.realm.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="firstName"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=false
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.interop.PropertyInfo.Companion' type=io.realm.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="lastName"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=false
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.interop.PropertyInfo.Companion' type=io.realm.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="age"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_INT' type=io.realm.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=false
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+        FUN name:$realm$newInstance visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun $realm$newInstance (): kotlin.Any declared in io.realm.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in multiple_ctor.input.MultipleConstructors.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> () declared in multiple_ctor.input.MultipleConstructors' type=multiple_ctor.input.MultipleConstructors origin=null
+        PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>> visibility:private
+            EXPRESSION_BODY
+              CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>> origin=null
+                <T>: kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>
+                elements: VARARG type=kotlin.Array<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>> varargElementType=kotlin.collections.List<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>>
+                  PROPERTY_REFERENCE 'public final firstName: kotlin.String [var]' field=null getter='public final fun <get-firstName> (): kotlin.String declared in multiple_ctor.input.MultipleConstructors' setter='public final fun <set-firstName> (<set-?>: kotlin.String): kotlin.Unit declared in multiple_ctor.input.MultipleConstructors' type=kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?> origin=null
+                  PROPERTY_REFERENCE 'public final lastName: kotlin.String [var]' field=null getter='public final fun <get-lastName> (): kotlin.String declared in multiple_ctor.input.MultipleConstructors' setter='public final fun <set-lastName> (<set-?>: kotlin.String): kotlin.Unit declared in multiple_ctor.input.MultipleConstructors' type=kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?> origin=null
+                  PROPERTY_REFERENCE 'public final age: kotlin.Int [var]' field=null getter='public final fun <get-age> (): kotlin.Int declared in multiple_ctor.input.MultipleConstructors' setter='public final fun <set-age> (<set-?>: kotlin.Int): kotlin.Unit declared in multiple_ctor.input.MultipleConstructors' type=kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?> origin=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$fields> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<*, *>>? declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$fields> (): kotlin.collections.List<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>> declared in multiple_ctor.input.MultipleConstructors.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>> visibility:private' type=kotlin.collections.List<kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors.Companion declared in multiple_ctor.input.MultipleConstructors.Companion.<get-$realm$fields>' type=multiple_ctor.input.MultipleConstructors.Companion origin=null
+        PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?> visibility:private
+            EXPRESSION_BODY
+              CONST Null type=kotlin.Nothing? value=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$primaryKey> visibility:public modality:FINAL <> ($this:multiple_ctor.input.MultipleConstructors.Companion) returnType:kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?>
+            correspondingProperty: PROPERTY name:$realm$primaryKey visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<*, *>? declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$primaryKey> (): kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?> declared in multiple_ctor.input.MultipleConstructors.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$primaryKey type:kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<multiple_ctor.input.MultipleConstructors, kotlin.Any?> origin=null
+                  receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors.Companion declared in multiple_ctor.input.MultipleConstructors.Companion.<get-$realm$primaryKey>' type=multiple_ctor.input.MultipleConstructors.Companion origin=null
+      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+      FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.internal.interop.NativePointer? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors) returnType:io.realm.internal.interop.NativePointer?
+          correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? [fake_override] declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? declared in multiple_ctor.input.MultipleConstructors'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.internal.interop.NativePointer? visibility:private' type=io.realm.internal.interop.NativePointer? origin=null
+                receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-$realm$ObjectPointer>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:io.realm.internal.interop.NativePointer?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.internal.interop.NativePointer?): kotlin.Unit [fake_override] declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.interop.NativePointer?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$ObjectPointer type:io.realm.internal.interop.NativePointer? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-$realm$ObjectPointer>' type=multiple_ctor.input.MultipleConstructors origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.interop.NativePointer? declared in multiple_ctor.input.MultipleConstructors.<set-$realm$ObjectPointer>' type=io.realm.internal.interop.NativePointer? origin=null
+      PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:io.realm.internal.RealmReference? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Owner> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors) returnType:io.realm.internal.RealmReference?
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Owner> (): io.realm.internal.RealmReference? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Owner> (): io.realm.internal.RealmReference? declared in multiple_ctor.input.MultipleConstructors'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:io.realm.internal.RealmReference? visibility:private' type=io.realm.internal.RealmReference? origin=null
+                receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-$realm$Owner>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Owner> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:io.realm.internal.RealmReference?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Owner visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Owner> (<set-?>: io.realm.internal.RealmReference?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmReference?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Owner type:io.realm.internal.RealmReference? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-$realm$Owner>' type=multiple_ctor.input.MultipleConstructors origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.RealmReference? declared in multiple_ctor.input.MultipleConstructors.<set-$realm$Owner>' type=io.realm.internal.RealmReference? origin=null
+      PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$TableName> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors) returnType:kotlin.String?
+          correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$TableName> (): kotlin.String? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$TableName> (): kotlin.String? declared in multiple_ctor.input.MultipleConstructors'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private' type=kotlin.String? origin=null
+                receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-$realm$TableName>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$TableName> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:kotlin.String?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$TableName visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$TableName> (<set-?>: kotlin.String?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$TableName type:kotlin.String? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-$realm$TableName>' type=multiple_ctor.input.MultipleConstructors origin=null
+              value: GET_VAR '<set-?>: kotlin.String? declared in multiple_ctor.input.MultipleConstructors.<set-$realm$TableName>' type=kotlin.String? origin=null
+      PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private
+          EXPRESSION_BODY
+            CONST Boolean type=kotlin.Boolean value=false
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$IsManaged> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors) returnType:kotlin.Boolean
+          correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$IsManaged> (): kotlin.Boolean declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private' type=kotlin.Boolean origin=null
+                receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-$realm$IsManaged>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$IsManaged> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:kotlin.Boolean) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$IsManaged visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$IsManaged> (<set-?>: kotlin.Boolean): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:kotlin.Boolean
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$IsManaged type:kotlin.Boolean visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-$realm$IsManaged>' type=multiple_ctor.input.MultipleConstructors origin=null
+              value: GET_VAR '<set-?>: kotlin.Boolean declared in multiple_ctor.input.MultipleConstructors.<set-$realm$IsManaged>' type=kotlin.Boolean origin=null
+      PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
+        FIELD PROPERTY_BACKING_FIELD name:$realm$Mediator type:io.realm.internal.Mediator? visibility:private
+          EXPRESSION_BODY
+            CONST Null type=kotlin.Nothing? value=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$Mediator> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors) returnType:io.realm.internal.Mediator?
+          correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <get-$realm$Mediator> (): io.realm.internal.Mediator? declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$Mediator> (): io.realm.internal.Mediator? declared in multiple_ctor.input.MultipleConstructors'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Mediator type:io.realm.internal.Mediator? visibility:private' type=io.realm.internal.Mediator? origin=null
+                receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<get-$realm$Mediator>' type=multiple_ctor.input.MultipleConstructors origin=null
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$Mediator> visibility:public modality:OPEN <> ($this:multiple_ctor.input.MultipleConstructors, <set-?>:io.realm.internal.Mediator?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:$realm$Mediator visibility:public modality:OPEN [var]
+          overridden:
+            public abstract fun <set-$realm$Mediator> (<set-?>: io.realm.internal.Mediator?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:multiple_ctor.input.MultipleConstructors
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.Mediator?
+          BLOCK_BODY
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$Mediator type:io.realm.internal.Mediator? visibility:private' type=kotlin.Unit origin=null
+              receiver: GET_VAR '<this>: multiple_ctor.input.MultipleConstructors declared in multiple_ctor.input.MultipleConstructors.<set-$realm$Mediator>' type=multiple_ctor.input.MultipleConstructors origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.Mediator? declared in multiple_ctor.input.MultipleConstructors.<set-$realm$Mediator>' type=io.realm.internal.Mediator? origin=null
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+        overridden:
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
+        VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
+        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
+      FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
+        overridden:
+          public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
+      FUN FAKE_OVERRIDE name:isFrozen visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Boolean [fake_override]
+        overridden:
+          public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+      FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
+        overridden:
+          public open fun realmState (): io.realm.internal.RealmState declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+      FUN FAKE_OVERRIDE name:registerForNotification visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, callback:io.realm.internal.interop.Callback) returnType:io.realm.internal.interop.NativePointer [fake_override]
+        overridden:
+          public open fun registerForNotification (callback: io.realm.internal.interop.Callback): io.realm.internal.interop.NativePointer declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
+        overridden:
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+      FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
+        overridden:
+          public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
