@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -476,20 +477,22 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            val firstZeroArgCtor = irClass.constructors.filter { it.valueParameters.isEmpty() }.firstOrNull()
-                ?: fatalError("Can not find primary zero arg constructor")
-            +irReturn(
-                IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
-                    startOffset,
-                    endOffset,
-                    firstZeroArgCtor.returnType,
-                    firstZeroArgCtor.symbol,
-                    0,
-                    0,
-                    0,
-                    origin = null
+            val firstZeroArgCtor: Any = irClass.constructors.filter { it.valueParameters.isEmpty() }.firstOrNull()
+                ?: logError("Cannot find primary zero arg constructor", irClass.locationOf())
+            if (firstZeroArgCtor is IrConstructor) {
+                +irReturn(
+                    IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
+                        startOffset,
+                        endOffset,
+                        firstZeroArgCtor.returnType,
+                        firstZeroArgCtor.symbol,
+                        0,
+                        0,
+                        0,
+                        origin = null
+                    )
                 )
-            )
+            }
         }
         function.overriddenSymbols =
             listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }.symbol)
