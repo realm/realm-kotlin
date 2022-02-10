@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.DynamicRealmObject
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -195,14 +196,13 @@ internal class ListOperator<E>(
                 Double::class,
                 String::class -> value
                 RealmInstant::class -> RealmInstantImpl(value as Timestamp)
-                Link::class -> (value as Link).toRealmObject(
+                // TODO This doesn't look safe
+                else -> (value as Link).toRealmObject(
                     className,
                     clazz as KClass<out RealmObject>,
                     mediator,
                     realm
                 )
-                else ->
-                    error("Unknown type $clazz" )
             } as E
         }
     }

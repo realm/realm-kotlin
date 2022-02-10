@@ -37,6 +37,7 @@ interface SchemaMetadata {
 interface ClassMetadata {
     val className: String
     operator fun get(propertyName: String): PropertyKey?
+    fun info(propertyName: String): PropertyInfo?
     fun getOrThrow(propertyName: String): PropertyKey = get(propertyName)
         ?: throw IllegalArgumentException("Schema for type '$className doesn't contain a property named '$propertyName'")
 }
@@ -70,12 +71,15 @@ class CachedClassMetadata(dbPointer: NativePointer, override val className: Stri
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
-    val propertyMap: Map<String, PropertyKey>
+    val propertyKeyMap: Map<String, PropertyKey>
+    val propertyMap: Map<String, PropertyInfo>
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        propertyMap = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyKey>> { it.name to it.key }.toMap()
+        propertyMap = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyInfo>> { it.name to it }.toMap()
+        propertyKeyMap = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyKey>> { it.name to it.key }.toMap()
     }
 
-    override fun get(propertyName: String): PropertyKey? = propertyMap[propertyName]
+    override fun get(propertyName: String): PropertyKey? = propertyKeyMap[propertyName]
+    override fun info(propertyName: String): PropertyInfo? = propertyMap[propertyName]
 }

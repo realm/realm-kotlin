@@ -26,7 +26,9 @@ import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.internal.util.Validation.sdkError
+import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 
 /**
@@ -97,28 +99,36 @@ internal object RealmObjectHelper {
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
-    internal inline fun <reified R> getList(
+    internal inline fun <reified R : Any> getList(
         obj: RealmObjectInternal,
         propertyName: String
     ): RealmList<Any?> {
-        return getListByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
+        return getList(obj, propertyName, R::class)
     }
 
-    internal inline fun <reified R> getListByKey(
+    internal fun <R : Any> getList(
+        obj: RealmObjectInternal,
+        propertyName: String,
+        elementType: KClass<R>,
+    ): RealmList<Any?> {
+        return getListByKey(obj, obj.propertyKeyOrThrow(propertyName), elementType)
+    }
+
+    internal fun <R : Any> getListByKey(
         obj: RealmObjectInternal,
         key: io.realm.internal.interop.PropertyKey,
+        elementType: KClass<R>,
     ): RealmList<Any?> {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
-        val clazz: KClass<*> = R::class
         val mediator: Mediator = obj.`$realm$Mediator`!!
 
         // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val realm: RealmReference =
             obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         // Cannot call managedRealmList directly from an inline function
-        return getManagedRealmList(listPtr, obj.`$realm$ClassName`!!, clazz, mediator, realm)
+        return getManagedRealmList(listPtr, obj.`$realm$ClassName`!!, elementType, mediator, realm)
     }
 
     /**
@@ -223,7 +233,20 @@ internal object RealmObjectHelper {
     internal fun <R : Any> get(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
         return when(clazz) {
             DynamicRealmObject::class -> getObject<DynamicRealmObject>(obj, propertyName)
-            RealmList::class -> getList<Any>(obj, propertyName)
+            RealmList::class -> {
+                val storageType: RealmStorageType = RealmStorageTypeImpl.fromCorePropertyType(obj.`$realm$metadata`?.info(propertyName)?.type!!) // ?: error(" dffdaf")
+                val asdf = when(storageType) {
+                    RealmStorageType.BOOL -> Boolean::class
+                    RealmStorageType.INT -> Long::class
+                    RealmStorageType.STRING -> String::class
+                    RealmStorageType.OBJECT -> DynamicRealmObject::class
+                    RealmStorageType.FLOAT -> Float::class
+                    RealmStorageType.DOUBLE -> Double::class
+                    RealmStorageType.TIMESTAMP -> RealmInstant::class
+                    else -> error("asdf")
+                }
+                getList(obj, propertyName, asdf)
+            }
             else -> getValue<R>(obj, propertyName)
         } as R?
 //        val

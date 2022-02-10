@@ -106,6 +106,7 @@ class RealmMigrationTests {
                 child = Sample().apply { stringField = "Child" }
                 stringListField.add("STRINGLISTELEMENT")
                 objectListField.add(Sample().apply { stringField = "SAMPLELISTELEMENT" })
+                objectListField[0]
             }
         }
 
@@ -127,7 +128,8 @@ class RealmMigrationTests {
         assertEquals("STRINGLISTELEMENT", stringList!![0])
 
         val objectList: RealmList<DynamicRealmObject>? = first.get("objectListField")
-        assertEquals("SAMPLELISTELEMENT", objectList!![0].get("stringField"))
+        val dynamicRealmObject = objectList!![0]
+        assertEquals("SAMPLELISTELEMENT", dynamicRealmObject.get("stringField"))
 
         realm.close()
 
