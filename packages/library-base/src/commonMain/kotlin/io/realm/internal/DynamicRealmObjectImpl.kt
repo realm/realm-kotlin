@@ -21,11 +21,9 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.schema.ClassMetadata
 import kotlin.reflect.KClass
 
-class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
+open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override val type: String
         get() =  this.`$realm$ClassName` ?: throw IllegalArgumentException("Cannot get class name of unmanaged dynamic object")
-    override val fields: Set<String>
-        get() = TODO("Not yet implemented")
     override var `$realm$ObjectPointer`: NativePointer? = null
     override var `$realm$IsManaged`: Boolean = false
     override var `$realm$Owner`: RealmReference?  = null
@@ -37,7 +35,4 @@ class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
         return RealmObjectHelper.get(this, clazz, fieldName)
     }
 
-    override fun <T> set(fieldName: String, value: T) {
-        TODO("Not yet implemented")
-    }
 }

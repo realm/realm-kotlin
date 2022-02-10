@@ -16,15 +16,6 @@
 
 package io.realm
 
-import io.realm.query.RealmQuery
-
-// Naming: Untyped realm
-interface DynamicRealm : BaseRealm {
-    fun query(
-        clazz: String,
-        query: String = "TRUEPREDICATE",
-        vararg args: Any?
-    ): RealmQuery<out DynamicRealmObject>
-
-    // FIXME This shouldn't be closeable?
+interface DynamicMutableRealmObject : DynamicRealmObject {
+    fun <T> set(fieldName: String, value: T)
 }

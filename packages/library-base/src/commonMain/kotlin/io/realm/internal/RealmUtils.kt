@@ -82,20 +82,15 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T {
-    // FIXME Does not work with obfuscation. We should probably supply the static meta data through
-    //  the companion (accessible through schema) or might even have a cached version of the key in
-    //  some runtime container of an open realm.
-    //  https://github.com/realm/realm-kotlin/issues/85
-    //  https://github.com/realm/realm-kotlin/issues/105
-    val companion = mediator.companionOf(type)
-    val className: String = companion.`$realm$className`
+internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T =
+    create(mediator, realm, type, mediator.companionOf(type).`$realm$className`)
+
+internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
     try {
-//        val managedModel: RealmObjectInternal = mediator.createInstanceOf(type)
-//        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
-        // FIXME Is this OK
-        val managedModel = companion.`$realm$newInstance`() as RealmObjectInternal
+        val managedModel = mediator.createInstanceOf(type)
+        // TODO OPTIMIZE Key could be cached in realmReference.schemaMetadata
         val key = RealmInterop.realm_find_class(realm.dbPointer, className)
+        realm.schemaMetadata[className]
         key?.let {
             return managedModel.manage(
                 realm,

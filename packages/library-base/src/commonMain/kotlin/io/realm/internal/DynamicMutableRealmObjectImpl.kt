@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.internal
 
-import io.realm.query.RealmQuery
+import io.realm.DynamicMutableRealmObject
+import io.realm.RealmObject
 
-// Naming: Untyped realm
-interface DynamicRealm : BaseRealm {
-    fun query(
-        clazz: String,
-        query: String = "TRUEPREDICATE",
-        vararg args: Any?
-    ): RealmQuery<out DynamicRealmObject>
-
-    // FIXME This shouldn't be closeable?
+internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
+    override fun <T> set(fieldName: String, value: T) {
+        when(value) {
+            is RealmObject -> RealmObjectHelper.setObject(this, fieldName, value as RealmObjectInternal)
+            else -> RealmObjectHelper.setValue(this, fieldName, value)
+        }
+    }
 }

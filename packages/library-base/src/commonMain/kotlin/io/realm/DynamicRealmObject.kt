@@ -25,7 +25,7 @@ interface DynamicRealmObject : RealmObject {
     //  to ease access or is it ok to rely on realm.schema to introspect
 
     fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
-    fun <T> set(fieldName: String, value: T)
 }
 
 inline fun <reified T : Any> DynamicRealmObject.get(fieldName: String): T? = this.get(fieldName, T::class)
+

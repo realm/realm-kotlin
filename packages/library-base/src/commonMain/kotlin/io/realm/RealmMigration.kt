@@ -18,7 +18,7 @@ package io.realm
 
 // FIXME DOC
 fun interface RealmMigration {
-    fun migrate(old: DynamicRealm, new: BaseRealm)
+    fun migrate(old: DynamicRealm, new: DynamicMutableRealm)
 }
 
 

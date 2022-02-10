@@ -19,5 +19,6 @@ package io.realm.entities.migration
 import io.realm.RealmObject
 
 class SampleMigrated : RealmObject {
-    var name: String = ""
+    var name: String = "Migration"
+    var self: SampleMigrated? = null
 }

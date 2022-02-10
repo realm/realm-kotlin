@@ -16,10 +16,7 @@
 
 package io.realm.internal
 
-import io.realm.DynamicRealmObject
-import io.realm.LogConfiguration
-import io.realm.RealmMigration
-import io.realm.RealmObject
+import io.realm.*
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
@@ -106,11 +103,7 @@ open class ConfigurationImpl constructor(
                 // If we don't start a read, then we cannot det the version
                 RealmInterop.realm_begin_read(oldRealm)
 
-                // FIXME Might have to split a new base of MutableRealm to act as live realm without
-                //  ability to register for notifications ... maybe already safe but needs to verify
-                val new = object : BaseRealmImpl(this@ConfigurationImpl) {
-                    override val realmReference: RealmReference = FrozenRealmReference(this, newRealm)
-                }
+                val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
                 migration.migrate(old, new)
                 true
             }
@@ -123,8 +116,8 @@ open class ConfigurationImpl constructor(
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal =
                 when(clazz) {
-                    DynamicRealmObject::class ->
-                        DynamicRealmObjectImpl()
+                    DynamicRealmObject::class -> DynamicRealmObjectImpl()
+                    DynamicMutableRealmObject::class -> DynamicMutableRealmObjectImpl()
                     else ->
                         companionOf(clazz).`$realm$newInstance`() as RealmObjectInternal
                 }
