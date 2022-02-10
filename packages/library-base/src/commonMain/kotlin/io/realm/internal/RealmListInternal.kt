@@ -163,8 +163,9 @@ internal class ManagedRealmList<E>(
             }
         } else {
             channel.trySend(DeletedListImpl())
-            channel.close()
-            null
+                .also {
+                    channel.close()
+                }
         }
     }
 

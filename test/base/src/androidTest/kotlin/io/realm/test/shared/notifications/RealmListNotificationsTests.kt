@@ -424,7 +424,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertEquals(dataset2.size, listChange.list!!.size)
             }
 
-            // Change some two ranges of values
+            // Change contents of two ranges of values
             //
             // objectListField = [<A>, <B>, E, <D>]
             realm.writeBlocking {
