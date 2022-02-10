@@ -72,6 +72,8 @@ open class ConfigurationImpl constructor(
             // FIXME Proper platform agnostic file separator: File.separator is not available for Kotlin/Native
             //  https://github.com/realm/realm-kotlin/issues/75
             "$directory/$name"
+        } else if (path.startsWith("./")) {
+            path.replaceFirst("./", "${appFilesDirectory()}/")
         } else path
         this.name = name // FIXME Should read name from end of path
         this.schema = schema

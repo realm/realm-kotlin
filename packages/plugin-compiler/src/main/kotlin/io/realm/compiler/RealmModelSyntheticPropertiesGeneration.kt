@@ -62,7 +62,6 @@ import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -76,6 +75,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
@@ -100,7 +100,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
-    private val realmModelInternalInterface: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
+    private val realmModelInternalInterface: IrClass =
+        pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val nullableNativePointerInterface =
         pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
             .symbol.createType(true, emptyList())
@@ -134,16 +135,36 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     fun addProperties(irClass: IrClass): IrClass =
         irClass.apply {
-            addVariableProperty(realmModelInternalInterface, OBJECT_POINTER, nullableNativePointerInterface, ::irNull)
-            addVariableProperty(realmModelInternalInterface, REALM_OWNER, realmReferenceClass.defaultType.makeNullable(), ::irNull)
+            addVariableProperty(
+                realmModelInternalInterface,
+                OBJECT_POINTER,
+                nullableNativePointerInterface,
+                ::irNull
+            )
+            addVariableProperty(
+                realmModelInternalInterface,
+                REALM_OWNER,
+                realmReferenceClass.defaultType.makeNullable(),
+                ::irNull
+            )
             addVariableProperty(
                 realmModelInternalInterface,
                 OBJECT_CLASS_NAME,
                 pluginContext.irBuiltIns.stringType.makeNullable(),
                 ::irNull
             )
-            addVariableProperty(realmModelInternalInterface, OBJECT_IS_MANAGED, pluginContext.irBuiltIns.booleanType, ::irFalse)
-            addVariableProperty(realmModelInternalInterface, MEDIATOR, mediatorInterface.defaultType.makeNullable(), ::irNull)
+            addVariableProperty(
+                realmModelInternalInterface,
+                OBJECT_IS_MANAGED,
+                pluginContext.irBuiltIns.booleanType,
+                ::irFalse
+            )
+            addVariableProperty(
+                realmModelInternalInterface,
+                MEDIATOR,
+                mediatorInterface.defaultType.makeNullable(),
+                ::irNull
+            )
         }
 
     @Suppress("LongMethod")
@@ -182,7 +203,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
         }
 
-        val primaryKeyFields = properties!!.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields = properties!!.filter {
+            it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION)
+        }
 
         val primaryKey: IrProperty? = when (primaryKeyFields.size) {
             0 -> null
@@ -210,7 +233,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     getter = primaryKey.getter?.symbol,
                     setter = primaryKey.setter?.symbol
                 )
-            } ?: IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
+            } ?: IrConstImpl.constNull(
+                startOffset,
+                endOffset,
+                pluginContext.irBuiltIns.nothingNType
+            )
         }
     }
 
@@ -225,7 +252,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val fields: MutableMap<String, SchemaProperty> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        val primaryKeyFields = fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
+        val primaryKeyFields =
+            fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
@@ -556,10 +584,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         setter.body = DeclarationIrBuilder(pluginContext, setter.symbol).irBlockBody {
             at(startOffset, endOffset)
-            +irSetField(
-                irGet(setter.dispatchReceiverParameter!!),
-                property.backingField!!,
-                irGet(valueParameter)
+
+            +IrSetFieldImpl(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                symbol = property.backingField!!.symbol,
+                receiver = irGet(setter.dispatchReceiverParameter!!),
+                value = irGet(valueParameter),
+                type = context.irBuiltIns.unitType
             )
         }
     }
