@@ -30,45 +30,7 @@ import kotlin.reflect.KClass
 internal interface MutableRealmImpl : MutableRealm {
 
     override val configuration: InternalConfiguration
-
-    // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
-    //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
-    companion object {
-        internal fun <T : RealmObject> delete(obj: T) {
-            val internalObject = obj as RealmObjectInternal
-            checkObjectValid(internalObject)
-            internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-        }
-
-        private fun checkObjectValid(obj: RealmObjectInternal) {
-            if (!obj.isValid()) {
-                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
-            }
-        }
-    }
-
     val realmReference: LiveRealmReference
-
-//    internal constructor(
-//        configuration: InternalConfiguration,
-//        dispatcher: CoroutineDispatcher? = null
-//    ) : super(parent, configuration, dispatcher)
-    /**
-     * Create a MutableRealm which lifecycle must be managed by its own, i.e. any modifications
-     * done inside the MutableRealm is not immediately reflected in the `parentRealm`.
-     *
-     * The core scheduler used to deliver notifications are:
-     * - Android: The default Android scheduler, which delivers notifications on the looper of
-     * the current thread.
-     * - Native: Either a scheduler dispatching to the supplied dispatcher or the default Darwin
-     * scheduler, that delivers notifications on the main run loop.
-     */
-//    internal constructor(
-//        parent: RealmImpl,
-//        configuration: InternalConfiguration,
-//        dispatcher: CoroutineDispatcher? = null
-//    ) : super(parent, configuration, dispatcher)
-
 
     fun beginTransaction() {
         try {
@@ -100,7 +62,6 @@ internal interface MutableRealmImpl : MutableRealm {
             // up to date, just return input
             obj
         } else {
-            // Why is the cast needed
             (obj as RealmObjectInternal).thaw(realmReference) as T
         }
     }
@@ -132,7 +93,7 @@ internal interface MutableRealmImpl : MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-//    // FIXME Can we eliminate these
+//    // FIXME Can't we eliminate these
 //    override fun <T : RealmObject> registerResultsChangeListener(
 //        results: RealmResultsImpl<T>,
 //        callback: Callback<RealmResultsImpl<T>>
@@ -140,7 +101,7 @@ internal interface MutableRealmImpl : MutableRealm {
 //        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
 //    }
 //
-//    // FIXME Can we eliminate these
+//    // FIXME Can't we eliminate these
 //    internal override fun <T : RealmObject> registerListChangeListener(
 //        list: List<T>,
 //        callback: Callback<List<T>>
@@ -148,11 +109,27 @@ internal interface MutableRealmImpl : MutableRealm {
 //        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
 //    }
 //
-//    // FIXME Can we eliminate these
+//    // FIXME Can't we eliminate these
 //    internal override fun <T : RealmObject> registerObjectChangeListener(
 //        obj: T,
 //        callback: Callback<T?>
 //    ): Cancellable {
 //        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
 //    }
+
+    // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
+    //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
+    companion object {
+        internal fun <T : RealmObject> delete(obj: T) {
+            val internalObject = obj as RealmObjectInternal
+            checkObjectValid(internalObject)
+            internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
+        }
+
+        private fun checkObjectValid(obj: RealmObjectInternal) {
+            if (!obj.isValid()) {
+                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
+            }
+        }
+    }
 }

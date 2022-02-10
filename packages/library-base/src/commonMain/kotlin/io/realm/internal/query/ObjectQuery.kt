@@ -65,7 +65,6 @@ internal class ObjectQuery<E : RealmObject> constructor(
         objectQuery.realmReference,
         objectQuery.className,
         objectQuery.clazz,
-//        objectQuery.companion,
         objectQuery.mediator,
         composedQueryPointer,
         objectQuery.filter,
@@ -117,7 +116,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
         SingleQuery(realmReference, queryPointer, className, clazz, mediator)
 
     override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
-        MinMaxQuery<E, T>(
+        MinMaxQuery(
             realmReference,
             queryPointer,
             mediator,
@@ -129,7 +128,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
 
     override fun <T : Any> max(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
-        MinMaxQuery<E, T>(
+        MinMaxQuery(
             realmReference,
             queryPointer,
             mediator,
@@ -141,10 +140,10 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
 
     override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        SumQuery<E,T>(realmReference, queryPointer, mediator, className, clazz, property, type)
+        SumQuery(realmReference, queryPointer, mediator, className, clazz, property, type)
 
     override fun count(): RealmScalarQuery<Long> =
-        CountQuery<E>(realmReference, queryPointer, mediator, className, clazz)
+        CountQuery(realmReference, queryPointer, mediator, className, clazz)
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
         thawResults(liveRealm, resultsPointer, className, clazz, mediator)

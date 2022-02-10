@@ -20,14 +20,12 @@ import kotlin.reflect.KClass
 
 interface DynamicRealmObject : RealmObject {
     val type : String
-    val fields: Set<String>
-//    fun createEmbeddedObject(fieldName: String) // much simpler than sitting in Realm, type can be inferred.
-    // throws on wrong type
-//fun <T : Any> get(fieldName: String, type: KClass<T>): T
-//    fun <T : Any> get(fieldName: String): T
+    // FIXME Should we have something like
+    //  val fields: Set<String>
+    //  to ease access or is it ok to rely on realm.schema to introspect
+
     fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
-    // throws on wrong type
     fun <T> set(fieldName: String, value: T)
-//    inline fun <reified T> getObjectLinks(fieldName: String): RealmResults<T>
 }
+
 inline fun <reified T : Any> DynamicRealmObject.get(fieldName: String): T? = this.get(fieldName, T::class)

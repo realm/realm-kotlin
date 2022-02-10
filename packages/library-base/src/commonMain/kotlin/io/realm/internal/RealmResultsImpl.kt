@@ -36,7 +36,6 @@ import kotlin.reflect.KClass
 internal class RealmResultsImpl<E : RealmObject> constructor(
     private val realm: RealmReference,
     internal val nativePointer: NativePointer,
-//    private val companion: RealmObjectCompanion,
     private val className: String,
     private val clazz: KClass<E>,
     private val mediator: Mediator,

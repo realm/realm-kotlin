@@ -19,13 +19,12 @@ package io.realm
 import io.realm.query.RealmQuery
 
 // Naming: Untyped realm
-// Doesn't have to be mutable for migrations ... unless we want the target realm to be mutable too
-// which I think we would like to make incremental migrations easier
 interface DynamicRealm : BaseRealm {
-    // BaseRealm
     fun query(
         clazz: String,
         query: String = "TRUEPREDICATE",
         vararg args: Any?
     ): RealmQuery<DynamicRealmObject>
+
+    // FIXME This shouldn't be closeable?
 }

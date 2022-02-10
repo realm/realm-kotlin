@@ -226,16 +226,13 @@ internal object RealmObjectHelper {
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
     }
 
-//    internal inline fun <reified R : Any> get(obj: RealmObjectInternal, propertyName: String): R? {
-//        return get(obj, R::class, propertyName)
-//    }
-
     internal fun <R : Any> get(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
+        @Suppress("UNCHECKED_CAST")
         return when(clazz) {
             DynamicRealmObject::class -> getObject<DynamicRealmObject>(obj, propertyName)
             RealmList::class -> {
-                val storageType: RealmStorageType = RealmStorageTypeImpl.fromCorePropertyType(obj.`$realm$metadata`?.info(propertyName)?.type!!) // ?: error(" dffdaf")
-                val asdf = when(storageType) {
+                val storageType: RealmStorageType = RealmStorageTypeImpl.fromCorePropertyType(obj.`$realm$metadata`?.info(propertyName)?.type!!)
+                val type = when(storageType) {
                     RealmStorageType.BOOL -> Boolean::class
                     RealmStorageType.INT -> Long::class
                     RealmStorageType.STRING -> String::class
@@ -243,28 +240,11 @@ internal object RealmObjectHelper {
                     RealmStorageType.FLOAT -> Float::class
                     RealmStorageType.DOUBLE -> Double::class
                     RealmStorageType.TIMESTAMP -> RealmInstant::class
-                    else -> error("asdf")
                 }
-                getList(obj, propertyName, asdf)
+                getList(obj, propertyName, type)
             }
             else -> getValue<R>(obj, propertyName)
         } as R?
-//        val
-//        val value = getByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
-//        return when (value) {
-//            is Link -> {
-//                // HACK HACK HACK to get the generic bound right
-//                val dsf = clazz as KClass<out RealmObject>
-//                (obj.`$realm$Mediator`!!).createInstanceOf(dsf).link<RealmObject>(
-//                    obj.`$realm$Owner`!!,
-//                    obj.`$realm$Mediator`!!,
-//                    obj.`$realm$ClassName`!!,
-//                    value
-//                )
-//            }
-//            else ->
-//                value
-//        } as R?
     }
 
     @Suppress("UNUSED_PARAMETER")

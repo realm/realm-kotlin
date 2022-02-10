@@ -65,5 +65,6 @@ data class PropertyInfo( // Kotlin variant of realm_property_info
                 flags
             )
         }
+
     }
 }

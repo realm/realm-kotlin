@@ -27,7 +27,6 @@ internal open class DynamicRealmImpl(configuration: InternalConfiguration, dbPoi
     override val realmReference: RealmReference = FrozenRealmReference(this, dbPointer)
 
     override fun query(className: String, query: String, vararg args: Any?): RealmQuery<DynamicRealmObject> =
-        ObjectQuery(realmReference, className, DynamicRealmObject::class, configuration.mediator, null, query, *args)
+            ObjectQuery(realmReference, className, DynamicRealmObject::class, configuration.mediator, null, query, *args)
 
-    // FIXME Should we allow users to close this?
 }

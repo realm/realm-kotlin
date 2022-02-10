@@ -427,6 +427,11 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_get_schema(realm.cptr()))
     }
 
+    actual fun realm_get_schema_version(realm: NativePointer): Int {
+        // https://github.com/realm/realm-core/issues/5236
+        TODO("Cannot retrieve schema version yet")
+    }
+
     actual fun realm_get_num_classes(realm: NativePointer): Long {
         return realm_wrapper.realm_get_num_classes(realm.cptr()).toLong()
     }

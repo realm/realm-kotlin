@@ -149,7 +149,6 @@ interface Configuration {
             apply { this.schema = setOf(*classes) } as S
 
         // FIXME Docs
-        // FIXME Should be internal until settled
         fun migration(migration: RealmMigration) : S = apply { this.migration = migration } as S
 
         /**

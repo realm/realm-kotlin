@@ -16,16 +16,13 @@
 
 package io.realm.internal
 
-import io.realm.RealmObject
 import io.realm.internal.schema.RealmClassImpl
-import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
 @Suppress("VariableNaming")
 interface RealmObjectCompanion {
     val `$realm$className`: String
-    val `$realm$class`: KClass<out RealmObject>
     val `$realm$fields`: List<KMutableProperty1<*, *>>?
     val `$realm$primaryKey`: KMutableProperty1<*, *>?
     fun `$realm$schema`(): RealmClassImpl

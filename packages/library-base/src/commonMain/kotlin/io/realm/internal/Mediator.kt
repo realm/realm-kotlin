@@ -25,5 +25,4 @@ interface Mediator {
     //  companionOf(clazz).`$realm$newInstance`()
     fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal
     fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
-//    fun companionOf(className: String): RealmObjectCompanion
 }

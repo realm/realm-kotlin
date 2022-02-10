@@ -85,7 +85,6 @@ expect object RealmInterop {
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
 
-//    fun realm_get_schema_version(realm: NativePointer): Int
 
     fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken
     fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken)
@@ -97,6 +96,7 @@ expect object RealmInterop {
     fun realm_close(realm: NativePointer)
 
     fun realm_get_schema(realm: NativePointer): NativePointer
+    fun realm_get_schema_version(realm: NativePointer): Int
     fun realm_get_num_classes(realm: NativePointer): Long
     fun realm_get_class_keys(realm: NativePointer): List<ClassKey>
     fun realm_find_class(realm: NativePointer, name: String): ClassKey?

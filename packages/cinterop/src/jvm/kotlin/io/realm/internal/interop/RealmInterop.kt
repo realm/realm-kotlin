@@ -154,12 +154,6 @@ actual object RealmInterop {
         return realmPtr
     }
 
-
-//    actual fun realm_get_schema_version(realm: NativePointer): Int {
-//        return realmc.
-//
-//    }
-
     actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
         return RegistrationToken(realmc.realm_add_realm_changed_callback(realm.cptr(), block))
     }
@@ -193,8 +187,12 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
-        // TODO API-SCHEMA
         return LongPointerWrapper(realmc.realm_get_schema(realm.cptr()))
+    }
+
+    actual fun realm_get_schema_version(realm: NativePointer): Int {
+        // https://github.com/realm/realm-core/issues/5236
+        TODO("Cannot retrieve schema version yet")
     }
 
     actual fun realm_get_num_classes(realm: NativePointer): Long {
