@@ -4,6 +4,7 @@
 * `Realm.observe()` has been renamed to `asFlow()`.
 
 ### Enhancements
+* Add support for fine grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `RealmInitial` or `RealmUpdated` states.
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
@@ -34,7 +35,6 @@
 * Added source code link to model definition compiler errors. ([#173](https://github.com/realm/realm-kotlin/issues/173))
 * Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`.
 * Add support for JVM on M1 (in case we're running outside Rosetta compatibility mode, example when using Azul JVM which is compiled against `aarch64`) [#629](https://github.com/realm/realm-kotlin/issues/629).
-* Add support for fine grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `RealmInitial` or `RealmUpdated` states.
 
 ### Fixed
 * Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)). 
