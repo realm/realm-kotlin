@@ -9,9 +9,13 @@ sealed interface ObjectChange<O : RealmObject> {
      */
     val obj: O?
 }
-interface InitialObject<O : RealmObject> : ObjectChange<O>
+interface InitialObject<O : RealmObject> : ObjectChange<O> {
+    override val obj: O
+}
 
 interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
+    override val obj: O
+
     /**
      * Returns the names of properties that has changed.
      */

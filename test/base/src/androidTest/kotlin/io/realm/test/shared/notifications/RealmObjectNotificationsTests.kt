@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.asFlow
 import io.realm.entities.Sample
+import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
 import io.realm.notifications.ObjectChange
 import io.realm.notifications.UpdatedObject
@@ -39,6 +40,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -81,7 +83,7 @@ class RealmObjectNotificationsTests : NotificationTests {
 
             c.receive().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
-                assertEquals("Foo", objectChange.obj!!.stringField)
+                assertEquals("Foo", objectChange.obj.stringField)
             }
 
             observer.cancel()
@@ -104,7 +106,7 @@ class RealmObjectNotificationsTests : NotificationTests {
 
             c.receive().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
-                assertEquals("Foo", objectChange.obj!!.stringField)
+                assertEquals("Foo", objectChange.obj.stringField)
             }
 
             obj.update {
@@ -116,7 +118,7 @@ class RealmObjectNotificationsTests : NotificationTests {
                 assertEquals(1, objectChange.changedFields.size)
                 assertContains(objectChange.changedFields, Sample::stringField.name)
 
-                assertEquals("Bar", objectChange.obj!!.stringField)
+                assertEquals("Bar", objectChange.obj.stringField)
             }
 
             obj.update {
@@ -131,8 +133,8 @@ class RealmObjectNotificationsTests : NotificationTests {
                 assertContains(objectChange.changedFields, Sample::stringField.name)
                 assertContains(objectChange.changedFields, Sample::booleanField.name)
 
-                assertEquals("Baz", objectChange.obj!!.stringField)
-                assertEquals(false, objectChange.obj!!.booleanField)
+                assertEquals("Baz", objectChange.obj.stringField)
+                assertEquals(false, objectChange.obj.booleanField)
             }
 
             observer.cancel()
@@ -161,11 +163,11 @@ class RealmObjectNotificationsTests : NotificationTests {
             // First event should be the initial value
             c1.receive().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
-                assertEquals("Foo", objectChange.obj!!.stringField)
+                assertEquals("Foo", objectChange.obj.stringField)
             }
             c2.receive().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
-                assertEquals("Foo", objectChange.obj!!.stringField)
+                assertEquals("Foo", objectChange.obj.stringField)
             }
             // Second event should reflect the udpate
             obj.update {
@@ -173,11 +175,11 @@ class RealmObjectNotificationsTests : NotificationTests {
             }
             c1.receive().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
-                assertEquals("Bar", objectChange.obj!!.stringField)
+                assertEquals("Bar", objectChange.obj.stringField)
             }
             c2.receive().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
-                assertEquals("Bar", objectChange.obj!!.stringField)
+                assertEquals("Bar", objectChange.obj.stringField)
             }
 
             observer1.cancel()
@@ -186,7 +188,7 @@ class RealmObjectNotificationsTests : NotificationTests {
             }
             c2.receive().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
-                assertEquals("Baz", objectChange.obj!!.stringField)
+                assertEquals("Baz", objectChange.obj.stringField)
             }
             assertTrue(c1.isEmpty)
             observer2.cancel()
@@ -220,6 +222,10 @@ class RealmObjectNotificationsTests : NotificationTests {
             realm.write {
                 delete(findLatest(obj)!!)
             }
+            c1.receive().let { objectChange ->
+                assertIs<DeletedObject<Sample>>(objectChange)
+                assertNull(objectChange.obj)
+            }
             // Test for sentinel value
             assertEquals(Unit, c2.receive())
             observer.cancel()
@@ -249,7 +255,7 @@ class RealmObjectNotificationsTests : NotificationTests {
             }
             c.receive().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
-                assertEquals("Foo", objectChange.obj!!.stringField)
+                assertEquals("Foo", objectChange.obj.stringField)
             }
             realm.close()
             observer.cancel()

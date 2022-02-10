@@ -102,9 +102,11 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
 
         return if (frozenObject == null) {
-            channel.trySend(DeletedObjectImpl())
-            channel.close()
-            null
+            channel
+                .trySend(DeletedObjectImpl())
+                .also {
+                    channel.close()
+                }
         } else {
             val changedFieldNames = getChangedFieldNames(frozenRealm, change)
 
