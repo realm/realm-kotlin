@@ -18,6 +18,35 @@ package io.realm.notifications
 
 import io.realm.RealmObject
 
+/**
+ * This sealed interface describe the possible changes that can be observed to a Realm Object.
+ *
+ * The specific states are represented by the specific subclasses [InitialObject], [UpdatedObject] and
+ * [DeletedObject].
+ *
+ * Changes can thus be consumed in a number of ways:
+ *
+ * ```
+ * // Variant 1: Switch on the sealed interface
+ * realm.filter<Person>().first().asFlow()
+ *   .collect { it: ObjectChange<Person> ->
+ *       when(result) {
+ *          is InitialObject -> initPersonUI(it.obj)
+ *          is UpdatedObject -> updatePersonUi(it.obj, it.changedFields)
+ *          is DeletedObject -> removePersonUi()
+ *       }
+ *   }
+ *
+ *
+ * // Variant 2: Just pass on the object
+ * realm.filter<Person>().first().asFlow()
+ *   .collect { it: ObjectChange<Person> ->
+ *       handleChange(it.obj)
+ *   }
+ * ```
+ *
+ * For state of update changes, a list with the updated field names from the previous version is provided.
+ */
 sealed interface ObjectChange<O : RealmObject> {
     /**
      * Returns the newest state of object being observed. `null` is returned if the object
@@ -25,10 +54,19 @@ sealed interface ObjectChange<O : RealmObject> {
      */
     val obj: O?
 }
+
+/**
+ * Initial event to be observed on a RealmObject flow. It contains a reference to the original object
+ * state.
+ */
 interface InitialObject<O : RealmObject> : ObjectChange<O> {
     override val obj: O
 }
 
+/**
+ * Realm object flow event that describes that an update has been performed on to the observed object.
+ * It provides a reference to the object and a list of the changed field names.
+ */
 interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
     override val obj: O
 
@@ -48,4 +86,9 @@ interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
         return changedFields.firstOrNull { it == fieldName } != null
     }
 }
+
+/**
+ * This interface describes the event where an observed object is deleted. The flow will terminate
+ * after observing this event.
+ */
 interface DeletedObject<O : RealmObject> : ObjectChange<O>
