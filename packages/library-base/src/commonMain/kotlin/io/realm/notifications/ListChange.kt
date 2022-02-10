@@ -1,11 +1,11 @@
 package io.realm.notifications
 
 /**
- * This sealed interface describe the possible changes that happen happen to a list collection,
+ * This sealed interface describe the possible changes that can happen to a list collection,
  * currently [io.realm.RealmList] or [io.realm.RealmResults].
  *
- * The specific states are both represented through the [ListChange.state] property but also as
- * specific subclasses.
+ * The specific states are represented by the specific subclasses [InitialList], [UpdatedList] and
+ * [DeletedList].
  *
  * Changes can thus be consumed in a number of ways:
  *
@@ -20,30 +20,20 @@ package io.realm.notifications
  *       }
  *   }
  *
- * // Variant 2: Switch on the state property
- * realm.filter<Person>().asFlow()
- *   .collect { it: ListChange<RealmResults<Person>> ->
- *       when(it.state) {
- *          INITIAL -> setUIList(it.list)
- *          UPDATED -> updateUIList(it.list) // Use DiffUtil to calculate and animate changes
- *          DELETED -> deleteUIList(it.list)
- *       }
- *   }
  *
- * // Variant 3: Just pass on the list
+ * // Variant 2: Just pass on the list
  * realm.filter<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       handleChange(it.list)
  *   }
  * ```
  *
- * For state changes of [ListChange.State.UPDATED], extra information is provided describing
- * the changes from the previous version. This information is formatted in a way that can be
- * feed directly to drive animations on UI components like `RecyclerView`. In order to access this
- * information, the [ListChange] must be cast to the appropriate subclass
+ * For state of update changes, extra information is provided describing the changes from the previous
+ * version. This information is formatted in a way that can be feed directly to drive animations on UI
+ * components like `RecyclerView`. In order to access this information, the [ListChange] must be cast
+ * to the appropriate subclass.
  *
  * ```
- * // Variant 1: Automatic cast using sealed interface
  * realm.filter<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       when(result) {
@@ -57,23 +47,6 @@ package io.realm.notifications
  *             )
  *          }
  *          is DeletedList -> deleteList(it.list)
- *       }
- *   }
- * // Variant 1: Manual switch on state property
- * realm.filter<Person>().asFlow()
- *   .collect { it: ListChange<RealmResults<Person>> ->
- *       when(it.state) {
- *          INITIAL -> setList(it.list)
- *          UPDATED -> {
- *              val update = it as UpdatedList
- *              updateList(
- *                  update.list,
- *                  update.deletionRanges,
- *                  update.insertionRanges,
- *                  update.changeRanges
- *             )
- *          }
- *          DELETED -> removeList()
  *       }
  *   }
  * ```

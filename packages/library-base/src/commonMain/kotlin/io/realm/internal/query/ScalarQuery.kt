@@ -142,6 +142,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
                 throw IllegalArgumentException("Use SumQuery instead.")
         }
         // TODO Expand to support other numeric types, e.g. Decimal128
+        @Suppress("UNCHECKED_CAST")
         return when (result) {
             null -> null
             is Timestamp -> RealmInstant.fromEpochSeconds(result.seconds, result.nanoSeconds)
@@ -203,6 +204,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     private fun computeAggregatedValue(resultsPointer: NativePointer, colKey: Long): T {
         val result: T = RealmInterop.realm_results_sum(resultsPointer, colKey)
         // TODO Expand to support other numeric types, e.g. Decimal128
+        @Suppress("UNCHECKED_CAST")
         return when (result) {
             is Number -> when (type) {
                 Int::class -> result.toInt()

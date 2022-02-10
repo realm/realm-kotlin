@@ -1,15 +1,28 @@
+/*
+ * Copyright 2021 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.internal
 
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.WeakReference
 import io.realm.internal.platform.runBlocking
-import io.realm.notifications.Callback
-import io.realm.notifications.Cancellable
 import io.realm.notifications.InitialRealmImpl
 import io.realm.notifications.RealmChange
 import io.realm.notifications.UpdatedRealmImpl
@@ -21,6 +34,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flattenConcat
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,7 +53,7 @@ internal class RealmImpl private constructor(
     internal val realmScope =
         CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow =
-        MutableSharedFlow<RealmChange<Realm>>(replay = 1) // Realm notifications emit their initial state when subscribed to
+        MutableSharedFlow<RealmChange<Realm>>() // Realm notifications emit their initial state when subscribed to
     private val notifier =
         SuspendableNotifier(this, configuration.notificationDispatcher)
     private val writer =
@@ -71,7 +88,6 @@ internal class RealmImpl private constructor(
         realmReference = RealmReference(this, frozenRealm)
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
-            realmFlow.emit(InitialRealmImpl(this@RealmImpl))
             notifier.realmChanged().collect { realmReference ->
                 updateRealmPointer(realmReference)
             }
@@ -116,33 +132,14 @@ internal class RealmImpl private constructor(
     }
 
     override fun asFlow(): Flow<RealmChange<Realm>> {
-        return realmFlow.asSharedFlow()
-    }
-
-    /**
-     * FIXME Hidden until we can add proper support
-     */
-    internal fun addChangeListener(): Cancellable {
-        TODO()
+        return flowOf(
+            flow { emit(InitialRealmImpl(this@RealmImpl)) },
+            realmFlow.asSharedFlow().takeWhile { !isClosed() }
+        ).flattenConcat()
     }
 
     override fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
         return notifier.registerObserver(t)
-    }
-
-    internal override fun <T : RealmObject> registerResultsChangeListener(
-        results: RealmResultsImpl<T>,
-        callback: Callback<RealmResultsImpl<T>>
-    ): Cancellable {
-        TODO("Not yet implemented")
-    }
-
-    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
-        TODO("Not yet implemented")
-    }
-
-    internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
-        TODO("Not yet implemented")
     }
 
     private suspend fun updateRealmPointer(newRealmReference: RealmReference) {
@@ -198,6 +195,7 @@ internal class RealmImpl private constructor(
                     )
                     RealmInterop.realm_close(pointer)
                 }
+                realmFlow.emit(UpdatedRealmImpl(this@RealmImpl))
             }
         }
         // TODO There is currently nothing that tears down the dispatcher

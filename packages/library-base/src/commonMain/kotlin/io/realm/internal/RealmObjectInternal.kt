@@ -79,6 +79,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         val managedModel = mediator.createInstanceOf(type)
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
+            @Suppress("UNCHECKED_CAST")
             managedModel.manage(
                 liveRealm,
                 mediator,
@@ -101,9 +102,11 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
 
         return if (frozenObject == null) {
-            channel.trySend(DeletedObjectImpl())
-            channel.close()
-            null
+            channel
+                .trySend(DeletedObjectImpl())
+                .also {
+                    channel.close()
+                }
         } else {
             val changedFieldNames = getChangedFieldNames(frozenRealm, change)
 
@@ -137,7 +140,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     }
 }
 
-internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {
+internal fun RealmObject.realmObjectInternal(): RealmObjectInternal {
     return this as RealmObjectInternal
 }
 

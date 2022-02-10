@@ -117,7 +117,8 @@ interface Realm : TypedRealm {
 
     /**
      * Observe changes to the realm. The flow will emit a [RealmChange] once subscribed and then, on
-     * every change to the realm. The flow will continue running indefinitely until canceled.
+     * every change to the realm. The flow will continue running indefinitely until canceled or the
+     * realm instance is closed.
      *
      * The change calculations will run on the thread defined through the [Configuration]
      * Notification Dispatcher.
