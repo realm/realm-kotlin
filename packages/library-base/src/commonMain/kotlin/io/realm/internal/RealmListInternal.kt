@@ -32,7 +32,6 @@ import io.realm.notifications.InitialListImpl
 import io.realm.notifications.ListChange
 import io.realm.notifications.UpdatedList
 import io.realm.notifications.UpdatedListImpl
-import io.realm.realmListOf
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
