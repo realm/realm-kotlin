@@ -141,6 +141,9 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
 inline void jni_check_exception(JNIEnv *jenv = get_env()) {
     if (jenv->ExceptionCheck()) {
         jenv->ExceptionDescribe();
+        // Also clear exception since we are going to throw a wrapper exception just before
+        // returning to JVM.
+        jenv->ExceptionClear();
         throw std::runtime_error("An unexpected Error was thrown from Java.");
     }
 }
