@@ -32,6 +32,7 @@ import io.realm.notifications.InitialListImpl
 import io.realm.notifications.ListChange
 import io.realm.notifications.UpdatedList
 import io.realm.notifications.UpdatedListImpl
+import io.realm.realmListOf
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -51,7 +52,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     private val nativePointer: NativePointer,
     private val metadata: ListOperatorMetadata
-) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>, ListChange<ManagedRealmList<E>>>, Flowable<ListChange<RealmList<E>>> {
+) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>, ListChange<RealmList<E>>>, Flowable<ListChange<RealmList<E>>> {
 
     private val operator = ListOperator<E>(metadata)
 
@@ -124,7 +125,7 @@ internal class ManagedRealmList<E>(
         }
     }
 
-    override fun asFlow(): Flow<ListChange<ManagedRealmList<E>>> {
+    override fun asFlow(): Flow<ListChange<RealmList<E>>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }
@@ -148,7 +149,7 @@ internal class ManagedRealmList<E>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<ListChange<ManagedRealmList<E>>>
+        channel: SendChannel<ListChange<RealmList<E>>>
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
@@ -162,7 +163,7 @@ internal class ManagedRealmList<E>(
                 channel.trySend(builder.build())
             }
         } else {
-            channel.trySend(DeletedListImpl())
+            channel.trySend(DeletedListImpl(UnmanagedRealmList()))
                 .also {
                     channel.close()
                 }

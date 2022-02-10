@@ -15,7 +15,4 @@ internal class UpdatedListImpl<T : List<*>>(
     override val changeRanges: Array<ListChange.Range>
 ) : UpdatedList<T>
 
-internal class DeletedListImpl<T : List<*>> : DeletedList<T> {
-    override val list: T
-        get() = emptyList<Any>() as T
-}
+internal class DeletedListImpl<T : List<*>>(override val list: T) : DeletedList<T>

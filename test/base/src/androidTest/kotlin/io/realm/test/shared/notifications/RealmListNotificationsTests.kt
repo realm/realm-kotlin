@@ -21,6 +21,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.entities.list.RealmListContainer
 import io.realm.internal.platform.freeze
+import io.realm.notifications.DeletedList
 import io.realm.notifications.InitialList
 import io.realm.notifications.ListChange
 import io.realm.notifications.UpdatedList
@@ -244,6 +245,10 @@ class RealmListNotificationsTests : NotificationTests {
                 delete(findLatest(container)!!)
             }
 
+            channel1.receive().let { listChange ->
+                assertIs<DeletedList<*>>(listChange)
+                assertTrue(listChange.list.isEmpty())
+            }
             // Wait for flow completion
             assertTrue(channel2.receive())
 
