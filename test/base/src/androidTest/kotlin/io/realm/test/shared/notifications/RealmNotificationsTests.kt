@@ -153,9 +153,10 @@ class RealmNotificationsTests : NotificationTests {
             observer2.cancel()
 
             realm.write { /* Do nothing */ }
-            // Closing a channel should prevent on receiving further notifications
-            assertTrue(c2.isEmpty)
 
+            // Closing an observer should prevent the channel on receiving further notifications
+            assertTrue(c2.isEmpty)
+            // But unclosed channels should receive notifications
             c1.receive().let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
@@ -169,6 +170,7 @@ class RealmNotificationsTests : NotificationTests {
     }
 
     @Test
+    @Ignore
     override fun deleteObservable() {
         // Realms cannot be deleted, so Realm Flows do not need to handle this case
     }
