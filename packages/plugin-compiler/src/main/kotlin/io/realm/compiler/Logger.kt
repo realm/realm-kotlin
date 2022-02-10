@@ -26,6 +26,7 @@ private fun logger(message: String, severity: CompilerMessageSeverity = Compiler
     val formattedMessage by lazy { "[Realm] $message" }
     messageCollector.report(severity, formattedMessage, location)
 }
+
 fun logInfo(message: String) = logger(message, severity = CompilerMessageSeverity.INFO)
 fun logWarn(message: String, location: CompilerMessageSourceLocation? = null) = logger(message, severity = CompilerMessageSeverity.WARNING, location = location)
 fun logError(message: String, location: CompilerMessageSourceLocation? = null) = logger(message, severity = CompilerMessageSeverity.ERROR, location = location) // /!\ This will log and fail the compilation /!\

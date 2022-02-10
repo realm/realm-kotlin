@@ -2,5 +2,5 @@ package io.realm.internal.platform
 
 @Suppress("FunctionOnlyReturningConstant")
 actual fun appFilesDirectory(): String {
-    return "."
+    return platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
 }
