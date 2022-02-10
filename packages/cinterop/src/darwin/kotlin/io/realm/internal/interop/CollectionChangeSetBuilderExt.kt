@@ -39,11 +39,6 @@ private fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(
     ranges: CArrayPointer<realm_wrapper.realm_index_range_t>
 ) = initRangesArray(size[0].toInt(), ranges.asFromAccessor(), ranges.asToAccessor())
 
-private fun <T, R> CollectionChangeSetBuilder<T, R>.initMovesArray(
-    size: CArrayPointer<ULongVar>,
-    moves: CArrayPointer<realm_wrapper.realm_collection_move_t>
-) = initMovesArray(size[0].toInt(), moves.asFromAccessor(), moves.asToAccessor())
-
 fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(
     array: KMutableProperty0<IntArray>,
     size: CArrayPointer<ULongVar>,
