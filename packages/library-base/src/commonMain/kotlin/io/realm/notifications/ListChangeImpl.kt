@@ -1,5 +1,7 @@
 package io.realm.notifications
 
+import io.realm.realmListOf
+
 internal class InitialListImpl<T : List<*>>(override val list: T) : InitialList<T>
 
 @Suppress("LongParameterList")
@@ -10,11 +12,10 @@ internal class UpdatedListImpl<T : List<*>>(
     override val changes: IntArray,
     override val deletionRanges: Array<ListChange.Range>,
     override val insertionRanges: Array<ListChange.Range>,
-    override val changeRanges: Array<ListChange.Range>,
-    override val moves: Array<ListChange.Move>
+    override val changeRanges: Array<ListChange.Range>
 ) : UpdatedList<T>
 
 internal class DeletedListImpl<T : List<*>> : DeletedList<T> {
-    override val list: T?
-        get() = null
+    override val list: T
+        get() = emptyList<Any>() as T
 }

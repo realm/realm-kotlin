@@ -1134,7 +1134,7 @@ actual object RealmInterop {
 
     private inline fun <reified T : CVariable> MemScope.initArray(size: CArrayPointer<ULongVar>) = allocArray<T>(size[0].toInt())
 
-    actual fun <T, R, M> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
+    actual fun <T, R> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>) {
         memScoped {
             val insertionCount = allocArray<ULongVar>(1)
             val deletionCount = allocArray<ULongVar>(1)
@@ -1167,11 +1167,11 @@ actual object RealmInterop {
             builder.initIndicesArray(builder::deletionIndices, deletionCount, deletionIndices)
             builder.initIndicesArray(builder::modificationIndices, modificationCount, modificationIndices)
             builder.initIndicesArray(builder::modificationIndicesAfter, modificationCount, modificationIndicesAfter)
-            builder.initMovesArray(builder::moves, movesCount, moves)
+            builder.movesCount = movesCount[0].toInt()
         }
     }
 
-    actual fun <T, R, M> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>) {
         memScoped {
             val insertRangesCount = allocArray<ULongVar>(1)
             val deleteRangesCount = allocArray<ULongVar>(1)

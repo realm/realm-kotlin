@@ -63,18 +63,7 @@ sealed interface ListChange<out T : List<*>> {
         val length: Int
     )
 
-    data class Move(
-        /**
-         * The position before moving the element.
-         */
-        val from: Int,
-        /**
-         * The position after moving the element.
-         */
-        val to: Int
-    )
-
-    val list: T?
+    val list: T
 }
 interface InitialList<T : List<*>> : ListChange<T>
 interface UpdatedList<T : List<*>> : ListChange<T> {
@@ -84,6 +73,5 @@ interface UpdatedList<T : List<*>> : ListChange<T> {
     val deletionRanges: Array<ListChange.Range>
     val insertionRanges: Array<ListChange.Range>
     val changeRanges: Array<ListChange.Range>
-    val moves: Array<ListChange.Move>
 }
 interface DeletedList<T : List<*>> : ListChange<T>

@@ -506,7 +506,7 @@ actual object RealmInterop {
     private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
     private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
 
-    actual fun <T, R, M> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
+    actual fun <T, R> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>) {
         val insertionCount = LongArray(1)
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
@@ -543,10 +543,10 @@ actual object RealmInterop {
         builder.initIndicesArray(builder::deletionIndices, deletionIndices)
         builder.initIndicesArray(builder::modificationIndices, modificationIndices)
         builder.initIndicesArray(builder::modificationIndicesAfter, modificationIndicesAfter)
-        builder.initMovesArray(builder::moves, moves)
+        builder.movesCount = movesCount[0].toInt()
     }
 
-    actual fun <T, R, M> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R, M>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)

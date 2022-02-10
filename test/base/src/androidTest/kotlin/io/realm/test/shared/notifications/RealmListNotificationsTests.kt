@@ -91,7 +91,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<InitialList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataSet.size, listChange.list!!.size)
+                assertEquals(dataSet.size, listChange.list.size)
             }
 
             observer.cancel()
@@ -123,7 +123,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<InitialList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(0, listChange.list!!.size)
+                assertEquals(0, listChange.list.size)
             }
 
             // Trigger update
@@ -138,7 +138,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataSet.size, listChange.list!!.size)
+                assertEquals(dataSet.size, listChange.list.size)
             }
 
             observer.cancel()
@@ -181,8 +181,8 @@ class RealmListNotificationsTests : NotificationTests {
                 val queriedContainer = findLatest(container)
                 queriedContainer!!.objectListField.addAll(values)
             }
-            assertEquals(OBJECT_VALUES.size, channel1.receive().list!!.size)
-            assertEquals(OBJECT_VALUES.size, channel2.receive().list!!.size)
+            assertEquals(OBJECT_VALUES.size, channel1.receive().list.size)
+            assertEquals(OBJECT_VALUES.size, channel2.receive().list.size)
 
             // Cancel observer 1
             observer1.cancel()
@@ -195,7 +195,7 @@ class RealmListNotificationsTests : NotificationTests {
             }
 
             // Check channel 1 didn't receive the update
-            assertEquals(OBJECT_VALUES.size + 1, channel2.receive().list!!.size)
+            assertEquals(OBJECT_VALUES.size + 1, channel2.receive().list.size)
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -236,7 +236,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<InitialList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(OBJECT_VALUES.size, listChange.list!!.size)
+                assertEquals(OBJECT_VALUES.size, listChange.list.size)
             }
 
             // Now delete owner
@@ -274,7 +274,7 @@ class RealmListNotificationsTests : NotificationTests {
                 fail("Flow should not be canceled.")
             }
 
-            assertTrue(channel.receive().list!!.isEmpty())
+            assertTrue(channel.receive().list.isEmpty())
 
             realm.close()
             observer.cancel()
@@ -309,7 +309,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<InitialList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(0, listChange.list!!.size)
+                assertEquals(0, listChange.list.size)
             }
 
             // Assert a single range is reported
@@ -325,7 +325,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataset.size, listChange.list!!.size)
+                assertEquals(dataset.size, listChange.list.size)
 
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
@@ -349,7 +349,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataset.size + dataset2.size + dataset3.size, listChange.list!!.size)
+                assertEquals(dataset.size + dataset2.size + dataset3.size, listChange.list.size)
 
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
@@ -375,7 +375,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataset.size, listChange.list!!.size)
+                assertEquals(dataset.size, listChange.list.size)
 
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
@@ -399,7 +399,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertTrue(listChange.list!!.isEmpty())
+                assertTrue(listChange.list.isEmpty())
 
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
@@ -421,7 +421,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataset2.size, listChange.list!!.size)
+                assertEquals(dataset2.size, listChange.list.size)
             }
 
             // Change contents of two ranges of values
@@ -439,7 +439,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataset2.size, listChange.list!!.size)
+                assertEquals(dataset2.size, listChange.list.size)
 
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
@@ -463,7 +463,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
-                assertEquals(dataset2.size, listChange.list!!.size)
+                assertEquals(dataset2.size, listChange.list.size)
 
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
@@ -514,8 +514,7 @@ class RealmListNotificationsTests : NotificationTests {
         updatedListChange: UpdatedList<*>,
         insertRanges: Array<ListChange.Range> = emptyArray(),
         deletionRanges: Array<ListChange.Range> = emptyArray(),
-        changesRanges: Array<ListChange.Range> = emptyArray(),
-        moves: Array<ListChange.Move> = emptyArray()
+        changesRanges: Array<ListChange.Range> = emptyArray()
     ) {
         assertContains(
             insertRanges,
@@ -534,14 +533,5 @@ class RealmListNotificationsTests : NotificationTests {
             updatedListChange.changes,
             updatedListChange.changeRanges
         )
-
-        if (moves.isEmpty()) {
-            assertTrue(updatedListChange.moves.isEmpty())
-        } else {
-            assertEquals(moves.size, updatedListChange.moves.size)
-            for (move in moves) {
-                assertContains(updatedListChange.moves, move)
-            }
-        }
     }
 }

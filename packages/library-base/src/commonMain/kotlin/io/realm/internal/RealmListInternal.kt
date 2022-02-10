@@ -176,7 +176,7 @@ internal class ManagedRealmList<E>(
 }
 
 internal class UpdatedListBuilder<T : List<*>>(val list: T) :
-    CollectionChangeSetBuilder<UpdatedList<T>, ListChange.Range, ListChange.Move>() {
+    CollectionChangeSetBuilder<UpdatedList<T>, ListChange.Range>() {
 
     override fun initIndicesArray(size: Int, indicesAccessor: ArrayAccessor): IntArray =
         IntArray(size) { index -> indicesAccessor(index) }
@@ -192,17 +192,6 @@ internal class UpdatedListBuilder<T : List<*>>(val list: T) :
             ListChange.Range(from, to - from)
         }
 
-    override fun initMovesArray(
-        size: Int,
-        fromAccessor: ArrayAccessor,
-        toAccessor: ArrayAccessor
-    ): Array<ListChange.Move> =
-        Array(size) { index ->
-            val from: Int = fromAccessor(index)
-            val to: Int = toAccessor(index)
-            ListChange.Move(from, to)
-        }
-
     override fun build(): UpdatedList<T> = UpdatedListImpl(
         list = list,
         deletions = deletionIndices,
@@ -210,8 +199,7 @@ internal class UpdatedListBuilder<T : List<*>>(val list: T) :
         changes = modificationIndicesAfter,
         deletionRanges = deletionRanges,
         insertionRanges = insertionRanges,
-        changeRanges = modificationRangesAfter,
-        moves = moves
+        changeRanges = modificationRangesAfter
     )
 }
 
