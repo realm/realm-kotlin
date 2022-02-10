@@ -24,7 +24,6 @@ import io.realm.internal.platform.runBlocking
 import io.realm.notifications.InitialRealm
 import io.realm.notifications.RealmChange
 import io.realm.notifications.UpdatedRealm
-import io.realm.observe
 import io.realm.test.NotificationTests
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.async
@@ -36,7 +35,6 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 import kotlin.test.assertTrue
 
 class RealmNotificationsTests : NotificationTests {
@@ -153,7 +151,6 @@ class RealmNotificationsTests : NotificationTests {
             }
 
             observer2.cancel()
-
 
             realm.write { /* Do nothing */ }
             // Closing a channel should prevent on receiving further notifications
