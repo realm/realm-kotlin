@@ -19,7 +19,29 @@ package io.realm.notifications
 import io.realm.BaseRealm
 
 /**
- * A [RealmChange] describes the type of changes that can be observed on a realm.
+ * This sealed interface describe the possible changes that can be observed to a Realm.
+ *
+ * The specific states are represented by the specific subclasses [InitialRealm] and [UpdatedRealm].
+ *
+ * Changes can thus be consumed in a number of ways:
+ *
+ * ```
+ * // Variant 1: Switch on the sealed interface
+ * realm.asFlow()
+ *   .collect { it: RealmChange ->
+ *       when(result) {
+ *          is InitialRealm -> setInitialState(it.realm)
+ *          is UpdatedRealm -> setUpdatedState(it.realm)
+ *       }
+ *   }
+ *
+ *
+ * // Variant 2: Just pass on the realm
+ * realm.asFlow()
+ *   .collect { it: RealmChange ->
+ *       handleChange(it.realm)
+ *   }
+ * ```
  */
 sealed interface RealmChange<R : BaseRealm> {
     /**
@@ -27,14 +49,13 @@ sealed interface RealmChange<R : BaseRealm> {
      */
     val realm: R
 }
+
 /**
- * [InitialRealm] describes the initial event observed on a Realm flow. It contains the Realm instance
- * it was subscribed to.
+ * Initial event to be observed on a Realm flow. It contains a reference to the original Realm instance.
  */
 interface InitialRealm<R : BaseRealm> : RealmChange<R>
 
 /**
- * [UpdatedRealm] describes a Realm update event to be observed on a Realm flow after the [InitialRealm].
- * It contains a Realm instance of the updated Realm.
+ * Realm flow event that describes that an update has been performed on to the observed Realm instance.
  */
 interface UpdatedRealm<R : BaseRealm> : RealmChange<R>
