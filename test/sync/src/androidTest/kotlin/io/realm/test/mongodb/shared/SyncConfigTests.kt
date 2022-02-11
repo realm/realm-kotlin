@@ -17,7 +17,6 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.CompactOnLaunchCallback
-import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
@@ -51,7 +50,6 @@ class SyncConfigTests {
 
     private lateinit var tmpDir: String
     private lateinit var app: App
-    private lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
@@ -129,11 +127,7 @@ class SyncConfigTests {
     @Test
     fun compactOnLaunch() {
         val user = createTestUser()
-        val callback = object : CompactOnLaunchCallback {
-            override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
-                return false
-            }
-        }
+        val callback = CompactOnLaunchCallback { _, _ -> false }
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,

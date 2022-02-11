@@ -507,7 +507,6 @@ String startLogCatCollector(name) {
   // ensure we have access to a device. If not, it is most likely a more severe problem.
   timeout(time: 1, unit: 'MINUTES') {
     // Need ADB as root to clear all buffers: https://stackoverflow.com/a/47686978/1389357
-    sh '$ANDROID_SDK_ROOT/platform-tools/adb kill-server'
     sh '$ANDROID_SDK_ROOT/platform-tools/adb devices'
     sh """
       $ANDROID_SDK_ROOT/platform-tools/adb root
