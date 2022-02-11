@@ -1,6 +1,6 @@
 package io.realm
 
-import io.realm.internal.Flowable
+import io.realm.notifications.ListChange
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
  * @see Realm.objects
  * @see MutableRealm.objects
  */
-interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Flowable<RealmResults<T>>, Versioned {
+interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versioned {
 
     /**
      * Perform a query on the objects of this result using the Realm Query Language.
@@ -40,7 +40,7 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Flowable<RealmR
      *
      * @return a flow representing changes to the RealmResults.
      */
-    override fun asFlow(): Flow<RealmResults<T>>
+    fun asFlow(): Flow<ListChange<RealmResults<T>>>
 
     /**
      * Delete all objects from this result from the realm.

@@ -23,7 +23,7 @@ import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.internal.Flowable
+import io.realm.notifications.ListChange
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -195,7 +195,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 /**
  * Query returning [RealmResults].
  */
-interface RealmElementQuery<T : RealmObject> : Flowable<RealmResults<T>> {
+interface RealmElementQuery<T : RealmObject> {
 
     /**
      * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
@@ -223,13 +223,13 @@ interface RealmElementQuery<T : RealmObject> : Flowable<RealmResults<T>> {
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    override fun asFlow(): Flow<RealmResults<T>>
+    fun asFlow(): Flow<ListChange<RealmResults<T>>>
 }
 
 /**
  * Query returning a single [RealmObject].
  */
-interface RealmSingleQuery<T> : Flowable<T> {
+interface RealmSingleQuery<T : RealmObject> {
 
     /**
      * Finds the first object that fulfills the query conditions and returns it in a blocking
@@ -254,14 +254,14 @@ interface RealmSingleQuery<T> : Flowable<T> {
      *
      * @return a flow representing changes to the [RealmObject] resulting from running this query.
      */
-    override fun asFlow(): Flow<T?>
+    fun asFlow(): Flow<T?>
 }
 
 /**
  * Queries that return scalar values. This type of query is used to more accurately represent the
  * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.sum].
  */
-interface RealmScalarQuery<T> : Flowable<T> {
+interface RealmScalarQuery<T> {
     /**
      * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be of a
      * different type depending on the type of query:
@@ -288,7 +288,7 @@ interface RealmScalarQuery<T> : Flowable<T> {
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    override fun asFlow(): Flow<T>
+    fun asFlow(): Flow<T>
 }
 
 /**
@@ -390,4 +390,4 @@ fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find().let(bl
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-fun <T, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)
+fun <T : RealmObject, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)
