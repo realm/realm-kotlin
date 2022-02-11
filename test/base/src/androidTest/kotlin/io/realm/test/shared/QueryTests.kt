@@ -24,6 +24,7 @@ import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
+import io.realm.notifications.ListChange
 import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.query.Sort
@@ -176,7 +177,7 @@ class QueryTests {
 
     @Test
     fun asFlow_initialResults() {
-        val channel = Channel<RealmResults<QuerySample>>(1)
+        val channel = Channel<ListChange<RealmResults<QuerySample>>>(1)
 
         runBlocking {
             val observer = async {
@@ -188,7 +189,7 @@ class QueryTests {
                     }
             }
 
-            assertTrue(channel.receive().isEmpty())
+            assertTrue(channel.receive().list.isEmpty())
 
             observer.cancel()
             channel.close()
@@ -197,7 +198,7 @@ class QueryTests {
 
     @Test
     fun asFlow() {
-        val channel = Channel<RealmResults<QuerySample>>(1)
+        val channel = Channel<ListChange<RealmResults<QuerySample>>>(1)
 
         runBlocking {
             val observer = async {
@@ -209,13 +210,13 @@ class QueryTests {
                     }
             }
 
-            assertTrue(channel.receive().isEmpty())
+            assertTrue(channel.receive().list.isEmpty())
 
             realm.writeBlocking {
                 copyToRealm(QuerySample())
             }
 
-            assertEquals(1, channel.receive().size)
+            assertEquals(1, channel.receive().list.size)
             observer.cancel()
             channel.close()
         }
@@ -223,7 +224,7 @@ class QueryTests {
 
     @Test
     fun asFlow_deleteObservable() {
-        val channel = Channel<RealmResults<QuerySample>>(1)
+        val channel = Channel<ListChange<RealmResults<QuerySample>>>(1)
 
         runBlocking {
             realm.writeBlocking {
@@ -239,7 +240,7 @@ class QueryTests {
                     }
             }
 
-            assertEquals(1, channel.receive().size)
+            assertEquals(1, channel.receive().list.size)
 
             realm.writeBlocking {
                 query<QuerySample>()
@@ -247,7 +248,7 @@ class QueryTests {
                     .delete()
             }
 
-            assertTrue(channel.receive().isEmpty())
+            assertTrue(channel.receive().list.isEmpty())
 
             observer.cancel()
             channel.close()

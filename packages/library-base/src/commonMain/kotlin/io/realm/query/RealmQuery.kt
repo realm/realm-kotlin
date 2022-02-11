@@ -296,33 +296,7 @@ interface RealmScalarQuery<T> {
  * represent the results provided by some query operations, e.g. [RealmQuery.min] or
  * [RealmQuery.max].
  */
-interface RealmScalarNullableQuery<T> : Flowable<T> {
-    /**
-     * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be `null`
-     * if no objects are present.
-     *
-     * It is not recommended launching heavy queries from the UI thread as it may result in a drop
-     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
-     *
-     * @return a [T] containing the result of the scalar query or `null` depending on the query
-     * being executed.
-     */
-    fun find(): T?
-
-    /**
-     * Calculates the value that fulfills the query conditions and returns it asynchronously as a
-     * [Flow].
-     *
-     * If there is any changes to the objects represented by the query backing the value, the flow
-     * will emit the updated value. The flow will continue running indefinitely until canceled.
-     *
-     * The change calculations will run on the thread represented by
-     * [RealmConfiguration.Builder.notificationDispatcher].
-     *
-     * @return a flow representing changes to the [RealmResults] resulting from running this query.
-     */
-    override fun asFlow(): Flow<T?>
-}
+interface RealmScalarNullableQuery<T> : RealmScalarQuery<T?>
 
 /**
  * This enum describes the sorting order used in Realm queries.

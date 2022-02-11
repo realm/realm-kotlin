@@ -21,6 +21,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.entities.Sample
+import io.realm.notifications.ListChange
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.NotificationTests
@@ -64,7 +65,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<RealmResults<Sample>>(1)
+            val c = Channel<ListChange<RealmResults<Sample>>>(1)
             val observer = async {
                 realm.query<Sample>()
                     .asFlow()
@@ -72,8 +73,8 @@ class RealmResultsNotificationsTests : NotificationTests {
                         c.trySend(it)
                     }
             }
-            val initialElement: RealmResults<Sample> = c.receive()
-            assertEquals(0, initialElement.size)
+            val initialElement: ListChange<RealmResults<Sample>> = c.receive()
+            assertEquals(0, initialElement.list.size)
             observer.cancel()
             c.close()
         }
@@ -87,9 +88,9 @@ class RealmResultsNotificationsTests : NotificationTests {
                 realm.query<Sample>()
                     .asFlow()
                     .filterNot {
-                        it.isEmpty()
+                        it.list.isEmpty()
                     }.collect {
-                        c.trySend(it.size)
+                        c.trySend(it.list.size)
                     }
             }
             realm.write {
@@ -104,13 +105,13 @@ class RealmResultsNotificationsTests : NotificationTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            val c1 = Channel<RealmResults<Sample>>(1)
-            val c2 = Channel<RealmResults<Sample>>(1)
+            val c1 = Channel<ListChange<RealmResults<Sample>>>(1)
+            val c2 = Channel<ListChange<RealmResults<Sample>>>(1)
             val observer1 = async {
                 realm.query<Sample>()
                     .asFlow()
                     .filterNot {
-                        it.isEmpty()
+                        it.list.isEmpty()
                     }.collect {
                         c1.trySend(it)
                     }
@@ -119,7 +120,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 realm.query<Sample>()
                     .asFlow()
                     .filterNot {
-                        it.isEmpty()
+                        it.list.isEmpty()
                     }.collect {
                         c2.trySend(it)
                     }
@@ -127,13 +128,13 @@ class RealmResultsNotificationsTests : NotificationTests {
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })
             }
-            assertEquals(1, c1.receive().size)
-            assertEquals(1, c2.receive().size)
+            assertEquals(1, c1.receive().list.size)
+            assertEquals(1, c2.receive().list.size)
             observer1.cancel()
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Baz" })
             }
-            assertEquals(2, c2.receive().size)
+            assertEquals(2, c2.receive().list.size)
             assertTrue(c1.isEmpty)
             observer2.cancel()
             c1.close()
@@ -144,7 +145,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     @Test
     override fun deleteObservable() {
         runBlocking {
-            val c = Channel<RealmResults<Sample>>(1)
+            val c = Channel<ListChange<RealmResults<Sample>>>(1)
             realm.write {
                 copyToRealm(
                     Sample().apply {
@@ -159,7 +160,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                         c.trySend(it)
                     }
             }
-            assertEquals(1, c.receive().size)
+            assertEquals(1, c.receive().list.size)
             realm.write {
                 query<Sample>()
                     .first()
@@ -168,7 +169,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                         delete(sample)
                     }
             }
-            assertEquals(0, c.receive().size)
+            assertEquals(0, c.receive().list.size)
             observer.cancel()
             c.close()
         }
@@ -185,7 +186,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                     .asFlow()
                     .collect {
                         when (counter.incrementAndGet()) {
-                            1 -> c.trySend(it.size)
+                            1 -> c.trySend(it.list.size)
                             2 -> {
                                 realm.close()
                                 c.trySend(-1)
@@ -198,7 +199,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 realm.query<Sample>()
                     .asFlow()
                     .collect {
-                        println(it.first().stringField)
+                        println(it.list.first().stringField)
                         println("$it -> ${realm.isClosed()}")
                     }
             }
@@ -224,9 +225,9 @@ class RealmResultsNotificationsTests : NotificationTests {
                 realm.query<Sample>()
                     .asFlow()
                     .filterNot {
-                        it.isEmpty()
+                        it.list.isEmpty()
                     }.collect {
-                        c.send(it.size)
+                        c.send(it.list.size)
                     }
                 fail("Flow should not be canceled.")
             }
