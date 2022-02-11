@@ -23,8 +23,8 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
-    actual fun createTempDir(): String {
-        return Files.createTempDirectory("jvm_tests").absolutePathString()
+    actual fun createTempDir(prefix: String): String {
+        return Files.createTempDirectory("$prefix-jvm_tests").absolutePathString()
     }
 
     actual fun deleteTempDir(path: String) {

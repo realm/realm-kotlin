@@ -33,11 +33,14 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -477,6 +480,104 @@ class RealmTests {
         // Clearing the realm object reference allowed clearing the corresponding reference
         assertEquals(1, intermediateReferences.value.size)
     }
+
+    @Test
+    fun deleteRealm() {
+        val fileSystem = FileSystem.SYSTEM
+        val testDir = PlatformUtils.createTempDir("test_dir")
+        val testDirPath = testDir.toPath()
+        assertTrue(fileSystem.exists(testDirPath))
+
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .path("$testDir/default.realm")
+            .build()
+        val bgThreadReadyChannel = Channel<Unit>(1)
+        val readyToCloseChannel = Channel<Unit>(1)
+        val closedChannel = Channel<Unit>(1)
+
+        runBlocking {
+            // Creates another Realm to ensure the log files are generated.
+            val testRealm = Realm.open(configuration)
+
+            val deferred = async {
+                val anotherRealm = Realm.open(configuration)
+
+                bgThreadReadyChannel.send(Unit)
+                readyToCloseChannel.receive()
+
+                anotherRealm.close()
+
+                closedChannel.send(Unit)
+            }
+
+            testRealm.writeBlocking {
+                copyToRealm(Child())
+            }
+
+            // Waits for bg thread's opening the same Realm.
+            bgThreadReadyChannel.receive()
+
+            // A core upgrade might change the location of the files
+            val testDirRenamedPath = PlatformUtils.createTempDir("test_dir_renamed").toPath()
+            assertTrue(fileSystem.exists(testDirRenamedPath))
+            fileSystem.atomicMove(testDirPath, testDirRenamedPath)
+            val testDirRenamedPathList = fileSystem.list(testDirRenamedPath)
+            assertEquals(4, testDirRenamedPathList.size) // db file, .lock, .management, .note
+
+            readyToCloseChannel.send(Unit)
+
+            testRealm.close()
+
+            closedChannel.receive()
+
+            // Now we get log files back!
+            fileSystem.atomicMove(testDirRenamedPath, testDirPath)
+
+            assertTrue(Realm.deleteRealm(configuration))
+
+            val testDirPathList = fileSystem.list(testDirPath)
+            // Lock file should never be deleted
+            assertEquals(1, testDirPathList.size) // only .lock file remains
+            assertTrue(fileSystem.exists("${configuration.path}.lock".toPath()))
+
+            deferred.cancel()
+            bgThreadReadyChannel.close()
+            readyToCloseChannel.close()
+            closedChannel.close()
+        }
+    }
+
+    // @Test
+    // fun deleteRealm_failures() {
+    //     val OTHER_REALM_NAME = "yetAnotherRealm.realm"
+    //     val configA: RealmConfiguration = configFactory.createConfiguration()
+    //     val configB: RealmConfiguration = configFactory.createConfiguration(OTHER_REALM_NAME)
+    //
+    //     // This instance is already cached because of the setUp() method so this deletion should throw.
+    //     try {
+    //         Realm.deleteRealm(configA)
+    //         fail()
+    //     } catch (ignored: java.lang.IllegalStateException) {
+    //     }
+    //
+    //     // Creates a new Realm file.
+    //     val yetAnotherRealm: Realm = Realm.getInstance(configB)
+    //
+    //     // Deleting it should fail.
+    //     try {
+    //         Realm.deleteRealm(configB)
+    //         fail()
+    //     } catch (ignored: java.lang.IllegalStateException) {
+    //     }
+    //
+    //     // But now that we close it deletion should work.
+    //     yetAnotherRealm.close()
+    //     try {
+    //         Realm.deleteRealm(configB)
+    //     } catch (e: Exception) {
+    //         fail()
+    //     }
+    // }
 
     @Suppress("invisible_reference")
     private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>

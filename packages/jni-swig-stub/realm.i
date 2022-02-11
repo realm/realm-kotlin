@@ -184,7 +184,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int64_t[] { size_t* };
 
 // bool output parameter
-%apply bool* OUTPUT { bool* out_found };
+%apply bool* OUTPUT { bool* out_found, bool* did_delete_realm };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };

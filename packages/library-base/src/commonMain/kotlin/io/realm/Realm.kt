@@ -18,6 +18,7 @@ package io.realm
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.Constants
+import io.realm.internal.interop.RealmInterop
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -56,9 +57,32 @@ interface Realm : TypedRealm {
          *
          * @throws IllegalArgumentException on invalid Realm configurations.
          */
-        fun open(configuration: Configuration): Realm {
-            return RealmImpl(configuration as InternalConfiguration)
-        }
+        fun open(configuration: Configuration): Realm =
+            RealmImpl(configuration as InternalConfiguration)
+
+        /**
+         * TODO revisit docs
+         *
+         * Deletes the Realm file along with the related temporary files specified by the given
+         * [RealmConfiguration] from the filesystem. The temporary file with ".lock" extension won't be
+         * deleted.
+         *
+         * All Realm instances must be closed before calling this method.
+         *
+         * TODO does this still apply?
+         * WARNING: For synchronized Realm, there is a chance that an internal Realm instance on the
+         * background thread is not closed even all the user controlled Realm instances are closed.
+         * This will result an `IllegalStateException`. See issue
+         * https://github.com/realm/realm-java/issues/5416 for more details.
+         *
+         * @param configuration a [RealmConfiguration].
+         * @return `false` if the Realm file could not be deleted. Temporary files deletion failure
+         * won't impact the return value. All of the failing file deletions will be logged.
+         * @throws IllegalStateException if there are open Realm instances on other threads or other
+         * processes.
+         */
+        fun deleteRealm(configuration: RealmConfiguration): Boolean =
+            RealmInterop.realm_delete_files(configuration.path)
     }
 
     /**

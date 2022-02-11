@@ -162,6 +162,19 @@ actual object RealmInterop {
         realmc.realm_close((realm as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_delete_files(path: String): Boolean {
+        val deleted = booleanArrayOf(false)
+        realmc.realm_delete_files(path, deleted)
+
+        // TODO error handling
+        if (!deleted[0]) {
+            throw IllegalStateException("It's not allowed to delete the file associated with an open Realm. " +
+                "Remember to call 'close()' on all the instances of the Realm before deleting its file: "
+                + path);
+        }
+        return deleted[0]
+    }
+
     actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
         return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeValue.toLong())
     }

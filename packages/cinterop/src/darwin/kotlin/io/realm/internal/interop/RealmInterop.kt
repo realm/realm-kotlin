@@ -19,7 +19,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.propertyInfo
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -383,6 +382,16 @@ actual object RealmInterop {
 
     actual fun realm_close(realm: NativePointer) {
         checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
+    }
+
+    actual fun realm_delete_files(path: String): Boolean {
+        memScoped {
+            val deleted = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_delete_files(path, deleted.ptr)
+            )
+            return deleted.value
+        }
     }
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {

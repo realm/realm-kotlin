@@ -40,6 +40,9 @@ kotlin {
                 // for now, but ideally they should go to the compiler plugin tests.
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+
+                // For filesystem operations
+                implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }
 
