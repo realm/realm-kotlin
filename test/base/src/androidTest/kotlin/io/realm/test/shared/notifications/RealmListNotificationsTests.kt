@@ -101,195 +101,8 @@ class RealmListNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun asFlow() {
-        val dataSet = OBJECT_VALUES
-
-        val container = realm.writeBlocking {
-            // Create an empty container with empty lists
-            copyToRealm(RealmListContainer())
-        }
-
-        runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
-            val observer = async {
-                container.objectListField
-                    .asFlow()
-                    .collect { flowList ->
-                        channel.send(flowList)
-                    }
-            }
-
-            // Assertion after empty list is emitted
-            channel.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-
-                assertNotNull(listChange.list)
-                assertEquals(0, listChange.list.size)
-            }
-
-            // Trigger update
-            realm.writeBlocking {
-                val queriedContainer = findLatest(container)
-                val queriedList = queriedContainer!!.objectListField
-                queriedList.addAll(dataSet)
-            }
-
-            // Assertion after list is updated
-            channel.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
-
-                assertNotNull(listChange.list)
-                assertEquals(dataSet.size, listChange.list.size)
-            }
-
-            observer.cancel()
-            channel.close()
-        }
-    }
-
-    @Test
-    override fun cancelAsFlow() {
-        runBlocking {
-            // Freeze values since native complains if we reference a package-level defined variable
-            // inside a write block
-            val values = OBJECT_VALUES.freeze()
-            val container = realm.write {
-                copyToRealm(RealmListContainer())
-            }
-            val channel1 = Channel<ListChange<RealmList<*>>>(1)
-            val channel2 = Channel<ListChange<RealmList<*>>>(1)
-            val observer1 = async {
-                container.objectListField
-                    .asFlow()
-                    .collect { flowList ->
-                        channel1.trySend(flowList)
-                    }
-            }
-            val observer2 = async {
-                container.objectListField
-                    .asFlow()
-                    .collect { flowList ->
-                        channel2.trySend(flowList)
-                    }
-            }
-
-            // Ignore first emission with empty lists
-            channel1.receive()
-            channel2.receive()
-
-            // Trigger an update
-            realm.write {
-                val queriedContainer = findLatest(container)
-                queriedContainer!!.objectListField.addAll(values)
-            }
-            assertEquals(OBJECT_VALUES.size, channel1.receive().list.size)
-            assertEquals(OBJECT_VALUES.size, channel2.receive().list.size)
-
-            // Cancel observer 1
-            observer1.cancel()
-
-            // Trigger another update
-            realm.write {
-                val queriedContainer = findLatest(container)
-                queriedContainer!!.objectListField
-                    .add(copyToRealm(RealmListContainer().apply { stringField = "C" }))
-            }
-
-            // Check channel 1 didn't receive the update
-            assertEquals(OBJECT_VALUES.size + 1, channel2.receive().list.size)
-            assertTrue(channel1.isEmpty)
-
-            observer2.cancel()
-            channel1.close()
-            channel2.close()
-        }
-    }
-
-    @Test
-    override fun deleteObservable() {
-        runBlocking {
-            // Freeze values since native complains if we reference a package-level defined variable
-            // inside a write block
-            val values = OBJECT_VALUES.freeze()
-            val channel1 = Channel<ListChange<RealmList<*>>>(capacity = 1)
-            val channel2 = Channel<Boolean>(capacity = 1)
-            val container = realm.write {
-                RealmListContainer()
-                    .apply {
-                        objectListField.addAll(values)
-                    }.let { container ->
-                        copyToRealm(container)
-                    }
-            }
-            val observer = async {
-                container.objectListField
-                    .asFlow()
-                    .onCompletion {
-                        // Signal completion
-                        channel2.send(true)
-                    }.collect { flowList ->
-                        channel1.send(flowList)
-                    }
-            }
-
-            // Assert container got populated correctly
-            channel1.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-
-                assertNotNull(listChange.list)
-                assertEquals(OBJECT_VALUES.size, listChange.list.size)
-            }
-
-            // Now delete owner
-            realm.write {
-                delete(findLatest(container)!!)
-            }
-
-            channel1.receive().let { listChange ->
-                assertIs<DeletedList<*>>(listChange)
-                assertTrue(listChange.list.isEmpty())
-            }
-            // Wait for flow completion
-            assertTrue(channel2.receive())
-
-            observer.cancel()
-            channel1.close()
-        }
-    }
-
-    @Test
-    @Ignore // FIXME Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out
-    override fun closeRealmInsideFlowThrows() {
-        TODO("Waiting for RealmList support")
-    }
-
-    @Test
-    override fun closingRealmDoesNotCancelFlows() {
-        runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
-            val container = realm.write {
-                copyToRealm(RealmListContainer())
-            }
-            val observer = async {
-                container.objectListField
-                    .asFlow()
-                    .collect { flowList ->
-                        channel.trySend(flowList)
-                    }
-                fail("Flow should not be canceled.")
-            }
-
-            assertTrue(channel.receive().list.isEmpty())
-
-            realm.close()
-            observer.cancel()
-            channel.close()
-        }
-    }
-
-    @Test
     @Suppress("LongMethod")
-    fun updatedListChangeSet() {
+    override fun asFlow() {
         val dataset = OBJECT_VALUES
         val dataset2 = OBJECT_VALUES2
         val dataset3 = OBJECT_VALUES3
@@ -478,6 +291,146 @@ class RealmListNotificationsTests : NotificationTests {
                 )
             }
 
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    override fun cancelAsFlow() {
+        runBlocking {
+            // Freeze values since native complains if we reference a package-level defined variable
+            // inside a write block
+            val values = OBJECT_VALUES.freeze()
+            val container = realm.write {
+                copyToRealm(RealmListContainer())
+            }
+            val channel1 = Channel<ListChange<RealmList<*>>>(1)
+            val channel2 = Channel<ListChange<RealmList<*>>>(1)
+            val observer1 = async {
+                container.objectListField
+                    .asFlow()
+                    .collect { flowList ->
+                        channel1.trySend(flowList)
+                    }
+            }
+            val observer2 = async {
+                container.objectListField
+                    .asFlow()
+                    .collect { flowList ->
+                        channel2.trySend(flowList)
+                    }
+            }
+
+            // Ignore first emission with empty lists
+            channel1.receive()
+            channel2.receive()
+
+            // Trigger an update
+            realm.write {
+                val queriedContainer = findLatest(container)
+                queriedContainer!!.objectListField.addAll(values)
+            }
+            assertEquals(OBJECT_VALUES.size, channel1.receive().list.size)
+            assertEquals(OBJECT_VALUES.size, channel2.receive().list.size)
+
+            // Cancel observer 1
+            observer1.cancel()
+
+            // Trigger another update
+            realm.write {
+                val queriedContainer = findLatest(container)
+                queriedContainer!!.objectListField
+                    .add(copyToRealm(RealmListContainer().apply { stringField = "C" }))
+            }
+
+            // Check channel 1 didn't receive the update
+            assertEquals(OBJECT_VALUES.size + 1, channel2.receive().list.size)
+            assertTrue(channel1.isEmpty)
+
+            observer2.cancel()
+            channel1.close()
+            channel2.close()
+        }
+    }
+
+    @Test
+    override fun deleteObservable() {
+        runBlocking {
+            // Freeze values since native complains if we reference a package-level defined variable
+            // inside a write block
+            val values = OBJECT_VALUES.freeze()
+            val channel1 = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel2 = Channel<Boolean>(capacity = 1)
+            val container = realm.write {
+                RealmListContainer()
+                    .apply {
+                        objectListField.addAll(values)
+                    }.let { container ->
+                        copyToRealm(container)
+                    }
+            }
+            val observer = async {
+                container.objectListField
+                    .asFlow()
+                    .onCompletion {
+                        // Signal completion
+                        channel2.send(true)
+                    }.collect { flowList ->
+                        channel1.send(flowList)
+                    }
+            }
+
+            // Assert container got populated correctly
+            channel1.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(OBJECT_VALUES.size, listChange.list.size)
+            }
+
+            // Now delete owner
+            realm.write {
+                delete(findLatest(container)!!)
+            }
+
+            channel1.receive().let { listChange ->
+                assertIs<DeletedList<*>>(listChange)
+                assertTrue(listChange.list.isEmpty())
+            }
+            // Wait for flow completion
+            assertTrue(channel2.receive())
+
+            observer.cancel()
+            channel1.close()
+        }
+    }
+
+    @Test
+    @Ignore // FIXME Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out
+    override fun closeRealmInsideFlowThrows() {
+        TODO("Waiting for RealmList support")
+    }
+
+    @Test
+    override fun closingRealmDoesNotCancelFlows() {
+        runBlocking {
+            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val container = realm.write {
+                copyToRealm(RealmListContainer())
+            }
+            val observer = async {
+                container.objectListField
+                    .asFlow()
+                    .collect { flowList ->
+                        channel.trySend(flowList)
+                    }
+                fail("Flow should not be canceled.")
+            }
+
+            assertTrue(channel.receive().list.isEmpty())
+
+            realm.close()
             observer.cancel()
             channel.close()
         }
