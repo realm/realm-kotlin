@@ -31,7 +31,6 @@ internal class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbP
     override fun query(className: String, query: String, vararg args: Any?): RealmQuery<DynamicMutableRealmObject> =
             ObjectQuery(realmReference, className, DynamicMutableRealmObject::class, configuration.mediator, null, query, *args)
 
-
     override fun createObject(type: String): DynamicMutableRealmObject =
         create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type)
 
@@ -39,14 +38,11 @@ internal class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbP
         TODO("Not yet implemented")
     }
 
-//    override fun createEmbeddedObject(type: String, parent: DynamicRealmObject, parentProperty: String) {
-//        TODO("Not yet implemented")
-//    }
-
     override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {
-        TODO("Not yet implemented")
+        return (obj as RealmObjectInternal).thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?
     }
 
+    // FIXME Do we need this
 //    override fun cancelWrite() {
 //        TODO("Not yet implemented")
 //    }

@@ -78,10 +78,12 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     }
 
     override fun thaw(liveRealm: RealmReference): RealmObjectInternal? {
-        @Suppress("UNCHECKED_CAST")
-        val type: KClass<out RealmObject> = this::class
+        return thaw(liveRealm, this::class)
+    }
+
+    fun thaw(liveRealm: RealmReference, clazz: KClass<out RealmObject>): RealmObjectInternal? {
         val mediator = `$realm$Mediator`!!
-        val managedModel = mediator.createInstanceOf(type)
+        val managedModel = mediator.createInstanceOf(clazz)
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
             @Suppress("UNCHECKED_CAST")

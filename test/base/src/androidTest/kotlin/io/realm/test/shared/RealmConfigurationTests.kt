@@ -291,6 +291,11 @@ class RealmConfigurationTests {
     }
 
     @Test
+    fun migration() {
+        // FIXME
+    }
+
+    @Test
     fun defaultEncryptionKey() {
         val config = RealmConfiguration.with(schema = setOf(Sample::class))
         assertNull(config.encryptionKey)

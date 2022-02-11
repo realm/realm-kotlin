@@ -16,50 +16,30 @@
 
 package io.realm
 
+sealed interface RealmMigration
+// FIXME DOC
+// FIXME Should this be inner class of AutomaticSchemaMigration?
 interface DataMigrationContext {
     val oldRealm : DynamicRealm
     val newRealm : DynamicMutableRealm
 }
 
-//interface ManualMigration: Migration {
-//    val realm: SuperDynamicRealm // We can change the schema
-//}
-
-sealed interface RealmMigration
-// FIXME DOC
-fun interface AutomaticRealmMigration: RealmMigration {
+fun interface AutomaticSchemaMigration: RealmMigration {
     fun migrate(migrationContext: DataMigrationContext)
+}
+// FIXME Only for convenience to allow deconstruction in lambda { (oldRealm, newRealm) -> }
+operator fun DataMigrationContext.component1() = this.oldRealm
+operator fun DataMigrationContext.component2() = this.newRealm
+fun DataMigrationContext.enumerate(className: String, block: (oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject) -> Unit) {
+    val find: RealmResults<out DynamicRealmObject> = oldRealm.query(className).find()
+    find.forEach {
+        // FIXME In which cases can we fail to resolv the object??
+        block(it, newRealm.findLatest(it) ?: error("Couldn't find object after migration"))
+    }
 }
 
 // TODO
 //fun interface ManualRealmMigration : Migration {
-//    fun migrate(migration: ManualMigration)
+//    fun migrate(migrationContext: FullMigrationContext )
 //}
 
-//fun test () {
-//    val config = RealmConfiguration.Builder()
-////            .automaticMigration
-////            .manualMigration
-//            .migration(AutomaticRealmMigration { migrationContext: DataMigrationContext ->
-//                migrationContext.enumerate()
-//            })
-//            .migration(ManualRealmMigration {  })
-////            .migration(AutomaticRealmMigration { old, new ->
-////            }
-//
-////            )
-////            .migration()
-////            { automatic: AutomaticSchemaMigration ->
-////
-////            }
-//            .build()
-//}
-//
-//
-//fun AutomaticRealmMigration.enumerate(block: (oldObject: RealmObject, newObject: RealmObject) -> Unit) {
-//    this
-//
-//}
-//fun DataMigrationContext.enumerate(block: (oldObject: RealmObject, newObject: RealmObject) ->) {
-//
-//}
