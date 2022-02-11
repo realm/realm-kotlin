@@ -1,4 +1,3 @@
-@file:Suppress("invisible_member", "invisible_reference")
 /*
  * Copyright 2022 Realm Inc.
  *
@@ -17,17 +16,41 @@
 
 package io.realm.test.shared
 
-import io.realm.*
+import io.realm.AutomaticSchemaMigration
+import io.realm.DynamicMutableRealm
+import io.realm.DynamicMutableRealmObject
+import io.realm.DynamicRealm
+import io.realm.DynamicRealmObject
+import io.realm.MutableRealm
+import io.realm.Realm
+import io.realm.RealmConfiguration
+import io.realm.RealmObject
+import io.realm.RealmResults
+import io.realm.component1
+import io.realm.component2
+import io.realm.delete
 import io.realm.entities.Sample
 import io.realm.entities.migration.SampleMigrated
+import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.schema.SchemaVariations
-import io.realm.internal.asDynamicRealm
+import io.realm.enumerate
+import io.realm.get
+import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.use
 import kotlinx.atomicfu.atomic
 import kotlin.reflect.KClass
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
+import kotlin.test.assertIsNot
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class RealmMigrationTests {
 
@@ -46,9 +69,9 @@ class RealmMigrationTests {
     @Test
     fun migration_smoketest() {
         val configuration =
-                RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
-                        .path("$tmpDir/default.realm")
-                        .build()
+            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
+                .path("$tmpDir/default.realm")
+                .build()
 
         Realm.open(configuration).use {
             it.writeBlocking {
@@ -57,32 +80,29 @@ class RealmMigrationTests {
         }
 
         val newConfiguration = RealmConfiguration.Builder(schema = setOf(SampleMigrated::class))
-                .path("$tmpDir/default.realm")
-                .schemaVersion(1)
-                .migration(AutomaticSchemaMigration { (oldRealm, newRealm) ->
-                    println("Migration: ${oldRealm.version().version}->${newRealm.version().version}")
-                    println("Old schema: ${oldRealm.schema()}")
-                    println("New schema: ${newRealm.schema()}")
-                    // FIXME Don't have access to schema version :|/
+            .path("$tmpDir/default.realm")
+            .schemaVersion(1)
+            .migration(AutomaticSchemaMigration { (oldRealm, newRealm) ->
+                // FIXME Don't have access to schema version :|/
 
-                    val query: RealmQuery<out DynamicRealmObject> = oldRealm.query(Sample::class.simpleName!!)
-                    val first: DynamicRealmObject? = query.first().find()
-                    assertNotNull(first)
-                    assertEquals("ASDF", first.get("stringField"))
+                val query: RealmQuery<out DynamicRealmObject> = oldRealm.query(Sample::class.simpleName!!)
+                val first: DynamicRealmObject? = query.first().find()
+                assertNotNull(first)
+                assertEquals("ASDF", first.get("stringField"))
 
-                    // FIXME Assert something on the query
-                    val newquery: RealmQuery<DynamicMutableRealmObject> = newRealm.query(SampleMigrated::class.simpleName!!)
+                // FIXME Assert something on the query
+                val newQuery: RealmQuery<DynamicMutableRealmObject> = newRealm.query(SampleMigrated::class.simpleName!!)
 
-                    // Create a new object
-                    val newObject = newRealm.createObject("SampleMigrated")
-                    assertEquals("", newObject.get("name"))
+                // Create a new object
+                val newObject = newRealm.createObject("SampleMigrated")
+                assertEquals("", newObject.get("name"))
 
-                    newObject.set("name", "MIGRATEDVALUE")
-                    newObject.set("self", newObject)
+                newObject.set("name", "MIGRATEDVALUE")
+                newObject.set("self", newObject)
 
-                    // FIXME Need primary key
-                })
-                .build()
+                // FIXME Need primary key
+            })
+            .build()
 
         // Open realm and trigger migration
         val newRealm = Realm.open(newConfiguration)
@@ -94,133 +114,35 @@ class RealmMigrationTests {
     }
 
     @Test
-    fun dynamicRealm() {
-        val configuration =
-                RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
-                        .path("$tmpDir/default.realm").build()
+    fun schema() {
+        migration(
+            initialSchema = setOf(SchemaVariations::class, Sample::class),
+            migratedSchema = setOf(SampleMigrated::class),
+            migration = { (oldRealm, newRealm) ->
+                assertIs<DynamicRealm>(oldRealm)
+                assertIsNot<DynamicMutableRealm>(oldRealm)
+                oldRealm.schema().let { oldSchema ->
+                    assertEquals(2, oldSchema.classes.size)
+                    assertNotNull(oldSchema["Sample"])
+                    assertNotNull(oldSchema["SchemaVariations"])
+                    assertNull(oldSchema["SampleMigrated"])
+                    // FIXME Assert version number
+                }
 
-        val realm = Realm.open(configuration)
-        realm.writeBlocking {
-            copyToRealm(Sample()).apply {
-                stringField = "Parent"
-                child = Sample().apply { stringField = "Child" }
-                stringListField.add("STRINGLISTELEMENT")
-                objectListField.add(Sample().apply { stringField = "SAMPLELISTELEMENT" })
-                objectListField[0]
+                assertIs<DynamicRealm>(newRealm)
+                assertIs<DynamicMutableRealm>(newRealm)
+                newRealm.schema().let { newSchema ->
+                    assertEquals(1, newSchema.classes.size)
+                    assertNull(newSchema["Sample"])
+                    assertNull(newSchema["SchemaVariations"])
+                    assertNotNull(newSchema["SampleMigrated"])
+                    // FIXME Assert version number
+                }
             }
-        }
-
-        val dynamicRealm = realm.asDynamicRealm()
-
-        // dynamic object query
-        val query: RealmQuery<out DynamicRealmObject> = dynamicRealm.query(Sample::class.simpleName!!)
-        val first: DynamicRealmObject? = query.first().find()
-        assertNotNull(first)
-
-        // type
-        assertEquals("Sample", first.type)
-
-        // get string
-        val actual = first.get("stringField", String::class)
-        assertEquals("Parent", actual)
-
-        // get object
-        val dynamicChild: DynamicRealmObject? = first.get("child")
-        assertNotNull(dynamicChild)
-        assertEquals("Child", dynamicChild.get("stringField"))
-
-        // string list
-        // FIXME Doesn't verify generic type
-        val stringList1: RealmList<String>? = first.get("stringListField")
-        // FIXME Do we need separate getList method
-//        val get: RealmList<String>? = first.getList("stringListField", String::class)
-//        val stringList2: RealmList<String>? = get
-
-        assertEquals("STRINGLISTELEMENT", stringList1!![0])
-        // FIXME Is it acceptable that this is a mutable list?
-        assertFailsWith<IllegalStateException> {
-            stringList1.add("another element")
-        }
-
-        // object list
-        val objectList: RealmList<DynamicRealmObject>? = first.get("objectListField")
-        val dynamicRealmObject = objectList!![0]
-        assertEquals("SAMPLELISTELEMENT", dynamicRealmObject.get("stringField"))
-
-        // FIXME Is this the right exception?
-        assertFailsWith<NotImplementedError> {
-            dynamicRealmObject.observe()
-        }
-
-        realm.close()
-
-        assertFailsWith<IllegalStateException> {
-            first.get<DynamicRealmObject>("stringField")
-        }.run {
-            // FIXME Seems like message for accessing objects on closed realm is wrong
-            assertTrue { message!!.contains("Cannot perform this operation on an invalid/deleted object") }
-        }
+        )
     }
 
-    // FIXME
-    fun iterate() {
-        // emurate
-        // migrate
-    }
-
-    // Dynamic readable
-    // - All types of objects get
-    // - Type
-    // - Fields
-    //
-    // Dynamic writeable
-    // - Create object
-    // - All types of objects set
-    //
-    // Migration
-    // - schema version
-
-    @Test
-    fun migration() {
-        val migrated = atomic(false)
-        val configuration =
-                RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
-                        .path("$tmpDir/default.realm")
-                        .build()
-        Realm.open(configuration).close()
-
-        val newConfiguration = RealmConfiguration.Builder(schema = setOf(SampleMigrated::class))
-                .path("$tmpDir/default.realm")
-                .schemaVersion(1)
-                .migration(AutomaticSchemaMigration { (oldRealm, newRealm) ->
-                    assertIs<DynamicRealm>(oldRealm)
-                    assertIsNot<DynamicMutableRealm>(oldRealm)
-                    oldRealm.schema().let { oldSchema ->
-                        assertEquals(2, oldSchema.classes.size)
-                        assertNotNull(oldSchema["Sample"])
-                        assertNotNull(oldSchema["SchemaVariations"])
-                        assertNull(oldSchema["SampleMigrated"])
-                        // FIXME Assert version number
-                    }
-
-                    assertIs<DynamicRealm>(newRealm)
-                    assertIs<DynamicMutableRealm>(newRealm)
-                    newRealm.schema().let { newSchema ->
-                        assertEquals(1, newSchema.classes.size)
-                        assertNull(newSchema["Sample"])
-                        assertNull(newSchema["SchemaVariations"])
-                        assertNotNull(newSchema["SampleMigrated"])
-                        // FIXME Assert version number
-                    }
-                    migrated.value = true
-                })
-                .build()
-        Realm.open(newConfiguration).close()
-
-        assertTrue(migrated.value)
-    }
-
-    // TODO Test all schema modifications (theoretically test core behavior, so post poned for now)
+    // TODO Test all schema modifications (theoretically test core behavior, so postponed for now)
     //  - Keep existing class
     //  - Add class
     //  - Remove class
@@ -228,54 +150,69 @@ class RealmMigrationTests {
     //    - Add property
     //    - Remove property
     //    - Rename (remove+add with different type)
-    //    - Change property atttributes (is this technically a remove and add?)
+    //    - Change property attributes (is this technically a remove and add?)
     //      - Nullability
     //      - Primary key
     //      - Index
 
     @Test
     fun create() {
+        val value = "MIGRATED_NAME"
         migration(
-                initialSchema = setOf(Sample::class),
-                migratedSchema = setOf(SampleMigrated::class),
-                migration = { (oldRealm, newRealm) -> newRealm.createObject("SampleMigrated").set("name", "MIGRATEDNAME") }
+            initialSchema = setOf(Sample::class),
+            migratedSchema = setOf(SampleMigrated::class),
+            migration = { (oldRealm, newRealm) -> newRealm.createObject("SampleMigrated").set("name", value) }
         ).use {
-            assertEquals("MIGRATEDNAME", it.query<SampleMigrated>().find().first().name)
+            assertEquals(value, it.query<SampleMigrated>().find().first().name)
         }
     }
 
     @Test
     fun createPrimaryKey() {
-        TODO()
+        val primaryKey = "PRIMARY_KEY"
+        migration(
+            initialSchema = setOf(Sample::class),
+            migratedSchema = setOf(PrimaryKeyString::class),
+            migration = { (oldRealm, newRealm) -> newRealm.createObject("PrimaryKeyString", primaryKey) }
+        ).use {
+            assertEquals(primaryKey, it.query<PrimaryKeyString>().find().first().primaryKey)
+        }
     }
-    // createObject_withNullStringPrimaryKey
-    // createObject_withNullBytePrimaryKey
-    // createObject_withNullShortPrimaryKey
-    // ... all other types
-    // createObject_illegalPrimaryKeyValue
-    // createObject_absentPrimaryKeyThrows
 
     @Test
     fun query() {
-        TODO()
-    }
+        migration(
+            initialSchema = setOf(Sample::class),
+            initialData = {
+                for (i in 0..9) {
+                    copyToRealm(Sample().apply { intField = i % 2 })
+                }
+            },
+            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
+            // FIXME Can we get this to have the DataMigrationContext as receiver
+            migration = {
+                val oldSamples: RealmResults<out DynamicRealmObject> = it.oldRealm.query("Sample", "intField = 0").find()
+                assertEquals(5, oldSamples.size)
+                oldSamples.forEach { assertEquals(0, it.get<Long>("intField")) }
 
-    // Non existing class throws
-    // Non existing property throws
-    // asFlow??
-    // Descriptors. Sort, distinct, order
+                val newSamples: RealmResults<out DynamicRealmObject> = it.newRealm.query("Sample", "intField = 0").find()
+                assertEquals(5, newSamples.size)
+                newSamples.forEach { assertEquals(0, it.get<Long>("intField")) }
+            }
+        ).close()
+    }
 
     @Test
     fun create_unknownClassFails() {
         migration(
-                initialSchema = setOf(Sample::class),
-                migratedSchema = setOf(SampleMigrated::class),
-                migration = { (oldRealm, newRealm) ->
-                    // FIXME Should be InvalidArgumentException
-                    assertFailsWith<java.lang.IllegalStateException> {
-                        newRealm.createObject("Sample")
-                    }
+            initialSchema = setOf(Sample::class),
+            migratedSchema = setOf(SampleMigrated::class),
+            migration = { (oldRealm, newRealm) ->
+                // FIXME Should be InvalidArgumentException
+                assertFailsWith<java.lang.IllegalStateException> {
+                    newRealm.createObject("Sample")
                 }
+            }
         ).close()
     }
 
@@ -284,64 +221,159 @@ class RealmMigrationTests {
         val initialValue = "INITIAL_VALUE"
         val migratedValue = "MIGRATED_VALUE"
         migration(
-                initialSchema = setOf(Sample::class),
-                initialData = { copyToRealm(Sample().apply { stringField = initialValue }) },
-                migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-                // FIXME Can we get this to have the DataMigrationContext as receiver
-                migration = {
-                    it.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject ->
-                        assertEquals(initialValue, oldObject.get("stringField"))
-                        assertEquals(initialValue, newObject.get("stringField"))
-                        newObject.set("stringField", migratedValue)
-                    }
+            initialSchema = setOf(Sample::class),
+            initialData = { copyToRealm(Sample().apply { stringField = initialValue }) },
+            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
+            // FIXME Can we get this to have the DataMigrationContext as receiver
+            migration = {
+                it.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject ->
+                    assertEquals(initialValue, oldObject.get("stringField"))
+                    assertEquals(initialValue, newObject.get("stringField"))
+                    newObject.set("stringField", migratedValue)
                 }
+            }
         ).use {
             assertEquals(migratedValue, it.query<io.realm.entities.migration.Sample>().find().first().stringField)
         }
     }
 
     @Test
-    fun delete() {
+    fun enumerate_throwsOnInvalidName() {
+        val initialValue = "INITIAL_VALUE"
         migration(
-                initialSchema = setOf(Sample::class),
-                initialData = {
-                    for (i in 0..10) {
-                        copyToRealm(Sample().apply { intField = i%2 })
-                    }
-                },
-                migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-                // FIXME Can we get this to have the DataMigrationContext as receiver
-                migration = {
-                    it.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject ->
-                        if (newObject.get<Long>("intField") == 0L) {
-                            newObject.delete()
-                        }
+            initialSchema = setOf(Sample::class),
+            initialData = { copyToRealm(Sample().apply { stringField = initialValue }) },
+            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
+            // FIXME Can we get this to have the DataMigrationContext as receiver
+            migration = {
+                assertFailsWith<IllegalArgumentException> {
+                    it.enumerate("NON_EXISTING_CLASS") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject ->
                     }
                 }
+            }
+        ).close()
+    }
+
+    @Test
+    fun delete() {
+        migration(
+            initialSchema = setOf(Sample::class),
+            initialData = {
+                for (i in 0..9) {
+                    copyToRealm(Sample().apply { intField = i % 2 })
+                }
+            },
+            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
+            // FIXME Can we get this to have the DataMigrationContext as receiver
+            migration = {
+                it.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject ->
+                    if (newObject.get<Long>("intField") == 0L) {
+                        newObject.delete()
+                    }
+                }
+            }
         ).use {
             val samples = it.query<io.realm.entities.migration.Sample>().find()
             assertEquals(5, samples.size)
             samples.forEach { assertEquals(1, it.intField) }
         }
     }
-    // Single object
-    // All of one type? Possible through query
 
-    // Cancelling
-    // Threading
+    @Test
+    fun deleteAll() {
+        migration(
+            initialSchema = setOf(Sample::class),
+            initialData = {
+                for (i in 0..9) {
+                    copyToRealm(Sample().apply { intField = i % 2 })
+                }
+            },
+            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
+            // FIXME Can we get this to have the DataMigrationContext as receiver
+            migration = {
+                val samples = it.newRealm.query("Sample").find()
+                assertEquals(10, samples.size)
+                samples.delete()
+            }
+        ).use {
+            val samples = it.query<io.realm.entities.migration.Sample>().find()
+            assertEquals(0, samples.size)
+        }
+    }
 
-    // Migration errors
-    // - Missing migration block when schema is updated
-    // - Version mismatch
-    // - Duplicate primary keys
-    // -
+    @Test
+    fun migrationError_throwingCausesMigrationToFail() {
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path("$tmpDir/default.realm")
+            .build()
+        Realm.open(configuration).close()
 
-    private fun migration(initialSchema: Set<KClass<out RealmObject>>, migratedSchema: Set<KClass<out RealmObject>>, migration: AutomaticSchemaMigration, initialData: MutableRealm.() -> Unit = {}) : Realm {
+        val newConfiguration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
+            .path("$tmpDir/default.realm")
+            .schemaVersion(1)
+            .migration(AutomaticSchemaMigration {
+                throw RuntimeException("User error")
+            })
+            .build()
+
+        // FIXME Wrong exception
+        assertFailsWith<IllegalArgumentException> {
+            Realm.open(newConfiguration)
+        }
+    }
+
+    @Test
+    fun migrationError_throwsIfVersionIsNotUpdated() {
+        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .path("$tmpDir/default.realm")
+            .build()
+        Realm.open(configuration).close()
+
+        val newConfiguration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
+            .path("$tmpDir/default.realm")
+            .migration(AutomaticSchemaMigration {  })
+            .build()
+
+        assertFailsWith<java.lang.IllegalStateException> {
+            Realm.open(newConfiguration)
+        }
+    }
+
+    @Test
+    fun migrationError_throwsOnDuplicatePrimaryKey() {
+        val configuration = RealmConfiguration.Builder(schema = setOf(PrimaryKeyString::class))
+            .path("$tmpDir/default.realm")
+            .build()
+        Realm.open(configuration).use {
+            it.writeBlocking {
+                copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY1" })
+                copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY2" })
+            }
+        }
+
+        val newConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class))
+            .path("$tmpDir/default.realm")
+            .schemaVersion(1)
+            .migration(AutomaticSchemaMigration {
+                it.enumerate("PrimaryKeyString") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject ->
+                    newObject.set("primaryKey", "PRIMARY_KEY")
+                }
+            })
+            .build()
+
+        assertFailsWith<java.lang.IllegalStateException> {
+            Realm.open(newConfiguration)
+        }.let {
+            it.message!!.contains("Primary key property 'class_PrimaryKeyString.primaryKey' has duplicate values after migration.")
+        }
+    }
+
+    private fun migration(initialSchema: Set<KClass<out RealmObject>>, migratedSchema: Set<KClass<out RealmObject>>, migration: AutomaticSchemaMigration, initialData: MutableRealm.() -> Unit = {}): Realm {
         val migrated = atomic(false)
         val configuration =
-                RealmConfiguration.Builder(schema = initialSchema)
-                        .path("$tmpDir/default.realm")
-                        .build()
+            RealmConfiguration.Builder(schema = initialSchema)
+                .path("$tmpDir/default.realm")
+                .build()
         Realm.open(configuration).use {
             it.writeBlocking {
                 initialData()
@@ -349,14 +381,14 @@ class RealmMigrationTests {
         }
 
         val newConfiguration = RealmConfiguration.Builder(schema = migratedSchema)
-                .path("$tmpDir/default.realm")
-                .schemaVersion(1)
-                .migration(AutomaticSchemaMigration {
-                    migration.migrate(it)
-                    migrated.value = true
+            .path("$tmpDir/default.realm")
+            .schemaVersion(1)
+            .migration(AutomaticSchemaMigration {
+                migration.migrate(it)
+                migrated.value = true
 
-                })
-                .build()
+            })
+            .build()
         val migratedRealm = Realm.open(newConfiguration)
         assertTrue { migrated.value }
         return migratedRealm

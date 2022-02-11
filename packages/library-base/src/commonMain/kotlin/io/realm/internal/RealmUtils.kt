@@ -105,19 +105,19 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
 }
 
 internal fun <T : RealmObject> create(
+        mediator: Mediator,
+        realm: RealmReference,
+        type: KClass<T>,
+        primaryKey: Any?
+): T = create(mediator, realm, type, mediator.companionOf(type).`$realm$className`, primaryKey)
+
+internal fun <T : RealmObject> create(
     mediator: Mediator,
     realm: RealmReference,
     type: KClass<T>,
-    companion: RealmObjectCompanion,
+    className: String,
     primaryKey: Any?
 ): T {
-    // FIXME Does not work with obfuscation. We should probably supply the static meta data through
-    //  the companion (accessible through schema) or might even have a cached version of the key in
-    //  some runtime container of an open realm.
-    //  https://github.com/realm/realm-kotlin/issues/85
-    //  https://github.com/realm/realm-kotlin/issues/105
-    // Should use companion.className
-    val className = type.simpleName ?: error("Cannot get class name")
     try {
         val key = RealmInterop.realm_find_class(realm.dbPointer, className)
         // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
@@ -129,7 +129,7 @@ internal fun <T : RealmObject> create(
             existingPrimaryKeyObject?.let {
                 throw IllegalArgumentException("Cannot create object with existing primary key")
             }
-            val managedModel = companion.`$realm$newInstance`() as RealmObjectInternal
+            val managedModel = mediator.createInstanceOf(type)
             return managedModel.manage(
                 realm,
                 mediator,
@@ -169,7 +169,6 @@ internal fun <T> copyToRealm(
                     mediator,
                     realmPointer,
                     instance::class,
-                    companion,
                     (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance)
                 )
             } ?: create(mediator, realmPointer, instance::class)

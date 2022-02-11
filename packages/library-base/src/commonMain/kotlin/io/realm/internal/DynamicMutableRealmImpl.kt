@@ -34,20 +34,11 @@ internal class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbP
     override fun createObject(type: String): DynamicMutableRealmObject =
         create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type)
 
-    override fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject {
-        TODO("Not yet implemented")
-    }
+    override fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject =
+        create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type, primaryKey)
 
     override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {
         return (obj as RealmObjectInternal).thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?
     }
 
-    // FIXME Do we need this
-//    override fun cancelWrite() {
-//        TODO("Not yet implemented")
-//    }
-
-    override fun delete(obj: RealmObject) {
-        TODO("Not yet implemented")
-    }
 }

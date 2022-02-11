@@ -20,13 +20,12 @@ import io.realm.query.RealmQuery
 
 interface DynamicMutableRealm: DynamicRealm {
 
-    override fun query(clazz: String, query: String, vararg args: Any?): RealmQuery<DynamicMutableRealmObject>
-
     fun createObject(type: String): DynamicMutableRealmObject
 
     fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
 
+    override fun query(clazz: String, query: String, vararg args: Any?): RealmQuery<DynamicMutableRealmObject>
+
     fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
 
-    fun delete(obj: RealmObject)
 }
