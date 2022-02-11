@@ -121,16 +121,6 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun `multiple constructors in model definition`() {
-        val inputs = Files("/multiple_ctor")
-
-        val result = compile(inputs)
-
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-        inputs.assertGeneratedIR()
-    }
-
-    @Test
     @Suppress("LongMethod")
     fun `synthetic method generated`() {
         val inputs = Files("/sample")
