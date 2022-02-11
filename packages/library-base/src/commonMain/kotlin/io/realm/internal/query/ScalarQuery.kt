@@ -31,6 +31,7 @@ import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.notifications.ListChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
@@ -53,7 +54,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val queryPointer: NativePointer,
     protected val mediator: Mediator,
     protected val clazz: KClass<E>
-) : Thawable<Observable<RealmResultsImpl<E>, RealmResultsImpl<E>>> {
+) : Thawable<Observable<RealmResultsImpl<E>, ListChange<RealmResultsImpl<E>>>> {
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
@@ -83,7 +84,7 @@ internal class CountQuery<E : RealmObject> constructor(
         return realmReference.owner
             .registerObserver(this)
             .map {
-                it.size.toLong()
+                it.list.size.toLong()
             }.distinctUntilChanged()
     }
 }
@@ -109,7 +110,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.nativePointer) }
+            .map { findFromResults(it.list.nativePointer) }
             .distinctUntilChanged()
     }
 
@@ -179,7 +180,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.nativePointer) }
+            .map { findFromResults(it.list.nativePointer) }
             .distinctUntilChanged()
     }
 

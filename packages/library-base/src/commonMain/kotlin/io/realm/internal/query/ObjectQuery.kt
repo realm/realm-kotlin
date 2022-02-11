@@ -18,6 +18,7 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.internal.Flowable
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
 import io.realm.internal.RealmReference
@@ -30,6 +31,7 @@ import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
+import io.realm.notifications.ListChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
@@ -46,7 +48,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
-) : RealmQuery<E>, Thawable<Observable<RealmResultsImpl<E>, RealmResultsImpl<E>>> {
+) : RealmQuery<E>, Thawable<Observable<RealmResultsImpl<E>, ListChange<RealmResultsImpl<E>>>>, Flowable<ListChange<RealmResults<E>>> {
 
     private val queryPointer: NativePointer = when {
         composedQueryPointer != null -> composedQueryPointer
@@ -144,7 +146,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
         thawResults(liveRealm, resultsPointer, clazz, mediator)
 
-    override fun asFlow(): Flow<RealmResults<E>> {
+    override fun asFlow(): Flow<ListChange<RealmResults<E>>> {
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)

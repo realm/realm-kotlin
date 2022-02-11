@@ -19,9 +19,7 @@ package io.realm.internal
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.internal.interop.ArrayAccessor
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.CollectionChangeSetBuilder
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
@@ -30,8 +28,6 @@ import io.realm.internal.interop.Timestamp
 import io.realm.notifications.DeletedListImpl
 import io.realm.notifications.InitialListImpl
 import io.realm.notifications.ListChange
-import io.realm.notifications.UpdatedList
-import io.realm.notifications.UpdatedListImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -152,9 +148,7 @@ internal class ManagedRealmList<E>(
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            val builder = UpdatedListBuilder(frozenList)
-            RealmInterop.realm_collection_changes_get_changes(change, builder)
-            RealmInterop.realm_collection_changes_get_ranges(change, builder)
+            val builder = UpdatedListBuilderImpl(frozenList, change)
 
             if (builder.isEmpty()) {
                 channel.trySend(InitialListImpl(frozenList))
@@ -173,34 +167,6 @@ internal class ManagedRealmList<E>(
     internal fun isValid(): Boolean {
         return RealmInterop.realm_list_is_valid(nativePointer)
     }
-}
-
-internal class UpdatedListBuilder<T : List<*>>(val list: T) :
-    CollectionChangeSetBuilder<UpdatedList<T>, ListChange.Range>() {
-
-    override fun initIndicesArray(size: Int, indicesAccessor: ArrayAccessor): IntArray =
-        IntArray(size) { index -> indicesAccessor(index) }
-
-    override fun initRangesArray(
-        size: Int,
-        fromAccessor: ArrayAccessor,
-        toAccessor: ArrayAccessor
-    ): Array<ListChange.Range> =
-        Array(size) { index ->
-            val from: Int = fromAccessor(index)
-            val to: Int = toAccessor(index)
-            ListChange.Range(from, to - from)
-        }
-
-    override fun build(): UpdatedList<T> = UpdatedListImpl(
-        list = list,
-        deletions = deletionIndices,
-        insertions = insertionIndices,
-        changes = modificationIndicesAfter,
-        deletionRanges = deletionRanges,
-        insertionRanges = insertionRanges,
-        changeRanges = modificationRangesAfter
-    )
 }
 
 /**

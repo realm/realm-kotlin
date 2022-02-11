@@ -9,6 +9,7 @@ import io.realm.internal.Thawable
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.link
+import io.realm.notifications.ListChange
 import io.realm.query.RealmSingleQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -19,7 +20,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<E>,
     private val mediator: Mediator
-) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>, RealmResultsImpl<E>>> {
+) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>, ListChange<RealmResultsImpl<E>>>> {
 
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
@@ -33,7 +34,7 @@ internal class SingleQuery<E : RealmObject> constructor(
         realmReference.checkClosed()
         return realmReference.owner.registerObserver(this)
             .map { results ->
-                results.firstOrNull()
+                results.list.firstOrNull()
             }
     }
 
