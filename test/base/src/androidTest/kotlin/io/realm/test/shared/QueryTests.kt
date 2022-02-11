@@ -24,7 +24,9 @@ import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
+import io.realm.notifications.InitialList
 import io.realm.notifications.ListChange
+import io.realm.notifications.UpdatedList
 import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.query.Sort
@@ -50,6 +52,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -189,7 +192,10 @@ class QueryTests {
                     }
             }
 
-            assertTrue(channel.receive().list.isEmpty())
+            channel.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+                assertTrue(listChange.list.isEmpty())
+            }
 
             observer.cancel()
             channel.close()
@@ -210,13 +216,20 @@ class QueryTests {
                     }
             }
 
-            assertTrue(channel.receive().list.isEmpty())
+            channel.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+                assertTrue(listChange.list.isEmpty())
+            }
 
             realm.writeBlocking {
                 copyToRealm(QuerySample())
             }
 
-            assertEquals(1, channel.receive().list.size)
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+                assertEquals(1, listChange.list.size)
+            }
+
             observer.cancel()
             channel.close()
         }
@@ -240,7 +253,10 @@ class QueryTests {
                     }
             }
 
-            assertEquals(1, channel.receive().list.size)
+            channel.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+                assertEquals(1, listChange.list.size)
+            }
 
             realm.writeBlocking {
                 query<QuerySample>()
@@ -248,7 +264,10 @@ class QueryTests {
                     .delete()
             }
 
-            assertTrue(channel.receive().list.isEmpty())
+            channel.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+                assertTrue(listChange.list.isEmpty())
+            }
 
             observer.cancel()
             channel.close()

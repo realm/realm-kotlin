@@ -21,14 +21,20 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.entities.Sample
+import io.realm.entities.list.RealmListContainer
+import io.realm.notifications.InitialList
 import io.realm.notifications.ListChange
+import io.realm.notifications.UpdatedList
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.NotificationTests
+import io.realm.test.assertIsChangeSet
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.shared.OBJECT_VALUES
+import io.realm.test.shared.OBJECT_VALUES2
+import io.realm.test.shared.OBJECT_VALUES3
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
@@ -36,6 +42,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -49,7 +56,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, RealmListContainer::class))
             .path(path = "$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }
@@ -73,30 +80,189 @@ class RealmResultsNotificationsTests : NotificationTests {
                         c.trySend(it)
                     }
             }
-            val initialElement: ListChange<RealmResults<Sample>> = c.receive()
-            assertEquals(0, initialElement.list.size)
+
+            c.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+                assertTrue(listChange.list.isEmpty())
+            }
+
             observer.cancel()
             c.close()
         }
     }
 
     @Test
+    @Suppress("LongMethod")
     override fun asFlow() {
+        val dataset1 = OBJECT_VALUES
+        val dataset2 = OBJECT_VALUES2
+        val dataset3 = OBJECT_VALUES3
+
         runBlocking {
-            val c = Channel<Int>(capacity = 1)
+            val c = Channel<ListChange<RealmResults<*>>>(capacity = 1)
             val observer = async {
-                realm.query<Sample>()
+                realm.query<RealmListContainer>()
+                    .sort("stringField")
                     .asFlow()
-                    .filterNot {
-                        it.list.isEmpty()
-                    }.collect {
-                        c.trySend(it.list.size)
+                    .collect {
+                        c.trySend(it)
                     }
             }
-            realm.write {
-                copyToRealm(Sample().apply { stringField = "Foo" })
+
+            // Assertion after empty list is emitted
+            c.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(0, listChange.list.size)
             }
-            assertEquals(1, c.receive())
+
+            // Assert a single range is reported
+            //
+            // objectListField = [C, D, E, F]
+            realm.writeBlocking {
+                dataset2.forEach {
+                    copyToRealm(it)
+                }
+            }
+
+            c.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset2.size, listChange.list.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>),
+                    insertRanges = arrayOf(
+                        ListChange.Range(0, 4)
+                    )
+                )
+            }
+
+            // Assert multiple ranges are reported
+            //
+            // objectListField = [<A, B>, C, D, E, F, <G, H>]
+            realm.writeBlocking {
+                (dataset1 + dataset3).forEach {
+                    copyToRealm(it)
+                }
+            }
+
+            c.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset1.size + dataset2.size + dataset3.size, listChange.list.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>),
+                    insertRanges = arrayOf(
+                        ListChange.Range(0, 2),
+                        ListChange.Range(6, 2)
+                    )
+                )
+            }
+
+            // Assert multiple ranges are deleted
+            //
+            // objectListField = [<A, B>, C, D, E, F, <G, H>]
+            realm.writeBlocking {
+                (dataset1 + dataset3).forEach { element ->
+                    delete(
+                        query<RealmListContainer>("stringField = $0", element.stringField)
+                            .first()
+                            .find()!!
+                    )
+                }
+            }
+
+            c.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset2.size, listChange.list.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>),
+                    deletionRanges = arrayOf(
+                        ListChange.Range(0, 2),
+                        ListChange.Range(6, 2)
+                    )
+                )
+            }
+
+            // Assert a single range is deleted
+            //
+            // objectListField = [<A, B>]
+            realm.writeBlocking {
+                dataset2.forEach { element ->
+                    delete(
+                        query<RealmListContainer>("stringField = $0", element.stringField)
+                            .first()
+                            .find()!!
+                    )
+                }
+            }
+
+            c.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertTrue(listChange.list.isEmpty())
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>),
+                    deletionRanges = arrayOf(
+                        ListChange.Range(0, 4)
+                    )
+                )
+            }
+
+            // Add some values to change
+            //
+            // objectListField = [<C, D, E, F>]
+            realm.writeBlocking {
+                dataset2.forEach {
+                    copyToRealm(it)
+                }
+            }
+
+            c.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset2.size, listChange.list.size)
+            }
+
+            // Change contents of two ranges of values
+            //
+            // objectListField = [<A>, <B>, E, <F>]
+            realm.writeBlocking {
+                query<RealmListContainer>()
+                    .sort("stringField")
+                    .find { queriedList ->
+                        queriedList[0].stringField = "A"
+                        queriedList[1].stringField = "B"
+                        queriedList[3].stringField = "F"
+                    }
+            }
+
+            c.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+
+                assertNotNull(listChange.list)
+                assertEquals(dataset2.size, listChange.list.size)
+
+                assertIsChangeSet(
+                    (listChange as UpdatedList<*>),
+                    changesRanges = arrayOf(
+                        ListChange.Range(0, 2),
+                        ListChange.Range(3, 1),
+                    )
+                )
+            }
+
             observer.cancel()
             c.close()
         }
@@ -128,13 +294,23 @@ class RealmResultsNotificationsTests : NotificationTests {
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })
             }
-            assertEquals(1, c1.receive().list.size)
-            assertEquals(1, c2.receive().list.size)
+            c1.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+                assertEquals(1, listChange.list.size)
+            }
+            c2.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+                assertEquals(1, listChange.list.size)
+            }
+
             observer1.cancel()
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Baz" })
             }
-            assertEquals(2, c2.receive().list.size)
+            c2.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+                assertEquals(2, listChange.list.size)
+            }
             assertTrue(c1.isEmpty)
             observer2.cancel()
             c1.close()
@@ -160,7 +336,10 @@ class RealmResultsNotificationsTests : NotificationTests {
                         c.trySend(it)
                     }
             }
-            assertEquals(1, c.receive().list.size)
+            c.receive().let { listChange ->
+                assertIs<InitialList<*>>(listChange)
+                assertEquals(1, listChange.list.size)
+            }
             realm.write {
                 query<Sample>()
                     .first()
@@ -169,7 +348,10 @@ class RealmResultsNotificationsTests : NotificationTests {
                         delete(sample)
                     }
             }
-            assertEquals(0, c.receive().list.size)
+            c.receive().let { listChange ->
+                assertIs<UpdatedList<*>>(listChange)
+                assertTrue(listChange.list.isEmpty())
+            }
             observer.cancel()
             c.close()
         }
