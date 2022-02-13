@@ -119,6 +119,7 @@ std::string rlm_stdstr(realm_string_t val)
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_migration_func_t>(migration_callback);
     // FIXME When are we supposed to release this, or shouldn't we hold on to it
+    //  https://github.com/realm/realm-core/issues/5222
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
 }
 

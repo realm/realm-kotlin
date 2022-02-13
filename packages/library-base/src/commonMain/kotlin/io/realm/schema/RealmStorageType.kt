@@ -16,15 +16,19 @@
 
 package io.realm.schema
 
+import io.realm.RealmInstant
+import io.realm.RealmObject
+import kotlin.reflect.KClass
+
 /**
  * The various types that are used when storing the property values in the realm.
  */
-enum class RealmStorageType {
-    BOOL,
-    INT,
-    STRING,
-    OBJECT,
-    FLOAT,
-    DOUBLE,
-    TIMESTAMP;
+enum class RealmStorageType(val kClass: KClass<*>) {
+    BOOL(Boolean::class),
+    INT(Long::class),
+    STRING(String::class),
+    OBJECT(RealmObject::class),
+    FLOAT(Float::class),
+    DOUBLE(Double::class),
+    TIMESTAMP(RealmInstant::class);
 }

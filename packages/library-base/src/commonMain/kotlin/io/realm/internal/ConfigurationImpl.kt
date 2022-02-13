@@ -105,11 +105,10 @@ open class ConfigurationImpl constructor(
                         // If we don't start a read, then we cannot det the version
                         RealmInterop.realm_begin_read(oldRealm)
                         val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
-                        val context = object: DataMigrationContext {
+                        it.migrate(object : DataMigrationContext {
                             override val oldRealm: DynamicRealm = old
                             override val newRealm: DynamicMutableRealm = new
-                        }
-                        it.migrate(context)
+                        })
                         true
                     }
             }

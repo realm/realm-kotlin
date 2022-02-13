@@ -40,11 +40,7 @@ class DynamicMutableRealmObjectTests {
 
     }
 
-    // Dynamic readable
-    // - All types of objects get
-    // - Type
-    // - Fields
-    //
+    // - All types of objects set
 
 //    @Test
 //    fun create_throwsWithPrimaryKey() {
@@ -97,5 +93,11 @@ class DynamicMutableRealmObjectTests {
     // ... all other types
     // createObject_illegalPrimaryKeyValue
     // createObject_absentPrimaryKeyThrows
+
+    // setter_null
+    // setter_nullOnRequiredFieldsThrows
+    // typedSetter_null
+    // setObject_differentType
+    // setNull_changePrimaryKeyThrows
 
 }

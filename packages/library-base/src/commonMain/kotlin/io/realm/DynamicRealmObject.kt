@@ -27,6 +27,7 @@ interface DynamicRealmObject : RealmObject {
 
     // Maybe separate into getPrimitive, getObject, getList, get
     // This would make it easier to stay in the correct type setting (dynamic realm object, dynamic mutable realm object)
+    // FIXME We cannot catch T? here because KClass<T : Any>
     fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
     // We need a list variant to overcome issues with specifying the generic type of the collection
 //    fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
