@@ -97,3 +97,5 @@ class RealmCoreInvalidQueryStringException(message: String?) : RealmCoreExceptio
 class RealmCoreInvalidQueryException(message: String?) : RealmCoreException(message)
 // RLM_ERR_CALLBACK
 class RealmCoreCallbackException(message: String?) : RealmCoreException(message)
+// RLM_ERR_DELETE_OPENED_REALM
+class RealmCoreDeleteOpenRealmException(message: String?) : RealmCoreException(message)

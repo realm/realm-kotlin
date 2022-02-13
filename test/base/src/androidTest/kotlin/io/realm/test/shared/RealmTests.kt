@@ -50,6 +50,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
@@ -547,37 +548,47 @@ class RealmTests {
         }
     }
 
-    // @Test
-    // fun deleteRealm_failures() {
-    //     val OTHER_REALM_NAME = "yetAnotherRealm.realm"
-    //     val configA: RealmConfiguration = configFactory.createConfiguration()
-    //     val configB: RealmConfiguration = configFactory.createConfiguration(OTHER_REALM_NAME)
-    //
-    //     // This instance is already cached because of the setUp() method so this deletion should throw.
-    //     try {
-    //         Realm.deleteRealm(configA)
-    //         fail()
-    //     } catch (ignored: java.lang.IllegalStateException) {
-    //     }
-    //
-    //     // Creates a new Realm file.
-    //     val yetAnotherRealm: Realm = Realm.getInstance(configB)
-    //
-    //     // Deleting it should fail.
-    //     try {
-    //         Realm.deleteRealm(configB)
-    //         fail()
-    //     } catch (ignored: java.lang.IllegalStateException) {
-    //     }
-    //
-    //     // But now that we close it deletion should work.
-    //     yetAnotherRealm.close()
-    //     try {
-    //         Realm.deleteRealm(configB)
-    //     } catch (e: Exception) {
-    //         fail()
-    //     }
-    // }
+    @Test
+    fun deleteRealm_failures() {
+        // val tempDirA = PlatformUtils.createTempDir()
+        // val pathA = "$tempDirA/default.realm"
+        val configA = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            // .path(pathA)
+            .path("$tmpDir/default.realm")
+            .build()
+        val tempDirB = PlatformUtils.createTempDir()
+        val pathB = "$tempDirB/yetAnotherRealm.realm"
+        val configB = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .path(pathB)
+            .build()
+
+        // This instance is already cached because of the setUp() method so this deletion should throw.
+        try {
+            Realm.deleteRealm(configA)
+            fail("Should not reach this.")
+        } catch (ignored: IllegalStateException) {
+            // All good here
+        }
+
+        // Creates a new Realm file.
+        val yetAnotherRealm = Realm.open(configB)
+
+        // Deleting it should fail.
+        try {
+            Realm.deleteRealm(configB)
+            fail("Should not reach this.")
+        } catch (ignored: IllegalStateException) {
+            // All good here
+        }
+
+        // But now that we close it deletion should work.
+        yetAnotherRealm.close()
+        try {
+            Realm.deleteRealm(configB)
+        } catch (e: Exception) {
+            fail("Should not reach this.")
+        }
+    }
 
     @Suppress("invisible_reference")
     private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>

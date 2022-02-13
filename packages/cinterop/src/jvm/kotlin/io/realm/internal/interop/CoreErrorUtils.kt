@@ -60,6 +60,7 @@ object CoreErrorUtils {
             realm_errno_e.RLM_ERR_INVALID_QUERY_STRING -> RealmCoreInvalidQueryStringException(message)
             realm_errno_e.RLM_ERR_INVALID_QUERY -> RealmCoreInvalidQueryException(message)
             realm_errno_e.RLM_ERR_CALLBACK -> RealmCoreCallbackException(message)
+            realm_errno_e.RLM_ERR_DELETE_OPENED_REALM -> RealmCoreDeleteOpenRealmException(message)
             else -> RealmCoreUnknownException(message)
         }
     }

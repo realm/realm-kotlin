@@ -17,7 +17,9 @@ package io.realm
 
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmImpl
+import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.Constants
+import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
@@ -82,7 +84,14 @@ interface Realm : TypedRealm {
          * processes.
          */
         fun deleteRealm(configuration: RealmConfiguration): Boolean =
-            RealmInterop.realm_delete_files(configuration.path)
+            try {
+                RealmInterop.realm_delete_files(configuration.path)
+            } catch (exception: RealmCoreException) {
+                throw genericRealmCoreExceptionHandler(
+                    "Cannot delete Realm located at '${configuration.path}', did you close it before calling 'deleteRealm'?",
+                    exception
+                )
+            }
     }
 
     /**
