@@ -57,7 +57,6 @@ public class RealmSchemaTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
-                .log(LogLevel.DEBUG)
                 .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }

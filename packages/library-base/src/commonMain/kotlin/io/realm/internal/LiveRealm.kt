@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
      */
     internal val snapshot: FrozenRealmReference
         get() {
-            // Initialize a new snapshot that can be reused until cleared again onRealmChanged
+            // Initialize a new snapshot that can be reused until cleared again from onRealmChanged
             if (_snapshot.value == null) {
                 val snapshot = realmReference.snapshot(owner)
                 versionTracker.trackAndCloseExpiredReferences(snapshot)
