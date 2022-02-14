@@ -27,6 +27,8 @@ import io.realm.internal.interop.RealmCoreCrossTableLinkTargetException
 import io.realm.internal.interop.RealmCoreDeleteOpenRealmException
 import io.realm.internal.interop.RealmCoreDuplicatePrimaryKeyValueException
 import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmCoreFileAccessErrorException
+import io.realm.internal.interop.RealmCoreFilePermissionDeniedException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidArgumentException
 import io.realm.internal.interop.RealmCoreInvalidPathErrorException
@@ -260,6 +262,8 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreNotInATransactionException,
         is RealmCoreDeleteOpenRealmException,
         is RealmCoreDeleteOpenRealmException,
+        is RealmCoreFileAccessErrorException,
+        is RealmCoreFilePermissionDeniedException,
         is RealmCoreLogicException -> IllegalStateException("RealmCoreException ${cause.message} $message", cause)
         is RealmCoreNoneException,
         is RealmCoreUnknownException,
