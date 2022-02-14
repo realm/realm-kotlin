@@ -76,7 +76,7 @@ class ImportTests {
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
                 RealmInstant::class -> assertEquals(RealmInstant.fromEpochSeconds(100, 1000), managed.timestampField)
-                RealmObject::class -> assertEquals(null, managed.child)
+                RealmObject::class -> assertEquals(null, managed.nullableObject)
                 else -> error("Untested type: $type")
             }
         }
@@ -100,26 +100,26 @@ class ImportTests {
         val v1 = "Hello"
         val selfReferencingSample = Sample().apply {
             stringField = v1
-            child = this
+            nullableObject = this
         }
-        val root = Sample().apply { child = selfReferencingSample }
+        val root = Sample().apply { nullableObject = selfReferencingSample }
         val clone = realm.writeBlocking { copyToRealm(root) }
 
         assertNotNull(clone)
         val query = realm.query(Sample::class)
         assertEquals(2L, query.count().find())
         assertEquals(2, query.find().size)
-        val child = clone.child
+        val child = clone.nullableObject
         assertNotNull(child)
         assertNotNull(child.stringField)
         assertEquals(v1, child.stringField)
         // Verifying the self/cyclic reference by validating that the child (self reference) has
         // the same stringField value as the object. This will be safest verified when we have
         // support for primary keys (https://github.com/realm/realm-kotlin/issues/122)
-        assertEquals(child.stringField, child.child?.stringField)
+        assertEquals(child.stringField, child.nullableObject?.stringField)
         // Just another level down to see that we are going in cycles.
-        val child2 = child.child!!
-        assertEquals(child2.stringField, child2.child?.stringField)
+        val child2 = child.nullableObject!!
+        assertEquals(child2.stringField, child2.nullableObject?.stringField)
     }
 
     @Test
@@ -189,7 +189,7 @@ class ImportTests {
 
         val unmanaged = Sample().apply {
             stringField = v2
-            child = managed
+            nullableObject = managed
         }
 
         val importedRoot = realm.writeBlocking {
@@ -198,7 +198,7 @@ class ImportTests {
 
         assertEquals(2L, realm.query(Sample::class).count().find())
         assertEquals(v2, importedRoot.stringField)
-        assertEquals(v1, importedRoot.child?.stringField)
+        assertEquals(v1, importedRoot.nullableObject?.stringField)
     }
 
     @Test

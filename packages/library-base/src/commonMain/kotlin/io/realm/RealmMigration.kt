@@ -30,6 +30,7 @@ fun interface AutomaticSchemaMigration: RealmMigration {
 // FIXME Only for convenience to allow deconstruction in lambda { (oldRealm, newRealm) -> }
 operator fun DataMigrationContext.component1() = this.oldRealm
 operator fun DataMigrationContext.component2() = this.newRealm
+
 fun DataMigrationContext.enumerate(className: String, block: (oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject) -> Unit) {
     val find: RealmResults<out DynamicRealmObject> = oldRealm.query(className).find()
     find.forEach {

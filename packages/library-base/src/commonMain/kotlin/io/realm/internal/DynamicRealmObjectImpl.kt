@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.DynamicRealmObject
+import io.realm.RealmList
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.schema.ClassMetadata
 import kotlin.reflect.KClass
@@ -31,8 +32,20 @@ open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override var `$realm$Mediator`: Mediator? = null
     override var `$realm$metadata`: ClassMetadata? = null
 
-    override fun <T : Any> get(fieldName: String, clazz: KClass<T>): T? {
+    override fun <T : Any> get(fieldName: String, clazz: KClass<T>): T {
+        return RealmObjectHelper.get(this, clazz, fieldName)!! // Is it reasonable to just throw language null pointer error?
+    }
+
+    override fun <T : Any> getNullable(fieldName: String, clazz: KClass<T>): T? {
         return RealmObjectHelper.get(this, clazz, fieldName)
+    }
+
+    override fun <T : Any> getList(fieldName: String, clazz: KClass<T>): RealmList<T> {
+        return RealmObjectHelper.getList(this, fieldName, clazz) as RealmList<T>
+    }
+
+    override fun <T : Any> getListOfNullable(fieldName: String, clazz: KClass<T>): RealmList<T?> {
+        return RealmObjectHelper.getList(this, fieldName, clazz) as RealmList<T?>
     }
 
 }

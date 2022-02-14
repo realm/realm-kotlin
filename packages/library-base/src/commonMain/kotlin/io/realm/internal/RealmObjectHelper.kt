@@ -60,6 +60,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
+    // FIXME Why do we have a generic parameter on this?
     internal fun <R> getTimestamp(obj: RealmObjectInternal, col: String): RealmInstant? {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
@@ -229,20 +230,9 @@ internal object RealmObjectHelper {
     internal fun <R : Any> get(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
         @Suppress("UNCHECKED_CAST")
         return when(clazz) {
+            RealmInstant::class -> getTimestamp<R>(obj, propertyName)
             DynamicRealmObject::class -> getObject<DynamicRealmObject>(obj, propertyName)
-            RealmList::class -> {
-                val storageType: RealmStorageType = RealmStorageTypeImpl.fromCorePropertyType(obj.`$realm$metadata`?.info(propertyName)?.type!!)
-                val type = when(storageType) {
-                    RealmStorageType.BOOL -> Boolean::class
-                    RealmStorageType.INT -> Long::class
-                    RealmStorageType.STRING -> String::class
-                    RealmStorageType.OBJECT -> DynamicRealmObject::class
-                    RealmStorageType.FLOAT -> Float::class
-                    RealmStorageType.DOUBLE -> Double::class
-                    RealmStorageType.TIMESTAMP -> RealmInstant::class
-                }
-                getList(obj, propertyName, type)
-            }
+            RealmList::class -> throw IllegalArgumentException("Cannot retrieve RealmList through 'get(...)', use getList(...) instead: $propertyName")
             else -> getValue<R>(obj, propertyName)
         } as R?
     }

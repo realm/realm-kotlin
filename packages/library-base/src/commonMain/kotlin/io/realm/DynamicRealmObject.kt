@@ -19,21 +19,21 @@ package io.realm
 import kotlin.reflect.KClass
 
 interface DynamicRealmObject : RealmObject {
-
     val type : String
     // FIXME Should we have something like
     //  val fields: Set<String>
     //  to ease access or is it ok to rely on realm.schema to introspect
 
-    // Maybe separate into getPrimitive, getObject, getList, get
-    // This would make it easier to stay in the correct type setting (dynamic realm object, dynamic mutable realm object)
-    // FIXME We cannot catch T? here because KClass<T : Any>
-    fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
-    // We need a list variant to overcome issues with specifying the generic type of the collection
-//    fun <T : Any> get(fieldName: String, clazz: KClass<T>): T?
-//    fun <T : Any> getList(fieldName: String, clazz: KClass<T>): RealmList<T>?
+    fun <T : Any> get(fieldName: String, clazz: KClass<T>): T
+    fun <T : Any> getNullable(fieldName: String, clazz: KClass<T>): T?
 
+    fun <T : Any> getList(fieldName: String, clazz: KClass<T>): RealmList<T>
+    fun <T : Any> getListOfNullable(fieldName: String, clazz: KClass<T>): RealmList<T?>
 }
 
-inline fun <reified T : Any> DynamicRealmObject.get(fieldName: String): T? = this.get(fieldName, T::class)
+inline fun <reified T : Any> DynamicRealmObject.get(fieldName: String): T = this.get(fieldName, T::class)
+inline fun <reified T : Any> DynamicRealmObject.getNullable(fieldName: String): T? = this.getNullable(fieldName, T::class)
+
+inline fun <reified T : Any> DynamicRealmObject.getList(fieldName: String): RealmList<T> = this.getList(fieldName, T::class)
+inline fun <reified T : Any> DynamicRealmObject.getListOfNullable(fieldName: String): RealmList<T?> = this.getListOfNullable(fieldName, T::class)
 
