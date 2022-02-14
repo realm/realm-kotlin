@@ -168,9 +168,7 @@ actual object RealmInterop {
 
         // TODO error handling
         if (!deleted[0]) {
-            throw IllegalStateException("It's not allowed to delete the file associated with an open Realm. " +
-                "Remember to call 'close()' on all the instances of the Realm before deleting its file: "
-                + path);
+            throw IllegalStateException("It's not allowed to delete the file associated with an open Realm. Remember to call 'close()' on all the instances of the Realm before deleting its file: $path")
         }
         return deleted[0]
     }
