@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member", "invisible_reference")
 /*
  * Copyright 2022 Realm Inc.
  *
@@ -16,88 +17,42 @@
 
 package io.realm.test.shared
 
+import io.realm.Realm
+import io.realm.RealmConfiguration
+import io.realm.entities.Sample
+import io.realm.entities.migration.SampleMigrated
+import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Test
 
 class DynamicMutableRealmObjectTests {
 
     private lateinit var tmpDir: String
+    private lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
+        val configuration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class, SampleMigrated::class, PrimaryKeyString::class))
+                .path("$tmpDir/default.realm").build()
+
+        realm = Realm.open(configuration)
     }
 
     @AfterTest
     fun tearDown() {
+        if (this::realm.isInitialized && !realm.isClosed()) {
+            realm.close()
+        }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-    @Test
-    fun x() {
-
-    }
-
-    // - All types of objects set
-
-//    @Test
-//    fun create_throwsWithPrimaryKey() {
-//        migration(
-//            initialSchema = setOf(Sample::class),
-//            migratedSchema = setOf(SampleMigrated::class),
-//            migration = { (oldRealm, newRealm) ->
-//                newRealm.createObject("SampleMigrated", "NON_PRIMARY_KEY_CLASS")
-//            }
-//        ).close()
-//    }
-//
-//
-//    @Test
-//    fun createPrimaryKey_absentPrimaryKey() {
-//        migration(
-//            initialSchema = setOf(Sample::class),
-//            migratedSchema = setOf(PrimaryKeyString::class),
-//            migration = { (oldRealm, newRealm) ->
-//                newRealm.createObject("PrimaryKeyString")
-//            }
-//        ).close()
-//    }
-//
-//    @Test
-//    fun createPrimaryKey_throwsWithWrongPrimaryKeyType() {
-//        migration(
-//            initialSchema = setOf(Sample::class),
-//            migratedSchema = setOf(PrimaryKeyString::class),
-//            migration = { (oldRealm, newRealm) ->
-//                newRealm.createObject("PrimaryKeyString", 42)
-//            }
-//        ).close()
-//    }
-//
-//    @Test
-//    fun createPrimaryKey_nullablePrimaryKey() {
-//        migration(
-//            initialSchema = setOf(Sample::class),
-//            migratedSchema = setOf(PrimaryKeyStringNullable::class),
-//            migration = { (oldRealm, newRealm) ->
-//                newRealm.createObject("PrimaryKeyStringNullable", null)
-//            }
-//        ).close()
-//    }
-
-    // createObject_withNullStringPrimaryKey
-    // createObject_withNullBytePrimaryKey
-    // createObject_withNullShortPrimaryKey
-    // ... all other types
-    // createObject_illegalPrimaryKeyValue
-    // createObject_absentPrimaryKeyThrows
-
+    // FIXME
+    // set all types
     // setter_null
     // setter_nullOnRequiredFieldsThrows
-    // typedSetter_null
-    // setObject_differentType
     // setNull_changePrimaryKeyThrows
 
 }

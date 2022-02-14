@@ -2,6 +2,7 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
+import io.realm.DynamicMutableRealm
 import io.realm.DynamicRealm
 import io.realm.MutableRealm
 import io.realm.Realm
@@ -199,9 +200,12 @@ internal class RealmImpl private constructor(
         notifier.unregisterCallbacks()
     }
 
-
 }
 
 // DOC Should not be closed on its own
 internal fun Realm.asDynamicRealm(): DynamicRealm =
     DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, (this as RealmImpl).realmReference.dbPointer)
+
+// FIXME Need to close the DynamicMutableRealm as we are opening a new one
+internal fun Realm.asDynamicMutableRealm(): DynamicMutableRealm =
+    DynamicMutableRealmImpl(this@asDynamicMutableRealm.configuration as InternalConfiguration, RealmInterop.realm_open((this@asDynamicMutableRealm.configuration as InternalConfiguration).nativeConfig, null))

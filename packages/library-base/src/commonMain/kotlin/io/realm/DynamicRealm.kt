@@ -25,6 +25,4 @@ interface DynamicRealm : BaseRealm {
         query: String = "TRUEPREDICATE",
         vararg args: Any?
     ): RealmQuery<out DynamicRealmObject>
-
-    // FIXME This shouldn't be closeable?
 }
