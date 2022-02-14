@@ -3,6 +3,7 @@
 ### Breaking Changes
 
 ### Enhancements
+* Added `Realm.deleteRealm(RealmConfiguration)` function (Issue [#95](https://github.com/realm/realm-kotlin/issues/95)).
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
@@ -19,6 +20,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Updated to Realm Core 11.9.0, commit: 6b81f1a7a2d421f9e0b9e7f04e76bcf736a54409.
 
 
 ## 0.9.0 (2022-01-28)
@@ -35,7 +37,7 @@
 * Add support for JVM on M1 (in case we're running outside Rosetta compatibility mode, example when using Azul JVM which is compiled against `aarch64`) [#629](https://github.com/realm/realm-kotlin/issues/629).
 
 ### Fixed
-* Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)). 
+* Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)).
 
 ### Compatibility
 * This release is compatible with:

@@ -63,18 +63,15 @@ interface Realm : TypedRealm {
             RealmImpl(configuration as InternalConfiguration)
 
         /**
-         * TODO revisit docs
-         *
          * Deletes the Realm file along with the related temporary files specified by the given
-         * [RealmConfiguration] from the filesystem. The temporary file with ".lock" extension won't be
-         * deleted.
+         * [RealmConfiguration] from the filesystem. The temporary file with ".lock" extension won't
+         * be deleted.
          *
          * All Realm instances must be closed before calling this method.
          *
-         * TODO does this still apply?
-         * WARNING: For synchronized Realm, there is a chance that an internal Realm instance on the
-         * background thread is not closed even all the user controlled Realm instances are closed.
-         * This will result an `IllegalStateException`. See issue
+         * **WARNING**: For synchronized realms there is a chance that an internal Realm instance on
+         * the background thread is not closed even though the user controlled Realm instances are
+         * closed. This will result an `IllegalStateException`. See issue
          * https://github.com/realm/realm-java/issues/5416 for more details.
          *
          * @param configuration a [RealmConfiguration].
