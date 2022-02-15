@@ -38,7 +38,6 @@ import io.realm.internal.interop.realmc
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.file.Files
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
@@ -355,7 +354,6 @@ class CinteropTest {
         }
     }
 
-    @ExperimentalPathApi
     @Test
     fun cinterop_swig() {
         System.loadLibrary("realmc")
