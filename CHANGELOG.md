@@ -20,6 +20,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
 
 
 ## 0.9.0 (2022-01-28)
