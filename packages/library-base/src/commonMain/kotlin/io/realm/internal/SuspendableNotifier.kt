@@ -9,6 +9,7 @@ import io.realm.notifications.Callback
 import io.realm.notifications.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
@@ -92,46 +93,58 @@ internal class SuspendableNotifier(
     }
 
     internal fun <T, C> registerObserver(thawableObservable: Thawable<Observable<T, C>>): Flow<C> {
-        return callbackFlow {
-            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-            withContext(dispatcher) {
-                ensureActive()
-                val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
-                    ?: error("Cannot listen for changes on a deleted reference")
-                val interopCallback: io.realm.internal.interop.Callback =
-                    object : io.realm.internal.interop.Callback {
-                        override fun onChange(change: NativePointer) {
-                            // FIXME How to make sure the Realm isn't closed when handling this?
+        var cancelCallback: () -> Unit = {}
 
-                            // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
-                            //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
-                            //  We also send it to the owner Realm, so it can keep track of its lifecycle
-                            val frozenRealm = RealmReference(
-                                owner,
-                                RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-                            )
-                            notifyRealmChanged(frozenRealm)
-                            // Notifications need to be delivered with the version they where created on, otherwise
-                            // the fine-grained notification data might be out of sync.
-                            liveRef.emitFrozenUpdate(
-                                frozenRealm,
-                                change,
-                                this@callbackFlow
-                            )?.let {
-                                checkResult(it)
+        return object :
+            Cancellable,
+            Flow<C> by callbackFlow({
+                cancelCallback = {
+                    cancel()
+                }
+                val token: AtomicRef<Cancellable> =
+                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+                withContext(dispatcher) {
+                    ensureActive()
+                    val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
+                        ?: error("Cannot listen for changes on a deleted reference")
+                    val interopCallback: io.realm.internal.interop.Callback =
+                        object : io.realm.internal.interop.Callback {
+                            override fun onChange(change: NativePointer) {
+                                // FIXME How to make sure the Realm isn't closed when handling this?
+
+                                // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
+                                //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
+                                //  We also send it to the owner Realm, so it can keep track of its lifecycle
+                                val frozenRealm = RealmReference(
+                                    owner,
+                                    RealmInterop.realm_freeze(realm.realmReference.dbPointer)
+                                )
+                                notifyRealmChanged(frozenRealm)
+                                // Notifications need to be delivered with the version they where created on, otherwise
+                                // the fine-grained notification data might be out of sync.
+                                liveRef.emitFrozenUpdate(
+                                    frozenRealm,
+                                    change,
+                                    this@callbackFlow
+                                )?.let {
+                                    checkResult(it)
+                                }
                             }
-                        }
-                    }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
-                val newToken =
-                    NotificationToken<Callback<T>>(
-                        // FIXME What is this callback for anyway?
-                        callback = Callback { _, _ -> /* Do nothing */ },
-                        token = liveRef.registerForNotification(interopCallback)
-                    )
-                token.value = newToken
-            }
-            awaitClose {
-                token.value.cancel()
+                        }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
+                    val newToken =
+                        NotificationToken<Callback<T>>(
+                            // FIXME What is this callback for anyway?
+                            callback = Callback { _, _ -> /* Do nothing */ },
+                            token = liveRef.registerForNotification(interopCallback)
+                        )
+                    token.value = newToken
+                }
+                awaitClose {
+                    token.value.cancel()
+                }
+            }) {
+            override fun cancel() {
+                cancelCallback()
             }
         }
     }

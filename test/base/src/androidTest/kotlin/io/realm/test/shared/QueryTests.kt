@@ -24,9 +24,13 @@ import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
+import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialList
+import io.realm.notifications.InitialObject
 import io.realm.notifications.ListChange
+import io.realm.notifications.ObjectChange
 import io.realm.notifications.UpdatedList
+import io.realm.notifications.UpdatedObject
 import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.query.Sort
@@ -1626,48 +1630,22 @@ class QueryTests {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun first_asFlow() {
-        val channel = Channel<QuerySample?>(1)
-        val value1 = 2
-        val value2 = 7
+        val channel = Channel<ObjectChange<QuerySample>>(2)
+
+        val dataset = arrayOf(
+            QuerySample(intField = 1),
+            QuerySample(intField = 2),
+            QuerySample(intField = 3),
+            QuerySample(intField = 4),
+            QuerySample(intField = 5)
+        )
 
         runBlocking {
-            val observer = async {
-                realm.query<QuerySample>("intField > $0", value1)
-                    .first()
-                    .asFlow()
-                    .collect { first ->
-                        channel.send(first)
-                    }
-            }
-
-            val firstNull = channel.receive()
-            assertNull(firstNull)
-
-            realm.writeBlocking {
-                copyToRealm(QuerySample(intField = value1))
-                copyToRealm(QuerySample(intField = value2))
-            }
-
-            val first = channel.receive()
-            assertNotNull(first)
-            assertEquals(value2, first.intField)
-            observer.cancel()
-            channel.close()
-        }
-    }
-
-    @Test
-    fun first_asFlow_deleteObservable() {
-        val channel = Channel<QuerySample?>(1)
-
-        runBlocking {
-            realm.writeBlocking {
-                copyToRealm(QuerySample())
-            }
-
             val observer = async {
                 realm.query<QuerySample>()
+                    .sort(QuerySample::intField.name, Sort.DESCENDING)
                     .first()
                     .asFlow()
                     .collect { first ->
@@ -1675,15 +1653,96 @@ class QueryTests {
                     }
             }
 
-            assertNotNull(channel.receive())
-
+            // Insert initial data set
+            // [5, 4, 3, 2, 1]
             realm.writeBlocking {
-                query<QuerySample>()
-                    .find()
-                    .delete()
+                dataset.forEach { querySample ->
+                    copyToRealm(querySample)
+                }
             }
 
-            assertNull(channel.receive())
+            channel.receive().let { objectChange ->
+                assertTrue(channel.isEmpty) // Validates that this is the first event and only event
+
+                assertIs<InitialObject<QuerySample>>(objectChange)
+                assertEquals(5, objectChange.obj.intField)
+            }
+
+            // Update the head element from value 5 to 6
+            // [6, 4, 3, 2, 1]
+            realm.writeBlocking {
+                query<QuerySample>("intField = $0", 5).first().find { querySample ->
+                    querySample!!.intField = 6
+                }
+            }
+
+            channel.receive().let { objectChange ->
+                assertIs<UpdatedObject<QuerySample>>(objectChange)
+                assertEquals(6, objectChange.obj.intField)
+            }
+
+            // Update the head element 6 to value 7
+            // [7, 4, 3, 2, 1]
+            realm.writeBlocking {
+                query<QuerySample>("intField = $0", 6).first().find { querySample ->
+                    querySample!!.intField = 7
+                }
+            }
+
+            channel.receive().let { objectChange ->
+                assertIs<UpdatedObject<QuerySample>>(objectChange)
+                assertEquals(7, objectChange.obj.intField)
+            }
+
+            // Delete the head element 6
+            // [4, 3, 2, 1]
+            realm.writeBlocking {
+                delete(query<QuerySample>("intField = $0", 7).first().find()!!)
+            }
+
+            assertIs<DeletedObject<QuerySample>>(channel.receive())
+
+            channel.receive().let { objectChange ->
+                assertIs<InitialObject<QuerySample>>(objectChange)
+                assertEquals(4, objectChange.obj.intField)
+            }
+
+            // Replace the head value with the second one
+            // [<7>, 4, 2, 1]
+            realm.writeBlocking {
+                query<QuerySample>("intField = $0", 3).first().find { querySample ->
+                    querySample!!.intField = 7
+                }
+            }
+
+            channel.receive().let { objectChange ->
+                assertIs<InitialObject<QuerySample>>(objectChange)
+                assertEquals(7, objectChange.obj.intField)
+            }
+
+            // Delete head element and update the new head
+            // [10, 2, 1]
+            realm.writeBlocking {
+                query<QuerySample>("intField = $0", 7).find().delete()
+                query<QuerySample>("intField = $0", 4).first().find { querySample ->
+                    querySample!!.intField = 10
+                }
+            }
+
+            assertIs<DeletedObject<QuerySample>>(channel.receive())
+
+            channel.receive().let { objectChange ->
+                assertIs<InitialObject<QuerySample>>(objectChange)
+                assertEquals(10, objectChange.obj.intField)
+            }
+
+            // Empty the list
+            // []
+            realm.writeBlocking {
+                query<QuerySample>().find().delete()
+            }
+
+            assertIs<DeletedObject<QuerySample>>(channel.receive())
 
             observer.cancel()
             channel.close()
@@ -1693,8 +1752,8 @@ class QueryTests {
     @Test
     fun first_asFlow_cancel() {
         runBlocking {
-            val channel1 = Channel<QuerySample?>(1)
-            val channel2 = Channel<QuerySample?>(1)
+            val channel1 = Channel<ObjectChange<QuerySample>>(2)
+            val channel2 = Channel<ObjectChange<QuerySample>>(2)
 
             val observer1 = async {
                 realm.query<QuerySample>()
@@ -1713,10 +1772,6 @@ class QueryTests {
                     }
             }
 
-            // First emission will be null
-            assertNull(channel1.receive())
-            assertNull(channel2.receive())
-
             // Write one object
             realm.write {
                 copyToRealm(QuerySample().apply { stringField = "Bar" })
@@ -1727,9 +1782,11 @@ class QueryTests {
             assertNotNull(channel2.receive())
             observer1.cancel()
 
-            // Write another object
+            // Update object
             realm.write {
-                copyToRealm(QuerySample().apply { stringField = "Baz" })
+                query<QuerySample>("stringField = $0", "Bar").first().find {
+                    it!!.stringField = "Baz"
+                }
             }
 
             // Assert emission and that the original channel hasn't been received
@@ -2398,4 +2455,8 @@ class QuerySample() : RealmObject {
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
 
     var child: QuerySample? = null
+
+    override fun toString(): String {
+        return this.stringField
+    }
 }

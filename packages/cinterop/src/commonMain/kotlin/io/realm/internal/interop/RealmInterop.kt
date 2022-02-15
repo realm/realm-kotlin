@@ -81,6 +81,7 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): ClassKey?
     fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo
     fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo>
+    fun realm_equals(pointer1: NativePointer, pointer2: NativePointer): Boolean
 
     fun realm_release(p: NativePointer)
 

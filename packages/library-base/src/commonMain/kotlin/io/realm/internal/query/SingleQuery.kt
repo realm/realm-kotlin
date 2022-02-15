@@ -1,6 +1,8 @@
 package io.realm.internal.query
 
 import io.realm.RealmObject
+import io.realm.asFlow
+import io.realm.equalsTo
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
 import io.realm.internal.RealmReference
@@ -9,10 +11,14 @@ import io.realm.internal.Thawable
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.link
+import io.realm.notifications.Cancellable
 import io.realm.notifications.ListChange
+import io.realm.notifications.ObjectChange
+import io.realm.notifications.UpdatedList
 import io.realm.query.RealmSingleQuery
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapMerge
 import kotlin.reflect.KClass
 
 internal class SingleQuery<E : RealmObject> constructor(
@@ -30,11 +36,32 @@ internal class SingleQuery<E : RealmObject> constructor(
         return model as E
     }
 
-    override fun asFlow(): Flow<E?> {
+    override fun asFlow(): Flow<ObjectChange<E>> {
         realmReference.checkClosed()
+
+        var head: E? = null
+        var headFlow: Cancellable? = null
+
         return realmReference.owner.registerObserver(this)
-            .map { results ->
-                results.list.firstOrNull()
+            .filter { listChange: ListChange<RealmResultsImpl<E>> ->
+                // Denotes when to subscribe to the next object:
+                // A change on the head of the list, and it is not the same as the previous head
+                val newHead: E? = listChange.list.firstOrNull()
+
+                (newHead != null && !newHead.equalsTo(head)).also {
+                    head = newHead
+                }
+            }.flatMapMerge { listChange ->
+                // Don't close the flow if the head was removed
+                if (listChange !is UpdatedList<*> || !listChange.deletions.contains(0))
+                    headFlow?.cancel()
+
+                listChange.list
+                    .first()
+                    .asFlow()
+                    .also {
+                        headFlow = it as Cancellable
+                    }
             }
     }
 

@@ -228,6 +228,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_equals(pointer1: NativePointer, pointer2: NativePointer): Boolean {
+        return realmc.realm_equals(pointer1.cptr(), pointer2.cptr())
+    }
+
     actual fun realm_release(p: NativePointer) {
         realmc.realm_release((p as LongPointerWrapper).ptr)
     }

@@ -24,6 +24,7 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.notifications.ListChange
+import io.realm.notifications.ObjectChange
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -254,7 +255,7 @@ interface RealmSingleQuery<T : RealmObject> {
      *
      * @return a flow representing changes to the [RealmObject] resulting from running this query.
      */
-    fun asFlow(): Flow<T?>
+    fun asFlow(): Flow<ObjectChange<T>>
 }
 
 /**
