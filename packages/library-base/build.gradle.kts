@@ -100,10 +100,12 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        getByName("macosMain") {
-            // TODO HMPP Should be shared source set
+        val macosMain by getting {
             kotlin.srcDir("src/darwin/kotlin")
         }
+//        getByName("macosMain") {
+//            // TODO HMPP Should be shared source set
+//        }
         val macosArm64Main by getting {
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/macosMain/kotlin")

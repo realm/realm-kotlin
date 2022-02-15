@@ -21,6 +21,8 @@ import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
+import io.realm.internal.schema.RealmClassImpl
+import io.realm.internal.schema.RealmSchemaImpl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
@@ -42,8 +44,9 @@ import io.realm.internal.freeze as freezeTyped
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
     private val tid: ULong
     private val realmInitializer = lazy {
-        MutableRealmImpl(owner.configuration, dispatcher)
+        MutableRealmImpl(owner, owner.configuration, dispatcher)
     }
+
     // Must only be accessed from the dispatchers thread
     private val realm: MutableRealmImpl by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
@@ -53,7 +56,27 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         tid = runBlocking(dispatcher) { threadId() }
     }
 
-    suspend fun <R> write(block: MutableRealm.() -> R): Pair<RealmReference, R> {
+    // Currently just for internal-only usage in test, thus API is not polished
+    suspend fun updateSchema(schema: RealmSchemaImpl): FrozenRealmReference {
+        return withContext(dispatcher) {
+            transactionMutex.withLock {
+                realm.log.debug("Updating schema: $schema")
+                val classPropertyList = schema.classes.map { it: RealmClassImpl ->
+                    it.cinteropClass to it.cinteropProperties
+                }
+                val newCinteropSchema = RealmInterop.realm_schema_new(classPropertyList)
+                RealmInterop.realm_update_schema(realm.realmReference.dbPointer, newCinteropSchema)
+                // Are we guaranteed that updating the schema will trigger both:
+                // - onSchemaChanged - invalidating the key caches
+                // - onRealmChanged - updating the realm.snapshot to also point to the latest key cache
+                // Seems like order is not guaranteed, but it is synchroneous, so updating snapshot
+                // in both callbacks should ensure that we have the right snapshot here
+                realm.snapshot
+            }
+        }
+    }
+
+    suspend fun <R> write(block: MutableRealm.() -> R): Pair<FrozenRealmReference, R> {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
         return withContext(dispatcher) {
             var result: R
@@ -81,8 +104,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // the transaction is committed and we freeze it.
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
-            val newDbPointer = RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-            val newReference = RealmReference(owner, newDbPointer)
+            val newReference = realm.snapshot
             // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {
                 result = freezeWriteReturnValue(newReference, result)
@@ -137,12 +159,16 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // which will itself prevent other transactions to start as the dispatcher can only run
             // a single job at a time
             withContext(dispatcher) {
+                // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
+                // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
                 if (realmInitializer.isInitialized()) {
-                    // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
-                    // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
                     realm.close()
                 }
             }
         }
+    }
+
+    fun unregisterCallbacks() {
+        realm.unregisterCallbacks()
     }
 }

@@ -20,6 +20,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
 
 
 ## 0.9.0 (2022-01-28)
@@ -70,7 +71,7 @@
   * Kotlin 1.6.10.
   * Coroutines 1.5.2-native-mt.
   * AtomicFu 0.17.0.
-* Minimum Gradle version: 6.1.1.  
+* Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
