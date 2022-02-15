@@ -122,21 +122,21 @@ class RealmMigrationTests {
                 assertIs<DynamicRealm>(oldRealm)
                 assertIsNot<DynamicMutableRealm>(oldRealm)
                 oldRealm.schema().let { oldSchema ->
+                    assertEquals(0, oldRealm.schemaVersion())
                     assertEquals(2, oldSchema.classes.size)
                     assertNotNull(oldSchema["Sample"])
                     assertNotNull(oldSchema["SchemaVariations"])
                     assertNull(oldSchema["SampleMigrated"])
-                    // FIXME Assert version number
                 }
 
                 assertIs<DynamicRealm>(newRealm)
                 assertIs<DynamicMutableRealm>(newRealm)
                 newRealm.schema().let { newSchema ->
+                    assertEquals(1, newRealm.schemaVersion())
                     assertEquals(1, newSchema.classes.size)
                     assertNull(newSchema["Sample"])
                     assertNull(newSchema["SchemaVariations"])
                     assertNotNull(newSchema["SampleMigrated"])
-                    // FIXME Assert version number
                 }
             }
         )

@@ -71,6 +71,10 @@ abstract class BaseRealmImpl internal constructor(
         return RealmSchemaImpl.fromRealm(realmReference.dbPointer)
     }
 
+    override fun schemaVersion(): Long {
+        return RealmInterop.realm_get_schema_version(realmReference.dbPointer)
+    }
+
     internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
