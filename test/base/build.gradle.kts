@@ -59,9 +59,6 @@ kotlin {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.jvmTarget = Versions.jvmTarget
         kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
-        // @ExperimentalPathApi is only available for JVM, so cannot use the annotation in shared
-        // tests, so adding it here.
-        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.io.path.ExperimentalPathApi"
     }
 }
 

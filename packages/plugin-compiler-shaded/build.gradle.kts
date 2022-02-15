@@ -33,11 +33,6 @@ tasks {
         archiveClassifier.set("")
         this.destinationDirectory.set(file("$buildDir/libs"))
         relocate("org.jetbrains.kotlin.com.intellij", "com.intellij")
-        dependencies {
-            exclude {
-                it.moduleName != "plugin-compiler"
-            }
-        }
     }
 }
 tasks {

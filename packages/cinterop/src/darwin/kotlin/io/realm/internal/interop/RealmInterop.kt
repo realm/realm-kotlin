@@ -249,7 +249,7 @@ actual object RealmInterop {
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
-                    primary_key = (clazz.primaryKey ?: "").cstr.ptr
+                    primary_key = clazz.primaryKey.cstr.ptr
                     num_properties = properties.size.toULong()
                     num_computed_properties = 0U
                     flags = clazz.flags
@@ -259,9 +259,9 @@ actual object RealmInterop {
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
-                        public_name = "".cstr.ptr
-                        link_target = property.linkTarget?.cstr?.ptr ?: "".cstr.ptr
-                        link_origin_property_name = "".cstr.ptr
+                        public_name = SCHEMA_NO_VALUE.cstr.ptr
+                        link_target = property.linkTarget.cstr.ptr
+                        link_origin_property_name = SCHEMA_NO_VALUE.cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
                         flags = property.flags
@@ -389,6 +389,44 @@ actual object RealmInterop {
         return realmPtr
     }
 
+    actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
+        return RegistrationToken(
+            realm_wrapper.realm_add_realm_changed_callback(
+                realm.cptr(),
+                staticCFunction { userData ->
+                    safeUserData<() -> Unit>(userData)()
+                },
+                StableRef.create(block).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
+                }
+            ).toLong()
+        )
+    }
+
+    actual fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        realm_wrapper.realm_remove_realm_changed_callback(realm.cptr(), token.value.toULong())
+    }
+
+    actual fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken {
+        return RegistrationToken(
+            realm_wrapper.realm_add_schema_changed_callback(
+                realm.cptr(),
+                staticCFunction { userData, schema ->
+                    safeUserData<(NativePointer) -> Unit>(userData)(CPointerWrapper(realm_clone(schema)))
+                },
+                StableRef.create(block).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<(NativePointer, SyncErrorCallback) -> Unit>(userdata)
+                }
+            ).toLong()
+        )
+    }
+
+    actual fun realm_remove_schema_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        realm_wrapper.realm_remove_schema_changed_callback(realm.cptr(), token.value.toULong())
+    }
+
     actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_freeze(liveRealm.cptr<realm_t>()))
     }
@@ -449,7 +487,7 @@ actual object RealmInterop {
             return with(classInfo) {
                 ClassInfo(
                     name.safeKString("name"),
-                    primary_key?.toKString(),
+                    primary_key?.toKString() ?: SCHEMA_NO_VALUE,
                     num_properties.convert(),
                     num_computed_properties.convert(),
                     ClassKey(key.toLong()),
@@ -480,11 +518,11 @@ actual object RealmInterop {
                         with(properties[it]) {
                             PropertyInfo(
                                 name.safeKString("name"),
-                                public_name?.toKString(),
+                                public_name.safeKString("public_name"),
                                 PropertyType.from(type.toInt()),
                                 CollectionType.from(collection_type.toInt()),
-                                link_target?.toKString(),
-                                link_origin_property_name?.toKString(),
+                                link_target.safeKString("link_target"),
+                                link_origin_property_name.safeKString("link_origin_property_name"),
                                 PropertyKey(key),
                                 flags
                             )
@@ -523,6 +561,10 @@ actual object RealmInterop {
 
     actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
         return realm_wrapper.realm_is_writable(realm.cptr())
+    }
+
+    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_update_schema(realm.cptr(), schema.cptr()))
     }
 
     actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {
@@ -1429,7 +1471,7 @@ actual object RealmInterop {
 
     private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {
         return this?.toKString()
-            ?: throw NullPointerException(identifier?.let { "'$identifier' cannot be null." })
+            ?: throw NullPointerException(identifier?.let { "'$identifier' shouldn't be null." })
     }
 
     private fun createSingleThreadDispatcherScheduler(
@@ -1648,6 +1690,7 @@ private fun printlnWithTid(s: String) {
     val tid = tid()
     println("<" + tid.toString() + "> $s")
 }
+
 private fun tid(): ULong {
     memScoped {
         initRuntimeIfNeeded()
@@ -1656,6 +1699,7 @@ private fun tid(): ULong {
         return tidVar.value
     }
 }
+
 private fun getUnixError() = strerror(posix_errno())!!.toKString()
 private inline fun Int.ensureUnixCallResult(s: String): Int {
     if (this != 0) {

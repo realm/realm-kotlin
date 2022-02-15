@@ -27,11 +27,11 @@ import io.realm.internal.interop.PropertyFlags.RLM_PROPERTY_PRIMARY_KEY
 //  implement as custom serializer, so that we could transfer the full struct in one bridge crossing.
 data class PropertyInfo( // Kotlin variant of realm_property_info
     val name: String,
-    val publicName: String? = null,
+    val publicName: String = SCHEMA_NO_VALUE,
     val type: PropertyType,
     val collectionType: CollectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
-    val linkTarget: String? = null,
-    val linkOriginPropertyName: String? = null,
+    val linkTarget: String = SCHEMA_NO_VALUE,
+    val linkOriginPropertyName: String = SCHEMA_NO_VALUE,
     val key: PropertyKey = INVALID_PROPERTY_KEY,
     val flags: Int = RLM_PROPERTY_NORMAL
 ) {
@@ -56,11 +56,11 @@ data class PropertyInfo( // Kotlin variant of realm_property_info
                 (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or (if (isPrimaryKey) RLM_PROPERTY_PRIMARY_KEY else 0) or (if (isIndexed) RLM_PROPERTY_INDEXED else 0)
             return PropertyInfo(
                 name,
-                publicName,
+                publicName ?: SCHEMA_NO_VALUE,
                 type,
                 collectionType,
-                linkTarget,
-                linkOriginPropertyName,
+                linkTarget ?: SCHEMA_NO_VALUE,
+                linkOriginPropertyName ?: SCHEMA_NO_VALUE,
                 INVALID_PROPERTY_KEY,
                 flags
             )

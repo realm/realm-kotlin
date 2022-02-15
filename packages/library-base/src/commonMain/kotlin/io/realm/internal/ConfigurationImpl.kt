@@ -76,6 +76,8 @@ open class ConfigurationImpl constructor(
             // FIXME Proper platform agnostic file separator: File.separator is not available for Kotlin/Native
             //  https://github.com/realm/realm-kotlin/issues/75
             "$directory/$name"
+        } else if (path.startsWith("./")) {
+            path.replaceFirst("./", "${appFilesDirectory()}/")
         } else path
         this.name = name // FIXME Should read name from end of path
         this.schema = schema
@@ -116,10 +118,8 @@ open class ConfigurationImpl constructor(
         }
 
         mediator = object : Mediator {
-            override fun createInstanceOf(clazz: KClass<*>): RealmObjectInternal = (
-                mapOfKClassWithCompanion[clazz]?.`$realm$newInstance`()
-                    ?: error("$clazz not part of this configuration schema")
-                ) as RealmObjectInternal
+            override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal =
+                companionOf(clazz).`$realm$newInstance`() as RealmObjectInternal
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]
