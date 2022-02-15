@@ -23,8 +23,11 @@ import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.notifications.DeletedObject
+import io.realm.notifications.InitialObject
 import io.realm.notifications.ListChange
 import io.realm.notifications.ObjectChange
+import io.realm.notifications.UpdatedObject
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -247,8 +250,20 @@ interface RealmSingleQuery<T : RealmObject> {
      * Finds the first object that fulfills the query conditions and returns it asynchronously as a
      * [Flow].
      *
-     * If there is any changes to the object represented by the query, the flow will emit the
-     * updated object. The flow will continue running indefinitely until canceled.
+     * If there is any changes to the first object represented by the query, the flow will emit an
+     * [ObjectChange] event depending on the query state. The flow will continue running indefinitely until
+     * canceled.
+     *
+     * If subscribed on an empty query the flow will not yield any event until an element is added, then
+     * it would yield an [InitialObject] event for the first element. On a non-empty list it would start
+     * with an [InitialObject] event for its first element.
+     *
+     * Once subscribed and the [InitialObject] event is observed, sequential [UpdatedObject] instances
+     * would be observed if the first element is modified. If the element is deleted a [DeletedObject]
+     * would be yield.
+     *
+     * If the first element is replaced with a new value, an [InitialObject] would be yield for the new
+     * head, and would be follow with [UpdatedObject] on all its changes.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
