@@ -43,6 +43,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import kotlin.random.Random
+import kotlin.random.nextULong
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -106,13 +107,15 @@ class SyncedRealmTests {
             app.createUserAndLogIn(email, password)
         }
 
+        val partitionValue = Random.nextULong().toString()
+
         val dir1 = PlatformUtils.createTempDir()
-        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user)
+        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user, partitionValue = partitionValue)
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
         val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user)
+        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user, partitionValue = partitionValue)
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
@@ -122,8 +125,6 @@ class SyncedRealmTests {
         }
 
         val channel = Channel<RealmResults<ChildPk>>(1)
-
-        assertEquals(0, realm1.query<ChildPk>().find().size, realm1.toString())
 
         runBlocking {
             val observer = async {
