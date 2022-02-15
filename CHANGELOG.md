@@ -1,4 +1,29 @@
-## 0.9.0-SNAPSHOT (YYYY-MM-DD)
+## 0.10.0-SNAPSHOT (2022-MM-DD)
+
+### Breaking Changes
+
+### Enhancements
+
+### Fixed
+* Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
+* `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
+* Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
+
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
+
+
+## 0.9.0 (2022-01-28)
 
 ### Breaking Changes
 * `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
@@ -8,10 +33,11 @@
 * Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
 * Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
 * Added source code link to model definition compiler errors. ([#173](https://github.com/realm/realm-kotlin/issues/173))
-* Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`. 
+* Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`.
+* Add support for JVM on M1 (in case we're running outside Rosetta compatibility mode, example when using Azul JVM which is compiled against `aarch64`) [#629](https://github.com/realm/realm-kotlin/issues/629).
 
 ### Fixed
-* None.
+* Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)). 
 
 ### Compatibility
 * This release is compatible with:
@@ -24,7 +50,7 @@
 
 ### Internal
 * Updated to Gradle 7.3.3.
-* Updated to Android Gradle Plugin 7.1.0-rc01.
+* Updated to Android Gradle Plugin 7.1.0.
 * Updated to AndroidX JUnit 1.1.3.
 * Updated to AndroidX Test 1.4.0.
 
@@ -45,7 +71,7 @@
   * Kotlin 1.6.10.
   * Coroutines 1.5.2-native-mt.
   * AtomicFu 0.17.0.
-* Minimum Gradle version: 6.1.1.  
+* Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 

@@ -39,4 +39,9 @@ object Validation {
         }
         return value!!
     }
+
+    fun sdkError(message: String): Nothing {
+        @Suppress("TooGenericExceptionThrown")
+        throw RuntimeException(message)
+    }
 }
