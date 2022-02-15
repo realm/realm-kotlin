@@ -24,7 +24,6 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.log.LogLevel
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
@@ -616,7 +615,6 @@ class SyncedRealmTests {
         partitionValue = partitionValue
     ).path(path)
         .name(name)
-        .log(LogLevel.DEBUG)
         .let { builder ->
             if (encryptionKey != null) builder.encryptionKey(encryptionKey)
             if (errorHandler != null) builder.errorHandler(errorHandler)
