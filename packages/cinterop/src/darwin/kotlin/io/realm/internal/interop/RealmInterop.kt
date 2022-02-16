@@ -384,13 +384,10 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
     }
 
-    actual fun realm_delete_files(path: String): Boolean {
+    actual fun realm_delete_files(path: String) {
         memScoped {
             val deleted = alloc<BooleanVar>()
-            checkedBooleanResult(
-                realm_wrapper.realm_delete_files(path, deleted.ptr)
-            )
-            return deleted.value
+            checkedBooleanResult(realm_wrapper.realm_delete_files(path, deleted.ptr))
         }
     }
 

@@ -74,7 +74,7 @@ expect object RealmInterop {
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_is_frozen(realm: NativePointer): Boolean
     fun realm_close(realm: NativePointer)
-    fun realm_delete_files(path: String): Boolean
+    fun realm_delete_files(path: String)
 
     fun realm_get_schema(realm: NativePointer): NativePointer
     fun realm_get_num_classes(realm: NativePointer): Long

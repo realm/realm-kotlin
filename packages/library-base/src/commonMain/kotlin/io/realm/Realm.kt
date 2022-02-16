@@ -67,20 +67,17 @@ interface Realm : TypedRealm {
          * [RealmConfiguration] from the filesystem. The temporary file with ".lock" extension won't
          * be deleted.
          *
-         * All Realm instances must be closed before calling this method.
+         * All Realm instances pointing to the same file must be closed before calling this method.
          *
          * **WARNING**: For synchronized realms there is a chance that an internal Realm instance on
          * the background thread is not closed even though the user controlled Realm instances are
-         * closed. This will result an `IllegalStateException`. See issue
+         * closed. This will result in an `IllegalStateException`. See issue
          * https://github.com/realm/realm-java/issues/5416 for more details.
          *
          * @param configuration a [RealmConfiguration].
-         * @return `false` if the Realm file could not be deleted. Temporary files deletion failure
-         * won't impact the return value. All of the failing file deletions will be logged.
-         * @throws IllegalStateException if there are open Realm instances on other threads or other
-         * processes.
+         * @throws IllegalStateException if an error occurred while deleting the Realm files.
          */
-        fun deleteRealm(configuration: RealmConfiguration): Boolean =
+        fun deleteRealm(configuration: RealmConfiguration) {
             try {
                 RealmInterop.realm_delete_files(configuration.path)
             } catch (exception: RealmCoreException) {
@@ -89,6 +86,7 @@ interface Realm : TypedRealm {
                     exception
                 )
             }
+        }
     }
 
     /**

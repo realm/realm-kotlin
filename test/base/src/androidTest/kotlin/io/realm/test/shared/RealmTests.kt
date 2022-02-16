@@ -497,10 +497,10 @@ class RealmTests {
         val closedChannel = Channel<Unit>(1)
 
         runBlocking {
-            // Creates another Realm to ensure the log files are generated.
             val testRealm = Realm.open(configuration)
 
             val deferred = async {
+                // Create another Realm to ensure the log files are generated.
                 val anotherRealm = Realm.open(configuration)
 
                 bgThreadReadyChannel.send(Unit)
@@ -511,35 +511,29 @@ class RealmTests {
                 closedChannel.send(Unit)
             }
 
-            testRealm.writeBlocking {
-                copyToRealm(Child())
-            }
-
-            // Waits for bg thread's opening the same Realm.
+            // Waits for background thread opening the same Realm.
             bgThreadReadyChannel.receive()
 
-            // A core upgrade might change the location of the files
-            val testDirRenamedPath = PlatformUtils.createTempDir("test_dir_renamed").toPath()
-            assertTrue(fileSystem.exists(testDirRenamedPath))
-            fileSystem.atomicMove(testDirPath, testDirRenamedPath)
-            val testDirRenamedPathList = fileSystem.list(testDirRenamedPath)
-            assertEquals(4, testDirRenamedPathList.size) // db file, .lock, .management, .note
-
-            readyToCloseChannel.send(Unit)
+            // Check the realm got created correctly and signal that it can be closed.
+            fileSystem.list(testDirPath)
+                .also { testDirPathList ->
+                    assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
+                    readyToCloseChannel.send(Unit)
+                }
 
             testRealm.close()
 
             closedChannel.receive()
 
-            // Now we get log files back!
-            fileSystem.atomicMove(testDirRenamedPath, testDirPath)
+            // Delete realm now that it's fully closed.
+            Realm.deleteRealm(configuration)
 
-            assertTrue(Realm.deleteRealm(configuration))
-
-            val testDirPathList = fileSystem.list(testDirPath)
-            // Lock file should never be deleted
-            assertEquals(1, testDirPathList.size) // only .lock file remains
-            assertTrue(fileSystem.exists("${configuration.path}.lock".toPath()))
+            // Lock file should never be deleted.
+            fileSystem.list(testDirPath)
+                .also { testDirPathList ->
+                    assertEquals(1, testDirPathList.size) // only .lock file remains
+                    assertTrue(fileSystem.exists("${configuration.path}.lock".toPath()))
+                }
 
             deferred.cancel()
             bgThreadReadyChannel.close()
@@ -550,41 +544,23 @@ class RealmTests {
 
     @Test
     fun deleteRealm_failures() {
-        // val tempDirA = PlatformUtils.createTempDir()
-        // val pathA = "$tempDirA/default.realm"
+        val tempDirA = PlatformUtils.createTempDir()
         val configA = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
-            // .path(pathA)
-            .path("$tmpDir/default.realm")
+            .path("$tempDirA/anotherRealm.realm")
             .build()
-        val tempDirB = PlatformUtils.createTempDir()
-        val pathB = "$tempDirB/yetAnotherRealm.realm"
-        val configB = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
-            .path(pathB)
-            .build()
-
-        // This instance is already cached because of the setUp() method so this deletion should throw.
-        try {
-            Realm.deleteRealm(configA)
-            fail("Should not reach this.")
-        } catch (ignored: IllegalStateException) {
-            // All good here
-        }
 
         // Creates a new Realm file.
-        val yetAnotherRealm = Realm.open(configB)
+        val anotherRealm = Realm.open(configA)
 
-        // Deleting it should fail.
-        try {
-            Realm.deleteRealm(configB)
-            fail("Should not reach this.")
-        } catch (ignored: IllegalStateException) {
-            // All good here
+        // Deleting it without having closed it should fail.
+        assertFailsWith<IllegalStateException> {
+            Realm.deleteRealm(configA)
         }
 
         // But now that we close it deletion should work.
-        yetAnotherRealm.close()
+        anotherRealm.close()
         try {
-            Realm.deleteRealm(configB)
+            Realm.deleteRealm(configA)
         } catch (e: Exception) {
             fail("Should not reach this.")
         }
