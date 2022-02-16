@@ -79,8 +79,11 @@ interface Realm : TypedRealm {
          */
         fun deleteRealm(configuration: RealmConfiguration) {
             try {
+                println("Realm.deleteRealm 1 - before")
                 RealmInterop.realm_delete_files(configuration.path)
+                println("Realm.deleteRealm 1 - after")
             } catch (exception: RealmCoreException) {
+                println("Realm.deleteRealm 2 - catch")
                 throw genericRealmCoreExceptionHandler(
                     "Cannot delete Realm located at '${configuration.path}', did you close it before calling 'deleteRealm'?",
                     exception
