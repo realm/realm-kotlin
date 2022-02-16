@@ -2455,8 +2455,4 @@ class QuerySample() : RealmObject {
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
 
     var child: QuerySample? = null
-
-    override fun toString(): String {
-        return this.stringField
-    }
 }
