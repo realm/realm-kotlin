@@ -72,7 +72,7 @@ actual object RealmInterop {
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
-                primary_key = clazz.primaryKey ?: ""
+                primary_key = clazz.primaryKey
                 num_properties = properties.size.toLong()
                 num_computed_properties = 0
                 key = INVALID_CLASS_KEY.key
@@ -150,6 +150,22 @@ actual object RealmInterop {
         return realmPtr
     }
 
+    actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
+        return RegistrationToken(realmc.realm_add_realm_changed_callback(realm.cptr(), block))
+    }
+
+    actual fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        return realmc.realm_remove_realm_changed_callback(realm.cptr(), token.value)
+    }
+
+    actual fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken {
+        return RegistrationToken(realmc.realm_add_schema_changed_callback(realm.cptr(), block))
+    }
+
+    actual fun realm_remove_schema_changed_callback(realm: NativePointer, token: RegistrationToken) {
+        return realmc.realm_remove_schema_changed_callback(realm.cptr(), token.value)
+    }
+
     actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
         return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
     }
@@ -178,7 +194,7 @@ actual object RealmInterop {
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
         // TODO API-SCHEMA
-        TODO("Not yet implemented")
+        return LongPointerWrapper(realmc.realm_get_schema(realm.cptr()))
     }
 
     actual fun realm_get_num_classes(realm: NativePointer): Long {
@@ -264,6 +280,10 @@ actual object RealmInterop {
 
     actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
         return realmc.realm_is_writable(realm.cptr())
+    }
+
+    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer) {
+        realmc.realm_update_schema(realm.cptr(), schema.cptr())
     }
 
     actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {

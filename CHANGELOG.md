@@ -8,6 +8,7 @@
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
 * `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
+* Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
 
 
 ### Compatibility
@@ -20,6 +21,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
 * Updated to Realm Core 11.9.0, commit: 6b81f1a7a2d421f9e0b9e7f04e76bcf736a54409.
 
 
@@ -71,7 +73,7 @@
   * Kotlin 1.6.10.
   * Coroutines 1.5.2-native-mt.
   * AtomicFu 0.17.0.
-* Minimum Gradle version: 6.1.1.  
+* Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 

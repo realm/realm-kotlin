@@ -20,14 +20,12 @@ import android.annotation.SuppressLint
 import android.os.SystemClock
 import java.io.File
 import java.nio.file.Files
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     @SuppressLint("NewApi")
-    @ExperimentalPathApi
     actual fun createTempDir(prefix: String): String {
         return Files.createTempDirectory("$prefix-android_tests").absolutePathString()
     }
