@@ -506,7 +506,6 @@ class RealmTests {
             val testRealm = Realm.open(configuration)
             println("deleteRealm 3 - after")
 
-
             val deferred = async {
                 // Create another Realm to ensure the log files are generated.
                 println("deleteRealm 4 - before")
