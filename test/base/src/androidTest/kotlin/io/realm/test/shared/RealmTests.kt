@@ -405,6 +405,7 @@ class RealmTests {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun deleteRealm() {
         val fileSystem = FileSystem.SYSTEM
         val testDir = PlatformUtils.createTempDir("test_dir")
