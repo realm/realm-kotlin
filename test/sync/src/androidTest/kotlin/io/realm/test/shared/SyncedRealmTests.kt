@@ -29,6 +29,7 @@ import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
+import io.realm.notifications.ListChange
 import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -120,25 +121,25 @@ class SyncedRealmTests {
             name = "A"
         }
 
-        val channel = Channel<RealmResults<ChildPk>>(1)
+        val channel = Channel<ListChange<RealmResults<ChildPk>>>(1)
 
         runBlocking {
             val observer = async {
                 realm2.query<ChildPk>()
                     .asFlow()
-                    .collect { childResults ->
+                    .collect { childResults: ListChange<RealmResults<ChildPk>> ->
                         channel.send(childResults)
                     }
             }
 
-            assertEquals(0, channel.receive().size)
+            assertEquals(0, channel.receive().list.size)
 
             realm1.write {
                 copyToRealm(child)
             }
 
             val childResults = channel.receive()
-            val childPk = childResults[0]
+            val childPk = childResults.list[0]
             assertEquals("CHILD_A", childPk._id)
             observer.cancel()
             channel.close()
@@ -171,7 +172,7 @@ class SyncedRealmTests {
         // Block until we see changed written to one realm in the other to ensure that schema is
         // aligned with backend
         val synced = async {
-            realm2.query(ChildPk::class).asFlow().takeWhile { it.size != 0 }.collect { }
+            realm2.query(ChildPk::class).asFlow().takeWhile { it.list.size != 0 }.collect { }
         }
         realm1.write { copyToRealm(ChildPk()) }
         synced.await()
