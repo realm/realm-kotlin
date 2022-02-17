@@ -16,19 +16,16 @@
 
 package io.realm.internal
 
-import io.realm.DynamicRealmObject
-import io.realm.RealmInstant
-import io.realm.RealmList
-import io.realm.RealmObject
+import io.realm.*
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmCorePropertyNotNullableException
+import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
-import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.internal.util.Validation.sdkError
-import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 
 /**
@@ -55,7 +52,8 @@ internal object RealmObjectHelper {
 
     internal fun <R> getByKey(obj: RealmObjectInternal, key: io.realm.internal.interop.PropertyKey): Any? {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
-        val o = obj.`$realm$ObjectPointer`!! ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
+        val o = obj.`$realm$ObjectPointer`!!
+            ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
         return RealmInterop.realm_get_value(o, key)
     }
 
@@ -88,11 +86,13 @@ internal object RealmObjectHelper {
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
-            val value = (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
+            val mediator = obj.`$realm$Mediator`!!
+            val className = mediator.companionOf(R::class)?.`$realm$className`
+            val value = (mediator).createInstanceOf(R::class)
             return value.link(
                 obj.`$realm$Owner`!!,
                 obj.`$realm$Mediator`!!,
-                obj.`$realm$ClassName`!!,
+                className,
                 link
             )
         }
@@ -124,12 +124,13 @@ internal object RealmObjectHelper {
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
         val mediator: Mediator = obj.`$realm$Mediator`!!
+//        val className = mediator.companionOf(elementType).`$realm$className`
 
         // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val realm: RealmReference =
             obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         // Cannot call managedRealmList directly from an inline function
-        return getManagedRealmList(listPtr, obj.`$realm$ClassName`!!, elementType, mediator, realm)
+        return getManagedRealmList(listPtr, elementType, mediator, realm)
     }
 
     /**
@@ -137,20 +138,20 @@ internal object RealmObjectHelper {
      * functions not being able to access non-public API methods - managedRealmList is `internal`
      * and therefore it cannot be called from `getList`
      */
-    internal fun getManagedRealmList(
+    internal fun <R> getManagedRealmList(
         listPtr: NativePointer,
-        className: String,
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference
-    ): RealmList<Any?> {
+    ): RealmList<R> {
         return managedRealmList(
             listPtr,
             ListOperatorMetadata(
-                className,
-                clazz = clazz,
+//                className,
+//                clazz = clazz,
                 mediator = mediator,
-                realm = realm
+                realm = realm,
+                converter(mediator, realm, clazz),
             )
         )
     }

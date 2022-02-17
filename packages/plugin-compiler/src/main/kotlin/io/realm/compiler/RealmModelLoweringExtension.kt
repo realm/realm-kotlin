@@ -19,9 +19,13 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.MODEL_OBJECT_ANNOTATION
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_FREEZE
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_IS_FROZEN
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_PROPERTY_KEY
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REALM_STATE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_THAW
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_VERSION
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
@@ -44,11 +48,10 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.konan.isNative
 
 private val realmObjectInternalOverrides = setOf(
-    // FIXME Define the constannts in Identifiers.kt
-    Name.identifier("freeze"),
-    Name.identifier("thaw"),
-    Name.identifier("registerForNotification"),
-    Name.identifier("emitFrozenUpdate"),
+    REALM_OBJECT_INTERNAL_FREEZE,
+    REALM_OBJECT_INTERNAL_THAW,
+    REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION,
+    REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE,
     REALM_OBJECT_INTERNAL_IS_FROZEN,
     REALM_OBJECT_INTERNAL_REALM_STATE,
     REALM_OBJECT_INTERNAL_VERSION,

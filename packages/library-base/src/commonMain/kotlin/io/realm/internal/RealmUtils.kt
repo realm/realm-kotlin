@@ -83,14 +83,13 @@ internal fun checkRealmClosed(realm: RealmReference) {
 }
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, mediator.companionOf(type).`$realm$className`)
+    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanion(type).`$realm$className`)
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
     try {
         val managedModel = mediator.createInstanceOf(type)
         // TODO OPTIMIZE Key could be cached in realmReference.schemaMetadata
         val key = RealmInterop.realm_find_class(realm.dbPointer, className)
-        realm.schemaMetadata[className]
         key?.let {
             return managedModel.manage(
                 realm,
@@ -109,7 +108,7 @@ internal fun <T : RealmObject> create(
         realm: RealmReference,
         type: KClass<T>,
         primaryKey: Any?
-): T = create(mediator, realm, type, mediator.companionOf(type).`$realm$className`, primaryKey)
+): T = create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanion(type).`$realm$className`, primaryKey)
 
 internal fun <T : RealmObject> create(
     mediator: Mediator,
@@ -162,8 +161,8 @@ internal fun <T> copyToRealm(
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
-            val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-            val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+            val members = companion?.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
+            val target = companion?.`$realm$primaryKey`?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,

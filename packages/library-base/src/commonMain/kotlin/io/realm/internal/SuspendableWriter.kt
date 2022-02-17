@@ -23,12 +23,14 @@ import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
 import io.realm.internal.schema.RealmClassImpl
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.reflect.KClass
 import io.realm.internal.freeze as freezeTyped
 
 /**
@@ -53,6 +55,12 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
             return super<MutableRealmImpl>.registerObserver(t)
         }
+
+        override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
+            return super.query(clazz, query, *args)
+        }
+
+        override fun cancelWrite() { super.cancelWrite() }
     }
 
     private val realmInitializer = lazy {

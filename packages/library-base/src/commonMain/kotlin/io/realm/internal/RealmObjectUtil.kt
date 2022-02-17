@@ -20,7 +20,6 @@ import io.realm.RealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
@@ -47,15 +46,15 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
 internal fun <T : RealmObject> RealmObjectInternal.link(
     realm: RealmReference,
     mediator: Mediator,
-    className: String,
+    className: String?,
     link: Link
 ): T {
+    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
-    this.`$realm$ClassName` = className
+    this.`$realm$ClassName` = className ?: RealmInterop.realm_get_class(realm.dbPointer, RealmInterop.realm_object_get_table(this.`$realm$ObjectPointer`!!)).name
     // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
-    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
-    this.`$realm$metadata` = realm.schemaMetadata[className]
+    this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]
     this.`$realm$Mediator` = mediator
     @Suppress("UNCHECKED_CAST")
     return this as T
@@ -85,7 +84,7 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmRefe
  * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
  */
 internal fun <T : RealmObject> Link.toRealmObject(
-    className: String,
+    className: String?,
     clazz: KClass<T>,
     mediator: Mediator,
     realm: RealmReference
