@@ -120,6 +120,7 @@ expect object RealmInterop {
     fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer?
 
     fun realm_object_as_link(obj: NativePointer): Link
+    fun realm_object_get_table(obj: NativePointer): ClassKey
 
     fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey
 

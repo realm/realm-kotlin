@@ -170,7 +170,11 @@ internal object RealmObjectHelper {
         // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
         // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
         // info that might help users to understand the exception.
-        catch (exception: RealmCoreException) {
+        catch (exception: RealmCorePropertyNotNullableException) {
+            throw IllegalArgumentException("Required property `${obj.`$realm$ClassName`}.$propertyName` cannot be null")
+        } catch (exception: RealmCorePropertyTypeMismatchException) {
+            throw IllegalArgumentException("Property `${obj.`$realm$ClassName`}.$propertyName` cannot be assigned with value '$value' of wrong type")
+        } catch (exception: RealmCoreException) {
             throw IllegalStateException(
                 "Cannot set `${obj.`$realm$ClassName`}.$propertyName` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
@@ -227,11 +231,12 @@ internal object RealmObjectHelper {
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
     }
 
-    internal fun <R : Any> get(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
+    internal fun <R : Any> dynamicGet(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
         @Suppress("UNCHECKED_CAST")
-        return when(clazz) {
+        return when (clazz) {
             RealmInstant::class -> getTimestamp<R>(obj, propertyName)
             DynamicRealmObject::class -> getObject<DynamicRealmObject>(obj, propertyName)
+            DynamicMutableRealmObject::class -> getObject<DynamicMutableRealmObject>(obj, propertyName)
             RealmList::class -> throw IllegalArgumentException("Cannot retrieve RealmList through 'get(...)', use getList(...) instead: $propertyName")
             else -> getValue<R>(obj, propertyName)
         } as R?

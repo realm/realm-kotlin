@@ -17,36 +17,16 @@ package io.realm.internal
 
 import io.realm.MutableRealm
 import io.realm.RealmObject
-import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.query.ObjectQuery
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
-import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
-import kotlin.reflect.KClass
 
 internal interface MutableRealmImpl : MutableRealm {
 
     override val configuration: InternalConfiguration
     val realmReference: LiveRealmReference
-
-    fun beginTransaction() {
-        try {
-            RealmInterop.realm_begin_write(realmReference.dbPointer)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot begin the write transaction", exception)
-        }
-    }
-
-    fun commitTransaction() {
-        RealmInterop.realm_commit(realmReference.dbPointer)
-    }
-
-    fun isInTransaction(): Boolean {
-        return RealmInterop.realm_is_in_transaction(realmReference.dbPointer)
-    }
 
     override fun <T : RealmObject> findLatest(obj: T): T? {
         return if (!obj.isValid()) {
@@ -62,15 +42,7 @@ internal interface MutableRealmImpl : MutableRealm {
             // up to date, just return input
             obj
         } else {
-            (obj as RealmObjectInternal).thaw(realmReference) as T
-        }
-    }
-
-    override fun cancelWrite() {
-        try {
-            RealmInterop.realm_rollback(realmReference.dbPointer)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot cancel the write transaction", exception)
+            (obj as RealmObjectInternal).thaw(realmReference) as T?
         }
     }
 

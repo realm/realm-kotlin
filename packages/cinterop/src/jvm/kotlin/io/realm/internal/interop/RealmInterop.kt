@@ -310,6 +310,10 @@ actual object RealmInterop {
         return Link(ClassKey(link.target_table), link.target)
     }
 
+    actual fun realm_object_get_table(obj: NativePointer): ClassKey {
+        return ClassKey(realmc.realm_object_get_table(obj.cptr()))
+    }
+
     actual fun realm_get_col_key(
         realm: NativePointer,
         className: String,

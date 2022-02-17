@@ -36,14 +36,9 @@ import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmStorageType
 import io.realm.schema.ValuePropertyType
 import io.realm.test.platform.PlatformUtils
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
+import kotlin.test.*
 
-private val defaultSample = Sample()
+val defaultSample = Sample()
 
 class DynamicRealmObjectTests {
 
@@ -123,7 +118,7 @@ class DynamicRealmObjectTests {
         val schema = dynamicRealm.schema()
         val sampleDescriptor = schema["Sample"]!!
 
-        val properties = sampleDescriptor.properties//.filter { it.type is ValuePropertyType && it.isNullable }
+        val properties = sampleDescriptor.properties
         for (property in properties) {
             val name: String = property.name
             val type = property.type
@@ -307,6 +302,18 @@ class DynamicRealmObjectTests {
 
 
     @Test
+    fun getList_unknownNameThrows() {
+        realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+        val dynamicRealm = realm.asDynamicRealm()
+        val dynamicSample = dynamicRealm.query("Sample").find().first()
+        assertFailsWith<IllegalArgumentException> {
+            dynamicSample.getList<String>("UNKNOWN_FIELD")
+        }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
+    }
+
+    @Test
     fun get_wrongTypeThrows() {
         realm.writeBlocking {
             copyToRealm(Sample())
@@ -319,6 +326,22 @@ class DynamicRealmObjectTests {
     }
 
     @Test
+    @Ignore // FIXME Should we actually verify the types as the generic parameters is not enforced
+    fun getList_wrongTypeThrows() {
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { stringListField.add("STRING") })
+        }
+        val dynamicRealm = realm.asDynamicRealm()
+        val dynamicSample = dynamicRealm.query("Sample").find().first()
+        assertFailsWith<ClassCastException> {
+            val stringList: RealmList<Long> = dynamicSample.getList("stringListField")
+            val long: Long = stringList[0]
+        }.run {
+            assertEquals(message, "java.lang.String cannot be cast to java.lang.Number")
+        }
+    }
+
+    @Test
     fun get_listThrows() {
         realm.writeBlocking {
             copyToRealm(Sample())
@@ -328,7 +351,21 @@ class DynamicRealmObjectTests {
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.get<RealmList<*>>("stringListField")
         }.run { assertEquals ( "Cannot retrieve RealmList through 'get(...)', use getList(...) instead: stringListField", message) }
+    }
 
+    @Test
+    fun getList_throwsIfModified() {
+        realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+        val dynamicRealm = realm.asDynamicRealm()
+        val dynamicSample = dynamicRealm.query("Sample").find().first()
+
+        assertFailsWith<IllegalStateException> {
+            dynamicSample.getList<String>("stringListField").add("IMMUTABLE_LIST_ELEMENT")
+        }.run {
+            assertTrue(message!!.contains("Cannot modify managed objects outside of a write transaction"))
+        }
     }
 
     @Test
@@ -393,3 +430,4 @@ class DynamicRealmObjectTests {
         }
     }
 }
+

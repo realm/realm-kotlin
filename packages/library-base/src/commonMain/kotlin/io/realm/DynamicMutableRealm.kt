@@ -28,4 +28,7 @@ interface DynamicMutableRealm: DynamicRealm {
 
     fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
 
+    // FIXME Do we want an explicit delete here? At least we should probably match MutableRealm.delete/RealmObject.delete behaviour
+    // fun delete(obj: RealmObject)
+
 }

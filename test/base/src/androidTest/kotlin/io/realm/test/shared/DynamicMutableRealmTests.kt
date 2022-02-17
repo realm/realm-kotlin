@@ -17,14 +17,17 @@
 
 package io.realm.test.shared
 
-import io.realm.Realm
+import io.realm.DynamicMutableRealm
 import io.realm.RealmConfiguration
-import io.realm.isValid
-import io.realm.get
+import io.realm.delete
 import io.realm.entities.Sample
 import io.realm.entities.migration.SampleMigrated
 import io.realm.entities.primarykey.PrimaryKeyString
-import io.realm.internal.asDynamicMutableRealm
+import io.realm.entities.primarykey.PrimaryKeyStringNullable
+import io.realm.get
+import io.realm.internal.InternalConfiguration
+import io.realm.isValid
+import io.realm.test.DynamicMutableTransactionRealm
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -32,33 +35,37 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+
 
 class DynamicMutableRealmTests {
     private lateinit var tmpDir: String
-    private lateinit var realm: Realm
+    private lateinit var dynamicMutableRealm: DynamicMutableRealm
 
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class, SampleMigrated::class, PrimaryKeyString::class))
+            RealmConfiguration.Builder(schema = setOf(Sample::class, SampleMigrated::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
                 .path("$tmpDir/default.realm").build()
 
-        realm = Realm.open(configuration)
+        dynamicMutableRealm = DynamicMutableTransactionRealm(configuration as InternalConfiguration).apply {
+            beginTransaction()
+        }
     }
 
     @AfterTest
     fun tearDown() {
-        if (this::realm.isInitialized && !realm.isClosed()) {
-            realm.close()
+        if (this::dynamicMutableRealm.isInitialized && !dynamicMutableRealm.isClosed()) {
+            (dynamicMutableRealm as DynamicMutableTransactionRealm).close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
     fun create() {
-        val dynamicMutableRealm = realm.asDynamicMutableRealm()
         val dynamicMutableObject = dynamicMutableRealm.createObject("Sample")
         assertTrue { dynamicMutableObject.isValid() }
     }
@@ -66,8 +73,7 @@ class DynamicMutableRealmTests {
     // FIXME Do we need this for each type?
     @Test
     fun createPrimaryKey() {
-        val dynamicMutableRealm = realm.asDynamicMutableRealm()
-        val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KY")
+        val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
         assertTrue { dynamicMutableObject.isValid() }
         assertEquals("PRIMARY_KEY", dynamicMutableObject.get("primaryKey"))
     }
@@ -75,13 +81,20 @@ class DynamicMutableRealmTests {
     // FIXME Do we need this for each type?
     @Test
     fun createPrimaryKey_nullablePrimaryKey() {
-        val dynamicMutableRealm = realm.asDynamicMutableRealm()
         dynamicMutableRealm.createObject("PrimaryKeyStringNullable", null)
     }
 
     @Test
+    fun create_throwsOnUnknownClass() {
+        assertFailsWith<IllegalStateException> {
+            dynamicMutableRealm.createObject("UNKNOWN_CLASS")
+        }.run {
+            assertEquals("Couldn't find key for class UNKNOWN_CLASS", message)
+        }
+    }
+
+    @Test
     fun create_throwsWithPrimaryKey() {
-        val dynamicMutableRealm = realm.asDynamicMutableRealm()
         assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.createObject("SampleMigrated", "PRIMARY_KEY")
         }.run {
@@ -91,7 +104,6 @@ class DynamicMutableRealmTests {
 
     @Test
     fun createPrimaryKey_throwsOnAbsentPrimaryKey() {
-        val dynamicMutableRealm = realm.asDynamicMutableRealm()
         assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.createObject("PrimaryKeyString")
         }.run {
@@ -101,7 +113,6 @@ class DynamicMutableRealmTests {
 
     @Test
     fun createPrimaryKey_throwsWithWrongPrimaryKeyType() {
-        val dynamicMutableRealm = realm.asDynamicMutableRealm()
         assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.createObject("PrimaryKeyString", 42)
         }.run {
@@ -109,4 +120,42 @@ class DynamicMutableRealmTests {
         }
     }
 
+    @Test
+    fun query_returnsDynamicMutableObject() {
+        dynamicMutableRealm.createObject("Sample")
+        val o1 = dynamicMutableRealm.query("Sample").find().first()
+        o1.set("stringField", "value")
+
+        val o2 = dynamicMutableRealm.query("Sample").find().first()
+        assertEquals("value", o2.get("stringField"))
+    }
+
+    @Test
+    fun query_failsOnUnknownClass() {
+        assertFailsWith<IllegalArgumentException> {
+            dynamicMutableRealm.query("UNKNOWN_CLASS")
+        }.run {
+            assertEquals("Cannot find class: 'UNKNOWN_CLASS'", message)
+        }
+    }
+
+    @Test
+    fun findLatest() {
+        val o1 = dynamicMutableRealm.createObject("Sample")
+            .set("stringField", "NEW_VALUE")
+
+        val o2 = dynamicMutableRealm.findLatest(o1)
+        assertNotNull(o2)
+        assertEquals("NEW_VALUE", o2.get("stringField"))
+    }
+
+    @Test
+    fun findLatest_deleted() {
+        val o1 = dynamicMutableRealm.createObject("Sample")
+        o1.delete()
+        val o2 = dynamicMutableRealm.findLatest(o1)
+        assertNull(o2)
+    }
+
+    // fun delete() ? See comment in DynamicMutableRealm.delete
 }

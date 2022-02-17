@@ -33,11 +33,11 @@ open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override var `$realm$metadata`: ClassMetadata? = null
 
     override fun <T : Any> get(fieldName: String, clazz: KClass<T>): T {
-        return RealmObjectHelper.get(this, clazz, fieldName)!! // Is it reasonable to just throw language null pointer error?
+        return RealmObjectHelper.dynamicGet(this, clazz, fieldName)!! // Is it reasonable to just throw language null pointer error?
     }
 
     override fun <T : Any> getNullable(fieldName: String, clazz: KClass<T>): T? {
-        return RealmObjectHelper.get(this, clazz, fieldName)
+        return RealmObjectHelper.dynamicGet(this, clazz, fieldName)
     }
 
     override fun <T : Any> getList(fieldName: String, clazz: KClass<T>): RealmList<T> {

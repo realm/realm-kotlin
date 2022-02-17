@@ -16,14 +16,13 @@
 
 package io.realm.internal
 
-import io.realm.BaseRealm
 import io.realm.RealmObject
 import io.realm.TypedRealm
 import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 
-interface TypedRealmImpl : TypedRealm, BaseRealm {
+interface TypedRealmImpl : TypedRealm {
 
     override val configuration: InternalConfiguration
     val realmReference: RealmReference

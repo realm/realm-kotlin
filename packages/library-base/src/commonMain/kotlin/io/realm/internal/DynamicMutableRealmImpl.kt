@@ -17,16 +17,15 @@
 package io.realm.internal
 
 import io.realm.DynamicMutableRealm
-import io.realm.internal.interop.NativePointer
 import io.realm.DynamicMutableRealmObject
-import io.realm.DynamicRealmObject
 import io.realm.RealmObject
+import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
 
-internal class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) : BaseRealmImpl(configuration), DynamicMutableRealm {
+internal open class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) : BaseRealmImpl(configuration), DynamicMutableRealm, TransactionalRealm {
 
-    override val realmReference: RealmReference = LiveRealmReference(this, dbPointer)
+    override val realmReference: LiveRealmReference = LiveRealmReference(this, dbPointer)
 
     override fun query(className: String, query: String, vararg args: Any?): RealmQuery<DynamicMutableRealmObject> =
             ObjectQuery(realmReference, className, DynamicMutableRealmObject::class, configuration.mediator, null, query, *args)
@@ -40,5 +39,4 @@ internal class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbP
     override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {
         return (obj as RealmObjectInternal).thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?
     }
-
 }

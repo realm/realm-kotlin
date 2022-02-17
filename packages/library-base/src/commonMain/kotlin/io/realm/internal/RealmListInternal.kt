@@ -44,10 +44,8 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
  */
 internal class ManagedRealmList<E>(
     private val nativePointer: NativePointer,
-    private val metadata: ListOperatorMetadata
+    private val metadata: ListOperatorMetadata<E>
 ) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
-
-    private val operator = ListOperator<E>(metadata)
 
     override val size: Int
         get() {
@@ -58,7 +56,7 @@ internal class ManagedRealmList<E>(
     override fun get(index: Int): E {
         metadata.realm.checkClosed()
         try {
-            return operator.convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
+            return convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
                 "Could not get element at list index $index",
@@ -100,10 +98,14 @@ internal class ManagedRealmList<E>(
         }
     }
 
+    private fun convert(value: Any?): E {
+        return value?.let { metadata.converter.convert(value) } as E
+    }
+
     override fun set(index: Int, element: E): E {
         metadata.realm.checkClosed()
         try {
-            return operator.convert(
+            return convert(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
@@ -159,51 +161,47 @@ internal class ManagedRealmList<E>(
     }
 }
 
+fun interface ElementConverter<E> {
+    fun convert(value: Any?): E
+}
+
 /**
  * Metadata needed to correctly instantiate a list operator.
  */
-internal data class ListOperatorMetadata(
-    val className: String,
-    val clazz: KClass<*>,
+internal data class ListOperatorMetadata<E>(
     val mediator: Mediator,
-    val realm: RealmReference
+    val realm: RealmReference,
+    val converter: ElementConverter<E>
 )
 
-/**
- * Facilitates conversion between Realm Core types and Kotlin types.
- */
-internal class ListOperator<E>(
-    private val metadata: ListOperatorMetadata
-) {
-
-    /**
-     * Converts the underlying Core type to the correct type expressed in the RealmList.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun convert(value: Any?): E {
-        if (value == null) {
-            return null as E
+fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KClass<*>): ElementConverter<E> {
+    return when (clazz) {
+        Byte::class -> ElementConverter { (it as Long).toByte() as E }
+        Char::class -> ElementConverter { (it as Long).toInt().toChar() as E }
+        Short::class -> ElementConverter { (it as Long).toShort() as E }
+        Int::class -> ElementConverter { (it as Long).toInt() as E }
+        Long::class,
+        Boolean::class,
+        Float::class,
+        Double::class,
+        String::class -> ElementConverter { it as E }
+        RealmInstant::class -> ElementConverter { RealmInstantImpl(it as Timestamp) as E }
+        DynamicRealmObject::class -> ElementConverter {
+            (it as Link).toRealmObject(
+                null,
+                clazz as KClass<out RealmObject>,
+                mediator,
+                realm
+            ) as E
         }
-        return with(metadata) {
-            when (clazz) {
-                Byte::class -> (value as Long).toByte()
-                Char::class -> (value as Long).toInt().toChar()
-                Short::class -> (value as Long).toShort()
-                Int::class -> (value as Long).toInt()
-                Long::class,
-                Boolean::class,
-                Float::class,
-                Double::class,
-                String::class -> value
-                RealmInstant::class -> RealmInstantImpl(value as Timestamp)
-                // TODO This doesn't look safe
-                else -> (value as Link).toRealmObject(
-                    className,
-                    clazz as KClass<out RealmObject>,
-                    mediator,
-                    realm
-                )
-            } as E
+        // TODO This doesn't look safe
+        else -> ElementConverter {
+            (it as Link).toRealmObject(
+                mediator.companionOf(clazz as KClass<out RealmObject>)!!.`$realm$className`,
+                clazz as KClass<out RealmObject>,
+                mediator,
+                realm
+            ) as E
         }
     }
 }
@@ -213,7 +211,7 @@ internal class ListOperator<E>(
  */
 internal fun <T> managedRealmList(
     listPointer: NativePointer,
-    metadata: ListOperatorMetadata
+    metadata: ListOperatorMetadata<T>
 ): ManagedRealmList<T> = ManagedRealmList(listPointer, metadata)
 
 internal fun <T> Array<out T>.asRealmList(): RealmList<T> =
