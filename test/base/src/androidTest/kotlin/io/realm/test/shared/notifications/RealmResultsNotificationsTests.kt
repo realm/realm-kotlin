@@ -273,27 +273,26 @@ class RealmResultsNotificationsTests : NotificationTests {
         runBlocking {
             val c1 = Channel<ListChange<RealmResults<Sample>>>(1)
             val c2 = Channel<ListChange<RealmResults<Sample>>>(1)
+
+            realm.write {
+                copyToRealm(Sample().apply { stringField = "Bar" })
+            }
+
             val observer1 = async {
                 realm.query<Sample>()
                     .asFlow()
-                    .filterNot {
-                        it.list.isEmpty()
-                    }.collect {
+                    .collect {
                         c1.trySend(it)
                     }
             }
             val observer2 = async {
                 realm.query<Sample>()
                     .asFlow()
-                    .filterNot {
-                        it.list.isEmpty()
-                    }.collect {
+                    .collect {
                         c2.trySend(it)
                     }
             }
-            realm.write {
-                copyToRealm(Sample().apply { stringField = "Bar" })
-            }
+
             c1.receive().let { listChange ->
                 assertIs<InitialList<*>>(listChange)
                 assertEquals(1, listChange.list.size)
@@ -304,9 +303,11 @@ class RealmResultsNotificationsTests : NotificationTests {
             }
 
             observer1.cancel()
+
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Baz" })
             }
+
             c2.receive().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
                 assertEquals(2, listChange.list.size)
