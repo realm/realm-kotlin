@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 
-// Logging to a temp file and to console/IDE (Build Output)
+// Logging to console/IDE (Build Output)
 lateinit var messageCollector: MessageCollector
 private fun logger(message: String, severity: CompilerMessageSeverity = CompilerMessageSeverity.WARNING, location: CompilerMessageSourceLocation? = null) {
     val formattedMessage by lazy { "[Realm] $message" }
