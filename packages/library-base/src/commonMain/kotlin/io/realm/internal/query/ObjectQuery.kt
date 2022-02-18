@@ -38,7 +38,7 @@ import io.realm.query.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-@Suppress("SpreadOperator")
+@Suppress("SpreadOperator", "LongParameterList")
 internal class ObjectQuery<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val className: String,

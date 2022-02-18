@@ -107,6 +107,7 @@ class DynamicRealmObjectTests {
     }
 
     @Test
+    @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     fun get_allTypes() {
         val expectedSample = testSample()
         realm.writeBlocking {

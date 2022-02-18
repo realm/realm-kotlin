@@ -312,6 +312,7 @@ class RealmMigrationTests {
             .path("$tmpDir/default.realm")
             .schemaVersion(1)
             .migration(AutomaticSchemaMigration {
+                @Suppress("TooGenericExceptionThrown")
                 throw RuntimeException("User error")
             })
             .build()
@@ -386,7 +387,6 @@ class RealmMigrationTests {
             .migration(AutomaticSchemaMigration {
                 migration.migrate(it)
                 migrated.value = true
-
             })
             .build()
         val migratedRealm = Realm.open(newConfiguration)

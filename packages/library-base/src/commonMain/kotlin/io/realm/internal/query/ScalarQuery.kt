@@ -169,6 +169,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
 /**
  * Computes the sum of all entries for a given property. The result is always non-nullable.
  */
+@Suppress("LongParameterList")
 internal class SumQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,

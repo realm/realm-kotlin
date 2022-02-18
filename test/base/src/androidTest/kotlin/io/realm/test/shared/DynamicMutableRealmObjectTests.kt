@@ -71,6 +71,7 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
+    @Suppress("LongMethod", "ComplexMethod")
     fun set_allTypes() = runTest {
         val dynamicSample = dynamicMutableRealm.createObject("Sample")
         assertNotNull(dynamicSample)

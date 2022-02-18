@@ -339,18 +339,21 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_config_set_migration_function(config: NativePointer, callback: MigrationCallback) {
+    actual fun realm_config_set_migration_function(
+        config: NativePointer,
+        callback: MigrationCallback
+    ) {
         realm_wrapper.realm_config_set_migration_function(
-                config.cptr(),
-                staticCFunction { userData, oldRealm, newRealm, schema ->
-                    safeUserData<MigrationCallback>(userData)(
-                            CPointerWrapper(realm_clone(oldRealm)),
-                            CPointerWrapper(realm_clone(newRealm)),
-                            CPointerWrapper(realm_clone(schema)),
-                    )
-                },
-                // Does this leak?? Don't bother until pattern from https://github.com/realm/realm-core/issues/5222 is settled
-                StableRef.create(callback).asCPointer()
+            config.cptr(),
+            staticCFunction { userData, oldRealm, newRealm, schema ->
+                safeUserData<MigrationCallback>(userData)(
+                    CPointerWrapper(realm_clone(oldRealm)),
+                    CPointerWrapper(realm_clone(newRealm)),
+                    CPointerWrapper(realm_clone(schema)),
+                )
+            },
+            // Does this leak?? Don't bother until pattern from https://github.com/realm/realm-core/issues/5222 is settled
+            StableRef.create(callback).asCPointer()
         )
     }
 
@@ -443,7 +446,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_schema_version(realm: NativePointer): Long {
-        return realm_wrapper.realm_get_schema_version(realm.cptr())
+        return realm_wrapper.realm_get_schema_version(realm.cptr()).toLong()
     }
 
     actual fun realm_get_num_classes(realm: NativePointer): Long {
@@ -617,6 +620,10 @@ actual object RealmInterop {
         link.useContents {
             return Link(ClassKey(this.target_table.toLong()), this.target)
         }
+    }
+
+    actual fun realm_object_get_table(obj: NativePointer): ClassKey {
+        return ClassKey(realm_wrapper.realm_object_get_table(obj.cptr()).toLong())
     }
 
     actual fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey {
