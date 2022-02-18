@@ -57,7 +57,7 @@ sealed interface ObjectChange<O : RealmObject> {
 
 /**
  * Initial event to be observed on a RealmObject flow. It contains a reference to the starting object
- * state.
+ * state. Note, this state might be different than the object the flow was registered on, if another thread or device updated the object in the meantime.
  */
 interface InitialObject<O : RealmObject> : ObjectChange<O> {
     override val obj: O
