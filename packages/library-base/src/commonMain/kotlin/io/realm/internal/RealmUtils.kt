@@ -94,7 +94,7 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
             return managedModel.manage(
                 realm,
                 mediator,
-                className,
+                type,
                 RealmInterop.realm_object_create(realm.dbPointer, key)
             )
         } ?: error("Couldn't find key for class $className")
@@ -132,7 +132,7 @@ internal fun <T : RealmObject> create(
             return managedModel.manage(
                 realm,
                 mediator,
-                className,
+                type,
                 RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
             )
         } ?: error("Couldn't find key for class $className")
@@ -161,8 +161,8 @@ internal fun <T> copyToRealm(
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
-            val members = companion?.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-            val target = companion?.`$realm$primaryKey`?.let { primaryKey ->
+            val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
+            val target = companion.`$realm$primaryKey`?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,

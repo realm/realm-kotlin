@@ -55,7 +55,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
         val link = RealmInterop.realm_results_get(nativePointer, index.toLong())
         // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
         val model = mediator.createInstanceOf(clazz)
-        model.link<E>(realm, mediator, className, link)
+        model.link(realm, mediator, clazz, link)
         @Suppress("UNCHECKED_CAST")
         return model as E
     }

@@ -177,11 +177,11 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.INT -> {
                                 val value: Long = when (property.name) {
-                                    "byteListField" -> defaultSample.byteField.toLong()
-                                    "charListField" -> defaultSample.charField.code.toLong()
-                                    "shortListField" -> defaultSample.shortField.toLong()
-                                    "intListField" -> defaultSample.intField.toLong()
-                                    "longListField" -> defaultSample.longField
+                                    "nullableByteListField" -> defaultSample.byteField.toLong()
+                                    "nullableCharListField" -> defaultSample.charField.code.toLong()
+                                    "nullableShortListField" -> defaultSample.shortField.toLong()
+                                    "nullableIntListField" -> defaultSample.intField.toLong()
+                                    "nullableLongListField" -> defaultSample.longField
                                     else -> error("Unexpected integral field ${property.name}")
                                 }
                                 dynamicSample.getListOfNullable<Long>(property.name).add(value)

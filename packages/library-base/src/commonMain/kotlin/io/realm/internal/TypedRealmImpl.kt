@@ -28,7 +28,7 @@ interface TypedRealmImpl : TypedRealm {
     val realmReference: RealmReference
 
     override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
-        val className = configuration.mediator.companionOf(clazz)!!.`$realm$className`
+        val className = configuration.mediator.companionOf(clazz).`$realm$className`
         return ObjectQuery(realmReference, className, clazz, configuration.mediator, null, query, *args)
     }
 }

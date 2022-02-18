@@ -46,7 +46,6 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     var `$realm$Owner`: RealmReference?
     var `$realm$ClassName`: String?
     var `$realm$Mediator`: Mediator?
-    // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
     var `$realm$metadata`: ClassMetadata?
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
@@ -71,7 +70,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             managedModel.manage(
                 frozenRealm,
                 mediator,
-                this.`$realm$ClassName`!!,
+                type,
                 it
             )
         }
@@ -90,7 +89,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
             managedModel.manage(
                 liveRealm,
                 mediator,
-                this.`$realm$ClassName`!!,
+                clazz as KClass<RealmObjectInternal>,
                 it
             )
         }

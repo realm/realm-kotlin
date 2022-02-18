@@ -87,12 +87,11 @@ internal object RealmObjectHelper {
         val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
             val mediator = obj.`$realm$Mediator`!!
-            val className = mediator.companionOf(R::class)?.`$realm$className`
             val value = (mediator).createInstanceOf(R::class)
             return value.link(
                 obj.`$realm$Owner`!!,
                 obj.`$realm$Mediator`!!,
-                className,
+                R::class,
                 link
             )
         }

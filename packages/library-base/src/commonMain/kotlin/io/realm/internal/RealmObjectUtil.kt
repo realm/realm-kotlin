@@ -16,48 +16,41 @@
 
 package io.realm.internal
 
+import io.realm.DynamicRealmObject
 import io.realm.RealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.realmObjectCompanion
 import kotlin.reflect.KClass
 
-// TODO API-INTERNAL
-// We could inline this
 internal fun <T : RealmObject> RealmObjectInternal.manage(
     realm: RealmReference,
     mediator: Mediator,
-    className: String,
+    type: KClass<T>,
     objectPointer: NativePointer
 ): T {
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
-    this.`$realm$ClassName` = className
-    this.`$realm$ObjectPointer` = objectPointer
-    this.`$realm$metadata` = realm.schemaMetadata[className]
-    // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
-    // this.link = RealmInterop.realm_object_as_link()
     this.`$realm$Mediator` = mediator
+    this.`$realm$ObjectPointer` = objectPointer
+    this.`$realm$ClassName` = if (this is DynamicRealmObject) {
+        RealmInterop.realm_get_class(`$realm$Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
+    } else {
+        realmObjectCompanion(type).`$realm$className`
+    }
+    this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]
     @Suppress("UNCHECKED_CAST")
     return this as T
 }
 
-// TODO API-INTERNAL
 internal fun <T : RealmObject> RealmObjectInternal.link(
     realm: RealmReference,
     mediator: Mediator,
-    className: String?,
+    type: KClass<T>,
     link: Link
 ): T {
-    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
-    this.`$realm$IsManaged` = true
-    this.`$realm$Owner` = realm
-    this.`$realm$ClassName` = className ?: RealmInterop.realm_get_class(realm.dbPointer, RealmInterop.realm_object_get_table(this.`$realm$ObjectPointer`!!)).name
-    // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
-    this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]
-    this.`$realm$Mediator` = mediator
-    @Suppress("UNCHECKED_CAST")
-    return this as T
+    return this.manage(realm, mediator, type, RealmInterop.realm_get_object(realm.dbPointer, link))
 }
 
 /**
@@ -84,13 +77,12 @@ internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmRefe
  * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
  */
 internal fun <T : RealmObject> Link.toRealmObject(
-    className: String?,
     clazz: KClass<T>,
     mediator: Mediator,
     realm: RealmReference
 ): T {
     return mediator.createInstanceOf(clazz)
-        .link(realm, mediator, className, this)
+        .link(realm, mediator, clazz, this)
 }
 
 /**

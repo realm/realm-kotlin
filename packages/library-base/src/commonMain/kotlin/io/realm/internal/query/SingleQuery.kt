@@ -26,7 +26,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
         val model = mediator.createInstanceOf(clazz)
-        model.link<E>(realmReference, mediator, className, link)
+        model.link(realmReference, mediator, clazz, link)
         @Suppress("UNCHECKED_CAST")
         return model as E
     }

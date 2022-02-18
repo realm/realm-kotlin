@@ -125,13 +125,12 @@ open class ConfigurationImpl constructor(
                     DynamicRealmObject::class -> DynamicRealmObjectImpl()
                     DynamicMutableRealmObject::class -> DynamicMutableRealmObjectImpl()
                     else ->
-                        companionOf(clazz)?.`$realm$newInstance`() as RealmObjectInternal
-//                    ?: error("$clazz not part of this configuration schema")
+                        companionOf(clazz).`$realm$newInstance`() as RealmObjectInternal
                 }
 
-            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion? =
+            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]
-//                    ?: error("$clazz not part of this configuration schema")
+                    ?: error("$clazz not part of this configuration schema")
         }
     }
 }

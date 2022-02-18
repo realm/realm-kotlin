@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.DynamicRealmObject
 import io.realm.RealmList
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
 import kotlin.reflect.KClass
 

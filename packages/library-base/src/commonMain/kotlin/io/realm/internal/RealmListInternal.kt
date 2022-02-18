@@ -188,7 +188,6 @@ fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KClass<*>): 
         RealmInstant::class -> ElementConverter { RealmInstantImpl(it as Timestamp) as E }
         DynamicRealmObject::class -> ElementConverter {
             (it as Link).toRealmObject(
-                null,
                 clazz as KClass<out RealmObject>,
                 mediator,
                 realm
@@ -197,7 +196,6 @@ fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KClass<*>): 
         // TODO This doesn't look safe
         else -> ElementConverter {
             (it as Link).toRealmObject(
-                mediator.companionOf(clazz as KClass<out RealmObject>)!!.`$realm$className`,
                 clazz as KClass<out RealmObject>,
                 mediator,
                 realm
