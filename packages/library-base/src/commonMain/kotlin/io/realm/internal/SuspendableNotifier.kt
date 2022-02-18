@@ -2,9 +2,9 @@ package io.realm.internal
 
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
+import io.realm.internal.util.Validation.sdkError
 import io.realm.notifications.Callback
 import io.realm.notifications.Cancellable
 import kotlinx.atomicfu.AtomicRef
@@ -43,22 +43,30 @@ internal class SuspendableNotifier(
         }
     }
 
-    // FIXME Work-around for the global Realm changed listener not working.
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
-    private val _realmChanged = MutableSharedFlow<RealmReference>(
-        onBufferOverflow = BufferOverflow.SUSPEND,
+    private val _realmChanged = MutableSharedFlow<FrozenRealmReference>(
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
         extraBufferCapacity = 1
     )
 
-    private val realmInitializer = lazy {
-        val dbPointer = RealmInterop.realm_open(owner.configuration.nativeConfig, dispatcher)
-        object : BaseRealmImpl(owner.configuration, dbPointer) {
-            /* Realms used by the Notifier is just a basic Live Realm */
+    // Could just be anonymous class, but easiest way to get BaseRealmImpl.toString to display the
+    // right type with this
+    private inner class NotifierRealm : LiveRealm(owner, owner.configuration, dispatcher) {
+        // This is guaranteed to be triggered before any other notifications for the same
+        // update as we get all callbacks on the same single thread dispatcher
+        override fun onRealmChanged() {
+            super.onRealmChanged()
+            if (!_realmChanged.tryEmit(this.snapshot)) {
+                // Should never fail to emit snapshot version as we just drop oldest
+                sdkError("Failed to emit snapshot version")
+            }
         }
     }
+
+    private val realmInitializer = lazy { NotifierRealm() }
     // Must only be accessed from the dispatchers thread
-    private val realm: BaseRealmImpl by realmInitializer
+    private val realm: NotifierRealm by realmInitializer
 
     /**
      * FIXME Currently this is a hacked implementation that only does the correct thing if
@@ -70,25 +78,8 @@ internal class SuspendableNotifier(
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    internal fun realmChanged(): Flow<RealmReference> {
-        // FIXME Workaround until proper Realm Changed Listeners are implemented
-        // https://github.com/realm/realm-core/issues/4613
+    internal fun realmChanged(): Flow<FrozenRealmReference> {
         return _realmChanged.asSharedFlow()
-//        return callbackFlow {
-//            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-//            withContext(dispatcher) {
-//                token.value = addRealmChangedListener { frozenRealm ->
-//                    val result = trySend(frozenRealm)
-//                    if (!result.isSuccess) {
-//                        // FIXME What to do if this fails?
-//                        throw IllegalStateException("Notification could not be handled: $result")
-//                    }
-//                }
-//            }
-//            awaitClose {
-//                token.value.cancel()
-//            }
-//        }
     }
 
     internal fun <T, C> registerObserver(thawableObservable: Thawable<Observable<T, C>>): Flow<C> {
@@ -102,24 +93,10 @@ internal class SuspendableNotifier(
                     object : io.realm.internal.interop.Callback {
                         override fun onChange(change: NativePointer) {
                             // FIXME How to make sure the Realm isn't closed when handling this?
-
-                            // FIXME The Realm should have been frozen in `realmChanged`, but this isn't supported yet.
-                            //  Instead we create the frozen version ourselves (which is correct, but pretty inefficient)
-                            //  We also send it to the owner Realm, so it can keep track of its lifecycle
-                            val frozenRealm = RealmReference(
-                                owner,
-                                RealmInterop.realm_freeze(realm.realmReference.dbPointer)
-                            )
-                            notifyRealmChanged(frozenRealm)
                             // Notifications need to be delivered with the version they where created on, otherwise
                             // the fine-grained notification data might be out of sync.
-                            liveRef.emitFrozenUpdate(
-                                frozenRealm,
-                                change,
-                                this@callbackFlow
-                            )?.let {
-                                checkResult(it)
-                            }
+                            liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
+                                ?.let { checkResult(it) }
                         }
                     }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
                 val newToken =
@@ -151,9 +128,9 @@ internal class SuspendableNotifier(
         // FIXME Is it safe at all times to close a Realm? Probably not during a changelistener callback, but Mutexes
         //  are not supported within change listeners as they are not suspendable.
         runBlocking(dispatcher) {
+            // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
+            // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
             if (realmInitializer.isInitialized()) {
-                // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
-                // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
                 realm.close()
             }
         }
@@ -171,11 +148,7 @@ internal class SuspendableNotifier(
         }
     }
 
-    private fun notifyRealmChanged(frozenRealm: RealmReference) {
-        if (!_realmChanged.tryEmit(frozenRealm)) {
-            // FIXME Figure out why we sometimes end up here
-            println("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
-            // throw IllegalStateException("Failed to send update to Realm from the Notifier: ${owner./**/configuration.path}")
-        }
+    fun unregisterCallbacks() {
+        realm.unregisterCallbacks()
     }
 }

@@ -71,7 +71,8 @@ sealed interface ListChange<out T : List<*>> {
 
 /**
  * Initial event to be observed on a [RealmList] or [RealmResults] flow. It contains a reference to the
- * original list state.
+ * starting list state. Note, this state might be different than the list the flow was registered on,
+ * if another thread or device updated the object in the meantime.
  */
 interface InitialList<T : List<*>> : ListChange<T>
 
@@ -124,7 +125,7 @@ interface UpdatedList<T : List<*>> : ListChange<T> {
 }
 
 /**
- * This interface describes the event where an observed [RealmList] is deleted. The flow will terminate
+ * This interface describes the event is emitted deleted on a [RealmList] flow. The flow will terminate
  * after observing this event. This event would never be observed on a [RealmResults] as they cannot
  * be deleted.
  */
