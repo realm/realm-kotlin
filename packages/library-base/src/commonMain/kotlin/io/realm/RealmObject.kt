@@ -18,7 +18,6 @@ package io.realm
 
 import io.realm.internal.MutableRealmImpl
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
 import io.realm.notifications.ObjectChange
@@ -73,42 +72,23 @@ fun RealmObject.isManaged(): Boolean {
 }
 
 /**
- * Checks whether or not two Realm objects represent the same underlying object, by advancing the
- * [behind] object up to the [front] Realm version.
+ * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
+ * if two object from different frozen realms share their object key, and thus represent the same
+ * object on different instants.
  */
-internal fun equalsToResolvingIn(front: RealmObjectInternal, behind: RealmObjectInternal): Boolean {
-    val dbPointer: NativePointer = front.`$realm$Owner`!!.dbPointer
-    val resolvedPointer: NativePointer =
-        RealmInterop.realm_object_resolve_in(behind.`$realm$ObjectPointer`!!, dbPointer)
-            ?: return false
-
-    return RealmInterop.realm_equals(front.`$realm$ObjectPointer`!!, resolvedPointer)
-}
-
-/**
- * Checks whether [this] and [other] represent the same underlying object or not.
- */
-internal fun RealmObject.equalsTo(other: RealmObject?): Boolean {
-    if (other == null) return false
-    if (other !is RealmObjectInternal) return false
+internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
+    if ((other == null) || (other !is RealmObjectInternal)) return false
 
     if (!isManaged() || !other.isManaged()) {
         throw IllegalStateException("Cannot compare unmanaged objects.")
     }
 
-    val thisInternal = this.realmObjectInternal()
-    val otherInternal = other.realmObjectInternal()
+    val thisKey =
+        RealmInterop.realm_object_get_key(this.realmObjectInternal().`$realm$ObjectPointer`!!)
+    val otherKey =
+        RealmInterop.realm_object_get_key(other.realmObjectInternal().`$realm$ObjectPointer`!!)
 
-    val versionId = thisInternal.`$realm$Owner`!!.version()
-    val otherVersionId = otherInternal.`$realm$Owner`!!.version()
-
-    return if (versionId > otherVersionId) {
-        equalsToResolvingIn(thisInternal, otherInternal)
-    } else if (versionId < otherVersionId) {
-        equalsToResolvingIn(otherInternal, thisInternal)
-    } else {
-        RealmInterop.realm_equals(thisInternal.`$realm$ObjectPointer`!!, otherInternal.`$realm$ObjectPointer`!!)
-    }
+    return thisKey == otherKey
 }
 
 /**

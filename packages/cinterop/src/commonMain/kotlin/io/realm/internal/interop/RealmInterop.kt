@@ -81,7 +81,6 @@ expect object RealmInterop {
     fun realm_find_class(realm: NativePointer, name: String): ClassKey?
     fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo
     fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo>
-    fun realm_equals(pointer1: NativePointer, pointer2: NativePointer): Boolean
 
     fun realm_release(p: NativePointer)
 
@@ -96,6 +95,7 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
+    fun realm_object_get_key(obj: NativePointer): Long
     fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer?
 
     fun realm_object_as_link(obj: NativePointer): Link

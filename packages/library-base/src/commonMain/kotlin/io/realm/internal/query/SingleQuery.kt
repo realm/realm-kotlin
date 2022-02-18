@@ -2,7 +2,7 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.asFlow
-import io.realm.equalsTo
+import io.realm.hasSameObjectKey
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
 import io.realm.internal.RealmReference
@@ -48,7 +48,7 @@ internal class SingleQuery<E : RealmObject> constructor(
                 // A change on the head of the list, and it is not the same as the previous head
                 val newHead: E? = listChange.list.firstOrNull()
 
-                (newHead != null && !newHead.equalsTo(head)).also {
+                (newHead != null && !newHead.hasSameObjectKey(head)).also {
                     head = newHead
                 }
             }.flatMapMerge { listChange ->
