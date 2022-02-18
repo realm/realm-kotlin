@@ -20,7 +20,10 @@ import io.realm.internal.MutableRealmImpl
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
+import io.realm.notifications.DeletedObject
+import io.realm.notifications.InitialObject
 import io.realm.notifications.ObjectChange
+import io.realm.notifications.UpdatedObject
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -91,9 +94,10 @@ public fun RealmObject.isValid(): Boolean {
 }
 
 /**
- * Observe changes to a Realm object. The flow would emit an [ObjectChange] once subscribed and
- * then, on every change to the object. If the observed object is deleted from the Realm, the flow
- * will complete, otherwise it will continue running until canceled.
+ * Observe changes to a Realm object. The flow would emit an [InitialObject] once subscribed and
+ * then, on every change to the object an [UpdatedObject]. If the observed object is deleted from
+ * the Realm, the flow would emit a [DeletedObject] and then will complete, otherwise it will continue
+ * running until canceled.
  *
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *

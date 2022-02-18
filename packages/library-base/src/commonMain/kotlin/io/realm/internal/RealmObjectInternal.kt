@@ -110,6 +110,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         } else {
             val changedFieldNames = getChangedFieldNames(frozenRealm, change)
 
+            // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {
                 channel.trySend(InitialObjectImpl(frozenObject))
             } else {

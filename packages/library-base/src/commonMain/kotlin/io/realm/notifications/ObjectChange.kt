@@ -56,7 +56,7 @@ sealed interface ObjectChange<O : RealmObject> {
 }
 
 /**
- * Initial event to be observed on a RealmObject flow. It contains a reference to the starting object
+ * Initial event to be observed on a [RealmObject] flow. It contains a reference to the starting object
  * state. Note, this state might be different than the object the flow was registered on, if another thread or device updated the object in the meantime.
  */
 interface InitialObject<O : RealmObject> : ObjectChange<O> {
@@ -64,7 +64,7 @@ interface InitialObject<O : RealmObject> : ObjectChange<O> {
 }
 
 /**
- * Realm object flow event that describes that an update has been performed on to the observed object.
+ * [RealmObject] flow event that describes that an update has been performed on to the observed object.
  * It provides a reference to the object and a list of the changed field names.
  */
 interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
@@ -88,7 +88,7 @@ interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
 }
 
 /**
- * This interface describes the event where an observed object is deleted. The flow will terminate
+ * This interface describes the event is emitted deleted on a [RealmObject] flow. The flow will terminate
  * after emitting this event.
  */
 interface DeletedObject<O : RealmObject> : ObjectChange<O>
