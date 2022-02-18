@@ -1172,24 +1172,6 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {
-        memScoped {
-            val propertyInfo = alloc<realm_property_info_t>()
-            checkedBooleanResult(realm_wrapper.realm_get_property(realm.cptr(), classInfo(realm, className).key.toUInt(), propertyKey.key, propertyInfo.ptr))
-
-            return PropertyInfo(
-                name = propertyInfo.name.safeKString("name"),
-                publicName = propertyInfo.public_name?.toKString(),
-                type = PropertyType.from(propertyInfo.type.toInt()),
-                collectionType = CollectionType.from(propertyInfo.collection_type.toInt()),
-                linkTarget = propertyInfo.link_target?.toKString(),
-                linkOriginPropertyName = propertyInfo.link_origin_property_name?.toKString(),
-                key = PropertyKey(propertyInfo.key),
-                flags = propertyInfo.flags
-            )
-        }
-    }
-
     // TODO sync config shouldn't be null
     actual fun realm_app_get(
         appConfig: NativePointer,

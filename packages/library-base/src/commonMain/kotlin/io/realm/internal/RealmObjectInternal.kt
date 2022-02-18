@@ -135,13 +135,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         return RealmInterop.realm_object_changes_get_modified_properties(
             change
         ).map { propertyKey: PropertyKey ->
-            @Suppress("ForbiddenComment")
-            // TODO: Optimize. Once https://github.com/realm/realm-kotlin/pull/596 is merged we could extract the field names from ClassMetadata
-            RealmInterop.realm_get_property(
-                frozenRealm.dbPointer,
-                `$realm$TableName`!!,
-                propertyKey
-            ).name
+            `$realm$metadata`?.get(propertyKey) ?: ""
         }.toTypedArray()
     }
 

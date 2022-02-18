@@ -523,22 +523,6 @@ actual object RealmInterop {
         return keys.map { PropertyKey(it) }
     }
 
-    actual fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo {
-        val pinfo = realm_property_info_t()
-        realmc.realm_get_property(realm.cptr(), classInfo(realm, className).key, propertyKey.key, pinfo)
-
-        return PropertyInfo(
-            name = pinfo.name,
-            publicName = pinfo.public_name,
-            type = PropertyType.from(pinfo.type),
-            collectionType = CollectionType.from(pinfo.collection_type),
-            linkTarget = pinfo.link_target,
-            linkOriginPropertyName = pinfo.link_origin_property_name,
-            key = PropertyKey(pinfo.key),
-            flags = pinfo.flags
-        )
-    }
-
     actual fun realm_app_get(
         appConfig: NativePointer,
         syncClientConfig: NativePointer,
