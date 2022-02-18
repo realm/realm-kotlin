@@ -19,7 +19,7 @@ package io.realm
 import kotlin.reflect.KClass
 
 interface DynamicRealmObject : RealmObject {
-    val type : String
+    val type: String
     // FIXME Should we have something like
     //  val fields: Set<String>
     //  to ease access or is it ok to rely on realm.schema to introspect
@@ -38,4 +38,3 @@ inline fun <reified T : Any> DynamicRealmObject.getNullable(fieldName: String): 
 
 inline fun <reified T : Any> DynamicRealmObject.getList(fieldName: String): RealmList<T> = this.getList(fieldName, T::class)
 inline fun <reified T : Any> DynamicRealmObject.getListOfNullable(fieldName: String): RealmList<T?> = this.getListOfNullable(fieldName, T::class)
-

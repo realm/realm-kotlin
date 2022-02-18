@@ -20,12 +20,9 @@ import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
-import io.realm.query.RealmQuery
 import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow
-import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
 abstract class BaseRealmImpl internal constructor(

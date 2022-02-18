@@ -17,7 +17,6 @@
 
 package io.realm.internal
 
-import io.realm.Realm
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
@@ -104,11 +103,17 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
 }
 
 internal fun <T : RealmObject> create(
-        mediator: Mediator,
-        realm: RealmReference,
-        type: KClass<T>,
-        primaryKey: Any?
-): T = create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanion(type).`$realm$className`, primaryKey)
+    mediator: Mediator,
+    realm: RealmReference,
+    type: KClass<T>,
+    primaryKey: Any?
+): T = create(
+    mediator,
+    realm,
+    type,
+    io.realm.internal.platform.realmObjectCompanion(type).`$realm$className`,
+    primaryKey
+)
 
 internal fun <T : RealmObject> create(
     mediator: Mediator,

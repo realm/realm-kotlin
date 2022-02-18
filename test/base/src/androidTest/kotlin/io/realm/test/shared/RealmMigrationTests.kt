@@ -111,9 +111,11 @@ class RealmMigrationTests {
         migration(
             initialSchema = setOf(Sample::class),
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            migration = { (oldRealm, newRealm) -> newRealm.createObject("Sample").set("name", value) }
+            migration = { (oldRealm, newRealm) ->
+                newRealm.createObject("Sample").set("name", value)
+            }
         ).use {
-            assertEquals(value, it.query<Sample>().find().first().name)
+            assertEquals(value, it.query<io.realm.entities.migration.Sample>().find().first().name)
         }
     }
 
@@ -123,7 +125,12 @@ class RealmMigrationTests {
         migration(
             initialSchema = setOf(Sample::class),
             migratedSchema = setOf(PrimaryKeyString::class),
-            migration = { (oldRealm, newRealm) -> newRealm.createObject("PrimaryKeyString", primaryKey) }
+            migration = { (oldRealm, newRealm) ->
+                newRealm.createObject(
+                    "PrimaryKeyString",
+                    primaryKey
+                )
+            }
         ).use {
             assertEquals(primaryKey, it.query<PrimaryKeyString>().find().first().primaryKey)
         }
@@ -141,11 +148,13 @@ class RealmMigrationTests {
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
             // FIXME Can we get this to have the DataMigrationContext as receiver
             migration = {
-                val oldSamples: RealmResults<out DynamicRealmObject> = it.oldRealm.query("Sample", "intField = 0").find()
+                val oldSamples: RealmResults<out DynamicRealmObject> =
+                    it.oldRealm.query("Sample", "intField = 0").find()
                 assertEquals(5, oldSamples.size)
                 oldSamples.forEach { assertEquals(0, it.get<Long>("intField")) }
 
-                val newSamples: RealmResults<out DynamicRealmObject> = it.newRealm.query("Sample", "intField = 0").find()
+                val newSamples: RealmResults<out DynamicRealmObject> =
+                    it.newRealm.query("Sample", "intField = 0").find()
                 assertEquals(5, newSamples.size)
                 newSamples.forEach { assertEquals(0, it.get<Long>("intField")) }
             }
@@ -183,7 +192,10 @@ class RealmMigrationTests {
                 }
             }
         ).use {
-            assertEquals(migratedValue, it.query<io.realm.entities.migration.Sample>().find().first().stringField)
+            assertEquals(
+                migratedValue,
+                it.query<io.realm.entities.migration.Sample>().find().first().stringField
+            )
         }
     }
 
@@ -209,7 +221,6 @@ class RealmMigrationTests {
             }
         ).close()
     }
-
 
     @Test
     fun enumerate_throwsOnInvalidName() {
@@ -283,14 +294,17 @@ class RealmMigrationTests {
             .build()
         Realm.open(configuration).close()
 
-        val newConfiguration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
-            .path("$tmpDir/default.realm")
-            .schemaVersion(1)
-            .migration(AutomaticSchemaMigration {
-                @Suppress("TooGenericExceptionThrown")
-                throw RuntimeException("User error")
-            })
-            .build()
+        val newConfiguration =
+            RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
+                .path("$tmpDir/default.realm")
+                .schemaVersion(1)
+                .migration(
+                    AutomaticSchemaMigration {
+                        @Suppress("TooGenericExceptionThrown")
+                        throw RuntimeException("User error")
+                    }
+                )
+                .build()
 
         // FIXME Wrong exception
         assertFailsWith<IllegalArgumentException> {
@@ -305,10 +319,11 @@ class RealmMigrationTests {
             .build()
         Realm.open(configuration).close()
 
-        val newConfiguration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
-            .path("$tmpDir/default.realm")
-            .migration(AutomaticSchemaMigration {  })
-            .build()
+        val newConfiguration =
+            RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
+                .path("$tmpDir/default.realm")
+                .migration(AutomaticSchemaMigration { })
+                .build()
 
         assertFailsWith<IllegalStateException> {
             Realm.open(newConfiguration)
@@ -327,16 +342,19 @@ class RealmMigrationTests {
             }
         }
 
-        val newConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class))
-            .path("$tmpDir/default.realm")
-            .schemaVersion(1)
-            .migration(AutomaticSchemaMigration {
-                it.enumerate("PrimaryKeyString") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
-                    assertNotNull(newObject)
-                    newObject.set("primaryKey", "PRIMARY_KEY")
-                }
-            })
-            .build()
+        val newConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class))
+                .path("$tmpDir/default.realm")
+                .schemaVersion(1)
+                .migration(
+                    AutomaticSchemaMigration {
+                        it.enumerate("PrimaryKeyString") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
+                            assertNotNull(newObject)
+                            newObject.set("primaryKey", "PRIMARY_KEY")
+                        }
+                    }
+                )
+                .build()
 
         assertFailsWith<IllegalStateException> {
             Realm.open(newConfiguration)
@@ -345,7 +363,12 @@ class RealmMigrationTests {
         }
     }
 
-    private fun migration(initialSchema: Set<KClass<out RealmObject>>, migratedSchema: Set<KClass<out RealmObject>>, migration: AutomaticSchemaMigration, initialData: MutableRealm.() -> Unit = {}): Realm {
+    private fun migration(
+        initialSchema: Set<KClass<out RealmObject>>,
+        migratedSchema: Set<KClass<out RealmObject>>,
+        migration: AutomaticSchemaMigration,
+        initialData: MutableRealm.() -> Unit = {}
+    ): Realm {
         val migrated = atomic(false)
         val configuration =
             RealmConfiguration.Builder(schema = initialSchema)
@@ -360,10 +383,12 @@ class RealmMigrationTests {
         val newConfiguration = RealmConfiguration.Builder(schema = migratedSchema)
             .path("$tmpDir/default.realm")
             .schemaVersion(1)
-            .migration(AutomaticSchemaMigration {
-                migration.migrate(it)
-                migrated.value = true
-            })
+            .migration(
+                AutomaticSchemaMigration {
+                    migration.migrate(it)
+                    migrated.value = true
+                }
+            )
             .build()
         val migratedRealm = Realm.open(newConfiguration)
         assertTrue { migrated.value }

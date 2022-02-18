@@ -17,8 +17,8 @@
 package io.realm.internal
 
 import io.realm.LogConfiguration
-import io.realm.RealmMigration
 import io.realm.RealmConfiguration
+import io.realm.RealmMigration
 import io.realm.RealmObject
 import io.realm.internal.interop.SchemaMode
 import kotlinx.coroutines.CoroutineDispatcher

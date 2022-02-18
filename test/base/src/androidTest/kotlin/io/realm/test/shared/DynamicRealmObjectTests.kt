@@ -36,7 +36,14 @@ import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmStorageType
 import io.realm.schema.ValuePropertyType
 import io.realm.test.platform.PlatformUtils
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Ignore
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 val defaultSample = Sample()
 
@@ -301,7 +308,6 @@ class DynamicRealmObjectTests {
         }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
     }
 
-
     @Test
     fun getList_unknownNameThrows() {
         realm.writeBlocking {
@@ -351,7 +357,7 @@ class DynamicRealmObjectTests {
         val dynamicSample = dynamicRealm.query("Sample").find().first()
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.get<RealmList<*>>("stringListField")
-        }.run { assertEquals ( "Cannot retrieve RealmList through 'get(...)', use getList(...) instead: stringListField", message) }
+        }.run { assertEquals("Cannot retrieve RealmList through 'get(...)', use getList(...) instead: stringListField", message) }
     }
 
     @Test
@@ -431,4 +437,3 @@ class DynamicRealmObjectTests {
         }
     }
 }
-

@@ -38,7 +38,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-
 class DynamicMutableRealmTests {
     private lateinit var tmpDir: String
     private lateinit var dynamicMutableRealm: DynamicMutableRealm

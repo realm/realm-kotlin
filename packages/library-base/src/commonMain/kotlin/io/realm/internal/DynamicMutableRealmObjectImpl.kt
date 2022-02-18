@@ -20,8 +20,8 @@ import io.realm.DynamicMutableRealmObject
 import io.realm.RealmObject
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
-    override fun <T> set(fieldName: String, value: T): DynamicMutableRealmObject  {
-        when(value) {
+    override fun <T> set(fieldName: String, value: T): DynamicMutableRealmObject {
+        when (value) {
             is RealmObject -> RealmObjectHelper.setObject(this, fieldName, value as RealmObjectInternal)
             else -> RealmObjectHelper.setValue(this, fieldName, value)
         }

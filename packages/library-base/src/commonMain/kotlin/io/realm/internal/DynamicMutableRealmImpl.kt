@@ -28,7 +28,7 @@ internal open class DynamicMutableRealmImpl(configuration: InternalConfiguration
     override val realmReference: LiveRealmReference = LiveRealmReference(this, dbPointer)
 
     override fun query(className: String, query: String, vararg args: Any?): RealmQuery<DynamicMutableRealmObject> =
-            ObjectQuery(realmReference, className, DynamicMutableRealmObject::class, configuration.mediator, null, query, *args)
+        ObjectQuery(realmReference, className, DynamicMutableRealmObject::class, configuration.mediator, null, query, *args)
 
     override fun createObject(type: String): DynamicMutableRealmObject =
         create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type)

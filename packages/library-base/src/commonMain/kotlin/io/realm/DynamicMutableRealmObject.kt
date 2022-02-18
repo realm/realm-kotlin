@@ -17,5 +17,5 @@
 package io.realm
 
 interface DynamicMutableRealmObject : DynamicRealmObject {
-    fun <T> set(fieldName: String, value: T) : DynamicMutableRealmObject
+    fun <T> set(fieldName: String, value: T): DynamicMutableRealmObject
 }

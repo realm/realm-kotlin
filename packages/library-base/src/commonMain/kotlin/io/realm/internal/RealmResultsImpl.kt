@@ -99,7 +99,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
         val liveResultPtr = RealmInterop.realm_results_resolve_in(nativePointer, liveDbPointer)
-        return RealmResultsImpl(liveRealm, liveResultPtr, className,clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, className, clazz, mediator)
     }
 
     override fun registerForNotification(callback: Callback): NativePointer {

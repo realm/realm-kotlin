@@ -264,7 +264,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(value, dynamicSample.getList(property.name, RealmInstant::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
-                                val value = dynamicMutableRealm.createObject("Sample").set("stringField",  "NEW_OBJECT" )
+                                val value = dynamicMutableRealm.createObject("Sample").set("stringField", "NEW_OBJECT")
                                 dynamicSample.getList<DynamicRealmObject>(property.name).add(value)
                                 assertEquals("NEW_OBJECT", dynamicSample.getList(property.name, DynamicRealmObject::class)[0].get("stringField"))
                             }
@@ -282,8 +282,9 @@ class DynamicMutableRealmObjectTests {
     fun get_returnsDynamicMutableObject() {
         val parent = dynamicMutableRealm.createObject("Sample")
             .set("stringField", "PARENT")
-            .set("nullableObject", dynamicMutableRealm.createObject("Sample")
-                .set("stringField", "CHILD")
+            .set(
+                "nullableObject",
+                dynamicMutableRealm.createObject("Sample").set("stringField", "CHILD")
             )
         val child: DynamicMutableRealmObject = parent.get("nullableObject")
         assertNotNull(child)

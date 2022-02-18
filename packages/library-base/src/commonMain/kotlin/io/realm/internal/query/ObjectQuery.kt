@@ -19,7 +19,6 @@ package io.realm.internal.query
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.Mediator
-import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable

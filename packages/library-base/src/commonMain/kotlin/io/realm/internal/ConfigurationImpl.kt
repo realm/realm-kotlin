@@ -16,7 +16,15 @@
 
 package io.realm.internal
 
-import io.realm.*
+import io.realm.AutomaticSchemaMigration
+import io.realm.DataMigrationContext
+import io.realm.DynamicMutableRealm
+import io.realm.DynamicMutableRealmObject
+import io.realm.DynamicRealm
+import io.realm.DynamicRealmObject
+import io.realm.LogConfiguration
+import io.realm.RealmMigration
+import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
@@ -98,9 +106,8 @@ open class ConfigurationImpl constructor(
         RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
         RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
 
-
         migration?.let {
-            when(it) {
+            when (it) {
                 is AutomaticSchemaMigration ->
                     RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer ->
                         // If we don't start a read, then we cannot read the version
@@ -124,7 +131,7 @@ open class ConfigurationImpl constructor(
 
         mediator = object : Mediator {
             override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal =
-                when(clazz) {
+                when (clazz) {
                     DynamicRealmObject::class -> DynamicRealmObjectImpl()
                     DynamicMutableRealmObject::class -> DynamicMutableRealmObjectImpl()
                     else ->

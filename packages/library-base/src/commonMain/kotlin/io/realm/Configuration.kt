@@ -167,7 +167,7 @@ interface Configuration {
             apply { this.schema = setOf(*classes) } as S
 
         // FIXME Docs
-        fun migration(migration: RealmMigration) : S = apply { this.migration = migration } as S
+        fun migration(migration: RealmMigration): S = apply { this.migration = migration } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when

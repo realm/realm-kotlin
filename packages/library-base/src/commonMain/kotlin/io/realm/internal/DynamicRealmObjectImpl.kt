@@ -19,16 +19,15 @@ package io.realm.internal
 import io.realm.DynamicRealmObject
 import io.realm.RealmList
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
 import kotlin.reflect.KClass
 
 open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override val type: String
-        get() =  this.`$realm$ClassName` ?: throw IllegalArgumentException("Cannot get class name of unmanaged dynamic object")
+        get() = this.`$realm$ClassName` ?: throw IllegalArgumentException("Cannot get class name of unmanaged dynamic object")
     override var `$realm$ObjectPointer`: NativePointer? = null
     override var `$realm$IsManaged`: Boolean = false
-    override var `$realm$Owner`: RealmReference?  = null
+    override var `$realm$Owner`: RealmReference? = null
     override var `$realm$ClassName`: String? = null
     override var `$realm$Mediator`: Mediator? = null
     override var `$realm$metadata`: ClassMetadata? = null
@@ -48,5 +47,4 @@ open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override fun <T : Any> getListOfNullable(fieldName: String, clazz: KClass<T>): RealmList<T?> {
         return RealmObjectHelper.getList(this, fieldName, clazz) as RealmList<T?>
     }
-
 }

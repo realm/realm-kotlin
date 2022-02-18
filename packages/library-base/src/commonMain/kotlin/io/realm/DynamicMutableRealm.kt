@@ -18,7 +18,7 @@ package io.realm
 
 import io.realm.query.RealmQuery
 
-interface DynamicMutableRealm: DynamicRealm {
+interface DynamicMutableRealm : DynamicRealm {
 
     fun createObject(type: String): DynamicMutableRealmObject
 
@@ -30,5 +30,4 @@ interface DynamicMutableRealm: DynamicRealm {
 
     // FIXME Do we want an explicit delete here? At least we should probably match MutableRealm.delete/RealmObject.delete behaviour
     // fun delete(obj: RealmObject)
-
 }

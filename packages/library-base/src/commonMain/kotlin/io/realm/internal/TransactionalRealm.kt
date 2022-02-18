@@ -16,8 +16,8 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmInterop
 
 /**
  * Interface holding default implementation of methods related to controlling a write transaction.
