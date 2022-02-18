@@ -4,7 +4,7 @@ package io.realm.notifications
  * This sealed interface describe the possible changes that can happen to a list collection,
  * currently [io.realm.RealmList] or [io.realm.RealmResults].
  *
- * The specific states are represented by the specific subclasses [InitialList], [UpdatedList] and
+ * The states are represented by the specific subclasses [InitialList], [UpdatedList] and
  * [DeletedList].
  *
  * Changes can thus be consumed in a number of ways:
