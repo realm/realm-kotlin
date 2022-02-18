@@ -20,16 +20,11 @@ import io.realm.RealmConfiguration
 import io.realm.VersionId
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
-import io.realm.internal.InternalConfiguration
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.platform.WeakReference
 import io.realm.isManaged
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.platform.PlatformUtils.triggerGC
 import io.realm.version
-import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -405,83 +400,85 @@ class RealmTests {
             }
     }
 
-    @Test
-    // TODO Non deterministic.
-    //  https://github.com/realm/realm-kotlin/issues/486
-    @Ignore
-    fun intermediateVersionsReleaseWhenProgressingRealm() {
-        assertEquals(0, intermediateReferences.value.size)
-        realm.writeBlocking { }
-        assertEquals(1, intermediateReferences.value.size)
-        realm.writeBlocking { }
-        assertEquals(2, intermediateReferences.value.size)
-        realm.writeBlocking { }
-        assertEquals(3, intermediateReferences.value.size)
-
-        // Trigger GC - On native we also need to trigger GC on the background thread that creates
-        // the references
-        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
-            triggerGC()
-        }
-        triggerGC()
-
-        // Close of intermediate version is currently only done when updating the realm after a write
-        realm.writeBlocking { }
-        assertEquals(1, intermediateReferences.value.size)
-    }
-
-    @Test
-    // TODO Investigate why clearing local object variable does not trigger collection of
-    //  reference on Native. Could just be that the GC somehow does not collect this when
-    //  cleared due some thresholds or outcome of GC not being predictable.
-    //  https://github.com/realm/realm-kotlin/issues/486
-    @Ignore
-    fun clearingRealmObjectReleasesRealmReference() {
-        assertEquals(0, intermediateReferences.value.size)
-        // The below code creates the object without returning it from write to show that the
-        // issue is not bound to the freezing inside write, but also happens on the same thread as
-        // the realm is constructed on.
-        realm.writeBlocking { copyToRealm(Parent()); Unit }
-        var parent: Parent? = realm.query<Parent>()
-            .first()
-            .find()
-        assertNotNull(parent)
-        assertEquals(1, intermediateReferences.value.size)
-        realm.writeBlocking { }
-        assertEquals(2, intermediateReferences.value.size)
-        realm.writeBlocking { }
-        assertEquals(3, intermediateReferences.value.size)
-
-        // Trigger GC - On native we also need to trigger GC on the background thread that creates
-        // the references
-        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
-            triggerGC()
-        }
-        triggerGC()
-
-        // Close of intermediate version is currently only done when updating the realm after a write
-        realm.writeBlocking { }
-        // We still have the single intermediate reference as a result of the write itself
-        // and the reference kept alive by the realm object
-        assertEquals(2, intermediateReferences.value.size)
-
-        // Clear reference
-        parent = null
-
-        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
-            triggerGC()
-        }
-        triggerGC()
-
-        realm.writeBlocking { }
-        // Clearing the realm object reference allowed clearing the corresponding reference
-        assertEquals(1, intermediateReferences.value.size)
-    }
-
-    @Suppress("invisible_reference")
-    private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>
-        get() {
-            @Suppress("invisible_member")
-            return (realm as io.realm.internal.RealmImpl).intermediateReferences
-        }
+    // TODO Cannot verify intermediate versions as they are now spread across user facing, notifier
+    //  and writer realms. Tests were anyway ignored, so don't really know what to do with these.
+//    @Test
+//    // TODO Non deterministic.
+//    //  https://github.com/realm/realm-kotlin/issues/486
+//    @Ignore
+//    fun intermediateVersionsReleaseWhenProgressingRealm() {
+//        assertEquals(0, intermediateReferences.value.size)
+//        realm.writeBlocking { }
+//        assertEquals(1, intermediateReferences.value.size)
+//        realm.writeBlocking { }
+//        assertEquals(2, intermediateReferences.value.size)
+//        realm.writeBlocking { }
+//        assertEquals(3, intermediateReferences.value.size)
+//
+//        // Trigger GC - On native we also need to trigger GC on the background thread that creates
+//        // the references
+//        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
+//            triggerGC()
+//        }
+//        triggerGC()
+//
+//        // Close of intermediate version is currently only done when updating the realm after a write
+//        realm.writeBlocking { }
+//        assertEquals(1, intermediateReferences.value.size)
+//    }
+//
+//    @Test
+//    // TODO Investigate why clearing local object variable does not trigger collection of
+//    //  reference on Native. Could just be that the GC somehow does not collect this when
+//    //  cleared due some thresholds or outcome of GC not being predictable.
+//    //  https://github.com/realm/realm-kotlin/issues/486
+//    @Ignore
+//    fun clearingRealmObjectReleasesRealmReference() {
+//        assertEquals(0, intermediateReferences.value.size)
+//        // The below code creates the object without returning it from write to show that the
+//        // issue is not bound to the freezing inside write, but also happens on the same thread as
+//        // the realm is constructed on.
+//        realm.writeBlocking { copyToRealm(Parent()); Unit }
+//        var parent: Parent? = realm.query<Parent>()
+//            .first()
+//            .find()
+//        assertNotNull(parent)
+//        assertEquals(1, intermediateReferences.value.size)
+//        realm.writeBlocking { }
+//        assertEquals(2, intermediateReferences.value.size)
+//        realm.writeBlocking { }
+//        assertEquals(3, intermediateReferences.value.size)
+//
+//        // Trigger GC - On native we also need to trigger GC on the background thread that creates
+//        // the references
+//        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
+//            triggerGC()
+//        }
+//        triggerGC()
+//
+//        // Close of intermediate version is currently only done when updating the realm after a write
+//        realm.writeBlocking { }
+//        // We still have the single intermediate reference as a result of the write itself
+//        // and the reference kept alive by the realm object
+//        assertEquals(2, intermediateReferences.value.size)
+//
+//        // Clear reference
+//        parent = null
+//
+//        runBlocking((realm.configuration as InternalConfiguration).writeDispatcher) {
+//            triggerGC()
+//        }
+//        triggerGC()
+//
+//        realm.writeBlocking { }
+//        // Clearing the realm object reference allowed clearing the corresponding reference
+//        assertEquals(1, intermediateReferences.value.size)
+//    }
+//
+//    @Suppress("invisible_reference")
+//    private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<io.realm.internal.RealmReference>>>>
+//        get() {
+//            @Suppress("invisible_member")
+//            return (realm as io.realm.internal.RealmImpl).intermediateReferences
+//        }
 }

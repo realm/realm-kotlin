@@ -20,6 +20,7 @@ import io.realm.RealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 
 // TODO API-INTERNAL
@@ -30,10 +31,12 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     type: KClass<T>,
     objectPointer: NativePointer
 ): T {
+    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
-    this.`$realm$TableName` = type.simpleName
+    this.`$realm$ClassName` = className
     this.`$realm$ObjectPointer` = objectPointer
+    this.`$realm$metadata` = realm.schemaMetadata[className]
     // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
     // this.link = RealmInterop.realm_object_as_link()
     this.`$realm$Mediator` = mediator
@@ -48,11 +51,13 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
     type: KClass<T>,
     link: Link
 ): T {
+    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
-    this.`$realm$TableName` = type.simpleName
+    this.`$realm$ClassName` = className
     // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
     this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
+    this.`$realm$metadata` = realm.schemaMetadata[className]
     this.`$realm$Mediator` = mediator
     @Suppress("UNCHECKED_CAST")
     return this as T
