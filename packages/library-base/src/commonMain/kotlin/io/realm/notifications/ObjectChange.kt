@@ -56,7 +56,7 @@ sealed interface ObjectChange<O : RealmObject> {
 }
 
 /**
- * Initial event to be observed on a RealmObject flow. It contains a reference to the original object
+ * Initial event to be observed on a RealmObject flow. It contains a reference to the starting object
  * state.
  */
 interface InitialObject<O : RealmObject> : ObjectChange<O> {
