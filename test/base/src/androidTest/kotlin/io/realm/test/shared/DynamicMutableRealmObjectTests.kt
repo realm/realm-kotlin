@@ -23,7 +23,6 @@ import io.realm.DynamicRealmObject
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.entities.Sample
-import io.realm.entities.migration.SampleMigrated
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.get
@@ -54,7 +53,7 @@ class DynamicMutableRealmObjectTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, SampleMigrated::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
+        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
             .path("$tmpDir/default.realm").build()
 
         dynamicMutableRealm = DynamicMutableTransactionRealm(configuration as InternalConfiguration).apply {

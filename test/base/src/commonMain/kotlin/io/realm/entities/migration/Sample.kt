@@ -19,6 +19,7 @@ package io.realm.entities.migration
 import io.realm.RealmObject
 
 class Sample : RealmObject {
+    var name: String = "Migration"
     var stringField: String = "Realm"
     var intField: Int = 42
 }

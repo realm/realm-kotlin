@@ -21,7 +21,6 @@ import io.realm.DynamicMutableRealm
 import io.realm.RealmConfiguration
 import io.realm.delete
 import io.realm.entities.Sample
-import io.realm.entities.migration.SampleMigrated
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.get
@@ -48,7 +47,7 @@ class DynamicMutableRealmTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class, SampleMigrated::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
+            RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
                 .path("$tmpDir/default.realm").build()
 
         dynamicMutableRealm = DynamicMutableTransactionRealm(configuration as InternalConfiguration).apply {
@@ -96,9 +95,9 @@ class DynamicMutableRealmTests {
     @Test
     fun create_throwsWithPrimaryKey() {
         assertFailsWith<IllegalArgumentException> {
-            dynamicMutableRealm.createObject("SampleMigrated", "PRIMARY_KEY")
+            dynamicMutableRealm.createObject("Sample", "PRIMARY_KEY")
         }.run {
-            assertContains(message!!, "Class does not have a primary key Failed to create object of type 'SampleMigrated'")
+            assertContains(message!!, "Class does not have a primary key Failed to create object of type 'Sample'")
         }
     }
 

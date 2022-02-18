@@ -86,8 +86,7 @@ internal object RealmObjectHelper {
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
-            val mediator = obj.`$realm$Mediator`!!
-            val value = (mediator).createInstanceOf(R::class)
+            val value = (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
             return value.link(
                 obj.`$realm$Owner`!!,
                 obj.`$realm$Mediator`!!,
@@ -123,7 +122,6 @@ internal object RealmObjectHelper {
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
         val mediator: Mediator = obj.`$realm$Mediator`!!
-//        val className = mediator.companionOf(elementType).`$realm$className`
 
         // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val realm: RealmReference =
@@ -146,8 +144,6 @@ internal object RealmObjectHelper {
         return managedRealmList(
             listPtr,
             ListOperatorMetadata(
-//                className,
-//                clazz = clazz,
                 mediator = mediator,
                 realm = realm,
                 converter(mediator, realm, clazz),

@@ -59,7 +59,7 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
      */
     internal val snapshot: FrozenRealmReference
         get() {
-            // Initialize a new snapshot that can be reused until cleared again onRealmChanged
+            // Initialize a new snapshot that can be reused until cleared again from onRealmChanged
             if (_snapshot.value == null) {
                 val snapshot = realmReference.snapshot(owner)
                 versionTracker.trackAndCloseExpiredReferences(snapshot)

@@ -19,6 +19,9 @@ package io.realm.internal
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmCoreException
 
+/**
+ * Interface holding default implementation of methods related to controlling a write transaction.
+ */
 internal interface TransactionalRealm {
     val realmReference: LiveRealmReference
 

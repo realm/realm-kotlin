@@ -103,9 +103,10 @@ open class ConfigurationImpl constructor(
             when(it) {
                 is AutomaticSchemaMigration ->
                     RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer ->
-                        val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
-                        // If we don't start a read, then we cannot det the version
+                        // If we don't start a read, then we cannot read the version
                         RealmInterop.realm_begin_read(oldRealm)
+                        RealmInterop.realm_begin_read(newRealm)
+                        val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
                         val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
                         it.migrate(object : DataMigrationContext {
                             override val oldRealm: DynamicRealm = old

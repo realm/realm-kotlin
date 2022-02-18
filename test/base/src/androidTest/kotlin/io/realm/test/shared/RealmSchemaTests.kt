@@ -25,7 +25,6 @@ import io.realm.entities.schema.SchemaVariations
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.schema.RealmClassImpl
-import io.realm.log.LogLevel
 import io.realm.query
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmPropertyType
@@ -60,7 +59,6 @@ public class RealmSchemaTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
-                .log(LogLevel.DEBUG)
                 .path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
     }

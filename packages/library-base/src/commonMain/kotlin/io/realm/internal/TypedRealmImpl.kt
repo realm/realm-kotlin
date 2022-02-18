@@ -22,6 +22,9 @@ import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 
+/**
+ * Interface holding default implementation for performing a query on a typed realm.
+ */
 interface TypedRealmImpl : TypedRealm {
 
     override val configuration: InternalConfiguration

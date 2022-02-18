@@ -23,6 +23,7 @@ import kotlin.reflect.KClass
 /**
  * The various types that are used when storing the property values in the realm.
  */
+// TODO Doc kClass
 enum class RealmStorageType(val kClass: KClass<*>) {
     BOOL(Boolean::class),
     INT(Long::class),
