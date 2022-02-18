@@ -135,7 +135,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         return RealmInterop.realm_object_changes_get_modified_properties(
             change
         ).map { propertyKey: PropertyKey ->
-            `$realm$metadata`?.get(propertyKey) ?: ""
+            `$realm$metadata`?.get(propertyKey)?.name ?: ""
         }.toTypedArray()
     }
 
