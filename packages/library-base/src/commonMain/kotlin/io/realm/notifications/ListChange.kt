@@ -28,7 +28,7 @@ package io.realm.notifications
  *   }
  * ```
  *
- * For state of update changes, extra information is provided describing the changes from the previous
+ * When the list is updated, extra information is provided describing the changes from the previous
  * version. This information is formatted in a way that can be feed directly to drive animations on UI
  * components like `RecyclerView`. In order to access this information, the [ListChange] must be cast
  * to the appropriate subclass.
