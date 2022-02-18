@@ -89,6 +89,6 @@ interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
 
 /**
  * This interface describes the event where an observed object is deleted. The flow will terminate
- * after observing this event.
+ * after emitting this event.
  */
 interface DeletedObject<O : RealmObject> : ObjectChange<O>
