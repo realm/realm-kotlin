@@ -28,7 +28,8 @@ realm_changed_callback(void* userdata);
 void
 schema_changed_callback(void* userdata, const realm_schema_t* new_schema);
 
-bool migration_callback(void* userdata, realm_t* old_realm, realm_t* new_realm,
+bool
+migration_callback(void* userdata, realm_t* old_realm, realm_t* new_realm,
                         const realm_schema_t* schema);
 
 realm_notification_token_t*

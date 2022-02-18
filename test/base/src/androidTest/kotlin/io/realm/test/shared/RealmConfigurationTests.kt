@@ -90,11 +90,30 @@ class RealmConfigurationTests {
             config.path
         )
 
-        val configFromBuilder: RealmConfiguration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+        val configFromBuilderWithDefaultName: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .build()
         assertEquals(
             "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
-            configFromBuilder.path
+            configFromBuilderWithDefaultName.path
+        )
+
+        val configFromBuilderWithCustomName: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .name("custom.realm")
+                .build()
+        assertEquals(
+            "${appFilesDirectory()}/custom.realm",
+            configFromBuilderWithCustomName.path
+        )
+
+        val configFromBuilderWithCurrentDir: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .path("./my_dir/foo.realm")
+                .build()
+        assertEquals(
+            "${appFilesDirectory()}/my_dir/foo.realm",
+            configFromBuilderWithCurrentDir.path
         )
     }
 

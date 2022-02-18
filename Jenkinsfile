@@ -550,17 +550,10 @@ def testAndCollect(dir, task) {
         try {
             sh """
                 pushd $dir
-                ./gradlew $task --info --stacktrace --no-daemon
+                ./gradlew cleanAllTests $task --info --stacktrace --no-daemon
                 popd
             """
         } finally {
-            // See https://stackoverflow.com/a/51206394/1389357
-            script {
-                def testResults = findFiles(glob: "$dir/**/build/**/TEST-*.xml")
-                for(xml in testResults) {
-                    touch xml.getPath()
-                }
-            }
             step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
         }
     }
@@ -572,7 +565,7 @@ def runMonkey() {
             sh """
                 cd examples/kmm-sample
                 ./gradlew uninstallAll installRelease --stacktrace --no-daemon
-                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
+                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey --pct-syskeys 0 -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
     } catch (err) {

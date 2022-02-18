@@ -48,6 +48,8 @@ realm_changed_callback(void* userdata) {
     static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function0");
     static JavaMethod java_callback_method(env, java_callback_class, "invoke",
                                            "()Ljava/lang/Object;");
+    // TODOO Align exceptions handling https://github.com/realm/realm-kotlin/issues/665
+    jni_check_exception(env);
     env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method);
     jni_check_exception(env);
 }
@@ -59,6 +61,8 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
     static JavaMethod java_callback_method(env, java_callback_class, "invoke",
                                            "(Ljava/lang/Object;)Ljava/lang/Object;");
     jobject schema_pointer_wrapper = wrap_pointer(env,reinterpret_cast<jlong>(new_schema));
+    // TODOO Align exceptions handling https://github.com/realm/realm-kotlin/issues/665
+    jni_check_exception(env);
     env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, schema_pointer_wrapper);
     jni_check_exception(env);
 }

@@ -209,7 +209,7 @@ class RealmMigrationTests {
             migratedSchema = setOf(SampleMigrated::class),
             migration = { (oldRealm, newRealm) ->
                 // FIXME Should be InvalidArgumentException
-                assertFailsWith<java.lang.IllegalStateException> {
+                assertFailsWith<IllegalStateException> {
                     newRealm.createObject("Sample")
                 }
             }
@@ -334,7 +334,7 @@ class RealmMigrationTests {
             .migration(AutomaticSchemaMigration {  })
             .build()
 
-        assertFailsWith<java.lang.IllegalStateException> {
+        assertFailsWith<IllegalStateException> {
             Realm.open(newConfiguration)
         }
     }
@@ -361,7 +361,7 @@ class RealmMigrationTests {
             })
             .build()
 
-        assertFailsWith<java.lang.IllegalStateException> {
+        assertFailsWith<IllegalStateException> {
             Realm.open(newConfiguration)
         }.let {
             it.message!!.contains("Primary key property 'class_PrimaryKeyString.primaryKey' has duplicate values after migration.")

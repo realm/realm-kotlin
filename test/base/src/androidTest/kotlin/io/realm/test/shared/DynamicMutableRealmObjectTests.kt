@@ -37,10 +37,10 @@ import io.realm.schema.ValuePropertyType
 import io.realm.test.DynamicMutableTransactionRealm
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.test.runTest
-import org.junit.Ignore
-import org.junit.Test
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull

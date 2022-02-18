@@ -2,17 +2,14 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.DynamicMutableRealm
 import io.realm.DynamicRealm
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
-import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
@@ -194,12 +191,11 @@ internal class RealmImpl private constructor(
     }
 
     // FIXME Internal method to work around that callback subscription is not freed on GC
-    //  <issue ref>
+    //  https://github.com/realm/realm-kotlin/issues/671
     internal fun unregisterCallbacks() {
         writer.unregisterCallbacks()
         notifier.unregisterCallbacks()
     }
-
 }
 
 // Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the

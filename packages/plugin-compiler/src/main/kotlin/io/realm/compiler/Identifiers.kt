@@ -23,14 +23,20 @@ internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
     val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
-    val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
-    val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
-    val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
-    val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
+    val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
+    val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
+    val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
+    val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
 
     val SET = Name.special("<set-?>")
+
     // names must match `RealmObjectInterop` properties
     val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
+
     // names must match `RealmObjectInternal` properties
     val REALM_OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Owner")
     val OBJECT_CLASS_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ClassName")
@@ -80,19 +86,13 @@ internal object FqNames {
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")
     val CLASS_METADATA_CLASS = FqName("io.realm.internal.schema.ClassMetadata")
-    val REALM_LOCAL_CONFIGURATION = FqName("io.realm.LocalConfiguration")
-    val SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
-    val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
-    val SYNC_CONFIGURATION_BUILDER = FqName("io.realm.mongodb.SyncConfiguration.Builder")
+
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
-    val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")
-    val KOTLIN_PAIR = FqName("kotlin.Pair")
-    val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.Map")
     val KOTLIN_COLLECTIONS_LIST = FqName("kotlin.collections.List")
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
-    val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
+
     // Schema related types
     val CLASS_INFO = FqName("io.realm.internal.interop.ClassInfo")
     val PROPERTY_INFO = FqName("io.realm.internal.interop.PropertyInfo")
@@ -103,6 +103,7 @@ internal object FqNames {
     val IGNORE_ANNOTATION = FqName("io.realm.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.internal.platform.ModelObject")
+
     // Realm data types
     val REALM_LIST = FqName("io.realm.RealmList")
     val REALM_INSTANT = FqName("io.realm.RealmInstant")

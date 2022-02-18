@@ -22,6 +22,7 @@ import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.realmObjectCompanion
+import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 
 internal fun <T : RealmObject> RealmObjectInternal.manage(
@@ -30,6 +31,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     type: KClass<T>,
     objectPointer: NativePointer
 ): T {
+    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
     this.`$realm$Mediator` = mediator
