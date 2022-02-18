@@ -157,8 +157,8 @@ class RealmListNotificationsTests : NotificationTests {
             //
             // objectListField = [<C, D, E, F>, A, B, <G, H>]
             realm.writeBlocking {
-                val queriedContainer = findLatest(container)
-                val queriedList = queriedContainer!!.objectListField
+                val queriedContainer = findLatest(container)!!
+                val queriedList = queriedContainer.objectListField
                 queriedList.addAll(0, dataset2)
                 queriedList.addAll(dataset3)
             }
@@ -182,8 +182,8 @@ class RealmListNotificationsTests : NotificationTests {
             //
             // objectListField = [<C, D, E, F>, A, B, <G, H>]
             realm.writeBlocking {
-                val queriedContainer = findLatest(container)
-                val queriedList = queriedContainer!!.objectListField
+                val queriedContainer = findLatest(container)!!
+                val queriedList = queriedContainer.objectListField
 
                 queriedList.removeRange(6..7)
                 queriedList.removeRange(0..3)

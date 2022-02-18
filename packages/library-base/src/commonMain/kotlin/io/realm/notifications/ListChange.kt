@@ -1,17 +1,20 @@
 package io.realm.notifications
 
+import io.realm.RealmList
+import io.realm.RealmResults
+
 /**
  * This sealed interface describe the possible changes that can happen to a list collection,
  * currently [io.realm.RealmList] or [io.realm.RealmResults].
  *
  * The specific states are represented by the specific subclasses [InitialList], [UpdatedList] and
- * [DeletedList].
+ * [DeletedList]. When the list is deleted an empty list is emitted instead of null.
  *
  * Changes can thus be consumed in a number of ways:
  *
  * ```
  * // Variant 1: Switch on the sealed interface
- * realm.filter<Person>().asFlow()
+ * realm.query<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       when(result) {
  *          is InitialList -> setUIList(it.list)
@@ -22,7 +25,7 @@ package io.realm.notifications
  *
  *
  * // Variant 2: Just pass on the list
- * realm.filter<Person>().asFlow()
+ * realm.query<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       handleChange(it.list)
  *   }
@@ -34,7 +37,7 @@ package io.realm.notifications
  * to the appropriate subclass.
  *
  * ```
- * realm.filter<Person>().asFlow()
+ * realm.query<Person>().asFlow()
  *   .collect { it: ListChange<RealmResults<Person>> ->
  *       when(result) {
  *          is InitialList -> setList(it.list)
@@ -65,13 +68,64 @@ sealed interface ListChange<out T : List<*>> {
 
     val list: T
 }
+
+/**
+ * Initial event to be observed on a [RealmList] or [RealmResults] flow. It contains a reference to the
+ * original list state.
+ */
 interface InitialList<T : List<*>> : ListChange<T>
+
+/**
+ * [RealmList] or [RealmResults] flow event that describes that an update has been performed on to the
+ * observed list. It provides a reference to the list and a set of properties that describes the changes
+ * performed on the list.
+ */
 interface UpdatedList<T : List<*>> : ListChange<T> {
+    /**
+     * The deleted indices in the previous version of the collection. It will be set as a zero-sized
+     * array if no objects were deleted.
+     */
     val deletions: IntArray
+
+    /**
+     * The inserted indices in the new version of the collection. It will be set as a zero-sized
+     * array if no objects were inserted.
+     */
     val insertions: IntArray
+
+    /**
+     * The modified indices in the new version of the collection.
+     * <p>
+     * For {@link RealmResults}, this means that one or more of the properties of the object at the given index were
+     * modified (or an object linked to by that object was modified). It will be set as a zero-sized
+     * array if no objects were changed.
+     */
     val changes: IntArray
+
+    /**
+     * The deleted ranges of objects in the previous version of the collection. It will be set as a zero-sized
+     * array if no objects were deleted.
+     */
     val deletionRanges: Array<ListChange.Range>
+
+    /**
+     * The inserted ranges of objects in the new version of the collection. It will be set as a zero-sized
+     * array if no objects were inserted.
+     *
+     * @return the {@link Range} array. A zero-sized array will be returned if no objects were inserted.
+     */
     val insertionRanges: Array<ListChange.Range>
+
+    /**
+     * The modified ranges of objects in the new version of the collection. It will be set as a zero-sized
+     * array if no objects were changed.
+     */
     val changeRanges: Array<ListChange.Range>
 }
+
+/**
+ * This interface describes the event where an observed [RealmList] is deleted. The flow will terminate
+ * after observing this event. This event would never be observed on a [RealmResults] as they cannot
+ * be deleted.
+ */
 interface DeletedList<T : List<*>> : ListChange<T>
