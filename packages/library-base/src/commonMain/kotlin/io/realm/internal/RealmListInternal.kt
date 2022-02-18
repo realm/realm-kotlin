@@ -153,7 +153,7 @@ internal class ManagedRealmList<E>(
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
             val builder = UpdatedListBuilder(frozenList)
-            RealmInterop.realm_collection_changes_get_changes(change, builder)
+            RealmInterop.realm_collection_changes_get_indices(change, builder)
             RealmInterop.realm_collection_changes_get_ranges(change, builder)
 
             if (builder.isEmpty()) {

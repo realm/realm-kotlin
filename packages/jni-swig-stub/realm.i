@@ -57,61 +57,6 @@ std::string rlm_stdstr(realm_string_t val)
 }
 %}
 
-// Transforms a realm_index_range_t into a long array
-%typemap(in) (realm_index_range_t*, size_t) {
-    $2 = jenv->GetArrayLength($input);
-    $1 = new realm_index_range_t[$2];
-}
-
-%typemap(freearg) (realm_index_range_t*, size_t) {
-    for(int i = 0; i < $2; i++) {
-        jlongArray jRangeArray = (jlongArray) jenv->GetObjectArrayElement($input, i);
-        size_t *arg = (size_t *) 0 ;
-        jlong *jarr;
-
-        %#if defined(__ANDROID__)
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&arg, jRangeArray)) return $null;
-        %#elif defined(__aarch64__)
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&arg, jRangeArray)) return $null;
-        %#else
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&arg, jRangeArray)) return $null;
-        %#endif
-
-        arg[0] = $1[i].from;
-        arg[1] = $1[i].to;
-
-        %#if defined(__ANDROID__)
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr, (long*)arg, jRangeArray);
-        %#elif defined(__aarch64__)
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr, (jlong *)arg, jRangeArray);
-        %#else
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr, (long long *)arg, jRangeArray);
-        %#endif
-
-        jenv->SetObjectArrayElement($input, i, jRangeArray);
-    }
-
-    delete $1;
-}
-
-%typemap(jni) (realm_index_range_t*, size_t) "jobjectArray"
-%typemap(jtype) (realm_index_range_t*, size_t) "long[][]"
-%typemap(jstype) (realm_index_range_t*, size_t) "long[][]"
-%typemap(javain) (realm_index_range_t*, size_t) "$javainput"
-%apply (realm_index_range_t*, size_t) {
-    (realm_index_range_t* out_deletion_ranges, size_t max_deletion_ranges),
-    (realm_index_range_t* out_insertion_ranges, size_t max_insertion_ranges),
-    (realm_index_range_t* out_modification_ranges, size_t max_modification_ranges),
-    (realm_index_range_t* out_modification_ranges_after, size_t max_modification_ranges_after),
-    (realm_collection_move_t* out_moves, size_t max_moves)
-}
-
-// Transforms a realm_collection_move_t into a long array
-%typemap(in) (realm_collection_move_t* out_moves, size_t max_moves) {
-    $2 = jenv->GetArrayLength($input);
-    $1 = new realm_collection_move_t[$2];
-}
-
 // This sets up a type map for all methods with the argument pattern of:
 //    realm_void_user_completion_func_t, void* userdata, realm_free_userdata_func_t
 // This will make Swig wrap methods taking this argument pattern into:
@@ -234,6 +179,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
 %array_functions(realm_value_t, valueArray);
+%array_functions(realm_index_range_t, indexRangeArray);
+%array_functions(realm_collection_move_t, collectionMoveArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };

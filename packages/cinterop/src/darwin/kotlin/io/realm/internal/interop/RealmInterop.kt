@@ -1134,7 +1134,7 @@ actual object RealmInterop {
 
     private inline fun <reified T : CVariable> MemScope.initArray(size: CArrayPointer<ULongVar>) = allocArray<T>(size[0].toInt())
 
-    actual fun <T, R> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_indices(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>) {
         memScoped {
             val insertionCount = allocArray<ULongVar>(1)
             val deletionCount = allocArray<ULongVar>(1)
