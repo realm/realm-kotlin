@@ -17,6 +17,7 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_INFO
+import io.realm.compiler.FqNames.CLASS_METADATA_CLASS
 import io.realm.compiler.FqNames.COLLECTION_TYPE
 import io.realm.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
@@ -30,6 +31,7 @@ import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.FqNames.REALM_REFERENCE
 import io.realm.compiler.Names.CLASS_INFO_CREATE
 import io.realm.compiler.Names.MEDIATOR
+import io.realm.compiler.Names.METADATA
 import io.realm.compiler.Names.OBJECT_CLASS_NAME
 import io.realm.compiler.Names.OBJECT_IS_MANAGED
 import io.realm.compiler.Names.OBJECT_POINTER
@@ -64,6 +66,7 @@ import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -84,12 +87,12 @@ import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
@@ -120,8 +123,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val collectionTypes =
         collectionType.declarations.filterIsInstance<IrEnumEntry>()
 
-    private val realmReferenceClass: IrClass = pluginContext.lookupClassOrThrow(REALM_REFERENCE)
-    private val mediatorInterface: IrClass = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE)
+    private val realmReferenceClass = pluginContext.lookupClassOrThrow(REALM_REFERENCE)
+    private val mediatorInterface = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE)
+    private val classMetadataClass = pluginContext.lookupClassOrThrow(CLASS_METADATA_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
 
     private val listIrClass: IrClass =
@@ -165,6 +169,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 mediatorInterface.defaultType.makeNullable(),
                 ::irNull
             )
+            addVariableProperty(realmModelInternalInterface, METADATA, classMetadataClass.defaultType.makeNullable(), ::irNull)
         }
 
     @Suppress("LongMethod")
@@ -476,20 +481,22 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
-            val defaultCtor = irClass.primaryConstructor
-                ?: fatalError("Can not find primary constructor")
-            +irReturn(
-                IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
-                    startOffset,
-                    endOffset,
-                    defaultCtor.returnType,
-                    defaultCtor.symbol,
-                    0,
-                    0,
-                    0,
-                    origin = null
+            val firstZeroArgCtor: Any = irClass.constructors.filter { it.valueParameters.isEmpty() }.firstOrNull()
+                ?: logError("Cannot find primary zero arg constructor", irClass.locationOf())
+            if (firstZeroArgCtor is IrConstructor) {
+                +irReturn(
+                    IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
+                        startOffset,
+                        endOffset,
+                        firstZeroArgCtor.returnType,
+                        firstZeroArgCtor.symbol,
+                        0,
+                        0,
+                        0,
+                        origin = null
+                    )
                 )
-            )
+            }
         }
         function.overriddenSymbols =
             listOf(realmObjectCompanionInterface.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }.symbol)

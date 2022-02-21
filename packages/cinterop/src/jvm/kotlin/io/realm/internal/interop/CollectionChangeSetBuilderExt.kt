@@ -18,16 +18,21 @@ package io.realm.internal.interop
 
 import kotlin.reflect.KMutableProperty0
 
-private fun LongArray.asAccessor(): ArrayAccessor = { index -> this[index].toInt() }
+private fun LongArray.asAccessor(): ArrayAccessor = { index: Int -> this[index].toInt() }
 
-private fun Array<LongArray>.asFromAccessor(): ArrayAccessor = { index -> this[index][0].toInt() }
-private fun Array<LongArray>.asToAccessor(): ArrayAccessor = { index -> this[index][1].toInt() }
+private fun realm_index_range_t.asFromAccessor(): ArrayAccessor = { index: Int ->
+    realmc.indexRangeArray_getitem(this, index).from.toInt()
+}
+
+private fun realm_index_range_t.asToAccessor(): ArrayAccessor = { index: Int ->
+    realmc.indexRangeArray_getitem(this, index).to.toInt()
+}
 
 private fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(indices: LongArray) =
     initIndicesArray(indices.size, indices.asAccessor())
 
-private fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(ranges: Array<LongArray>) =
-    initRangesArray(ranges.size, ranges.asFromAccessor(), ranges.asToAccessor())
+private fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(ranges: realm_index_range_t, size: Long) =
+    initRangesArray(size.toInt(), ranges.asFromAccessor(), ranges.asToAccessor())
 
 fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(
     array: KMutableProperty0<IntArray>,
@@ -36,5 +41,6 @@ fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(
 
 fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(
     array: KMutableProperty0<Array<R>>,
-    ranges: Array<LongArray>
-) = array.set(initRangesArray(ranges))
+    ranges: realm_index_range_t,
+    size: Long
+) = array.set(initRangesArray(ranges, size))

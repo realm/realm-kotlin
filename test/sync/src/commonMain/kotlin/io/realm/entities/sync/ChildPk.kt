@@ -18,8 +18,9 @@ package io.realm.entities.sync
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
+import kotlin.random.Random
 
 class ChildPk : RealmObject {
-    @PrimaryKey var _id: String = ""
+    @PrimaryKey var _id: String = Random.nextLong().toString()
     var name: String = "DEFAULT"
 }

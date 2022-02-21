@@ -36,6 +36,12 @@ value class PropertyKey(val key: Long)
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
+// TODO Again it would be awesome with marker interfaces for the various realm types, so we could
+//  add it as generic parameters here ...
+// Registration token that represent realm and schema change callback registration
+@JvmInline
+value class RegistrationToken(val value: Long)
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_get_version_id(realm: NativePointer): Long
@@ -71,6 +77,12 @@ expect object RealmInterop {
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher? = null): NativePointer
+
+    fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken
+    fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken)
+    fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken
+    fun realm_remove_schema_changed_callback(realm: NativePointer, token: RegistrationToken)
+
     fun realm_freeze(liveRealm: NativePointer): NativePointer
     fun realm_is_frozen(realm: NativePointer): Boolean
     fun realm_close(realm: NativePointer)
@@ -91,6 +103,8 @@ expect object RealmInterop {
     fun realm_commit(realm: NativePointer)
     fun realm_rollback(realm: NativePointer)
     fun realm_is_in_transaction(realm: NativePointer): Boolean
+
+    fun realm_update_schema(realm: NativePointer, schema: NativePointer)
 
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
@@ -152,9 +166,8 @@ expect object RealmInterop {
     fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
     fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey>
-    fun <T, R> realm_collection_changes_get_changes(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>)
+    fun <T, R> realm_collection_changes_get_indices(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>)
     fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: CollectionChangeSetBuilder<T, R>)
-    fun realm_get_property(realm: NativePointer, className: String, propertyKey: PropertyKey): PropertyInfo
 
     // App
     fun realm_app_get(

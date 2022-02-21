@@ -28,7 +28,7 @@ internal class UpdatedListBuilderImpl<T : List<*>>(val list: T, change: NativePo
     CollectionChangeSetBuilder<UpdatedList<T>, ListChange.Range>() {
 
     init {
-        RealmInterop.realm_collection_changes_get_changes(change, this)
+        RealmInterop.realm_collection_changes_get_indices(change, this)
         RealmInterop.realm_collection_changes_get_ranges(change, this)
     }
 

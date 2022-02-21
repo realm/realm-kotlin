@@ -21,6 +21,8 @@ import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.util.Validation.sdkError
 import io.realm.isValid
 import io.realm.notifications.DeletedObjectImpl
 import io.realm.notifications.InitialObjectImpl
@@ -43,13 +45,20 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
-    var `$realm$Owner`: RealmReference?
-    var `$realm$TableName`: String?
     var `$realm$IsManaged`: Boolean
+    // Invariant: None of the below will be null for managed objects!
+    var `$realm$Owner`: RealmReference?
+    var `$realm$ClassName`: String?
     var `$realm$Mediator`: Mediator?
+    // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
+    var `$realm$metadata`: ClassMetadata?
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
+    fun propertyKeyOrThrow(propertyName: String): PropertyKey = this.`$realm$metadata`?.getOrThrow(propertyName)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        ?: sdkError("Class meta data should never be null for managed objects")
+
     override fun realmState(): RealmState {
         return `$realm$Owner` ?: UnmanagedState
     }
@@ -74,7 +83,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
 
     override fun thaw(liveRealm: RealmReference): RealmObjectInternal? {
         @Suppress("UNCHECKED_CAST")
-        val type: KClass<*> = this::class
+        val type: KClass<out RealmObject> = this::class
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
         val dbPointer = liveRealm.dbPointer
@@ -110,6 +119,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         } else {
             val changedFieldNames = getChangedFieldNames(frozenRealm, change)
 
+            // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {
                 channel.trySend(InitialObjectImpl(frozenObject))
             } else {
@@ -125,13 +135,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         return RealmInterop.realm_object_changes_get_modified_properties(
             change
         ).map { propertyKey: PropertyKey ->
-            @Suppress("ForbiddenComment")
-            // TODO: Optimize. Once https://github.com/realm/realm-kotlin/pull/596 is merged we could extract the field names from ClassMetadata
-            RealmInterop.realm_get_property(
-                frozenRealm.dbPointer,
-                `$realm$TableName`!!,
-                propertyKey
-            ).name
+            `$realm$metadata`?.get(propertyKey)?.name ?: ""
         }.toTypedArray()
     }
 
