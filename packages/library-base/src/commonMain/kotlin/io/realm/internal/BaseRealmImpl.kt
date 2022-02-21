@@ -19,7 +19,6 @@ import io.realm.BaseRealm
 import io.realm.Callback
 import io.realm.Cancellable
 import io.realm.RealmObject
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
@@ -32,7 +31,6 @@ import kotlin.reflect.KClass
 // TODO Public due to being a transitive dependency to RealmReference
 public abstract class BaseRealmImpl internal constructor(
     final override val configuration: InternalConfiguration,
-    dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {
 
     private companion object {
@@ -50,8 +48,7 @@ public abstract class BaseRealmImpl internal constructor(
      * updated to point to a new frozen version after writes or notification, so care should be
      * taken not to spread operations over different references.
      */
-    internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
-        set(_) = throw UnsupportedOperationException("BaseRealm reference should never be updated")
+    internal abstract val realmReference: RealmReference
 
     override fun realmState(): RealmState {
         return realmReference
@@ -72,7 +69,7 @@ public abstract class BaseRealmImpl internal constructor(
     //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
     //  initialization it would probably be acceptable to initialize on schema updates
     override fun schema(): RealmSchema {
-        return RealmSchemaImpl.fromRealm(realmReference)
+        return RealmSchemaImpl.fromRealm(realmReference.dbPointer)
     }
 
     internal open fun <T : RealmObject> query(
@@ -115,9 +112,8 @@ public abstract class BaseRealmImpl internal constructor(
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        val reference = realmReference
-        reference.checkClosed()
-        RealmInterop.realm_close(reference.dbPointer)
-        log.info("Realm closed: ${configuration.path}")
+        log.info("Realm closed: $this ${configuration.path}")
     }
+
+    override fun toString(): String = "${this::class.simpleName}[${this.configuration.path}}]"
 }

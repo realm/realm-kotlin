@@ -185,7 +185,7 @@ internal class ListOperator<E>(
         return with(metadata) {
             when (clazz) {
                 Byte::class -> (value as Long).toByte()
-                Char::class -> (value as Long).toChar()
+                Char::class -> (value as Long).toInt().toChar()
                 Short::class -> (value as Long).toShort()
                 Int::class -> (value as Long).toInt()
                 Long::class,

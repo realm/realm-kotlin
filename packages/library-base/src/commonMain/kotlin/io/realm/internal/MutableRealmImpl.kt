@@ -29,7 +29,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
+internal class MutableRealmImpl : LiveRealm, MutableRealm {
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
@@ -58,9 +58,10 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
      * scheduler, that delivers notifications on the main run loop.
      */
     internal constructor(
+        parent: RealmImpl,
         configuration: InternalConfiguration,
         dispatcher: CoroutineDispatcher? = null
-    ) : super(configuration, RealmInterop.realm_open(configuration.nativeConfig, dispatcher))
+    ) : super(parent, configuration, dispatcher)
 
     internal fun beginTransaction() {
         try {
@@ -79,7 +80,7 @@ internal class MutableRealmImpl : BaseRealmImpl, MutableRealm {
     }
 
     override fun <T : RealmObject> findLatest(obj: T): T? {
-        return if (obj == null || !obj.isValid()) {
+        return if (!obj.isValid()) {
             null
         } else if (!obj.isManaged()) {
             throw IllegalArgumentException(

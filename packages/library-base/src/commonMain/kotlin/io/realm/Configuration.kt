@@ -91,7 +91,7 @@ public interface Configuration {
     // The property functions in this builder return the type of the builder itself, represented by
     // [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
     // all function return types have to be typecast as [S].
-    @Suppress("UnnecessaryAbstractClass") // Actual implementations should rewire build() to companion map variant
+    @Suppress("UnnecessaryAbstractClass", "UNCHECKED_CAST") // Actual implementations should rewire build() to companion map variant
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         public var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
@@ -118,6 +118,24 @@ public interface Configuration {
          * Sets the absolute path of the realm file.
          *
          * If not set the realm will be stored at the default app storage location for the platform.
+         *
+         * @param path either the canonical absolute path or a relative path from the current directory ('./').
+         * ```
+         * // For JVM platforms the current directory is obtained using
+         *  System.getProperty("user.dir")
+         *
+         * // For macOS the current directory is obtained using
+         * platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
+         *
+         * // For iOS the current directory is obtained using
+         * NSFileManager.defaultManager.URLForDirectory(
+         *      NSDocumentDirectory,
+         *      NSUserDomainMask,
+         *      null,
+         *      true,
+         *      null
+         * )
+         * ```
          */
         public fun path(path: String?): S = apply { this.path = path } as S
 

@@ -69,7 +69,7 @@ import kotlin.reflect.KProperty1
  * Add a check and error message for code that never be reached because it should have been
  * replaced by the Compiler Plugin.
  */
-@Suppress("FunctionNaming")
+@Suppress("FunctionNaming", "NOTHING_TO_INLINE")
 internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
@@ -159,10 +159,10 @@ internal fun <T> copyToRealm(
         if (!elementToCopy.isManaged()) {
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
-            val members =
-                companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-
+            @Suppress("UNCHECKED_CAST")
+            val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
             val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+                @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,
                     realmPointer,
@@ -201,6 +201,7 @@ internal fun <T> copyToRealm(
                     member.set(target, it)
                 }
             }
+            @Suppress("UNCHECKED_CAST")
             elementToCopy = target as T
         }
 

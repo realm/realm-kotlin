@@ -1,3 +1,28 @@
+## 0.10.0-SNAPSHOT (2022-MM-DD)
+
+### Breaking Changes
+
+### Enhancements
+
+### Fixed
+* Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
+* `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
+* Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
+
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
+
+
 ## 0.9.0 (2022-01-28)
 
 ### Breaking Changes
@@ -46,7 +71,7 @@
   * Kotlin 1.6.10.
   * Coroutines 1.5.2-native-mt.
   * AtomicFu 0.17.0.
-* Minimum Gradle version: 6.1.1.  
+* Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 

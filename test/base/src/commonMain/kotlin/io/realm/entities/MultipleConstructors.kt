@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.entities
 
 import io.realm.RealmObject
-import kotlin.reflect.KClass
 
-// TODO Public due to being a transative dependency of ConfigurationImpl
-public interface Mediator {
-    public fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal
-    public fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion
+class MultipleConstructors(var firstName: String, var lastName: String, var age: Int) : RealmObject {
+    constructor(firstName: String, lastName: String) : this (firstName, lastName, 42)
+    constructor(foreName: String) : this (foreName, "Doe")
+    constructor() : this ("John")
 }

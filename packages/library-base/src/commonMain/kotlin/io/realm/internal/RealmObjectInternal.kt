@@ -19,7 +19,10 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.util.Validation.sdkError
 import io.realm.isValid
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
@@ -39,13 +42,20 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
-    public var `$realm$Owner`: RealmReference?
-    public var `$realm$TableName`: String?
     public var `$realm$IsManaged`: Boolean
+    // Invariant: None of the below will be null for managed objects!
+    public var `$realm$Owner`: RealmReference?
+    public var `$realm$ClassName`: String?
     public var `$realm$Mediator`: Mediator?
+    // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
+    public var `$realm$metadata`: ClassMetadata?
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
+    fun propertyKeyOrThrow(propertyName: String): PropertyKey = this.`$realm$metadata`?.getOrThrow(propertyName)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        ?: sdkError("Class meta data should never be null for managed objects")
+
     override fun realmState(): RealmState {
         return `$realm$Owner` ?: UnmanagedState
     }
@@ -70,11 +80,12 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
 
     override fun thaw(liveRealm: RealmReference): RealmObjectInternal? {
         @Suppress("UNCHECKED_CAST")
-        val type: KClass<*> = this::class
+        val type: KClass<out RealmObject> = this::class
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
+            @Suppress("UNCHECKED_CAST")
             managedModel.manage(
                 liveRealm,
                 mediator,
@@ -108,7 +119,7 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
     }
 }
 
-internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {
+internal fun RealmObject.realmObjectInternal(): RealmObjectInternal {
     return this as RealmObjectInternal
 }
 

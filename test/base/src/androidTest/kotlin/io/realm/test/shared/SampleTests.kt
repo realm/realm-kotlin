@@ -56,7 +56,9 @@ class SampleTests {
 
     @AfterTest
     fun tearDown() {
-        realm.close()
+        if (this::realm.isInitialized && !realm.isClosed()) {
+            realm.close()
+        }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
