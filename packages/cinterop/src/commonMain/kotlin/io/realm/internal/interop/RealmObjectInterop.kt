@@ -25,5 +25,7 @@ package io.realm.internal.interop
 @Suppress("VariableNaming")
 interface RealmObjectInterop {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
+
+    // Invariant: This is never null for managed objects!
     var `$realm$ObjectPointer`: NativePointer?
 }

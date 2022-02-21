@@ -18,7 +18,9 @@ package io.realm
 
 import io.realm.internal.UnmanagedRealmList
 import io.realm.internal.asRealmList
+import io.realm.notifications.InitialList
 import io.realm.notifications.ListChange
+import io.realm.notifications.UpdatedList
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -40,9 +42,9 @@ import kotlinx.coroutines.flow.Flow
 interface RealmList<E> : MutableList<E> {
 
     /**
-     * Observes changes to the RealmList. The flow will emit a [ListChange] once subscribed, and then
-     * on every change to the list. The flow will continue running indefinitely until canceled or
-     * until the parent object is deleted.
+     * Observes changes to the RealmList. The flow will emit a [InitialList] once subscribed, and
+     * then an [UpdatedList] on every change to the list. The flow will continue running indefinitely
+     * until canceled or until the parent object is deleted.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].

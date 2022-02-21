@@ -38,9 +38,10 @@ internal object Names {
 
     // names must match `RealmObjectInternal` properties
     val REALM_OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Owner")
-    val OBJECT_CLASS_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}TableName")
+    val OBJECT_CLASS_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ClassName")
     val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
     val MEDIATOR = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Mediator")
+    val METADATA = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}metadata")
 
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
@@ -60,11 +61,10 @@ internal object Names {
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
 
     // Function names
-    val REALM_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
-    val REALM_CONFIGURATION_WITH = Name.identifier("with")
     val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
     val REALM_OBJECT_INTERNAL_REALM_STATE = Name.identifier("realmState")
     val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
+    val REALM_OBJECT_INTERNAL_PROPERTY_KEY = Name.identifier("propertyKeyOrThrow")
 }
 
 internal object FqNames {
@@ -78,19 +78,12 @@ internal object FqNames {
     val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
     val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")
-    val REALM_CONFIGURATION = FqName("io.realm.RealmConfiguration")
-    val SYNC_CONFIGURATION = FqName("io.realm.mongodb.SyncConfiguration")
-    val REALM_CONFIGURATION_BUILDER = FqName("io.realm.RealmConfiguration.Builder")
-    val SYNC_CONFIGURATION_BUILDER = FqName("io.realm.mongodb.SyncConfiguration.Builder")
+    val CLASS_METADATA_CLASS = FqName("io.realm.internal.schema.ClassMetadata")
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
-    val KOTLIN_COLLECTION_LIST = FqName("kotlin.collections.List")
-    val KOTLIN_PAIR = FqName("kotlin.Pair")
-    val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.Map")
     val KOTLIN_COLLECTIONS_LIST = FqName("kotlin.collections.List")
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
-    val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
 
     // Schema related types
