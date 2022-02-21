@@ -291,6 +291,8 @@ interface Configuration {
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
 
         /**
+         * Sets a callback for controlling whether the realm should be compacted when opened.
+         *
          * Due to the way Realm allocates space on disk, it is sometimes the case that more space
          * is allocated than what is actually needed, making the realm file larger than what it
          * needs to be. This mostly occurs when writing larger binary blobs to the file.
@@ -304,7 +306,7 @@ interface Configuration {
          *
          * @param callback The callback called when opening the realm file. The return value
          * determines whether or not the file should be compacted. If not user defined callback
-         * is defined, the default policy will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
+         * is defined, the default callback will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
          * for more details.
          */
         fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK) =

@@ -343,6 +343,7 @@ actual object RealmInterop {
         config: NativePointer,
         callback: CompactOnLaunchCallback
     ) {
+        // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
         realm_wrapper.realm_config_set_should_compact_on_launch_function(
             config.cptr(),
             staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
