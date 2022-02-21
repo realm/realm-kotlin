@@ -59,6 +59,9 @@
 -keep class io.realm.internal.interop.AppCallback {
     *;
 }
+-keep class io.realm.internal.interop.CompactOnLaunchCallback {
+    *;
+}
 
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt

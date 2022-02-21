@@ -19,7 +19,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.propertyInfo
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -68,6 +67,7 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.size_tVar
 import platform.posix.strerror
+import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
@@ -337,6 +337,23 @@ actual object RealmInterop {
 
             return null
         }
+    }
+
+    actual fun realm_config_set_should_compact_on_launch_function(
+        config: NativePointer,
+        callback: CompactOnLaunchCallback
+    ) {
+        // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
+        realm_wrapper.realm_config_set_should_compact_on_launch_function(
+            config.cptr(),
+            staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
+                stableUserData<CompactOnLaunchCallback>(userdata).get().invoke(
+                    total.toLong(),
+                    used.toLong()
+                )
+            },
+            StableRef.create(callback).asCPointer()
+        )
     }
 
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {

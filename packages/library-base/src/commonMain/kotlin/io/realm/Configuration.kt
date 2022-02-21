@@ -22,6 +22,27 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
+ * This interface is used to determine if a Realm file should be compacted the first time the file
+ * is opened and before the instance is returned.
+ *
+ * Note that compacting a file can take a while, so compacting should generally only be done as
+ * part of opening a Realm on a background thread.
+ */
+fun interface CompactOnLaunchCallback {
+
+    /**
+     * This method determines if the Realm file should be compacted before opened and returned to
+     * the user.
+     *
+     * @param totalBytes the total file size (data + free space).
+     * @param usedBytes the total bytes used by data in the file.
+     * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
+     * compaction will be skipped.
+     */
+    fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
+}
+
+/**
  * Configuration for log events created by a Realm instance.
  */
 public data class LogConfiguration(
@@ -82,6 +103,16 @@ interface Configuration {
     val encryptionKey: ByteArray?
 
     /**
+     * Callback that determines if the realm file should be compacted as part of opening it.
+     *
+     * @return `null` if the realm file should not be compacted when opened. Otherwise, the callback
+     * returned is the one that will be invoked in order to determine if the file should be
+     * compacted or not.
+     * @see [RealmConfiguration.Builder.compactOnLaunch]
+     */
+    val compactOnLaunchCallback: CompactOnLaunchCallback?
+
+    /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
      *
@@ -106,6 +137,7 @@ interface Configuration {
         protected var deleteRealmIfMigrationNeeded: Boolean = false
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
+        protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
 
         /**
          * Creates the RealmConfiguration based on the builder properties.
@@ -257,6 +289,28 @@ interface Configuration {
          */
         fun encryptionKey(encryptionKey: ByteArray) =
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
+
+        /**
+         * Sets a callback for controlling whether the realm should be compacted when opened.
+         *
+         * Due to the way Realm allocates space on disk, it is sometimes the case that more space
+         * is allocated than what is actually needed, making the realm file larger than what it
+         * needs to be. This mostly occurs when writing larger binary blobs to the file.
+         *
+         * The space will be used by subsequent writes, but in the interim period the file will
+         * be larger than what is strictly needed.
+         *
+         * This method makes it possible to define a function that determines whether or not
+         * the file should be compacted when the realm is opened, optimizing how much disk size
+         * is used.
+         *
+         * @param callback The callback called when opening the realm file. The return value
+         * determines whether or not the file should be compacted. If not user defined callback
+         * is defined, the default callback will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
+         * for more details.
+         */
+        fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK) =
+            apply { this.compactOnLaunchCallback = callback } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have
