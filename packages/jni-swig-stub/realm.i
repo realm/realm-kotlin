@@ -224,7 +224,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
     // Original
     %#if defined(__ANDROID__) && defined(__aarch64__) // Android arm64-v8a
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
-    %#elif defined(__ANDROID__) // Android armeabi-v7a
+    %#elif defined(__ANDROID__) // Android armeabi-v7a, x86_64 and x86
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
     %#elif defined(__aarch64__) // macos M1
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
