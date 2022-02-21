@@ -34,7 +34,6 @@ operator fun DataMigrationContext.component2() = this.newRealm
 fun DataMigrationContext.enumerate(className: String, block: (oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject?) -> Unit) {
     val find: RealmResults<out DynamicRealmObject> = oldRealm.query(className).find()
     find.forEach {
-        // FIXME In which cases can we fail to resolv the object??
         block(it, newRealm.findLatest(it))
     }
 }

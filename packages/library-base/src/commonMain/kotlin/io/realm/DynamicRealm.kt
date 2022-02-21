@@ -18,7 +18,6 @@ package io.realm
 
 import io.realm.query.RealmQuery
 
-// Naming: Untyped realm
 interface DynamicRealm : BaseRealm {
     fun query(
         clazz: String,

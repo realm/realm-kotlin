@@ -352,7 +352,7 @@ actual object RealmInterop {
                     CPointerWrapper(realm_clone(schema)),
                 )
             },
-            // Does this leak?? Don't bother until pattern from https://github.com/realm/realm-core/issues/5222 is settled
+            // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
             StableRef.create(callback).asCPointer()
         )
     }

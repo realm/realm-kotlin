@@ -20,14 +20,11 @@ import kotlin.reflect.KClass
 
 interface DynamicRealmObject : RealmObject {
     val type: String
-    // FIXME Should we have something like
-    //  val fields: Set<String>
-    //  to ease access or is it ok to rely on realm.schema to introspect
 
     fun <T : Any> get(fieldName: String, clazz: KClass<T>): T
     fun <T : Any> getNullable(fieldName: String, clazz: KClass<T>): T?
 
-    // FIXME We don't have distinction between mutable and immutable list so we API will allow to
+    // FIXME EVALUATE We don't have distinction between mutable and immutable list so we API will allow to
     //  modify the resulting list ... even though it will fail
     fun <T : Any> getList(fieldName: String, clazz: KClass<T>): RealmList<T>
     fun <T : Any> getListOfNullable(fieldName: String, clazz: KClass<T>): RealmList<T?>
