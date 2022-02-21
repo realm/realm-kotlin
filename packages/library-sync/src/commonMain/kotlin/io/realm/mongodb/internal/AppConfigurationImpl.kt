@@ -34,12 +34,12 @@ public class AppConfigurationImpl(
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val networkTransport: NetworkTransport,
     override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
-    val log: RealmLog
+    public val log: RealmLog
 ) : AppConfiguration {
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
-    val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
+    public val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
         networkTransport = RealmInterop.realm_network_transport_new(networkTransport),

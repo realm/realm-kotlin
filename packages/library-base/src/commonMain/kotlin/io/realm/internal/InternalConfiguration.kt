@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
  * [io.realm.Configuration]. This is needed to make "agnostic" configurations from a base-sync
  * point of view.
  */
-// TODO Public due to being transitive dependency to `ConfigurationImpl`.
+// TODO Public due to being transitive dependency to `ConfigurationImpl` and `SyncConfigurationImpl`.
 public interface InternalConfiguration : Configuration {
     public val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     public val mediator: Mediator

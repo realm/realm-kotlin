@@ -38,28 +38,28 @@ import kotlinx.coroutines.CoroutineDispatcher
  * Instances of an AppConfiguration can only be created by using the [AppConfiguration.Builder] and
  * calling its [AppConfiguration.Builder.build] method.
  */
-interface AppConfiguration {
+public interface AppConfiguration {
 
-    val appId: String
+    public val appId: String
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
-    val baseUrl: String
-    val networkTransport: NetworkTransport
-    val metadataMode: MetadataMode
+    public val baseUrl: String
+    public val networkTransport: NetworkTransport
+    public val metadataMode: MetadataMode
 
-    companion object {
+    public companion object {
         /**
          * The default url for MongoDB Realm applications.
          *
          * @see Builder#baseUrl(String)
          */
-        const val DEFAULT_BASE_URL = "https://realm.mongodb.com"
+        public const val DEFAULT_BASE_URL: String = "https://realm.mongodb.com"
 
         /**
          * The default header name used to carry authorization data when making network requests
          * towards MongoDB Realm.
          */
-        const val DEFAULT_AUTHORIZATION_HEADER_NAME = "Authorization"
+        public const val DEFAULT_AUTHORIZATION_HEADER_NAME: String = "Authorization"
     }
 
     /**
@@ -67,7 +67,7 @@ interface AppConfiguration {
      *
      * @param appId the application id of the MongoDB Realm Application.
      */
-    class Builder(
+    public class Builder(
         private val appId: String
     ) {
         private var baseUrl: String = DEFAULT_BASE_URL
@@ -85,12 +85,12 @@ interface AppConfiguration {
          *
          * @param baseUrl the base url for the MongoDB Realm application.
          */
-        fun baseUrl(baseUrl: String) = apply { this.baseUrl = baseUrl }
+        public fun baseUrl(baseUrl: String): Builder = apply { this.baseUrl = baseUrl }
 
         /**
          * The dispatcher used to execute internal tasks; most notably remote HTTP requests.
          */
-        fun dispatcher(dispatcher: CoroutineDispatcher) = apply { this.dispatcher = dispatcher }
+        public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply { this.dispatcher = dispatcher }
 
         /**
          * Configure how Realm will report log events for this App.
@@ -100,7 +100,7 @@ interface AppConfiguration {
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
          */
-        fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()) =
+        public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder  =
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
@@ -115,14 +115,14 @@ interface AppConfiguration {
          *
          * @see [RealmConfiguration.Builder.log]
          */
-        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true }
+        internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
 
         /**
          * Creates the AppConfiguration from the properties of the builder.
          *
          * @return the AppConfiguration that can be used to create a [App].
          */
-        fun build(): AppConfiguration {
+        public fun build(): AppConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))

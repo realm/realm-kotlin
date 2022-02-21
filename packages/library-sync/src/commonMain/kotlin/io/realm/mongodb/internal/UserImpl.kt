@@ -27,7 +27,7 @@ import kotlinx.coroutines.channels.Channel
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
-    val nativePointer: NativePointer,
+    public val nativePointer: NativePointer,
     override val app: AppImpl
 ) : User {
 
@@ -71,13 +71,13 @@ public class UserImpl(
         return result
     }
 
-    companion object {
+    public companion object {
         /**
          * Converts a Core state value to a library state value.
          *
          * For internal use only.
          */
-        fun fromCoreState(coreState: CoreUserState): User.State = when (coreState) {
+        public fun fromCoreState(coreState: CoreUserState): User.State = when (coreState) {
             CoreUserState.RLM_USER_STATE_LOGGED_OUT -> User.State.LOGGED_OUT
             CoreUserState.RLM_USER_STATE_LOGGED_IN -> User.State.LOGGED_IN
             CoreUserState.RLM_USER_STATE_REMOVED -> User.State.REMOVED

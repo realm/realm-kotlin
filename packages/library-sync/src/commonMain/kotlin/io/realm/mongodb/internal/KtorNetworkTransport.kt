@@ -42,7 +42,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlin.collections.set
 
-class KtorNetworkTransport(
+internal class KtorNetworkTransport(
     override val authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME,
     override val customHeaders: Map<String, String> = mapOf(),
     // FIXME Rework timeout to take a Duration instead
