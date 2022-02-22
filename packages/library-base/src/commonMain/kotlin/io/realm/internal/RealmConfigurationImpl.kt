@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
@@ -34,7 +35,8 @@ internal class RealmConfigurationImpl(
     writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
     encryptionKey: ByteArray?,
-    override val deleteRealmIfMigrationNeeded: Boolean
+    override val deleteRealmIfMigrationNeeded: Boolean,
+    compactOnLaunchCallback: CompactOnLaunchCallback?
 ) : ConfigurationImpl(
     path,
     name,
@@ -48,6 +50,7 @@ internal class RealmConfigurationImpl(
         true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
         false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
     },
-    encryptionKey
+    encryptionKey,
+    compactOnLaunchCallback
 ),
     RealmConfiguration

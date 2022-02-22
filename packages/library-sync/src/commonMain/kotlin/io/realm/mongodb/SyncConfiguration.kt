@@ -149,7 +149,8 @@ public interface SyncConfiguration : Configuration {
                 writeDispatcher ?: singleThreadDispatcher(name),
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
-                encryptionKey
+                encryptionKey,
+                compactOnLaunchCallback
             )
 
             return SyncConfigurationImpl(

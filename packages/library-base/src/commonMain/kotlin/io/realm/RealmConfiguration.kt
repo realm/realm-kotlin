@@ -72,6 +72,7 @@ public interface RealmConfiguration : Configuration {
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,
+                compactOnLaunchCallback
             )
         }
     }
