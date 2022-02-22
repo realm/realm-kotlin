@@ -9,8 +9,8 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
-import io.realm.query.RealmQuery
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -97,7 +97,7 @@ internal class RealmImpl private constructor(
         vararg args: Any?
     ): RealmQuery<T> {
         return super.query(clazz, query, *args)
- 	}
+    }
 
     // Currently just for internal-only usage in test, thus API is not polished
     internal suspend fun updateSchema(schema: RealmSchemaImpl) {

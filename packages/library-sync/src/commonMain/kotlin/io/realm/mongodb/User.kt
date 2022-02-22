@@ -67,7 +67,7 @@ public interface User {
     //     * and will still be returned by [App.allUsers]. They can be removed completely by
     //     * calling [User.remove].asd
 
-    public  suspend fun logOut()
+    public suspend fun logOut()
 
     /**
      * Two Users are considered equal if they have the same user identity and are associated
