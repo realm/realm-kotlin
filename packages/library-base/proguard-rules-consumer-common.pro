@@ -60,6 +60,11 @@
     *;
 }
 
+# Preserve Function<X> methods as they back various functional interfaces called from JNI
+-keep class kotlin.jvm.functions.Function* {
+    *;
+}
+
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt
 #-keepattributes LineNumberTable,SourceFile
