@@ -48,4 +48,4 @@ internal expect class HttpClientCache(timeoutMs: Long, customLogger: Logger? = n
     fun getClient(): HttpClient
 }
 
-internal expect fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
+public expect fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
