@@ -16,13 +16,12 @@
 
 package io.realm.test
 
-import io.realm.notifications.ListChange
-import io.realm.notifications.UpdatedList
+import io.realm.notifications.CollectionChangeSet
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-private fun assertContains(array: IntArray, element: ListChange.Range) {
+private fun assertContains(array: IntArray, element: CollectionChangeSet.Range) {
     for (value in element.startIndex until element.startIndex + element.length) {
         kotlin.test.assertContains(
             array,
@@ -33,9 +32,9 @@ private fun assertContains(array: IntArray, element: ListChange.Range) {
 }
 
 private fun assertContains(
-    expectedRanges: Array<ListChange.Range>,
+    expectedRanges: Array<CollectionChangeSet.Range>,
     indices: IntArray,
-    ranges: Array<ListChange.Range>
+    ranges: Array<CollectionChangeSet.Range>
 ) {
     if (expectedRanges.isEmpty()) {
         assertTrue(indices.isEmpty())
@@ -55,26 +54,26 @@ private fun assertContains(
 }
 
 fun assertIsChangeSet(
-    updatedListChange: UpdatedList<*>,
-    insertRanges: Array<ListChange.Range> = emptyArray(),
-    deletionRanges: Array<ListChange.Range> = emptyArray(),
-    changesRanges: Array<ListChange.Range> = emptyArray()
+    collectionChangeSet: CollectionChangeSet,
+    insertRanges: Array<CollectionChangeSet.Range> = emptyArray(),
+    deletionRanges: Array<CollectionChangeSet.Range> = emptyArray(),
+    changesRanges: Array<CollectionChangeSet.Range> = emptyArray()
 ) {
     assertContains(
         insertRanges,
-        updatedListChange.insertions,
-        updatedListChange.insertionRanges
+        collectionChangeSet.insertions,
+        collectionChangeSet.insertionRanges
     )
 
     assertContains(
         deletionRanges,
-        updatedListChange.deletions,
-        updatedListChange.deletionRanges
+        collectionChangeSet.deletions,
+        collectionChangeSet.deletionRanges
     )
 
     assertContains(
         changesRanges,
-        updatedListChange.changes,
-        updatedListChange.changeRanges
+        collectionChangeSet.changes,
+        collectionChangeSet.changeRanges
     )
 }

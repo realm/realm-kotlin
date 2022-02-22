@@ -23,7 +23,9 @@ import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.notifications.ListChange
+import io.realm.notifications.InitialResults
+import io.realm.notifications.ResultsChange
+import io.realm.notifications.UpdatedResults
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -212,9 +214,9 @@ interface RealmElementQuery<T : RealmObject> {
      * Finds all objects that fulfill the query conditions and returns them asynchronously as a
      * [Flow].
      *
-     * If there is any changes to the objects represented by the query backing the [RealmResults],
-     * the flow will emit the updated results. The flow will continue running indefinitely until
-     * canceled.
+     * Once subscribed the flow will emit a [InitialResults] event and then a [UpdatedResults] on any
+     * change to the objects represented by the query backing the [RealmResults]. The flow will continue
+     * running indefinitely until canceled.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
@@ -223,7 +225,7 @@ interface RealmElementQuery<T : RealmObject> {
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    fun asFlow(): Flow<ListChange<RealmResults<T>>>
+    fun asFlow(): Flow<ResultsChange<T>>
 }
 
 /**

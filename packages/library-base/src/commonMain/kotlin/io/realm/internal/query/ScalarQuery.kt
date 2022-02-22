@@ -31,7 +31,7 @@ import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
-import io.realm.notifications.ListChange
+import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
@@ -54,7 +54,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val queryPointer: NativePointer,
     protected val mediator: Mediator,
     protected val clazz: KClass<E>
-) : Thawable<Observable<RealmResultsImpl<E>, ListChange<RealmResultsImpl<E>>>> {
+) : Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer

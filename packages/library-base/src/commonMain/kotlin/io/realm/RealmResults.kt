@@ -1,6 +1,8 @@
 package io.realm
 
-import io.realm.notifications.ListChange
+import io.realm.notifications.InitialResults
+import io.realm.notifications.ResultsChange
+import io.realm.notifications.UpdatedResults
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -31,16 +33,16 @@ interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versioned {
     override fun query(query: String, vararg args: Any?): RealmResults<T>
 
     /**
-     * Observe changes to the RealmResult. If there is any change to objects represented by the
-     * query backing the RealmResults, the flow will emit the updated RealmResult. The flow will
-     * continue running indefinitely until canceled.
+     * Observe changes to the RealmResult. Once subscribed the flow will emit a [InitialResults]
+     * event and then a [UpdatedResults] on any change to the objects represented by the query backing
+     * the RealmResults. The flow will continue running indefinitely until canceled.
      *
      * The change calculations will on on the thread represented by
      * [Configuration.SharedBuilder.notificationDispatcher].
      *
      * @return a flow representing changes to the RealmResults.
      */
-    fun asFlow(): Flow<ListChange<RealmResults<T>>>
+    fun asFlow(): Flow<ResultsChange<T>>
 
     /**
      * Delete all objects from this result from the realm.

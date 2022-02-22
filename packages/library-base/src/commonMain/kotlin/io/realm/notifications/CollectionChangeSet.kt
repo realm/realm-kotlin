@@ -1,0 +1,76 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.realm.notifications
+
+/**
+ * This interface models the changes that can occur to a collection.
+ */
+interface CollectionChangeSet {
+    /**
+     * The deleted indices in the previous version of the collection. It will be set as a zero-sized
+     * array if no objects were deleted.
+     */
+    val deletions: IntArray
+
+    /**
+     * The inserted indices in the new version of the collection. It will be set as a zero-sized
+     * array if no objects were inserted.
+     */
+    val insertions: IntArray
+
+    /**
+     * The modified indices in the new version of the collection.
+     * <p>
+     * For {@link RealmResults}, this means that one or more of the properties of the object at the given index were
+     * modified (or an object linked to by that object was modified). It will be set as a zero-sized
+     * array if no objects were changed.
+     */
+    val changes: IntArray
+
+    /**
+     * The deleted ranges of objects in the previous version of the collection. It will be set as a zero-sized
+     * array if no objects were deleted.
+     */
+    val deletionRanges: Array<Range>
+
+    /**
+     * The inserted ranges of objects in the new version of the collection. It will be set as a zero-sized
+     * array if no objects were inserted.
+     *
+     * @return the {@link Range} array. A zero-sized array will be returned if no objects were inserted.
+     */
+    val insertionRanges: Array<Range>
+
+    /**
+     * The modified ranges of objects in the new version of the collection. It will be set as a zero-sized
+     * array if no objects were changed.
+     */
+    val changeRanges: Array<Range>
+
+    /**
+     * Defines a range of elements in a collection.
+     */
+    data class Range(
+        /**
+         * The start index of this change range.
+         */
+        val startIndex: Int,
+        /**
+         * How many elements are inside this range.
+         */
+        val length: Int
+    )
+}

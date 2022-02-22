@@ -28,6 +28,7 @@ import io.realm.internal.interop.Timestamp
 import io.realm.notifications.DeletedListImpl
 import io.realm.notifications.InitialListImpl
 import io.realm.notifications.ListChange
+import io.realm.notifications.UpdatedListImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -148,12 +149,12 @@ internal class ManagedRealmList<E>(
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            val builder = UpdatedListBuilderImpl(frozenList, change)
+            val builder = CollectionChangeSetBuilderImpl(change)
 
             if (builder.isEmpty()) {
                 channel.trySend(InitialListImpl(frozenList))
             } else {
-                channel.trySend(builder.build())
+                channel.trySend(UpdatedListImpl(frozenList, builder.build()))
             }
         } else {
             channel.trySend(DeletedListImpl(UnmanagedRealmList()))
