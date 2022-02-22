@@ -25,8 +25,8 @@ import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 class DynamicRealmTests {
     private lateinit var tmpDir: String
@@ -60,9 +60,9 @@ class DynamicRealmTests {
         }
         val dynamicRealm = realm.asDynamicRealm()
         assertFailsWith<IllegalArgumentException> {
-            dynamicRealm.query("UNKNOWN_CLASS").find().first()
-        }.let {
-            assertTrue(it.message.contentEquals("Cannot find class: 'UNKNOWN_CLASS'"))
+            dynamicRealm.query("UNKNOWN_CLASS")
+        }.run {
+            assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
     }
 }

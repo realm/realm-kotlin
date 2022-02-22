@@ -317,10 +317,10 @@ actual object RealmInterop {
 
     actual fun realm_get_col_key(
         realm: NativePointer,
-        className: String,
+        classKey: ClassKey,
         col: String
     ): PropertyKey {
-        return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
+        return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
     actual fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T {
@@ -687,24 +687,23 @@ actual object RealmInterop {
         return classInfo
     }
 
-    private fun propertyInfo(realm: NativePointer, classInfo: realm_class_info_t, col: String): realm_property_info_t {
+    private fun propertyInfo(realm: NativePointer, classKey: ClassKey, col: String): realm_property_info_t {
         val found = booleanArrayOf(false)
         val pinfo = realm_property_info_t()
-        realmc.realm_find_property((realm as LongPointerWrapper).ptr, classInfo.key, col, found, pinfo)
+        realmc.realm_find_property((realm as LongPointerWrapper).ptr, classKey.key, col, found, pinfo)
         if (!found[0]) {
-            throw IllegalArgumentException("Cannot find property: '$col' in '$classInfo.name'")
+            throw IllegalArgumentException("Cannot find property: '$col' in class with key=$classKey")
         }
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: NativePointer, className: String, query: String, vararg args: Any?): NativePointer {
+    actual fun realm_query_parse(realm: NativePointer, classKey: ClassKey, query: String, vararg args: Any?): NativePointer {
         val count = args.size
-        val classKey = classInfo(realm, className).key
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
             realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
         }
-        return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey, query, count.toLong(), cArgs))
+        return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey.key, query, count.toLong(), cArgs))
     }
 
     actual fun realm_query_parse_for_results(
@@ -772,32 +771,32 @@ actual object RealmInterop {
 
     actual fun <T> realm_results_average(
         results: NativePointer,
-        property: Long
+        propertyKey: PropertyKey
     ): Pair<Boolean, T> {
         val average = realm_value_t()
         val found = booleanArrayOf(false)
-        realmc.realm_results_average(results.cptr(), property, average, found)
+        realmc.realm_results_average(results.cptr(), propertyKey.key, average, found)
         return found[0] to from_realm_value(average)
     }
 
-    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_sum(results: NativePointer, propertyKey: PropertyKey): T {
         val sum = realm_value_t()
         val foundArray = BooleanArray(1)
-        realmc.realm_results_sum(results.cptr(), property, sum, foundArray)
+        realmc.realm_results_sum(results.cptr(), propertyKey.key, sum, foundArray)
         return from_realm_value(sum)
     }
 
-    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_max(results: NativePointer, propertyKey: PropertyKey): T {
         val max = realm_value_t()
         val foundArray = BooleanArray(1)
-        realmc.realm_results_max(results.cptr(), property, max, foundArray)
+        realmc.realm_results_max(results.cptr(), propertyKey.key, max, foundArray)
         return from_realm_value(max)
     }
 
-    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_min(results: NativePointer, propertyKey: PropertyKey): T {
         val min = realm_value_t()
         val foundArray = BooleanArray(1)
-        realmc.realm_results_min(results.cptr(), property, min, foundArray)
+        realmc.realm_results_min(results.cptr(), propertyKey.key, min, foundArray)
         return from_realm_value(min)
     }
 

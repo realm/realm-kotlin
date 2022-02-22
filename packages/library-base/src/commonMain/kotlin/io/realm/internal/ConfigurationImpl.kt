@@ -115,11 +115,17 @@ open class ConfigurationImpl constructor(
                         RealmInterop.realm_begin_read(newRealm)
                         val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
                         val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
-                        it.migrate(object : DataMigrationContext {
-                            override val oldRealm: DynamicRealm = old
-                            override val newRealm: DynamicMutableRealm = new
-                        })
-                        true
+                        @Suppress("TooGenericExceptionCaught")
+                        try {
+                            it.migrate(object : DataMigrationContext {
+                                override val oldRealm: DynamicRealm = old
+                                override val newRealm: DynamicMutableRealm = new
+                            })
+                            true
+                        } catch (e: Throwable) {
+                            // TODO Should we dump the actual exceptions in a platform specific way
+                            false
+                        }
                     }
             }
             Unit

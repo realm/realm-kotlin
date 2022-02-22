@@ -84,10 +84,10 @@ class DynamicMutableRealmTests {
 
     @Test
     fun create_throwsOnUnknownClass() {
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.createObject("UNKNOWN_CLASS")
         }.run {
-            assertEquals("Couldn't find key for class UNKNOWN_CLASS", message)
+            assertEquals("Schema doesn't include class 'UNKNOWN_CLASS'", message)
         }
     }
 
@@ -133,7 +133,7 @@ class DynamicMutableRealmTests {
         assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.query("UNKNOWN_CLASS")
         }.run {
-            assertEquals("Cannot find class: 'UNKNOWN_CLASS'", message)
+            assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
     }
 

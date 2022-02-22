@@ -36,6 +36,7 @@ interface SchemaMetadata {
  */
 interface ClassMetadata {
     val className: String
+    val classKey: ClassKey
     operator fun get(propertyName: String): PropertyKey?
     fun info(propertyName: String): PropertyInfo?
     fun getOrThrow(propertyName: String): PropertyKey = get(propertyName)
@@ -67,7 +68,7 @@ class CachedSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadat
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-class CachedClassMetadata(dbPointer: NativePointer, override val className: String, val classKey: ClassKey) : ClassMetadata {
+class CachedClassMetadata(dbPointer: NativePointer, override val className: String, override val classKey: ClassKey) : ClassMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation

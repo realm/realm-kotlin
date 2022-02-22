@@ -329,12 +329,25 @@ class DynamicRealmObjectTests {
         val dynamicSample = dynamicRealm.query("Sample").find().first()
         assertFailsWith<ClassCastException> {
             dynamicSample.get<Long>("stringField")
-        }.run { assertEquals("java.lang.String cannot be cast to java.lang.Number", message) }
+        }.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+    }
+
+    @Test
+    // FIXME Should this only fail it the value is actually null? or in all cases if the field is nullable
+    fun get_throwsOnNullableField() {
+        realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+        val dynamicRealm = realm.asDynamicRealm()
+        val dynamicSample = dynamicRealm.query("Sample").find().first()
+        assertFailsWith<NullPointerException> {
+            dynamicSample.get<String>("nullableStringField")
+        }
     }
 
     @Test
     @Ignore // FIXME Should we actually verify the types as the generic parameters is not enforced
-    fun getList_wrongTypeThrows() {
+    fun getList_throwsOnWrongType() {
         realm.writeBlocking {
             copyToRealm(Sample().apply { stringListField.add("STRING") })
         }
@@ -349,7 +362,7 @@ class DynamicRealmObjectTests {
     }
 
     @Test
-    fun get_listThrows() {
+    fun get_throwsOnList() {
         realm.writeBlocking {
             copyToRealm(Sample())
         }
@@ -376,7 +389,7 @@ class DynamicRealmObjectTests {
     }
 
     @Test
-    fun observeThrows() {
+    fun observe_throws() {
         realm.writeBlocking {
             copyToRealm(Sample())
         }

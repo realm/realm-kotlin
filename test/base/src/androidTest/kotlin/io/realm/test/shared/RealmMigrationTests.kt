@@ -167,8 +167,7 @@ class RealmMigrationTests {
             initialSchema = setOf(Sample::class),
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
             migration = { (oldRealm, newRealm) ->
-                // FIXME Should be InvalidArgumentException
-                assertFailsWith<IllegalStateException> {
+                assertFailsWith<IllegalArgumentException> {
                     newRealm.createObject("UNKNOWN_CLASS")
                 }
             }
@@ -313,6 +312,7 @@ class RealmMigrationTests {
     }
 
     @Test
+    // FIXME Need migration exception
     fun migrationError_throwsIfVersionIsNotUpdated() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .path("$tmpDir/default.realm")

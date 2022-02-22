@@ -27,5 +27,5 @@ internal open class DynamicRealmImpl(configuration: InternalConfiguration, dbPoi
     override val realmReference: RealmReference = FrozenRealmReference(this, dbPointer)
 
     override fun query(className: String, query: String, vararg args: Any?): RealmQuery<DynamicRealmObject> =
-        ObjectQuery(realmReference, className, DynamicRealmObject::class, configuration.mediator, null, query, *args)
+        ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, DynamicRealmObject::class, configuration.mediator, null, query, *args)
 }

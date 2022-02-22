@@ -63,12 +63,10 @@ internal object RealmObjectHelper {
 
     @Suppress("unused") // Called from generated code
     // FIXME Why do we have a generic parameter on this?
-    internal fun <R> getTimestamp(obj: RealmObjectInternal, col: String): RealmInstant? {
+    internal fun <R> getTimestamp(obj: RealmObjectInternal, propertyName: String): RealmInstant? {
         obj.checkValid()
-        val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$ClassName`!!, col)
-        val res = RealmInterop.realm_get_value<Timestamp?>(o, key)
+        val res = RealmInterop.realm_get_value<Timestamp?>(o, obj.propertyKeyOrThrow(propertyName))
         return if (res == null) null else RealmInstantImpl(res)
     }
 
@@ -184,25 +182,24 @@ internal object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    internal fun <R> setTimestamp(obj: RealmObjectInternal, col: String, value: RealmInstant?) {
+    internal fun <R> setTimestamp(obj: RealmObjectInternal, propertyName: String, value: RealmInstant?) {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val key = RealmInterop.realm_get_col_key(realm.dbPointer, obj.`$realm$ClassName`!!, col)
         // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
         //  implementations in the various platform RealmInterops here to eliminate
         //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
         //  only. This relates to the overall concern of having a generic path for getter/setter
         //  instead of generating a typed path for each type.
         try {
-            RealmInterop.realm_set_value(o, key, value, false)
+            RealmInterop.realm_set_value(o, obj.propertyKeyOrThrow(propertyName), value, false)
         }
         // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
         // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
         // info that might help users to understand the exception.
         catch (exception: RealmCoreException) {
             throw IllegalStateException(
-                "Cannot set `${obj.`$realm$ClassName`}.$col` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                "Cannot set `${obj.`$realm$ClassName`}.$propertyName` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
             )
         }
@@ -239,8 +236,14 @@ internal object RealmObjectHelper {
             RealmList::class -> throw IllegalArgumentException("Cannot retrieve RealmList through 'get(...)', use getList(...) instead: $propertyName")
             else -> getValue<R>(obj, propertyName)
         }
-        @Suppress("UNCHECKED_CAST")
-        return if (clazz.isInstance(value)) value as R? else throw ClassCastException("Retrieving value of type '${clazz.simpleName}' but was ${value?.let { "of type '${it::class.simpleName}'" } ?: value}")
+        return value?.let {
+            @Suppress("UNCHECKED_CAST")
+            if (clazz.isInstance(value)) {
+                value as R?
+            } else {
+                throw ClassCastException("Retrieving value of type '${clazz.simpleName}' but was of type '${value::class.simpleName}'")
+            }
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")

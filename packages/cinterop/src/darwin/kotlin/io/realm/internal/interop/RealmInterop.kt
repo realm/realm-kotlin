@@ -622,9 +622,9 @@ actual object RealmInterop {
         return ClassKey(realm_wrapper.realm_object_get_table(obj.cptr()).toLong())
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey {
+    actual fun realm_get_col_key(realm: NativePointer, classKey: ClassKey, col: String): PropertyKey {
         memScoped {
-            return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
+            return PropertyKey(propertyInfo(realm, classKey, col).key)
         }
     }
 
@@ -819,7 +819,7 @@ actual object RealmInterop {
 
     actual fun realm_query_parse(
         realm: NativePointer,
-        className: String,
+        classKey: ClassKey,
         query: String,
         vararg args: Any?
     ): NativePointer {
@@ -834,7 +834,7 @@ actual object RealmInterop {
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
-                    classInfo(realm, className).key,
+                    classKey.key.toUInt(),
                     query,
                     count.toULong(),
                     cArgs
@@ -946,7 +946,7 @@ actual object RealmInterop {
 
     actual fun <T> realm_results_average(
         results: NativePointer,
-        property: Long
+        propertyKey: PropertyKey
     ): Pair<Boolean, T> {
         memScoped {
             val found = cValue<BooleanVar>().ptr
@@ -954,7 +954,7 @@ actual object RealmInterop {
             checkedBooleanResult(
                 realm_wrapper.realm_results_average(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     average.ptr,
                     found
                 )
@@ -963,13 +963,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_sum(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val sum = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_sum(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     sum.ptr,
                     null
                 )
@@ -978,13 +978,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_max(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val max = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_max(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     max.ptr,
                     null
                 )
@@ -993,13 +993,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_min(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val min = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_min(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     min.ptr,
                     null
                 )
@@ -1444,7 +1444,7 @@ actual object RealmInterop {
 
     private fun MemScope.propertyInfo(
         realm: NativePointer,
-        classInfo: realm_class_info_t,
+        classKey: ClassKey,
         col: String
     ): realm_property_info_t {
         val found = alloc<BooleanVar>()
@@ -1452,7 +1452,7 @@ actual object RealmInterop {
         checkedBooleanResult(
             realm_find_property(
                 realm.cptr(),
-                classInfo.key,
+                classKey.key.toUInt(),
                 col,
                 found.ptr,
                 propertyInfo.ptr

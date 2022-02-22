@@ -122,7 +122,7 @@ expect object RealmInterop {
     fun realm_object_as_link(obj: NativePointer): Link
     fun realm_object_get_table(obj: NativePointer): ClassKey
 
-    fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey
+    fun realm_get_col_key(realm: NativePointer, classKey: ClassKey, col: String): PropertyKey
 
     fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T
     fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean)
@@ -139,7 +139,7 @@ expect object RealmInterop {
     fun realm_list_is_valid(list: NativePointer): Boolean
 
     // query
-    fun realm_query_parse(realm: NativePointer, className: String, query: String, vararg args: Any?): NativePointer
+    fun realm_query_parse(realm: NativePointer, classKey: ClassKey, query: String, vararg args: Any?): NativePointer
     fun realm_query_parse_for_results(results: NativePointer, query: String, vararg args: Any?): NativePointer
     fun realm_query_find_first(query: NativePointer): Link?
     fun realm_query_find_all(query: NativePointer): NativePointer
@@ -152,10 +152,10 @@ expect object RealmInterop {
 
     fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer
     fun realm_results_count(results: NativePointer): Long
-    fun <T> realm_results_average(results: NativePointer, property: Long): Pair<Boolean, T>
-    fun <T> realm_results_sum(results: NativePointer, property: Long): T
-    fun <T> realm_results_max(results: NativePointer, property: Long): T
-    fun <T> realm_results_min(results: NativePointer, property: Long): T
+    fun <T> realm_results_average(results: NativePointer, propertyKey: PropertyKey): Pair<Boolean, T>
+    fun <T> realm_results_sum(results: NativePointer, propertyKey: PropertyKey): T
+    fun <T> realm_results_max(results: NativePointer, propertyKey: PropertyKey): T
+    fun <T> realm_results_min(results: NativePointer, propertyKey: PropertyKey): T
     // FIXME OPTIMIZE Get many
     fun realm_results_get(results: NativePointer, index: Long): Link
 

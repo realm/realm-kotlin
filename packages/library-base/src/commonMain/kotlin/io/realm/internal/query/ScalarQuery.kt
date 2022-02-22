@@ -24,6 +24,7 @@ import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
+import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
@@ -51,7 +52,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val realmReference: RealmReference,
     protected val queryPointer: NativePointer,
     protected val mediator: Mediator,
-    protected val className: String,
+    protected val classKey: ClassKey,
     protected val clazz: KClass<E>
 ) : Thawable<RealmResultsImpl<E>> {
 
@@ -59,12 +60,11 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
         val liveDbPointer = liveRealm.dbPointer
         val queryResults = RealmInterop.realm_query_find_all(queryPointer)
         val liveResultPtr = RealmInterop.realm_results_resolve_in(queryResults, liveDbPointer)
-        return RealmResultsImpl(liveRealm, liveResultPtr, className, clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
 
-    // TODO OPTIMIZE Can't we just retrieve this once from the schema metadata
-    protected fun getPropertyKey(className: String, property: String): PropertyKey =
-        RealmInterop.realm_get_col_key(realmReference.dbPointer, className, property)
+    protected fun getPropertyKey(property: String): PropertyKey =
+        RealmInterop.realm_get_col_key(realmReference.dbPointer, classKey, property)
 }
 
 /**
@@ -74,9 +74,9 @@ internal class CountQuery<E : RealmObject> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
-    className: String,
+    classKey: ClassKey,
     clazz: KClass<E>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, className, clazz), RealmScalarQuery<Long>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<Long>, Thawable<RealmResultsImpl<E>> {
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
@@ -99,12 +99,12 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
-    className: String,
+    classKey: ClassKey,
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, className, clazz), RealmScalarNullableQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarNullableQuery<T>, Thawable<RealmResultsImpl<E>> {
 
     override fun find(): T? = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -117,9 +117,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     }
 
     private fun findFromResults(resultsPointer: NativePointer): T? = try {
-        // TODO OPTIMIZE
-        val colKey = getPropertyKey(className, property).key
-        computeAggregatedValue(resultsPointer, colKey)
+        computeAggregatedValue(resultsPointer, getPropertyKey(property))
     } catch (exception: RealmCoreException) {
         throw when (exception) {
             is RealmCoreLogicException ->
@@ -136,12 +134,12 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     }
 
     @Suppress("ComplexMethod")
-    private fun computeAggregatedValue(resultsPointer: NativePointer, colKey: Long): T? {
+    private fun computeAggregatedValue(resultsPointer: NativePointer, propertyKey: PropertyKey): T? {
         val result: T? = when (queryType) {
             AggregatorQueryType.MIN ->
-                RealmInterop.realm_results_min(resultsPointer, colKey)
+                RealmInterop.realm_results_min(resultsPointer, propertyKey)
             AggregatorQueryType.MAX ->
-                RealmInterop.realm_results_max(resultsPointer, colKey)
+                RealmInterop.realm_results_max(resultsPointer, propertyKey)
             AggregatorQueryType.SUM ->
                 throw IllegalArgumentException("Use SumQuery instead.")
         }
@@ -173,11 +171,11 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
-    className: String,
+    classKey: ClassKey,
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, className, clazz), RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
 
     override fun find(): T = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -190,8 +188,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     }
 
     private fun findFromResults(resultsPointer: NativePointer): T = try {
-        val colKey = getPropertyKey(className, property).key
-        computeAggregatedValue(resultsPointer, colKey)
+        computeAggregatedValue(resultsPointer, getPropertyKey(property))
     } catch (exception: RealmCoreException) {
         throw when (exception) {
             is RealmCoreLogicException ->
@@ -207,8 +204,8 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         }
     }
 
-    private fun computeAggregatedValue(resultsPointer: NativePointer, colKey: Long): T {
-        val result: T = RealmInterop.realm_results_sum(resultsPointer, colKey)
+    private fun computeAggregatedValue(resultsPointer: NativePointer, propertyKey: PropertyKey): T {
+        val result: T = RealmInterop.realm_results_sum(resultsPointer, propertyKey)
         // TODO Expand to support other numeric types, e.g. Decimal128
         @Suppress("UNCHECKED_CAST")
         return when (result) {
