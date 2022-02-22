@@ -25,12 +25,12 @@ import io.realm.RealmResults
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.query.AggregatorQueryType
 import io.realm.notifications.DeletedObject
-import io.realm.notifications.InitialList
 import io.realm.notifications.InitialObject
-import io.realm.notifications.ListChange
+import io.realm.notifications.InitialResults
 import io.realm.notifications.ObjectChange
-import io.realm.notifications.UpdatedList
+import io.realm.notifications.ResultsChange
 import io.realm.notifications.UpdatedObject
+import io.realm.notifications.UpdatedResults
 import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.query.Sort
@@ -184,7 +184,7 @@ class QueryTests {
 
     @Test
     fun asFlow_initialResults() {
-        val channel = Channel<ListChange<RealmResults<QuerySample>>>(1)
+        val channel = Channel<ResultsChange<QuerySample>>(1)
 
         runBlocking {
             val observer = async {
@@ -196,9 +196,9 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-                assertTrue(listChange.list.isEmpty())
+            channel.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertTrue(resultsChange.list.isEmpty())
             }
 
             observer.cancel()
@@ -208,7 +208,7 @@ class QueryTests {
 
     @Test
     fun asFlow() {
-        val channel = Channel<ListChange<RealmResults<QuerySample>>>(1)
+        val channel = Channel<ResultsChange<QuerySample>>(1)
 
         runBlocking {
             val observer = async {
@@ -220,18 +220,18 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-                assertTrue(listChange.list.isEmpty())
+            channel.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertTrue(resultsChange.list.isEmpty())
             }
 
             realm.writeBlocking {
                 copyToRealm(QuerySample())
             }
 
-            channel.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
-                assertEquals(1, listChange.list.size)
+            channel.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
+                assertEquals(1, resultsChange.list.size)
             }
 
             observer.cancel()
@@ -241,7 +241,7 @@ class QueryTests {
 
     @Test
     fun asFlow_deleteObservable() {
-        val channel = Channel<ListChange<RealmResults<QuerySample>>>(1)
+        val channel = Channel<ResultsChange<QuerySample>>(1)
 
         runBlocking {
             realm.writeBlocking {
@@ -257,9 +257,9 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-                assertEquals(1, listChange.list.size)
+            channel.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertEquals(1, resultsChange.list.size)
             }
 
             realm.writeBlocking {
@@ -268,9 +268,9 @@ class QueryTests {
                     .delete()
             }
 
-            channel.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
-                assertTrue(listChange.list.isEmpty())
+            channel.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
+                assertTrue(resultsChange.list.isEmpty())
             }
 
             observer.cancel()

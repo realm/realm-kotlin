@@ -16,13 +16,13 @@
 
 package io.realm.notifications
 
-import io.realm.RealmList
+import io.realm.RealmObject
+import io.realm.RealmResults
 
-internal class InitialListImpl<T>(override val list: RealmList<T>) : InitialList<T>
+internal class InitialResultsImpl<T : RealmObject>(override val list: RealmResults<T>) :
+    InitialResults<T>
 
-internal class UpdatedListImpl<T>(
-    override val list: RealmList<T>,
+internal class UpdatedResultsImpl<T : RealmObject>(
+    override val list: RealmResults<T>,
     collectionChangeSet: CollectionChangeSet
-) : UpdatedList<T>, CollectionChangeSet by collectionChangeSet
-
-internal class DeletedListImpl<T>(override val list: RealmList<T>) : DeletedList<T>
+) : UpdatedResults<T>, CollectionChangeSet by collectionChangeSet

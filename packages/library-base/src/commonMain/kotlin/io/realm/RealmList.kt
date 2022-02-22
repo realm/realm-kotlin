@@ -51,7 +51,7 @@ interface RealmList<E> : MutableList<E> {
      *
      * @return a flow representing changes to the list.
      */
-    fun asFlow(): Flow<ListChange<RealmList<E>>>
+    fun asFlow(): Flow<ListChange<E>>
 }
 
 /**

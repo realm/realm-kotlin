@@ -20,12 +20,10 @@ import io.realm.internal.interop.ArrayAccessor
 import io.realm.internal.interop.CollectionChangeSetBuilder
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.notifications.ListChange
-import io.realm.notifications.UpdatedList
-import io.realm.notifications.UpdatedListImpl
+import io.realm.notifications.CollectionChangeSet
 
-internal class UpdatedListBuilderImpl<T : List<*>>(val list: T, change: NativePointer) :
-    CollectionChangeSetBuilder<UpdatedList<T>, ListChange.Range>() {
+internal class CollectionChangeSetBuilderImpl(change: NativePointer) :
+    CollectionChangeSetBuilder<CollectionChangeSet, CollectionChangeSet.Range>() {
 
     init {
         RealmInterop.realm_collection_changes_get_indices(change, this)
@@ -39,20 +37,30 @@ internal class UpdatedListBuilderImpl<T : List<*>>(val list: T, change: NativePo
         size: Int,
         fromAccessor: ArrayAccessor,
         toAccessor: ArrayAccessor
-    ): Array<ListChange.Range> =
+    ): Array<CollectionChangeSet.Range> =
         Array(size) { index ->
             val from: Int = fromAccessor(index)
             val to: Int = toAccessor(index)
-            ListChange.Range(from, to - from)
+            CollectionChangeSet.Range(from, to - from)
         }
 
-    override fun build(): UpdatedList<T> = UpdatedListImpl(
-        list = list,
-        deletions = deletionIndices,
-        insertions = insertionIndices,
-        changes = modificationIndicesAfter,
-        deletionRanges = deletionRanges,
-        insertionRanges = insertionRanges,
-        changeRanges = modificationRangesAfter
-    )
+    override fun build(): CollectionChangeSet = object : CollectionChangeSet {
+        override val deletions: IntArray =
+            this@CollectionChangeSetBuilderImpl.deletionIndices
+
+        override val insertions: IntArray =
+            this@CollectionChangeSetBuilderImpl.insertionIndices
+
+        override val changes: IntArray =
+            this@CollectionChangeSetBuilderImpl.modificationIndicesAfter
+
+        override val deletionRanges: Array<CollectionChangeSet.Range> =
+            this@CollectionChangeSetBuilderImpl.deletionRanges
+
+        override val insertionRanges: Array<CollectionChangeSet.Range> =
+            this@CollectionChangeSetBuilderImpl.insertionRanges
+
+        override val changeRanges: Array<CollectionChangeSet.Range> =
+            this@CollectionChangeSetBuilderImpl.modificationRangesAfter
+    }
 }

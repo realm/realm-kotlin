@@ -19,12 +19,12 @@ package io.realm.test.shared.notifications
 import co.touchlab.stately.concurrency.AtomicInt
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmResults
 import io.realm.entities.Sample
 import io.realm.entities.list.RealmListContainer
-import io.realm.notifications.InitialList
-import io.realm.notifications.ListChange
-import io.realm.notifications.UpdatedList
+import io.realm.notifications.CollectionChangeSet
+import io.realm.notifications.InitialResults
+import io.realm.notifications.ResultsChange
+import io.realm.notifications.UpdatedResults
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.NotificationTests
@@ -72,7 +72,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<ListChange<RealmResults<Sample>>>(1)
+            val c = Channel<ResultsChange<Sample>>(1)
             val observer = async {
                 realm.query<Sample>()
                     .asFlow()
@@ -81,9 +81,9 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
 
-            c.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-                assertTrue(listChange.list.isEmpty())
+            c.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertTrue(resultsChange.list.isEmpty())
             }
 
             observer.cancel()
@@ -99,7 +99,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         val dataset3 = OBJECT_VALUES3
 
         runBlocking {
-            val c = Channel<ListChange<RealmResults<*>>>(capacity = 1)
+            val c = Channel<ResultsChange<*>>(capacity = 1)
             val observer = async {
                 realm.query<RealmListContainer>()
                     .sort("stringField")
@@ -110,11 +110,11 @@ class RealmResultsNotificationsTests : NotificationTests {
             }
 
             // Assertion after empty list is emitted
-            c.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
+            c.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
 
-                assertNotNull(listChange.list)
-                assertEquals(0, listChange.list.size)
+                assertNotNull(resultsChange.list)
+                assertEquals(0, resultsChange.list.size)
             }
 
             // Assert a single range is reported
@@ -126,16 +126,16 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
+            c.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
 
-                assertNotNull(listChange.list)
-                assertEquals(dataset2.size, listChange.list.size)
+                assertNotNull(resultsChange.list)
+                assertEquals(dataset2.size, resultsChange.list.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>),
+                    (resultsChange as UpdatedResults<*>),
                     insertRanges = arrayOf(
-                        ListChange.Range(0, 4)
+                        CollectionChangeSet.Range(0, 4)
                     )
                 )
             }
@@ -149,17 +149,17 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
+            c.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
 
-                assertNotNull(listChange.list)
-                assertEquals(dataset1.size + dataset2.size + dataset3.size, listChange.list.size)
+                assertNotNull(resultsChange.list)
+                assertEquals(dataset1.size + dataset2.size + dataset3.size, resultsChange.list.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>),
+                    (resultsChange as UpdatedResults<*>),
                     insertRanges = arrayOf(
-                        ListChange.Range(0, 2),
-                        ListChange.Range(6, 2)
+                        CollectionChangeSet.Range(0, 2),
+                        CollectionChangeSet.Range(6, 2)
                     )
                 )
             }
@@ -177,17 +177,17 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
+            c.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
 
-                assertNotNull(listChange.list)
-                assertEquals(dataset2.size, listChange.list.size)
+                assertNotNull(resultsChange.list)
+                assertEquals(dataset2.size, resultsChange.list.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>),
+                    (resultsChange as UpdatedResults<*>),
                     deletionRanges = arrayOf(
-                        ListChange.Range(0, 2),
-                        ListChange.Range(6, 2)
+                        CollectionChangeSet.Range(0, 2),
+                        CollectionChangeSet.Range(6, 2)
                     )
                 )
             }
@@ -205,16 +205,16 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
+            c.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
 
-                assertNotNull(listChange.list)
-                assertTrue(listChange.list.isEmpty())
+                assertNotNull(resultsChange.list)
+                assertTrue(resultsChange.list.isEmpty())
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>),
+                    (resultsChange as UpdatedResults<*>),
                     deletionRanges = arrayOf(
-                        ListChange.Range(0, 4)
+                        CollectionChangeSet.Range(0, 4)
                     )
                 )
             }
@@ -228,11 +228,11 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
+            c.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
 
-                assertNotNull(listChange.list)
-                assertEquals(dataset2.size, listChange.list.size)
+                assertNotNull(resultsChange.list)
+                assertEquals(dataset2.size, resultsChange.list.size)
             }
 
             // Change contents of two ranges of values
@@ -248,17 +248,17 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
 
-            c.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
+            c.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
 
-                assertNotNull(listChange.list)
-                assertEquals(dataset2.size, listChange.list.size)
+                assertNotNull(resultsChange.list)
+                assertEquals(dataset2.size, resultsChange.list.size)
 
                 assertIsChangeSet(
-                    (listChange as UpdatedList<*>),
+                    (resultsChange as UpdatedResults<*>),
                     changesRanges = arrayOf(
-                        ListChange.Range(0, 2),
-                        ListChange.Range(3, 1),
+                        CollectionChangeSet.Range(0, 2),
+                        CollectionChangeSet.Range(3, 1),
                     )
                 )
             }
@@ -271,8 +271,8 @@ class RealmResultsNotificationsTests : NotificationTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            val c1 = Channel<ListChange<RealmResults<Sample>>>(1)
-            val c2 = Channel<ListChange<RealmResults<Sample>>>(1)
+            val c1 = Channel<ResultsChange<Sample>>(1)
+            val c2 = Channel<ResultsChange<Sample>>(1)
 
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })
@@ -293,13 +293,13 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
 
-            c1.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-                assertEquals(1, listChange.list.size)
+            c1.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertEquals(1, resultsChange.list.size)
             }
-            c2.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-                assertEquals(1, listChange.list.size)
+            c2.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertEquals(1, resultsChange.list.size)
             }
 
             observer1.cancel()
@@ -308,9 +308,9 @@ class RealmResultsNotificationsTests : NotificationTests {
                 copyToRealm(Sample().apply { stringField = "Baz" })
             }
 
-            c2.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
-                assertEquals(2, listChange.list.size)
+            c2.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
+                assertEquals(2, resultsChange.list.size)
             }
             assertTrue(c1.isEmpty)
             observer2.cancel()
@@ -322,7 +322,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     @Test
     override fun deleteObservable() {
         runBlocking {
-            val c = Channel<ListChange<RealmResults<Sample>>>(1)
+            val c = Channel<ResultsChange<Sample>>(1)
             realm.write {
                 copyToRealm(
                     Sample().apply {
@@ -337,9 +337,9 @@ class RealmResultsNotificationsTests : NotificationTests {
                         c.trySend(it)
                     }
             }
-            c.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-                assertEquals(1, listChange.list.size)
+            c.receive().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertEquals(1, resultsChange.list.size)
             }
             realm.write {
                 query<Sample>()
@@ -349,9 +349,9 @@ class RealmResultsNotificationsTests : NotificationTests {
                         delete(sample)
                     }
             }
-            c.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
-                assertTrue(listChange.list.isEmpty())
+            c.receive().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
+                assertTrue(resultsChange.list.isEmpty())
             }
             observer.cancel()
             c.close()

@@ -22,8 +22,9 @@ import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
-import io.realm.notifications.InitialListImpl
-import io.realm.notifications.ListChange
+import io.realm.notifications.InitialResultsImpl
+import io.realm.notifications.ResultsChange
+import io.realm.notifications.UpdatedResultsImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -41,7 +42,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     private val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>, ListChange<RealmResultsImpl<E>>>, RealmStateHolder, Flowable<ListChange<RealmResults<E>>> {
+) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder, Flowable<ResultsChange<E>> {
 
     enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
@@ -72,7 +73,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
         }
     }
 
-    override fun asFlow(): Flow<ListChange<RealmResults<E>>> {
+    override fun asFlow(): Flow<ResultsChange<E>> {
         realm.checkClosed()
         return realm.owner.registerObserver(this)
     }
@@ -110,16 +111,16 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<ListChange<RealmResultsImpl<E>>>
+        channel: SendChannel<ResultsChange<E>>
     ): ChannelResult<Unit>? {
         val frozenResult = freeze(frozenRealm)
 
-        val builder = UpdatedListBuilderImpl(frozenResult, change)
+        val builder = CollectionChangeSetBuilderImpl(change)
 
         return if (builder.isEmpty()) {
-            channel.trySend(InitialListImpl(frozenResult))
+            channel.trySend(InitialResultsImpl(frozenResult))
         } else {
-            channel.trySend(builder.build())
+            channel.trySend(UpdatedResultsImpl(frozenResult, builder.build()))
         }
     }
 

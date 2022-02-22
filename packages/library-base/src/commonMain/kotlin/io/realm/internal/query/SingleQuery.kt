@@ -12,9 +12,9 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.link
 import io.realm.notifications.Cancellable
-import io.realm.notifications.ListChange
 import io.realm.notifications.ObjectChange
-import io.realm.notifications.UpdatedList
+import io.realm.notifications.ResultsChange
+import io.realm.notifications.UpdatedResults
 import io.realm.query.RealmSingleQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -26,7 +26,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     private val queryPointer: NativePointer,
     private val clazz: KClass<E>,
     private val mediator: Mediator
-) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>, ListChange<RealmResultsImpl<E>>>> {
+) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
 
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
@@ -43,20 +43,20 @@ internal class SingleQuery<E : RealmObject> constructor(
         var headFlow: Cancellable? = null
 
         return realmReference.owner.registerObserver(this)
-            .filter { listChange: ListChange<RealmResultsImpl<E>> ->
+            .filter { resultsChange: ResultsChange<E> ->
                 // Denotes when to subscribe to the next object:
                 // A change on the head of the list, and it is not the same as the previous head
-                val newHead: E? = listChange.list.firstOrNull()
+                val newHead: E? = resultsChange.list.firstOrNull()
 
                 (newHead != null && !newHead.hasSameObjectKey(head)).also {
                     head = newHead
                 }
-            }.flatMapMerge { listChange ->
+            }.flatMapMerge { resultsChange ->
                 // Don't close the flow if the head was removed
-                if (listChange !is UpdatedList<*> || !listChange.deletions.contains(0))
+                if (resultsChange !is UpdatedResults<*> || !resultsChange.deletions.contains(0))
                     headFlow?.cancel()
 
-                listChange.list
+                resultsChange.list
                     .first()
                     .asFlow()
                     .also {
