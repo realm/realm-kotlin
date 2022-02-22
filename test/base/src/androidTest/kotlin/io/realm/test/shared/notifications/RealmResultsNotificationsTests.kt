@@ -19,7 +19,6 @@ package io.realm.test.shared.notifications
 import co.touchlab.stately.concurrency.AtomicInt
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmResults
 import io.realm.entities.Sample
 import io.realm.entities.list.RealmListContainer
 import io.realm.notifications.CollectionChangeSet
@@ -100,7 +99,7 @@ class RealmResultsNotificationsTests : NotificationTests {
         val dataset3 = OBJECT_VALUES3
 
         runBlocking {
-            val c = Channel<ResultsChange<RealmResults<*>>>(capacity = 1)
+            val c = Channel<ResultsChange<*>>(capacity = 1)
             val observer = async {
                 realm.query<RealmListContainer>()
                     .sort("stringField")

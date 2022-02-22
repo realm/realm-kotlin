@@ -79,7 +79,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
 
         runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel = Channel<ListChange<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
                     .asFlow()
@@ -114,7 +114,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
 
         runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel = Channel<ListChange<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
                     .asFlow()
@@ -306,8 +306,8 @@ class RealmListNotificationsTests : NotificationTests {
             val container = realm.write {
                 copyToRealm(RealmListContainer())
             }
-            val channel1 = Channel<ListChange<RealmList<*>>>(1)
-            val channel2 = Channel<ListChange<RealmList<*>>>(1)
+            val channel1 = Channel<ListChange<*>>(1)
+            val channel2 = Channel<ListChange<*>>(1)
             val observer1 = async {
                 container.objectListField
                     .asFlow()
@@ -361,7 +361,7 @@ class RealmListNotificationsTests : NotificationTests {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
             val values = OBJECT_VALUES.freeze()
-            val channel1 = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel1 = Channel<ListChange<*>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {
                 RealmListContainer()
@@ -416,7 +416,7 @@ class RealmListNotificationsTests : NotificationTests {
     @Test
     override fun closingRealmDoesNotCancelFlows() {
         runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel = Channel<ListChange<*>>(capacity = 1)
             val container = realm.write {
                 copyToRealm(RealmListContainer())
             }

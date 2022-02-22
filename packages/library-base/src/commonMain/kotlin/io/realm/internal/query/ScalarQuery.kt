@@ -110,7 +110,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.list.nativePointer) }
+            .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()
     }
 
@@ -180,7 +180,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.list.nativePointer) }
+            .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()
     }
 

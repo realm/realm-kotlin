@@ -237,7 +237,7 @@ class QueryTests {
 
     @Test
     fun asFlow_deleteObservable() {
-        val channel = Channel<ResultsChange<RealmResults<QuerySample>>>(1)
+        val channel = Channel<ResultsChange<QuerySample>>(1)
 
         runBlocking {
             realm.writeBlocking {
