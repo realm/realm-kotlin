@@ -17,6 +17,23 @@
 package io.realm.notifications
 
 import io.realm.RealmObject
+import io.realm.query.RealmSingleQuery
+
+/**
+ * This sealed class describe the possible changes that can be observed on a [RealmSingleQuery] flow.
+ */
+sealed interface QueryObjectChange<O : RealmObject> {
+    /**
+     * Returns the newest state of object being observed. `null` is returned if there is no object to
+     * observe.
+     */
+    val obj: O?
+}
+
+/**
+ * Describes the state where a query does not contain any elements.
+ */
+interface PendingObject<O : RealmObject> : QueryObjectChange<O>
 
 /**
  * This sealed interface describe the possible changes that can be observed to a Realm Object.
@@ -47,12 +64,12 @@ import io.realm.RealmObject
  *
  * For state of update changes, a list with the updated field names from the previous version is provided.
  */
-sealed interface ObjectChange<O : RealmObject> {
+sealed interface ObjectChange<O : RealmObject> : QueryObjectChange<O> {
     /**
      * Returns the newest state of object being observed. `null` is returned if the object
      * has been deleted.
      */
-    val obj: O?
+    override val obj: O?
 }
 
 /**

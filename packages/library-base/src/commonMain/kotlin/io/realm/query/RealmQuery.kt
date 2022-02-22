@@ -26,7 +26,8 @@ import io.realm.RealmResults
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
 import io.realm.notifications.InitialResults
-import io.realm.notifications.ObjectChange
+import io.realm.notifications.PendingObject
+import io.realm.notifications.QueryObjectChange
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.UpdatedObject
 import io.realm.notifications.UpdatedResults
@@ -253,12 +254,12 @@ interface RealmSingleQuery<T : RealmObject> {
      * [Flow].
      *
      * If there is any changes to the first object represented by the query, the flow will emit an
-     * [ObjectChange] event depending on the query state. The flow will continue running indefinitely until
+     * [QueryObjectChange] event depending on the query state. The flow will continue running indefinitely until
      * canceled.
      *
-     * If subscribed on an empty query the flow will not yield any event until an element is added, then
-     * it would yield an [InitialObject] event for the first element. On a non-empty list it would start
-     * with an [InitialObject] event for its first element.
+     * If subscribed on an empty query the flow will emit a [PendingObject] event to signal the query
+     * is empty, it would then yield an [InitialObject] event for the first element. On a non-empty
+     * list it would start emitting an [InitialObject] event for its first element.
      *
      * Once subscribed and the [InitialObject] event is observed, sequential [UpdatedObject] instances
      * would be observed if the first element is modified. If the element is deleted a [DeletedObject]
@@ -267,12 +268,27 @@ interface RealmSingleQuery<T : RealmObject> {
      * If the first element is replaced with a new value, an [InitialObject] would be yield for the new
      * head, and would be follow with [UpdatedObject] on all its changes.
      *
+     * The state machine, based on if the list has or not a head, looks like this:
+     *
+     *                ┌───────┐
+     *                │ start ├───────────────────────────────┐
+     *                └───┬───┘       [InitialObject]         │
+     *                    │                                   │
+     *    [PendingObject] │                                   │
+     *                    │                                   │
+     *              ┌─────▼─────┐     [InitialObject]    ┌────▼───┐
+     *              │           ├────────────────────────►        ├─────┐[InitialObject]
+     *              │  No Head  │                        │  Head  │     │
+     *              │           ◄────────────────────────┤        │◄────┘[UpdatedObject]
+     *              └───────────┘     [DeletedObject]    └────────┘
+     *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
      *
      * @return a flow representing changes to the [RealmObject] resulting from running this query.
+
      */
-    fun asFlow(): Flow<ObjectChange<T>>
+    fun asFlow(): Flow<QueryObjectChange<T>>
 }
 
 /**

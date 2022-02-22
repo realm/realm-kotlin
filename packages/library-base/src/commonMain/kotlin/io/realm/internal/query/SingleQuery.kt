@@ -12,13 +12,16 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.link
 import io.realm.notifications.Cancellable
-import io.realm.notifications.ObjectChange
+import io.realm.notifications.InitialResults
+import io.realm.notifications.PendingObjectImpl
+import io.realm.notifications.QueryObjectChange
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.UpdatedResults
 import io.realm.query.RealmSingleQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flowOf
 import kotlin.reflect.KClass
 
 internal class SingleQuery<E : RealmObject> constructor(
@@ -36,7 +39,18 @@ internal class SingleQuery<E : RealmObject> constructor(
         return model as E
     }
 
-    override fun asFlow(): Flow<ObjectChange<E>> {
+    /**
+     * Because Core does not support subscribing for the head element of a query this feature
+     * must be shimmed.
+     *
+     * This [QueryObjectChange] flow is achieved by flat mapping and tracking the flow of the head element.
+     *
+     * If the head element is replaced by a new one, then we cancel the previous flow and subscribe to the new.
+     * If the head element is deleted, the flow does not need to be cancelled but we subscribe to the
+     * new head if any.
+     * If there is an update, we ignore it, as the object flow would automatically emit the event.
+     */
+    override fun asFlow(): Flow<QueryObjectChange<E>> {
         realmReference.checkClosed()
 
         var head: E? = null
@@ -44,11 +58,13 @@ internal class SingleQuery<E : RealmObject> constructor(
 
         return realmReference.owner.registerObserver(this)
             .filter { resultsChange: ResultsChange<E> ->
-                // Denotes when to subscribe to the next object:
-                // A change on the head of the list, and it is not the same as the previous head
+                // This filter prevents flat mapping an object flow if the object is the same.
                 val newHead: E? = resultsChange.list.firstOrNull()
 
-                (newHead != null && !newHead.hasSameObjectKey(head)).also {
+                val isSameObject = newHead != null && !newHead.hasSameObjectKey(head)
+                val pendingObject = resultsChange is InitialResults<E> && resultsChange.list.isEmpty()
+
+                (isSameObject || pendingObject).also {
                     head = newHead
                 }
             }.flatMapMerge { resultsChange ->
@@ -56,12 +72,16 @@ internal class SingleQuery<E : RealmObject> constructor(
                 if (resultsChange !is UpdatedResults<*> || !resultsChange.deletions.contains(0))
                     headFlow?.cancel()
 
-                resultsChange.list
-                    .first()
-                    .asFlow()
-                    .also {
-                        headFlow = it as Cancellable
-                    }
+                if (resultsChange is InitialResults<E> && resultsChange.list.isEmpty()) {
+                    flowOf(PendingObjectImpl())
+                } else {
+                    resultsChange.list
+                        .first()
+                        .asFlow()
+                        .also {
+                            headFlow = it as Cancellable
+                        }
+                }
             }
     }
 

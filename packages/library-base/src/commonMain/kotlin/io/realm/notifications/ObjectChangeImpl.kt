@@ -29,3 +29,8 @@ internal class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {
     override val obj: O?
         get() = null
 }
+
+internal class PendingObjectImpl<O : RealmObject> : PendingObject<O> {
+    override val obj: O?
+        get() = null
+}

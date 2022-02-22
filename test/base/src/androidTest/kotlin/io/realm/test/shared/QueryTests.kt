@@ -27,7 +27,8 @@ import io.realm.internal.query.AggregatorQueryType
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
 import io.realm.notifications.InitialResults
-import io.realm.notifications.ObjectChange
+import io.realm.notifications.PendingObject
+import io.realm.notifications.QueryObjectChange
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.UpdatedObject
 import io.realm.notifications.UpdatedResults
@@ -1632,7 +1633,7 @@ class QueryTests {
     @Test
     @Suppress("LongMethod")
     fun first_asFlow() {
-        val channel = Channel<ObjectChange<QuerySample>>(2)
+        val channel = Channel<QueryObjectChange<QuerySample>>(2)
 
         val dataset = arrayOf(
             QuerySample(intField = 1),
@@ -1651,6 +1652,11 @@ class QueryTests {
                     .collect { first ->
                         channel.send(first)
                     }
+            }
+
+            channel.receive().let { objectChange ->
+                assertTrue(channel.isEmpty) // Validates that this is the first event and only event
+                assertIs<PendingObject<QuerySample>>(objectChange)
             }
 
             // Insert initial data set
@@ -1752,8 +1758,8 @@ class QueryTests {
     @Test
     fun first_asFlow_cancel() {
         runBlocking {
-            val channel1 = Channel<ObjectChange<QuerySample>>(2)
-            val channel2 = Channel<ObjectChange<QuerySample>>(2)
+            val channel1 = Channel<QueryObjectChange<QuerySample>>(2)
+            val channel2 = Channel<QueryObjectChange<QuerySample>>(2)
 
             val observer1 = async {
                 realm.query<QuerySample>()
@@ -1772,14 +1778,17 @@ class QueryTests {
                     }
             }
 
+            assertIs<PendingObject<*>>(channel1.receive())
+            assertIs<PendingObject<*>>(channel2.receive())
+
             // Write one object
             realm.write {
                 copyToRealm(QuerySample().apply { stringField = "Bar" })
             }
 
             // Assert emission and cancel first subscription
-            assertNotNull(channel1.receive())
-            assertNotNull(channel2.receive())
+            assertIs<InitialObject<*>>(channel1.receive())
+            assertIs<InitialObject<*>>(channel2.receive())
             observer1.cancel()
 
             // Update object
@@ -1790,7 +1799,7 @@ class QueryTests {
             }
 
             // Assert emission and that the original channel hasn't been received
-            assertNotNull(channel2.receive())
+            assertIs<UpdatedObject<*>>(channel2.receive())
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
