@@ -38,7 +38,7 @@ class ExpressionRepository {
     fun expressions(): List<Expression> = realm.query<Expression>().find()
 
     fun observeChanges(): Flow<List<Expression>> =
-        realm.query<Expression>().asFlow().map { listChange: ListChange<List<Expression>> ->
+        realm.query<Expression>().asFlow().map { listChange: ListChange<Expression> ->
             listChange.list
         }
 }

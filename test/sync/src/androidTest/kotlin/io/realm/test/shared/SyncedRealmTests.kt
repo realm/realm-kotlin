@@ -18,7 +18,6 @@ package io.realm.test.shared
 
 import io.realm.LogConfiguration
 import io.realm.Realm
-import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
@@ -29,7 +28,7 @@ import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
-import io.realm.notifications.ListChange
+import io.realm.notifications.ResultsChange
 import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -124,13 +123,13 @@ class SyncedRealmTests {
             name = "A"
         }
 
-        val channel = Channel<ListChange<RealmResults<ChildPk>>>(1)
+        val channel = Channel<ResultsChange<ChildPk>>(1)
 
         runBlocking {
             val observer = async {
                 realm2.query<ChildPk>()
                     .asFlow()
-                    .collect { childResults: ListChange<RealmResults<ChildPk>> ->
+                    .collect { childResults: ResultsChange<ChildPk> ->
                         channel.send(childResults)
                     }
             }
