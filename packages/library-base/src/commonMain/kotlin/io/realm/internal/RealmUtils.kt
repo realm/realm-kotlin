@@ -99,7 +99,7 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
                 type,
                 RealmInterop.realm_object_create(realm.dbPointer, key)
             )
-        } ?: error("Couldn't find key for class $className")
+        } ?: throw IllegalArgumentException("Schema doesn't include class '$className'")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)
     }

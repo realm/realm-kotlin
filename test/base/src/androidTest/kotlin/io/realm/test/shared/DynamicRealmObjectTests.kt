@@ -328,7 +328,7 @@ class DynamicRealmObjectTests {
         val dynamicRealm = realm.asDynamicRealm()
         val dynamicSample = dynamicRealm.query("Sample").find().first()
         assertFailsWith<ClassCastException> {
-            val value = dynamicSample.get<Long>("stringField")
+            dynamicSample.get<Long>("stringField")
         }.run { assertEquals("java.lang.String cannot be cast to java.lang.Number", message) }
     }
 

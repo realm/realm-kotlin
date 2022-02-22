@@ -19,7 +19,7 @@ package io.realm
 import io.realm.query.RealmQuery
 
 /**
- * A **dynamic realm** gives access to the data of the realm file through a generic string based
+ * A **dynamic realm** gives access to the data of the realm through a generic string based
  * API instead of the conventional [Realm] API that uses the schema classes supplied in the
  * configuration.
  *

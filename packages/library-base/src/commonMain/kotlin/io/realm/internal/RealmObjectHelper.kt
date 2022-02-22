@@ -232,14 +232,15 @@ internal object RealmObjectHelper {
     }
 
     internal fun <R : Any> dynamicGet(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
-        @Suppress("UNCHECKED_CAST")
-        return when (clazz) {
+        val value = when (clazz) {
             RealmInstant::class -> getTimestamp<R>(obj, propertyName)
             DynamicRealmObject::class -> getObject<DynamicRealmObject>(obj, propertyName)
             DynamicMutableRealmObject::class -> getObject<DynamicMutableRealmObject>(obj, propertyName)
             RealmList::class -> throw IllegalArgumentException("Cannot retrieve RealmList through 'get(...)', use getList(...) instead: $propertyName")
             else -> getValue<R>(obj, propertyName)
-        } as R?
+        }
+        @Suppress("UNCHECKED_CAST")
+        return if (clazz.isInstance(value)) value as R? else throw ClassCastException("Retrieving value of type '${clazz.simpleName}' but was ${value?.let { "of type '${it::class.simpleName}'" } ?: value}")
     }
 
     @Suppress("UNUSED_PARAMETER")

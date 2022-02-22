@@ -166,7 +166,15 @@ interface Configuration {
         fun schema(vararg classes: KClass<out RealmObject>) =
             apply { this.schema = setOf(*classes) } as S
 
-        // FIXME Docs
+        /**
+         * Sets the migration to handle potential schema updates.
+         *
+         * @param migration the [RealmMigration] instance to handle schema and data migration in the
+         * event of a schema update.
+         *
+         * @see RealmMigration
+         * @see AutomaticSchemaMigration
+         */
         fun migration(migration: RealmMigration): S = apply { this.migration = migration } as S
 
         /**

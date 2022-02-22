@@ -16,6 +16,20 @@
 
 package io.realm
 
+/**
+ * A **dynamic mutable realm object** gives access and possibility to update the data of the realm
+ * objects through a generic string based API instead of the conventional [Realm] API that only
+ * allows access and updates through the properties of the corresponding schema classes supplied in the configuration.
+ */
 interface DynamicMutableRealmObject : DynamicRealmObject {
-    fun <T> set(fieldName: String, value: T): DynamicMutableRealmObject
+    /**
+     * Sets the value for the given field.
+     *
+     * @param propertyName the name of the property to update.
+     * @param value the new value of the property.
+     * @param T the type of the value.
+     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * name, or if the value doesn't match the type of the property.
+     */
+    fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
 }

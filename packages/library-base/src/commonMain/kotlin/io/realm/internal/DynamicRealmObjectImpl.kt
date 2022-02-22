@@ -32,19 +32,19 @@ open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override var `$realm$Mediator`: Mediator? = null
     override var `$realm$metadata`: ClassMetadata? = null
 
-    override fun <T : Any> get(fieldName: String, clazz: KClass<T>): T {
-        return RealmObjectHelper.dynamicGet(this, clazz, fieldName)!!
+    override fun <T : Any> get(propertyName: String, clazz: KClass<T>): T {
+        return RealmObjectHelper.dynamicGet(this, clazz, propertyName)!!
     }
 
-    override fun <T : Any> getNullable(fieldName: String, clazz: KClass<T>): T? {
-        return RealmObjectHelper.dynamicGet(this, clazz, fieldName)
+    override fun <T : Any> getNullable(propertyName: String, clazz: KClass<T>): T? {
+        return RealmObjectHelper.dynamicGet(this, clazz, propertyName)
     }
 
-    override fun <T : Any> getList(fieldName: String, clazz: KClass<T>): RealmList<T> {
-        return RealmObjectHelper.getList(this, fieldName, clazz) as RealmList<T>
+    override fun <T : Any> getList(propertyName: String, clazz: KClass<T>): RealmList<T> {
+        return RealmObjectHelper.getList(this, propertyName, clazz) as RealmList<T>
     }
 
-    override fun <T : Any> getListOfNullable(fieldName: String, clazz: KClass<T>): RealmList<T?> {
-        return RealmObjectHelper.getList(this, fieldName, clazz) as RealmList<T?>
+    override fun <T : Any> getListOfNullable(propertyName: String, clazz: KClass<T>): RealmList<T?> {
+        return RealmObjectHelper.getList(this, propertyName, clazz) as RealmList<T?>
     }
 }
