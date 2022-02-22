@@ -1,4 +1,4 @@
-package io.realm.test.mongodb.util
+package io.realm.test.platform
 
 import okio.FileSystem
 

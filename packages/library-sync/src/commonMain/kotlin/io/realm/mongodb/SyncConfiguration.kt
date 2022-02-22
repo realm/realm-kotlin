@@ -150,6 +150,7 @@ interface SyncConfiguration : Configuration {
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
+                compactOnLaunchCallback,
                 migration
             )
 

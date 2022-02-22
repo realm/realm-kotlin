@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.AutomaticSchemaMigration
+import io.realm.CompactOnLaunchCallback
 import io.realm.DataMigrationContext
 import io.realm.DynamicMutableRealm
 import io.realm.DynamicMutableRealmObject
@@ -45,6 +46,7 @@ open class ConfigurationImpl constructor(
     schemaVersion: Long,
     schemaMode: SchemaMode,
     encryptionKey: ByteArray?,
+    compactOnLaunchCallback: CompactOnLaunchCallback?,
     migration: RealmMigration?,
 ) : InternalConfiguration {
 
@@ -74,6 +76,8 @@ open class ConfigurationImpl constructor(
 
     override val writeDispatcher: CoroutineDispatcher
 
+    override val compactOnLaunchCallback: CompactOnLaunchCallback?
+
     init {
         this.path = if (path == null || path.isEmpty()) {
             val directory = appFilesDirectory()
@@ -92,10 +96,21 @@ open class ConfigurationImpl constructor(
         this.writeDispatcher = writeDispatcher
         this.schemaVersion = schemaVersion
         this.schemaMode = schemaMode
+        this.compactOnLaunchCallback = compactOnLaunchCallback
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
         RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
         RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
+        compactOnLaunchCallback?.let { callback ->
+            RealmInterop.realm_config_set_should_compact_on_launch_function(
+                nativeConfig,
+                object : io.realm.internal.interop.CompactOnLaunchCallback {
+                    override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
+                        return callback.shouldCompact(totalBytes, usedBytes)
+                    }
+                }
+            )
+        }
 
         val nativeSchema = RealmInterop.realm_schema_new(
             mapOfKClassWithCompanion.values.map { it ->
