@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
  * Note that compacting a file can take a while, so compacting should generally only be done as
  * part of opening a Realm on a background thread.
  */
-fun interface CompactOnLaunchCallback {
+public fun interface CompactOnLaunchCallback {
 
     /**
      * This method determines if the Realm file should be compacted before opened and returned to
@@ -39,7 +39,7 @@ fun interface CompactOnLaunchCallback {
      * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
      * compaction will be skipped.
      */
-    fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
+    public fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
 }
 
 /**
@@ -110,7 +110,7 @@ public interface Configuration {
      * compacted or not.
      * @see [RealmConfiguration.Builder.compactOnLaunch]
      */
-    val compactOnLaunchCallback: CompactOnLaunchCallback?
+    public val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     /**
      * Base class for configuration builders that holds properties available to both
@@ -309,7 +309,7 @@ public interface Configuration {
          * is defined, the default callback will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
          * for more details.
          */
-        fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK) =
+        public fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK): S =
             apply { this.compactOnLaunchCallback = callback } as S
 
         /**
