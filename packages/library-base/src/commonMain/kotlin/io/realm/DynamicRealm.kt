@@ -18,9 +18,30 @@ package io.realm
 
 import io.realm.query.RealmQuery
 
+/**
+ * A **dynamic realm** gives access to the data of the realm file through a generic string based
+ * API instead of the conventional [Realm] API that uses the schema classes supplied in the
+ * configuration.
+ *
+ * *NOTE:* All objects obtained from a [DynamicRealm] are only valid in the scope of the dynamic
+ * realm. Thus they cannot be passed outside of an [RealmMigration] that gives access to a specific
+ * [DynamicRealm] instance, etc.
+ */
 interface DynamicRealm : BaseRealm {
+
+    /**
+     * Returns a query for dynamic realm objects of the specified class.
+     *
+     * @param className the name of the class of which to query for.
+     * @param query the Realm Query Language predicate use when querying.
+     * @param args realm values for the predicate.
+     * @return a RealmQuery, which can be used to query for specific objects of provided type.
+     * @throws IllegalArgumentException if the class with `className` doesn't exist in the realm.
+     *
+     * @see DynamicRealmObject
+     */
     fun query(
-        clazz: String,
+        className: String,
         query: String = "TRUEPREDICATE",
         vararg args: Any?
     ): RealmQuery<out DynamicRealmObject>
