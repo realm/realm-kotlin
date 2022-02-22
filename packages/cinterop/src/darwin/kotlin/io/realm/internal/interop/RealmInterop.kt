@@ -1504,7 +1504,7 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, Boolean> { userdata -> true },
             )
         ) ?: error("Couldn't create scheduler")
-        scheduler.set_scheduler(capi_scheduler!!)
+        scheduler.set_scheduler(capi_scheduler)
         scheduler.freeze()
         return capi_scheduler
     }
