@@ -5,6 +5,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+// TODO Methods in this file are public as they are used extensively by the `test` module. Consider
+//  moving these to a `shared` module or similar that all other modules depend on. Then visibility
+//  can be controlled through the normal `api/implementation` dependency mechanisms.
+
 /**
  * Returns a default Realm write dispatcher for a Realm opened on the calling thread.
  */
