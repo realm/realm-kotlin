@@ -16,7 +16,7 @@
 
 package io.realm.mongodb.internal
 
-// import io.realm.internal.InternalConfiguration
+import io.realm.internal.InternalConfiguration
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SyncErrorCallback
@@ -26,13 +26,12 @@ import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 
-// TODO Public as it is used from the io.realm.mongodb.sync.SyncConfiguration interface
-public class SyncConfigurationImpl(
+internal class SyncConfigurationImpl(
     private val configuration: io.realm.internal.InternalConfiguration,
     override val partitionValue: PartitionValue,
     override val user: UserImpl,
     override val errorHandler: SyncSession.ErrorHandler
-) : io.realm.internal.InternalConfiguration by configuration, SyncConfiguration {
+) : InternalConfiguration by configuration, SyncConfiguration {
 
     private val nativeSyncConfig: NativePointer =
         RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
