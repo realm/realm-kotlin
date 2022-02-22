@@ -22,6 +22,7 @@
 
 ### Internal
 * Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
+* Updated to Realm Core 11.9.0, commit: 377a85d2a385a31ec91be7e5fe8c09d22365df97
 
 
 ## 0.9.0 (2022-01-28)
