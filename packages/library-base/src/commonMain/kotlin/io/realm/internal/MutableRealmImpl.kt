@@ -116,8 +116,10 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
         }
         val internalObject = obj as RealmObjectInternal
         if (internalObject.isFrozen()) {
-            throw IllegalArgumentException("Frozen objects cannot be deleted. They must be " +
-                "converted to live objects first by using `MutableRealm.findLatest(frozenObject)`.")
+            throw IllegalArgumentException(
+                "Frozen objects cannot be deleted. They must be converted to live objects first " +
+                    "by using `MutableRealm.findLatest(frozenObject)`."
+            )
         }
         checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }

@@ -17,7 +17,6 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.entities.Sample
 import io.realm.entities.StringPropertyWithPrimaryKey
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
