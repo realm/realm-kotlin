@@ -4,6 +4,7 @@
 * None.
 
 ### Enhancements
+* Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
 * Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
 
 ### Fixed
