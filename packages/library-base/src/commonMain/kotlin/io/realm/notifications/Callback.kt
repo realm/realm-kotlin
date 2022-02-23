@@ -29,6 +29,6 @@ package io.realm.notifications
  * @see [SetChange]
  * @see [MapChange]
  */
-fun interface Callback<T> {
-    fun onChange(change: T?, error: Throwable?)
+public fun interface Callback<T> {
+    public fun onChange(change: T?, error: Throwable?)
 }
