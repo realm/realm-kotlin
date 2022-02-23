@@ -139,6 +139,12 @@ kotlin {
         }
     }
 
+    // Require that all methods in the API have visibility modifiers and return types.
+    // Anything inside `io.realm.internal.*` is considered internal regardless of their
+    // visibility modifier and will be stripped from Dokka, but will unfortunately still
+    // leak into auto-complete in the IDE.
+    explicitApi = org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode.Strict
+
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
     // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
 //    configure(listOf(targets["metadata"], jvm())) {

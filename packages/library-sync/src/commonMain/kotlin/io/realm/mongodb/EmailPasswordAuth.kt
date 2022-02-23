@@ -12,7 +12,7 @@ import kotlinx.coroutines.channels.Channel
  * Class encapsulating functionality for managing [User]s through the
  * [AuthenticationProvider.EMAIL_PASSWORD] provider.
  */
-class EmailPasswordAuth(
+public class EmailPasswordAuth(
     private val app: NativePointer
 ) {
 
@@ -25,7 +25,7 @@ class EmailPasswordAuth(
      *
      * @throws AppException if the server failed to register the user.
      */
-    suspend fun registerUser(email: String, password: String) {
+    public suspend fun registerUser(email: String, password: String) {
         Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_email_password_provider_client_register_email(
                 app,

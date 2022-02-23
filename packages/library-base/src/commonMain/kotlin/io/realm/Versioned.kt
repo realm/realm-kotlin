@@ -15,9 +15,9 @@
 
 package io.realm
 
-interface Versioned {
+public interface Versioned {
     /**
      * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
      */
-    fun version(): VersionId
+    public fun version(): VersionId
 }

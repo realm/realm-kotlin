@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
  * Note that compacting a file can take a while, so compacting should generally only be done as
  * part of opening a Realm on a background thread.
  */
-fun interface CompactOnLaunchCallback {
+public fun interface CompactOnLaunchCallback {
 
     /**
      * This method determines if the Realm file should be compacted before opened and returned to
@@ -39,7 +39,7 @@ fun interface CompactOnLaunchCallback {
      * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
      * compaction will be skipped.
      */
-    fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
+    public fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
 }
 
 /**
@@ -58,7 +58,7 @@ public data class LogConfiguration(
     public val loggers: List<RealmLogger>
 )
 
-interface Configuration {
+public interface Configuration {
     // Public properties making up the RealmConfiguration
     // TODO Add more elaborate KDoc for all of these
     /**
@@ -100,7 +100,7 @@ interface Configuration {
      *
      * @return null on unencrypted Realms.
      */
-    val encryptionKey: ByteArray?
+    public val encryptionKey: ByteArray?
 
     /**
      * Callback that determines if the realm file should be compacted as part of opening it.
@@ -110,7 +110,7 @@ interface Configuration {
      * compacted or not.
      * @see [RealmConfiguration.Builder.compactOnLaunch]
      */
-    val compactOnLaunchCallback: CompactOnLaunchCallback?
+    public val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     /**
      * Base class for configuration builders that holds properties available to both
@@ -123,8 +123,8 @@ interface Configuration {
     // [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
     // all function return types have to be typecast as [S].
     @Suppress("UnnecessaryAbstractClass", "UNCHECKED_CAST") // Actual implementations should rewire build() to companion map variant
-    abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
-        var schema: Set<KClass<out RealmObject>> = setOf()
+    public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
+        public var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
         protected var path: String? = null
         protected var name: String = Realm.DEFAULT_FILE_NAME
@@ -144,7 +144,7 @@ interface Configuration {
          *
          * @return the created RealmConfiguration.
          */
-        abstract fun build(): T
+        public abstract fun build(): T
 
         /**
          * Sets the absolute path of the realm file.
@@ -169,14 +169,14 @@ interface Configuration {
          * )
          * ```
          */
-        fun path(path: String?): S = apply { this.path = path } as S
+        public fun path(path: String?): S = apply { this.path = path } as S
 
         /**
          * Sets the filename of the realm file.
          *
          * If setting the full path of the realm, this name is not taken into account.
          */
-        fun name(name: String) = apply { this.name = name } as S
+        public fun name(name: String): S = apply { this.name = name } as S
 
         /**
          * Sets the classes of the schema.
@@ -185,7 +185,7 @@ interface Configuration {
          *
          * @param classes the set of classes that the schema consists of.
          */
-        fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes } as S
+        public fun schema(classes: Set<KClass<out RealmObject>>): S = apply { this.schema = classes } as S
 
         /**
          * Sets the classes of the schema.
@@ -194,7 +194,7 @@ interface Configuration {
          *
          * @param classes the classes that the schema consists of.
          */
-        fun schema(vararg classes: KClass<out RealmObject>) =
+        public fun schema(vararg classes: KClass<out RealmObject>): S =
             apply { this.schema = setOf(*classes) } as S
 
         /**
@@ -213,7 +213,7 @@ interface Configuration {
          *
          * @param number the maximum number of active versions before an exception is thrown.
          */
-        fun maxNumberOfActiveVersions(maxVersions: Long = 8) = apply {
+        public fun maxNumberOfActiveVersions(maxVersions: Long = 8): S = apply {
             if (maxVersions < 1) {
                 throw IllegalArgumentException("Only positive numbers above 0 are allowed. Yours was: $maxVersions")
             }
@@ -228,10 +228,10 @@ interface Configuration {
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
          */
-        open fun log(
+        public open fun log(
             level: LogLevel = LogLevel.WARN,
             customLoggers: List<RealmLogger> = emptyList()
-        ) = apply {
+        ): S = apply {
             this.logLevel = level
             this.userLoggers = customLoggers
         } as S
@@ -272,7 +272,7 @@ interface Configuration {
          * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
          * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
          */
-        fun schemaVersion(schemaVersion: Long): S {
+        public fun schemaVersion(schemaVersion: Long): S {
             if (schemaVersion < 0) {
                 throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
             }
@@ -287,7 +287,7 @@ interface Configuration {
          *
          * @param encryptionKey 64-byte encryption key.
          */
-        fun encryptionKey(encryptionKey: ByteArray) =
+        public fun encryptionKey(encryptionKey: ByteArray): S =
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
 
         /**
@@ -309,7 +309,7 @@ interface Configuration {
          * is defined, the default callback will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
          * for more details.
          */
-        fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK) =
+        public fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK): S =
             apply { this.compactOnLaunchCallback = callback } as S
 
         /**
