@@ -77,9 +77,17 @@ public interface MutableRealm : TypedRealm {
     ): RealmQuery<T>
 
     /**
-     * Deletes the object from the underlying Realm.
+     * Deletes the object from the underlying Realm. Only live objects can be deleted. Frozen
+     * objects can be converted to live using [MutableRealm.findLatest].
      *
-     * @throws IllegalArgumentException if the object is not managed by Realm.
+     * ```
+     * val frozenObj = realm.query<Sample>.first().find()
+     * realm.write {
+     *   findLatest(frozenObject)?.delete()
+     * }
+     * ```
+     *
+     * @throws IllegalArgumentException if the object is frozen or not managed by Realm.
      */
     public fun <T : RealmObject> delete(obj: T)
 }

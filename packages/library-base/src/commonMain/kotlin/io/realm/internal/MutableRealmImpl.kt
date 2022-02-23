@@ -42,7 +42,7 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
 
         private fun checkObjectValid(obj: RealmObjectInternal) {
             if (!obj.isValid()) {
-                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
+                throw IllegalArgumentException("This operation cannot be performed on invalid/deleted objects.")
             }
         }
     }
@@ -111,8 +111,14 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
     }
 
     override fun <T : RealmObject> delete(obj: T) {
-        // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
+        if (obj !is RealmObjectInternal) {
+            throw IllegalArgumentException("Unmanaged objects cannot be deleted.")
+        }
         val internalObject = obj as RealmObjectInternal
+        if (internalObject.isFrozen()) {
+            throw IllegalArgumentException("Frozen objects cannot be deleted. They must be " +
+                "converted to live objects first by using `MutableRealm.findLatest(frozenObject)`.")
+        }
         checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
     }

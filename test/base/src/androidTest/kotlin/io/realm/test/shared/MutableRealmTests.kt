@@ -17,6 +17,7 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.entities.Sample
 import io.realm.entities.StringPropertyWithPrimaryKey
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
@@ -167,6 +168,50 @@ class MutableRealmTests {
                     assertNotNull(findLatest(child))
                 }
                 delay(100)
+            }
+        }
+    }
+
+    @Test
+    fun delete() {
+        realm.writeBlocking {
+            val liveObject = copyToRealm(Parent())
+            assertEquals(1, query<Parent>().count().find())
+            delete(liveObject)
+            assertEquals(0, query<Parent>().count().find())
+        }
+    }
+
+    @Test
+    fun delete_deletedObjectThrows() {
+        realm.writeBlocking {
+            val liveObject = copyToRealm(Parent())
+            assertEquals(1, query<Parent>().count().find())
+            delete(liveObject)
+            assertEquals(0, query<Parent>().count().find())
+            assertFailsWith<IllegalArgumentException> {
+                delete(liveObject)
+            }
+        }
+    }
+
+    @Test
+    fun delete_unmanagedObjectsThrows() {
+        realm.writeBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                delete(Parent())
+            }
+        }
+    }
+
+    @Test
+    fun delete_frozenObjectsThrows() {
+        val frozenObj = realm.writeBlocking {
+            copyToRealm(Parent())
+        }
+        realm.writeBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                delete(frozenObj)
             }
         }
     }
