@@ -19,7 +19,7 @@ package io.realm.schema
 /**
  * The various types that are used when storing the property values in the realm.
  */
-enum class RealmStorageType {
+public enum class RealmStorageType {
     BOOL,
     INT,
     STRING,

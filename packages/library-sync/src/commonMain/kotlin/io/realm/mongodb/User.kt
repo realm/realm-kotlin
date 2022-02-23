@@ -25,27 +25,27 @@ package io.realm.mongodb
  * @see SyncConfiguration.Builder
  */
 @Suppress("EqualsWithHashCodeExist") // Only overwriting equals to make docs available to user
-interface User {
+public interface User {
 
     /**
      * The [App] this user is associated with.
      */
-    val app: App
+    public val app: App
 
     /**
      * The [State] this user is in.
      */
-    val state: State
+    public val state: State
 
     /**
      * The server id of the user.
      */
-    val identity: String
+    public val identity: String
 
     /**
      * Returns whether or not this user is still logged into the MongoDB Realm App.
      */
-    val loggedIn: Boolean
+    public val loggedIn: Boolean
 
     // FIXME Review around user state
     /**
@@ -67,7 +67,7 @@ interface User {
     //     * and will still be returned by [App.allUsers]. They can be removed completely by
     //     * calling [User.remove].asd
 
-    suspend fun logOut()
+    public suspend fun logOut()
 
     /**
      * Two Users are considered equal if they have the same user identity and are associated
@@ -78,7 +78,7 @@ interface User {
     /**
      * A user's potential states.
      */
-    enum class State {
+    public enum class State {
         LOGGED_OUT,
         LOGGED_IN,
         REMOVED;

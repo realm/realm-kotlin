@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
  * from [Realm.write] and [Realm.writeBlocking], which are frozen and remain tied to the resulting
  * version of the write-transaction.
  */
-interface MutableRealm : TypedRealm {
+public interface MutableRealm : TypedRealm {
     /**
      * Get latest version of an object.
      *
@@ -32,14 +32,14 @@ interface MutableRealm : TypedRealm {
      *
      * @throws IllegalArgumentException if called on an unmanaged object.
      */
-    fun <T : RealmObject> findLatest(obj: T): T?
+    public fun <T : RealmObject> findLatest(obj: T): T?
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
      *
      * @throws IllegalStateException if the write transaction was already cancelled.
      */
-    fun cancelWrite()
+    public fun cancelWrite()
 
     /**
      * Creates a copy of an object in the Realm.
@@ -54,7 +54,7 @@ interface MutableRealm : TypedRealm {
      * @throws IllegalArgumentException if the class has a primary key field and an object with the same
      * primary key already exists.
      */
-    fun <T : RealmObject> copyToRealm(instance: T): T
+    public fun <T : RealmObject> copyToRealm(instance: T): T
 
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
@@ -81,7 +81,7 @@ interface MutableRealm : TypedRealm {
      *
      * @throws IllegalArgumentException if the object is not managed by Realm.
      */
-    fun <T : RealmObject> delete(obj: T)
+    public fun <T : RealmObject> delete(obj: T)
 }
 
 /**
@@ -89,7 +89,7 @@ interface MutableRealm : TypedRealm {
  *
  * Reified convenience wrapper for [MutableRealm.query].
  */
-inline fun <reified T : RealmObject> MutableRealm.query(
+public inline fun <reified T : RealmObject> MutableRealm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

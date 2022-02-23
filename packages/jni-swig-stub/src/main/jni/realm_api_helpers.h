@@ -46,11 +46,17 @@ set_log_callback(realm_sync_client_config_t* sync_client_config, jobject log_cal
 realm_t*
 open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 
+bool
+realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes);
+
 void
 invoke_core_notify_callback(int64_t core_notify_function);
 
-void app_complete_void_callback(void* userdata, const realm_app_error_t* error);
-void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error);
+void
+app_complete_void_callback(void* userdata, const realm_app_error_t* error);
+
+void
+app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error);
 
 void
 sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);

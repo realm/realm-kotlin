@@ -16,11 +16,11 @@ public actual fun <T> runBlocking(
 /**
  * The default dispatcher for Darwin platforms spawns a new thread with a run loop.
  */
-actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
+public actual fun singleThreadDispatcher(id: String): CoroutineDispatcher {
     return newSingleThreadContext(id)
 }
 
-actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher {
+public actual fun multiThreadDispatcher(size: Int): CoroutineDispatcher {
     // TODO https://github.com/realm/realm-kotlin/issues/501
     return singleThreadDispatcher("singleThreadDispatcher")
 }

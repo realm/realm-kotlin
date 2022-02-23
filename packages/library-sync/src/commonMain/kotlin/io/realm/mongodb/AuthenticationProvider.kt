@@ -25,7 +25,7 @@ import io.realm.internal.interop.sync.AuthProvider
  *
  * @see [Authentication Providers](https://docs.mongodb.com/realm/authentication/providers/)
  */
-enum class AuthenticationProvider(id: AuthProvider) {
+public enum class AuthenticationProvider(id: AuthProvider) {
     ANONYMOUS(AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS),
     // API_KEY("api-key"),  // same value as API_KEY as per OS specifications
     // APPLE("oauth2-apple"),

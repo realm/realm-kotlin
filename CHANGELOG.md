@@ -4,13 +4,13 @@
 * `Realm.observe()` has been renamed to `asFlow()`.
 
 ### Enhancements
+* Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
 * Add support for fine grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `RealmInitial` or `RealmUpdated` states.
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
 * `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
 * Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
-
 
 ### Compatibility
 * This release is compatible with:
@@ -23,6 +23,7 @@
 
 ### Internal
 * Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
+* Updated to Realm Core 11.9.0, commit: 377a85d2a385a31ec91be7e5fe8c09d22365df97
 
 
 ## 0.9.0 (2022-01-28)
