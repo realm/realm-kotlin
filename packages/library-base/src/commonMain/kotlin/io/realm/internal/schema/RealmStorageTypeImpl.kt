@@ -18,7 +18,7 @@ package io.realm.internal.schema
 
 import io.realm.schema.RealmStorageType
 
-object RealmStorageTypeImpl {
+internal object RealmStorageTypeImpl {
     fun fromCorePropertyType(type: io.realm.internal.interop.PropertyType): RealmStorageType {
         return when (type) {
             io.realm.internal.interop.PropertyType.RLM_PROPERTY_TYPE_INT -> RealmStorageType.INT

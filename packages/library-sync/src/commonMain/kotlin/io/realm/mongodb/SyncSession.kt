@@ -36,14 +36,14 @@ import io.realm.Realm
  *
  * The [SyncSession] object is thread safe.
  */
-interface SyncSession {
+public interface SyncSession {
 
     /**
      * Interface used to report any session errors.
      *
      * @see SyncConfiguration.Builder.errorHandler
      */
-    interface ErrorHandler {
+    public interface ErrorHandler {
         /**
          * Callback for errors on a session object. It is not recommended to throw an exception
          * inside an error handler, as the exception will be caught, logged, and ignored by Realm.
@@ -53,6 +53,6 @@ interface SyncSession {
          * @param session the [SyncSession] in which this error happened.
          * @param error the [SyncException] being reported by the server.
          */
-        fun onError(session: SyncSession, error: SyncException)
+        public fun onError(session: SyncSession, error: SyncException)
     }
 }

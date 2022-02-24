@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.NativePointer
@@ -26,8 +27,9 @@ import io.realm.internal.platform.realmObjectCompanion
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
+// TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
-open class ConfigurationImpl constructor(
+public open class ConfigurationImpl constructor(
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
@@ -38,6 +40,7 @@ open class ConfigurationImpl constructor(
     schemaVersion: Long,
     schemaMode: SchemaMode,
     encryptionKey: ByteArray?,
+    compactOnLaunchCallback: CompactOnLaunchCallback?,
 ) : InternalConfiguration {
 
     override val path: String
@@ -54,7 +57,8 @@ open class ConfigurationImpl constructor(
 
     override val schemaMode: SchemaMode
 
-    override val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
+    override val encryptionKey: ByteArray?
+        get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
     override val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
 
@@ -65,6 +69,8 @@ open class ConfigurationImpl constructor(
     override val notificationDispatcher: CoroutineDispatcher
 
     override val writeDispatcher: CoroutineDispatcher
+
+    override val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     init {
         this.path = if (path == null || path.isEmpty()) {
@@ -84,10 +90,21 @@ open class ConfigurationImpl constructor(
         this.writeDispatcher = writeDispatcher
         this.schemaVersion = schemaVersion
         this.schemaMode = schemaMode
+        this.compactOnLaunchCallback = compactOnLaunchCallback
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
         RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
         RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
+        compactOnLaunchCallback?.let { callback ->
+            RealmInterop.realm_config_set_should_compact_on_launch_function(
+                nativeConfig,
+                object : io.realm.internal.interop.CompactOnLaunchCallback {
+                    override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
+                        return callback.shouldCompact(totalBytes, usedBytes)
+                    }
+                }
+            )
+        }
 
         val nativeSchema = RealmInterop.realm_schema_new(
             mapOfKClassWithCompanion.values.map { it ->

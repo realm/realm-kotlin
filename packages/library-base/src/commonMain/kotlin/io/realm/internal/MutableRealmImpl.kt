@@ -24,8 +24,10 @@ import io.realm.isManaged
 import io.realm.isValid
 import io.realm.notifications.Callback
 import io.realm.notifications.Cancellable
+import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
 internal class MutableRealmImpl : LiveRealm, MutableRealm {
 
@@ -123,24 +125,34 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerResultsChangeListener(
+    override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerListChangeListener(
+    override fun <T : RealmObject> registerListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerObjectChangeListener(
+    override fun <T : RealmObject> registerObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    // Required as Kotlin otherwise gets confused about the visibility and reports
+    // "Cannot infer visibility for '...'. Please specify it explicitly"
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T> {
+        return super.query(clazz, query, *args)
     }
 }

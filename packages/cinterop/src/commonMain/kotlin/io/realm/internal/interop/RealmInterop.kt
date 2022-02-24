@@ -58,6 +58,7 @@ expect object RealmInterop {
     fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long)
     fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray)
     fun realm_config_get_encryption_key(config: NativePointer): ByteArray?
+    fun realm_config_set_should_compact_on_launch_function(config: NativePointer, callback: CompactOnLaunchCallback)
 
     fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean
 

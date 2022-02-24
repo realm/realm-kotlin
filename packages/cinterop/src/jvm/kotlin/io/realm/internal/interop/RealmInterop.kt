@@ -137,8 +137,16 @@ actual object RealmInterop {
         return null
     }
 
+    actual fun realm_config_set_should_compact_on_launch_function(
+        config: NativePointer,
+        callback: CompactOnLaunchCallback
+    ) {
+        realmc.realm_config_set_should_compact_on_launch_function(config.cptr(), callback)
+    }
+
     actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
         // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
+
         val realmPtr = LongPointerWrapper(
             realmc.open_realm_with_scheduler(
                 (config as LongPointerWrapper).ptr,
@@ -852,11 +860,9 @@ actual object RealmInterop {
 private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
 
-    fun notifyCore(coreNotificationFunctionPointer: Long) {
+    fun notifyCore(schedulerPointer: Long) {
         val function: suspend CoroutineScope.() -> Unit = {
-            realmc.invoke_core_notify_callback(
-                coreNotificationFunctionPointer
-            )
+            realmc.invoke_core_notify_callback(schedulerPointer)
         }
         scope.launch(
             scope.coroutineContext,

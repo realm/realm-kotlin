@@ -59,6 +59,14 @@
 -keep class io.realm.internal.interop.AppCallback {
     *;
 }
+-keep class io.realm.internal.interop.CompactOnLaunchCallback {
+    *;
+}
+
+# Preserve Function<X> methods as they back various functional interfaces called from JNI
+-keep class kotlin.jvm.functions.Function* {
+    *;
+}
 
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt

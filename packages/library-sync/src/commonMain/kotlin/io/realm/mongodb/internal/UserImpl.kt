@@ -25,8 +25,9 @@ import io.realm.internal.util.use
 import io.realm.mongodb.User
 import kotlinx.coroutines.channels.Channel
 
-internal class UserImpl(
-    val nativePointer: NativePointer,
+// TODO Public due to being a transitive dependency to SyncConfigurationImpl
+public class UserImpl(
+    public val nativePointer: NativePointer,
     override val app: AppImpl
 ) : User {
 
@@ -70,13 +71,13 @@ internal class UserImpl(
         return result
     }
 
-    companion object {
+    public companion object {
         /**
          * Converts a Core state value to a library state value.
          *
          * For internal use only.
          */
-        fun fromCoreState(coreState: CoreUserState): User.State = when (coreState) {
+        public fun fromCoreState(coreState: CoreUserState): User.State = when (coreState) {
             CoreUserState.RLM_USER_STATE_LOGGED_OUT -> User.State.LOGGED_OUT
             CoreUserState.RLM_USER_STATE_LOGGED_IN -> User.State.LOGGED_IN
             CoreUserState.RLM_USER_STATE_REMOVED -> User.State.REMOVED
