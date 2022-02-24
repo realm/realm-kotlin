@@ -49,7 +49,7 @@ import kotlin.reflect.KClass
  *
  * @param T the class of the objects to be queried.
  */
-interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
+public interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 
     /**
      * Appends the query represented by [filter] to an existing query using a logical `AND`.
@@ -57,7 +57,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * @param filter the Realm Query Language predicate to append.
      * @param arguments Realm values for the predicate.
      */
-    fun query(filter: String, vararg arguments: Any?): RealmQuery<T>
+    public fun query(filter: String, vararg arguments: Any?): RealmQuery<T>
 
     /**
      * Sorts the query result by the specific property name according to [sortOrder], which is
@@ -70,7 +70,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * @param property the property name to sort by.
      * @throws [IllegalArgumentException] if the property name does not exist.
      */
-    fun sort(property: String, sortOrder: Sort = Sort.ASCENDING): RealmQuery<T>
+    public fun sort(property: String, sortOrder: Sort = Sort.ASCENDING): RealmQuery<T>
 
     /**
      * Sorts the query result by the specific property name according to [Pair]s of properties and
@@ -83,7 +83,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * @param propertyAndSortOrder pair containing the property and the order to sort by.
      * @throws [IllegalArgumentException] if the property name does not exist.
      */
-    fun sort(
+    public fun sort(
         propertyAndSortOrder: Pair<String, Sort>,
         vararg additionalPropertiesAndOrders: Pair<String, Sort>
     ): RealmQuery<T>
@@ -101,7 +101,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * points to a linked field.
      */
     // TODO "points to a linked field" doesn't apply yet
-    fun distinct(property: String, vararg extraProperties: String): RealmQuery<T>
+    public fun distinct(property: String, vararg extraProperties: String): RealmQuery<T>
 
     /**
      * Limits the number of objects returned in case the query matched more objects.
@@ -112,12 +112,12 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * @param limit a limit that is greater than or equal to 1.
      * @throws IllegalArgumentException if the provided [limit] is less than 1.
      */
-    fun limit(limit: Int): RealmQuery<T>
+    public fun limit(limit: Int): RealmQuery<T>
 
     /**
      * Returns a query that finds the first object that fulfills the query conditions.
      */
-    fun first(): RealmSingleQuery<T>
+    public fun first(): RealmSingleQuery<T>
 
     /**
      * Finds the minimum value of a property.
@@ -139,7 +139,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
     // TODO update doc when ObjectId and Decimal128 are added
     //  https://github.com/realm/realm-kotlin/issues/652
     //  https://github.com/realm/realm-kotlin/issues/653
-    fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
+    public fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
 
     /**
      * Finds the maximum value of a property.
@@ -161,7 +161,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
     // TODO update doc when ObjectId and Decimal128 are added
     //  https://github.com/realm/realm-kotlin/issues/652
     //  https://github.com/realm/realm-kotlin/issues/653
-    fun <T : Any> max(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
+    public fun <T : Any> max(property: String, type: KClass<T>): RealmScalarNullableQuery<T>
 
     /**
      * Calculates the sum of the given [property].
@@ -186,7 +186,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      * @throws IllegalArgumentException if the [property] is not a [Number] or a [Char], or if it is
      * a [RealmInstant], or if the [type] cannot be used to represent the [property].
      */
-    fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T>
+    public fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T>
 
     /**
      * Returns a [RealmScalarQuery] that counts the number of objects that fulfill the query
@@ -194,7 +194,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
      *
      * @return a [RealmScalarQuery] that counts the number of objects for a given query.
      */
-    fun count(): RealmScalarQuery<Long>
+    public fun count(): RealmScalarQuery<Long>
 
     // TODO add 'get_description': https://github.com/realm/realm-core/issues/5106
 }
@@ -202,7 +202,7 @@ interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 /**
  * Query returning [RealmResults].
  */
-interface RealmElementQuery<T : RealmObject> {
+public interface RealmElementQuery<T : RealmObject> {
 
     /**
      * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
@@ -213,7 +213,7 @@ interface RealmElementQuery<T : RealmObject> {
      * @return a [RealmResults] instance containing matching objects. If no objects match the
      * condition, an instance with zero objects is returned.
      */
-    fun find(): RealmResults<T>
+    public fun find(): RealmResults<T>
 
     /**
      * Finds all objects that fulfill the query conditions and returns them asynchronously as a
@@ -230,13 +230,13 @@ interface RealmElementQuery<T : RealmObject> {
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    fun asFlow(): Flow<ResultsChange<T>>
+    public fun asFlow(): Flow<ResultsChange<T>>
 }
 
 /**
  * Query returning a single [RealmObject].
  */
-interface RealmSingleQuery<T : RealmObject> {
+public interface RealmSingleQuery<T : RealmObject> {
 
     /**
      * Finds the first object that fulfills the query conditions and returns it in a blocking
@@ -247,7 +247,7 @@ interface RealmSingleQuery<T : RealmObject> {
      *
      * @return a [RealmObject] instance or `null` if no object matches the condition.
      */
-    fun find(): T?
+    public fun find(): T?
 
     /**
      * Observes changes to the first object that fulfills the query conditions. The flow will emit
@@ -282,14 +282,14 @@ interface RealmSingleQuery<T : RealmObject> {
      * @return a flow representing changes to the [RealmObject] resulting from running this query.
 
      */
-    fun asFlow(): Flow<QueryObjectChange<T>>
+    public fun asFlow(): Flow<QueryObjectChange<T>>
 }
 
 /**
  * Queries that return scalar values. This type of query is used to more accurately represent the
  * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.sum].
  */
-interface RealmScalarQuery<T> {
+public interface RealmScalarQuery<T> {
     /**
      * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be of a
      * different type depending on the type of query:
@@ -302,7 +302,7 @@ interface RealmScalarQuery<T> {
      *
      * @return a [T] containing the result of the scalar query.
      */
-    fun find(): T
+    public fun find(): T
 
     /**
      * Calculates the value that fulfills the query conditions and returns it asynchronously as a
@@ -316,7 +316,7 @@ interface RealmScalarQuery<T> {
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    fun asFlow(): Flow<T>
+    public fun asFlow(): Flow<T>
 }
 
 /**
@@ -324,14 +324,14 @@ interface RealmScalarQuery<T> {
  * represent the results provided by some query operations, e.g. [RealmQuery.min] or
  * [RealmQuery.max].
  */
-interface RealmScalarNullableQuery<T> : RealmScalarQuery<T?>
+public interface RealmScalarNullableQuery<T> : RealmScalarQuery<T?>
 
 /**
  * This enum describes the sorting order used in Realm queries.
  *
  * @see [RealmQuery.sort]
  */
-enum class Sort {
+public enum class Sort {
     ASCENDING,
     DESCENDING
 }
@@ -339,19 +339,19 @@ enum class Sort {
 /**
  * Similar to [RealmQuery.min] but the type parameter is automatically inferred.
  */
-inline fun <reified T : Any> RealmQuery<*>.min(property: String): RealmScalarNullableQuery<T> =
+public inline fun <reified T : Any> RealmQuery<*>.min(property: String): RealmScalarNullableQuery<T> =
     min(property, T::class)
 
 /**
  * Similar to [RealmQuery.max] but the type parameter is automatically inferred.
  */
-inline fun <reified T : Any> RealmQuery<*>.max(property: String): RealmScalarNullableQuery<T> =
+public inline fun <reified T : Any> RealmQuery<*>.max(property: String): RealmScalarNullableQuery<T> =
     max(property, T::class)
 
 /**
  * Similar to [RealmQuery.sum] but the type parameter is automatically inferred.
  */
-inline fun <reified T : Any> RealmQuery<*>.sum(property: String): RealmScalarQuery<T> =
+public inline fun <reified T : Any> RealmQuery<*>.sum(property: String): RealmScalarQuery<T> =
     sum(property, T::class)
 
 /**
@@ -362,7 +362,7 @@ inline fun <reified T : Any> RealmQuery<*>.sum(property: String): RealmScalarQue
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-fun <T : RealmObject, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = find().let(block)
+public fun <T : RealmObject, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = find().let(block)
 
 /**
  * Similar to [RealmScalarQuery.find] but it receives a [block] in which the scalar result from the
@@ -372,7 +372,7 @@ fun <T : RealmObject, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = 
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-fun <T, R> RealmScalarQuery<T>.find(block: (T) -> R): R = find().let(block)
+public fun <T, R> RealmScalarQuery<T>.find(block: (T) -> R): R = find().let(block)
 
 /**
  * Similar to [RealmScalarNullableQuery.find] but it receives a [block] in which the scalar result
@@ -382,7 +382,7 @@ fun <T, R> RealmScalarQuery<T>.find(block: (T) -> R): R = find().let(block)
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find().let(block)
+public fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find().let(block)
 
 /**
  * Similar to [RealmSingleQuery.find] but it receives a [block] in which the [RealmObject] from the
@@ -392,4 +392,4 @@ fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find().let(bl
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-fun <T : RealmObject, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)
+public fun <T : RealmObject, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)

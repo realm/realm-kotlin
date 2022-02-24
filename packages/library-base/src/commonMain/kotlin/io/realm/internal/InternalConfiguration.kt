@@ -28,15 +28,16 @@ import kotlin.reflect.KClass
  * [io.realm.Configuration]. This is needed to make "agnostic" configurations from a base-sync
  * point of view.
  */
-interface InternalConfiguration : Configuration {
-    val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
-    val mediator: Mediator
-    val nativeConfig: NativePointer
-    val notificationDispatcher: CoroutineDispatcher
-    val writeDispatcher: CoroutineDispatcher
-    val schemaMode: SchemaMode
+// TODO Public due to being transitive dependency to `ConfigurationImpl` and `SyncConfigurationImpl`.
+public interface InternalConfiguration : Configuration {
+    public val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
+    public val mediator: Mediator
+    public val nativeConfig: NativePointer
+    public val notificationDispatcher: CoroutineDispatcher
+    public val writeDispatcher: CoroutineDispatcher
+    public val schemaMode: SchemaMode
 
-    fun debug(): String {
+    public fun debug(): String {
         return "path=$path\n" +
             " name=$name\n" +
             " maxNumberOfActiveVersions=$maxNumberOfActiveVersions\n" +

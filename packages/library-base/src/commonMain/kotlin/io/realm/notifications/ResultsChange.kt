@@ -66,19 +66,19 @@ import io.realm.RealmResults
  *   }
  * ```
  */
-sealed interface ResultsChange<T : RealmObject> {
-    val list: RealmResults<T>
+public sealed interface ResultsChange<T : RealmObject> {
+    public val list: RealmResults<T>
 }
 
 /**
  * Initial event to be emitted on a [RealmResults] flow. It contains a reference to the
  * starting query results state.
  */
-interface InitialResults<T : RealmObject> : ResultsChange<T>
+public interface InitialResults<T : RealmObject> : ResultsChange<T>
 
 /**
  * [RealmResults] flow event that describes that an update has been performed on to the
  * observed list. It provides a reference to the list and a set of properties that describes the changes
  * performed on the list.
  */
-interface UpdatedResults<T : RealmObject> : ResultsChange<T>, CollectionChangeSet
+public interface UpdatedResults<T : RealmObject> : ResultsChange<T>, CollectionChangeSet

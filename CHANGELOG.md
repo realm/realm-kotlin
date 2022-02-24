@@ -4,6 +4,7 @@
 * `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
 
 ### Enhancements
+* Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
 * Add support for fine grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `RealmInitial` or `RealmUpdated` states.
 * Add support for fine grained notification on Realm objects. `RealmObject.asFlow()` yields `ObjectChange` that represent the `ObjectInitial`, `ObjectUpdated` or `ObjectDeleted` states.
 * Add support for fine grained notification on Realm lists. `RealmList.asFlow()` yields `ListChange` that represent the `InitialList`, `UpdatedList` or `DeletedList` states.
@@ -26,6 +27,7 @@
 
 ### Internal
 * Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
+* Updated to Realm Core 11.9.0, commit: 377a85d2a385a31ec91be7e5fe8c09d22365df97
 
 
 ## 0.9.0 (2022-01-28)

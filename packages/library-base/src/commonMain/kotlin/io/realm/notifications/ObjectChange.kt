@@ -38,18 +38,18 @@ import io.realm.query.RealmSingleQuery
  *      │ InitialObject │  │ UpdatedObject │  │ DeletedObject │
  *      └───────────────┘  └───────────────┘  └───────────────┘
  */
-sealed interface QueryObjectChange<O : RealmObject> {
+public sealed interface QueryObjectChange<O : RealmObject> {
     /**
      * Returns the newest state of object being observed. `null` is returned if there is no object to
      * observe.
      */
-    val obj: O?
+    public val obj: O?
 }
 
 /**
  * Describes the state where a query does not contain any elements.
  */
-interface PendingObject<O : RealmObject> : QueryObjectChange<O>
+public interface PendingObject<O : RealmObject> : QueryObjectChange<O>
 
 /**
  * This sealed interface describe the possible changes that can be observed to a Realm Object.
@@ -80,7 +80,7 @@ interface PendingObject<O : RealmObject> : QueryObjectChange<O>
  *
  * For state of update changes, a list with the updated field names from the previous version is provided.
  */
-sealed interface ObjectChange<O : RealmObject> : QueryObjectChange<O> {
+public sealed interface ObjectChange<O : RealmObject> : QueryObjectChange<O> {
     /**
      * Returns the newest state of object being observed. `null` is returned if the object
      * has been deleted.
@@ -92,7 +92,7 @@ sealed interface ObjectChange<O : RealmObject> : QueryObjectChange<O> {
  * Initial event to be observed on a [RealmObject] flow. It contains a reference to the starting object
  * state. Note, this state might be different than the object the flow was registered on, if another thread or device updated the object in the meantime.
  */
-interface InitialObject<O : RealmObject> : ObjectChange<O> {
+public interface InitialObject<O : RealmObject> : ObjectChange<O> {
     override val obj: O
 }
 
@@ -100,13 +100,13 @@ interface InitialObject<O : RealmObject> : ObjectChange<O> {
  * [RealmObject] flow event that describes that an update has been performed on to the observed object.
  * It provides a reference to the object and a list of the changed field names.
  */
-interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
+public interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
     override val obj: O
 
     /**
      * Returns the names of properties that has changed.
      */
-    val changedFields: Array<String>
+    public val changedFields: Array<String>
 
     /**
      * Checks if a given field has been changed.
@@ -115,7 +115,7 @@ interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
      * @return `true` if the field has been changed. It returns `false` the field cannot be found
      * or the field hasn't been changed.
      */
-    fun isFieldChanged(fieldName: String): Boolean {
+    public fun isFieldChanged(fieldName: String): Boolean {
         return changedFields.firstOrNull { it == fieldName } != null
     }
 }
@@ -124,4 +124,4 @@ interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
  * This interface describes the event is emitted deleted on a [RealmObject] flow. The flow will terminate
  * after emitting this event.
  */
-interface DeletedObject<O : RealmObject> : ObjectChange<O>
+public interface DeletedObject<O : RealmObject> : ObjectChange<O>

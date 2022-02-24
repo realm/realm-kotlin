@@ -43,19 +43,19 @@ import io.realm.BaseRealm
  *   }
  * ```
  */
-sealed interface RealmChange<R : BaseRealm> {
+public sealed interface RealmChange<R : BaseRealm> {
     /**
      * Returns the newest version of the Realm.
      */
-    val realm: R
+    public val realm: R
 }
 
 /**
  * Initial event to be observed on a Realm flow. It contains a reference to the original Realm instance.
  */
-interface InitialRealm<R : BaseRealm> : RealmChange<R>
+public interface InitialRealm<R : BaseRealm> : RealmChange<R>
 
 /**
  * Realm flow event that describes that an update has been performed on to the observed Realm instance.
  */
-interface UpdatedRealm<R : BaseRealm> : RealmChange<R>
+public interface UpdatedRealm<R : BaseRealm> : RealmChange<R>
