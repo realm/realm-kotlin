@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.notifications.internal
 
-package io.realm.notifications
-
-import io.realm.BaseRealm
-
-internal class InitialRealmImpl<R : BaseRealm>(override val realm: R) : InitialRealm<R>
-
-internal class UpdatedRealmImpl<R : BaseRealm>(override val realm: R) : UpdatedRealm<R>
+/**
+ * A `callback` interface to receive notifications about updates to Realm backed objects and
+ * collections.
+ *
+ * @see [Realm.addChangeListener]
+ * @see [RealmObject.addChangeListener]
+ * @see [RealmResults.addChangeListener]
+ * @see [RealmList.addChangeListener]
+ * @see [RealmChange]
+ * @see [ObjectChange]
+ * @see [ListChange]
+ * @see [SetChange]
+ * @see [MapChange]
+ */
+internal fun interface Callback<T> {
+    public fun onChange(change: T?, error: Throwable?)
+}

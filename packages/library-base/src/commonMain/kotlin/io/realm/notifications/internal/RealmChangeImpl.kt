@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.notifications
 
-/**
- * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
- */
-public interface Cancellable {
-    public fun cancel()
-}
+package io.realm.notifications.internal
+
+import io.realm.BaseRealm
+import io.realm.notifications.InitialRealm
+import io.realm.notifications.UpdatedRealm
+
+internal class InitialRealmImpl<R : BaseRealm>(override val realm: R) : InitialRealm<R>
+
+internal class UpdatedRealmImpl<R : BaseRealm>(override val realm: R) : UpdatedRealm<R>
