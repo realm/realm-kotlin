@@ -301,7 +301,7 @@ class DynamicRealmObjectTests {
                     }
                 }
             }
-            // FIXME There is currently nothing that assert that we have tested all type
+            // TODO There is currently nothing that assert that we have tested all type
             // assertTrue("Untested types: $untested") { untested.isEmpty() }
         }
     }
@@ -400,30 +400,32 @@ class DynamicRealmObjectTests {
         // Wrong type
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getValueList<Long>("stringListField")
-        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }.run { assertEquals("Trying to access property 'Sample.stringListField' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'RealmList<class kotlin.String>'", message) }
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getNullableValueList<Long>("nullableStringListField")
-        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }.run { assertEquals("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'RealmList<class kotlin.String?>'", message, message) }
 
         // Wrong nullability
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getValueList<String>("nullableStringListField")
-        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }.run { assertEquals("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class kotlin.String>' but actual schema type is 'RealmList<class kotlin.String?>'", message, message) }
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getNullableValueList<String>("stringListField")
-        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }.run { assertEquals("Trying to access property 'Sample.stringListField' as type: 'RealmList<class kotlin.String?>' but actual schema type is 'RealmList<class kotlin.String>'", message, message) }
 
         // Wrong variants
         assertFailsWith<IllegalArgumentException> {
-            dynamicSample.getValueList<DynamicRealmObject>("objectList")
-        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
-
+            dynamicSample.getValueList<String>("stringField")
+        }.run { assertEquals("Trying to access property 'Sample.stringField' as type: 'RealmList<class kotlin.String>' but actual schema type is 'class kotlin.String'", message, message) }
         assertFailsWith<IllegalArgumentException> {
-            dynamicSample.getValueList<Long>("stringField")
-        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+            dynamicSample.getValueList<Long>("nullableObject")
+        }.run { assertEquals("Trying to access property 'Sample.nullableObject' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'class io.realm.RealmObject?'", message, message) }
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getNullableValueList<Long>("nullableStringField")
-        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }.run { assertEquals("Trying to access property 'Sample.nullableStringField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'class kotlin.String?'", message, message) }
+        assertFailsWith<IllegalArgumentException> {
+            dynamicSample.getObjectList("nullableStringListField")
+        }.run { assertEquals("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class io.realm.RealmObject>' but actual schema type is 'RealmList<class kotlin.String?>'", message, message) }
     }
 
     // We don't have an immutable RealmList so verify that we fail in an understandable manner if

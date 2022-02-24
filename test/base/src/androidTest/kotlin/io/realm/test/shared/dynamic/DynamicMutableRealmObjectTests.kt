@@ -33,18 +33,18 @@
 
 package io.realm.test.shared.dynamic
 
+import io.realm.RealmConfiguration
+import io.realm.RealmInstant
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
-import io.realm.RealmConfiguration
-import io.realm.RealmInstant
-import io.realm.entities.Sample
-import io.realm.entities.primarykey.PrimaryKeyString
-import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.dynamic.getNullableValue
 import io.realm.dynamic.getNullableValueList
 import io.realm.dynamic.getValue
 import io.realm.dynamic.getValueList
+import io.realm.entities.Sample
+import io.realm.entities.primarykey.PrimaryKeyString
+import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmStorageType
@@ -289,7 +289,7 @@ class DynamicMutableRealmObjectTests {
                     }
                 }
             }
-            // FIXME There is currently nothing that assert that we have tested all type
+            // TODO There is currently nothing that assert that we have tested all type
             // assertTrue("Untested types: $untested") { untested.isEmpty() }
         }
     }

@@ -15,7 +15,6 @@
  */
 package io.realm.test.shared
 
-import io.realm.AutomaticSchemaMigration
 import io.realm.Configuration
 import io.realm.Realm
 import io.realm.RealmConfiguration
@@ -24,6 +23,7 @@ import io.realm.internal.InternalConfiguration
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
+import io.realm.migration.AutomaticSchemaMigration
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestLogger
 import io.realm.test.util.use

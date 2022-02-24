@@ -26,7 +26,8 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
 
-internal open class DynamicRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) : BaseRealmImpl(configuration),
+internal open class DynamicRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) :
+    BaseRealmImpl(configuration),
     DynamicRealm {
 
     override val realmReference: RealmReference = FrozenRealmReference(this, dbPointer)

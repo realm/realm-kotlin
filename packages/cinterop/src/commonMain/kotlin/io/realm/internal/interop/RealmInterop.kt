@@ -46,10 +46,6 @@ expect val INVALID_PROPERTY_KEY: PropertyKey
 @JvmInline
 value class RegistrationToken(val value: Long)
 
-fun interface MigrationCallback {
-    fun migrate(oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer): Boolean
-}
-
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_get_version_id(realm: NativePointer): Long

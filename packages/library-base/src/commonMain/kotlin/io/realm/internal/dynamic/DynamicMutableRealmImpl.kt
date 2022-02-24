@@ -29,7 +29,8 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
 
-internal open class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) : BaseRealmImpl(configuration),
+internal open class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) :
+    BaseRealmImpl(configuration),
     DynamicMutableRealm,
     TransactionalRealm {
 

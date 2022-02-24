@@ -147,6 +147,11 @@ open class ConfigurationImpl constructor(
                             })
                             true
                         } catch (e: Throwable) {
+                            // Returning false will cause Realm.open to fail with a
+                            // RuntimeException with a text saying "User-provided callback failed"
+                            // which is the closest that we can get across platforms, so dump the
+                            // actual exception to stdout, so users have a chance to see what is
+                            // actually failing
                             // TODO Should we dump the actual exceptions in a platform specific way
                             e.printStackTrace()
                             false

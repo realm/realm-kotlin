@@ -16,23 +16,23 @@
 
 package io.realm.test.shared.migration
 
-import io.realm.migration.AutomaticSchemaMigration
-import io.realm.dynamic.DynamicMutableRealm
-import io.realm.dynamic.DynamicMutableRealmObject
-import io.realm.dynamic.DynamicRealm
-import io.realm.dynamic.DynamicRealmObject
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.delete
-import io.realm.migration.component1
-import io.realm.migration.component2
+import io.realm.dynamic.DynamicMutableRealm
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealm
+import io.realm.dynamic.DynamicRealmObject
+import io.realm.dynamic.getValue
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.schema.SchemaVariations
-import io.realm.dynamic.getValue
+import io.realm.migration.AutomaticSchemaMigration
+import io.realm.migration.component1
+import io.realm.migration.component2
 import io.realm.query
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.use
@@ -41,7 +41,6 @@ import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
