@@ -21,7 +21,7 @@ import io.realm.BaseRealm
 /**
  * This sealed interface describe the possible changes that can be observed to a Realm.
  *
- * The specific states are represented by the specific subclasses [InitialRealm] and [UpdatedRealm].
+ * The specific states are represented by the subclasses [InitialRealm] and [UpdatedRealm].
  *
  * Changes can thus be consumed in a number of ways:
  *
