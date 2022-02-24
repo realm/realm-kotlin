@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package io.realm.test.shared
+package io.realm.test.shared.dynamic
 
 import io.realm.Realm
 import io.realm.RealmConfiguration

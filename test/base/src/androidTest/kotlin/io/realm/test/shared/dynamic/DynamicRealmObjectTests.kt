@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 @file:Suppress("invisible_member", "invisible_reference")
 /*
  * Copyright 2022 Realm Inc.
@@ -15,18 +31,17 @@
  * limitations under the License.
  */
 
-package io.realm.test.shared
+package io.realm.test.shared.dynamic
 
-// FIXME Should we put these (and all DynamicX) in it's own package
-import io.realm.DynamicRealmObject
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
+import io.realm.dynamic.DynamicRealmObject
+import io.realm.dynamic.getNullableValue
+import io.realm.dynamic.getNullableValueList
+import io.realm.dynamic.getValue
+import io.realm.dynamic.getValueList
 import io.realm.entities.Sample
-import io.realm.getNullableValue
-import io.realm.getNullableValueList
-import io.realm.getValue
-import io.realm.getValueList
 import io.realm.internal.asDynamicRealm
 import io.realm.observe
 import io.realm.query.RealmQuery
@@ -385,30 +400,30 @@ class DynamicRealmObjectTests {
         // Wrong type
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getValueList<Long>("stringListField")
-        }//.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getNullableValueList<Long>("nullableStringListField")
-        }//.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
 
         // Wrong nullability
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getValueList<String>("nullableStringListField")
-        }//.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getNullableValueList<String>("stringListField")
-        }//.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
 
         // Wrong variants
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getValueList<DynamicRealmObject>("objectList")
-        }//.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
 
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getValueList<Long>("stringField")
-        }//.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
         assertFailsWith<IllegalArgumentException> {
             dynamicSample.getNullableValueList<Long>("nullableStringField")
-        }//.run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
+        }// .run { assertEquals("Retrieving value of type 'Long' but was of type 'String'", message) }
     }
 
     // We don't have an immutable RealmList so verify that we fail in an understandable manner if

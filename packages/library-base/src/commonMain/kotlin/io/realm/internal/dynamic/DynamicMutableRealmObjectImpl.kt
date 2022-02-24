@@ -16,9 +16,9 @@
 
 package io.realm.internal.dynamic
 
-import io.realm.DynamicMutableRealmObject
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmObjectInternal
 

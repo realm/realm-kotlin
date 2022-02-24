@@ -2,10 +2,10 @@ package io.realm.internal
 
 import io.realm.Callback
 import io.realm.Cancellable
-import io.realm.DynamicRealm
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicRealm
 import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException

@@ -17,7 +17,7 @@
 
 package io.realm.test
 
-import io.realm.internal.DynamicMutableRealmImpl
+import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.TransactionalRealm
 import io.realm.internal.interop.RealmInterop

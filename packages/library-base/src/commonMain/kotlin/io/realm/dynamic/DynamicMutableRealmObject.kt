@@ -16,6 +16,8 @@
 
 package io.realm.dynamic
 
+import io.realm.RealmList
+
 /**
  * A **dynamic mutable realm object** gives access and possibility to update the data of the realm
  * objects through a generic string based API instead of the conventional [Realm] API that only

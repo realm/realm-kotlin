@@ -16,6 +16,12 @@
 
 package io.realm.migration
 
+import io.realm.RealmResults
+import io.realm.dynamic.DynamicMutableRealm
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealm
+import io.realm.dynamic.DynamicRealmObject
+
 /**
  * A base class for the various **realm migration** schemes.
  *

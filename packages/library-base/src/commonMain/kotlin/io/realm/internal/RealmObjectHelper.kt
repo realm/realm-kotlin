@@ -16,11 +16,11 @@
 
 package io.realm.internal
 
-import io.realm.DynamicMutableRealmObject
-import io.realm.DynamicRealmObject
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer

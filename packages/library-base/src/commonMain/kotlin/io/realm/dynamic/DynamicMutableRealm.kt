@@ -16,6 +16,7 @@
 
 package io.realm.dynamic
 
+import io.realm.RealmObject
 import io.realm.query.RealmQuery
 
 /**

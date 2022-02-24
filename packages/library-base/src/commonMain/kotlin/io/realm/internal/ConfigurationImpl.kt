@@ -16,15 +16,13 @@
 
 package io.realm.internal
 
-import io.realm.AutomaticSchemaMigration
 import io.realm.CompactOnLaunchCallback
-import io.realm.DynamicMutableRealm
-import io.realm.DynamicMutableRealmObject
-import io.realm.DynamicRealm
-import io.realm.DynamicRealmObject
 import io.realm.LogConfiguration
-import io.realm.RealmMigration
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicMutableRealm
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealm
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.dynamic.DynamicMutableRealmObjectImpl
 import io.realm.internal.dynamic.DynamicRealmImpl
@@ -34,6 +32,8 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.realmObjectCompanion
+import io.realm.migration.AutomaticSchemaMigration
+import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
@@ -67,7 +67,10 @@ open class ConfigurationImpl constructor(
 
     override val schemaMode: SchemaMode
 
-    override val encryptionKey get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
+    override val encryptionKey
+        get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(
+            nativeConfig
+        )
 
     override val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
 
@@ -122,7 +125,10 @@ open class ConfigurationImpl constructor(
         )
 
         RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
-        RealmInterop.realm_config_set_max_number_of_active_versions(nativeConfig, maxNumberOfActiveVersions)
+        RealmInterop.realm_config_set_max_number_of_active_versions(
+            nativeConfig,
+            maxNumberOfActiveVersions
+        )
 
         migration?.let {
             when (it) {
@@ -135,7 +141,7 @@ open class ConfigurationImpl constructor(
                         val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
                         @Suppress("TooGenericExceptionCaught")
                         try {
-                            it.migrate(object : AutomaticSchemaMigration.DataMigrationContext {
+                            it.migrate(object : AutomaticSchemaMigration.MigrationContext {
                                 override val oldRealm: DynamicRealm = old
                                 override val newRealm: DynamicMutableRealm = new
                             })

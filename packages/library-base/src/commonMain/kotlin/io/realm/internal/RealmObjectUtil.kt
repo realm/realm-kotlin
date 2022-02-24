@@ -16,8 +16,8 @@
 
 package io.realm.internal
 
-import io.realm.DynamicRealmObject
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
