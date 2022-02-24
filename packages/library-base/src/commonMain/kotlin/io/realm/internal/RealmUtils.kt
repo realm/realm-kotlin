@@ -90,8 +90,7 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
     try {
         val managedModel = mediator.createInstanceOf(type)
-        // TODO OPTIMIZE Key could be cached in realmReference.schemaMetadata
-        val key = RealmInterop.realm_find_class(realm.dbPointer, className)
+        val key = realm.schemaMetadata.getOrThrow(className).classKey
         key?.let {
             return managedModel.manage(
                 realm,

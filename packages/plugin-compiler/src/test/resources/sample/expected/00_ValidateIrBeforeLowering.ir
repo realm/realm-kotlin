@@ -611,11 +611,11 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-timestampField>' type=sample.input.Sample origin=null
-                    then: CALL 'internal final fun getTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String): io.realm.RealmInstant? declared in io.realm.internal.RealmObjectHelper' type=io.realm.RealmInstant? origin=GET_PROPERTY
+                    then: CALL 'internal final fun getTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, propertyName: kotlin.String): io.realm.RealmInstant? declared in io.realm.internal.RealmObjectHelper' type=io.realm.RealmInstant? origin=GET_PROPERTY
                       <R>: io.realm.RealmInstant?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                       obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-timestampField>' type=sample.input.Sample origin=null
-                      col: CONST String type=kotlin.String value="timestampField"
+                      propertyName: CONST String type=kotlin.String value="timestampField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:timestampField type:io.realm.RealmInstant? visibility:private' type=io.realm.RealmInstant? origin=null
@@ -631,11 +631,11 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampField>' type=sample.input.Sample origin=null
-                    then: CALL 'internal final fun setTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, value: io.realm.RealmInstant?): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun setTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, propertyName: kotlin.String, value: io.realm.RealmInstant?): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                       <R>: io.realm.RealmInstant?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                       obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampField>' type=sample.input.Sample origin=null
-                      col: CONST String type=kotlin.String value="timestampField"
+                      propertyName: CONST String type=kotlin.String value="timestampField"
                       value: GET_VAR '<set-?>: io.realm.RealmInstant? declared in sample.input.Sample.<set-timestampField>' type=io.realm.RealmInstant? origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
