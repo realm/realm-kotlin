@@ -22,9 +22,11 @@ import kotlin.reflect.KClass
 
 /**
  * The various types that are used when storing the property values in the realm.
+ *
+ * @param kClass the default Kotlin class used to represent values of the storage type. For
+ * non-object types, this is the type of the value return by [DynamicRealmObject.getValue].
  */
-// TODO Doc kClass
-enum class RealmStorageType(val kClass: KClass<*>) {
+public enum class RealmStorageType(public val kClass: KClass<*>) {
     BOOL(Boolean::class),
     INT(Long::class),
     STRING(String::class),

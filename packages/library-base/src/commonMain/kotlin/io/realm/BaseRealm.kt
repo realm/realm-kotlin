@@ -19,18 +19,18 @@ import io.realm.schema.RealmSchema
 /**
  * Base class for all Realm instances ([Realm] and [MutableRealm]).
  */
-interface BaseRealm : Versioned {
+public interface BaseRealm : Versioned {
     /**
      * Configuration used to configure this Realm instance.
      */
-    val configuration: Configuration
+    public val configuration: Configuration
 
     /**
      * Returns an immutable schema of the realm.
      *
      * @return the schema of the realm.
      */
-    fun schema(): RealmSchema
+    public fun schema(): RealmSchema
 
     /**
      * Returns the schema version of the realm.
@@ -41,7 +41,7 @@ interface BaseRealm : Versioned {
      *
      * @see [Configuration.SharedBuilder.schemaVersion]
      */
-    fun schemaVersion(): Long
+    public fun schemaVersion(): Long
 
     /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have
@@ -49,7 +49,7 @@ interface BaseRealm : Versioned {
      *
      * @see [Configuration.Builder.maxNumberOfActiveVersions]
      */
-    fun getNumberOfActiveVersions(): Long
+    public fun getNumberOfActiveVersions(): Long
 
     /**
      * Check if this Realm has been closed or not. If the Realm has been closed, most methods
@@ -57,5 +57,5 @@ interface BaseRealm : Versioned {
      *
      * @return `true` if the Realm has been closed. `false` if not.
      */
-    fun isClosed(): Boolean
+    public fun isClosed(): Boolean
 }

@@ -47,17 +47,17 @@ import kotlin.reflect.KClass
  * ```
  */
 // FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
-interface SyncConfiguration : Configuration {
+public interface SyncConfiguration : Configuration {
 
-    val user: User
-    val partitionValue: PartitionValue
-    val errorHandler: SyncSession.ErrorHandler?
+    public val user: User
+    public val partitionValue: PartitionValue
+    public val errorHandler: SyncSession.ErrorHandler?
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
      * created using the [RealmConfiguration.with] function.
      */
-    class Builder private constructor(
+    public class Builder private constructor(
         private var user: User,
         private var partitionValue: PartitionValue,
         schema: Set<KClass<out RealmObject>>,
@@ -65,19 +65,19 @@ interface SyncConfiguration : Configuration {
 
         private var errorHandler: SyncSession.ErrorHandler? = null
 
-        constructor(
+        public constructor(
             user: User,
             partitionValue: Int,
             schema: Set<KClass<out RealmObject>> = setOf()
         ) : this(user, PartitionValue(partitionValue.toLong()), schema)
 
-        constructor(
+        public constructor(
             user: User,
             partitionValue: Long,
             schema: Set<KClass<out RealmObject>> = setOf()
         ) : this(user, PartitionValue(partitionValue), schema)
 
-        constructor(
+        public constructor(
             user: User,
             partitionValue: String,
             schema: Set<KClass<out RealmObject>> = setOf()
@@ -91,7 +91,7 @@ interface SyncConfiguration : Configuration {
             this.removeSystemLogger = true
         }
 
-        override fun log(level: LogLevel, customLoggers: List<RealmLogger>) =
+        override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
             apply {
                 // Will clear any primed configuration
                 this.logLevel = level
@@ -104,7 +104,7 @@ interface SyncConfiguration : Configuration {
          *
          * @param errorHandler lambda to handle the error.
          */
-        fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
+        public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
             apply { this.errorHandler = errorHandler }
 
         override fun build(): SyncConfiguration {

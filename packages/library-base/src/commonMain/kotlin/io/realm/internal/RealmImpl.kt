@@ -91,7 +91,13 @@ internal class RealmImpl private constructor(
             }
         )
 
-    override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
+    // Required as Kotlin otherwise gets confused about the visibility and reports
+    // "Cannot infer visibility for '...'. Please specify it explicitly"
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T> {
         return super.query(clazz, query, *args)
     }
 

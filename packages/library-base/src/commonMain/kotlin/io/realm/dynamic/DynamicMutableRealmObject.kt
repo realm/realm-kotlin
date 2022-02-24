@@ -23,12 +23,10 @@ import io.realm.RealmList
  * objects through a generic string based API instead of the conventional [Realm] API that only
  * allows access and updates through the properties of the corresponding schema classes supplied in the configuration.
  */
-interface DynamicMutableRealmObject : DynamicRealmObject {
+public interface DynamicMutableRealmObject : DynamicRealmObject {
 
-    // FIXME Check doc
     override fun getObject(propertyName: String): DynamicMutableRealmObject?
 
-    // FIXME Check doc
     override fun getObjectList(propertyName: String): RealmList<DynamicMutableRealmObject>
 
     /**
@@ -40,5 +38,5 @@ interface DynamicMutableRealmObject : DynamicRealmObject {
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
      * name, or if the value doesn't match the type of the property.
      */
-    fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
+    public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
 }

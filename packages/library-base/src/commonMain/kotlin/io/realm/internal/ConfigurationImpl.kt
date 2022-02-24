@@ -37,8 +37,9 @@ import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
+// TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
-open class ConfigurationImpl constructor(
+public open class ConfigurationImpl constructor(
     path: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
@@ -67,10 +68,9 @@ open class ConfigurationImpl constructor(
 
     override val schemaMode: SchemaMode
 
-    override val encryptionKey
-        get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(
-            nativeConfig
-        )
+    override val encryptionKey: ByteArray? get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(
+        nativeConfig
+    )
 
     override val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
 

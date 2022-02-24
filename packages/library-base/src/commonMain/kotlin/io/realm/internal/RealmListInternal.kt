@@ -160,7 +160,7 @@ internal class ManagedRealmList<E>(
     }
 }
 
-fun interface ElementConverter<E> {
+internal fun interface ElementConverter<E> {
     fun convert(value: Any?): E
 }
 
@@ -173,7 +173,7 @@ internal data class ListOperatorMetadata<E>(
     val converter: ElementConverter<E>
 )
 
-fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KClass<*>): ElementConverter<E> {
+internal fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KClass<*>): ElementConverter<E> {
     return when (clazz) {
         Byte::class -> ElementConverter { (it as Long).toByte() as E }
         Char::class -> ElementConverter { (it as Long).toInt().toChar() as E }

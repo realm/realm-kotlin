@@ -28,7 +28,7 @@ import io.realm.query.RealmQuery
  * realm. Thus they cannot be passed outside of an [RealmMigration] that gives access to a specific
  * [DynamicRealm] instance, etc.
  */
-interface DynamicRealm : BaseRealm {
+public interface DynamicRealm : BaseRealm {
 
     /**
      * Returns a query for dynamic realm objects of the specified class.
@@ -41,7 +41,7 @@ interface DynamicRealm : BaseRealm {
      *
      * @see DynamicRealmObject
      */
-    fun query(
+    public fun query(
         className: String,
         query: String = "TRUEPREDICATE",
         vararg args: Any?

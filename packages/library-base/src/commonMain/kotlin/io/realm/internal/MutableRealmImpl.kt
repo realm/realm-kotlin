@@ -51,8 +51,16 @@ internal interface MutableRealmImpl : MutableRealm {
     }
 
     override fun <T : RealmObject> delete(obj: T) {
-        // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
+        if (obj !is RealmObjectInternal) {
+            throw IllegalArgumentException("Unmanaged objects cannot be deleted.")
+        }
         val internalObject = obj as RealmObjectInternal
+        if (internalObject.isFrozen()) {
+            throw IllegalArgumentException(
+                "Frozen objects cannot be deleted. They must be converted to live objects first " +
+                    "by using `MutableRealm.findLatest(frozenObject)`."
+            )
+        }
         checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
     }
@@ -64,30 +72,6 @@ internal interface MutableRealmImpl : MutableRealm {
     fun <T> registerObserver(t: Thawable<T>): Flow<T> {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
-
-//    // FIXME Can't we eliminate these
-//    override fun <T : RealmObject> registerResultsChangeListener(
-//        results: RealmResultsImpl<T>,
-//        callback: Callback<RealmResultsImpl<T>>
-//    ): Cancellable {
-//        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
-//    }
-//
-//    // FIXME Can't we eliminate these
-//    internal override fun <T : RealmObject> registerListChangeListener(
-//        list: List<T>,
-//        callback: Callback<List<T>>
-//    ): Cancellable {
-//        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
-//    }
-//
-//    // FIXME Can't we eliminate these
-//    internal override fun <T : RealmObject> registerObjectChangeListener(
-//        obj: T,
-//        callback: Callback<T?>
-//    ): Cancellable {
-//        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
-//    }
 
     // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
     //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181

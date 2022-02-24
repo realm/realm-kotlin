@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 /**
  * Interface holding default implementation for performing a query on a typed realm.
  */
-interface TypedRealmImpl : TypedRealm {
+internal interface TypedRealmImpl : TypedRealm {
 
     override val configuration: InternalConfiguration
     val realmReference: RealmReference

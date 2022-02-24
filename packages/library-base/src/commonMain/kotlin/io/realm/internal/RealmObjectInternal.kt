@@ -36,21 +36,23 @@ import kotlin.reflect.KClass
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
+// TODO Public due to being a transative dependency of Mediator
 @Suppress("VariableNaming")
-interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
+public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
-    var `$realm$IsManaged`: Boolean
+    public var `$realm$IsManaged`: Boolean
     // Invariant: None of the below will be null for managed objects!
-    var `$realm$Owner`: RealmReference?
-    var `$realm$ClassName`: String?
-    var `$realm$Mediator`: Mediator?
-    var `$realm$metadata`: ClassMetadata?
+    public var `$realm$Owner`: RealmReference?
+    public var `$realm$ClassName`: String?
+    public var `$realm$Mediator`: Mediator?
+    // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
+    public var `$realm$metadata`: ClassMetadata?
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
-    fun propertyKeyOrThrow(propertyName: String): PropertyKey = this.`$realm$metadata`?.getOrThrow(propertyName)
+    public fun propertyKeyOrThrow(propertyName: String): PropertyKey = this.`$realm$metadata`?.getOrThrow(propertyName)
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         ?: sdkError("Class meta data should never be null for managed objects")
 
@@ -80,7 +82,7 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
         return thaw(liveRealm, this::class)
     }
 
-    fun thaw(liveRealm: RealmReference, clazz: KClass<out RealmObject>): RealmObjectInternal? {
+    public fun thaw(liveRealm: RealmReference, clazz: KClass<out RealmObject>): RealmObjectInternal? {
         val mediator = `$realm$Mediator`!!
         val managedModel = mediator.createInstanceOf(clazz)
         val dbPointer = liveRealm.dbPointer

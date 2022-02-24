@@ -103,7 +103,7 @@ class DynamicMutableRealmTests {
         assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.createObject("UNKNOWN_CLASS")
         }.run {
-            assertEquals("Schema doesn't include class 'UNKNOWN_CLASS'", message)
+            assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
     }
 

@@ -1,3 +1,3 @@
 package io.realm.internal.platform
 
-actual typealias WeakReference<T> = kotlin.native.ref.WeakReference<T>
+public actual typealias WeakReference<T> = kotlin.native.ref.WeakReference<T>

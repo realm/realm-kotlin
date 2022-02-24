@@ -31,27 +31,27 @@ import io.realm.dynamic.DynamicRealmObject
  * @see Configuration.SharedBuilder.migration
  * @see AutomaticSchemaMigration
  */
-sealed interface RealmMigration
+public sealed interface RealmMigration
 
 /**
  * An realm migration that performs automatic schema migration and allows additional custom
  * migration of data.
  */
-fun interface AutomaticSchemaMigration : RealmMigration {
+public fun interface AutomaticSchemaMigration : RealmMigration {
     /**
      * A **data migration context** providing access to the realm before and after an
      * [AutomaticSchemaMigration].
      */
-    interface MigrationContext {
+    public interface MigrationContext {
 
         /**
          * The realm before automatic schema migration.
          */
-        val oldRealm: DynamicRealm
+        public val oldRealm: DynamicRealm
         /**
          * The realm after automatic schema migration.
          */
-        val newRealm: DynamicMutableRealm
+        public val newRealm: DynamicMutableRealm
 
         /**
          * Convenience method to iterate all objects of a certain class from the realm before migration
@@ -63,7 +63,7 @@ fun interface AutomaticSchemaMigration : RealmMigration {
          * realm. The `newObject` will be a reference to the corresponding [DynamicMutableRealmObject] in
          * the already migrated realm, or null if the object has been deleted.
          */
-        fun enumerate(className: String, block: (oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject?) -> Unit) {
+        public fun enumerate(className: String, block: (oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject?) -> Unit) {
             val find: RealmResults<out DynamicRealmObject> = oldRealm.query(className).find()
             find.forEach {
                 block(it, newRealm.findLatest(it))
@@ -75,9 +75,9 @@ fun interface AutomaticSchemaMigration : RealmMigration {
      * Method triggered and allowing migration of data in the case that the schema of the realm has
      * changed.
      */
-    fun migrate(migrationContext: MigrationContext)
+    public fun migrate(migrationContext: MigrationContext)
 }
 
 // FIXME Should we eliminate these. Only for convenience to allow deconstruction in lambda { (oldRealm, newRealm) -> }
-operator fun AutomaticSchemaMigration.MigrationContext.component1() = this.oldRealm
-operator fun AutomaticSchemaMigration.MigrationContext.component2() = this.newRealm
+public operator fun AutomaticSchemaMigration.MigrationContext.component1(): DynamicRealm = this.oldRealm
+public operator fun AutomaticSchemaMigration.MigrationContext.component2(): DynamicMutableRealm = this.newRealm

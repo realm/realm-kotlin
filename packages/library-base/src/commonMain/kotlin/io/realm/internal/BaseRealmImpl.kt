@@ -25,7 +25,8 @@ import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("UnnecessaryAbstractClass")
-abstract class BaseRealmImpl internal constructor(
+// TODO Public due to being a transitive dependency to RealmReference
+public abstract class BaseRealmImpl internal constructor(
     final override val configuration: InternalConfiguration,
 ) : BaseRealm, RealmStateHolder {
 
@@ -73,7 +74,7 @@ abstract class BaseRealmImpl internal constructor(
     }
 
     internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
-        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
+        throw UnsupportedOperationException(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(

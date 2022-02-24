@@ -28,7 +28,7 @@ import io.realm.query.RealmQuery
  * realm. Thus they cannot be passed outside of an [RealmMigration] that gives access to a specific
  * [DynamicRealm] instance, etc.
  */
-interface DynamicMutableRealm : DynamicRealm {
+public interface DynamicMutableRealm : DynamicRealm {
 
     /**
      * Adds and returns a new object of the specified class to the Realm.
@@ -41,7 +41,7 @@ interface DynamicMutableRealm : DynamicRealm {
      * @throws IllegalArgumentException if the class name is not part of the realm's schema or the
      * class requires a primary key.
      */
-    fun createObject(type: String): DynamicMutableRealmObject
+    public fun createObject(type: String): DynamicMutableRealmObject
 
     /**
      * Adds and returns a new object of the specified class with the given primary key to the Realm.
@@ -55,7 +55,7 @@ interface DynamicMutableRealm : DynamicRealm {
      * @throws IllegalArgumentException if the class name is not part of the realm's schema or the
      * class
      */
-    fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
+    public fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.
@@ -80,7 +80,7 @@ interface DynamicMutableRealm : DynamicRealm {
      * @returns a [DynamicMutableRealmObject] reference to the object version as of this realm or
      * `null` if the object has been deleted in this realm.
      */
-    fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
+    public fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
 
     // FIXME Do we want an explicit delete here? At least we should probably match MutableRealm.delete/RealmObject.delete behaviour
     //  https://github.com/realm/realm-kotlin/issues/181

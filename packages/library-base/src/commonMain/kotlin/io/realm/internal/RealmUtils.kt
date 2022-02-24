@@ -73,7 +73,7 @@ import kotlin.reflect.KProperty1
  * replaced by the Compiler Plugin.
  */
 @Suppress("FunctionNaming", "NOTHING_TO_INLINE")
-inline fun REPLACED_BY_IR(
+internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
@@ -245,7 +245,7 @@ private fun <T : RealmObject> processListMember(
     return list
 }
 
-fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
+internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
     return when (cause) {
         is RealmCoreOutOfMemoryException,
         is RealmCoreUnsupportedFileFormatVersionException,
