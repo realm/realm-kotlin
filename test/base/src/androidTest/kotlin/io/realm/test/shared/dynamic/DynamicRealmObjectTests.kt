@@ -459,8 +459,7 @@ class DynamicRealmObjectTests {
         val query: RealmQuery<out DynamicRealmObject> = dynamicRealm.query(Sample::class.simpleName!!)
         val dynamicRealmObject: DynamicRealmObject = query.first().find()!!
 
-        // FIXME Is this the right exception?
-        assertFailsWith<NotImplementedError> {
+        assertFailsWith<UnsupportedOperationException> {
             dynamicRealmObject.observe()
         }
     }
