@@ -15,6 +15,7 @@
  */
 package io.realm.test.shared
 
+import io.realm.AutomaticSchemaMigration
 import io.realm.Configuration
 import io.realm.Realm
 import io.realm.RealmConfiguration
@@ -37,6 +38,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -311,7 +313,12 @@ class RealmConfigurationTests {
 
     @Test
     fun migration() {
-        // FIXME
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .migration(AutomaticSchemaMigration { })
+            .build()
+        // There is not really anything we can test, so basically just validating that we can call
+        // .migrate(...)
+        assertNotNull(config)
     }
 
     @Test
