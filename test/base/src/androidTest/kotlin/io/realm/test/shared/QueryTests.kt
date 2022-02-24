@@ -101,7 +101,10 @@ class QueryTests {
                     realm.query<QuerySample>("booleanField = $0", true)
                 }
                 RealmStorageType.INT -> {
-                    realm.query<QuerySample>("intField = $0", 42)
+                    realm.query<QuerySample>("intField = $0", 1.toByte())
+                    realm.query<QuerySample>("intField = $0", 2.toShort())
+                    realm.query<QuerySample>("intField = $0", 3)
+                    realm.query<QuerySample>("intField = $0", 4.toLong())
                 }
                 RealmStorageType.STRING -> {
                     realm.query<QuerySample>("stringField = $0", "foo")
