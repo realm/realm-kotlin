@@ -32,12 +32,13 @@ import io.realm.query.max
 import io.realm.query.min
 import io.realm.query.sum
 import io.realm.realmListOf
+import io.realm.schema.RealmStorageType
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.reflect.KClass
@@ -52,6 +53,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 @Suppress("LargeClass")
 class QueryTests {
@@ -73,6 +75,52 @@ class QueryTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun query_missingArgumentThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("Request for argument at index 0 but no arguments are provided") {
+            realm.query<QuerySample>("stringField = $0")
+        }
+    }
+
+    @Test
+    fun query_wrongArgumentTypeThrows() {
+        assertFailsWithMessage<IllegalArgumentException>(" Unsupported comparison between type 'string' and type 'bool'") {
+            realm.query<QuerySample>("stringField = $0", true)
+        }
+    }
+
+    // Ensure that parameter types are carried on into RQL and not converted,
+    // e.g. `true` Boolean is not turned into `"true"` (String) or `1` (Integer).
+    @Test
+    fun query_typesAreConvertedCorrectly() {
+        for (type: RealmStorageType in RealmStorageType.values()) {
+            when (type) {
+                RealmStorageType.BOOL -> {
+                    realm.query<QuerySample>("booleanField = $0", true)
+                }
+                RealmStorageType.INT -> {
+                    realm.query<QuerySample>("intField = $0", 42)
+                }
+                RealmStorageType.STRING -> {
+                    realm.query<QuerySample>("stringField = $0", "foo")
+                }
+                RealmStorageType.OBJECT -> {
+                    // Ignore
+                }
+                RealmStorageType.FLOAT -> {
+                    realm.query<QuerySample>("floatField = $0", 1.23F)
+                }
+                RealmStorageType.DOUBLE -> {
+                    realm.query<QuerySample>("doubleField = $0", 1.234)
+                }
+                RealmStorageType.TIMESTAMP -> {
+                    realm.query<QuerySample>("timestampField = $0", RealmInstant.fromEpochSeconds(0, 0))
+                }
+                else -> fail("Unknown type: $type")
+            }
+        }
     }
 
     @Test
