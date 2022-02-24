@@ -360,7 +360,7 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_migration_function(
             config.cptr(),
             staticCFunction { userData, oldRealm, newRealm, schema ->
-                safeUserData<MigrationCallback>(userData)(
+                safeUserData<MigrationCallback>(userData).migrate(
                     CPointerWrapper(realm_clone(oldRealm)),
                     CPointerWrapper(realm_clone(newRealm)),
                     CPointerWrapper(realm_clone(schema)),

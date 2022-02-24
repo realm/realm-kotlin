@@ -148,6 +148,7 @@ open class ConfigurationImpl constructor(
                             true
                         } catch (e: Throwable) {
                             // TODO Should we dump the actual exceptions in a platform specific way
+                            e.printStackTrace()
                             false
                         }
                     }

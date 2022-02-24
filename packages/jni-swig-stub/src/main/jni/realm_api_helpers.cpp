@@ -70,11 +70,10 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
 bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
                         const realm_schema_t *schema) {
     auto env = get_env(true);
-    // Should match RealmInterop.MigrationCallback
-    static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function3");
-    static JavaMethod java_callback_method(env, java_callback_class, "invoke",
-                                           "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-    bool result = env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method,
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/MigrationCallback");
+    static JavaMethod java_callback_method(env, java_callback_class, "migrate",
+                                           "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;)Z");
+    bool result = env->CallBooleanMethod(static_cast<jobject>(userdata), java_callback_method,
                                         wrap_pointer(env, reinterpret_cast<jlong>(old_realm)),
                                         wrap_pointer(env, reinterpret_cast<jlong>(new_realm)),
                                         wrap_pointer(env, reinterpret_cast<jlong>(schema))

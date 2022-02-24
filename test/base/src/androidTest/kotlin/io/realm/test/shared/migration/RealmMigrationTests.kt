@@ -41,6 +41,7 @@ import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
@@ -304,14 +305,14 @@ class RealmMigrationTests {
                 )
                 .build()
 
-        // FIXME Wrong exception
-        // assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<RuntimeException> {
             Realm.open(newConfiguration)
-        // }
+        }.run {
+            assertTrue(message) { message!!.contains("User-provided callback failed") }
+        }
     }
 
     @Test
-    // FIXME Need migration exception
     fun migrationError_throwsIfVersionIsNotUpdated() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .path("$tmpDir/default.realm")
@@ -326,6 +327,8 @@ class RealmMigrationTests {
 
         assertFailsWith<IllegalStateException> {
             Realm.open(newConfiguration)
+        }.run {
+            assertTrue(message) { message!!.contains("Migration is required") }
         }
     }
 
