@@ -21,27 +21,31 @@ import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 
-interface Notifiable<T> {
-    fun registerForNotification(callback: Callback): NativePointer
+// TODO Public due to being a transitive dependency to Observable
+public interface Notifiable<T> {
+    public fun registerForNotification(callback: Callback): NativePointer
 
     // FIXME Needs elaborate doc on how to signal and close channel
-    fun emitFrozenUpdate(
+    public fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
         channel: SendChannel<T>
     ): ChannelResult<Unit>?
 }
 
-interface Freezable<T> {
-    fun freeze(frozenRealm: RealmReference): T?
+// TODO Public due to being a transitive dependency to Observable
+public interface Freezable<T> {
+    public fun freeze(frozenRealm: RealmReference): T?
 }
 
-interface Thawable<T> {
-    fun thaw(liveRealm: RealmReference): T?
+// TODO Public due to being a transitive dependency to Observable
+public interface Thawable<T> {
+    public fun thaw(liveRealm: RealmReference): T?
 }
 
-interface Flowable<T> {
-    fun asFlow(): Flow<T?>
+// TODO Why is this flowable here?
+public interface Flowable<T> {
+    public fun asFlow(): Flow<T?>
 }
 
-interface Observable<T, C> : Notifiable<C>, Freezable<Observable<T, C>>, Thawable<Observable<T, C>>
+public interface Observable<T, C> : Notifiable<C>, Freezable<Observable<T, C>>, Thawable<Observable<T, C>>

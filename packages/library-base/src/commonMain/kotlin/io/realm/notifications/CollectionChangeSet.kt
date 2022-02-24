@@ -18,18 +18,18 @@ package io.realm.notifications
 /**
  * This interface models the changes that can occur to a collection.
  */
-interface CollectionChangeSet {
+public interface CollectionChangeSet {
     /**
      * The deleted indices in the previous version of the collection. It will be set as a zero-sized
      * array if no objects were deleted.
      */
-    val deletions: IntArray
+    public val deletions: IntArray
 
     /**
      * The inserted indices in the new version of the collection. It will be set as a zero-sized
      * array if no objects were inserted.
      */
-    val insertions: IntArray
+    public val insertions: IntArray
 
     /**
      * The modified indices in the new version of the collection.
@@ -38,13 +38,13 @@ interface CollectionChangeSet {
      * modified (or an object linked to by that object was modified). It will be set as a zero-sized
      * array if no objects were changed.
      */
-    val changes: IntArray
+    public val changes: IntArray
 
     /**
      * The deleted ranges of objects in the previous version of the collection. It will be set as a zero-sized
      * array if no objects were deleted.
      */
-    val deletionRanges: Array<Range>
+    public val deletionRanges: Array<Range>
 
     /**
      * The inserted ranges of objects in the new version of the collection. It will be set as a zero-sized
@@ -52,18 +52,18 @@ interface CollectionChangeSet {
      *
      * @return the {@link Range} array. A zero-sized array will be returned if no objects were inserted.
      */
-    val insertionRanges: Array<Range>
+    public val insertionRanges: Array<Range>
 
     /**
      * The modified ranges of objects in the new version of the collection. It will be set as a zero-sized
      * array if no objects were changed.
      */
-    val changeRanges: Array<Range>
+    public val changeRanges: Array<Range>
 
     /**
      * Defines a range of elements in a collection.
      */
-    data class Range(
+    public data class Range(
         /**
          * The start index of this change range.
          */

@@ -52,8 +52,8 @@ import io.realm.RealmList
  *   }
  * ```
  */
-sealed interface ListChange<T> {
-    val list: RealmList<T>
+public sealed interface ListChange<T> {
+    public val list: RealmList<T>
 }
 
 /**
@@ -61,17 +61,17 @@ sealed interface ListChange<T> {
  * state. Note, this state might be different than the list the flow was registered on, if another
  * thread or device updated the object in the meantime.
  */
-interface InitialList<T> : ListChange<T>
+public interface InitialList<T> : ListChange<T>
 
 /**
  * [RealmList] flow event that describes that an update has been performed on to the observed list. It
  * provides a reference to the list and a set of properties that describes the changes performed on
  * the list.
  */
-interface UpdatedList<T> : ListChange<T>, CollectionChangeSet
+public interface UpdatedList<T> : ListChange<T>, CollectionChangeSet
 
 /**
  * This interface describes the event is emitted deleted on a [RealmList] flow. The flow will terminate
  * after observing this event.
  */
-interface DeletedList<T> : ListChange<T>
+public interface DeletedList<T> : ListChange<T>

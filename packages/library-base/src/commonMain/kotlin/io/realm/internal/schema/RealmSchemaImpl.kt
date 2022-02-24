@@ -20,7 +20,7 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.schema.RealmSchema
 
-data class RealmSchemaImpl(
+internal data class RealmSchemaImpl(
     override val classes: Collection<RealmClassImpl>
 ) : RealmSchema {
 
