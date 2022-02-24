@@ -20,7 +20,23 @@ import io.realm.RealmObject
 import io.realm.query.RealmSingleQuery
 
 /**
- * This sealed class describe the possible changes that can be observed on a [RealmSingleQuery] flow.
+ * This sealed class describe the possible events that can be observed on a [RealmSingleQuery] flow.
+ *
+ * It extends the sealed interface [ObjectChange] by adding the new event [PendingObject] on top of
+ * its hierarchy. See [RealmSingleQuery.asFlow] for more information on how these events are emitted.
+ *
+ * Object event hierarchy diagram
+ *                                   ┌───────────────────┐
+ *                                   │ QueryObjectChange │
+ *                                   └─────────┬─────────┘
+ *                                ┌────────────┴───────────┐
+ *                         ┌──────▼───────┐        ┌───────▼───────┐
+ *                         │ ObjectChange │        │ PendingObject │
+ *                         └──────┬───────┘        └───────────────┘
+ *               ┌────────────────┼────────────────────┐
+ *      ┌────────▼──────┐  ┌──────▼────────┐  ┌────────▼──────┐
+ *      │ InitialObject │  │ UpdatedObject │  │ DeletedObject │
+ *      └───────────────┘  └───────────────┘  └───────────────┘
  */
 sealed interface QueryObjectChange<O : RealmObject> {
     /**
@@ -47,7 +63,7 @@ interface PendingObject<O : RealmObject> : QueryObjectChange<O>
  * // Variant 1: Switch on the sealed interface
  * realm.filter<Person>().first().asFlow()
  *   .collect { it: ObjectChange<Person> ->
- *       when(result) {
+ *       when(it) {
  *          is InitialObject -> initPersonUI(it.obj)
  *          is UpdatedObject -> updatePersonUi(it.obj, it.changedFields)
  *          is DeletedObject -> removePersonUi()

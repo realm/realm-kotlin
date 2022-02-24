@@ -250,12 +250,9 @@ interface RealmSingleQuery<T : RealmObject> {
     fun find(): T?
 
     /**
-     * Finds the first object that fulfills the query conditions and returns it asynchronously as a
-     * [Flow].
-     *
-     * If there is any changes to the first object represented by the query, the flow will emit an
-     * [QueryObjectChange] event depending on the query state. The flow will continue running indefinitely until
-     * canceled.
+     * Observes changes to the first object that fulfills the query conditions. The flow will emit
+     * [QueryObjectChange] events on any changes to the first object represented by the query. The flow
+     * will continue running indefinitely until cancelled.
      *
      * If subscribed on an empty query the flow will emit a [PendingObject] event to signal the query
      * is empty, it would then yield an [InitialObject] event for the first element. On a non-empty
@@ -268,19 +265,16 @@ interface RealmSingleQuery<T : RealmObject> {
      * If the first element is replaced with a new value, an [InitialObject] would be yield for the new
      * head, and would be follow with [UpdatedObject] on all its changes.
      *
-     * The state machine, based on if the list has or not a head, looks like this:
-     *
-     *                ┌───────┐
-     *                │ start ├───────────────────────────────┐
-     *                └───┬───┘       [InitialObject]         │
-     *                    │                                   │
-     *    [PendingObject] │                                   │
-     *                    │                                   │
-     *              ┌─────▼─────┐     [InitialObject]    ┌────▼───┐
-     *              │           ├────────────────────────►        ├─────┐[InitialObject]
-     *              │  No Head  │                        │  Head  │     │
-     *              │           ◄────────────────────────┤        │◄────┘[UpdatedObject]
-     *              └───────────┘     [DeletedObject]    └────────┘
+     *               ┌───────┐
+     *         ┌─────┤ Start ├───┐
+     *         │     └───────┘   ├────┐──────────┬─────┐
+     * ┌───────▼───────┐ ┌───────▼────┴──┐ ┌─────┴─────▼───┐
+     * │ PendingObject ├─► InitialObject │ │ UpdatedObject │
+     * └───────────────┘ └────▲──┬───────┘ └───────────┬───┘
+     *                        │  │  ┌───────────────┐  │
+     *                        │  └──► DeletedObject ◄──┘
+     *                        │     └───────┬───────┘
+     *                        └─────────────┘
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
