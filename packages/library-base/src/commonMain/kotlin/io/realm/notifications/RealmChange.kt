@@ -45,7 +45,7 @@ import io.realm.BaseRealm
  */
 public sealed interface RealmChange<R : BaseRealm> {
     /**
-     * Returns the newest version of the Realm.
+     * Returns the realm instance that was affected by the change event.
      */
     public val realm: R
 }
