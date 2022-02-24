@@ -54,8 +54,8 @@ import io.realm.RealmResults
  *   }
  * ```
  */
-sealed interface ListChange<out T : List<*>> {
-    data class Range(
+public sealed interface ListChange<out T : List<*>> {
+    public data class Range(
         /**
          * The start index of this change range.
          */
@@ -66,7 +66,7 @@ sealed interface ListChange<out T : List<*>> {
         val length: Int
     )
 
-    val list: T
+    public val list: T
 }
 
 /**
@@ -74,25 +74,25 @@ sealed interface ListChange<out T : List<*>> {
  * starting list state. Note, this state might be different than the list the flow was registered on,
  * if another thread or device updated the object in the meantime.
  */
-interface InitialList<T : List<*>> : ListChange<T>
+public interface InitialList<T : List<*>> : ListChange<T>
 
 /**
  * [RealmList] or [RealmResults] flow event that describes that an update has been performed on to the
  * observed list. It provides a reference to the list and a set of properties that describes the changes
  * performed on the list.
  */
-interface UpdatedList<T : List<*>> : ListChange<T> {
+public interface UpdatedList<T : List<*>> : ListChange<T> {
     /**
      * The deleted indices in the previous version of the collection. It will be set as a zero-sized
      * array if no objects were deleted.
      */
-    val deletions: IntArray
+    public val deletions: IntArray
 
     /**
      * The inserted indices in the new version of the collection. It will be set as a zero-sized
      * array if no objects were inserted.
      */
-    val insertions: IntArray
+    public val insertions: IntArray
 
     /**
      * The modified indices in the new version of the collection.
@@ -101,13 +101,13 @@ interface UpdatedList<T : List<*>> : ListChange<T> {
      * modified (or an object linked to by that object was modified). It will be set as a zero-sized
      * array if no objects were changed.
      */
-    val changes: IntArray
+    public val changes: IntArray
 
     /**
      * The deleted ranges of objects in the previous version of the collection. It will be set as a zero-sized
      * array if no objects were deleted.
      */
-    val deletionRanges: Array<ListChange.Range>
+    public val deletionRanges: Array<ListChange.Range>
 
     /**
      * The inserted ranges of objects in the new version of the collection. It will be set as a zero-sized
@@ -115,13 +115,13 @@ interface UpdatedList<T : List<*>> : ListChange<T> {
      *
      * @return the {@link Range} array. A zero-sized array will be returned if no objects were inserted.
      */
-    val insertionRanges: Array<ListChange.Range>
+    public val insertionRanges: Array<ListChange.Range>
 
     /**
      * The modified ranges of objects in the new version of the collection. It will be set as a zero-sized
      * array if no objects were changed.
      */
-    val changeRanges: Array<ListChange.Range>
+    public val changeRanges: Array<ListChange.Range>
 }
 
 /**
@@ -129,4 +129,4 @@ interface UpdatedList<T : List<*>> : ListChange<T> {
  * after observing this event. This event would never be observed on a [RealmResults] as they cannot
  * be deleted.
  */
-interface DeletedList<T : List<*>> : ListChange<T>
+public interface DeletedList<T : List<*>> : ListChange<T>

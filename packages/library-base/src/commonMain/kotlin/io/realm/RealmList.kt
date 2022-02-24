@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.Flow
  * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
  * [MutableRealm.copyToRealm] method.
  */
-interface RealmList<E> : MutableList<E> {
+public interface RealmList<E> : MutableList<E> {
 
     /**
      * Observes changes to the RealmList. The flow will emit a [InitialList] once subscribed, and
@@ -51,19 +51,19 @@ interface RealmList<E> : MutableList<E> {
      *
      * @return a flow representing changes to the list.
      */
-    fun asFlow(): Flow<ListChange<RealmList<E>>>
+    public fun asFlow(): Flow<ListChange<RealmList<E>>>
 }
 
 /**
  * Instantiates an **unmanaged** [RealmList].
  */
-fun <T> realmListOf(vararg elements: T): RealmList<T> =
+public fun <T> realmListOf(vararg elements: T): RealmList<T> =
     if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()
 
 /**
  * Instantiates an **unmanaged** [RealmList] containing all the elements of this iterable.
  */
-fun <T> Iterable<T>.toRealmList(): RealmList<T> {
+public fun <T> Iterable<T>.toRealmList(): RealmList<T> {
     if (this is Collection) {
         return when (size) {
             0 -> UnmanagedRealmList()

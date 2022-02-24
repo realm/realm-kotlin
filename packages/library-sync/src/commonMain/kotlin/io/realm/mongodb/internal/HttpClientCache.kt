@@ -15,7 +15,7 @@ import io.realm.internal.platform.freeze
  * on a platform basis.
  */
 
-fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
+internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
     // Need to freeze value as it is used inside the client's init lambda block, which also
     // freezes captured objects too, see:
     // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
@@ -44,8 +44,8 @@ fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
     }
 }
 
-expect class HttpClientCache(timeoutMs: Long, customLogger: Logger? = null) {
+internal expect class HttpClientCache(timeoutMs: Long, customLogger: Logger? = null) {
     fun getClient(): HttpClient
 }
 
-expect fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
+public expect fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient

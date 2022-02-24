@@ -24,4 +24,4 @@ package io.realm.annotations
  *
  * Any field in a RealmObject class can have this annotation.
  */
-annotation class Ignore
+public annotation class Ignore

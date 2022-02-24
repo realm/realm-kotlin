@@ -5,16 +5,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+// TODO Methods in this file are public as they are used extensively by the `test` module. Consider
+//  moving these to a `shared` module or similar that all other modules depend on. Then visibility
+//  can be controlled through the normal `api/implementation` dependency mechanisms.
+
 /**
  * Returns a default Realm write dispatcher for a Realm opened on the calling thread.
  */
-expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
+public expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
 
 /**
  * Returns a default multithread dispatcher used by Sync.
  * TODO https://github.com/realm/realm-kotlin/issues/501 compute size based on number of cores
  */
-expect fun multiThreadDispatcher(size: Int = 3): CoroutineDispatcher
+public expect fun multiThreadDispatcher(size: Int = 3): CoroutineDispatcher
 
 /**
  * Runs a new coroutine and **blocks** the current thread _interruptibly_ until its completion.
@@ -24,4 +28,4 @@ expect fun multiThreadDispatcher(size: Int = 3): CoroutineDispatcher
  *
  * See documentation in one of the specific Kotlin implementations for further details.
  */
-expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T
+public expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T

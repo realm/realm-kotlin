@@ -18,6 +18,6 @@ package io.realm.notifications
 /**
  * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
  */
-interface Cancellable {
-    fun cancel()
+public interface Cancellable {
+    public fun cancel()
 }
