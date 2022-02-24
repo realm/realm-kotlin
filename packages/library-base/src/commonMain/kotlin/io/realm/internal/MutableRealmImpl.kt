@@ -110,6 +110,10 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
         return copyToRealm(configuration.mediator, realmReference, instance)
     }
 
+    override fun <T : RealmObject> copyToRealmOrUpdate(instance: T): T {
+        return copyToRealmOrUpdate(configuration.mediator, realmReference, instance)
+    }
+
     override fun <T : RealmObject> delete(obj: T) {
         if (obj !is RealmObjectInternal) {
             throw IllegalArgumentException("Unmanaged objects cannot be deleted.")

@@ -590,6 +590,24 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_object_get_or_create_with_primary_key(
+        realm: NativePointer,
+        classKey: ClassKey,
+        primaryKey: Any?
+    ): NativePointer {
+        memScoped {
+            val found = alloc<BooleanVar>()
+            return CPointerWrapper(
+                realm_wrapper.realm_object_get_or_create_with_primary_key_by_ref(
+                    realm.cptr(),
+                    classKey.key.toUInt(),
+                    to_realm_value(primaryKey).ptr,
+                    found.ptr
+                )
+            )
+        }
+    }
+
     actual fun realm_object_is_valid(obj: NativePointer): Boolean {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }

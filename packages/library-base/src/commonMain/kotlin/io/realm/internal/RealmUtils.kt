@@ -111,7 +111,8 @@ internal fun <T : RealmObject> create(
     mediator: Mediator,
     realm: RealmReference,
     type: KClass<T>,
-    primaryKey: Any?
+    primaryKey: Any?,
+    updateExisting: Boolean
 ): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
@@ -120,35 +121,43 @@ internal fun <T : RealmObject> create(
     //  https://github.com/realm/realm-kotlin/issues/105
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
+        // FIXME Use cached keys instead
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
-        // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
-        //  instead
-        //  https://github.com/realm/realm-core/issues/4595
         key?.let {
-            val existingPrimaryKeyObject =
-                RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
-            existingPrimaryKeyObject?.let {
-                throw IllegalArgumentException("Cannot create object with existing primary key")
-            }
             val managedModel = mediator.createInstanceOf(type)
-            return managedModel.manage(
-                realm,
-                mediator,
-                type,
+            val nativeObject = if (updateExisting) {
+                RealmInterop.realm_object_get_or_create_with_primary_key(realm.dbPointer, key, primaryKey)
+            } else {
                 RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
-            )
+            }
+            return managedModel.manage(realm, mediator, type, nativeObject)
         } ?: error("Couldn't find key for class $objectType")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
     }
 }
 
-@Suppress("NestedBlockDepth")
 internal fun <T> copyToRealm(
     mediator: Mediator,
     realmPointer: RealmReference,
     element: T,
-    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
+): T = copyToRealm(mediator, realmPointer, element, false, cache)
+
+internal fun <T> copyToRealmOrUpdate(
+    mediator: Mediator,
+    realmPointer: RealmReference,
+    element: T,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
+): T = copyToRealm(mediator, realmPointer, element, true, cache)
+
+@Suppress("NestedBlockDepth")
+private fun <T> copyToRealm(
+    mediator: Mediator,
+    realmPointer: RealmReference,
+    element: T,
+    updateExisting: Boolean,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
 ): T {
     return if (element is RealmObjectInternal) {
         var elementToCopy = element
@@ -170,7 +179,8 @@ internal fun <T> copyToRealm(
                     mediator,
                     realmPointer,
                     instance::class,
-                    (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance)
+                    (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance),
+                    updateExisting
                 )
             } ?: create(mediator, realmPointer, instance::class)
 
@@ -183,7 +193,7 @@ internal fun <T> copyToRealm(
                     // In case of list ensure the values from the source are passed to the native list
                     if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
                         cache.getOrPut(sourceObject) {
-                            copyToRealm(mediator, realmPointer, sourceObject, cache)
+                            copyToRealm(mediator, realmPointer, sourceObject, updateExisting, cache)
                         }
                     } else if (sourceObject is RealmList<*>) {
                         processListMember(

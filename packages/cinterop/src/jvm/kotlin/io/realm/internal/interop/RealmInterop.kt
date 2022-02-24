@@ -291,6 +291,10 @@ actual object RealmInterop {
     actual fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer {
         return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, classKey.key, to_realm_value(primaryKey)))
     }
+    actual fun realm_object_get_or_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer {
+        val created = booleanArrayOf(false)
+        return LongPointerWrapper(realmc.realm_object_get_or_create_with_primary_key((realm as LongPointerWrapper).ptr, classKey.key, to_realm_value(primaryKey), created))
+    }
 
     actual fun realm_object_is_valid(obj: NativePointer): Boolean {
         return realmc.realm_object_is_valid(obj.cptr())

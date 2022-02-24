@@ -56,6 +56,9 @@ public interface MutableRealm : TypedRealm {
      */
     public fun <T : RealmObject> copyToRealm(instance: T): T
 
+    // TODO ImportFlags??
+    public fun <T : RealmObject> copyToRealmOrUpdate(instance: T): T
+
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *

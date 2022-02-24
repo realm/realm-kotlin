@@ -69,6 +69,24 @@ class MutableRealmTests {
     }
 
     @Test
+    fun copyToRealmOrUpdate() {
+        realm.writeBlocking {
+            val obj = StringPropertyWithPrimaryKey()
+            copyToRealm(obj.apply { id = "PRIMARY_KEY" })
+
+            obj.apply { this.value = "UPDATED_VALUE" }
+            copyToRealmOrUpdate(obj)
+        }
+
+        val objects = realm.query<StringPropertyWithPrimaryKey>().find()
+        assertEquals(1, objects.size)
+        objects[0].run {
+            assertEquals("PRIMARY_KEY", id)
+            assertEquals("UPDATED_VALUE", value)
+        }
+    }
+
+    @Test
     fun writeReturningUnmanaged() {
         assertTrue(realm.writeBlocking { Parent() } is Parent)
     }

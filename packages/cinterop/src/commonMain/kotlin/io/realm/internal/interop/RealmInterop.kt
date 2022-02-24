@@ -109,6 +109,8 @@ expect object RealmInterop {
 
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
+    // How to propagate C-API did_create out
+    fun realm_object_get_or_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
     fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer?
 
