@@ -35,7 +35,11 @@ interface BaseRealm : Versioned {
     /**
      * Returns the schema version of the realm.
      *
+     * The default initial schema version is 0.
+     *
      * @return the schema version of the realm.
+     *
+     * @see [Configuration.SharedBuilder.schemaVersion]
      */
     fun schemaVersion(): Long
 

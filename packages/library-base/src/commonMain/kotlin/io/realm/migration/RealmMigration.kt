@@ -36,7 +36,7 @@ fun interface AutomaticSchemaMigration : RealmMigration {
      * A **data migration context** providing access to the realm before and after an
      * [AutomaticSchemaMigration].
      */
-    interface DataMigrationContext {
+    interface MigrationContext {
 
         /**
          * The realm before automatic schema migration.
@@ -69,9 +69,9 @@ fun interface AutomaticSchemaMigration : RealmMigration {
      * Method triggered and allowing migration of data in the case that the schema of the realm has
      * changed.
      */
-    fun migrate(migrationContext: DataMigrationContext)
+    fun migrate(migrationContext: MigrationContext)
 }
 
 // FIXME Should we eliminate these. Only for convenience to allow deconstruction in lambda { (oldRealm, newRealm) -> }
-operator fun AutomaticSchemaMigration.DataMigrationContext.component1() = this.oldRealm
-operator fun AutomaticSchemaMigration.DataMigrationContext.component2() = this.newRealm
+operator fun AutomaticSchemaMigration.MigrationContext.component1() = this.oldRealm
+operator fun AutomaticSchemaMigration.MigrationContext.component2() = this.newRealm

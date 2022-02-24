@@ -199,7 +199,7 @@ interface Configuration {
             apply { this.schema = setOf(*classes) } as S
 
         /**
-         * Sets the migration to handle potential schema updates.
+         * Sets the migration to handle schema updates.
          *
          * @param migration the [RealmMigration] instance to handle schema and data migration in the
          * event of a schema update.

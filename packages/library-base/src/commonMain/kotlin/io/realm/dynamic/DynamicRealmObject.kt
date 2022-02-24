@@ -19,13 +19,16 @@ package io.realm.dynamic
 import kotlin.reflect.KClass
 
 /**
- * A **dynamic realm object** gives access the data of the realm objects through a generic string
+ * A **dynamic realm object** gives access to the data of the realm objects through a generic string
  * based API instead of the conventional [Realm] API that only allows access through the properties
  * of the corresponding schema classes supplied in the configuration.
  */
 interface DynamicRealmObject : RealmObject {
     /**
-     * The name of the class in the realm object model.
+     * The type of the object.
+     *
+     * This will normally correspond to the name of a model class that is extending
+     * [io.realm.RealmObject].
      */
     val type: String
 
