@@ -6,6 +6,7 @@ import io.realm.DynamicRealm
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmObject
+import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop

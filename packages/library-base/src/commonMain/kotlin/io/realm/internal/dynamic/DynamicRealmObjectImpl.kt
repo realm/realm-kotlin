@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.internal.dynamic
 
 import io.realm.DynamicRealmObject
 import io.realm.RealmList
+import io.realm.internal.Mediator
+import io.realm.internal.RealmObjectHelper
+import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmReference
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.schema.ClassMetadata
 import kotlin.reflect.KClass

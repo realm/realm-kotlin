@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.migration
 
 /**
  * A base class for the various **realm migration** schemes.

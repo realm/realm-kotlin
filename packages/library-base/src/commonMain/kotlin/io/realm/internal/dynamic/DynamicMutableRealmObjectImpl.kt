@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.internal.dynamic
 
 import io.realm.DynamicMutableRealmObject
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.RealmObjectHelper
+import io.realm.internal.RealmObjectInternal
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
 
@@ -32,7 +34,11 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
         when (value) {
-            is RealmObject -> RealmObjectHelper.setObject(this, propertyName, value as RealmObjectInternal)
+            is RealmObject -> RealmObjectHelper.setObject(
+                this,
+                propertyName,
+                value as RealmObjectInternal
+            )
             else -> RealmObjectHelper.setValue(this, propertyName, value)
         }
         return this

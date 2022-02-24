@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.dynamic
 
 import io.realm.query.RealmQuery
 

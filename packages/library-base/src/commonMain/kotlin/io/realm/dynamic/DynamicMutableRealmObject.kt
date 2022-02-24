@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.dynamic
 
 /**
  * A **dynamic mutable realm object** gives access and possibility to update the data of the realm

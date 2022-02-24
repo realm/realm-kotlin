@@ -25,6 +25,10 @@ import io.realm.DynamicRealmObject
 import io.realm.LogConfiguration
 import io.realm.RealmMigration
 import io.realm.RealmObject
+import io.realm.internal.dynamic.DynamicMutableRealmImpl
+import io.realm.internal.dynamic.DynamicMutableRealmObjectImpl
+import io.realm.internal.dynamic.DynamicRealmImpl
+import io.realm.internal.dynamic.DynamicRealmObjectImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode

@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.internal.dynamic
 
 import io.realm.DynamicRealm
 import io.realm.DynamicRealmObject
+import io.realm.internal.BaseRealmImpl
+import io.realm.internal.FrozenRealmReference
+import io.realm.internal.InternalConfiguration
+import io.realm.internal.RealmReference
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
