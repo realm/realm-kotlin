@@ -17,9 +17,19 @@
 package io.realm.internal
 
 import io.realm.DynamicMutableRealmObject
+import io.realm.RealmList
 import io.realm.RealmObject
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
+
+    override fun getObject(propertyName: String): DynamicMutableRealmObject? {
+        return getNullableValue(propertyName, DynamicMutableRealmObject::class)
+    }
+
+    override fun getObjectList(propertyName: String): RealmList<DynamicMutableRealmObject> {
+        return getValueList(propertyName, DynamicMutableRealmObject::class)
+    }
+
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
         when (value) {
             is RealmObject -> RealmObjectHelper.setObject(this, propertyName, value as RealmObjectInternal)

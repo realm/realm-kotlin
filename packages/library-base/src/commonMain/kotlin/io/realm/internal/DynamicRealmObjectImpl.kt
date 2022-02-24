@@ -32,19 +32,28 @@ open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override var `$realm$Mediator`: Mediator? = null
     override var `$realm$metadata`: ClassMetadata? = null
 
-    override fun <T : Any> get(propertyName: String, clazz: KClass<T>): T {
-        return RealmObjectHelper.dynamicGet(this, clazz, propertyName)!!
+    override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
+        // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE
+        return RealmObjectHelper.dynamicGetSingleton(this, propertyName, clazz, false)!!
     }
 
-    override fun <T : Any> getNullable(propertyName: String, clazz: KClass<T>): T? {
-        return RealmObjectHelper.dynamicGet(this, clazz, propertyName)
+    override fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T? {
+        return RealmObjectHelper.dynamicGetSingleton(this, propertyName, clazz, true)
     }
 
-    override fun <T : Any> getList(propertyName: String, clazz: KClass<T>): RealmList<T> {
-        return RealmObjectHelper.getList(this, propertyName, clazz) as RealmList<T>
+    override fun getObject(propertyName: String): DynamicRealmObject? {
+        return getNullableValue(propertyName, DynamicRealmObject::class)
     }
 
-    override fun <T : Any> getListOfNullable(propertyName: String, clazz: KClass<T>): RealmList<T?> {
-        return RealmObjectHelper.getList(this, propertyName, clazz) as RealmList<T?>
+    override fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T> {
+        return RealmObjectHelper.dynamicGetList(this, propertyName, clazz, false) as RealmList<T>
+    }
+
+    override fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?> {
+        return RealmObjectHelper.dynamicGetList(this, propertyName, clazz, true)
+    }
+
+    override fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject> {
+        return getValueList(propertyName, DynamicRealmObject::class)
     }
 }

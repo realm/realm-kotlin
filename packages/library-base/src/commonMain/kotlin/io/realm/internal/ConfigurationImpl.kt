@@ -18,7 +18,6 @@ package io.realm.internal
 
 import io.realm.AutomaticSchemaMigration
 import io.realm.CompactOnLaunchCallback
-import io.realm.DataMigrationContext
 import io.realm.DynamicMutableRealm
 import io.realm.DynamicMutableRealmObject
 import io.realm.DynamicRealm
@@ -132,7 +131,7 @@ open class ConfigurationImpl constructor(
                         val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
                         @Suppress("TooGenericExceptionCaught")
                         try {
-                            it.migrate(object : DataMigrationContext {
+                            it.migrate(object : AutomaticSchemaMigration.DataMigrationContext {
                                 override val oldRealm: DynamicRealm = old
                                 override val newRealm: DynamicMutableRealm = new
                             })

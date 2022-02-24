@@ -22,6 +22,13 @@ package io.realm
  * allows access and updates through the properties of the corresponding schema classes supplied in the configuration.
  */
 interface DynamicMutableRealmObject : DynamicRealmObject {
+
+    // FIXME Check doc
+    override fun getObject(propertyName: String): DynamicMutableRealmObject?
+
+    // FIXME Check doc
+    override fun getObjectList(propertyName: String): RealmList<DynamicMutableRealmObject>
+
     /**
      * Sets the value for the given field.
      *

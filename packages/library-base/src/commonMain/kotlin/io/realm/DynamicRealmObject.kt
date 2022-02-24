@@ -30,9 +30,10 @@ interface DynamicRealmObject : RealmObject {
     val type: String
 
     /**
-     * Returns the value of a specific value property.
+     * Returns the value of a specific non-nullable value property.
      *
-     * *NOTE:* This shouldn't be used for nullable properties. Use [getNullable] for those.
+     * To retrieve values for nullable, object or list properties use the [getNullableValue],
+     * [getObject] and `get<X>List` variants.
      *
      * @param propertyName the name of the property to retrieve the value for.
      * @param clazz the Kotlin class of the value.
@@ -42,10 +43,13 @@ interface DynamicRealmObject : RealmObject {
      * name, or if trying to retrieve collection properties.
      * @throws ClassCastException if the field doesn't contain a field of the defined return type.
      */
-    fun <T : Any> get(propertyName: String, clazz: KClass<T>): T
+    fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T
 
     /**
      * Returns the value of a specific nullable value property.
+     *
+     * To retrieve values for non-nullable, object or list properties use the [getValue],
+     * [getObject] and `get<X>List` variants.
      *
      * @param propertyName the name of the property to retrieve the value for.
      * @param clazz the Kotlin class of the value.
@@ -55,12 +59,28 @@ interface DynamicRealmObject : RealmObject {
      * name, or if trying to retrieve collection properties.
      * @throws ClassCastException if the field doesn't contain a field of the defined return type.
      */
-    fun <T : Any> getNullable(propertyName: String, clazz: KClass<T>): T?
+    fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T?
 
     /**
-     * Returns the list referenced by the property name as a [RealmList].
+     * Returns the value of a object property.
      *
-     * *NOTE:* This shouldn't be used for list of nullable values. Use [getListOfNullable] for those.
+     * To retrieve values for value or list properties use the `get<X>Value` and `get<X>List` variants.
+     *
+     * @param propertyName the name of the property to retrieve the value for.
+     * @param clazz the Kotlin class of the value.
+     * @param T the type of the value.
+     * @return the [RealmList] value.
+     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * name, or if trying to retrieve collection properties.
+     * @throws ClassCastException if the field doesn't contain a field of the defined return type.
+     */
+    fun getObject(propertyName: String): DynamicRealmObject?
+
+    /**
+     * Returns the list of non-nullable value elements referenced by the property name as a [RealmList].
+     *
+     * To retrieve values, objects or list of nullable elements or object use the `get<X>Value`,
+     * [getObject] and other `get<X>List` variants.
      *
      * @param propertyName the name of the list property to retrieve the list for.
      * @param clazz the Kotlin class of the list element type.
@@ -69,13 +89,14 @@ interface DynamicRealmObject : RealmObject {
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
      * name.
      */
-    // FIXME EVALUATE We don't have distinction between mutable and immutable list so we API will allow to
-    //  modify the resulting list ... even though it will fail
-    fun <T : Any> getList(propertyName: String, clazz: KClass<T>): RealmList<T>
+    fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T>
 
     /**
      * Returns the list of nullable elements referenced by the property name as a [RealmList].
      *
+     * To retrieve values, objects or list of non-nullable elements or object use the `get<X>Value`,
+     * [getObject] and other `get<X>List` variants.
+     *
      * @param propertyName the name of the list property to retrieve the list for.
      * @param clazz the Kotlin class of the list element type.
      * @param T the type of the list element type.
@@ -83,31 +104,46 @@ interface DynamicRealmObject : RealmObject {
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
      * name.
      */
-    fun <T : Any> getListOfNullable(propertyName: String, clazz: KClass<T>): RealmList<T?>
+    fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?>
+
+    /**
+     * Returns the list of objects referenced by the property name as a [RealmList].
+     *
+     * To retrieve values, objects or list of value elements use the `get<X>Value`,
+     * [getObject] and other `get<X>List` variants.
+     *
+     * @param propertyName the name of the list property to retrieve the list for.
+     * @param clazz the Kotlin class of the list element type.
+     * @param T the type of the list element type.
+     * @return the referenced [RealmList]
+     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * name.
+     */
+    fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject>
 }
 
 /**
  * Returns the value of a specific value property.
  *
- * Reified convenience wrapper of [DynamicRealmObject.get].
+ * Reified convenience wrapper of [DynamicRealmObject.getValue].
  */
-inline fun <reified T : Any> DynamicRealmObject.get(fieldName: String): T = this.get(fieldName, T::class)
+inline fun <reified T : Any> DynamicRealmObject.getValue(fieldName: String): T = this.getValue(fieldName, T::class)
 /**
  * Returns the value of a specific nullable value property.
  *
- * Reified convenience wrapper of [DynamicRealmObject.getNullable].
+ * Reified convenience wrapper of [DynamicRealmObject.getNullableValue].
  */
-inline fun <reified T : Any> DynamicRealmObject.getNullable(fieldName: String): T? = this.getNullable(fieldName, T::class)
+inline fun <reified T : Any> DynamicRealmObject.getNullableValue(fieldName: String): T? = this.getNullableValue(fieldName, T::class)
 
 /**
  * Returns the list referenced by the property name as a [RealmList].
  *
- * Reified convenience wrapper of [DynamicRealmObject.getList].
+ * Reified convenience wrapper of [DynamicRealmObject.getValueList].
  */
-inline fun <reified T : Any> DynamicRealmObject.getList(fieldName: String): RealmList<T> = this.getList(fieldName, T::class)
+inline fun <reified T : Any> DynamicRealmObject.getValueList(fieldName: String): RealmList<T> = this.getValueList(fieldName, T::class)
 /**
  * Returns the list of nullable elements referenced by the property name as a [RealmList].
  *
- * Reified convenience wrapper of [DynamicRealmObject.getListOfNullable].
+ * Reified convenience wrapper of [DynamicRealmObject.getNullableValueList].
  */
-inline fun <reified T : Any> DynamicRealmObject.getListOfNullable(fieldName: String): RealmList<T?> = this.getListOfNullable(fieldName, T::class)
+inline fun <reified T : Any> DynamicRealmObject.getNullableValueList(fieldName: String): RealmList<T?> = this.getNullableValueList(fieldName, T::class)

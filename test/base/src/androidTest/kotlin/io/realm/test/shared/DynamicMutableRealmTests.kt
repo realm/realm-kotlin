@@ -23,7 +23,7 @@ import io.realm.delete
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
-import io.realm.get
+import io.realm.getValue
 import io.realm.internal.InternalConfiguration
 import io.realm.isValid
 import io.realm.test.DynamicMutableTransactionRealm
@@ -73,7 +73,7 @@ class DynamicMutableRealmTests {
     fun createPrimaryKey() {
         val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
         assertTrue { dynamicMutableObject.isValid() }
-        assertEquals("PRIMARY_KEY", dynamicMutableObject.get("primaryKey"))
+        assertEquals("PRIMARY_KEY", dynamicMutableObject.getValue("primaryKey"))
     }
 
     // FIXME Do we need this for each type?
@@ -125,7 +125,7 @@ class DynamicMutableRealmTests {
         o1.set("stringField", "value")
 
         val o2 = dynamicMutableRealm.query("Sample").find().first()
-        assertEquals("value", o2.get("stringField"))
+        assertEquals("value", o2.getValue("stringField"))
     }
 
     @Test
@@ -144,7 +144,7 @@ class DynamicMutableRealmTests {
 
         val o2 = dynamicMutableRealm.findLatest(o1)
         assertNotNull(o2)
-        assertEquals("NEW_VALUE", o2.get("stringField"))
+        assertEquals("NEW_VALUE", o2.getValue("stringField"))
     }
 
     @Test

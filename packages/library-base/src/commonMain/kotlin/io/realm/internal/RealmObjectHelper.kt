@@ -21,14 +21,17 @@ import io.realm.DynamicRealmObject
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 
@@ -51,10 +54,13 @@ internal object RealmObjectHelper {
     @Suppress("unused") // Called from generated code
     internal fun <R> getValue(obj: RealmObjectInternal, propertyName: String): Any? {
         obj.checkValid()
-        return getByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
+        return getValueByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
     }
 
-    internal fun <R> getByKey(obj: RealmObjectInternal, key: io.realm.internal.interop.PropertyKey): Any? {
+    internal fun <R> getValueByKey(
+        obj: RealmObjectInternal,
+        key: io.realm.internal.interop.PropertyKey
+    ): Any? {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer`!!
             ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
@@ -182,7 +188,11 @@ internal object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    internal fun <R> setTimestamp(obj: RealmObjectInternal, propertyName: String, value: RealmInstant?) {
+    internal fun <R> setTimestamp(
+        obj: RealmObjectInternal,
+        propertyName: String,
+        value: RealmInstant?
+    ) {
         obj.checkValid()
         val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
@@ -228,13 +238,22 @@ internal object RealmObjectHelper {
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
     }
 
-    internal fun <R : Any> dynamicGet(obj: RealmObjectInternal, clazz: KClass<R>, propertyName: String): R? {
+    internal fun <R : Any> dynamicGetSingleton(
+        obj: RealmObjectInternal,
+        propertyName: String,
+        clazz: KClass<R>,
+        nullable: Boolean
+    ): R? {
+        obj.checkValid()
+        val propertyInfo = checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_NONE, clazz, nullable)
         val value = when (clazz) {
             RealmInstant::class -> getTimestamp<R>(obj, propertyName)
-            DynamicRealmObject::class -> getObject<DynamicRealmObject>(obj, propertyName)
-            DynamicMutableRealmObject::class -> getObject<DynamicMutableRealmObject>(obj, propertyName)
-            RealmList::class -> throw IllegalArgumentException("Cannot retrieve RealmList through 'get(...)', use getList(...) instead: $propertyName")
-            else -> getValue<R>(obj, propertyName)
+            DynamicRealmObject::class -> getObjectByKey<DynamicRealmObject>(obj, propertyInfo.key)
+            DynamicMutableRealmObject::class -> getObjectByKey<DynamicMutableRealmObject>(
+                obj,
+                propertyInfo.key
+            )
+            else -> getValueByKey<R>(obj, propertyInfo.key)
         }
         return value?.let {
             @Suppress("UNCHECKED_CAST")
@@ -243,6 +262,45 @@ internal object RealmObjectHelper {
             } else {
                 throw ClassCastException("Retrieving value of type '${clazz.simpleName}' but was of type '${value::class.simpleName}'")
             }
+        }
+    }
+
+    internal fun <R : Any> dynamicGetList(
+        obj: RealmObjectInternal,
+        propertyName: String,
+        clazz: KClass<R>,
+        nullable: Boolean
+    ): RealmList<R?> {
+        obj.checkValid()
+        val propertyInfo = checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_LIST, clazz, nullable)
+        return getListByKey(obj, propertyInfo.key, clazz) as RealmList<R?>
+    }
+
+    private fun checkPropertyType(obj: RealmObjectInternal, propertyName: String, collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): PropertyInfo {
+        val realElementType = when (elementType) {
+            DynamicRealmObject::class,
+            DynamicMutableRealmObject::class ->
+                RealmObject::class
+            else -> elementType
+        }
+        return obj.`$realm$metadata`!!.info(propertyName)!!.also { propertyInfo ->
+            val kClass = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass
+            if (collectionType != propertyInfo.collectionType ||
+                realElementType != kClass ||
+                nullable != propertyInfo.isNullable
+            ) {
+                // FIXME Should this rather be ClassCastException?
+                throw IllegalArgumentException("Trying to access property '${obj.`$realm$ClassName`}.$propertyName' as type: '${formatType(collectionType, realElementType, nullable)}' but actual schema type is '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}'")
+            }
+        }
+    }
+
+    private fun formatType(collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): String {
+        val elementTypeString = elementType.toString() + if (nullable) "?" else ""
+        return when (collectionType) {
+            CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
+            CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
+            else -> TODO()
         }
     }
 

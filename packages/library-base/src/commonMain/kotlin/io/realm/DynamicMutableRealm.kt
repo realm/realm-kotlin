@@ -74,5 +74,6 @@ interface DynamicMutableRealm : DynamicRealm {
     fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
 
     // FIXME Do we want an explicit delete here? At least we should probably match MutableRealm.delete/RealmObject.delete behaviour
+    //  https://github.com/realm/realm-kotlin/issues/181
     // fun delete(obj: RealmObject)
 }

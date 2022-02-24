@@ -25,10 +25,10 @@ import io.realm.RealmInstant
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
-import io.realm.get
-import io.realm.getList
-import io.realm.getListOfNullable
-import io.realm.getNullable
+import io.realm.getNullableValue
+import io.realm.getNullableValueList
+import io.realm.getValue
+import io.realm.getValueList
 import io.realm.internal.InternalConfiguration
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmStorageType
@@ -88,48 +88,48 @@ class DynamicMutableRealmObjectTests {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 dynamicSample.set(name, true)
-                                assertEquals(true, dynamicSample.getNullable(name))
+                                assertEquals(true, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
-                                assertEquals(null, dynamicSample.getNullable<Boolean>(name))
+                                assertEquals(null, dynamicSample.getNullableValue<Boolean>(name))
                             }
                             RealmStorageType.INT -> {
                                 dynamicSample.set(name, 42L)
-                                assertEquals(42L, dynamicSample.getNullable(name))
+                                assertEquals(42L, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
-                                assertEquals(null, dynamicSample.getNullable<Long>(name))
+                                assertEquals(null, dynamicSample.getNullableValue<Long>(name))
                             }
                             RealmStorageType.STRING -> {
                                 dynamicSample.set(name, "STRING")
-                                assertEquals("STRING", dynamicSample.getNullable(name))
+                                assertEquals("STRING", dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
-                                assertEquals(null, dynamicSample.getNullable<String>(name))
+                                assertEquals(null, dynamicSample.getNullableValue<String>(name))
                             }
                             RealmStorageType.OBJECT -> {
                                 dynamicSample.set(name, Sample())
-                                val nullableObject = dynamicSample.getNullable<DynamicRealmObject>(name)
+                                val nullableObject = dynamicSample.getObject(name)
                                 assertNotNull(nullableObject)
-                                assertEquals("Realm", nullableObject.get("stringField"))
+                                assertEquals("Realm", nullableObject.getValue("stringField"))
                                 dynamicSample.set(name, null)
-                                assertEquals(null, dynamicSample.getNullable<DynamicMutableRealmObject>(name))
+                                assertEquals(null, dynamicSample.getObject(name))
                             }
                             RealmStorageType.FLOAT -> {
                                 dynamicSample.set(name, 4.2f)
-                                assertEquals(4.2f, dynamicSample.getNullable(name))
+                                assertEquals(4.2f, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
-                                assertEquals(null, dynamicSample.getNullable<Float>(name))
+                                assertEquals(null, dynamicSample.getNullableValue<Float>(name))
                             }
                             RealmStorageType.DOUBLE -> {
                                 dynamicSample.set(name, 4.2)
-                                assertEquals(4.2, dynamicSample.getNullable(name))
+                                assertEquals(4.2, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
-                                assertEquals(null, dynamicSample.getNullable<Double>(name))
+                                assertEquals(null, dynamicSample.getNullableValue<Double>(name))
                             }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.fromEpochSeconds(100, 100)
                                 dynamicSample.set(name, value)
-                                assertEquals(value, dynamicSample.getNullable(name))
+                                assertEquals(value, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
-                                assertEquals(null, dynamicSample.getNullable<RealmInstant>(name))
+                                assertEquals(null, dynamicSample.getNullableValue<RealmInstant>(name))
                             }
                             else -> error("Model contains untested properties: $property")
                         }
@@ -137,28 +137,28 @@ class DynamicMutableRealmObjectTests {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 dynamicSample.set(name, true)
-                                assertEquals(true, dynamicSample.getNullable(name))
+                                assertEquals(true, dynamicSample.getValue(name))
                             }
                             RealmStorageType.INT -> {
                                 dynamicSample.set(name, 42L)
-                                assertEquals(42L, dynamicSample.getNullable(name))
+                                assertEquals(42L, dynamicSample.getValue(name))
                             }
                             RealmStorageType.STRING -> {
                                 dynamicSample.set(name, "STRING")
-                                assertEquals("STRING", dynamicSample.getNullable(name))
+                                assertEquals("STRING", dynamicSample.getValue(name))
                             }
                             RealmStorageType.FLOAT -> {
                                 dynamicSample.set(name, 4.2f)
-                                assertEquals(4.2f, dynamicSample.getNullable(name))
+                                assertEquals(4.2f, dynamicSample.getValue(name))
                             }
                             RealmStorageType.DOUBLE -> {
                                 dynamicSample.set(name, 4.2)
-                                assertEquals(4.2, dynamicSample.getNullable(name))
+                                assertEquals(4.2, dynamicSample.getValue(name))
                             }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.fromEpochSeconds(100, 100)
                                 dynamicSample.set(name, value)
-                                assertEquals(value, dynamicSample.getNullable(name))
+                                assertEquals(value, dynamicSample.getValue(name))
                             }
                             else -> error("Model contains untested properties: $property")
                         }
@@ -169,9 +169,9 @@ class DynamicMutableRealmObjectTests {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 val value = true
-                                dynamicSample.getListOfNullable<Boolean>(property.name).add(value)
-                                dynamicSample.getListOfNullable<Boolean>(property.name).add(null)
-                                val listOfNullable = dynamicSample.getListOfNullable(property.name, Boolean::class)
+                                dynamicSample.getNullableValueList<Boolean>(property.name).add(value)
+                                dynamicSample.getNullableValueList<Boolean>(property.name).add(null)
+                                val listOfNullable = dynamicSample.getNullableValueList(property.name, Boolean::class)
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
@@ -184,41 +184,41 @@ class DynamicMutableRealmObjectTests {
                                     "nullableLongListField" -> defaultSample.longField
                                     else -> error("Unexpected integral field ${property.name}")
                                 }
-                                dynamicSample.getListOfNullable<Long>(property.name).add(value)
-                                dynamicSample.getListOfNullable<Long>(property.name).add(null)
-                                val listOfNullable = dynamicSample.getListOfNullable(property.name, Long::class)
+                                dynamicSample.getNullableValueList<Long>(property.name).add(value)
+                                dynamicSample.getNullableValueList<Long>(property.name).add(null)
+                                val listOfNullable = dynamicSample.getNullableValueList(property.name, Long::class)
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
                             RealmStorageType.STRING -> {
                                 val value = "NEW_ELEMENT"
-                                dynamicSample.getListOfNullable<String>(property.name).add(value)
-                                dynamicSample.getListOfNullable<String>(property.name).add(null)
-                                val listOfNullable = dynamicSample.getListOfNullable(property.name, String::class)
+                                dynamicSample.getNullableValueList<String>(property.name).add(value)
+                                dynamicSample.getNullableValueList<String>(property.name).add(null)
+                                val listOfNullable = dynamicSample.getNullableValueList(property.name, String::class)
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
                             RealmStorageType.FLOAT -> {
                                 val value = 1.234f
-                                dynamicSample.getListOfNullable<Float>(property.name).add(value)
-                                dynamicSample.getListOfNullable<Float>(property.name).add(null)
-                                val listOfNullable = dynamicSample.getListOfNullable(property.name, Float::class)
+                                dynamicSample.getNullableValueList<Float>(property.name).add(value)
+                                dynamicSample.getNullableValueList<Float>(property.name).add(null)
+                                val listOfNullable = dynamicSample.getNullableValueList(property.name, Float::class)
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
                             RealmStorageType.DOUBLE -> {
                                 val value = 1.234
-                                dynamicSample.getListOfNullable<Double>(property.name).add(value)
-                                dynamicSample.getListOfNullable<Double>(property.name).add(null)
-                                val listOfNullable = dynamicSample.getListOfNullable(property.name, Double::class)
+                                dynamicSample.getNullableValueList<Double>(property.name).add(value)
+                                dynamicSample.getNullableValueList<Double>(property.name).add(null)
+                                val listOfNullable = dynamicSample.getNullableValueList(property.name, Double::class)
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.fromEpochSeconds(100, 100)
-                                dynamicSample.getListOfNullable<RealmInstant>(property.name).add(value)
-                                dynamicSample.getListOfNullable<RealmInstant>(property.name).add(null)
-                                val listOfNullable = dynamicSample.getListOfNullable(property.name, RealmInstant::class)
+                                dynamicSample.getNullableValueList<RealmInstant>(property.name).add(value)
+                                dynamicSample.getNullableValueList<RealmInstant>(property.name).add(null)
+                                val listOfNullable = dynamicSample.getNullableValueList(property.name, RealmInstant::class)
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
@@ -228,8 +228,8 @@ class DynamicMutableRealmObjectTests {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 val value = true
-                                dynamicSample.getList<Boolean>(property.name).add(value)
-                                assertEquals(value, dynamicSample.getList(property.name, Boolean::class)[0])
+                                dynamicSample.getValueList<Boolean>(property.name).add(value)
+                                assertEquals(value, dynamicSample.getValueList(property.name, Boolean::class)[0])
                             }
                             RealmStorageType.INT -> {
                                 val value: Long = when (property.name) {
@@ -240,33 +240,33 @@ class DynamicMutableRealmObjectTests {
                                     "longListField" -> defaultSample.longField
                                     else -> error("Unexpected integral field ${property.name}")
                                 }
-                                dynamicSample.getList<Long>(property.name).add(value)
-                                assertEquals(value, dynamicSample.getList(property.name, Long::class)[0])
+                                dynamicSample.getValueList<Long>(property.name).add(value)
+                                assertEquals(value, dynamicSample.getValueList(property.name, Long::class)[0])
                             }
                             RealmStorageType.STRING -> {
                                 val value = "NEW_ELEMENT"
-                                dynamicSample.getList<String>(property.name).add(value)
-                                assertEquals(value, dynamicSample.getList(property.name, String::class)[0])
+                                dynamicSample.getValueList<String>(property.name).add(value)
+                                assertEquals(value, dynamicSample.getValueList(property.name, String::class)[0])
                             }
                             RealmStorageType.FLOAT -> {
                                 val value = 1.234f
-                                dynamicSample.getList<Float>(property.name).add(value)
-                                assertEquals(value, dynamicSample.getList(property.name, Float::class)[0])
+                                dynamicSample.getValueList<Float>(property.name).add(value)
+                                assertEquals(value, dynamicSample.getValueList(property.name, Float::class)[0])
                             }
                             RealmStorageType.DOUBLE -> {
                                 val value = 1.234
-                                dynamicSample.getList<Double>(property.name).add(value)
-                                assertEquals(value, dynamicSample.getList(property.name, Double::class)[0])
+                                dynamicSample.getValueList<Double>(property.name).add(value)
+                                assertEquals(value, dynamicSample.getValueList(property.name, Double::class)[0])
                             }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.fromEpochSeconds(100, 100)
-                                dynamicSample.getList<RealmInstant>(property.name).add(value)
-                                assertEquals(value, dynamicSample.getList(property.name, RealmInstant::class)[0])
+                                dynamicSample.getValueList<RealmInstant>(property.name).add(value)
+                                assertEquals(value, dynamicSample.getValueList(property.name, RealmInstant::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
                                 val value = dynamicMutableRealm.createObject("Sample").set("stringField", "NEW_OBJECT")
-                                dynamicSample.getList<DynamicRealmObject>(property.name).add(value)
-                                assertEquals("NEW_OBJECT", dynamicSample.getList(property.name, DynamicRealmObject::class)[0].get("stringField"))
+                                dynamicSample.getValueList<DynamicRealmObject>(property.name).add(value)
+                                assertEquals("NEW_OBJECT", dynamicSample.getValueList(property.name, DynamicRealmObject::class)[0].getValue("stringField"))
                             }
                             else -> error("Model contains untested properties: $property")
                         }
@@ -286,7 +286,7 @@ class DynamicMutableRealmObjectTests {
                 "nullableObject",
                 dynamicMutableRealm.createObject("Sample").set("stringField", "CHILD")
             )
-        val child: DynamicMutableRealmObject = parent.get("nullableObject")
+        val child: DynamicMutableRealmObject? = parent.getObject("nullableObject")
         assertNotNull(child)
         child.set("stringField", "UPDATED_CHILD")
     }

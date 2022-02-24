@@ -38,7 +38,7 @@ interface ClassMetadata {
     val className: String
     val classKey: ClassKey
     operator fun get(propertyName: String): PropertyKey?
-    fun info(propertyName: String): PropertyInfo?
+    fun info(propertyName: String): PropertyInfo
     fun getOrThrow(propertyName: String): PropertyKey = get(propertyName)
         ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
@@ -82,5 +82,6 @@ class CachedClassMetadata(dbPointer: NativePointer, override val className: Stri
     }
 
     override fun get(propertyName: String): PropertyKey? = propertyKeyMap[propertyName]
-    override fun info(propertyName: String): PropertyInfo? = propertyMap[propertyName]
+    override fun info(propertyName: String): PropertyInfo = propertyMap[propertyName]
+        ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
