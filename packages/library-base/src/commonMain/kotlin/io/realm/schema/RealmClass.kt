@@ -19,27 +19,27 @@ package io.realm.schema
 /**
  * A [RealmClass] describing the object model of a specific class.
  */
-interface RealmClass {
+public interface RealmClass {
     /**
      * The name of the object model.
      */
-    val name: String
+    public val name: String
 
     /**
      * The properties of the object model.
      */
-    val properties: Collection<RealmProperty>
+    public val properties: Collection<RealmProperty>
 
     /**
      * The primary key property of the object model or `null` if the object model doesn't have a
      * primary key.
      */
-    val primaryKey: RealmProperty?
+    public val primaryKey: RealmProperty?
 
     /**
      * Index operator to lookup a specific [RealmProperty] from it's property name.
      *
      * @return the [RealmProperty] with the given `propertyName` or `null` if no such property exists.
      */
-    operator fun get(key: String): RealmProperty?
+    public operator fun get(key: String): RealmProperty?
 }

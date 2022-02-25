@@ -3,7 +3,7 @@ package io.realm.internal
 import io.realm.RealmInstant
 import io.realm.internal.interop.Timestamp
 
-data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp, RealmInstant {
+internal data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp, RealmInstant {
     constructor(ts: Timestamp) : this(ts.seconds, ts.nanoSeconds)
 
     override val epochSeconds: Long

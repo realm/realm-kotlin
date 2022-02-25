@@ -137,6 +137,12 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
+
+    // Require that all methods in the API have visibility modifiers and return types.
+    // Anything inside `io.realm.internal.*` is considered internal regardless of their
+    // visibility modifier and will be stripped from Dokka, but will unfortunately still
+    // leak into auto-complete in the IDE.
+    explicitApi = org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode.Strict
 }
 
 // Using a custom name module for internal methods to avoid default name mangling in Kotlin compiler which uses the module
@@ -210,7 +216,7 @@ realmPublish {
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    moduleName.set("Realm Kotlin Multiplatform SDK")
+    moduleName.set("Realm Kotlin SDK")
     moduleVersion.set(Realm.version)
     dokkaSourceSets {
         configureEach {
@@ -276,7 +282,7 @@ tasks.create("generateSdkVersionConstant") {
             """
             // Generated file. Do not edit!
             package io.realm.internal
-            const val SDK_VERSION = "${project.version}"
+            public const val SDK_VERSION: String = "${project.version}"
             """.trimIndent()
         )
     }
