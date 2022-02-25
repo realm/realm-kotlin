@@ -20,8 +20,8 @@ import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
-import io.realm.notifications.Callback
-import io.realm.notifications.Cancellable
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import io.realm.query.RealmQuery
 import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow

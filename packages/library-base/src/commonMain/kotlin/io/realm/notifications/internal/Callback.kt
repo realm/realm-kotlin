@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.notifications
+package io.realm.notifications.internal
 
 /**
  * A `callback` interface to receive notifications about updates to Realm backed objects and
@@ -29,6 +29,6 @@ package io.realm.notifications
  * @see [SetChange]
  * @see [MapChange]
  */
-public fun interface Callback<T> {
+internal fun interface Callback<T> {
     public fun onChange(change: T?, error: Throwable?)
 }

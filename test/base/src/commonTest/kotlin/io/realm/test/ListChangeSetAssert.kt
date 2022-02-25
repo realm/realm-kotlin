@@ -16,12 +16,12 @@
 
 package io.realm.test
 
-import io.realm.notifications.CollectionChangeSet
+import io.realm.notifications.ListChangeSet
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-private fun assertContains(array: IntArray, element: CollectionChangeSet.Range) {
+private fun assertContains(array: IntArray, element: ListChangeSet.Range) {
     for (value in element.startIndex until element.startIndex + element.length) {
         kotlin.test.assertContains(
             array,
@@ -32,9 +32,9 @@ private fun assertContains(array: IntArray, element: CollectionChangeSet.Range) 
 }
 
 private fun assertContains(
-    expectedRanges: Array<CollectionChangeSet.Range>,
+    expectedRanges: Array<ListChangeSet.Range>,
     indices: IntArray,
-    ranges: Array<CollectionChangeSet.Range>
+    ranges: Array<ListChangeSet.Range>
 ) {
     if (expectedRanges.isEmpty()) {
         assertTrue(indices.isEmpty())
@@ -54,26 +54,26 @@ private fun assertContains(
 }
 
 fun assertIsChangeSet(
-    collectionChangeSet: CollectionChangeSet,
-    insertRanges: Array<CollectionChangeSet.Range> = emptyArray(),
-    deletionRanges: Array<CollectionChangeSet.Range> = emptyArray(),
-    changesRanges: Array<CollectionChangeSet.Range> = emptyArray()
+    listChangeSet: ListChangeSet,
+    insertRanges: Array<ListChangeSet.Range> = emptyArray(),
+    deletionRanges: Array<ListChangeSet.Range> = emptyArray(),
+    changesRanges: Array<ListChangeSet.Range> = emptyArray()
 ) {
     assertContains(
         insertRanges,
-        collectionChangeSet.insertions,
-        collectionChangeSet.insertionRanges
+        listChangeSet.insertions,
+        listChangeSet.insertionRanges
     )
 
     assertContains(
         deletionRanges,
-        collectionChangeSet.deletions,
-        collectionChangeSet.deletionRanges
+        listChangeSet.deletions,
+        listChangeSet.deletionRanges
     )
 
     assertContains(
         changesRanges,
-        collectionChangeSet.changes,
-        collectionChangeSet.changeRanges
+        listChangeSet.changes,
+        listChangeSet.changeRanges
     )
 }

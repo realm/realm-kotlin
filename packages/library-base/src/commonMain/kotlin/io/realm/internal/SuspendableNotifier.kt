@@ -5,8 +5,8 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.util.Validation.sdkError
-import io.realm.notifications.Callback
-import io.realm.notifications.Cancellable
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.cancel

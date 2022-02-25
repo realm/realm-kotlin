@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.notifications.internal
 
-package io.realm.notifications
-
-import io.realm.RealmList
-
-internal class InitialListImpl<T>(override val list: RealmList<T>) : InitialList<T>
-
-internal class UpdatedListImpl<T>(
-    override val list: RealmList<T>,
-    collectionChangeSet: CollectionChangeSet
-) : UpdatedList<T>, CollectionChangeSet by collectionChangeSet
-
-internal class DeletedListImpl<T>(override val list: RealmList<T>) : DeletedList<T>
+/**
+ * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
+ */
+internal interface Cancellable {
+    fun cancel()
+}

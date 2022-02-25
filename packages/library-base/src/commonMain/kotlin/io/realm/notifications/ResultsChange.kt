@@ -72,13 +72,13 @@ public sealed interface ResultsChange<T : RealmObject> {
 
 /**
  * Initial event to be emitted on a [RealmResults] flow. It contains a reference to the
- * starting query results state.
+ * result of the query, the first time it runs.
  */
 public interface InitialResults<T : RealmObject> : ResultsChange<T>
 
 /**
- * [RealmResults] flow event that describes that an update has been performed on to the
- * observed list. It provides a reference to the list and a set of properties that describes the changes
- * performed on the list.
+ * [RealmResults] flow event that describes that an update has happened to elements in the
+ * observed query. It provides a reference to the new query result and a set of properties that
+ * describes the changes that happened to the query result.
  */
-public interface UpdatedResults<T : RealmObject> : ResultsChange<T>, CollectionChangeSet
+public interface UpdatedResults<T : RealmObject> : ResultsChange<T>, ListChangeSet

@@ -25,10 +25,10 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
-import io.realm.notifications.DeletedListImpl
-import io.realm.notifications.InitialListImpl
 import io.realm.notifications.ListChange
-import io.realm.notifications.UpdatedListImpl
+import io.realm.notifications.internal.DeletedListImpl
+import io.realm.notifications.internal.InitialListImpl
+import io.realm.notifications.internal.UpdatedListImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -149,7 +149,7 @@ internal class ManagedRealmList<E>(
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            val builder = CollectionChangeSetBuilderImpl(change)
+            val builder = ListChangeSetBuilderImpl(change)
 
             if (builder.isEmpty()) {
                 channel.trySend(InitialListImpl(frozenList))

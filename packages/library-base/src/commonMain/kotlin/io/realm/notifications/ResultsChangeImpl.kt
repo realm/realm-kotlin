@@ -19,10 +19,11 @@ package io.realm.notifications
 import io.realm.RealmObject
 import io.realm.RealmResults
 
-internal class InitialResultsImpl<T : RealmObject>(override val list: RealmResults<T>) :
-    InitialResults<T>
+internal class InitialResultsImpl<T : RealmObject>(
+    override val list: RealmResults<T>
+) : InitialResults<T>
 
 internal class UpdatedResultsImpl<T : RealmObject>(
     override val list: RealmResults<T>,
-    collectionChangeSet: CollectionChangeSet
-) : UpdatedResults<T>, CollectionChangeSet by collectionChangeSet
+    listChangeSet: ListChangeSet
+) : UpdatedResults<T>, ListChangeSet by listChangeSet

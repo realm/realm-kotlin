@@ -24,10 +24,10 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.util.Validation.sdkError
 import io.realm.isValid
-import io.realm.notifications.DeletedObjectImpl
-import io.realm.notifications.InitialObjectImpl
 import io.realm.notifications.ObjectChange
-import io.realm.notifications.UpdatedObjectImpl
+import io.realm.notifications.internal.DeletedObjectImpl
+import io.realm.notifications.internal.InitialObjectImpl
+import io.realm.notifications.internal.UpdatedObjectImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow

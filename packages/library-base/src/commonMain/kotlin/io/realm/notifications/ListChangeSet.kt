@@ -15,10 +15,12 @@
  */
 package io.realm.notifications
 
+import io.realm.RealmResults
+
 /**
- * This interface models the changes that can occur to a collection.
+ * This interface models the changes that can occur to a list.
  */
-public interface CollectionChangeSet {
+public interface ListChangeSet {
     /**
      * The deleted indices in the previous version of the collection. It will be set as a zero-sized
      * array if no objects were deleted.
@@ -34,7 +36,7 @@ public interface CollectionChangeSet {
     /**
      * The modified indices in the new version of the collection.
      * <p>
-     * For {@link RealmResults}, this means that one or more of the properties of the object at the given index were
+     * For [RealmResults], this means that one or more of the properties of the object at the given index were
      * modified (or an object linked to by that object was modified). It will be set as a zero-sized
      * array if no objects were changed.
      */
@@ -49,8 +51,6 @@ public interface CollectionChangeSet {
     /**
      * The inserted ranges of objects in the new version of the collection. It will be set as a zero-sized
      * array if no objects were inserted.
-     *
-     * @return the {@link Range} array. A zero-sized array will be returned if no objects were inserted.
      */
     public val insertionRanges: Array<Range>
 
@@ -61,7 +61,7 @@ public interface CollectionChangeSet {
     public val changeRanges: Array<Range>
 
     /**
-     * Defines a range of elements in a collection.
+     * Defines a range of elements in a list.
      */
     public data class Range(
         /**

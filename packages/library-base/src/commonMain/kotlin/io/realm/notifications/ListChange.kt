@@ -1,12 +1,28 @@
+/*
+ * Copyright 2021 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.notifications
 
 import io.realm.RealmList
 
 /**
- * This sealed interface describe the possible changes that can happen to a list collection.
+ * This sealed interface describes the possible changes that can happen to a [RealmList] collection.
  *
  * The states are represented by the specific subclasses [InitialList], [UpdatedList] and
- * [DeletedList]. When the list is deleted an empty list is emitted instead of null.
+ * [DeletedList]. When the list is deleted an empty list is emitted instead of `null`.
  *
  * Changes can thus be consumed in a number of ways:
  *
@@ -64,14 +80,14 @@ public sealed interface ListChange<T> {
 public interface InitialList<T> : ListChange<T>
 
 /**
- * [RealmList] flow event that describes that an update has been performed on to the observed list. It
- * provides a reference to the list and a set of properties that describes the changes performed on
- * the list.
+ * [RealmList] flow event that describes that an update has been performed on the observed list. It
+ * provides a reference to the updated list and a set of properties that describes the changes
+ * performed on the list.
  */
-public interface UpdatedList<T> : ListChange<T>, CollectionChangeSet
+public interface UpdatedList<T> : ListChange<T>, ListChangeSet
 
 /**
- * This interface describes the event is emitted deleted on a [RealmList] flow. The flow will terminate
+ * This event is emitted when the parent object owning the list has been deleted, which in turn also removes the list. The flow will terminate
  * after observing this event.
  */
 public interface DeletedList<T> : ListChange<T>
