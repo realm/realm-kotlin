@@ -1,12 +1,12 @@
 package io.realm.internal
 
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.util.Validation.sdkError
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
@@ -82,12 +82,12 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T> registerObserver(thawable: Thawable<T>): Flow<T> {
+    internal fun <T> registerObserver(thawableObservable: Thawable<Observable<T>>): Flow<T> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             withContext(dispatcher) {
                 ensureActive()
-                val liveRef: Notifiable<T> = thawable.thaw(realm.realmReference)
+                val liveRef: Observable<T> = thawableObservable.thaw(realm.realmReference)
                     ?: error("Cannot listen for changes on a deleted reference")
                 val interopCallback: io.realm.internal.interop.Callback =
                     object : io.realm.internal.interop.Callback {
@@ -102,7 +102,7 @@ internal class SuspendableNotifier(
                 val newToken =
                     NotificationToken<Callback<T>>(
                         // FIXME What is this callback for anyway?
-                        callback = Callback { },
+                        callback = Callback { _, _ -> /* Do nothing */ },
                         token = liveRef.registerForNotification(interopCallback)
                     )
                 token.value = newToken

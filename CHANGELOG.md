@@ -1,10 +1,11 @@
 ## 0.10.0-SNAPSHOT (2022-MM-DD)
 
 ### Breaking Changes
-* None.
+* `Realm.observe()` has been renamed to `asFlow()`.
 
 ### Enhancements
 * Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
+* Add support for fine-grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `RealmInitial` or `RealmUpdated` states.
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
