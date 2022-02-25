@@ -122,6 +122,7 @@ internal fun <T : RealmObject> create(
     val objectType = type.simpleName ?: error("Cannot get class name")
     try {
         // FIXME Use cached keys instead
+        //  Already part of https://github.com/realm/realm-kotlin/pull/674
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
         key?.let {
             val managedModel = mediator.createInstanceOf(type)
