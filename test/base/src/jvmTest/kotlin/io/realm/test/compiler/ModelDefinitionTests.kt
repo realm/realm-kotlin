@@ -65,4 +65,21 @@ class ModelDefinitionTests {
         )
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
     }
+
+    @Test
+    fun `data_class_with_default_constructor`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "multiple_ctor.kt",
+                """
+                        import io.realm.RealmObject
+                        data class Foo(var name: String, var age: Int) : RealmObject {
+                            constructor() : this ("John" , 42)
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+    }
 }

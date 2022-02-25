@@ -6,6 +6,7 @@
 ### Enhancements
 * Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
 * Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
+* Improving runtime/compiler errors, (Issue [#684](https://github.com/realm/realm-kotlin/issues/684)), (Issue [#676](https://github.com/realm/realm-kotlin/issues/676)) and , (Issue [#680](https://github.com/realm/realm-kotlin/issues/680)).
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).

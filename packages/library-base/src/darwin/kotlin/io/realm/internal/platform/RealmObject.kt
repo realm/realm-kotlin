@@ -26,5 +26,5 @@ internal actual fun <T : RealmObject> realmObjectCompanion(clazz: KClass<T>): Re
     @OptIn(ExperimentalAssociatedObjects::class)
     when (val associatedObject = clazz.findAssociatedObject<ModelObject>()) {
         is RealmObjectCompanion -> associatedObject
-        else -> error("Couldn't find companion object of class ${clazz.simpleName}")
+        else -> error("Couldn't find companion object of class '${clazz.simpleName}'.\nA common cause for this is when the `io.realm.plugin` is not applied to the Gradle module that contains the '${clazz.simpleName}' class.")
     }
