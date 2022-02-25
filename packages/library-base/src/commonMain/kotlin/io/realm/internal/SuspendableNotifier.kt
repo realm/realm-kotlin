@@ -97,7 +97,7 @@ internal class SuspendableNotifier(
                 withContext(dispatcher) {
                     ensureActive()
                     val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
-                        ?: error("Cannot listen for changes on a deleted reference")
+                        ?: error("Cannot listen for changes on a deleted Realm reference")
                     val interopCallback: io.realm.internal.interop.Callback =
                         object : io.realm.internal.interop.Callback {
                             override fun onChange(change: NativePointer) {
