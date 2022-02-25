@@ -64,9 +64,9 @@ public sealed interface ListChange<T> {
 public interface InitialList<T> : ListChange<T>
 
 /**
- * [RealmList] flow event that describes that an update has been performed on to the observed list. It
- * provides a reference to the list and a set of properties that describes the changes performed on
- * the list.
+ * [RealmList] flow event that describes that an update has been performed on the observed list. It
+ * provides a reference to the updated list and a set of properties that describes the changes 
+ * performed on the list.
  */
 public interface UpdatedList<T> : ListChange<T>, CollectionChangeSet
 
