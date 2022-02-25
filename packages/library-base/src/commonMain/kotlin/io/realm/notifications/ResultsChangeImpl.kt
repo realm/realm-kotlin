@@ -19,8 +19,9 @@ package io.realm.notifications
 import io.realm.RealmObject
 import io.realm.RealmResults
 
-internal class InitialResultsImpl<T : RealmObject>(override val list: RealmResults<T>) :
-    InitialResults<T>
+internal class InitialResultsImpl<T : RealmObject>(
+    override val list: RealmResults<T>
+) : InitialResults<T>
 
 internal class UpdatedResultsImpl<T : RealmObject>(
     override val list: RealmResults<T>,
