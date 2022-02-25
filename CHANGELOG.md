@@ -9,7 +9,7 @@
 * Add support for fine grained notification on Realm objects. `RealmObject.asFlow()` yields `ObjectChange` that represent the `ObjectInitial`, `ObjectUpdated` or `ObjectDeleted` states.
 * Add support for fine grained notification on Realm lists. `RealmList.asFlow()` yields `ListChange` that represent the `InitialList`, `UpdatedList` or `DeletedList` states.
 * Add support for fine grained notification on Realm results. `RealmResults.asFlow()` yields `ListChange` that represent the `InitialList`, `UpdatedList` or `DeletedList` states.
-* Add support for fine grained notification on RealmSingleQuery. `RealmSingleQuery.asFlow()` yields `ObjectChange` that represent the events might happen on the first element of the query.
+* Add support for fine-grained notifications on `RealmSingleQuery`. `RealmSingleQuery.asFlow()` yields `ObjectChange` events that represent changes that happen to the first result of the query. Unlike flows directly on Realm objects, deleting this object does not terminate the flow.
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
