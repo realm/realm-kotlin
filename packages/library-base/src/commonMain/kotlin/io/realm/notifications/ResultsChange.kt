@@ -72,7 +72,7 @@ public sealed interface ResultsChange<T : RealmObject> {
 
 /**
  * Initial event to be emitted on a [RealmResults] flow. It contains a reference to the
- * starting query results state.
+ * result of the query, the first time it runs.
  */
 public interface InitialResults<T : RealmObject> : ResultsChange<T>
 
