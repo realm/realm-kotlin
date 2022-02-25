@@ -9,6 +9,7 @@ import io.realm.notifications.internal.Callback
 import io.realm.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
@@ -83,32 +84,44 @@ internal class SuspendableNotifier(
     }
 
     internal fun <T, C> registerObserver(thawableObservable: Thawable<Observable<T, C>>): Flow<C> {
-        return callbackFlow {
-            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-            withContext(dispatcher) {
-                ensureActive()
-                val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
-                    ?: error("Cannot listen for changes on a deleted reference")
-                val interopCallback: io.realm.internal.interop.Callback =
-                    object : io.realm.internal.interop.Callback {
-                        override fun onChange(change: NativePointer) {
-                            // FIXME How to make sure the Realm isn't closed when handling this?
-                            // Notifications need to be delivered with the version they where created on, otherwise
-                            // the fine-grained notification data might be out of sync.
-                            liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
-                                ?.let { checkResult(it) }
-                        }
-                    }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
-                val newToken =
-                    NotificationToken<Callback<T>>(
-                        // FIXME What is this callback for anyway?
-                        callback = Callback { _, _ -> /* Do nothing */ },
-                        token = liveRef.registerForNotification(interopCallback)
-                    )
-                token.value = newToken
-            }
-            awaitClose {
-                token.value.cancel()
+        var cancelCallback: () -> Unit = {}
+
+        return object :
+            Cancellable,
+            Flow<C> by callbackFlow({
+                cancelCallback = {
+                    cancel()
+                }
+                val token: AtomicRef<Cancellable> =
+                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+                withContext(dispatcher) {
+                    ensureActive()
+                    val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
+                        ?: error("Cannot listen for changes on a deleted Realm reference")
+                    val interopCallback: io.realm.internal.interop.Callback =
+                        object : io.realm.internal.interop.Callback {
+                            override fun onChange(change: NativePointer) {
+                                // FIXME How to make sure the Realm isn't closed when handling this?
+                                // Notifications need to be delivered with the version they where created on, otherwise
+                                // the fine-grained notification data might be out of sync.
+                                liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
+                                    ?.let { checkResult(it) }
+                            }
+                        }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
+                    val newToken =
+                        NotificationToken<Callback<T>>(
+                            // FIXME What is this callback for anyway?
+                            callback = Callback { _, _ -> /* Do nothing */ },
+                            token = liveRef.registerForNotification(interopCallback)
+                        )
+                    token.value = newToken
+                }
+                awaitClose {
+                    token.value.cancel()
+                }
+            }) {
+            override fun cancel() {
+                cancelCallback()
             }
         }
     }

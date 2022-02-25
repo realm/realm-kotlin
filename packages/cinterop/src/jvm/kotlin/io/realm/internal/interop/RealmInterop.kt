@@ -296,6 +296,10 @@ actual object RealmInterop {
         return realmc.realm_object_is_valid(obj.cptr())
     }
 
+    actual fun realm_object_get_key(obj: NativePointer): Long {
+        return realmc.realm_object_get_key(obj.cptr())
+    }
+
     actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
         val objectPointer = longArrayOf(0)
         realmc.realm_object_resolve_in(obj.cptr(), realm.cptr(), objectPointer)

@@ -599,6 +599,10 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
+    actual fun realm_object_get_key(obj: NativePointer): Long {
+        return realm_wrapper.realm_object_get_key(obj.cptr())
+    }
+
     actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
         memScoped {
             val objectPointer = allocArray<CPointerVar<realm_object_t>>(1)

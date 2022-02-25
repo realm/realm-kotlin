@@ -17,6 +17,41 @@
 package io.realm.notifications
 
 import io.realm.RealmObject
+import io.realm.query.RealmSingleQuery
+
+/**
+ * This sealed class describe the possible events that can be observed on a [RealmSingleQuery] flow.
+ *
+ * It extends the sealed interface [ObjectChange] by adding the new event [PendingObject] on top of
+ * its hierarchy. See [RealmSingleQuery.asFlow] for more information on how these events are emitted.
+ *
+ * Object event hierarchy diagram:
+ * ```
+ *                                   ┌───────────────────┐
+ *                                   │ SingleQueryChange │
+ *                                   └─────────┬─────────┘
+ *                                ┌────────────┴───────────┐
+ *                         ┌──────▼───────┐        ┌───────▼───────┐
+ *                         │ ObjectChange │        │ PendingObject │
+ *                         └──────┬───────┘        └───────────────┘
+ *               ┌────────────────┼────────────────────┐
+ *      ┌────────▼──────┐  ┌──────▼────────┐  ┌────────▼──────┐
+ *      │ InitialObject │  │ UpdatedObject │  │ DeletedObject │
+ *      └───────────────┘  └───────────────┘  └───────────────┘
+ * ```
+ */
+public sealed interface SingleQueryChange<O : RealmObject> {
+    /**
+     * Returns the newest state of object being observed. `null` is returned if there is no object to
+     * observe.
+     */
+    public val obj: O?
+}
+
+/**
+ * Describes the initial state where a query result does not contain any elements.
+ */
+public interface PendingObject<O : RealmObject> : SingleQueryChange<O>
 
 /**
  * This sealed interface describe the possible changes that can be observed to a Realm Object.
@@ -30,7 +65,7 @@ import io.realm.RealmObject
  * // Variant 1: Switch on the sealed interface
  * realm.filter<Person>().first().asFlow()
  *   .collect { it: ObjectChange<Person> ->
- *       when(result) {
+ *       when(it) {
  *          is InitialObject -> initPersonUI(it.obj)
  *          is UpdatedObject -> updatePersonUi(it.obj, it.changedFields)
  *          is DeletedObject -> removePersonUi()
@@ -47,12 +82,12 @@ import io.realm.RealmObject
  *
  * For state of update changes, a list with the updated field names from the previous version is provided.
  */
-public sealed interface ObjectChange<O : RealmObject> {
+public sealed interface ObjectChange<O : RealmObject> : SingleQueryChange<O> {
     /**
      * Returns the newest state of object being observed. `null` is returned if the object
      * has been deleted.
      */
-    public val obj: O?
+    override val obj: O?
 }
 
 /**

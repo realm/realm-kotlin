@@ -110,6 +110,7 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
+    fun realm_object_get_key(obj: NativePointer): Long
     fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer?
 
     fun realm_object_as_link(obj: NativePointer): Link

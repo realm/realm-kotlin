@@ -19,6 +19,7 @@ package io.realm.notifications.internal
 import io.realm.RealmObject
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
+import io.realm.notifications.PendingObject
 import io.realm.notifications.UpdatedObject
 
 internal class InitialObjectImpl<O : RealmObject>(override val obj: O) : InitialObject<O>
@@ -29,6 +30,11 @@ internal class UpdatedObjectImpl<O : RealmObject>(
 ) : UpdatedObject<O>
 
 internal class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {
+    override val obj: O?
+        get() = null
+}
+
+internal class PendingObjectImpl<O : RealmObject> : PendingObject<O> {
     override val obj: O?
         get() = null
 }
