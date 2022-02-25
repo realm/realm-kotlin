@@ -77,7 +77,7 @@ public fun RealmObject.isManaged(): Boolean {
 /**
  * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
  * if two object from different frozen realms share their object key, and thus represent the same
- * object on different instants.
+ * object at different points in time (= at two different frozen realm versions).
  */
 internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     if ((other == null) || (other !is RealmObjectInternal)) return false
