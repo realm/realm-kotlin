@@ -71,7 +71,7 @@ public interface InitialList<T> : ListChange<T>
 public interface UpdatedList<T> : ListChange<T>, CollectionChangeSet
 
 /**
- * This interface describes the event is emitted deleted on a [RealmList] flow. The flow will terminate
+ * This event is emitted when the parent object owning the list has been deleted, which in turn also removes the list. The flow will terminate
  * after observing this event.
  */
 public interface DeletedList<T> : ListChange<T>
