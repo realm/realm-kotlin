@@ -84,7 +84,7 @@ public interface InitialList<T> : ListChange<T>
  * provides a reference to the updated list and a set of properties that describes the changes
  * performed on the list.
  */
-public interface UpdatedList<T> : ListChange<T>, CollectionChangeSet
+public interface UpdatedList<T> : ListChange<T>, ListChangeSet
 
 /**
  * This event is emitted when the parent object owning the list has been deleted, which in turn also removes the list. The flow will terminate

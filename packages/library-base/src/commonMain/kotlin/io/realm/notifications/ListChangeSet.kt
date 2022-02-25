@@ -15,10 +15,12 @@
  */
 package io.realm.notifications
 
+import io.realm.RealmResults
+
 /**
  * This interface models the changes that can occur to a list.
  */
-public interface CollectionChangeSet {
+public interface ListChangeSet {
     /**
      * The deleted indices in the previous version of the collection. It will be set as a zero-sized
      * array if no objects were deleted.

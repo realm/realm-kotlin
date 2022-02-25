@@ -115,7 +115,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     ): ChannelResult<Unit>? {
         val frozenResult = freeze(frozenRealm)
 
-        val builder = CollectionChangeSetBuilderImpl(change)
+        val builder = ListChangeSetBuilderImpl(change)
 
         return if (builder.isEmpty()) {
             channel.trySend(InitialResultsImpl(frozenResult))

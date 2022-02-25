@@ -17,13 +17,13 @@
 package io.realm.internal
 
 import io.realm.internal.interop.ArrayAccessor
-import io.realm.internal.interop.CollectionChangeSetBuilder
+import io.realm.internal.interop.ListChangeSetBuilder
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.notifications.CollectionChangeSet
+import io.realm.notifications.ListChangeSet
 
-internal class CollectionChangeSetBuilderImpl(change: NativePointer) :
-    CollectionChangeSetBuilder<CollectionChangeSet, CollectionChangeSet.Range>() {
+internal class ListChangeSetBuilderImpl(change: NativePointer) :
+    ListChangeSetBuilder<ListChangeSet, ListChangeSet.Range>() {
 
     init {
         RealmInterop.realm_collection_changes_get_indices(change, this)
@@ -37,30 +37,30 @@ internal class CollectionChangeSetBuilderImpl(change: NativePointer) :
         size: Int,
         fromAccessor: ArrayAccessor,
         toAccessor: ArrayAccessor
-    ): Array<CollectionChangeSet.Range> =
+    ): Array<ListChangeSet.Range> =
         Array(size) { index ->
             val from: Int = fromAccessor(index)
             val to: Int = toAccessor(index)
-            CollectionChangeSet.Range(from, to - from)
+            ListChangeSet.Range(from, to - from)
         }
 
-    override fun build(): CollectionChangeSet = object : CollectionChangeSet {
+    override fun build(): ListChangeSet = object : ListChangeSet {
         override val deletions: IntArray =
-            this@CollectionChangeSetBuilderImpl.deletionIndices
+            this@ListChangeSetBuilderImpl.deletionIndices
 
         override val insertions: IntArray =
-            this@CollectionChangeSetBuilderImpl.insertionIndices
+            this@ListChangeSetBuilderImpl.insertionIndices
 
         override val changes: IntArray =
-            this@CollectionChangeSetBuilderImpl.modificationIndicesAfter
+            this@ListChangeSetBuilderImpl.modificationIndicesAfter
 
-        override val deletionRanges: Array<CollectionChangeSet.Range> =
-            this@CollectionChangeSetBuilderImpl.deletionRanges
+        override val deletionRanges: Array<ListChangeSet.Range> =
+            this@ListChangeSetBuilderImpl.deletionRanges
 
-        override val insertionRanges: Array<CollectionChangeSet.Range> =
-            this@CollectionChangeSetBuilderImpl.insertionRanges
+        override val insertionRanges: Array<ListChangeSet.Range> =
+            this@ListChangeSetBuilderImpl.insertionRanges
 
-        override val changeRanges: Array<CollectionChangeSet.Range> =
-            this@CollectionChangeSetBuilderImpl.modificationRangesAfter
+        override val changeRanges: Array<ListChangeSet.Range> =
+            this@ListChangeSetBuilderImpl.modificationRangesAfter
     }
 }

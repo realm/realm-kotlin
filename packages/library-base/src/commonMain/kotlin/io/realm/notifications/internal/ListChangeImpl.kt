@@ -19,13 +19,14 @@ package io.realm.notifications.internal
 import io.realm.RealmList
 import io.realm.notifications.DeletedList
 import io.realm.notifications.InitialList
+import io.realm.notifications.ListChangeSet
 import io.realm.notifications.UpdatedList
 
 internal class InitialListImpl<T>(override val list: RealmList<T>) : InitialList<T>
 
 internal class UpdatedListImpl<T>(
     override val list: RealmList<T>,
-    collectionChangeSet: CollectionChangeSet
-) : UpdatedList<T>, CollectionChangeSet by collectionChangeSet
+    listChangeSet: ListChangeSet
+) : UpdatedList<T>, ListChangeSet by listChangeSet
 
 internal class DeletedListImpl<T>(override val list: RealmList<T>) : DeletedList<T>

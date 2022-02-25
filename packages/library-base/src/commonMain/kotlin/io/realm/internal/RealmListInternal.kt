@@ -149,7 +149,7 @@ internal class ManagedRealmList<E>(
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            val builder = CollectionChangeSetBuilderImpl(change)
+            val builder = ListChangeSetBuilderImpl(change)
 
             if (builder.isEmpty()) {
                 channel.trySend(InitialListImpl(frozenList))

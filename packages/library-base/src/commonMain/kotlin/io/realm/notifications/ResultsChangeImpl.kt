@@ -24,5 +24,5 @@ internal class InitialResultsImpl<T : RealmObject>(override val list: RealmResul
 
 internal class UpdatedResultsImpl<T : RealmObject>(
     override val list: RealmResults<T>,
-    collectionChangeSet: CollectionChangeSet
-) : UpdatedResults<T>, CollectionChangeSet by collectionChangeSet
+    listChangeSet: ListChangeSet
+) : UpdatedResults<T>, ListChangeSet by listChangeSet
