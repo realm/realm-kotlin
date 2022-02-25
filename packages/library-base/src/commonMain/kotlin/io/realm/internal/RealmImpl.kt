@@ -155,7 +155,7 @@ internal class RealmImpl private constructor(
         ).flattenConcat()
     }
 
-    override fun <T> registerObserver(t: Thawable<Observable<T>>): Flow<T> {
+    override fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
         return notifier.registerObserver(t)
     }
 

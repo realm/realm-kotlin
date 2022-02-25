@@ -20,6 +20,10 @@ import io.realm.internal.MutableRealmImpl
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
+import io.realm.notifications.DeletedObject
+import io.realm.notifications.InitialObject
+import io.realm.notifications.ObjectChange
+import io.realm.notifications.UpdatedObject
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -90,19 +94,20 @@ public fun RealmObject.isValid(): Boolean {
 }
 
 /**
- * Observe changes to a Realm object. Any change to the object, will cause the flow to emit the updated
- * object. If the observed object is deleted from the Realm, the flow will complete, otherwise it will
- * continue running until canceled.
+ * Observe changes to a Realm object. The flow would emit an [InitialObject] once subscribed and
+ * then, on every change to the object an [UpdatedObject]. If the observed object is deleted from
+ * the Realm, the flow would emit a [DeletedObject] and then will complete, otherwise it will continue
+ * running until canceled.
  *
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
  * @return a flow representing changes to the object.
  */
-public fun <T : RealmObject> T.observe(): Flow<T> {
+public fun <T : RealmObject, C : ObjectChange<T>> T.asFlow(): Flow<ObjectChange<T>> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$Owner`!!).owner.registerObserver(this) as Flow<T>
+    return (internalObject.`$realm$Owner`!!).owner.registerObserver(this) as Flow<ObjectChange<T>>
 }
 
 private fun RealmObject.checkNotificationsAvailable() {

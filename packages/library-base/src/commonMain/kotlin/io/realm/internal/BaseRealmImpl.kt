@@ -79,7 +79,7 @@ public abstract class BaseRealmImpl internal constructor(
     ): RealmQuery<T> =
         ObjectQuery(realmReference, clazz, configuration.mediator, null, query, *args)
 
-    internal open fun <T> registerObserver(t: Thawable<Observable<T>>): Flow<T> {
+    internal open fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

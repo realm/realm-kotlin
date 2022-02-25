@@ -19,6 +19,8 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.propertyInfo
+import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -34,6 +36,7 @@ import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValue
+import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
@@ -1172,6 +1175,16 @@ actual object RealmInterop {
             ),
             managed = false
         )
+    }
+
+    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
+        val propertyCount = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr())
+
+        memScoped {
+            val propertyKeys = allocArray<LongVar>(propertyCount.toLong())
+            realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, propertyCount)
+            return (0 until propertyCount.toInt()).map { PropertyKey(propertyKeys[it].toLong()) }
+        }
     }
 
     // TODO sync config shouldn't be null

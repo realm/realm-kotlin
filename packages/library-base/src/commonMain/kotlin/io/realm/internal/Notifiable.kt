@@ -48,5 +48,4 @@ public interface Flowable<T> {
     public fun asFlow(): Flow<T?>
 }
 
-// TODO Public due to being a transitive dependency to RealmObjectInternal
-public interface Observable<T> : Notifiable<T>, Freezable<Observable<T>>, Thawable<Observable<T>>
+public interface Observable<T, C> : Notifiable<C>, Freezable<Observable<T, C>>, Thawable<Observable<T, C>>

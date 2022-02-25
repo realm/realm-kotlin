@@ -39,7 +39,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     private val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>>, RealmStateHolder {
+) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>, RealmResultsImpl<E>>, RealmStateHolder {
 
     enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
