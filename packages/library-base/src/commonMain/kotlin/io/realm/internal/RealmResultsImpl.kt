@@ -65,7 +65,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun query(query: String, vararg args: Any?): RealmResultsImpl<E> {
         try {
             val table = clazz.simpleName!!
-            val queryPointer = RealmInterop.realm_query_parse(nativePointer, table, query, *args)
+            val queryPointer = RealmInterop.realm_query_parse_for_results(nativePointer, table, query, *args)
             val resultsPointer = RealmInterop.realm_query_find_all(queryPointer)
             return RealmResultsImpl(realm, resultsPointer, clazz, mediator)
         } catch (exception: RealmCoreException) {

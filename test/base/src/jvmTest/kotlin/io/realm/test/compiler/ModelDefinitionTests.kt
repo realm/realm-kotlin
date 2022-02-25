@@ -65,4 +65,20 @@ class ModelDefinitionTests {
         )
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
     }
+
+    @Test
+    fun `data_class_with_default_constructor`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "data_class.kt",
+                """
+                        import io.realm.RealmObject
+                        data class Foo(val name: String) : RealmObject
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using data class")
+        assertTrue(result.messages.contains("Data class 'Foo' is not currently supported"))
+    }
 }

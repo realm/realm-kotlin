@@ -242,9 +242,11 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 // Type map for int64_t has an erroneous cast, don't know how to fix it except with this
 %typemap(in) void** ( jlong *jarr ){
     // Original
-    %#if defined(__ANDROID__)
+    %#if defined(__ANDROID__) && defined(__aarch64__) // Android arm64-v8a
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
-    %#elif defined(__aarch64__)
+    %#elif defined(__ANDROID__) // Android armeabi-v7a, x86_64 and x86
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
+    %#elif defined(__aarch64__) // macos M1
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
     %#else
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
@@ -252,8 +254,10 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 }
 %typemap(argout) void** {
     // Original
-    %#if defined(__ANDROID__)
+    %#if defined(__ANDROID__) && defined(__aarch64__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
+    %#elif defined(__ANDROID__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong*)$1, $input);
     %#elif defined(__aarch64__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong *)$1, $input);
     %#else

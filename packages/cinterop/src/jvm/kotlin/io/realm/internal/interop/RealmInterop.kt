@@ -778,7 +778,7 @@ actual object RealmInterop {
         val classInfo = realm_class_info_t()
         realmc.realm_find_class((realm as LongPointerWrapper).ptr, className, found, classInfo)
         if (!found[0]) {
-            throw IllegalArgumentException("Cannot find class: '$className")
+            throw IllegalArgumentException("Cannot find class: '$className'. Has the class been added to the Realm schema?")
         }
         return classInfo
     }

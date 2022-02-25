@@ -25,4 +25,4 @@ import kotlin.reflect.full.companionObjectInstance
 //  through the compiler plugin or something similar to the Native findAssociatedObject
 internal actual fun <T : RealmObject> realmObjectCompanion(clazz: KClass<T>): RealmObjectCompanion =
     clazz.companionObjectInstance?.let { it as RealmObjectCompanion }
-        ?: error("Couldn't find companion object of class ${clazz.simpleName}")
+        ?: error("Couldn't find companion object of class '${clazz.simpleName}'.\nA common cause for this is when the `io.realm.plugin` is not applied to the Gradle module that contains the '${clazz.simpleName}' class.")
