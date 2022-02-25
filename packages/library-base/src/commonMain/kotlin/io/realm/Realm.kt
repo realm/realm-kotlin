@@ -18,6 +18,7 @@ package io.realm
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.Constants
+import io.realm.notifications.RealmChange
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -129,15 +130,16 @@ public interface Realm : TypedRealm {
     public fun <R> writeBlocking(block: MutableRealm.() -> R): R
 
     /**
-     * Observe changes to the realm. If there is any change to the realm, the flow will emit the
-     * updated realm. The flow will continue running indefinitely until canceled.
+     * Observe changes to the realm. The flow will emit a [RealmChange] once subscribed and then, on
+     * every change to the realm. The flow will continue running indefinitely until canceled or the
+     * realm instance is closed.
      *
      * The change calculations will run on the thread defined through the [Configuration]
      * Notification Dispatcher.
      *
      * @return a flow representing changes to this realm.
      */
-    public fun observe(): Flow<Realm>
+    public fun asFlow(): Flow<RealmChange<Realm>>
 
     /**
      * Close this realm and all underlying resources. Accessing any methods or Realm Objects after

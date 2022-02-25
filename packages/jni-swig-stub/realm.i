@@ -75,7 +75,7 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
-// Reuse void callback typemap as template for result callback
+
 %apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
     (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t)
 };
@@ -150,7 +150,7 @@ return $jnicall;
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
-               realm_http_completion_func_t, realm_http_transport_t*};
+               realm_http_completion_func_t, realm_http_transport_t*, realm_collection_changes_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -221,6 +221,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
 %array_functions(realm_value_t, valueArray);
+%array_functions(realm_index_range_t, indexRangeArray);
+%array_functions(realm_collection_move_t, collectionMoveArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
@@ -262,7 +264,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*};
+%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*};
 
 %apply uint32_t[] {realm_class_key_t*};
 

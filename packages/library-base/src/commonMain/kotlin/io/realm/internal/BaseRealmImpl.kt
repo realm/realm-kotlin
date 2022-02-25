@@ -16,12 +16,12 @@
 package io.realm.internal
 
 import io.realm.BaseRealm
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import io.realm.query.RealmQuery
 import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow
@@ -79,7 +79,7 @@ public abstract class BaseRealmImpl internal constructor(
     ): RealmQuery<T> =
         ObjectQuery(realmReference, clazz, configuration.mediator, null, query, *args)
 
-    internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
+    internal open fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

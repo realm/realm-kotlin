@@ -24,6 +24,10 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.util.Validation.sdkError
 import io.realm.isValid
+import io.realm.notifications.ObjectChange
+import io.realm.notifications.internal.DeletedObjectImpl
+import io.realm.notifications.internal.InitialObjectImpl
+import io.realm.notifications.internal.UpdatedObjectImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -38,7 +42,7 @@ import kotlin.reflect.KClass
  */
 // TODO Public due to being a transative dependency of Mediator
 @Suppress("VariableNaming")
-public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
+public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal, ObjectChange<RealmObjectInternal>>, Flowable<ObjectChange<RealmObjectInternal>> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
@@ -103,18 +107,40 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<RealmObjectInternal>
+        channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
-        val f: RealmObjectInternal? = this.freeze(frozenRealm)
-        return if (f == null) {
-            channel.close()
-            null
+        val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
+
+        return if (frozenObject == null) {
+            channel
+                .trySend(DeletedObjectImpl())
+                .also {
+                    channel.close()
+                }
         } else {
-            channel.trySend(f)
+            val changedFieldNames = getChangedFieldNames(frozenRealm, change)
+
+            // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
+            if (changedFieldNames.isEmpty()) {
+                channel.trySend(InitialObjectImpl(frozenObject))
+            } else {
+                channel.trySend(UpdatedObjectImpl(frozenObject, changedFieldNames))
+            }
         }
     }
 
-    override fun asFlow(): Flow<RealmObjectInternal> {
+    private fun getChangedFieldNames(
+        frozenRealm: RealmReference,
+        change: NativePointer
+    ): Array<String> {
+        return RealmInterop.realm_object_changes_get_modified_properties(
+            change
+        ).map { propertyKey: PropertyKey ->
+            `$realm$metadata`?.get(propertyKey)?.name ?: ""
+        }.toTypedArray()
+    }
+
+    override fun asFlow(): Flow<ObjectChange<RealmObjectInternal>> {
         return this.`$realm$Owner`!!.owner.registerObserver(this)
     }
 }

@@ -20,6 +20,7 @@ import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.Mediator
+import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
@@ -30,6 +31,7 @@ import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
@@ -52,7 +54,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val queryPointer: NativePointer,
     protected val mediator: Mediator,
     protected val clazz: KClass<E>
-) : Thawable<RealmResultsImpl<E>> {
+) : Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
@@ -73,7 +75,7 @@ internal class CountQuery<E : RealmObject> constructor(
     queryPointer: NativePointer,
     mediator: Mediator,
     clazz: KClass<E>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<Long>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<Long> {
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
@@ -82,7 +84,7 @@ internal class CountQuery<E : RealmObject> constructor(
         return realmReference.owner
             .registerObserver(this)
             .map {
-                it.size.toLong()
+                it.list.size.toLong()
             }.distinctUntilChanged()
     }
 }
@@ -100,7 +102,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     private val property: String,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarNullableQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarNullableQuery<T> {
 
     override fun find(): T? = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -108,7 +110,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.nativePointer) }
+            .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()
     }
 
@@ -170,7 +172,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<T> {
 
     override fun find(): T = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -178,7 +180,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.nativePointer) }
+            .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()
     }
 

@@ -35,12 +35,12 @@ public interface Notifiable<T> {
 
 // TODO Public due to being a transitive dependency to Observable
 public interface Freezable<T> {
-    public fun freeze(frozenRealm: RealmReference): Notifiable<T>?
+    public fun freeze(frozenRealm: RealmReference): T?
 }
 
 // TODO Public due to being a transitive dependency to Observable
 public interface Thawable<T> {
-    public fun thaw(liveRealm: RealmReference): Notifiable<T>?
+    public fun thaw(liveRealm: RealmReference): T?
 }
 
 // TODO Why is this flowable here?
@@ -48,5 +48,4 @@ public interface Flowable<T> {
     public fun asFlow(): Flow<T?>
 }
 
-// TODO Public due to being a transitive dependency to RealmObjectInternal
-public interface Observable<T> : Notifiable<T>, Freezable<T>, Thawable<T>
+public interface Observable<T, C> : Notifiable<C>, Freezable<Observable<T, C>>, Thawable<Observable<T, C>>

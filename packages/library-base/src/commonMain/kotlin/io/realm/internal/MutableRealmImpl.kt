@@ -15,8 +15,6 @@
  */
 package io.realm.internal
 
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreException
@@ -24,6 +22,8 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -129,7 +129,7 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
 
-    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
+    override fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
