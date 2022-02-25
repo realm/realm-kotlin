@@ -62,7 +62,7 @@ class RealmMigrationTests {
     }
 
     @Test
-    fun schema() {
+    fun schemaVerificationOnOldAndNewRealm() {
         migration(
             initialSchema = setOf(SchemaVariations::class, Sample::class),
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
@@ -312,6 +312,8 @@ class RealmMigrationTests {
         assertFailsWith<RuntimeException> {
             Realm.open(newConfiguration)
         }.run {
+            // TODO Provide better error messages for exception in callbacks
+            //  https://github.com/realm/realm-kotlin/issues/665
             assertTrue(message) { message!!.contains("User-provided callback failed") }
         }
     }

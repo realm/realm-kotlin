@@ -307,7 +307,7 @@ class DynamicRealmObjectTests {
     }
 
     @Test
-    fun get_throwsOnUknownName() {
+    fun get_throwsOnUnkownName() {
         realm.writeBlocking {
             copyToRealm(Sample())
         }
