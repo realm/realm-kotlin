@@ -23,7 +23,7 @@ import io.realm.isManaged
 import io.realm.isValid
 import kotlinx.coroutines.flow.Flow
 
-internal interface MutableRealmImpl : MutableRealm {
+internal interface InternalMutableRealm : MutableRealm {
 
     override val configuration: InternalConfiguration
     val realmReference: LiveRealmReference

@@ -80,7 +80,3 @@ public fun interface AutomaticSchemaMigration : RealmMigration {
      */
     public fun migrate(migrationContext: MigrationContext)
 }
-
-// FIXME Should we eliminate these. Only for convenience to allow deconstruction in lambda { (oldRealm, newRealm) -> }
-public operator fun AutomaticSchemaMigration.MigrationContext.component1(): DynamicRealm = this.oldRealm
-public operator fun AutomaticSchemaMigration.MigrationContext.component2(): DynamicMutableRealm = this.newRealm

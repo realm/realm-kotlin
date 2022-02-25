@@ -160,7 +160,15 @@ internal class ManagedRealmList<E>(
     }
 }
 
+/**
+ * Interface to convert objects returned from the cinterop layer to a specific type.
+ *
+ * @param E the type that objects are converted to by [convert].
+ */
 internal fun interface ElementConverter<E> {
+    /**
+     * Converts the given value to an object of type E.
+     */
     fun convert(value: Any?): E
 }
 

@@ -206,6 +206,6 @@ internal class RealmImpl private constructor(
 }
 
 // Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the
-// DynamicRealm API outside of migration
+// DynamicRealm API outside of a migration.
 internal fun Realm.asDynamicRealm(): DynamicRealm =
     DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, (this as RealmImpl).realmReference.dbPointer)

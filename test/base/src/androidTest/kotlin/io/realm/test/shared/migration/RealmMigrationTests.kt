@@ -31,8 +31,6 @@ import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.schema.SchemaVariations
 import io.realm.migration.AutomaticSchemaMigration
-import io.realm.migration.component1
-import io.realm.migration.component2
 import io.realm.query
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.use
@@ -68,7 +66,9 @@ class RealmMigrationTests {
         migration(
             initialSchema = setOf(SchemaVariations::class, Sample::class),
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            migration = { (oldRealm, newRealm) ->
+            migration = { context ->
+                val oldRealm = context.oldRealm
+                val newRealm = context.newRealm
                 assertIs<DynamicRealm>(oldRealm)
                 assertIsNot<DynamicMutableRealm>(oldRealm)
                 oldRealm.schema().let { oldSchema ->
@@ -110,7 +110,8 @@ class RealmMigrationTests {
         migration(
             initialSchema = setOf(Sample::class),
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            migration = { (oldRealm, newRealm) ->
+            migration = { context ->
+                val newRealm = context.newRealm
                 newRealm.createObject("Sample").set("name", value)
             }
         ).use {
@@ -124,7 +125,9 @@ class RealmMigrationTests {
         migration(
             initialSchema = setOf(Sample::class),
             migratedSchema = setOf(PrimaryKeyString::class),
-            migration = { (oldRealm, newRealm) ->
+            migration = { context ->
+                val oldRealm = context.oldRealm
+                val newRealm = context.newRealm
                 newRealm.createObject(
                     "PrimaryKeyString",
                     primaryKey
@@ -165,7 +168,9 @@ class RealmMigrationTests {
         migration(
             initialSchema = setOf(Sample::class),
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            migration = { (oldRealm, newRealm) ->
+            migration = { context ->
+                val oldRealm = context.oldRealm
+                val newRealm = context.newRealm
                 assertFailsWith<IllegalArgumentException> {
                     newRealm.createObject("UNKNOWN_CLASS")
                 }
