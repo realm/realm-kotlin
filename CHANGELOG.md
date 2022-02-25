@@ -6,7 +6,9 @@
 ### Enhancements
 * Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
 * Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
-* Improving runtime/compiler errors, (Issue [#684](https://github.com/realm/realm-kotlin/issues/684)), (Issue [#676](https://github.com/realm/realm-kotlin/issues/676)) and , (Issue [#680](https://github.com/realm/realm-kotlin/issues/680)).
+* Data classes can now be used as model classes. Note, it requires default no-arg constructor and properties must still be `var`'s. (Issue [#684](https://github.com/realm/realm-kotlin/issues/684))
+* A better error message if Realm plugin was not applied to the module containing model classes. (Issue [#676](https://github.com/realm/realm-kotlin/issues/676))
+* A better error message if a class is used that is not part of the schema. (Issue [#680](https://github.com/realm/realm-kotlin/issues/680))
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
