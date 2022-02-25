@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.notifications
+package io.realm.notifications.internal
+
+import io.realm.notifications.DeletedList
+import io.realm.notifications.InitialList
+import io.realm.notifications.ListChange
+import io.realm.notifications.UpdatedList
 
 internal class InitialListImpl<T : List<*>>(override val list: T) : InitialList<T>
 
