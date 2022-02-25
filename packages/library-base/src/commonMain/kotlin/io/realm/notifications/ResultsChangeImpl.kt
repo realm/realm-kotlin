@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package io.realm.notifications.internal
+package io.realm.notifications
 
-import io.realm.RealmList
-import io.realm.notifications.DeletedList
-import io.realm.notifications.InitialList
-import io.realm.notifications.ListChangeSet
-import io.realm.notifications.UpdatedList
+import io.realm.RealmObject
+import io.realm.RealmResults
 
-internal class InitialListImpl<T>(override val list: RealmList<T>) : InitialList<T>
+internal class InitialResultsImpl<T : RealmObject>(
+    override val list: RealmResults<T>
+) : InitialResults<T>
 
-internal class UpdatedListImpl<T>(
-    override val list: RealmList<T>,
+internal class UpdatedResultsImpl<T : RealmObject>(
+    override val list: RealmResults<T>,
     listChangeSet: ListChangeSet
-) : UpdatedList<T>, ListChangeSet by listChangeSet
-
-internal class DeletedListImpl<T>(override val list: RealmList<T>) : DeletedList<T>
+) : UpdatedResults<T>, ListChangeSet by listChangeSet

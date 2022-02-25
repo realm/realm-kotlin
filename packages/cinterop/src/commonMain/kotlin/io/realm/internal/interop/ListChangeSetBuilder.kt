@@ -18,7 +18,7 @@ package io.realm.internal.interop
 
 typealias ArrayAccessor = (index: Int) -> Int
 
-abstract class CollectionChangeSetBuilder<T, R> {
+abstract class ListChangeSetBuilder<T, R> {
     lateinit var insertionIndices: IntArray
     lateinit var deletionIndices: IntArray
     lateinit var modificationIndices: IntArray

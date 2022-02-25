@@ -24,8 +24,10 @@ import io.realm.internal.platform.freeze
 import io.realm.notifications.DeletedList
 import io.realm.notifications.InitialList
 import io.realm.notifications.ListChange
+import io.realm.notifications.ListChangeSet
 import io.realm.notifications.UpdatedList
 import io.realm.test.NotificationTests
+import io.realm.test.assertIsChangeSet
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.shared.OBJECT_VALUES
 import io.realm.test.shared.OBJECT_VALUES2
@@ -38,7 +40,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
@@ -78,7 +79,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
 
         runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel = Channel<ListChange<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
                     .asFlow()
@@ -113,7 +114,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
 
         runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel = Channel<ListChange<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
                     .asFlow()
@@ -148,7 +149,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     insertRanges = arrayOf(
-                        ListChange.Range(0, 2)
+                        ListChangeSet.Range(0, 2)
                     )
                 )
             }
@@ -172,8 +173,8 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     insertRanges = arrayOf(
-                        ListChange.Range(0, 4),
-                        ListChange.Range(6, 2)
+                        ListChangeSet.Range(0, 4),
+                        ListChangeSet.Range(6, 2)
                     )
                 )
             }
@@ -198,8 +199,8 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     deletionRanges = arrayOf(
-                        ListChange.Range(0, 4),
-                        ListChange.Range(6, 2)
+                        ListChangeSet.Range(0, 4),
+                        ListChangeSet.Range(6, 2)
                     )
                 )
             }
@@ -222,7 +223,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     deletionRanges = arrayOf(
-                        ListChange.Range(0, 2)
+                        ListChangeSet.Range(0, 2)
                     )
                 )
             }
@@ -262,8 +263,8 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     changesRanges = arrayOf(
-                        ListChange.Range(0, 2),
-                        ListChange.Range(3, 1),
+                        ListChangeSet.Range(0, 2),
+                        ListChangeSet.Range(3, 1),
                     )
                 )
             }
@@ -286,7 +287,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     changesRanges = arrayOf(
-                        ListChange.Range(0, 4)
+                        ListChangeSet.Range(0, 4)
                     )
                 )
             }
@@ -305,8 +306,8 @@ class RealmListNotificationsTests : NotificationTests {
             val container = realm.write {
                 copyToRealm(RealmListContainer())
             }
-            val channel1 = Channel<ListChange<RealmList<*>>>(1)
-            val channel2 = Channel<ListChange<RealmList<*>>>(1)
+            val channel1 = Channel<ListChange<*>>(1)
+            val channel2 = Channel<ListChange<*>>(1)
             val observer1 = async {
                 container.objectListField
                     .asFlow()
@@ -360,7 +361,7 @@ class RealmListNotificationsTests : NotificationTests {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
             val values = OBJECT_VALUES.freeze()
-            val channel1 = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel1 = Channel<ListChange<*>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {
                 RealmListContainer()
@@ -415,7 +416,7 @@ class RealmListNotificationsTests : NotificationTests {
     @Test
     override fun closingRealmDoesNotCancelFlows() {
         runBlocking {
-            val channel = Channel<ListChange<RealmList<*>>>(capacity = 1)
+            val channel = Channel<ListChange<*>>(capacity = 1)
             val container = realm.write {
                 copyToRealm(RealmListContainer())
             }
@@ -436,60 +437,7 @@ class RealmListNotificationsTests : NotificationTests {
         }
     }
 
-    private fun RealmList<*>.removeRange(range: IntRange) {
+    fun RealmList<*>.removeRange(range: IntRange) {
         range.reversed().forEach { index -> removeAt(index) }
-    }
-
-    private fun assertContains(array: IntArray, element: ListChange.Range) {
-        for (value in element.startIndex until element.startIndex + element.length) {
-            assertContains(array, value, "Array [${array.joinToString(",")}] does not contain `$value`")
-        }
-    }
-
-    private fun assertContains(
-        expectedRanges: Array<ListChange.Range>,
-        indices: IntArray,
-        ranges: Array<ListChange.Range>
-    ) {
-        if (expectedRanges.isEmpty()) {
-            assertTrue(indices.isEmpty())
-            assertTrue(ranges.isEmpty())
-        } else {
-            var elementCount = 0
-
-            for (range in expectedRanges) {
-                assertContains(indices, range)
-                assertContains(ranges, range)
-
-                elementCount += range.length
-            }
-
-            assertEquals(elementCount, indices.size)
-        }
-    }
-
-    private fun assertIsChangeSet(
-        updatedListChange: UpdatedList<*>,
-        insertRanges: Array<ListChange.Range> = emptyArray(),
-        deletionRanges: Array<ListChange.Range> = emptyArray(),
-        changesRanges: Array<ListChange.Range> = emptyArray()
-    ) {
-        assertContains(
-            insertRanges,
-            updatedListChange.insertions,
-            updatedListChange.insertionRanges
-        )
-
-        assertContains(
-            deletionRanges,
-            updatedListChange.deletions,
-            updatedListChange.deletionRanges
-        )
-
-        assertContains(
-            changesRanges,
-            updatedListChange.changes,
-            updatedListChange.changeRanges
-        )
     }
 }
