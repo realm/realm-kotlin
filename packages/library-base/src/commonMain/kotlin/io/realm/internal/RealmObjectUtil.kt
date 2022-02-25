@@ -21,7 +21,7 @@ import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.platform.realmObjectCompanion
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 
@@ -39,7 +39,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     this.`$realm$ClassName` = if (this is DynamicRealmObject) {
         RealmInterop.realm_get_class(`$realm$Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
     } else {
-        realmObjectCompanion(type).`$realm$className`
+        realmObjectCompanionOrThrow(type).`$realm$className`
     }
     this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]
     @Suppress("UNCHECKED_CAST")
@@ -91,5 +91,5 @@ internal fun <T : RealmObject> Link.toRealmObject(
  * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
  */
 internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanion(): RealmObjectCompanion {
-    return io.realm.internal.platform.realmObjectCompanion(this)
+    return io.realm.internal.platform.realmObjectCompanionOrThrow(this)
 }

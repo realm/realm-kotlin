@@ -19,12 +19,15 @@ package io.realm.internal
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.internal.platform.realmObjectCompanionOrNull
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -182,7 +185,15 @@ internal data class ListOperatorMetadata<E>(
 )
 
 internal fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KClass<*>): ElementConverter<E> {
-    return when (clazz) {
+    return if (realmObjectCompanionOrNull(clazz) != null || clazz in setOf(DynamicRealmObject::class, DynamicMutableRealmObject::class)) {
+        ElementConverter {
+            (it as Link).toRealmObject(
+                clazz as KClass<out RealmObject>,
+                mediator,
+                realm
+            ) as E
+        }
+    } else when (clazz) {
         Byte::class -> ElementConverter { (it as Long).toByte() as E }
         Char::class -> ElementConverter { (it as Long).toInt().toChar() as E }
         Short::class -> ElementConverter { (it as Long).toShort() as E }
@@ -193,13 +204,7 @@ internal fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KCl
         Double::class,
         String::class -> ElementConverter { it as E }
         RealmInstant::class -> ElementConverter { RealmInstantImpl(it as Timestamp) as E }
-        else -> ElementConverter {
-            (it as Link).toRealmObject(
-                clazz as KClass<out RealmObject>,
-                mediator,
-                realm
-            ) as E
-        }
+        else -> throw IllegalArgumentException("Unsupported type for RealmList: $clazz")
     }
 }
 

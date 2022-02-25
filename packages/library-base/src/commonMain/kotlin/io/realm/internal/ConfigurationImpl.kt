@@ -31,7 +31,7 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
-import io.realm.internal.platform.realmObjectCompanion
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
@@ -94,7 +94,7 @@ public open class ConfigurationImpl constructor(
         } else path
         this.name = name // FIXME Should read name from end of path
         this.schema = schema
-        this.mapOfKClassWithCompanion = schema.associateWith { realmObjectCompanion(it) }
+        this.mapOfKClassWithCompanion = schema.associateWith { realmObjectCompanionOrThrow(it) }
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
         this.notificationDispatcher = notificationDispatcher

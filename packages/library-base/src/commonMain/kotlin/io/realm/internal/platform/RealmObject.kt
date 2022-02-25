@@ -21,6 +21,13 @@ import io.realm.internal.RealmObjectCompanion
 import kotlin.reflect.KClass
 
 /**
+ * Returns the [RealmObjectCompanion] associated with a given [KClass] or null if it didn't have an
+ * associated [RealmObjectCompanion], in which case the `clazz` wasn't a user defined class
+ * implementing [RealmObject] augmented by our compiler plugin.
+ */
+internal expect fun <T: Any> realmObjectCompanionOrNull(clazz: KClass<T>): RealmObjectCompanion?
+
+/**
  * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
  */
-internal expect fun <T : RealmObject> realmObjectCompanion(clazz: KClass<T>): RealmObjectCompanion
+internal expect fun <T : RealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion

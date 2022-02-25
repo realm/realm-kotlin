@@ -22,9 +22,12 @@ import kotlin.reflect.ExperimentalAssociatedObjects
 import kotlin.reflect.KClass
 import kotlin.reflect.findAssociatedObject
 
-internal actual fun <T : RealmObject> realmObjectCompanion(clazz: KClass<T>): RealmObjectCompanion =
+internal actual fun <T: Any> realmObjectCompanionOrNull(clazz: KClass<T>): RealmObjectCompanion? =
     @OptIn(ExperimentalAssociatedObjects::class)
     when (val associatedObject = clazz.findAssociatedObject<ModelObject>()) {
         is RealmObjectCompanion -> associatedObject
-        else -> error("Couldn't find companion object of class ${clazz.simpleName}")
+        else -> null
     }
+
+internal actual fun <T : RealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion =
+    realmObjectCompanionOrNull(clazz) ?: error("Couldn't find companion object of class ${clazz.simpleName}")

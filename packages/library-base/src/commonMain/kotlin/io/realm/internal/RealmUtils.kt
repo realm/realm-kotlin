@@ -85,7 +85,7 @@ internal fun checkRealmClosed(realm: RealmReference) {
 }
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanion(type).`$realm$className`)
+    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`)
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
     try {
@@ -113,7 +113,7 @@ internal fun <T : RealmObject> create(
     mediator,
     realm,
     type,
-    io.realm.internal.platform.realmObjectCompanion(type).`$realm$className`,
+    io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`,
     primaryKey
 )
 
