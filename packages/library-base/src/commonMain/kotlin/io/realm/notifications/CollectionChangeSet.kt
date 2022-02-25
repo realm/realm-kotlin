@@ -61,7 +61,7 @@ public interface CollectionChangeSet {
     public val changeRanges: Array<Range>
 
     /**
-     * Defines a range of elements in a collection.
+     * Defines a range of elements in a list.
      */
     public data class Range(
         /**
