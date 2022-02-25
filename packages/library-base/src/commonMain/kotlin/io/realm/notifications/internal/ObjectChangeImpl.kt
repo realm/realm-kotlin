@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package io.realm.notifications
+package io.realm.notifications.internal
 
-import io.realm.BaseRealm
+import io.realm.RealmObject
+import io.realm.notifications.DeletedObject
+import io.realm.notifications.InitialObject
+import io.realm.notifications.UpdatedObject
 
-internal class InitialRealmImpl<R : BaseRealm>(override val realm: R) : InitialRealm<R>
+internal class InitialObjectImpl<O : RealmObject>(override val obj: O) : InitialObject<O>
 
-internal class UpdatedRealmImpl<R : BaseRealm>(override val realm: R) : UpdatedRealm<R>
+internal class UpdatedObjectImpl<O : RealmObject>(
+    override val obj: O,
+    override val changedFields: Array<String>
+) : UpdatedObject<O>
+
+internal class DeletedObjectImpl<O : RealmObject> : DeletedObject<O> {
+    override val obj: O?
+        get() = null
+}

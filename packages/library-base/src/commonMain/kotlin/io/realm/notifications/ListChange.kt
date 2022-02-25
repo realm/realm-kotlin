@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.notifications
 
 import io.realm.RealmList
@@ -6,7 +22,7 @@ import io.realm.RealmList
  * This sealed interface describes the possible changes that can happen to a [RealmList] collection.
  *
  * The states are represented by the specific subclasses [InitialList], [UpdatedList] and
- * [DeletedList]. When the list is deleted an empty list is emitted instead of null.
+ * [DeletedList]. When the list is deleted an empty list is emitted instead of `null`.
  *
  * Changes can thus be consumed in a number of ways:
  *
@@ -65,7 +81,7 @@ public interface InitialList<T> : ListChange<T>
 
 /**
  * [RealmList] flow event that describes that an update has been performed on the observed list. It
- * provides a reference to the updated list and a set of properties that describes the changes 
+ * provides a reference to the updated list and a set of properties that describes the changes
  * performed on the list.
  */
 public interface UpdatedList<T> : ListChange<T>, CollectionChangeSet
