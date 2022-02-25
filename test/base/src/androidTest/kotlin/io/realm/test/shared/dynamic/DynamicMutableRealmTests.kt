@@ -42,7 +42,7 @@ import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
 import io.realm.isValid
-import io.realm.test.DynamicMutableTransactionRealm
+import io.realm.test.StandaloneDynamicMutableRealm
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -65,7 +65,7 @@ class DynamicMutableRealmTests {
             RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
                 .path("$tmpDir/default.realm").build()
 
-        dynamicMutableRealm = DynamicMutableTransactionRealm(configuration as InternalConfiguration).apply {
+        dynamicMutableRealm = StandaloneDynamicMutableRealm(configuration as InternalConfiguration).apply {
             beginTransaction()
         }
     }
@@ -73,7 +73,7 @@ class DynamicMutableRealmTests {
     @AfterTest
     fun tearDown() {
         if (this::dynamicMutableRealm.isInitialized && !dynamicMutableRealm.isClosed()) {
-            (dynamicMutableRealm as DynamicMutableTransactionRealm).close()
+            (dynamicMutableRealm as StandaloneDynamicMutableRealm).close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }

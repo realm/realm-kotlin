@@ -58,7 +58,7 @@ internal class ManagedRealmList<E>(
     override fun get(index: Int): E {
         metadata.realm.checkClosed()
         try {
-            return convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
+            return cinteropObjectToUserObject(RealmInterop.realm_list_get(nativePointer, index.toLong()))
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
                 "Could not get element at list index $index",
@@ -100,14 +100,17 @@ internal class ManagedRealmList<E>(
         }
     }
 
-    private fun convert(value: Any?): E {
+    /**
+     * Converts the given cinterop object to an object of type E.
+    */
+    private fun cinteropObjectToUserObject(value: Any?): E {
         return value?.let { metadata.converter.convert(value) } as E
     }
 
     override fun set(index: Int, element: E): E {
         metadata.realm.checkClosed()
         try {
-            return convert(
+            return cinteropObjectToUserObject(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),

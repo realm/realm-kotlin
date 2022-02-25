@@ -27,7 +27,7 @@ import io.realm.delete
 import io.realm.entities.Sample
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.platform.realmObjectCompanionOrThrow
-import io.realm.internal.realmObjectCompanion
+import io.realm.internal.realmObjectCompanionOrThrow
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
@@ -65,7 +65,7 @@ class SampleTests {
     // Tests that we can resolve RealmObjectCompanion from KClass<out RealmObject>
     @Test
     fun realmObjectCompanion() {
-        assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanion())
+        assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanionOrThrow())
         assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
     }
 

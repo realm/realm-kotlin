@@ -21,6 +21,7 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
 import io.realm.internal.interop.RealmCoreColumnNotFoundException
 import io.realm.internal.interop.RealmCoreCrossTableLinkTargetException
@@ -113,7 +114,7 @@ internal fun <T : RealmObject> create(
     mediator,
     realm,
     type,
-    io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`,
+    realmObjectCompanionOrThrow(type).`$realm$className`,
     primaryKey
 )
 

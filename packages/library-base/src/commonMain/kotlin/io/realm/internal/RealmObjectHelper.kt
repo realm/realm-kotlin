@@ -68,7 +68,6 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    // FIXME Why do we have a generic parameter on this?
     internal fun <R> getTimestamp(obj: RealmObjectInternal, propertyName: String): RealmInstant? {
         obj.checkValid()
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
@@ -238,7 +237,13 @@ internal object RealmObjectHelper {
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
     }
 
-    internal fun <R : Any> dynamicGetSingleton(
+    /**
+     * Get values for non-collection properties by name.
+     *
+     * This will verify that the requested type (`clazz`) and nullability matches the property
+     * properties in the schema.
+     */
+    internal fun <R : Any> dynamicGet(
         obj: RealmObjectInternal,
         propertyName: String,
         clazz: KClass<R>,
@@ -273,6 +278,7 @@ internal object RealmObjectHelper {
     ): RealmList<R?> {
         obj.checkValid()
         val propertyInfo = checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_LIST, clazz, nullable)
+        @Suppress("UNCHECKED_CAST")
         return getListByKey(obj, propertyInfo.key, clazz) as RealmList<R?>
     }
 
@@ -300,7 +306,7 @@ internal object RealmObjectHelper {
         return when (collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
-            else -> TODO()
+            else -> TODO("Unsupported collection type: $collectionType")
         }
     }
 

@@ -48,6 +48,9 @@ public interface RealmConfiguration : Configuration {
         schema: Set<KClass<out RealmObject>> = setOf()
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
 
+        private var deleteRealmIfMigrationNeeded: Boolean = false
+        private var migration: RealmMigration? = null
+
         /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
          * exception the on-disc Realm will be cleared and recreated with the new Realm schema.

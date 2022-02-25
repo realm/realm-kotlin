@@ -47,9 +47,13 @@ import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
 import io.realm.schema.ListPropertyType
+import io.realm.schema.RealmClass
+import io.realm.schema.RealmProperty
+import io.realm.schema.RealmPropertyType
+import io.realm.schema.RealmSchema
 import io.realm.schema.RealmStorageType
 import io.realm.schema.ValuePropertyType
-import io.realm.test.DynamicMutableTransactionRealm
+import io.realm.test.StandaloneDynamicMutableRealm
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
@@ -72,7 +76,9 @@ class DynamicMutableRealmObjectTests {
         configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
             .path("$tmpDir/default.realm").build()
 
-        dynamicMutableRealm = DynamicMutableTransactionRealm(configuration as InternalConfiguration).apply {
+        // We use a StandaloneDynamicMutableRealm that allows us to manage the write transaction
+        // which is not possible on the public DynamicMutableRealm.
+        dynamicMutableRealm = StandaloneDynamicMutableRealm(configuration as InternalConfiguration).apply {
             beginTransaction()
         }
     }
@@ -80,7 +86,7 @@ class DynamicMutableRealmObjectTests {
     @AfterTest
     fun tearDown() {
         if (this::dynamicMutableRealm.isInitialized && !dynamicMutableRealm.isClosed()) {
-            (dynamicMutableRealm as DynamicMutableTransactionRealm).close()
+            (dynamicMutableRealm as StandaloneDynamicMutableRealm).close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }
@@ -88,16 +94,16 @@ class DynamicMutableRealmObjectTests {
     @Test
     @Suppress("LongMethod", "ComplexMethod")
     fun set_allTypes() = runTest {
-        val dynamicSample = dynamicMutableRealm.createObject("Sample")
+        val dynamicSample: DynamicMutableRealmObject = dynamicMutableRealm.createObject("Sample")
         assertNotNull(dynamicSample)
 
-        val schema = dynamicMutableRealm.schema()
-        val sampleDescriptor = schema["Sample"]!!
+        val schema: RealmSchema = dynamicMutableRealm.schema()
+        val sampleDescriptor: RealmClass = schema["Sample"]!!
 
-        val properties = sampleDescriptor.properties
-        for (property in properties) {
+        val properties: Collection<RealmProperty> = sampleDescriptor.properties
+        for (property: RealmProperty in properties) {
             val name: String = property.name
-            val type = property.type
+            val type: RealmPropertyType = property.type
             when (type) {
                 is ValuePropertyType -> {
                     if (type.isNullable) {

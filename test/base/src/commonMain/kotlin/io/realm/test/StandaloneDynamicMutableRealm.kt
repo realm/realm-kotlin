@@ -18,15 +18,23 @@
 package io.realm.test
 
 import io.realm.internal.InternalConfiguration
-import io.realm.internal.TransactionalRealm
+import io.realm.internal.WriteTransactionManager
 import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.interop.RealmInterop
 
 /**
- * Special dynamic mutable realm that operates on it's own shared realm to allow us to test the
- * [DynamicMutableRealm] API outside of a migration.
+ * Special dynamic mutable realm with methods for managing a write transaction.
+ *
+ * The normal [DynamicMutableRealm] is currently only available in a migration where core manages
+ * the transaction part of the migration. This class provides a dynamic mutable realm that operates
+ * on it's own shared realm with the ability to manage the write transaction, which allows us to
+ * test the [DynamicMutableRealm] API outside of a migration.
  */
-internal class DynamicMutableTransactionRealm(configuration: InternalConfiguration) : DynamicMutableRealmImpl(configuration, RealmInterop.realm_open(configuration.nativeConfig, null)), TransactionalRealm {
+internal class StandaloneDynamicMutableRealm(configuration: InternalConfiguration) :
+    DynamicMutableRealmImpl(
+        configuration,
+        RealmInterop.realm_open(configuration.nativeConfig, null)
+    ), WriteTransactionManager {
     fun close() {
         realmReference.close()
     }

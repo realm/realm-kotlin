@@ -22,7 +22,7 @@ import io.realm.internal.interop.RealmInterop
 /**
  * Interface holding default implementation of methods related to controlling a write transaction.
  */
-internal interface TransactionalRealm {
+internal interface WriteTransactionManager {
     val realmReference: LiveRealmReference
 
     fun beginTransaction() {

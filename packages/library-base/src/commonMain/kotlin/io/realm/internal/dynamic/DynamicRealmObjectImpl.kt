@@ -38,11 +38,11 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
 
     override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
         // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE
-        return RealmObjectHelper.dynamicGetSingleton(this, propertyName, clazz, false)!!
+        return RealmObjectHelper.dynamicGet(this, propertyName, clazz, false)!!
     }
 
     override fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T? {
-        return RealmObjectHelper.dynamicGetSingleton(this, propertyName, clazz, true)
+        return RealmObjectHelper.dynamicGet(this, propertyName, clazz, true)
     }
 
     override fun getObject(propertyName: String): DynamicRealmObject? {

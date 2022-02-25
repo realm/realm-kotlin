@@ -21,6 +21,7 @@ import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
@@ -90,6 +91,13 @@ internal fun <T : RealmObject> Link.toRealmObject(
 /**
  * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
  */
-internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanion(): RealmObjectCompanion {
-    return io.realm.internal.platform.realmObjectCompanionOrThrow(this)
+internal inline fun <reified T : Any> KClass<T>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
+    return realmObjectCompanionOrNull(this)
+}
+
+/**
+ * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
+ */
+internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
+    return realmObjectCompanionOrThrow(this)
 }

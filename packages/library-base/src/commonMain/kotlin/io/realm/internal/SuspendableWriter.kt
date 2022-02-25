@@ -47,7 +47,7 @@ import io.realm.internal.freeze as freezeTyped
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
     private val tid: ULong
 
-    internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcher), InternalMutableRealm, TypedRealmImpl, TransactionalRealm {
+    internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcher), InternalMutableRealm, InternalTypedRealm, WriteTransactionManager {
 
         override val realmReference: LiveRealmReference
             get() = super.realmReference

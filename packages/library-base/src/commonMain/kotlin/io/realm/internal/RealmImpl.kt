@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 internal class RealmImpl private constructor(
     configuration: InternalConfiguration,
     dbPointer: NativePointer
-) : BaseRealmImpl(configuration), Realm, TypedRealmImpl {
+) : BaseRealmImpl(configuration), Realm, InternalTypedRealm {
 
     private val realmPointerMutex = Mutex()
 

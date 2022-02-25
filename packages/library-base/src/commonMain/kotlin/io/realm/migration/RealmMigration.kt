@@ -59,7 +59,8 @@ public fun interface AutomaticSchemaMigration : RealmMigration {
         /**
          * Convenience method to iterate all objects of a certain class from the realm before migration
          * with access to an updatable [DynamicMutableRealmObject] reference to the corresponding object in
-         * the already migrated realm.
+         * the already migrated realm. This makes it possible to do more advanced data mapping like merging
+         * or splitting field data or moving data while changing the type.
          *
          * @param className the name of the class for which to iterate all instances in the old realm.
          * @param block block of code that will be triggered for each instance of the class in the old
@@ -69,14 +70,19 @@ public fun interface AutomaticSchemaMigration : RealmMigration {
         public fun enumerate(className: String, block: (oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject?) -> Unit) {
             val find: RealmResults<out DynamicRealmObject> = oldRealm.query(className).find()
             find.forEach {
+                // TODO OPTIMIZE Using find latest on every object is inefficient
                 block(it, newRealm.findLatest(it))
             }
         }
     }
 
     /**
-     * Method triggered and allowing migration of data in the case that the schema of the realm has
-     * changed.
-     */
+     * Method called when the schema of the realm has changed.
+     *
+     * The schema has automatically been migrated when this callback is triggered, but any data
+     * must be manually moved using the migration context.
+     *
+     * @param migrationContext migration context giving access to the old and new realms.
+     * */
     public fun migrate(migrationContext: MigrationContext)
 }

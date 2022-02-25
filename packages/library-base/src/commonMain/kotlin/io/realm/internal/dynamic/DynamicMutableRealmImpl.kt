@@ -23,7 +23,7 @@ import io.realm.internal.BaseRealmImpl
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.LiveRealmReference
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.TransactionalRealm
+import io.realm.internal.WriteTransactionManager
 import io.realm.internal.create
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
@@ -32,7 +32,7 @@ import io.realm.query.RealmQuery
 internal open class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) :
     BaseRealmImpl(configuration),
     DynamicMutableRealm,
-    TransactionalRealm {
+    WriteTransactionManager {
 
     override val realmReference: LiveRealmReference = LiveRealmReference(this, dbPointer)
 
