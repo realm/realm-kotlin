@@ -25,7 +25,7 @@ import io.realm.query.RealmSingleQuery
  * It extends the sealed interface [ObjectChange] by adding the new event [PendingObject] on top of
  * its hierarchy. See [RealmSingleQuery.asFlow] for more information on how these events are emitted.
  *
- * Object event hierarchy diagram
+ * Object event hierarchy diagram:
  *                                   ┌───────────────────┐
  *                                   │ SingleQueryChange │
  *                                   └─────────┬─────────┘
