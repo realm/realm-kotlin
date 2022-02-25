@@ -36,14 +36,18 @@ package io.realm.test.shared.dynamic
 import io.realm.RealmConfiguration
 import io.realm.delete
 import io.realm.dynamic.DynamicMutableRealm
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.dynamic.getValue
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
 import io.realm.isValid
+import io.realm.query
 import io.realm.test.StandaloneDynamicMutableRealm
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.use
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -78,13 +82,15 @@ class DynamicMutableRealmTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
+    // TODO Add test for all BaseRealm methods
+    
     @Test
     fun create() {
         val dynamicMutableObject = dynamicMutableRealm.createObject("Sample")
         assertTrue { dynamicMutableObject.isValid() }
     }
 
-    // FIXME Do we need this for each type?
+    // TODO Add variants for each type
     @Test
     fun createPrimaryKey() {
         val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
@@ -92,10 +98,12 @@ class DynamicMutableRealmTests {
         assertEquals("PRIMARY_KEY", dynamicMutableObject.getValue("primaryKey"))
     }
 
-    // FIXME Do we need this for each type?
+    // TODO Add variants for each type
     @Test
     fun createPrimaryKey_nullablePrimaryKey() {
-        dynamicMutableRealm.createObject("PrimaryKeyStringNullable", null)
+        val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyStringNullable", null)
+        assertTrue { dynamicMutableObject.isValid() }
+        assertNull(dynamicMutableObject.getNullableValue("primaryKey"))
     }
 
     @Test
@@ -137,17 +145,14 @@ class DynamicMutableRealmTests {
     @Test
     fun query_returnsDynamicMutableObject() {
         dynamicMutableRealm.createObject("Sample")
-        val o1 = dynamicMutableRealm.query("Sample").find().first()
+        val o1 = dynamicMutableRealm.query<Any>("Sample").find().first()
         o1.set("stringField", "value")
-
-        val o2 = dynamicMutableRealm.query("Sample").find().first()
-        assertEquals("value", o2.getValue("stringField"))
     }
 
     @Test
     fun query_failsOnUnknownClass() {
         assertFailsWith<IllegalArgumentException> {
-            dynamicMutableRealm.query("UNKNOWN_CLASS")
+            dynamicMutableRealm.query<Any>("UNKNOWN_CLASS")
         }.run {
             assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
@@ -171,5 +176,34 @@ class DynamicMutableRealmTests {
         assertNull(o2)
     }
 
-    // fun delete() ? See comment in DynamicMutableRealm.delete
+    // FIXME Align delete behavior with MutableRealm, until that is in place we just test the
+    //  various ways of deleting objects
+    //  https://github.com/realm/realm-kotlin/issues/181
+    @Test
+    fun delete() {
+        for (i in 0..9) {
+            dynamicMutableRealm.createObject("Sample").set("intField", i % 2)
+        }
+        dynamicMutableRealm.query("Sample").find().forEach { obj ->
+            if (obj.getValue<Long>("intField") == 0L) {
+                obj.delete()
+            }
+        }
+        val samples = dynamicMutableRealm.query("Sample").find()
+        assertEquals(5, samples.size)
+        samples.forEach { assertEquals(1, it.getValue("intField")) }
+    }
+
+    @Test
+    fun deleteAll() {
+        for (i in 0..9) {
+            dynamicMutableRealm.createObject("Sample").set("intField", i % 2)
+        }
+        val samples = dynamicMutableRealm.query("Sample").find()
+        assertEquals(10, samples.size)
+        samples.delete()
+
+        val noSamples = dynamicMutableRealm.query("Sample").find()
+        assertEquals(0, noSamples.size)
+    }
 }

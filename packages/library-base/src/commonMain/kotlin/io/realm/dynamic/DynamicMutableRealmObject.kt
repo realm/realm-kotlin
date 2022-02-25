@@ -17,6 +17,7 @@
 package io.realm.dynamic
 
 import io.realm.RealmList
+import io.realm.MutableRealm
 
 /**
  * A **dynamic mutable realm object** gives access and possibility to update the data of the realm
@@ -31,6 +32,9 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
 
     /**
      * Sets the value for the given field.
+     *
+     * If value is an unmanaged [RealmObject] it will copied into the realm, just as for normal
+     * assignments through the object setters of the typed API and [MutableRealm.copyToRealm].
      *
      * @param propertyName the name of the property to update.
      * @param value the new value of the property.

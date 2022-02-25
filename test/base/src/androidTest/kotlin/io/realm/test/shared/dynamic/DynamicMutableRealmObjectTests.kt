@@ -333,14 +333,13 @@ class DynamicMutableRealmObjectTests {
         }
     }
 
+    // This tests the current behavior of actually being able to update a primary key attribute.
+    // TODO Implement guard for updating primary keys
+    //  https://github.com/realm/realm-kotlin/issues/353
     @Test
-    @Ignore // Guard not implemented yet https://github.com/realm/realm-kotlin/issues/353
-    fun set_throwsOnPrimaryKeyUpdate() {
+    fun set_primaryKey() {
         val o = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
-        assertFailsWith<IllegalArgumentException> {
-            o.set("primaryKey", "UPDATED_PRIMARY_KEY")
-        }.run {
-            assertEquals("Required property `Sample.stringField` cannot be null", message)
-        }
+        o.set("primaryKey", "UPDATED_PRIMARY_KEY")
+        assertEquals("UPDATED_PRIMARY_KEY", o.getValue("PrimaryKeyString"))
     }
 }

@@ -64,7 +64,10 @@ class RealmMigrationTests {
     @Test
     fun schemaVerificationOnOldAndNewRealm() {
         migration(
-            initialSchema = setOf(SchemaVariations::class, Sample::class),
+            initialSchema = setOf(
+                io.realm.entities.schema.SchemaVariations::class,
+                io.realm.entities.Sample::class
+            ),
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
             migration = { context ->
                 val oldRealm = context.oldRealm
@@ -105,43 +108,9 @@ class RealmMigrationTests {
     //      - Index
 
     @Test
-    fun create() {
-        val value = "MIGRATED_NAME"
-        migration(
-            initialSchema = setOf(Sample::class),
-            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            migration = { context ->
-                val newRealm = context.newRealm
-                newRealm.createObject("Sample").set("name", value)
-            }
-        ).use {
-            assertEquals(value, it.query<io.realm.entities.migration.Sample>().find().first().name)
-        }
-    }
-
-    @Test
-    fun createPrimaryKey() {
-        val primaryKey = "PRIMARY_KEY"
-        migration(
-            initialSchema = setOf(Sample::class),
-            migratedSchema = setOf(PrimaryKeyString::class),
-            migration = { context ->
-                val oldRealm = context.oldRealm
-                val newRealm = context.newRealm
-                newRealm.createObject(
-                    "PrimaryKeyString",
-                    primaryKey
-                )
-            }
-        ).use {
-            assertEquals(primaryKey, it.query<PrimaryKeyString>().find().first().primaryKey)
-        }
-    }
-
-    @Test
     fun query() {
         migration(
-            initialSchema = setOf(Sample::class),
+            initialSchema = setOf(io.realm.entities.Sample::class),
             initialData = {
                 for (i in 0..9) {
                     copyToRealm(Sample().apply { intField = i % 2 })
@@ -156,24 +125,9 @@ class RealmMigrationTests {
                 oldSamples.forEach { assertEquals(0, it.getValue<Long>("intField")) }
 
                 val newSamples: RealmResults<out DynamicRealmObject> =
-                    it.newRealm.query("Sample", "intField = 0").find()
+                    it.newRealm.query<Any>("Sample", "intField = 0").find()
                 assertEquals(5, newSamples.size)
                 newSamples.forEach { assertEquals(0, it.getValue<Long>("intField")) }
-            }
-        ).close()
-    }
-
-    @Test
-    fun create_unknownClassFails() {
-        migration(
-            initialSchema = setOf(Sample::class),
-            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            migration = { context ->
-                val oldRealm = context.oldRealm
-                val newRealm = context.newRealm
-                assertFailsWith<IllegalArgumentException> {
-                    newRealm.createObject("UNKNOWN_CLASS")
-                }
             }
         ).close()
     }
@@ -183,7 +137,7 @@ class RealmMigrationTests {
         val initialValue = "INITIAL_VALUE"
         val migratedValue = "MIGRATED_VALUE"
         migration(
-            initialSchema = setOf(Sample::class),
+            initialSchema = setOf(io.realm.entities.Sample::class),
             initialData = { copyToRealm(Sample().apply { stringField = initialValue }) },
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
             // FIXME Can we get this to have the DataMigrationContext as receiver
@@ -205,7 +159,7 @@ class RealmMigrationTests {
     @Test
     fun enumerate_deleteNewObject() {
         migration(
-            initialSchema = setOf(Sample::class),
+            initialSchema = setOf(io.realm.entities.Sample::class),
             initialData = {
                 copyToRealm(Sample().apply { intField = 1 })
                 copyToRealm(Sample().apply { intField = 2 })
@@ -216,7 +170,7 @@ class RealmMigrationTests {
                 migrationContext.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
                     if (oldObject.getValue<Long>("intField") == 1L) {
                         // Delete all objects
-                        migrationContext.newRealm.query("Sample").find().delete()
+                        migrationContext.newRealm.query<Any>("Sample").find().delete()
                     } else {
                         assertNull(newObject)
                     }
@@ -229,7 +183,7 @@ class RealmMigrationTests {
     fun enumerate_throwsOnInvalidName() {
         val initialValue = "INITIAL_VALUE"
         migration(
-            initialSchema = setOf(Sample::class),
+            initialSchema = setOf(io.realm.entities.Sample::class),
             initialData = { copyToRealm(Sample().apply { stringField = initialValue }) },
             migratedSchema = setOf(io.realm.entities.migration.Sample::class),
             // FIXME Can we get this to have the DataMigrationContext as receiver
@@ -243,56 +197,8 @@ class RealmMigrationTests {
     }
 
     @Test
-    fun delete() {
-        migration(
-            initialSchema = setOf(Sample::class),
-            initialData = {
-                for (i in 0..9) {
-                    copyToRealm(Sample().apply { intField = i % 2 })
-                }
-            },
-            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            // FIXME Can we get this to have the DataMigrationContext as receiver
-            migration = {
-                it.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
-                    assertNotNull(newObject)
-                    if (newObject.getValue<Long>("intField") == 0L) {
-                        newObject.delete()
-                    }
-                }
-            }
-        ).use {
-            val samples = it.query<io.realm.entities.migration.Sample>().find()
-            assertEquals(5, samples.size)
-            samples.forEach { assertEquals(1, it.intField) }
-        }
-    }
-
-    @Test
-    fun deleteAll() {
-        migration(
-            initialSchema = setOf(Sample::class),
-            initialData = {
-                for (i in 0..9) {
-                    copyToRealm(Sample().apply { intField = i % 2 })
-                }
-            },
-            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            // FIXME Can we get this to have the DataMigrationContext as receiver
-            migration = {
-                val samples = it.newRealm.query("Sample").find()
-                assertEquals(10, samples.size)
-                samples.delete()
-            }
-        ).use {
-            val samples = it.query<io.realm.entities.migration.Sample>().find()
-            assertEquals(0, samples.size)
-        }
-    }
-
-    @Test
     fun migrationError_throwingCausesMigrationToFail() {
-        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.Sample::class))
             .path("$tmpDir/default.realm")
             .build()
         Realm.open(configuration).close()
@@ -320,7 +226,7 @@ class RealmMigrationTests {
 
     @Test
     fun migrationError_throwsIfVersionIsNotUpdated() {
-        val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.Sample::class))
             .path("$tmpDir/default.realm")
             .build()
         Realm.open(configuration).close()
@@ -351,7 +257,7 @@ class RealmMigrationTests {
         }
 
         val newConfiguration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class))
+            RealmConfiguration.Builder(schema = setOf(io.realm.entities.Sample::class, PrimaryKeyString::class))
                 .path("$tmpDir/default.realm")
                 .schemaVersion(1)
                 .migration(
