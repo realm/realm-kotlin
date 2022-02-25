@@ -16,7 +16,7 @@
 package io.realm.notifications
 
 /**
- * This interface models the changes that can occur to a collection.
+ * This interface models the changes that can occur to a list.
  */
 public interface CollectionChangeSet {
     /**
