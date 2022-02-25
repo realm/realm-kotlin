@@ -47,7 +47,7 @@ public sealed interface SingleQueryChange<O : RealmObject> {
 }
 
 /**
- * Describes the state where a query does not contain any elements.
+ * Describes the initial state where a query result does not contain any elements.
  */
 public interface PendingObject<O : RealmObject> : SingleQueryChange<O>
 
