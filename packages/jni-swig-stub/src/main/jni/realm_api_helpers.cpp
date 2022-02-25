@@ -183,7 +183,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
 }
 
 
-class CustomJVMScheduler : public realm::util::Scheduler {
+class CustomJVMScheduler {
 public:
     CustomJVMScheduler(jobject dispatchScheduler) : m_id(std::this_thread::get_id()) {
         JNIEnv *jenv = get_env();
@@ -196,35 +196,31 @@ public:
         get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
     }
 
-    void notify() override {
+    void set_scheduler(realm_scheduler_t* scheduler) {
+        m_scheduler = scheduler;
+    }
+
+    void notify() {
         auto jenv = get_env(true);
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
-                             reinterpret_cast<jlong>(&m_callback));
+                             reinterpret_cast<jlong>(m_scheduler));
     }
 
-    void set_notify_callback(std::function<void()> fn) override {
-        m_callback = std::move(fn);
-    }
-
-    bool is_on_thread() const noexcept override {
+    bool is_on_thread() const noexcept {
         return m_id == std::this_thread::get_id();
     }
 
-    bool is_same_as(const Scheduler *other) const noexcept override {
-        auto o = dynamic_cast<const CustomJVMScheduler *>(other);
-        return (o && (o->m_id == m_id));
-    }
-
-    bool can_deliver_notifications() const noexcept override {
+    bool can_invoke() const noexcept {
         return true;
     }
 
+
 private:
-    std::function<void()> m_callback;
     std::thread::id m_id;
     jmethodID m_notify_method;
     jobject m_jvm_dispatch_scheduler;
+    realm_scheduler_t *m_scheduler;
 };
 
 // Note: using jlong here will create a linker issue
@@ -235,24 +231,37 @@ private:
 //
 // I suspect this could be related to the fact that jni.h defines jlong differently between Android (typedef int64_t)
 // and JVM which is a (typedef long long) resulting in a different signature of the method that could be found by the linker.
-void invoke_core_notify_callback(int64_t core_notify_function) {
-    auto notify = reinterpret_cast<std::function<void()> *>(core_notify_function);
-    (*notify)();
+void invoke_core_notify_callback(int64_t scheduler) {
+    realm_scheduler_perform_work(reinterpret_cast<realm_scheduler_t *>(scheduler));
 }
 
-// TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
 realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
-    auto *cfg = reinterpret_cast<realm_config_t * >(config_ptr);
+    auto config = reinterpret_cast<realm_config_t *>(config_ptr);
     // copy construct to not set the scheduler on the original Conf which could be used
-    // to open Frozen Realm for instance.
-    auto copyConf = *cfg;
+    // to open Frozen Realm for instance. realm_clone doesn't produce a copy but just increases the
+    // reference count.
+    // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
+    auto config_clone = *config;
+
     if (dispatchScheduler) {
-        copyConf.scheduler = std::make_shared<CustomJVMScheduler>(dispatchScheduler);
+        auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
+        auto scheduler = realm_scheduler_new(
+                jvmScheduler,
+                [](void *userdata) { delete(static_cast<CustomJVMScheduler *>(userdata)); },
+                [](void *userdata) { static_cast<CustomJVMScheduler *>(userdata)->notify(); },
+                [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->is_on_thread(); },
+                [](const void *userdata, const void *userdata_other) { return userdata == userdata_other; },
+                [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
+        );
+        jvmScheduler->set_scheduler(scheduler);
+        realm_config_set_scheduler(&config_clone, scheduler);
     } else {
-        copyConf.scheduler = realm::util::Scheduler::make_generic();
+        // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
+        auto scheduler =  new realm_scheduler_t{realm::util::Scheduler::make_generic()};
+        realm_config_set_scheduler(&config_clone, scheduler);
     }
 
-    return realm_open(&copyConf);
+    return realm_open(&config_clone);
 }
 
 jobject app_exception_from_app_error(JNIEnv* env, const realm_app_error_t* error) {
@@ -319,6 +328,17 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
                                          reinterpret_cast<jlong>(cloned_result), false);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, pointer);
     }
+}
+
+bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes) {
+    auto env = get_env(true);
+    static JavaClass java_should_compact_class(env, "io/realm/internal/interop/CompactOnLaunchCallback");
+    static JavaMethod java_should_compact_method(env, java_should_compact_class, "invoke", "(JJ)Z");
+
+    jobject callback = static_cast<jobject>(userdata);
+    jboolean result = env->CallBooleanMethod(callback, java_should_compact_method, jlong(total_bytes), jlong(used_bytes));
+    jni_check_exception(env);
+    return result;
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {

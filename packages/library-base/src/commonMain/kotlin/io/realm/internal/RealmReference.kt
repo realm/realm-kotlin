@@ -27,10 +27,11 @@ import kotlinx.atomicfu.atomic
  * NOTE: There should never be multiple RealmReferences with the same `dbPointer` as the underlying
  * C++ SharedRealm is closed when the RealmReference is no longer referenced by the [Realm].
  */
-interface RealmReference : RealmState {
-    val owner: BaseRealmImpl
-    val schemaMetadata: SchemaMetadata
-    val dbPointer: NativePointer
+// TODO Public due to being a transitive dependency to Notifiable
+public interface RealmReference : RealmState {
+    public val owner: BaseRealmImpl
+    public val schemaMetadata: SchemaMetadata
+    public val dbPointer: NativePointer
 
     override fun version(): VersionId {
         checkClosed()
@@ -46,19 +47,19 @@ interface RealmReference : RealmState {
         return RealmInterop.realm_is_closed(dbPointer)
     }
 
-    fun close() {
+    public fun close() {
         checkClosed()
         RealmInterop.realm_close(dbPointer)
     }
 
-    fun checkClosed() {
+    public fun checkClosed() {
         if (isClosed()) {
             throw IllegalStateException("Realm has been closed and is no longer accessible: ${owner.configuration.path}")
         }
     }
 }
 
-data class FrozenRealmReference(
+public data class FrozenRealmReference(
     override val owner: BaseRealmImpl,
     override val dbPointer: NativePointer,
     override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer),
@@ -68,7 +69,7 @@ data class FrozenRealmReference(
  * A **live realm reference** linking to the underlying live SharedRealm with the option to update
  * schema metadata when the schema has changed.
  */
-data class LiveRealmReference(override val owner: BaseRealmImpl, override val dbPointer: NativePointer) : RealmReference {
+public data class LiveRealmReference(override val owner: BaseRealmImpl, override val dbPointer: NativePointer) : RealmReference {
     private val _schemaMetadata: AtomicRef<SchemaMetadata> = atomic(CachedSchemaMetadata(dbPointer))
     override val schemaMetadata: SchemaMetadata
         get() = _schemaMetadata.value
@@ -76,7 +77,7 @@ data class LiveRealmReference(override val owner: BaseRealmImpl, override val db
     /**
      * Returns a frozen realm reference of the current live realm reference.
      */
-    fun snapshot(owner: BaseRealmImpl): FrozenRealmReference {
+    public fun snapshot(owner: BaseRealmImpl): FrozenRealmReference {
         return FrozenRealmReference(owner, RealmInterop.realm_freeze(dbPointer), schemaMetadata)
     }
 
@@ -86,7 +87,7 @@ data class LiveRealmReference(override val owner: BaseRealmImpl, override val db
      * This means that any existing live realm objects will get an updated schema. This should be
      * safe as we don't expect live objects to leave the scope of the write block of [Realm.write].
      */
-    fun refreshSchemaMetadata() {
+    public fun refreshSchemaMetadata() {
         _schemaMetadata.value = CachedSchemaMetadata(dbPointer)
     }
 }

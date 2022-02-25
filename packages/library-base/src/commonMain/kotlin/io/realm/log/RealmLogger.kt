@@ -23,27 +23,27 @@ import io.realm.Configuration
  *
  * @see Configuration.Builder.log
  */
-interface RealmLogger {
+public interface RealmLogger {
 
     /**
      * The [LogLevel] used in this logger.
      */
-    val level: LogLevel
+    public val level: LogLevel
 
     /**
      * Tag that can be used to describe the output.
      */
-    val tag: String
+    public val tag: String
 
     /**
      * Log an event.
      */
-    fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
+    public fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
 
     /**
      * Log an event.
      */
-    fun log(level: LogLevel, message: String) {
+    public fun log(level: LogLevel, message: String) {
         log(level, null, message, null)
     }
 }

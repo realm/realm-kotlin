@@ -220,6 +220,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     }
 }
 
-enum class AggregatorQueryType {
+// TODO Public due to being used in QueryTests
+public enum class AggregatorQueryType {
     MIN, MAX, SUM
 }

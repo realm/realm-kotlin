@@ -24,7 +24,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 
-class NotificationToken<T>(callback: T, private val token: NativePointer) : Cancellable {
+internal class NotificationToken<T>(callback: T, private val token: NativePointer) : Cancellable {
 
     private val lock = reentrantLock()
     private val observer: AtomicRef<T?> = atomic(callback)

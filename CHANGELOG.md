@@ -1,13 +1,17 @@
 ## 0.10.0-SNAPSHOT (2022-MM-DD)
 
 ### Breaking Changes
+* None.
 
 ### Enhancements
+* Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
+* Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
 * `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
 * Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
+* Boolean argument substitution in queries on iOS/macOS would crash the query. (Issue [#691](https://github.com/realm/realm-kotlin/issues/691))
 * Support 32-bit Android (x86 and armeabi-v7a). (Issue ([#109](https://github.com/realm/realm-kotlin/issues/109)).
 
 
@@ -22,6 +26,7 @@
 
 ### Internal
 * Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
+* Updated to Realm Core 11.9.0, commit: 377a85d2a385a31ec91be7e5fe8c09d22365df97
 
 
 ## 0.9.0 (2022-01-28)

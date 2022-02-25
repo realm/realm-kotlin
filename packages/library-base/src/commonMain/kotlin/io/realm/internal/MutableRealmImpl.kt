@@ -24,8 +24,10 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
+import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
 internal class MutableRealmImpl : LiveRealm, MutableRealm {
 
@@ -40,7 +42,7 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
 
         private fun checkObjectValid(obj: RealmObjectInternal) {
             if (!obj.isValid()) {
-                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
+                throw IllegalArgumentException("This operation cannot be performed on invalid/deleted objects.")
             }
         }
     }
@@ -109,8 +111,16 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
     }
 
     override fun <T : RealmObject> delete(obj: T) {
-        // TODO It is easy to call this with a wrong object. Should we use `findLatest` behind the scenes?
+        if (obj !is RealmObjectInternal) {
+            throw IllegalArgumentException("Unmanaged objects cannot be deleted.")
+        }
         val internalObject = obj as RealmObjectInternal
+        if (internalObject.isFrozen()) {
+            throw IllegalArgumentException(
+                "Frozen objects cannot be deleted. They must be converted to live objects first " +
+                    "by using `MutableRealm.findLatest(frozenObject)`."
+            )
+        }
         checkObjectValid(internalObject)
         internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
     }
@@ -123,24 +133,34 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerResultsChangeListener(
+    override fun <T : RealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerListChangeListener(
+    override fun <T : RealmObject> registerListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    internal override fun <T : RealmObject> registerObjectChangeListener(
+    override fun <T : RealmObject> registerObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
+    }
+
+    // Required as Kotlin otherwise gets confused about the visibility and reports
+    // "Cannot infer visibility for '...'. Please specify it explicitly"
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T> {
+        return super.query(clazz, query, *args)
     }
 }
