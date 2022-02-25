@@ -19,12 +19,19 @@ package io.realm.internal
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.interop.ArrayAccessor
 import io.realm.internal.interop.Callback
+import io.realm.internal.interop.CollectionChangeSetBuilder
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.notifications.ListChange
+import io.realm.notifications.UpdatedList
+import io.realm.notifications.internal.DeletedListImpl
+import io.realm.notifications.internal.InitialListImpl
+import io.realm.notifications.internal.UpdatedListImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -34,7 +41,7 @@ import kotlin.reflect.KClass
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
 internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableListOf() {
-    override fun asFlow(): Flow<RealmList<E>> =
+    override fun asFlow(): Flow<ListChange<RealmList<E>>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 }
 
@@ -44,7 +51,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     private val nativePointer: NativePointer,
     private val metadata: ListOperatorMetadata
-) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>, ManagedRealmList<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>, ListChange<RealmList<E>>>, Flowable<ListChange<RealmList<E>>> {
 
     private val operator = ListOperator<E>(metadata)
 
@@ -117,7 +124,7 @@ internal class ManagedRealmList<E>(
         }
     }
 
-    override fun asFlow(): Flow<ManagedRealmList<E>> {
+    override fun asFlow(): Flow<ListChange<RealmList<E>>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }
@@ -141,14 +148,24 @@ internal class ManagedRealmList<E>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<ManagedRealmList<E>>
+        channel: SendChannel<ListChange<RealmList<E>>>
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            channel.trySend(frozenList)
+            val builder = UpdatedListBuilder(frozenList)
+            RealmInterop.realm_collection_changes_get_indices(change, builder)
+            RealmInterop.realm_collection_changes_get_ranges(change, builder)
+
+            if (builder.isEmpty()) {
+                channel.trySend(InitialListImpl(frozenList))
+            } else {
+                channel.trySend(builder.build())
+            }
         } else {
-            channel.close()
-            null
+            channel.trySend(DeletedListImpl(UnmanagedRealmList()))
+                .also {
+                    channel.close()
+                }
         }
     }
 
@@ -156,6 +173,34 @@ internal class ManagedRealmList<E>(
     internal fun isValid(): Boolean {
         return RealmInterop.realm_list_is_valid(nativePointer)
     }
+}
+
+internal class UpdatedListBuilder<T : List<*>>(val list: T) :
+    CollectionChangeSetBuilder<UpdatedList<T>, ListChange.Range>() {
+
+    override fun initIndicesArray(size: Int, indicesAccessor: ArrayAccessor): IntArray =
+        IntArray(size) { index -> indicesAccessor(index) }
+
+    override fun initRangesArray(
+        size: Int,
+        fromAccessor: ArrayAccessor,
+        toAccessor: ArrayAccessor
+    ): Array<ListChange.Range> =
+        Array(size) { index ->
+            val from: Int = fromAccessor(index)
+            val to: Int = toAccessor(index)
+            ListChange.Range(from, to - from)
+        }
+
+    override fun build(): UpdatedList<T> = UpdatedListImpl(
+        list = list,
+        deletions = deletionIndices,
+        insertions = insertionIndices,
+        changes = modificationIndicesAfter,
+        deletionRanges = deletionRanges,
+        insertionRanges = insertionRanges,
+        changeRanges = modificationRangesAfter
+    )
 }
 
 /**

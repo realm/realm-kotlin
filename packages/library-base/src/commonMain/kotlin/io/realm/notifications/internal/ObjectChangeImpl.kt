@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.notifications
+package io.realm.notifications.internal
 
 import io.realm.RealmObject
+import io.realm.notifications.DeletedObject
+import io.realm.notifications.InitialObject
+import io.realm.notifications.UpdatedObject
 
 internal class InitialObjectImpl<O : RealmObject>(override val obj: O) : InitialObject<O>
 
