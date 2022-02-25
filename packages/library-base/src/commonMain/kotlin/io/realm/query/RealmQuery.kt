@@ -27,8 +27,8 @@ import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
 import io.realm.notifications.InitialResults
 import io.realm.notifications.PendingObject
-import io.realm.notifications.QueryObjectChange
 import io.realm.notifications.ResultsChange
+import io.realm.notifications.SingleQueryChange
 import io.realm.notifications.UpdatedObject
 import io.realm.notifications.UpdatedResults
 import kotlinx.coroutines.flow.Flow
@@ -251,7 +251,7 @@ public interface RealmSingleQuery<T : RealmObject> {
 
     /**
      * Observes changes to the first object that fulfills the query conditions. The flow will emit
-     * [QueryObjectChange] events on any changes to the first object represented by the query. The flow
+     * [SingleQueryChange] events on any changes to the first object represented by the query. The flow
      * will continue running indefinitely until cancelled.
      *
      * If subscribed on an empty query the flow will emit a [PendingObject] event to signal the query
@@ -282,7 +282,7 @@ public interface RealmSingleQuery<T : RealmObject> {
      * @return a flow representing changes to the [RealmObject] resulting from running this query.
 
      */
-    public fun asFlow(): Flow<QueryObjectChange<T>>
+    public fun asFlow(): Flow<SingleQueryChange<T>>
 }
 
 /**

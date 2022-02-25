@@ -28,8 +28,8 @@ import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
 import io.realm.notifications.InitialResults
 import io.realm.notifications.PendingObject
-import io.realm.notifications.QueryObjectChange
 import io.realm.notifications.ResultsChange
+import io.realm.notifications.SingleQueryChange
 import io.realm.notifications.UpdatedObject
 import io.realm.notifications.UpdatedResults
 import io.realm.query
@@ -1633,7 +1633,7 @@ class QueryTests {
     @Test
     @Suppress("LongMethod")
     fun first_asFlow() {
-        val channel = Channel<QueryObjectChange<QuerySample>>(2)
+        val channel = Channel<SingleQueryChange<QuerySample>>(2)
 
         val dataset = arrayOf(
             QuerySample(intField = 1),
@@ -1758,8 +1758,8 @@ class QueryTests {
     @Test
     fun first_asFlow_cancel() {
         runBlocking {
-            val channel1 = Channel<QueryObjectChange<QuerySample>>(2)
-            val channel2 = Channel<QueryObjectChange<QuerySample>>(2)
+            val channel1 = Channel<SingleQueryChange<QuerySample>>(2)
+            val channel2 = Channel<SingleQueryChange<QuerySample>>(2)
 
             val observer1 = async {
                 realm.query<QuerySample>()

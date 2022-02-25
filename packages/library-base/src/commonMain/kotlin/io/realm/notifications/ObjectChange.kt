@@ -27,7 +27,7 @@ import io.realm.query.RealmSingleQuery
  *
  * Object event hierarchy diagram
  *                                   ┌───────────────────┐
- *                                   │ QueryObjectChange │
+ *                                   │ SingleQueryChange │
  *                                   └─────────┬─────────┘
  *                                ┌────────────┴───────────┐
  *                         ┌──────▼───────┐        ┌───────▼───────┐
@@ -38,7 +38,7 @@ import io.realm.query.RealmSingleQuery
  *      │ InitialObject │  │ UpdatedObject │  │ DeletedObject │
  *      └───────────────┘  └───────────────┘  └───────────────┘
  */
-public sealed interface QueryObjectChange<O : RealmObject> {
+public sealed interface SingleQueryChange<O : RealmObject> {
     /**
      * Returns the newest state of object being observed. `null` is returned if there is no object to
      * observe.
@@ -49,7 +49,7 @@ public sealed interface QueryObjectChange<O : RealmObject> {
 /**
  * Describes the state where a query does not contain any elements.
  */
-public interface PendingObject<O : RealmObject> : QueryObjectChange<O>
+public interface PendingObject<O : RealmObject> : SingleQueryChange<O>
 
 /**
  * This sealed interface describe the possible changes that can be observed to a Realm Object.
@@ -80,7 +80,7 @@ public interface PendingObject<O : RealmObject> : QueryObjectChange<O>
  *
  * For state of update changes, a list with the updated field names from the previous version is provided.
  */
-public sealed interface ObjectChange<O : RealmObject> : QueryObjectChange<O> {
+public sealed interface ObjectChange<O : RealmObject> : SingleQueryChange<O> {
     /**
      * Returns the newest state of object being observed. `null` is returned if the object
      * has been deleted.

@@ -14,8 +14,8 @@ import io.realm.internal.link
 import io.realm.notifications.Cancellable
 import io.realm.notifications.InitialResults
 import io.realm.notifications.PendingObjectImpl
-import io.realm.notifications.QueryObjectChange
 import io.realm.notifications.ResultsChange
+import io.realm.notifications.SingleQueryChange
 import io.realm.notifications.UpdatedResults
 import io.realm.query.RealmSingleQuery
 import kotlinx.coroutines.flow.Flow
@@ -43,14 +43,14 @@ internal class SingleQuery<E : RealmObject> constructor(
      * Because Core does not support subscribing to the head element of a query this feature
      * must be shimmed.
      *
-     * This [QueryObjectChange] flow is achieved by flat mapping and tracking the flow of the head element.
+     * This [SingleQueryChange] flow is achieved by flat mapping and tracking the flow of the head element.
      *
      * If the head element is replaced by a new one, then we cancel the previous flow and subscribe to the new.
      * If the head element is deleted, the flow does not need to be cancelled but we subscribe to the
      * new head if any.
      * If there is an update, we ignore it, as the object flow would automatically emit the event.
      */
-    override fun asFlow(): Flow<QueryObjectChange<E>> {
+    override fun asFlow(): Flow<SingleQueryChange<E>> {
         realmReference.checkClosed()
 
         var head: E? = null
@@ -68,8 +68,9 @@ internal class SingleQuery<E : RealmObject> constructor(
                     head = newHead
                 }
             }.flatMapMerge { resultsChange ->
-                // Don't close the flow if the head was removed
-                if (resultsChange !is UpdatedResults<*> || !resultsChange.deletions.contains(0))
+                // Head was changed, cancel any active flow unless the head was deleted. In the case
+                // the head was deleted the flow would emit a [DeletedObject] and terminate.
+                if (resultsChange is UpdatedResults<*> && !resultsChange.deletions.contains(0))
                     headFlow?.cancel()
 
                 if (resultsChange is InitialResults<E> && resultsChange.list.isEmpty()) {
