@@ -7,7 +7,7 @@
 * Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
 * Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
 * A better error message if a data class was used as model classes. (Issue [#684](https://github.com/realm/realm-kotlin/issues/684))
-* A better error message if Realm plugin was not applied to the module containing model classes. (Issue [#676](https://github.com/realm/realm-kotlin/issues/676))
+* A better error message if the Realm plugin was not applied to the module containing model classes. (Issue [#676](https://github.com/realm/realm-kotlin/issues/676))
 * A better error message if a class is used that is not part of the schema. (Issue [#680](https://github.com/realm/realm-kotlin/issues/680))
 
 ### Fixed
