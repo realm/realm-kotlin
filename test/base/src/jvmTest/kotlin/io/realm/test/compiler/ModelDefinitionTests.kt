@@ -71,15 +71,14 @@ class ModelDefinitionTests {
         val result = Compiler.compileFromSource(
             plugins = listOf(Registrar()),
             source = SourceFile.kotlin(
-                "multiple_ctor.kt",
+                "data_class.kt",
                 """
                         import io.realm.RealmObject
-                        data class Foo(var name: String, var age: Int) : RealmObject {
-                            constructor() : this ("John" , 42)
-                        }
+                        data class Foo(val name: String) : RealmObject
                 """.trimIndent()
             )
         )
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using data class")
+        assertTrue(result.messages.contains("Data class 'Foo' is not currently supported"))
     }
 }

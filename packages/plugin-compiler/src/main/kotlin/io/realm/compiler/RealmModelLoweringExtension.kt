@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.name.Name
@@ -71,6 +72,10 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
     override fun lower(irClass: IrClass) {
         if (irClass.hasRealmModelInterface) {
+            // We don't support data class
+            if (irClass.isData) {
+                error("Data class '${irClass.kotlinFqName}' is not currently supported.")
+            }
             // For native we add @ModelObject(irClass.Companion::class) as associated object to be
             // able to resolve the companion object during runtime due to absence of
             // kotlin.reflect.full.companionObjectInstance
