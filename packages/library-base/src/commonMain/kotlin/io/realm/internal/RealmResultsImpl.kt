@@ -22,9 +22,9 @@ import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
-import io.realm.notifications.InitialResultsImpl
 import io.realm.notifications.ResultsChange
-import io.realm.notifications.UpdatedResultsImpl
+import io.realm.notifications.internal.InitialResultsImpl
+import io.realm.notifications.internal.UpdatedResultsImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow

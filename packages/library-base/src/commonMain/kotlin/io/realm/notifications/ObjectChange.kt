@@ -26,6 +26,7 @@ import io.realm.query.RealmSingleQuery
  * its hierarchy. See [RealmSingleQuery.asFlow] for more information on how these events are emitted.
  *
  * Object event hierarchy diagram:
+ * ```
  *                                   ┌───────────────────┐
  *                                   │ SingleQueryChange │
  *                                   └─────────┬─────────┘
@@ -37,6 +38,7 @@ import io.realm.query.RealmSingleQuery
  *      ┌────────▼──────┐  ┌──────▼────────┐  ┌────────▼──────┐
  *      │ InitialObject │  │ UpdatedObject │  │ DeletedObject │
  *      └───────────────┘  └───────────────┘  └───────────────┘
+ * ```
  */
 public sealed interface SingleQueryChange<O : RealmObject> {
     /**

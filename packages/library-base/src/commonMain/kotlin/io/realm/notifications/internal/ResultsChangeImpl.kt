@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm.notifications
+package io.realm.notifications.internal
 
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.notifications.InitialResults
+import io.realm.notifications.ListChangeSet
+import io.realm.notifications.UpdatedResults
 
 internal class InitialResultsImpl<T : RealmObject>(
     override val list: RealmResults<T>

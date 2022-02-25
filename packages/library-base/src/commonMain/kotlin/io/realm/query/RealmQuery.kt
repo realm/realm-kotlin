@@ -265,17 +265,17 @@ public interface RealmSingleQuery<T : RealmObject> {
      * If the first element is replaced with a new value, an [InitialObject] would be yield for the new
      * head, and would be follow with [UpdatedObject] on all its changes.
      *
+     * ```
      *               ┌───────┐
      *         ┌─────┤ Start ├───┐
      *         │     └───────┘   ├────┐──────────┬─────┐
      * ┌───────▼───────┐ ┌───────▼────┴──┐ ┌─────┴─────▼───┐
      * │ PendingObject ├─► InitialObject │ │ UpdatedObject │
-     * └───────────────┘ └────▲──┬───────┘ └───────────┬───┘
-     *                        │  │  ┌───────────────┐  │
-     *                        │  └──► DeletedObject ◄──┘
-     *                        │     └───────┬───────┘
-     *                        └─────────────┘
-     *
+     * └───────────────┘ └───────▲───────┘ └───────────┬───┘
+     *                           │  ┌───────────────┐  │
+     *                           └──► DeletedObject ◄──┘
+     *                              └───────────────┘
+     * ```
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
      *

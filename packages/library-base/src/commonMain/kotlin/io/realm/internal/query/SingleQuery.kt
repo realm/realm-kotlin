@@ -11,12 +11,12 @@ import io.realm.internal.Thawable
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.link
-import io.realm.notifications.Cancellable
 import io.realm.notifications.InitialResults
-import io.realm.notifications.PendingObjectImpl
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.SingleQueryChange
 import io.realm.notifications.UpdatedResults
+import io.realm.notifications.internal.Cancellable
+import io.realm.notifications.internal.PendingObjectImpl
 import io.realm.query.RealmSingleQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
