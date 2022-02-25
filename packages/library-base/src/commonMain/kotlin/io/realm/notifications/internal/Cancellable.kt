@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.notifications
+package io.realm.notifications.internal
 
 /**
- * A `callback` interface to receive notifications about updates to Realm backed objects and
- * collections.
- *
- * @see [Realm.addChangeListener]
- * @see [RealmObject.addChangeListener]
- * @see [RealmResults.addChangeListener]
- * @see [RealmList.addChangeListener]
- * @see [RealmChange]
- * @see [ObjectChange]
- * @see [ListChange]
- * @see [SetChange]
- * @see [MapChange]
+ * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
  */
-public fun interface Callback<T> {
-    public fun onChange(change: T?, error: Throwable?)
+internal interface Cancellable {
+    fun cancel()
 }

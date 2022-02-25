@@ -21,7 +21,7 @@ import io.realm.BaseRealm
 /**
  * This sealed interface describe the possible changes that can be observed to a Realm.
  *
- * The specific states are represented by the specific subclasses [InitialRealm] and [UpdatedRealm].
+ * The specific states are represented by the subclasses [InitialRealm] and [UpdatedRealm].
  *
  * Changes can thus be consumed in a number of ways:
  *
@@ -45,7 +45,7 @@ import io.realm.BaseRealm
  */
 public sealed interface RealmChange<R : BaseRealm> {
     /**
-     * Returns the newest version of the Realm.
+     * Returns the realm instance that was affected by the change event.
      */
     public val realm: R
 }

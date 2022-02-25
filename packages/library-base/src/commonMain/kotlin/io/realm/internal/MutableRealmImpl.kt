@@ -22,8 +22,8 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
-import io.realm.notifications.Callback
-import io.realm.notifications.Cancellable
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
