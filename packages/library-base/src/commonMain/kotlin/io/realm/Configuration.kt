@@ -200,17 +200,6 @@ public interface Configuration {
             apply { this.schema = setOf(*classes) } as S
 
         /**
-         * Sets the migration to handle schema updates.
-         *
-         * @param migration the [RealmMigration] instance to handle schema and data migration in the
-         * event of a schema update.
-         *
-         * @see RealmMigration
-         * @see AutomaticSchemaMigration
-         */
-        public fun migration(migration: RealmMigration): S = apply { this.migration = migration } as S
-
-        /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
          * attempting to write more data.
          *

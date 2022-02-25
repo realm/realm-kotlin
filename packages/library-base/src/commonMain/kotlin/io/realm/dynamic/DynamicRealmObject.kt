@@ -18,6 +18,7 @@ package io.realm.dynamic
 
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 
 /**
@@ -37,21 +38,26 @@ public interface DynamicRealmObject : RealmObject {
     /**
      * Returns the value of a specific non-nullable value property.
      *
+     * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
+     *
      * To retrieve values for nullable, object or list properties use the [getNullableValue],
      * [getObject] and `get<X>List` variants.
      *
      * @param propertyName the name of the property to retrieve the value for.
-     * @param clazz the Kotlin class of the value.
+     * @param clazz the Kotlin class of the value. Must match the [RealmStorageType.kClass] of the
+     *              property in the realm.
      * @param T the type of the value.
      * @return the property value.
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
-     * name, or if trying to retrieve collection properties.
-     * @throws ClassCastException if the field doesn't contain a field of the defined return type.
+     * name, if `clazz` doesn't match the property's [RealmStorageType.kClass] or if trying to
+     * retrieve collection properties.
      */
     public fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T
 
     /**
      * Returns the value of a specific nullable value property.
+     *
+     * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
      * To retrieve values for non-nullable, object or list properties use the [getValue],
      * [getObject] and `get<X>List` variants.
@@ -61,13 +67,15 @@ public interface DynamicRealmObject : RealmObject {
      * @param T the type of the value.
      * @return the [RealmList] value.
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
-     * name, or if trying to retrieve collection properties.
-     * @throws ClassCastException if the field doesn't contain a field of the defined return type.
+     * name, if `clazz` doesn't match the property's [RealmStorageType.kClass] or if trying to
+     * retrieve collection properties.
      */
     public fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T?
 
     /**
      * Returns the value of a object property.
+     *
+     * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
      * To retrieve values for value or list properties use the `get<X>Value` and `get<X>List` variants.
      *
@@ -76,13 +84,15 @@ public interface DynamicRealmObject : RealmObject {
      * @param T the type of the value.
      * @return the [RealmList] value.
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
-     * name, or if trying to retrieve collection properties.
-     * @throws ClassCastException if the field doesn't contain a field of the defined return type.
+     * name, if `clazz` doesn't match the property's [RealmStorageType.kClass] or if trying to
+     * retrieve collection properties.
      */
     public fun getObject(propertyName: String): DynamicRealmObject?
 
     /**
      * Returns the list of non-nullable value elements referenced by the property name as a [RealmList].
+     *
+     * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
      * To retrieve values, objects or list of nullable elements or object use the `get<X>Value`,
      * [getObject] and other `get<X>List` variants.
@@ -92,12 +102,15 @@ public interface DynamicRealmObject : RealmObject {
      * @param T the type of the list element type.
      * @return the referenced [RealmList]
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
-     * name.
+     * name, if trying to retrieve values for non-list properties or if `clazz` doesn't match the
+     * property's [RealmStorageType.kClass].
      */
     public fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T>
 
     /**
      * Returns the list of nullable elements referenced by the property name as a [RealmList].
+     *
+     * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
      * To retrieve values, objects or list of non-nullable elements or object use the `get<X>Value`,
      * [getObject] and other `get<X>List` variants.
@@ -107,12 +120,15 @@ public interface DynamicRealmObject : RealmObject {
      * @param T the type of the list element type.
      * @return the referenced [RealmList]
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
-     * name.
+     * name, if trying to retrieve values for non-list properties or if `clazz` doesn't match the
+     * property's [RealmStorageType.kClass].
      */
     public fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?>
 
     /**
      * Returns the list of objects referenced by the property name as a [RealmList].
+     *
+     * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
      * To retrieve values, objects or list of value elements use the `get<X>Value`,
      * [getObject] and other `get<X>List` variants.
@@ -122,7 +138,8 @@ public interface DynamicRealmObject : RealmObject {
      * @param T the type of the list element type.
      * @return the referenced [RealmList]
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
-     * name.
+     * name, if trying to retrieve values for non-list properties or if `clazz` doesn't match the
+     * property's [RealmStorageType.kClass].
      */
     public fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject>
 }

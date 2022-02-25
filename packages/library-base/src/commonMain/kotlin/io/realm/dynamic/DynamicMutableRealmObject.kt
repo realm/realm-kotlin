@@ -35,6 +35,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      * @param propertyName the name of the property to update.
      * @param value the new value of the property.
      * @param T the type of the value.
+     * @return this object.
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
      * name, or if the value doesn't match the type of the property.
      */

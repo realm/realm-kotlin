@@ -699,7 +699,8 @@ actual object RealmInterop {
         val pinfo = realm_property_info_t()
         realmc.realm_find_property((realm as LongPointerWrapper).ptr, classKey.key, col, found, pinfo)
         if (!found[0]) {
-            throw IllegalArgumentException("Cannot find property: '$col' in class with key=$classKey")
+            val className = realm_get_class(realm, classKey).name
+            throw IllegalArgumentException("Cannot find property: '$col' in class '$className'")
         }
         return pinfo
     }

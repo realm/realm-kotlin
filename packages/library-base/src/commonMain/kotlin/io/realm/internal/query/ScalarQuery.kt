@@ -64,6 +64,8 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     }
 
     protected fun getPropertyKey(property: String): PropertyKey =
+        // TODO OPTIMIZE Maybe add classKey->ClassMetadata map to realmReference.schemaMetadata
+        //  so that we can get the key directly from a lookup
         RealmInterop.realm_get_col_key(realmReference.dbPointer, classKey, property)
 }
 

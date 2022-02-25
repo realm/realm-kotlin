@@ -41,6 +41,9 @@ public fun interface AutomaticSchemaMigration : RealmMigration {
     /**
      * A **data migration context** providing access to the realm before and after an
      * [AutomaticSchemaMigration].
+     *
+     * *NOTE:* All objects obtained from `oldRealm` and `newRealm` are only valid in the scope of
+     * the migration.
      */
     public interface MigrationContext {
 

@@ -68,9 +68,8 @@ public open class ConfigurationImpl constructor(
 
     override val schemaMode: SchemaMode
 
-    override val encryptionKey: ByteArray? get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(
-        nativeConfig
-    )
+    override val encryptionKey: ByteArray?
+        get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
     override val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
 
@@ -153,6 +152,7 @@ public open class ConfigurationImpl constructor(
                             // actual exception to stdout, so users have a chance to see what is
                             // actually failing
                             // TODO Should we dump the actual exceptions in a platform specific way
+                            //  https://github.com/realm/realm-kotlin/issues/665
                             e.printStackTrace()
                             false
                         }

@@ -23,10 +23,6 @@ import io.realm.query.RealmQuery
  * A **dynamic mutable realm** gives access and allows creation and modification of data in the
  * realm through a generic string based API instead of the conventional [Realm] API that uses the
  * typed API of the schema classes supplied in the configuration.
- *
- * *NOTE:* All objects obtained from a [DynamicRealm] are only valid in the scope of the dynamic
- * realm. Thus they cannot be passed outside of an [RealmMigration] that gives access to a specific
- * [DynamicRealm] instance, etc.
  */
 public interface DynamicMutableRealm : DynamicRealm {
 
@@ -53,7 +49,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * @param primaryKey the primary key value.
      * @return the new object.
      * @throws IllegalArgumentException if the class name is not part of the realm's schema or the
-     * class
+     * primary key is not of the correct type.
      */
     public fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
 
@@ -82,7 +78,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      */
     public fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
 
-    // FIXME Do we want an explicit delete here? At least we should probably match MutableRealm.delete/RealmObject.delete behaviour
+    // FIXME Align delete behavior with MutableRealm
     //  https://github.com/realm/realm-kotlin/issues/181
     // fun delete(obj: RealmObject)
 }

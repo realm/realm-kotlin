@@ -20,6 +20,7 @@ import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
+import io.realm.migration.RealmMigration
 import kotlin.reflect.KClass
 
 /**
@@ -54,6 +55,17 @@ public interface RealmConfiguration : Configuration {
          * **WARNING!** This will result in loss of data.
          */
         public fun deleteRealmIfMigrationNeeded(): Builder = apply { this.deleteRealmIfMigrationNeeded = true }
+
+        /**
+         * Sets the migration to handle schema updates.
+         *
+         * @param migration the [RealmMigration] instance to handle schema and data migration in the
+         * event of a schema update.
+         *
+         * @see RealmMigration
+         * @see AutomaticSchemaMigration
+         */
+        public fun migration(migration: RealmMigration): Builder = apply { this.migration = migration }
 
         override fun build(): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
