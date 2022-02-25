@@ -40,7 +40,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     }
 
     /**
-     * Because Core does not support subscribing for the head element of a query this feature
+     * Because Core does not support subscribing to the head element of a query this feature
      * must be shimmed.
      *
      * This [QueryObjectChange] flow is achieved by flat mapping and tracking the flow of the head element.
