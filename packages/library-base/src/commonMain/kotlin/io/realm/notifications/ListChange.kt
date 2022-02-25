@@ -3,7 +3,7 @@ package io.realm.notifications
 import io.realm.RealmList
 
 /**
- * This sealed interface describe the possible changes that can happen to a list collection.
+ * This sealed interface describes the possible changes that can happen to a [RealmList] collection.
  *
  * The states are represented by the specific subclasses [InitialList], [UpdatedList] and
  * [DeletedList]. When the list is deleted an empty list is emitted instead of null.
