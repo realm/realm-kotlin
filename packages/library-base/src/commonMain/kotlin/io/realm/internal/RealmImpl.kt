@@ -24,9 +24,9 @@ import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.schema.RealmSchemaImpl
-import io.realm.notifications.InitialRealmImpl
 import io.realm.notifications.RealmChange
-import io.realm.notifications.UpdatedRealmImpl
+import io.realm.notifications.internal.InitialRealmImpl
+import io.realm.notifications.internal.UpdatedRealmImpl
 import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic

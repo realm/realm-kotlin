@@ -33,7 +33,7 @@ version = null
 runTests = true
 isReleaseBranch = releaseBranches.contains(currentBranch)
 // Manually wipe the workspace before checking out the code. This happens automatically on release branches.
-forceWipeWorkspace = true
+forceWipeWorkspace = false
 
 // References to Docker containers holding the MongoDB Test server and infrastructure for
 // controlling it.
