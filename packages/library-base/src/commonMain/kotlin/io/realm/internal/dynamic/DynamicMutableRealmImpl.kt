@@ -73,15 +73,7 @@ internal open class DynamicMutableRealmImpl(
         return if (!obj.isValid()) {
             null
         } else if (!obj.isManaged()) {
-            throw IllegalArgumentException(
-                "Unmanaged objects must be part of the Realm, before " +
-                    "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
-                    "a managed object."
-            )
-        } else if (!obj.isFrozen()) {
-            // If already valid, managed and not frozen, it must be live, and thus already
-            // up to date, just return input
-            obj as DynamicMutableRealmObject?
+            throw IllegalArgumentException("Cannot lookup unmanaged object")
         } else {
             (obj as RealmObjectInternal).thaw(
                 realmReference,
