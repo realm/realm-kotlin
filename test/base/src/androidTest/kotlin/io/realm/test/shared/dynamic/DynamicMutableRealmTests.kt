@@ -105,7 +105,7 @@ class DynamicMutableRealmTests {
 
     @Test
     fun create_throwsWithPrimaryKey() {
-        assertFailsWithMessage<IllegalArgumentException>("Failed to create object of type 'Sample': RealmCoreException([12]: Class does not have a primary key)") {
+        assertFailsWithMessage<IllegalArgumentException>("Class does not have a primary key)") {
             dynamicMutableRealm.createObject("Sample", "PRIMARY_KEY")
         }
     }
