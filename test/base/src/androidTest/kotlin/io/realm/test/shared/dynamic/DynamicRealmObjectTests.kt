@@ -38,12 +38,12 @@ import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.dynamic.getNullableValue
+import io.realm.asFlow
 import io.realm.dynamic.getNullableValueList
 import io.realm.dynamic.getValue
 import io.realm.dynamic.getValueList
 import io.realm.entities.Sample
 import io.realm.internal.asDynamicRealm
-import io.realm.observe
 import io.realm.query.RealmQuery
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmStorageType
@@ -460,7 +460,7 @@ class DynamicRealmObjectTests {
         val dynamicRealmObject: DynamicRealmObject = query.first().find()!!
 
         assertFailsWith<UnsupportedOperationException> {
-            dynamicRealmObject.observe()
+            dynamicRealmObject.asFlow()
         }
     }
 

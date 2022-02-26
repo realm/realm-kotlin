@@ -71,7 +71,7 @@ internal object Names {
     val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
     val REALM_OBJECT_INTERNAL_REALM_STATE = Name.identifier("realmState")
     val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
-    val REALM_OBJECT_INTERNAL_PROPERTY_KEY = Name.identifier("propertyKeyOrThrow")
+    val REALM_OBJECT_INTERNAL_PROPERTY_KEY = Name.identifier("propertyInfoOrThrow")
 }
 
 internal object FqNames {

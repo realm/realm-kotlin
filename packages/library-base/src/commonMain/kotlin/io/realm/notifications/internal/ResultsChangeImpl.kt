@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.notifications.internal
 
-/**
- * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
- */
-internal interface Cancellable {
-    fun cancel()
-}
+import io.realm.RealmObject
+import io.realm.RealmResults
+import io.realm.notifications.InitialResults
+import io.realm.notifications.ListChangeSet
+import io.realm.notifications.UpdatedResults
+
+internal class InitialResultsImpl<T : RealmObject>(
+    override val list: RealmResults<T>
+) : InitialResults<T>
+
+internal class UpdatedResultsImpl<T : RealmObject>(
+    override val list: RealmResults<T>,
+    listChangeSet: ListChangeSet
+) : UpdatedResults<T>, ListChangeSet by listChangeSet

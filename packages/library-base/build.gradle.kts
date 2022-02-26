@@ -216,7 +216,7 @@ realmPublish {
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    moduleName.set("Realm Kotlin Multiplatform SDK")
+    moduleName.set("Realm Kotlin SDK")
     moduleVersion.set(Realm.version)
     dokkaSourceSets {
         configureEach {

@@ -16,11 +16,11 @@
 package io.realm.internal
 
 import io.realm.BaseRealm
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow
 
@@ -73,7 +73,7 @@ public abstract class BaseRealmImpl internal constructor(
         return RealmInterop.realm_get_schema_version(realmReference.dbPointer)
     }
 
-    internal open fun <T> registerObserver(t: Thawable<T>): Flow<T> {
+    internal open fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
         throw UnsupportedOperationException(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

@@ -116,6 +116,7 @@ expect object RealmInterop {
     fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer
     fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer
     fun realm_object_is_valid(obj: NativePointer): Boolean
+    fun realm_object_get_key(obj: NativePointer): Long
     fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer?
 
     fun realm_object_as_link(obj: NativePointer): Link
@@ -173,6 +174,9 @@ expect object RealmInterop {
     fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer
     fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer
     fun realm_list_add_notification_callback(list: NativePointer, callback: Callback): NativePointer
+    fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey>
+    fun <T, R> realm_collection_changes_get_indices(change: NativePointer, builder: ListChangeSetBuilder<T, R>)
+    fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: ListChangeSetBuilder<T, R>)
 
     // App
     fun realm_app_get(

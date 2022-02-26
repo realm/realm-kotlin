@@ -37,9 +37,9 @@ public interface SchemaMetadata {
 public interface ClassMetadata {
     public val className: String
     public val classKey: ClassKey
-    public fun info(propertyName: String): PropertyInfo
-    public operator fun get(propertyName: String): PropertyKey?
-    public fun getOrThrow(propertyName: String): PropertyKey = get(propertyName)
+    public operator fun get(propertyName: String): PropertyInfo?
+    public operator fun get(propertyKey: PropertyKey): PropertyInfo?
+    public fun getOrThrow(propertyName: String): PropertyInfo = get(propertyName)
         ?: throw IllegalArgumentException("Schema for type '$className doesn't contain a property named '$propertyName'")
 }
 
@@ -72,16 +72,17 @@ public class CachedClassMetadata(dbPointer: NativePointer, override val classNam
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
-    public val propertyKeyMap: Map<String, PropertyKey>
-    public val propertyMap: Map<String, PropertyInfo>
+    public val propertyNameToKeyMap: Map<String, PropertyInfo>
+    public val propertyKeyToInfoMap: Map<PropertyKey, PropertyInfo>
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        propertyMap = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyInfo>> { it.name to it }.toMap()
-        propertyKeyMap = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).map<PropertyInfo, Pair<String, PropertyKey>> { it.name to it.key }.toMap()
+        RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).apply {
+            propertyNameToKeyMap = this.map<PropertyInfo, Pair<String, PropertyInfo>> { it.name to it }.toMap()
+            propertyKeyToInfoMap = this.map<PropertyInfo, Pair<PropertyKey, PropertyInfo>> { it.key to it }.toMap()
+        }
     }
 
-    override fun get(propertyName: String): PropertyKey? = propertyKeyMap[propertyName]
-    override fun info(propertyName: String): PropertyInfo = propertyMap[propertyName]
-        ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
+    override fun get(propertyName: String): PropertyInfo? = propertyNameToKeyMap[propertyName]
+    override fun get(propertyKey: PropertyKey): PropertyInfo? = propertyKeyToInfoMap[propertyKey]
 }

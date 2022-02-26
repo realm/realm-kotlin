@@ -30,4 +30,5 @@ internal actual fun <T: Any> realmObjectCompanionOrNull(clazz: KClass<T>): Realm
     }
 
 internal actual fun <T : RealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion =
-    realmObjectCompanionOrNull(clazz) ?: error("Couldn't find companion object of class ${clazz.simpleName}")
+    realmObjectCompanionOrNull(clazz)
+        ?: error("Couldn't find companion object of class '${clazz.simpleName}'.\nA common cause for this is when the `io.realm.kotlin` is not applied to the Gradle module that contains the '${clazz.simpleName}' class.")

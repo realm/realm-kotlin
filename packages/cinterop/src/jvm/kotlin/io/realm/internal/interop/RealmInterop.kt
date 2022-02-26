@@ -303,6 +303,10 @@ actual object RealmInterop {
         return realmc.realm_object_is_valid(obj.cptr())
     }
 
+    actual fun realm_object_get_key(obj: NativePointer): Long {
+        return realmc.realm_object_get_key(obj.cptr())
+    }
+
     actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
         val objectPointer = longArrayOf(0)
         realmc.realm_object_resolve_in(obj.cptr(), realm.cptr(), objectPointer)
@@ -534,6 +538,102 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
+        val propertyCount = realmc.realm_object_changes_get_num_modified_properties(change.cptr())
+
+        val keys = LongArray(propertyCount.toInt())
+        realmc.realm_object_changes_get_modified_properties(change.cptr(), keys, propertyCount)
+        return keys.map { PropertyKey(it) }
+    }
+
+    private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
+    private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
+
+    actual fun <T, R> realm_collection_changes_get_indices(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+        val insertionCount = LongArray(1)
+        val deletionCount = LongArray(1)
+        val modificationCount = LongArray(1)
+        val movesCount = LongArray(1)
+
+        realmc.realm_collection_changes_get_num_changes(
+            change.cptr(),
+            deletionCount,
+            insertionCount,
+            modificationCount,
+            movesCount
+        )
+
+        val insertionIndices: LongArray = initIndicesArray(insertionCount)
+        val modificationIndices: LongArray = initIndicesArray(modificationCount)
+        val modificationIndicesAfter: LongArray = initIndicesArray(modificationCount)
+        val deletionIndices: LongArray = initIndicesArray(deletionCount)
+        val moves: realm_collection_move_t = realmc.new_collectionMoveArray(movesCount[0].toInt())
+
+        realmc.realm_collection_changes_get_changes(
+            change.cptr(),
+            deletionIndices,
+            deletionCount[0],
+            insertionIndices,
+            insertionCount[0],
+            modificationIndices,
+            modificationCount[0],
+            modificationIndicesAfter,
+            modificationCount[0],
+            moves,
+            movesCount[0]
+        )
+
+        builder.initIndicesArray(builder::insertionIndices, insertionIndices)
+        builder.initIndicesArray(builder::deletionIndices, deletionIndices)
+        builder.initIndicesArray(builder::modificationIndices, modificationIndices)
+        builder.initIndicesArray(builder::modificationIndicesAfter, modificationIndicesAfter)
+        builder.movesCount = movesCount[0].toInt()
+    }
+
+    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+        val insertRangesCount = LongArray(1)
+        val deleteRangesCount = LongArray(1)
+        val modificationRangesCount = LongArray(1)
+        val movesCount = LongArray(1)
+
+        realmc.realm_collection_changes_get_num_ranges(
+            change.cptr(),
+            deleteRangesCount,
+            insertRangesCount,
+            modificationRangesCount,
+            movesCount
+        )
+
+        val insertionRanges: realm_index_range_t =
+            realmc.new_indexRangeArray(insertRangesCount[0].toInt())
+        val modificationRanges: realm_index_range_t =
+            realmc.new_indexRangeArray(modificationRangesCount[0].toInt())
+        val modificationRangesAfter: realm_index_range_t =
+            realmc.new_indexRangeArray(modificationRangesCount[0].toInt())
+        val deletionRanges: realm_index_range_t =
+            realmc.new_indexRangeArray(deleteRangesCount[0].toInt())
+        val moves: realm_collection_move_t = realmc.new_collectionMoveArray(movesCount[0].toInt())
+
+        realmc.realm_collection_changes_get_ranges(
+            change.cptr(),
+            deletionRanges,
+            deleteRangesCount[0],
+            insertionRanges,
+            insertRangesCount[0],
+            modificationRanges,
+            modificationRangesCount[0],
+            modificationRangesAfter,
+            modificationRangesCount[0],
+            moves,
+            movesCount[0]
+        )
+
+        builder.initRangesArray(builder::deletionRanges, deletionRanges, deleteRangesCount[0])
+        builder.initRangesArray(builder::insertionRanges, insertionRanges, insertRangesCount[0])
+        builder.initRangesArray(builder::modificationRanges, modificationRanges, modificationRangesCount[0])
+        builder.initRangesArray(builder::modificationRangesAfter, modificationRangesAfter, modificationRangesCount[0])
+    }
+
     actual fun realm_app_get(
         appConfig: NativePointer,
         syncClientConfig: NativePointer,
@@ -689,7 +789,7 @@ actual object RealmInterop {
         val classInfo = realm_class_info_t()
         realmc.realm_find_class((realm as LongPointerWrapper).ptr, className, found, classInfo)
         if (!found[0]) {
-            throw IllegalArgumentException("Cannot find class: '$className'")
+            throw IllegalArgumentException("Cannot find class: '$className'. Has the class been added to the Realm schema?")
         }
         return classInfo
     }

@@ -28,6 +28,10 @@ import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
 import io.realm.internal.platform.realmObjectCompanionOrNull
+import io.realm.notifications.ListChange
+import io.realm.notifications.internal.DeletedListImpl
+import io.realm.notifications.internal.InitialListImpl
+import io.realm.notifications.internal.UpdatedListImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +41,7 @@ import kotlin.reflect.KClass
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
 internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableListOf() {
-    override fun asFlow(): Flow<RealmList<E>> =
+    override fun asFlow(): Flow<ListChange<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 }
 
@@ -47,7 +51,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     private val nativePointer: NativePointer,
     private val metadata: ListOperatorMetadata<E>
-) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
 
     override val size: Int
         get() {
@@ -125,7 +129,7 @@ internal class ManagedRealmList<E>(
         }
     }
 
-    override fun asFlow(): Flow<ManagedRealmList<E>> {
+    override fun asFlow(): Flow<ListChange<E>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }
@@ -149,14 +153,22 @@ internal class ManagedRealmList<E>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<ManagedRealmList<E>>
+        channel: SendChannel<ListChange<E>>
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            channel.trySend(frozenList)
+            val builder = ListChangeSetBuilderImpl(change)
+
+            if (builder.isEmpty()) {
+                channel.trySend(InitialListImpl(frozenList))
+            } else {
+                channel.trySend(UpdatedListImpl(frozenList, builder.build()))
+            }
         } else {
-            channel.close()
-            null
+            channel.trySend(DeletedListImpl(UnmanagedRealmList()))
+                .also {
+                    channel.close()
+                }
         }
     }
 

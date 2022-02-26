@@ -54,7 +54,7 @@ internal object RealmObjectHelper {
     @Suppress("unused") // Called from generated code
     internal fun <R> getValue(obj: RealmObjectInternal, propertyName: String): Any? {
         obj.checkValid()
-        return getValueByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
+        return getValueByKey<R>(obj, obj.propertyInfoOrThrow(propertyName).key)
     }
 
     internal fun <R> getValueByKey(
@@ -71,7 +71,7 @@ internal object RealmObjectHelper {
     internal fun <R> getTimestamp(obj: RealmObjectInternal, propertyName: String): RealmInstant? {
         obj.checkValid()
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val res = RealmInterop.realm_get_value<Timestamp?>(o, obj.propertyKeyOrThrow(propertyName))
+        val res = RealmInterop.realm_get_value<Timestamp?>(o, obj.propertyInfoOrThrow(propertyName).key)
         return if (res == null) null else RealmInstantImpl(res)
     }
 
@@ -82,7 +82,7 @@ internal object RealmObjectHelper {
         propertyName: String,
     ): Any? {
         obj.checkValid()
-        return getObjectByKey<R>(obj, obj.propertyKeyOrThrow(propertyName))
+        return getObjectByKey<R>(obj, obj.propertyInfoOrThrow(propertyName).key)
     }
 
     internal inline fun <reified R : RealmObject> getObjectByKey(
@@ -117,7 +117,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         elementType: KClass<R>,
     ): RealmList<Any?> {
-        return getListByKey(obj, obj.propertyKeyOrThrow(propertyName), elementType)
+        return getListByKey(obj, obj.propertyInfoOrThrow(propertyName).key, elementType)
     }
 
     internal fun <R : Any> getListByKey(
@@ -168,7 +168,7 @@ internal object RealmObjectHelper {
         //  only. This relates to the overall concern of having a generic path for getter/setter
         //  instead of generating a typed path for each type.
         try {
-            setValueByKey<R>(obj, obj.propertyKeyOrThrow(propertyName), value)
+            setValueByKey<R>(obj, obj.propertyInfoOrThrow(propertyName).key, value)
         }
         // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
         // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
@@ -201,7 +201,7 @@ internal object RealmObjectHelper {
         //  only. This relates to the overall concern of having a generic path for getter/setter
         //  instead of generating a typed path for each type.
         try {
-            RealmInterop.realm_set_value(o, obj.propertyKeyOrThrow(propertyName), value, false)
+            RealmInterop.realm_set_value(o, obj.propertyInfoOrThrow(propertyName).key, value, false)
         }
         // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
         // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
@@ -234,7 +234,7 @@ internal object RealmObjectHelper {
         val newValue = if (value?.`$realm$IsManaged` == false) {
             copyToRealm(obj.`$realm$Mediator`!!, obj.`$realm$Owner`!!, value)
         } else value
-        setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
+        setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue)
     }
 
     /**
@@ -289,7 +289,8 @@ internal object RealmObjectHelper {
                 RealmObject::class
             else -> elementType
         }
-        return obj.`$realm$metadata`!!.info(propertyName)!!.also { propertyInfo ->
+        val classMetadata = obj.`$realm$metadata`!!
+        return classMetadata.getOrThrow(propertyName).also { propertyInfo ->
             val kClass = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass
             if (collectionType != propertyInfo.collectionType ||
                 realElementType != kClass ||

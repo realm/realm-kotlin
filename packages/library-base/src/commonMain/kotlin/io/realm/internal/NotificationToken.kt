@@ -16,9 +16,9 @@
 
 package io.realm.internal
 
-import io.realm.Cancellable
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.reentrantLock

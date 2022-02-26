@@ -240,13 +240,13 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-$realm$metadata>' type=schema.input.A origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.A.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
-        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
+        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
@@ -524,13 +524,13 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-$realm$metadata>' type=schema.input.B origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.B.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
-        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
+        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
@@ -808,13 +808,13 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-$realm$metadata>' type=schema.input.C origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.C.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
-        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
+        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
