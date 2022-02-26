@@ -21,7 +21,6 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.delete
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealm
@@ -29,7 +28,6 @@ import io.realm.dynamic.DynamicRealmObject
 import io.realm.dynamic.getValue
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
-import io.realm.entities.schema.SchemaVariations
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.query
 import io.realm.test.platform.PlatformUtils
@@ -62,7 +60,7 @@ class RealmMigrationTests {
     }
 
     @Test
-    fun schemaVerificationOnOldAndNewRealm() {
+    fun migrationContext_schemaVerification() {
         migration(
             initialSchema = setOf(
                 io.realm.entities.schema.SchemaVariations::class,
@@ -108,31 +106,6 @@ class RealmMigrationTests {
     //      - Index
 
     @Test
-    fun query() {
-        migration(
-            initialSchema = setOf(io.realm.entities.Sample::class),
-            initialData = {
-                for (i in 0..9) {
-                    copyToRealm(Sample().apply { intField = i % 2 })
-                }
-            },
-            migratedSchema = setOf(io.realm.entities.migration.Sample::class),
-            // FIXME Can we get this to have the DataMigrationContext as receiver
-            migration = {
-                val oldSamples: RealmResults<out DynamicRealmObject> =
-                    it.oldRealm.query("Sample", "intField = 0").find()
-                assertEquals(5, oldSamples.size)
-                oldSamples.forEach { assertEquals(0, it.getValue<Long>("intField")) }
-
-                val newSamples: RealmResults<out DynamicRealmObject> =
-                    it.newRealm.query<Any>("Sample", "intField = 0").find()
-                assertEquals(5, newSamples.size)
-                newSamples.forEach { assertEquals(0, it.getValue<Long>("intField")) }
-            }
-        ).close()
-    }
-
-    @Test
     fun enumerate() {
         val initialValue = "INITIAL_VALUE"
         val migratedValue = "MIGRATED_VALUE"
@@ -170,7 +143,7 @@ class RealmMigrationTests {
                 migrationContext.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
                     if (oldObject.getValue<Long>("intField") == 1L) {
                         // Delete all objects
-                        migrationContext.newRealm.query<Any>("Sample").find().delete()
+                        migrationContext.newRealm.query("Sample").find().delete()
                     } else {
                         assertNull(newObject)
                     }

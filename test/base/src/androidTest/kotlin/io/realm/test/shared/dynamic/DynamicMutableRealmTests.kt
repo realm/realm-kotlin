@@ -1,19 +1,3 @@
-/*
- * Copyright 2022 Realm Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 @file:Suppress("invisible_member", "invisible_reference")
 /*
  * Copyright 2022 Realm Inc.
@@ -39,6 +23,7 @@ import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.dynamic.getValue
+import io.realm.dynamic.getNullableValue
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
@@ -83,7 +68,7 @@ class DynamicMutableRealmTests {
     }
 
     // TODO Add test for all BaseRealm methods
-    
+
     @Test
     fun create() {
         val dynamicMutableObject = dynamicMutableRealm.createObject("Sample")
@@ -103,7 +88,7 @@ class DynamicMutableRealmTests {
     fun createPrimaryKey_nullablePrimaryKey() {
         val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyStringNullable", null)
         assertTrue { dynamicMutableObject.isValid() }
-        assertNull(dynamicMutableObject.getNullableValue("primaryKey"))
+        assertNull(dynamicMutableObject.getNullableValue<String>("primaryKey"))
     }
 
     @Test
@@ -145,14 +130,14 @@ class DynamicMutableRealmTests {
     @Test
     fun query_returnsDynamicMutableObject() {
         dynamicMutableRealm.createObject("Sample")
-        val o1 = dynamicMutableRealm.query<Any>("Sample").find().first()
+        val o1 = dynamicMutableRealm.query("Sample").find().first()
         o1.set("stringField", "value")
     }
 
     @Test
     fun query_failsOnUnknownClass() {
         assertFailsWith<IllegalArgumentException> {
-            dynamicMutableRealm.query<Any>("UNKNOWN_CLASS")
+            dynamicMutableRealm.query("UNKNOWN_CLASS")
         }.run {
             assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
