@@ -18,6 +18,7 @@ package io.realm.dynamic
 
 import io.realm.RealmList
 import io.realm.MutableRealm
+import io.realm.schema.RealmStorageType
 
 /**
  * A **dynamic mutable realm object** gives access and possibility to update the data of the realm
@@ -41,7 +42,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      * @param T the type of the value.
      * @return this object.
      * @throws IllegalArgummentException if the class doesn't contain a field with the specific
-     * name, or if the value doesn't match the type of the property.
+     * name, or if the value doesn't match the [RealmStorageType.kClass] type of the property.
      */
     public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
 }
